@@ -1,0 +1,680 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      href="{% static 'images/icon.png' %}"
+      sizes="218x250"
+      type="image/png"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Lato"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Merriweather Sans"
+    />
+    <style>
+      body {
+        font-family: "Lato", serif !important;
+        font-size: 48px;
+        background-image: url("{% static 'images/bg.png' %}");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-color: #e3ed93;
+      }
+
+      .video {
+        margin-top: 30px !important;
+      }
+
+      .video-mobile {
+        display: none;
+      }
+
+      .hero-title {
+        font-size: 84px;
+        color: #183a58;
+        font-weight: bold;
+        text-shadow: 3px -1px 0px #ffffff;
+      }
+
+      .hero-content {
+        padding: 5px 80px;
+        color: #686868;
+        font-size: 18px;
+        max-width: 600px !important;
+        text-shadow: 0 0 0px #5c5251a3;
+      }
+
+      .navbar {
+        float: right;
+      }
+
+      .logo {
+        width: 220px;
+      }
+
+      .content {
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        margin: 120px auto 0 auto !important;
+        max-width: 900px;
+        flex-direction: column;
+        min-height: 800px;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .section-title {
+        font-size: 50px;
+        font-family: Merriweather Sans, serif !important;
+        color: #183a58;
+        font-weight: bold;
+        text-shadow: 3px -1px 0px #ffffff;
+        padding: 10px 0;
+      }
+
+      .section-content {
+        padding: 5px 80px;
+        color: #686868;
+        font-size: 18px;
+        max-width: 800px !important;
+        text-shadow: 0 0 0px #5c5251a3;
+        margin: auto;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .model-provider-icon {
+        width: 50px;
+        height: 50px;
+        margin: 10px;
+      }
+
+      .feature-section {
+        max-width: 100%;
+        padding: 30px 0;
+        margin: 5px auto !important;
+        background: linear-gradient(
+          to right,
+          transparent,
+          #e3ed93,
+          transparent
+        );
+      }
+
+      .feature-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        box-shadow: 0 0 10px #00000029;
+        border-radius: 8px;
+      }
+
+      .feature-title {
+        font-size: 40px;
+        font-family: Merriweather Sans, serif !important;
+        color: #183a58;
+        font-weight: bold;
+        text-shadow: 3px -1px 0px #ffffff;
+        padding: 10px 0;
+        text-align: left;
+      }
+
+      .feature-content {
+        padding: 5px;
+        color: #686868;
+        font-size: 18px;
+        max-width: 800px !important;
+        text-shadow: 0 0 0px #5c5251a3;
+        margin: auto;
+        text-align: left;
+      }
+
+      @media screen and (max-width: 600px) {
+        .row {
+          margin: 0 auto !important;
+        }
+
+        .logo {
+          width: 150px;
+        }
+
+        .hero-title {
+          font-size: 48px;
+          text-shadow: 3px -1px 0px #ffffff !important;
+        }
+
+        .hero-content {
+          font-size: 14px;
+        }
+
+        .video {
+          display: none;
+        }
+
+        .video-mobile {
+          width: 100% !important;
+          margin: 10px 0 !important;
+          display: block;
+        }
+
+        .section-title {
+          font-size: 42px;
+        }
+
+        .section-content {
+          padding: 5px 30px;
+          font-size: 16px;
+        }
+
+        .navbar {
+          font-size: 12px;
+        }
+
+        .content {
+          margin: 30px auto 0 auto !important;
+        }
+
+        .model-provider-icon {
+          width: 30px;
+          height: 30px;
+          margin: 5px;
+        }
+
+        .feature-title {
+          font-size: 32px;
+          text-align: center;
+        }
+      }
+    </style>
+    <title>
+      Promptly: AI Apps and Chatbots in Minutes | No-code AI App Builder
+    </title>
+    <meta
+      name="description"
+      content="Build generative AI apps and chatbots in minutes with Promptly's no-code platform."
+    />
+    <meta
+      name="keywords"
+      content="No-code app builder, chatbot builder, generative AI apps, Custom ChatGPT, share prompts, OpenAI completions, image generation, Stable Diffusion, API caching, Prototype ML apps"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Promptly" />
+    <meta
+      property="og:title"
+      content="Promptly: AI Apps and Chatbots in Minutes | No-code AI App Builder"
+    />
+    <meta
+      property="og:description"
+      content="Build generative AI apps and chatbots in minutes with Promptly's no-code platform."
+    />
+    <meta
+      property="twitter:title"
+      content="Promptly: AI Apps and Chatbots in Minutes | No-code AI App Builder"
+    />
+    <meta
+      property="twitter:description"
+      content="Build generative AI apps and chatbots in minutes with Promptly's no-code platform."
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-WV60HC9CHD"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-WV60HC9CHD");
+    </script>
+  </head>
+  <body style="height: 100%; width: 100%; background-color: #aff4ac">
+    <div
+      class="container-fluid"
+      style="height: 100%; width: 100%; display: inline-table; padding: 0px"
+    >
+      <div class="row" style="max-width: 1280px; margin: auto">
+        <header style="margin-top: 20px">
+          <img src="{% static 'images/logo.png' %}" class="logo" alt="Logo" />
+          <span class="navbar" style="padding: 0">
+            <ul class="nav nav-pills">
+              <li class="nav-item">
+                <a class="nav-link" style="color: #207797" href="/hub">Hub</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" style="color: #207797" href="/login"
+                  >Login</a
+                >
+              </li>
+              <li class="nav-item" style="padding-left: 15px">
+                <a
+                  class="nav-link active"
+                  style="background-color: #183a58"
+                  href="/login"
+                  >Sign Up</a
+                >
+              </li>
+            </ul>
+          </span>
+        </header>
+      </div>
+      <div class="row content">
+        <h1 class="hero-title">Build AI Apps & Chatbots in Minutes</h1>
+        <video
+          src="{% static 'images/promptly-app-builder-demo.mp4' %}"
+          autoplay
+          muted
+          loop
+          playsinline
+          style="
+            padding: 0;
+            object-fit: cover;
+            z-index: 0;
+            box-shadow: 0 0 20px 2px #4b4b4b;
+          "
+          class="video-mobile"
+        ></video>
+        <p class="hero-content">
+          Effortlessly create cutting-edge generative AI applications and
+          chatbots that cater to your users' unique needs. Easily integrate your
+          own data to build powerful GPT-backed apps.
+          <strong>No coding required.</strong>
+        </p>
+        <span
+          ><a href="#chatgpt"
+            ><button
+              type="button"
+              class="btn btn-primary"
+              style="
+                color: #1a1814;
+                background-color: #ffe193;
+                height: 60px;
+                width: 250px;
+                border-color: #e4b381;
+                margin: 0 5px 10px 5px;
+                border-radius: 10px;
+              "
+            >
+              ChatGPT for your Website
+            </button></a
+          ><a href="/login"
+            ><button
+              type="button"
+              class="btn btn-primary"
+              style="
+                color: #fcefce;
+                background-color: #1a5e10;
+                height: 60px;
+                width: 250px;
+                border-color: #f1d3cf;
+                margin: 0 5px 10px 5px;
+                border-radius: 10px;
+              "
+            >
+              Get Started for Free
+            </button></a
+          ></span
+        >
+        <span>
+          <a
+            href="https://www.producthunt.com/posts/promptly-4?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-promptly&#0045;4"
+            target="_blank"
+            ><img
+              src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=387909&theme=light"
+              alt="Promptly - No&#0045;code&#0032;platform&#0032;for&#0032;generative&#0032;AI&#0032;apps&#0032;&#0038;&#0032;chatbots | Product Hunt"
+              style="width: 250px; height: 54px"
+              width="250"
+              height="54"
+          /></a>
+        </span>
+        <video
+          src="{% static 'images/promptly-app-builder-demo.mp4' %}"
+          autoplay
+          muted
+          loop
+          playsinline
+          style="
+            padding: 0;
+            object-fit: cover;
+            z-index: 0;
+            box-shadow: 0 0 20px 2px #4b4b4b;
+          "
+          class="video"
+        ></video>
+      </div>
+      <div
+        class="row"
+        style="
+          max-width: 100%;
+          margin: auto;
+          padding: 0;
+          margin-top: 40px;
+          background: linear-gradient(
+            to right,
+            transparent,
+            #ffffff,
+            transparent
+          );
+        "
+      >
+        <div class="row" style="max-width: 1280px; margin: auto; padding: 0">
+          <div class="col-12" style="text-align: center; margin-top: 50px">
+            <h2 class="section-title">Use Your Favorite Model Providers</h2>
+          </div>
+          <div class="col-12" style="margin: 0px auto">
+            <p class="section-content">
+              Promptly supports all major model providers, including OpenAI,
+              Cohere, Stability AI, Hugging Face, and more. Easily integrate
+              your own models to build powerful apps.
+            </p>
+          </div>
+          <div
+            class="col-12"
+            style="text-align: center; margin: 10px 0px 50px 0px"
+          >
+            <img
+              src="{% static 'images/openai-icon-light.png' %}"
+              class="model-provider-icon"
+              alt="OpenAI"
+            />
+            <img
+              src="{% static 'images/cohere-icon-light.png' %}"
+              class="model-provider-icon"
+              alt="Cohere"
+            />
+            <img
+              src="{% static 'images/huggingface-icon-light.png' %}"
+              class="model-provider-icon"
+              alt="Huggingface"
+            />
+            <img
+              src="{% static 'images/replicate-icon-light.png' %}"
+              class="model-provider-icon"
+              alt="Replicate"
+            />
+            <img
+              src="{% static 'images/stabilityai-icon-light.png' %}"
+              class="model-provider-icon"
+              alt="StabilityAI"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="row feature-section">
+        <div class="row" style="max-width: 1280px; margin: auto; padding: 0">
+          <div class="col-md-6" style="text-align: center; margin-top: 10px">
+            <img
+              src="{% static 'images/promptly-chaining.png' %}"
+              alt="Chaining"
+              class="feature-image"
+            />
+          </div>
+          <div class="col-md-6" style="margin-top: 10px">
+            <h2 class="feature-title">Chain Multiple Models</h2>
+            <p class="feature-content">
+              Promptly allows you to chain multiple models together to create
+              powerful generative applications. You can even chain models from
+              different providers.
+            </p>
+            <ul
+              class="feature-content"
+              style="list-style-type: disc; padding-left: 50px"
+            >
+              <li>Models from all major providers</li>
+              <li>Promptly's high level processors</li>
+              <li>Support for both text and media models</li>
+              <li>Connect LLMs with your own data</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="row feature-section">
+        <div class="row" style="max-width: 1280px; margin: auto; padding: 0">
+          <div class="col-md-6 order-md-0 order-1" style="margin-top: 10px">
+            <h2 class="feature-title">Connect Your Data</h2>
+            <p class="feature-content">
+              Import your own data and connect it to LLM models to supercharge
+              your generative AI applications and chatbots. Promptly supports a
+              wide variety of data sources, including Web URLs, Sitemaps, PDFs,
+              Audio, PPTs, and more.
+            </p>
+            <ul
+              class="feature-content"
+              style="list-style-type: disc; padding-left: 40px"
+            >
+              <li>Import website data from URL or sitemap.xml</li>
+              <li>Load audio files and use them as datasource in your apps</li>
+              <li>
+                Add YouTube URLs as datasources to build AI applications on the
+                contents
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-6" style="text-align: center; margin-top: 10px">
+            <img
+              src="{% static 'images/promptly-datasources.png' %}"
+              alt="Data sources"
+              class="feature-image"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="row feature-section">
+        <div class="row" style="max-width: 1280px; margin: auto; padding: 0">
+          <div class="col-md-6" style="text-align: center; margin-top: 10px">
+            <img
+              src="{% static 'images/promptly-chat-widget.png' %}"
+              alt="Chat widgets"
+              class="feature-image"
+            />
+          </div>
+          <div class="col-md-6" style="margin-top: 10px">
+            <h2 class="feature-title">Embeddable Chat Widgets</h2>
+            <p class="feature-content">
+              Promptly provides embeddable chat widgets that you can easily
+              integrate into your website. You can use these widgets to build
+              conversational AI applications, or to add a chatbot to your
+              website.
+            </p>
+            <ul
+              class="feature-content"
+              style="list-style-type: disc; padding-left: 40px"
+            >
+              <li>ChatGPT with your own data</li>
+              <li>
+                Simply copy and paste the code to embed chatbot on your website
+              </li>
+              <li>
+                Customize the chatbot look and feel to match your website,
+                including a logo for the bot
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div
+        id="chatgpt"
+        class="row"
+        style="
+          max-width: 100%;
+          margin: auto;
+          padding: 0;
+          margin-top: 40px;
+          background: linear-gradient(
+            to right,
+            transparent,
+            #ffffff,
+            transparent
+          );
+        "
+      >
+        <div class="row" style="max-width: 1280px; margin: auto; padding: 0">
+          <div class="col-12" style="text-align: center; margin-top: 50px">
+            <h2 class="section-title">ChatGPT with Your Own Data</h2>
+          </div>
+          <div class="col-12" style="margin: 20px auto">
+            <p class="section-content">
+              Build your own ChatGPT with your data and embed on your website.
+              Just upload your data as PDF, pptx, media files or point to your
+              website or sitemap.xml. We'll take care of the rest.
+            </p>
+          </div>
+          <div class="col-12" style="text-align: center">
+            <a href="/login"
+              ><button
+                type="button"
+                class="btn btn-primary"
+                style="
+                  color: #fcefce;
+                  background-color: #1a5e10;
+                  height: 60px;
+                  width: 250px;
+                  border-color: #f1d3cf;
+                  margin: 0 5px 10px 5px;
+                "
+              >
+                Create Your Own ChatGPT
+              </button></a
+            >
+          </div>
+          <div
+            class="col-12"
+            style="text-align: center; margin: 20px auto; max-width: 1000px"
+          >
+            <video
+              src="{% static 'images/promptly-chatbot-embed.mp4' %}"
+              style="
+                max-width: 100%;
+                box-shadow: 0 0 20px 2px #4b4b4b;
+                border-radius: 5px;
+              "
+              controls
+            ></video>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+        style="
+          margin-top: 50px !important;
+          max-width: 1000px;
+          margin: auto;
+          box-shadow: 1px -2px 10px 0px #0a5f1f;
+        "
+      >
+        <div class="col12" style="padding: 0">
+          <script
+            async
+            src="https://js.stripe.com/v3/pricing-table.js"
+          ></script>
+          <stripe-pricing-table
+            pricing-table-id="prctbl_1MosnlJ4T0W46Sz1eR0QTKgX"
+            publishable-key="pk_live_51MoZtPJ4T0W46Sz1oMBTN4e8RrWlaIklOQf2rzF4p6HY16ETejC6EHmB7BQ3kYbl57Jb6FQ6kiKfq4hooFCEwiEA0018GHXEe3"
+          >
+          </stripe-pricing-table>
+        </div>
+      </div>
+      <div class="row">
+        <div
+          class="col-12"
+          style="
+            justify-content: center;
+            align-items: end;
+            color: #207797;
+            margin: 20px auto 5px auto;
+            gap: 10px;
+            text-align: center;
+          "
+        >
+          <a
+            href="https://twitter.com/trypromptly"
+            style="color: #207797; text-decoration: none"
+            target="_blank"
+            ><img src="{% static 'images/twitter-icon.svg' %}" alt="Twitter"
+          /></a>
+          &nbsp;&nbsp;<a
+            href="https://discord.gg/3JsEzSXspJ"
+            style="color: #207797; text-decoration: none"
+            target="_blank"
+            ><img src="{% static 'images/discord-icon.svg' %}" alt="Discord"
+          /></a>
+          &nbsp;&nbsp;<a
+            href="https://github.com/TryPromptly"
+            style="color: #207797; text-decoration: none"
+            target="_blank"
+            ><img src="{% static 'images/github-icon.svg' %}" alt="GitHub"
+          /></a>
+          &nbsp;&nbsp;<a
+            href="https://linkedin.com/company/trypromptly"
+            style="color: #207797; text-decoration: none"
+            target="_blank"
+            ><img src="{% static 'images/linkedin-icon.svg' %}" alt="LinkedIn"
+          /></a>
+        </div>
+        <div
+          class="col-12"
+          style="
+            align-items: end;
+            color: #207797;
+            margin: 10px auto 5px auto;
+            gap: 10px;
+            text-align: center;
+          "
+        >
+          <a
+            href="mailto:contact@trypromptly.com"
+            style="color: #207797; text-decoration: none"
+            target="_blank"
+            >Contact Us</a
+          >&nbsp;|&nbsp;<a
+            href="https://docs.trypromptly.com"
+            style="color: #207797; text-decoration: none"
+            target="_blank"
+            >Docs</a
+          >&nbsp;|&nbsp;<a
+            href="privacy.html"
+            style="color: #207797; text-decoration: none"
+            >Privacy</a
+          >&nbsp;|&nbsp;<a
+            href="tos.html"
+            style="color: #207797; text-decoration: none"
+            >Terms of Service</a
+          >
+        </div>
+      </div>
+      <div
+        class="row"
+        style="justify-content: center; font-size: 14px; color: #636363"
+      >
+        &copy; 2023 Promptly. All rights reserved
+      </div>
+    </div>
+    <script
+      async
+      src="https://storage.googleapis.com/trypromptly-static/static/js/embed-v1.js"
+    ></script>
+    <promptly-app-embed
+      published-app-id="548bfe21-7414-472f-8d36-a3b4d8352b24"
+      chat-bubble="true"
+    ></promptly-app-embed>
+  </body>
+</html>

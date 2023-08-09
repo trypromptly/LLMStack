@@ -1,0 +1,124 @@
+import logging
+from typing import List
+
+from pykka import ActorDeadError
+from pykka import ThreadingActor
+
+from play.actor import ActorConfig
+from play.output_stream import Message
+from play.output_stream import MessageType
+from play.output_stream import OutputStream
+from play.utils import ResettableTimer
+
+logger = logging.getLogger(__name__)
+
+TIMEOUT = 120
+
+
+class Coordinator(ThreadingActor):
+    def __init__(self, session_id, actor_configs: List[ActorConfig]):
+        super().__init__()
+        self._session_id = session_id
+
+        # Make sure there are not duplicate names or template_keys in actor_configs
+        assert len(set([actor_config.name for actor_config in actor_configs])) == len(
+            actor_configs,
+        )
+
+        assert len(set([actor_config.template_key for actor_config in actor_configs])) == len(
+            actor_configs,
+        )
+
+        self._actor_configs = {
+            actor_config.name: actor_config for actor_config in actor_configs
+        }
+
+        # Create output_streams
+        self._output_streams = []
+
+        # Spawn actors
+        self.actors = {}
+        for actor_config in actor_configs:
+            self._output_streams.append(
+                OutputStream(stream_id=actor_config.name, coordinator_urn=self.actor_urn, output_cls=actor_config.output_cls),
+            )
+            actor = actor_config.actor.start(
+                output_stream=self._output_streams[-1], dependencies=actor_config.dependencies, **actor_config.kwargs,
+            )
+            self.actors[actor_config.name] = actor
+            logger.info(
+                f'Spawned actor {actor} for coordinator {self.actor_urn}',
+            )
+
+        # Get dependencies for each actor and build a map of actor_urn -> [actor_urn]
+        self._actor_dependencies = {
+            actor_config.name: set(
+            ) for actor_config in actor_configs
+        }  # Actors that this actor depends on
+        self._actor_dependents = {
+            actor_config.name: set(
+            ) for actor_config in actor_configs
+        }  # Actors that depend on this actor
+        for actor_config in actor_configs:
+            dependencies = self.actors[actor_config.name]._actor.dependencies
+            for dependency in dependencies:
+                for actor in actor_configs:
+                    if dependency == actor.template_key and dependency != actor_config.template_key:
+                        self._actor_dependencies[actor_config.name].add(
+                            actor.name,
+                        )
+                        self._actor_dependents[actor.name].add(
+                            actor_config.name,
+                        )
+                    elif not dependency.startswith('_inputs[') and not dependency == 'processor' and actor.template_key == '':
+                        self._actor_dependencies[actor_config.name].add(
+                            actor.name,
+                        )
+                        self._actor_dependents[actor.name].add(
+                            actor_config.name,
+                        )
+
+        logger.debug(f'Actor dependencies: {self._actor_dependencies}')
+
+        # Set a timer for TIMEOUT seconds to stop the coordinator when there is no activity
+        self._idle_timer = ResettableTimer(TIMEOUT, self.force_stop)
+        self._idle_timer.start()
+
+    def relay(self, message: Message):
+        self._idle_timer.reset()
+
+        # If bookkeeping is done, we can stop the coordinator
+        if message.message_type == MessageType.BOOKKEEPING_DONE:
+            self.force_stop()
+            return
+
+        logger.debug(
+            f'Relaying message {message} to {self._actor_dependents.get(message.message_from)}',
+        )
+        from_actor_config = self._actor_configs.get(message.message_from)
+        message.template_key = from_actor_config.template_key
+        # Find actors that are dependent on the incoming stream and send the message to them
+        for actor_name in self._actor_dependents.get(message.message_from, []):
+            self.actors[actor_name].tell(message)
+
+    def get_actor(self, name):
+        return self.actors[name]
+
+    def on_stop(self) -> None:
+        logger.info(f'Coordinator {self.actor_urn} stopping')
+        self._idle_timer.stop()
+        for actor in self.actors.values():
+            try:
+                actor.stop(block=False)
+            except ActorDeadError:
+                pass
+            except Exception as e:
+                logger.error(f'Failed to stop actor {actor}: {e}')
+
+    def force_stop(self) -> None:
+        try:
+            self.stop()
+        except ActorDeadError:
+            pass
+        except Exception as e:
+            logger.error(f'Failed to stop coordinator {self}: {e}')

@@ -1,0 +1,17 @@
+PyNaCl==1.5.0
+Scrapy==2.8.0
+unstructured==0.9.0
+spacy==3.6.0
+striprtf==0.0.22
+tiktoken==0.4.0
+ffmpeg-python==0.2.0
+pydub==0.25.1
+boto3==1.26.122
+botocore==1.29.122
+yt-dlp==2023.3.4
+python-docx==0.8.11
+pdf2image==1.16.3
+pdfminer.six==20221105
+Markdown==3.4.4
+python-pptx==0.6.21
+python-magic==0.4.27

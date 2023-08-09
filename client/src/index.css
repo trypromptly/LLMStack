@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:400,700,900');
+@import url('https://fonts.googleapis.com/css?family=Source+Code+Pro');
+
+body {
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.ant-tabs-content-top {
+  display: flex;
+  height: 100%;
+}
+
+.ant-tabs-tabpane {
+  width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  .ant-tour {
+    width: 90%;
+  }
+
+.prompt-hub-container {
+    justify-content: center;
+}
+
+.prompt-hub-card {
+    width: 90% !important;
+    margin: auto;
+  }
+}
+
+.rjsf .form-group fieldset{
+  border: none;
+}
+
+.output-form {
+  width: 100%;
+  padding: 4px;
+}

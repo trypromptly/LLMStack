@@ -1,0 +1,670 @@
+[
+  {
+    "model": "apiabstractor.apiprovider",
+    "pk": 1,
+    "fields": {
+      "name": "Open AI",
+      "slug": "openai",
+      "prefix": "https://api.openai.com/v2/"
+    }
+  },
+  {
+    "model": "apiabstractor.apiprovider",
+    "pk": 2,
+    "fields": {
+      "name": "Stability AI",
+      "slug": "stabilityai",
+      "prefix": "https://api.stabilitydl.com/"
+    }
+  },
+  {
+    "model": "apiabstractor.apiprovider",
+    "pk": 3,
+    "fields": {
+      "name": "Cohere",
+      "slug": "cohere",
+      "prefix": "https://api.cohere.ai/"
+    }
+  },
+  {
+    "model": "apiabstractor.apiprovider",
+    "pk": 4,
+    "fields": {
+      "name": "Promptly",
+      "slug": "promptly",
+      "prefix": "https://api.promptly.com"
+    }
+  },
+  {
+    "model": "apiabstractor.apiprovider",
+    "pk": 5,
+    "fields": { "name": "Azure", "slug": "azure", "prefix": "azure" }
+  },
+  {
+    "model": "apiabstractor.apiprovider",
+    "pk": 6,
+    "fields": {
+      "name": "ElevenLabs",
+      "slug": "elevenlabs",
+      "prefix": "elevenlabs"
+    }
+  },
+  {
+    "model": "apiabstractor.apiprovider",
+    "pk": 7,
+    "fields": { "name": "Google", "slug": "google", "prefix": "google" }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 1,
+    "fields": {
+      "name": "Completions",
+      "slug": "openai_completions",
+      "description": null,
+      "api_provider": 1,
+      "api_endpoint": "completions",
+      "params": {
+        "type": "object",
+        "required": ["model"],
+        "properties": {
+          "n": {
+            "type": "integer",
+            "description": "How many completions to generate for each prompt"
+          },
+          "stop": {
+            "type": "string",
+            "description": "Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence"
+          },
+          "user": {
+            "type": "string",
+            "description": "A unique identifier representing"
+          },
+          "model": {
+            "type": "string",
+            "oneof": [{ "const": "model1", "title": "model1" }],
+            "description": "ID of the model to use"
+          },
+          "top_p": {
+            "type": "number",
+            "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered"
+          },
+          "suffix": {
+            "type": "string",
+            "description": "The suffix that comes after a completion of inserted text."
+          },
+          "best_of": {
+            "type": "integer",
+            "description": "Generates best_of completions server-side and returns the \"best\" (the one with the highest log probability per token). Results cannot be streamed"
+          },
+          "logprobs": {
+            "type": "integer",
+            "description": "Include the log probabilities on the logprobs most likely tokens, as well the chosen tokens. For example, if logprobs is 5, the API will return a list of the 5 most likely tokens. The API will always return the logprob of the sampled token, so there may be up to logprobs+1 elements in the response"
+          },
+          "logit_bias": {
+            "type": "string",
+            "description": "Modify the likelihood of specified tokens appearing in the completion"
+          },
+          "max_tokens": {
+            "type": "number",
+            "description": "The maximum number of tokens to generate in the completion"
+          },
+          "temperature": {
+            "type": "number",
+            "description": "What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer"
+          },
+          "presence_penalty": {
+            "type": "number",
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics"
+          },
+          "frequency_penalty": {
+            "type": "number",
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim"
+          }
+        }
+      },
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 2,
+    "fields": {
+      "name": "Image Generations",
+      "slug": "openai_image_generations",
+      "description": "Generates images from a given prompt",
+      "api_provider": 1,
+      "api_endpoint": "images/generations",
+      "params": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "default": 1,
+            "maximum": 10,
+            "minimum": 1,
+            "description": "The number of images to generate. Must be between 1 and 10."
+          },
+          "size": {
+            "enum": ["256x256", "512x512", "1024x1024"],
+            "type": "string",
+            "default": "1024x1024",
+            "description": "The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024."
+          },
+          "user": {
+            "type": "string",
+            "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse."
+          },
+          "response_format": {
+            "enum": ["url", "b64_json"],
+            "type": "string",
+            "default": "url",
+            "description": "The format in which the generated images are returned. Must be one of url or b64_json."
+          }
+        }
+      },
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 3,
+    "fields": {
+      "name": "Text2Image",
+      "slug": "stabilityai_text2image",
+      "description": "Generates images from a series of prompts and negative prompts",
+      "api_provider": 2,
+      "api_endpoint": "text2image",
+      "params": {
+        "type": "object",
+        "required": ["engine", "seed"],
+        "properties": {
+          "seed": {
+            "type": "integer",
+            "maximum": 2147483647,
+            "minimum": 0,
+            "description": "Seed for random latent noise generation."
+          },
+          "steps": {
+            "type": "integer",
+            "default": 30,
+            "maximum": 150,
+            "minimum": 10,
+            "description": "Affects the number of diffusion steps performed on the requested generation."
+          },
+          "width": {
+            "type": "integer",
+            "default": 512,
+            "description": "Width as measured in pixels"
+          },
+          "engine": {
+            "enum": [
+              "stable-diffusion-v1",
+              "stable-diffusion-v1-5",
+              "stable-diffusion-512-v2-0",
+              "stable-diffusion-768-v2-0",
+              "stable-diffusion-512-v2-1",
+              "stable-diffusion-768-v2-1",
+              "stable-inpainting-v1-0",
+              "stable-inpainting-512-v2-0"
+            ],
+            "type": "string",
+            "description": "Inference engine (model) to use."
+          },
+          "height": {
+            "type": "integer",
+            "default": 512,
+            "description": "Height as measured in pixels"
+          },
+          "sampler": {
+            "enum": [
+              "ddim",
+              "plms",
+              "k_euler",
+              "k_euler_ancestral",
+              "k_heun",
+              "k_dpm_2",
+              "k_dpm_2_ancestral",
+              "k_dpmpp_2s_ancestral",
+              "k_dpmpp_2m"
+            ],
+            "type": "string",
+            "default": "k_dpmpp_2m",
+            "description": "Sampling engine to use. If no sampler is declared, an appropriate default sampler for the declared inference engine will be applied automatically."
+          },
+          "cfg_scale": {
+            "type": "number",
+            "default": 7,
+            "maximum": 35,
+            "minimum": 1,
+            "description": "Dictates how closely the engine attempts to match a generation to the provided prompt. v2-x models respond well to lower CFG (4-8), where as v1-x models respond well to a higher range (IE: 7-14)."
+          },
+          "num_samples": {
+            "type": "integer",
+            "default": 1,
+            "description": "Number of images to generate. Allows for batch image generations."
+          }
+        }
+      },
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 4,
+    "fields": {
+      "name": "Generate",
+      "slug": "cohere_generate",
+      "description": "Generates completions for a given prompt",
+      "api_provider": 3,
+      "api_endpoint": "generate",
+      "params": {
+        "type": "object",
+        "required": ["model"],
+        "properties": {
+          "k": {
+            "type": "integer",
+            "default": 0,
+            "maximum": 500,
+            "minimum": 0,
+            "description": "Ensures only the top k most likely tokens are considered for generation at each step."
+          },
+          "p": {
+            "type": "number",
+            "default": 0.75,
+            "maximum": 1,
+            "minimum": 0,
+            "description": "If set to a probability 0.0 < p < 1.0, it ensures that only the most likely tokens, with total probability mass of p, are considered for generation at each step. If both k and p are enabled, p acts after k."
+          },
+          "model": {
+            "type": "string",
+            "description": "The size of the model to generate with. Currently available models are medium and xlarge (default). Smaller models are faster, while larger models will perform better. Custom models can also be supplied with their full ID."
+          },
+          "preset": {
+            "type": "string",
+            "description": "The ID of a custom playground preset. You can create presets in the playground. If you use a preset, the prompt parameter becomes optional, and any included parameters will override the preset's parameters."
+          },
+          "truncate": {
+            "enum": ["NONE", "START", "END"],
+            "type": "string",
+            "default": "END",
+            "description": "Passing START will discard the start of the input. END will discard the end of the input. In both cases, input is discarded until the remaining input is exactly the maximum input token length for the model.If NONE is selected, when the input exceeds the maximum input token length an error will be returned."
+          },
+          "max_tokens": {
+            "type": "integer",
+            "default": 20,
+            "description": "Numer of tokens to be returned."
+          },
+          "temperature": {
+            "type": "number",
+            "default": 0.75,
+            "description": "A non-negative float that tunes the degree of randomness in generation. Lower temperatures mean less random generations. See Temperature for more details."
+          },
+          "end_sequences": {
+            "type": "string",
+            "description": "The generated text will be cut at the beginning of the earliest occurence of an end sequence. The sequence will be excluded from the text."
+          },
+          "stop_sequences": {
+            "type": "string",
+            "description": "The generated text will be cut at the end of the earliest occurence of a stop sequence. The sequence will be included the text."
+          },
+          "num_generations": {
+            "type": "integer",
+            "default": 1,
+            "maximum": 5,
+            "minimum": 1,
+            "description": "Denotes the maximum number of generations that will be returned."
+          },
+          "presence_penalty": {
+            "type": "number",
+            "default": 0,
+            "maximum": 1,
+            "minimum": 0,
+            "description": "Similar to frequency_penalty, except that this penalty is applied equally to all tokens that have already appeared, regardless of their exact frequencies."
+          },
+          "frequency_penalty": {
+            "type": "integer",
+            "default": 0,
+            "description": "Can be used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation."
+          },
+          "return_likelihoods": {
+            "enum": ["GENERATION", "ALL", "NONE"],
+            "type": "string",
+            "default": "NONE",
+            "description": "If GENERATION is selected, the token likelihoods will only be provided for generated text.If ALL is selected, the token likelihoods will be provided both for the prompt and the generated text."
+          }
+        }
+      },
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 5,
+    "fields": {
+      "name": "ChatGPT",
+      "slug": "openai_chatgpt",
+      "description": "Takes a series of messages as input, and return a model-generated message as output",
+      "api_provider": 1,
+      "api_endpoint": "chat/completions",
+      "params": {
+        "type": "object",
+        "required": ["model"],
+        "properties": {
+          "n": {
+            "type": "integer",
+            "default": 1,
+            "description": "How many chat completion choices to generate for each input message."
+          },
+          "stop": {
+            "type": "string",
+            "description": "Up to 4 sequences where the API will stop generating further tokens."
+          },
+          "model": {
+            "enum": ["gpt-3.5-turbo", "gpt-3.5-turbo-0301"],
+            "type": "string",
+            "default": "gpt-3.5-turbo",
+            "description": "ID of the model to use. Currently, only gpt-3.5-turbo and gpt-3.5-turbo-0301 are supported."
+          },
+          "top_p": {
+            "type": "number",
+            "default": 1,
+            "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered."
+          },
+          "temperature": {
+            "type": "number",
+            "default": 1,
+            "maximum": 2,
+            "minimum": 0,
+            "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic."
+          },
+          "presence_penalty": {
+            "type": "number",
+            "default": 0,
+            "maximum": 2,
+            "minimum": -2,
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics."
+          },
+          "frequency_penalty": {
+            "type": "number",
+            "default": 0,
+            "maximum": 2,
+            "minimum": -2,
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim."
+          }
+        }
+      },
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 6,
+    "fields": {
+      "name": "Text-QnA",
+      "slug": "promptly_text_qna",
+      "description": "Answers questions based on the provided information",
+      "api_provider": 4,
+      "api_endpoint": "textqna",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 7,
+    "fields": {
+      "name": "Text-Chat",
+      "slug": "promptly_text_chat",
+      "description": "Conversation style question and answering from provided data",
+      "api_provider": 4,
+      "api_endpoint": "textchat",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 8,
+    "fields": {
+      "name": "Audio Transcription",
+      "slug": "openai_audio_transcriptions",
+      "description": "Transcribes the given audio file into text",
+      "api_provider": 1,
+      "api_endpoint": "whisper",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 9,
+    "fields": {
+      "name": "Audio Translation",
+      "slug": "openai_audio_translations",
+      "description": "Transcribes and translates the given audio file based on the prompt",
+      "api_provider": 1,
+      "api_endpoint": "whisper",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 10,
+    "fields": {
+      "name": "URL Extractor",
+      "slug": "promptly_http_uri_text_extract",
+      "description": "Extracts text from a given URL. Links can point to YouTube, PDF, PPTX, DOC, TEXT or XML files",
+      "api_provider": 4,
+      "api_endpoint": "promptly",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 11,
+    "fields": {
+      "name": "File Extractor",
+      "slug": "promptly_data_uri_text_extract",
+      "description": "Extracts text from file data passed as base64 encoded string to file_data",
+      "api_provider": 4,
+      "api_endpoint": "promptly",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 12,
+    "fields": {
+      "name": "Datasource Search",
+      "slug": "promptly_data_source_search",
+      "description": "Search across your data sources",
+      "api_provider": 4,
+      "api_endpoint": "promptly",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 14,
+    "fields": {
+      "name": "ChatGPT",
+      "slug": "azure_chatgpt",
+      "description": "Chat completions from Azure Open AI",
+      "api_provider": 5,
+      "api_endpoint": "azure_chatgpt",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 15,
+    "fields": {
+      "name": "Text to Speech",
+      "slug": "elevenlabs_text_to_speech",
+      "description": "Transforms text into speech in a given voice",
+      "api_provider": 6,
+      "api_endpoint": "elevenlabs_text_to_speech",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 16,
+    "fields": {
+      "name": "Image Variations",
+      "slug": "openai_images_variations",
+      "description": "Create variations of existing image",
+      "api_provider": 1,
+      "api_endpoint": "openai_images_variations",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 17,
+    "fields": {
+      "name": "Image Edit",
+      "slug": "openai_images_edit",
+      "description": "Edit source image with a prompt",
+      "api_provider": 1,
+      "api_endpoint": "openai_images_edit",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 18,
+    "fields": {
+      "name": "PaLM 2 For Chat",
+      "slug": "google_text_chat",
+      "description": "Chat completions from Google Vertex AI",
+      "api_provider": 7,
+      "api_endpoint": "google_text_chat",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 19,
+    "fields": {
+      "name": "PaLM 2 For Text",
+      "slug": "google_text",
+      "description": "Text completions from Google Vertex AI",
+      "api_provider": 7,
+      "api_endpoint": "google_text",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apiabstractor.apibackend",
+    "pk": 20,
+    "fields": {
+      "name": "Text Summarizer",
+      "slug": "promptly_text_summarizer",
+      "description": "Summarize given input text using OpenAI's models",
+      "api_provider": 4,
+      "api_endpoint": "promptly_text_summarizer",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
+    "model": "apps.apptype",
+    "pk": 1,
+    "fields": {
+      "name": "Web App",
+      "description": "Provides a web app that takes in a user input returns rendered output in the provided template",
+      "slug": "web"
+    }
+  },
+  {
+    "model": "apps.apptype",
+    "pk": 2,
+    "fields": {
+      "name": "Chat Bot",
+      "description": "A chat application with an embeddable widget that can be used as a chatbot",
+      "slug": "text-chat"
+    }
+  },
+  {
+    "model": "apps.apptype",
+    "pk": 3,
+    "fields": {
+      "name": "Slack App",
+      "description": "Native custom Slack app that can be used from your workspace",
+      "slug": "slack"
+    }
+  },
+  {
+    "model": "datasources.datasourcetype",
+    "pk": 1,
+    "fields": {
+      "name": "Text",
+      "slug": "text",
+      "description": "Text data source"
+    }
+  },
+  {
+    "model": "datasources.datasourcetype",
+    "pk": 2,
+    "fields": { "name": "URL", "slug": "url", "description": "URL type" }
+  },
+  {
+    "model": "datasources.datasourcetype",
+    "pk": 3,
+    "fields": { "name": "PDF", "slug": "pdf", "description": "PDF files" }
+  },
+  {
+    "model": "datasources.datasourcetype",
+    "pk": 4,
+    "fields": { "name": "File", "slug": "file", "description": "" }
+  }
+]

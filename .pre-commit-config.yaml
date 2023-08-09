@@ -1,0 +1,37 @@
+exclude: migrations/*
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        files: \.py$
+      - id: end-of-file-fixer
+        files: \.py$
+      - id: check-yaml
+        files: \.py$
+      - id: debug-statements
+        files: \.py$
+      - id: double-quote-string-fixer
+        files: \.py$
+      - id: name-tests-test
+        files: \.py$
+      - id: requirements-txt-fixer
+        files: \.py$
+      - id: check-added-large-files
+        files: \.py$
+      - id: check-ast
+        files: \.py$
+      - id: check-byte-order-marker
+        files: \.py$
+      - id: check-case-conflict
+        files: \.py$
+  - repo: https://github.com/asottile/reorder-python-imports
+    rev: v3.10.0
+    hooks:
+      - id: reorder-python-imports
+        exclude: ^(pre_commit/resources/|testing/resources/python3_hooks_repo/)
+        args: [--py38-plus]
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v3.0.1
+    hooks:
+      - id: add-trailing-comma

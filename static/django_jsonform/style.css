@@ -1,0 +1,1263 @@
+.rjf-form-wrapper > .module.aligned {
+    min-width: 20rem;
+    margin-bottom: 0;
+}
+.fieldBox .rjf-form-wrapper::before {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
+}
+.fieldBox .rjf-form-wrapper {
+    min-width: 19rem;
+    width: 100%
+}
+
+.fieldBox .rjf-form-wrapper > .module.aligned {
+    min-width: 0;
+}
+
+.rjf-add-button {
+    background: url(./img/icon-addlink.svg) 0 1px no-repeat;
+    padding-left: 16px;
+    font-size: 12px;
+    color: #447e9b;
+    cursor: pointer;
+    margin-top: 8px;
+    border: 0px none;
+}
+.rjf-add-button:hover {
+    color: #036;
+    background-color: #f0faff;
+}
+
+.rjf-form-group-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 39em;
+}
+.rjf-form-group {
+    margin-bottom: 15px;
+    position: relative;
+    width: 100%;
+    max-width: 39em;
+}
+.rjf-form-group-wrapper > .rjf-form-group {
+    max-width: 100%;
+}
+.rjf-form-group-inner,
+.rjf-form-row-controls + .rjf-oneof-group {
+    box-sizing: border-box;
+    position: relative;
+    width: 100%;
+    margin-bottom: 10px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 0 2px rgba(0,0,0,0.075);
+    transition: background-color 0.12s ease-in-out;
+}
+.rjf-form-row-controls + .rjf-oneof-group > .rjf-form-group {
+    margin-bottom: 2px;
+}
+.rjf-form-row-controls + .rjf-oneof-group > .rjf-form-group > .rjf-form-group-inner {
+    border: 0;
+    box-shadow: none;
+    padding: 5px;
+    margin-bottom: 0;
+}
+.rjf-form-group-title {
+    font-weight: bold;
+}
+.rjf-form-row {
+    padding: 5px 0;
+    display: table;
+    width: 100%;
+    position: relative;
+}
+.rjf-form-row-hidden {
+    display: none;
+}
+.rjf-form-row-controls + .rjf-form-row-inner {
+    box-sizing: border-box;
+    transition: background-color 0.12s ease-in-out;
+    padding: 5px;
+    padding-right: 76px;
+}
+.rjf-oneof-selector {
+    padding: 5px;
+    padding-right: 76px;
+}
+.rjf-oneof-group-top-level > .rjf-oneof-selector {
+    padding-left: 0;
+}
+
+.rjf-form-row input,
+.rjf-form-row select,
+.rjf-form-row textarea {
+    box-sizing: border-box;
+    width: 100%;
+}
+.rjf-form-row input,
+.rjf-form-row select {
+    max-width: 18rem;
+}
+.rjf-oneof-selector-input {
+    width: 100%;
+}
+
+.rjf-form-row input[type="date"],
+.rjf-form-row input[type="time"] {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 6px;
+    margin-top: 0;
+    color: var(--body-fg);
+    background-color: var(--body-bg);
+    font-size: 13px;
+}
+.rjf-form-group input[readonly] {
+    background-color: #eee;
+    outline: 0;
+}
+.rjf-form-row label,
+.rjf-oneof-selector label {
+    box-sizing: border-box;
+    width: 33%;
+    min-width: 5em;
+}
+.rjf-form-row label + .rjf-input-group,
+.rjf-oneof-selector label + .rjf-input-group > .rjf-oneof-selector-input {
+    box-sizing: border-box;
+    display: table;
+    width: 66%;
+    min-width: 8em;
+}
+.fieldBox .rjf-form-row label {
+    min-width: 3em;
+}
+.fieldBox .rjf-form-row label + .rjf-input-group {
+    min-width: 4em;
+}
+
+.rjf-check-input > label {
+    display: table;
+    float: none;
+    width: auto;
+}
+
+.rjf-text-danger {
+    color: var(--error-fg);
+}
+
+.rjf-help-text, .rjf-error-text {
+    color: var(--body-quiet-color);
+    display: block;
+    margin-top: 4px;
+}
+
+.rjf-help-text {
+    font-size: 11px;
+    color: var(--body-quiet-color);
+}
+
+.rjf-error-text {
+    color: var(--error-fg);
+}
+
+.rjf-check-input > label + .rjf-help-text,
+.rjf-check-input > .rjf-error-text {
+    margin-top: 0;
+}
+
+.rjf-file-field {
+    box-sizing: border-box;
+    width: 66%;
+    color: #666;
+    display: table;
+}
+
+.rjf-file-field .rjf-file-field-input input {
+    width: 100%;
+    max-width: 18em;
+}
+
+.rjf-current-file-name {
+    color: #666;
+    width: 100%;
+    margin-bottom: 0.5em;
+}
+.rjf-current-file-name > span {
+    background-color: #fbfbde;
+    color: #071d1f;
+    padding: 1px 4px;
+    border-radius: 3px;
+    display: inline-block;
+    vertical-align: middle;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 9em;
+    text-overflow: ellipsis;
+}
+.rjf-remove-file-button {
+    color: var(--link-fg);
+    background: transparent;
+    display: inline-block;
+    vertical-align: middle;
+    border: 0;
+    cursor: pointer;
+    padding: 0 1px;
+}
+.rjf-remove-file-button:hover {
+    background-color: #eee;
+    color: var(--link-hover-color);
+}
+
+.rjf-form-row label input[type="checkbox"] {
+    margin-top: 0;
+    vertical-align: 0;
+    display: inline-block;
+    width: auto;
+}
+.rjf-form-row-controls {
+    position: absolute;
+    right: 0;
+    top: -2px;
+    z-index: 2;
+}
+.rjf-form-row > .rjf-form-row-controls {
+    right: 0.3rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 10rem; /* same as child button */
+}
+.rjf-form-row-controls:hover + .rjf-form-row-inner,
+.rjf-form-row-controls:hover + .rjf-form-group {
+    background-color: #fffedd;
+}
+.rjf-form-row-controls button {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    margin-left: -1px;
+    border: 0px none;
+    cursor: pointer;
+    background-image: url(./img/control-icons.svg);
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-size: 40px;
+    border: 1px solid #ddd;
+}
+.rjf-form-group-wrapper > .rjf-form-row-controls button {
+    border-top: 0;
+}
+.rjf-form-row > .rjf-form-row-controls > button {
+    border-color: #ccc;
+    border-radius: 10rem;
+}
+.rjf-form-group-wrapper > .rjf-form-row-controls > button:first-child {
+    border-bottom-left-radius: 6px;
+}
+.rjf-form-row-controls > button:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.rjf-form-row-controls > button:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+.rjf-form-row-controls button:hover {
+    background-color: #fff;
+    border-color: #666;
+    z-index: 1;
+}
+.rjf-form-row-controls button > span {
+    display: none;
+}
+.rjf-remove-button {
+    background-position: -20px 0px;
+}
+.rjf-remove-button:hover {
+    background-position: -20px -20px;
+}
+.rjf-move-up-button {
+    background-position: 0px 0px;
+}
+.rjf-move-up-button:hover {
+    background-position: 0px -20px;
+}
+.rjf-move-down-button {
+    background-position: 0px -40px;
+}
+.rjf-move-down-button:hover {
+    background-position: 0px -60px;
+}
+
+.rjf-edit-button {
+    text-indent: -9999px;
+    background: url(./img/icon-changelink.svg) 0 1px no-repeat;
+    width: 16px;
+    height: 16px;
+    border: 0px none;
+    cursor: pointer;
+    margin-left: 2px;
+}
+.rjf-edit-button:hover {
+    border: 0;
+}
+
+.rjf-icon {
+    width: 1.2em;
+    height: 1.2em;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.rjf-datetime-field-inner {
+    display: inline-block;
+}
+.rjf-datetime-field-inputs::after {
+    display: table;
+    content: " ";
+    clear: both;
+}
+.rjf-datetime-field-date,
+.rjf-datetime-field-time {
+    float: left;
+    width: 9.5em;
+    padding-right: 2px;
+    box-sizing: border-box;
+    position: relative;
+}
+.rjf-datetime-field-date > div > label,
+.rjf-datetime-field-time > div > label {
+    display: none;
+}
+.rjf-datetime-field-date label + .rjf-input-group,
+.rjf-datetime-field-time label + .rjf-input-group {
+    width: 100%;
+    min-width: 0;
+}
+.rjf-time-picker {
+    width: 18em;
+    position: absolute;
+    margin-left: -4.5em;
+    margin-top: 3px;
+    background-color: #fff;
+    z-index: 10;
+    border-radius: 4px;
+    padding: 10px;
+    border: 1px solid #bbb;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+    box-sizing: border-box;
+}
+.rjf-time-picker * {
+    box-sizing: border-box;
+}
+.rjf-time-picker input {
+    max-width: 100%;
+    width: 100%;
+    text-align: center;
+    font-size: 1em;
+    padding: 2px 2px;
+    outline: 0;
+}
+.rjf-datetime-field input[readonly] {
+    background-color: var(--body-bg);
+}
+.rjf-time-picker-row {
+    margin-left: -2px;
+    margin-right: -2px;
+}
+.rjf-time-picker-row::before,
+.rjf-time-picker-row::after {
+    clear: both;
+    content: " ";
+    display: table;
+}
+.rjf-time-picker-col {
+    display: block;
+    float: left;
+    padding: 0 2px;
+    width: 20%;
+    min-height: 1px;
+}
+.rjf-time-picker-col-sm {
+    width: 6.666667%;
+    padding: 0;
+}
+.rjf-time-picker button {
+    display: block;
+    width: 100%;
+    background-color: #fff;
+    color: #666;
+    border: 1px solid transparent;
+    line-height: 1;
+    cursor: pointer;
+}
+.rjf-time-picker button:hover {
+    color: #000;
+    background-color: #eee;
+    border-color: #ccc;
+}
+.rjf-time-picker-labels {
+    text-align: center;
+    color: #999;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+.rjf-time-picker-values {
+    font-size: 1.1em;
+    text-align: center;
+}
+
+.rjf-multiselect-field {
+    position: relative;
+}
+.rjf-multiselect-field-input {
+    cursor: pointer;
+    padding-right: 28px !important;
+    background-color: #fff !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23777777' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 16px 12px;
+}
+.rjf-multiselect-field-options-container {
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    width: 22em;
+    padding: 5px 0;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.12);
+    max-height: 187px;
+    overflow: auto;
+    z-index: 100;
+}
+
+/* Django's form-row class has overflow hidden
+So, if the options container is at the bottom,
+it will not be fully visible.
+Threfore, we'll override the overflow property.
+Another solution is to user portals in React.
+*/
+.form-row {
+    overflow: visible !important;
+}
+div.form-row::before,
+div.form-row::after {
+    content: " ";
+    display: table;
+    clear: both;
+}
+.rjf-multiselect-field-option.disabled {
+    color: #999;
+}
+.rjf-multiselect-field-option label {
+    display: block;
+    float: none;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 8px !important;
+    color: #333;
+    cursor: pointer;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none;
+}
+.rjf-multiselect-field-option label::after {
+    display: none !important;
+}
+.rjf-multiselect-field-option label:hover {
+    background-color: #f3f3f3;
+}
+.rjf-multiselect-field-option.selected label {
+    background-color: #fffedd;
+}
+.rjf-multiselect-field-option.selected label:hover {
+    background-color: #f3f3d9;
+}
+.rjf-multiselect-field-option.disabled label {
+    cursor: not-allowed;
+    background-color: #fff;
+}
+.rjf-multiselect-field-option label > input[type="checkbox"] {
+    vertical-align: middle;
+    margin-right: 3px;
+}
+
+.errors .rjf-form-wrapper input,
+.errors .rjf-form-wrapper select,
+.errors .rjf-form-wrapper textarea {
+    border-color: var(--border-color);
+}
+.rjf-input-group.has-error input,
+.rjf-input-group.has-error select,
+.rjf-input-group.has-error textarea {
+    border-color: var(--error-fg);
+}
+
+.rjf-animate {
+    transition: all 0.2s ease-in-out;
+}
+.rjf-remove {
+    opacity: 0;
+    transform: translateX(10px);
+}
+
+.rjf-modal__main-body--open {
+    overflow: hidden;
+}
+.rjf-modal__overlay {
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    background-color: rgba(0,0,0,.25);
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 2000;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.rjf-modal__overlay.ReactModal__Overlay--after-open {
+    opacity: 1;
+}
+
+.rjf-modal__overlay.ReactModal__Overlay--before-close {
+    opacity: 0;
+    transition: opacity 0.1s ease-in-out;
+}
+.rjf-modal__dialog {
+    max-width: 700px;
+    top: 5%;
+    left: 0;
+    right: 0;
+    margin: auto;
+    margin-top: .5rem;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 5rem;
+    position: relative;
+    width: auto;
+    pointer-events: none;
+    outline: none;
+    border: none;
+    box-sizing: border-box;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s ease-in-out;
+}
+.rjf-modal__dialog.ReactModal__Content--after-open {
+    opacity: 1;
+    transform: scale(1);
+}
+.rjf-modal__dialog.ReactModal__Content--before-close {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.1s ease-in-out;
+}
+.rjf-modal__content {
+    background-color: #fff;
+    overflow: auto;
+    border-radius: 4px;
+    width: 100%;
+    box-shadow: 0 0 16px rgba(0,0,0,.25);
+    pointer-events: auto;
+    box-sizing: border-box;
+}
+.rjf-modal__header {
+    padding: 15px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    background-color: #f8f8f8;
+}
+.rjf-modal__close-button {
+    float: right;
+    position: relative;
+    font-weight: bold;
+    padding: 5px;
+    margin-top: -0.2em;
+    color: #ff4444;
+    background-color: #ffeeee;
+    border: 1px solid transparent;
+    border-radius: 100%;
+    cursor: pointer;
+    transition: background-color 0.12s ease-in-out, border-color 0.12s ease-in-out, color 0.12s ease-in-out;
+    line-height: 1;
+}
+.rjf-modal__close-button:hover {
+    color: #ff4444;
+    border-color: #ff4444;
+    background-color: #fff;
+}
+.rjf-modal__close-button > .rjf-icon {
+    width: 1.5em;
+    height: 1.5em;
+}
+.rjf-modal__close-button span {
+    pointer-events: none;
+}
+.rjf-upload-modal__open-button,
+.rjf-modal__footer-close-button {
+    background-color: #e8e8e8;
+    color: #000;
+    border: 1px solid #e8e8e8;
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.rjf-upload-modal__open-button:hover,
+.rjf-modal__footer-close-button:hover {
+    background-color: #ddd;
+}
+.rjf-modal__body {
+    padding: 15px;
+    box-sizing: border-box;
+}
+.rjf-modal__footer {
+    padding: 15px;
+    display: table;
+    width: 100%;
+    text-align: right;
+    box-sizing: border-box;
+}
+.rjf-upload-modal__tab-button {
+    background-color: transparent;
+    color: #1f546d;
+    border: 1px solid #1f546d;
+    padding: 3px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.rjf-upload-modal__tab-button:hover {
+    background-color: #dcecf4;
+}
+.rjf-upload-modal__tab-button--active {
+    background-color: #417690;
+    color: #fff;
+    border-color: #417690;
+}
+.rjf-upload-modal__tab-button--active:hover {
+    background-color: #205067;
+}
+.rjf-upload-modal__media-container {
+    box-sizing: border-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    margin-left: -5px;
+    margin-right: -5px;
+}
+.rjf-upload-modal__media-tile {
+    width: 100%;
+    -ms-flex: 0 0 25%;
+    flex: 0 0 25%;
+    max-width: 25%;
+    float: left;
+    padding: 5px;
+    box-sizing: border-box;
+    position: relative;
+}
+.rjf-upload-modal__media-tile-inner {
+    width: 100%;
+    background-color: #fff;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 5px;
+    cursor: pointer;
+}
+.rjf-upload-modal__media-tile-inner:hover {
+    background-color: #f8f8f8;
+    border-color: #777;
+}
+.rjf-upload-modal__media-tile-inner > img {
+    max-width: 100%;
+    max-height: 100px;
+    display: block;
+    margin: auto;
+    box-sizing: border-box;
+}
+.rjf-upload-modal__media-tile-metadata {
+    color: #777;
+    font-size: 0.9em;
+    padding-top: 15px;
+    word-break: break-word;
+    word-wrap: break-word;
+}
+.rjf-upload-modal__media-tile-metadata span {
+    display: block;
+    margin-bottom: 2px;
+}
+.rjf-upload-modal__media-tile .rjf-dropdown {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+}
+.rjf-upload-modal__media-tile .rjf-dropdown.open {
+    background: #fff;
+    width: 120px;
+    box-shadow: -2px 4px 10px rgba(0,0,0,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+.rjf-upload-modal__media-tile .rjf-dropdown-toggler {
+    padding: 3px;
+    border: 0;
+    background-color: transparent;
+    float: right;
+}
+.rjf-upload-modal__media-tile .rjf-dropdown-toggler:hover {
+    background-color: #eee;
+    color: #000;
+    cursor: pointer;
+}
+.rjf-dropdown-items {
+    display: table;
+    width: 100%;
+    padding-top: 4px;
+}
+.rjf-dropdown-item {
+    background-color: #fff;
+    border: 0;
+    border-top: 1px solid #ccc;
+    width: 100%;
+    display: block;
+    padding: 5px 2px;
+    font-size: 1em;
+}
+.rjf-dropdown-item:hover {
+    background-color: #eee;
+    cursor: pointer;
+}
+
+.rjf-autocomplete-field {
+    position: relative;
+}
+.rjf-autocomplete-field-input {
+    cursor: pointer;
+    padding-right: 40px !important;
+    background-color: #fff !important;
+}
+.rjf-autocomplete-field-clear-button {
+    position: absolute;
+    right: 6px;
+    top: 5px;
+    line-height: 1;
+    padding: 1px 2px;
+    background: transparent;
+    color: var(--link-fg);
+    border: 0;
+    z-index: 10;
+    cursor: pointer;
+}
+.rjf-autocomplete-field.has-label .rjf-autocomplete-field-clear-button {
+    top: 5px;
+}
+.rjf-autocomplete-field-clear-button:hover {
+    background-color: #eee;
+    color: var(--link-hover-color);
+}
+.rjf-autocomplete-field-clear-button > .rjf-icon {
+    display: none;
+}
+.rjf-autocomplete-field-clear-button > span {
+    vertical-align: middle;
+}
+.rjf-autocomplete-field-popup {
+    position: absolute;
+    left: 0;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    width: 100%;
+    max-width: 18rem;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.12);
+    z-index: 100;
+}
+.rjf-autocomplete-field.has-label .rjf-autocomplete-field-popup {
+    left: 33%;
+    width: 66%;
+}
+.rjf-autocomplete-field-search {
+    padding: 8px 10px;
+    position: relative;
+}
+.rjf-autocomplete-field-search input {
+    width: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' fill='%23444444' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 6px center;
+    padding-left: 30px;
+    padding-right: 30px;
+}
+.rjf-autocomplete-field-search .rjf-loader {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+}
+.rjf-autocomplete-field-options {
+    padding: 8px 0;
+    border-top: 1px solid #ccc;
+    max-height: 156px;
+    overflow: auto;
+}
+.rjf-autocomplete-field-option {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.rjf-autocomplete-field-option:hover,
+.rjf-autocomplete-field-option:focus {
+    background-color: #eee;
+}
+.rjf-autocomplete-field-option.disabled {
+    color: #999;
+    cursor: default;
+}
+.rjf-autocomplete-field-option.disabled:hover,
+.rjf-autocomplete-field-option.disabled:focus {
+    background-color: transparent;
+}
+
+.rjf-upload-modal__media-load-button {
+    display: table;
+    margin: auto;
+    margin-top: 2em;
+    font-size: 1em;
+    padding: 4px 8px;
+    border: 1px solid;
+    border-radius: 3px;
+    background-color: transparent;
+    cursor: pointer;
+    color: #417690;
+}
+.rjf-upload-modal__media-load-button:hover {
+    background-color: #dcecf4;
+}
+.rjf-upload-modal__media-end-message {
+    font-size: 1.2em;
+    text-align: center;
+    margin-top: 2em;
+    color: #999;
+    font-weight: bold;
+}
+.rjf-loader.rjf-upload-modal__media-loader {
+    width: 2.2em;
+    height: 2.2em;
+    border-width: 5px;
+    display: block;
+    margin: auto;
+    margin-top: 2em;
+}
+
+.rjf-file-field-loading {
+    margin-top: 0.6em;
+    vertical-align: middle;
+    display: inline-block;
+}
+.rjf-loader {
+    clear: both;
+    display: inline-block;
+    margin-right: 0.1em;
+    height: 0.9em;
+    width: 0.9em;
+    vertical-align: middle;;
+    border: 2px #a7e6f0 solid;
+    border-top-color: #2d6c8b;
+    border-radius: 50%;
+    -webkit-animation: loaderRotate .4s infinite linear;
+    animation: loaderRotate .4s infinite linear;
+}
+
+@-webkit-keyframes loaderRotate {
+    from {
+        -webkit-transform: rotate(0deg);
+    }
+    to {
+        -webkit-transform: rotate(359deg);
+    }
+}
+@keyframes loaderRotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
+}
+
+@media(max-width: 1024px) {
+    .rjf-input-group {
+        margin-left: 0;
+    }
+
+    .form-row input[type="date"],
+    .form-row input[type="time"] {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 6px 8px;
+        min-height: 36px;
+        font-size: 14px;
+    }
+
+    .rjf-multiselect-field-input {
+        padding-right: 32px !important;
+        background-position: right 8px center;
+    }
+
+    .rjf-autocomplete-field.has-label .rjf-autocomplete-field-clear-button,
+    .rjf-autocomplete-field-clear-button {
+        top: 8px;
+    }
+    .rjf-autocomplete-field-search input {
+        padding-left: 30px !important;
+        padding-right: 30px !important;
+        background-position: 6px center;
+    }
+    .rjf-autocomplete-field-search .rjf-loader {
+        top: 18px;
+    }
+}
+
+@media(max-width: 767px) {
+    .rjf-form-wrapper > .module.aligned {
+        min-width: 0;
+    }
+    .fieldBox .rjf-form-wrapper {
+        min-width: 0;
+    }
+
+    .rjf-form-group {
+        width: calc(100vw - 30px);
+        max-width: 100%;
+    }
+
+    .rjf-form-row input,
+    .rjf-form-row select,
+    .rjf-form-row textarea {
+        width: 100%;
+    }
+
+    .rjf-form-row label input[type="checkbox"] {
+        width: auto;
+    }
+
+    .rjf-input-group,
+    .rjf-form-row label + .rjf-input-group,
+    .rjf-oneof-selector label + .rjf-input-group > .rjf-oneof-selector-input {
+        width: 100%;
+    }
+
+    .rjf-file-field {
+        width: 100%;
+    }
+
+    .rjf-file-field .rjf-file-field-input input {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .rjf-form-row > .rjf-form-row-controls {
+        right: -0.4rem;
+    }
+
+    .rjf-form-row-controls + .rjf-form-row-inner {
+        padding-right: 62px;
+    }
+
+    .rjf-time-picker {
+        width: 100%;
+        min-width: 200px;
+    }
+
+    .rjf-current-file-name {
+        width: 100%;
+        max-width: 100%;
+        white-space: unset;
+        word-wrap: anywhere;
+        word-break: break-all;
+    }
+
+    .rjf-file-field-loading {
+        margin-top: 0;
+    }
+
+    .rjf-datetime-field-date,
+    .rjf-datetime-field-time {
+        width: 50%;
+    }
+
+    .rjf-multiselect-field-options-container {
+        width: calc(100% + 60px);
+    }
+
+    .rjf-autocomplete-field.has-label .rjf-autocomplete-field-clear-button {
+        top: 32px;
+    }
+
+    .rjf-autocomplete-field.has-label .rjf-autocomplete-field-popup,
+    .rjf-autocomplete-field-popup {
+        left: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .rjf-upload-modal__media-tile {
+        -ms-flex: 0 0 33%;
+        flex: 0 0 33%;
+        max-width: 33%;
+    }
+}
+
+@media(max-width: 575px) {
+    .rjf-upload-modal__media-tile {
+        -ms-flex: 0 0 50%;
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+
+/* Styles for Grappelli admin */
+
+.grp-module .rjf-add-button {
+    padding: 0 2px 0 16px;
+    margin-top: 8px;
+    margin-left: 0;
+    width: auto;
+    height: auto;
+    border: 0;
+    border-radius: 2px;
+}
+.grp-module .rjf-remove-file-button {
+    padding: 0 1px;
+    margin-left: 0;
+    width: auto;
+    height: auto;
+    display: inline-block;
+    vertical-align: middle;
+    border-radius: 2px;
+    border: 0;
+}
+.grp-module .rjf-add-button:hover,
+.grp-module .rjf-remove-file-button:hover {
+    border: 0;
+}
+.grp-module .rjf-form-row-inner label {
+    display: block;
+    padding: 4px 10px 0 0;
+    float: left;
+    width: 140px;
+    word-wrap: break-word;
+    line-height: 1;
+}
+.grp-module .rjf-multiselect-field-option label {
+    width: 100%;
+    float: none;
+    margin: 0 !important;
+}
+.grp-module input[readonly] {
+    border: 1px solid #ccc !important;
+    box-shadow: inset 0 1px 3px 0 #eee !important;
+    cursor: default;    
+}
+.grp-module .rjf-multiselect-field-input {
+    cursor: pointer;
+    padding-right: 28px !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23777777' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 6px center !important;
+    background-size: 16px 12px !important;
+}
+.grp-module .rjf-form-row input[type="date"],
+.grp-module .rjf-form-row input[type="time"] {
+    border: 1px solid #ccc !important;
+    margin-top: 0;
+    color: #333;
+    background-color: #fdfdfd !important;
+    box-shadow: inset 0 1px 3px 0 #eee !important;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+.grp-module .rjf-datetime-field-date,
+.grp-module .rjf-datetime-field-time {
+    width: 9.2em;
+}
+.grp-module .rjf-datetime-field-date > div > label,
+.grp-module .rjf-datetime-field-time > div > label {
+    display: none;
+}
+.grp-module .rjf-time-picker button {
+    margin-left: 0;
+}
+.grp-module .rjf-multiselect-field-input {
+    background-color: #fdfdfd !important;
+    cursor: pointer !important;
+}
+.grp-module .rjf-check-input > label {
+    display: table;
+    float: none;
+    width: auto;
+}
+.grp-module .rjf-help-text {
+    color: #888;
+}
+
+
+/* Dark mode */
+
+@media (prefers-color-scheme: dark) {
+    .rjf-form-group-inner,
+    .rjf-form-row-controls + .rjf-oneof-group {
+        border-color: #3f3f3f;
+    }
+    .rjf-form-row-controls button {
+        border-color: #3f3f3f;
+    }
+    .rjf-form-row-controls button:hover {
+        background-color: #eee;
+    }
+    .rjf-form-row > .rjf-form-row-controls > button {
+        border-color: #444;
+    }
+    .rjf-form-row-controls:hover + .rjf-form-row-inner,
+    .rjf-form-row-controls:hover + .rjf-form-group {
+        background-color: #000;
+    }
+    .rjf-form-group input[readonly] {
+        background-color: #272727;
+    }
+    .rjf-multiselect-field-input {
+        background-color: transparent !important;
+    }
+    .rjf-multiselect-field-options-container {
+        background-color: #222;
+        border-color: #444;
+        box-shadow: 0 3px 15px rgb(0, 0, 0);
+    }
+    .rjf-multiselect-field-option label {
+        color: #eee;
+    }
+    .rjf-multiselect-field-option label:hover {
+        background-color: #121212;
+    }
+    .rjf-multiselect-field-option.selected label {
+        background-color: #000;
+    }
+    .rjf-multiselect-field-option.selected label:hover {
+        background-color: #000;
+    }
+    .rjf-time-picker {
+        background-color: #222;
+        border-color: #444;
+        box-shadow: 0 3px 15px rgb(0, 0, 0);
+    }
+    .rjf-time-picker-labels {
+        color: #cacaca;
+    }
+    .rjf-time-picker button {
+        background-color: #000;
+        color: #cacaca;
+    }
+    .rjf-current-file-name {
+        color: #cacaca;
+    }
+    .rjf-current-file-name > span {
+        background-color: #3f3f3f;
+        color: #e3fcff;
+    }
+    .rjf-autocomplete-field-input {
+        background-color: transparent !important;
+    }
+    .rjf-autocomplete-field-search input {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' fill='%23999999' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+        outline: 0;
+    }
+    .rjf-autocomplete-field-popup {
+        background-color: #222;
+        border-color: #444;
+        box-shadow: 0 3px 15px rgb(0, 0, 0);
+    }
+    .rjf-autocomplete-field-options {
+        border-top-color: #444; 
+    }
+    .rjf-autocomplete-field-option:hover,
+    .rjf-autocomplete-field-option:focus {
+        background-color: #000;
+    }
+    .rjf-autocomplete-field-clear-button:hover {
+        background-color: #000;
+    }
+    .rjf-modal__content {
+        background-color: #121212;
+        box-shadow: 0 0 16px rgba(0,0,0);
+    }
+    .rjf-modal__header {
+        background-color: #212121;
+    }
+    .rjf-upload-modal__tab-button {
+        color: #83cbed;
+        border: 1px solid #83cbed;
+    }
+    .rjf-upload-modal__tab-button:hover {
+        background-color: #121212;
+    }
+    .rjf-upload-modal__tab-button--active {
+        background-color: #417690;
+        color: #fff;
+        border-color: #417690;
+    }
+    .rjf-upload-modal__tab-button--active:hover {
+        background-color: #205067;
+    }
+    .rjf-upload-modal__media-load-button {
+        color: #83cbed;
+    }
+    .rjf-upload-modal__media-load-button:hover {
+        background-color: #000;
+    }
+    .rjf-upload-modal__open-button,
+    .rjf-modal__footer-close-button {
+        background-color: #313131;
+        color: #fff;
+        border: 1px solid #555;
+    }
+    .rjf-upload-modal__open-button:hover,
+    .rjf-modal__footer-close-button:hover {
+        background-color: #000;
+    }
+    .rjf-modal__close-button {
+        background-color: #654848;
+    }
+    .rjf-upload-modal__media-tile .rjf-dropdown-toggler {
+        background-color: rgba(0, 0, 0, 0.5);
+        color: #cacaca;
+    }
+    .rjf-upload-modal__media-tile-inner {
+        background-color: #000;
+        border: 1px solid #444;
+    }
+    .rjf-upload-modal__media-tile-inner:hover {
+        background-color: #212121;
+        border-color: #444;
+    }
+    .rjf-upload-modal__media-tile-metadata {
+        color: #cacaca;
+    }
+}
