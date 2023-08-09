@@ -56,10 +56,11 @@ const config = {
       image:
         "https://storage.googleapis.com/trypromptly-static/static/images/opengraph.jpg",
       navbar: {
-        title: "LLMStack",
+        title: "",
         logo: {
           alt: "LLMStack",
-          src: "img/logo.png",
+          src: "img/llmstack-logo-light.svg",
+          srcDark: "img/llmstack-logo-dark.svg",
         },
         items: [
           {
