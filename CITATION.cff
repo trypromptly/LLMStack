@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "LLMStack: A platform to build and deploy LLM applications"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - given-names: "Ajay Kumar"
+    family-names: "Chintala"
+  - given-names: "Vignesh"
+    family-names: "Aigal"
+url: "https://github.com/trypromptly/llmstack"
