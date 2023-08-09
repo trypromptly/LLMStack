@@ -15,6 +15,5 @@ class BaseConfig(AppConfig):
         except Exception as e:
             pass
         from django.contrib.auth.models import User
-        from .models import create_user_profile, save_user_profile
+        from .models import create_user_profile
         post_save.connect(create_user_profile, sender=User)
-        post_save.connect(save_user_profile, sender=User)

@@ -269,8 +269,3 @@ def create_user_profile(sender, instance, created, **kwargs):
             )
             email_sender = EmailSender(email_template_cls(user=instance))
             email_sender.send()
-
-
-def save_user_profile(sender, instance, **kwargs):
-    if hasattr(instance, 'profile'):
-        instance.profile.save()
