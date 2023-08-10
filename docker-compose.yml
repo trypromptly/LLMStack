@@ -9,8 +9,6 @@ services:
     command: apiserver
     links:
       - postgres:postgres
-    ports:
-      - 9000:9000
     expose:
       - 9000
     env_file:
@@ -31,10 +29,20 @@ services:
       - postgres:postgres
     env_file:
       - .env
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+      cache_from:
+        - llmstack-nginx:latest
+    ports:
+      - ${LLMSTACK_PORT:-3000}:80
+    env_file:
+      - .env
+    depends_on:
+      - api
   redis:
     image: redis:alpine
-    ports:
-      - "26379:6379"
     command: redis-server
     restart: unless-stopped
     volumes:
@@ -43,8 +51,6 @@ services:
       - .env
   postgres:
     image: postgres:15.1-alpine
-    ports:
-      - "25432:5432"
     command: "postgres -c fsync=off -c full_page_writes=off -c synchronous_commit=OFF"
     restart: unless-stopped
     volumes:
@@ -58,8 +64,6 @@ services:
       - .env
   weaviate:
     image: semitechnologies/weaviate:1.20.5
-    ports:
-      - 28080:8080
     volumes:
       - ${WEAVIATE_VOLUME}:/var/lib/weaviate
     environment:

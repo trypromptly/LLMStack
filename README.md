@@ -25,7 +25,7 @@ Start the docker containers:
 docker compose up
 ```
 
-Point your browser to [localhost:9000](http://localhost:9000) to login into the platform. LLMStack deployment comes with a default admin account whose credentials are `admin` and `promptly`. _Be sure to change the password from admin panel after logging in_.
+Point your browser to [localhost:3000](http://localhost:3000) to login into the platform. LLMStack deployment comes with a default admin account whose credentials are `admin` and `promptly`. _Be sure to change the password from admin panel after logging in_.
 
 > Users of the platform can add their own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `.env` file. Make sure to restart the containers after adding the keys.
 
@@ -63,7 +63,7 @@ Using LLMStack you can build a variety of generative AI applications, chatbots a
 
 ## Administration
 
-Login to http://localhost:9000/admin using the admin account. You can add users and assign them to organizations in the admin panel.
+Login to [http://localhost:3000/admin](http://localhost:3000/admin) using the admin account. You can add users and assign them to organizations in the admin panel.
 
 ## Cloud Offering
 
@@ -75,11 +75,11 @@ Check out our documentation at [llmstack.ai/docs](https://llmstack.ai/docs/) to 
 
 ## Development
 
-You can use `docker compose up` to start the containers. You can also use `docker compose -f docker-compose.dev.yml up` to start the containers in development mode. This will mount the source code into the containers and restart the containers on code changes. Update `.env.dev` as needed.
+> Remember to run `npm run build` before starting your containers for development. Make sure to run `npm install` in the client directory before running `npm start` or `npm run build`.
+
+Run `docker compose -f docker-compose.dev.yml --env-file .env.dev up` to start the containers in development mode. This will mount the source code into the containers and restart the containers on code changes. Update `.env.dev` as needed. Please note that LLMStack is available at [http://localhost:9000](http://localhost:9000) in development mode.
 
 For frontend development, you can use `npm start` to start the development server in client directory. You can also use `npm run build` to build the frontend and serve it from the backend server.
-
-> Make sure to run `npm install` in the client directory before running `npm start` or `npm run build`. Remember to run `npm run build` before starting your containers.
 
 To update documentation, make changes to `web/docs` directory and run `npm run build` in web directory to build the documentation. You can use `npm start` in web directory to serve the documentation locally.
 
