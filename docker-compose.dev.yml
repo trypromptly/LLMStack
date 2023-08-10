@@ -18,16 +18,16 @@ services:
     volumes:
       - ${POSTGRES_VOLUME:-/tmp/postgres_llmstack}:/var/lib/postgresql/data/pgdata
     environment:
-      POSTGRES_HOST_AUTH_METHOD: "password"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
       PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER:-llmstack}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-llmstack}
   api:
     build:
       context: .
       cache_from:
         - llmstack-api:latest
     command: apiserver
+    volumes:
+      - .:/code
     links:
       - postgres:postgres
     ports:
@@ -35,7 +35,7 @@ services:
     expose:
       - 9000
     env_file:
-      - .env
+      - .env.dev
     cap_add:
       - SYS_PTRACE
   rqworker:
@@ -44,6 +44,8 @@ services:
       cache_from:
         - llmstack-rqworker:latest
     command: rqworker
+    volumes:
+      - .:/code
     depends_on:
       - redis
       - postgres
@@ -51,7 +53,7 @@ services:
       - redis:redis
       - postgres:postgres
     env_file:
-      - .env
+      - .env.dev
   weaviate:
     image: semitechnologies/weaviate:1.20.5
     ports:

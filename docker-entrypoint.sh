@@ -1,21 +1,22 @@
 #!/bin/sh
 set -e
+DATABASE_HOST=${DATABASE_HOST:-postgres}
 
 apiserver() {
     echo "Starting API server"
-    if [ "x$DJANGO_MANAGEPY_MIGRATE" = 'xon' ]; then
+    if [ "x$DJANGO_MANAGEPY_MIGRATE" != 'xoff' ]; then
         python manage.py migrate --noinput
     fi
 
-    if [ "x$DJANGO_MANAGEPY_COLLECTSTATIC" = 'xon' ]; then
+    if [ "x$DJANGO_MANAGEPY_COLLECTSTATIC" != 'xoff' ]; then
         python manage.py collectstatic --noinput
     fi
 
-    if [ "x$DJANGO_MANAGEPY_CREATECACHETABLE" = 'xon' ]; then
+    if [ "x$DJANGO_MANAGEPY_CREATECACHETABLE" != 'xoff' ]; then
         python manage.py createcachetable
     fi
 
-    if [ "x$DJANGO_MANAGEPY_CLEARCACHE" = 'xon' ]; then
+    if [ "x$DJANGO_MANAGEPY_CLEARCACHE" != 'xoff' ]; then
         python manage.py clearcache
     fi
     

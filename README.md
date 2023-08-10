@@ -13,7 +13,13 @@ Build tailor-made generative AI applications, chatbots and agents that cater to 
 
 **_Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow the instructions below to deploy LLMStack on your own infrastructure._**
 
-Clone this repository or downoad the latest release. Update `SECRET_KEY` in `.env` file and run the following command:
+Clone this repository or downoad the latest release. Copy `.env.prod` to `.env` and update `SECRET_KEY`, `CIPHER_SALT` and `DATABASE_PASSWORD` in `.env` file:
+
+```
+cp .env.prod .env
+```
+
+Start the docker containers:
 
 ```
 docker compose up
@@ -22,6 +28,8 @@ docker compose up
 Point your browser to [localhost:9000](http://localhost:9000) to login into the platform. LLMStack deployment comes with a default admin account whose credentials are `admin` and `promptly`. _Be sure to change the password from admin panel after logging in_.
 
 > Users of the platform can add their own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `.env` file. Make sure to restart the containers after adding the keys.
+
+> Remember to update `POSTGRES_VOLUME`, `REDIS_VOLUME` and `WEAVIATE_VOLUME` in `.env` file if you want to persist data across container restarts.
 
 ## Features
 
