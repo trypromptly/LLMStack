@@ -14,4 +14,8 @@ urlpatterns = [
 if settings.ADMIN_ENABLED:
     urlpatterns += [path('admin/', admin.site.urls)]
 
+    admin.site.site_header = 'LLMStack'
+    admin.site.site_title = 'LLMStack'
+    admin.site.index_title = 'LLMStack Administration'
+
 urlpatterns += [path('', include('base.urls'))]
