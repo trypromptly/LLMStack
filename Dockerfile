@@ -1,15 +1,32 @@
-FROM python:3.9
+# Stage 1: Compile and build code
+FROM python:3.9 AS builder
 
-# Create a group and user to run our app
+ADD requirements_base.txt /requirements_base.txt
+RUN pip install --no-cache-dir -r /requirements_base.txt
+RUN playwright install chromium
+
+ADD requirements_datasources.txt /requirements_datasources.txt
+RUN pip install --no-cache-dir -r /requirements_datasources.txt
+
+ADD requirements_processors.txt /requirements_processors.txt.txt
+RUN pip install --no-cache-dir -r /requirements_processors.txt.txt
+
+RUN mkdir /code/
+WORKDIR /code/
+ADD . /code/
+
+ENV DJANGO_SETTINGS_MODULE=llmstack.settings
+RUN python manage.py collectstatic --noinput --clear
+
+# Stage 2: Build final image
+FROM python:3.9-slim
+
 ARG APP_USER=appuser
 RUN groupadd -r ${APP_USER} && useradd --no-log-init -r -g ${APP_USER} ${APP_USER} \
     && mkdir -p /home/${APP_USER} \
     && chown -R ${APP_USER}:${APP_USER} /home/${APP_USER}
 
-# Install packages needed to run your application
-RUN set -ex \
-    && RUN_DEPS=" \
-    libpcre3 \
+RUN apt-get update && apt-get install -y libpcre3 \
     mime-support \
     ffmpeg \
     postgresql-client \
@@ -19,44 +36,24 @@ RUN set -ex \
     libcups2-dev \
     libxkbcommon-x11-0 \
     libxcomposite-dev \
-    libxdamage-dev \
-    " \
-    && seq 1 8 | xargs -I{} mkdir -p /usr/share/man/man{} \
-    && apt-get update && apt-get install -y --no-install-recommends $RUN_DEPS \
-    && rm -rf /var/lib/apt/lists/*
+    libxdamage-dev && rm -rf /var/lib/apt/lists/*    
 
-# Copy requirements files and build them
-ADD requirements_base.txt /requirements_base.txt
-RUN pip install --no-cache-dir -r /requirements_base.txt
+COPY --from=builder /code/ /code/
+COPY --from=builder /root/.cache/pip /root/.cache/pip
+COPY --from=builder /usr/local/lib/python3.9/site-packages/ /usr/local/lib/python3.9/site-packages/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
-ADD requirements_datasources.txt /requirements_datasources.txt
-RUN pip install --no-cache-dir -r /requirements_datasources.txt
+COPY --from=builder /root/.cache/ms-playwright /home/${APP_USER}/.cache/ms-playwright
+RUN chown -R ${APP_USER}:${APP_USER} /home/${APP_USER}/.cache
 
-ADD requirements_processors.txt /requirements_processors.txt.txt
-RUN pip install --no-cache-dir -r /requirements_processors.txt.txt
-
-# Copy app code
-RUN mkdir /code/
 WORKDIR /code/
-ADD . /code/
 
-# aWSGI will listen on this port
-EXPOSE 9000
-
-# Static environment variables needed by Django
 ENV DJANGO_SETTINGS_MODULE=llmstack.settings
 
-# Collect static
-RUN python manage.py collectstatic --noinput --clear
+EXPOSE 9000
 
-# Change to a non-root user
 USER ${APP_USER}:${APP_USER}
 
-# Install playwright  browser 
-RUN playwright install chromium
-
-# Run entrypoint script
 ENTRYPOINT ["/code/docker-entrypoint.sh"]
 
-# Start aWSGI
 CMD ["/usr/local/bin/gunicorn", "promptly.asgi:application", "-w", "2", "-t", "120", "-b", ":9000", "-k", "uvicorn.workers.UvicornWorker"]
