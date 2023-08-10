@@ -1,4 +1,5 @@
 ---
+id: playground
 title: Playground
 sidebar_label: Playground
 ---
