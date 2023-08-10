@@ -1,69 +1,103 @@
-import { Col, Divider, Row, Card, Button, Form, Input } from "antd";
+import { useState } from "react";
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import Paper from "@mui/material/Paper";
+import { styled } from "@mui/system";
 import { postData } from "./dataUtil";
 
-export default function LoginPage() {
-  const [form] = Form.useForm();
+import logo from "../assets/images/llmstack-logo-light.png";
 
-  const onSignInClick = async () => {
-    form
-      .validateFields()
-      .then((values) => {
-        postData(
-          "/api/login",
-          values,
-          () => {},
-          (result) => {
-            window.location.href = "/";
-          },
-          () => {},
-        );
-      })
-      .catch((error) => {});
+const Logo = styled("img")({
+  width: "50%",
+  marginBottom: 20,
+});
+
+export default function LoginPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const onSignInClick = async (e) => {
+    e.preventDefault();
+
+    if (!username || !password) {
+      return;
+    }
+
+    await postData(
+      "/api/login",
+      {
+        username: username,
+        password: password,
+      },
+      () => {},
+      (result) => {
+        window.location.href = "/";
+      },
+    );
   };
 
   return (
-    <div id="login-page">
-      <Row gutter={16}>
-        <Col span={6}></Col>
-        <Col span={10} align="middle">
-          <Card title="Sign In" bordered={true}>
-            <Row>
-              <Form layout="vertical" style={{ width: "100%" }} form={form}>
-                <Form.Item
-                  label="Username"
-                  name="username"
-                  rules={[
-                    { required: true, message: "Please input your username!" },
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-                <Form.Item
-                  label="Password"
-                  name="password"
-                  rules={[
-                    { required: true, message: "Please input your password!" },
-                  ]}
-                >
-                  <Input.Password />
-                </Form.Item>
-              </Form>
-            </Row>
-            <Row>
-              <Divider />
-            </Row>
-            <Row>
-              <Divider />
-            </Row>
-            <Row align="middle" style={{ display: "inline-flex" }}>
-              <Button size="large" onClick={onSignInClick}>
-                Sign In
-              </Button>
-            </Row>
-          </Card>
-        </Col>
-        <Col span={6}></Col>
-      </Row>
-    </div>
+    <Container maxWidth="xs">
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          minHeight: "100vh",
+          justifyContent: "center",
+        }}
+      >
+        <Paper elevation={3} sx={{ p: 2, width: "100%", textAlign: "center" }}>
+          <Logo
+            src={logo}
+            alt="logo"
+            sx={{
+              mt: 6,
+            }}
+          />
+          <Box component="form" noValidate sx={{ margin: 3 }}>
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              id="username"
+              label="Username"
+              name="username"
+              autoComplete="username"
+              autoFocus
+              onChange={(e) => setUsername(e.target.value)}
+              value={username}
+            />
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              onChange={(e) => setPassword(e.target.value)}
+              value={password}
+            />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              color="primary"
+              size="large"
+              sx={{ mt: 4, mb: 4, textTransform: "none" }}
+              onClick={onSignInClick}
+            >
+              Sign In
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
   );
 }
