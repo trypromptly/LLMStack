@@ -14,7 +14,7 @@ export function AppPreview(props) {
     window.location.protocol === "https:" ? "wss" : "ws"
   }://${
     process.env.NODE_ENV === "development"
-      ? process.env.REACT_APP_API_SERVER || "localhost:8000"
+      ? process.env.REACT_APP_API_SERVER || "localhost:9000"
       : window.location.host
   }/ws`;
 

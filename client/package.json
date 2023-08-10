@@ -2,8 +2,8 @@
   "name": "promptmanager",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:8000",
-  "homepage": "https://trypromptly.com/",
+  "proxy": "http://localhost:9000",
+  "homepage": "https://llmstack.ai",
   "dependencies": {
     "@ginkgo-bioworks/react-json-schema-form-builder": "^2.10.1",
     "@jsonforms/material-renderers": "^3.0.0",
