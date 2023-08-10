@@ -1,27 +1,6 @@
 version: "3.8"
 
 services:
-  redis:
-    image: redis:alpine
-    ports:
-      - "26379:6379"
-    command: redis-server
-    restart: unless-stopped
-    volumes:
-      - ${REDIS_VOLUME:-/tmp/redis_llmstack}:/data
-  postgres:
-    image: postgres:15.1-alpine
-    ports:
-      - "25432:5432"
-    command: "postgres -c fsync=off -c full_page_writes=off -c synchronous_commit=OFF"
-    restart: unless-stopped
-    volumes:
-      - ${POSTGRES_VOLUME:-/tmp/postgres_llmstack}:/var/lib/postgresql/data/pgdata
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: "password"
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER:-llmstack}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-llmstack}
   api:
     build:
       context: .
@@ -52,12 +31,37 @@ services:
       - postgres:postgres
     env_file:
       - .env
+  redis:
+    image: redis:alpine
+    ports:
+      - "26379:6379"
+    command: redis-server
+    restart: unless-stopped
+    volumes:
+      - ${REDIS_VOLUME}:/data
+    env_file:
+      - .env
+  postgres:
+    image: postgres:15.1-alpine
+    ports:
+      - "25432:5432"
+    command: "postgres -c fsync=off -c full_page_writes=off -c synchronous_commit=OFF"
+    restart: unless-stopped
+    volumes:
+      - ${POSTGRES_VOLUME}:/var/lib/postgresql/data/pgdata
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "password"
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER:-llmstack}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-llmstack}
+    env_file:
+      - .env
   weaviate:
     image: semitechnologies/weaviate:1.20.5
     ports:
       - 28080:8080
     volumes:
-      - ${WEAVIATE_VOLUME:-/var/weaviate}:/var/lib/weaviate
+      - ${WEAVIATE_VOLUME}:/var/lib/weaviate
     environment:
       QUERY_DEFAULTS_LIMIT: 20
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
@@ -65,3 +69,5 @@ services:
       DEFAULT_VECTORIZER_MODULE: text2vec-openai
       ENABLE_MODULES: text2vec-openai
       CLUSTER_HOSTNAME: "weaviate-node"
+    env_file:
+      - .env
