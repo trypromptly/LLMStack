@@ -10,6 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  ORG: trypromptly
   IMAGE_NAME_API: "llmstack-api"
   IMAGE_NAME_NGINX: "llmstack-nginx"
 
@@ -60,13 +61,13 @@ jobs:
         id: meta-api
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_API }}
+          images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME_API }}
 
       - name: Extract Docker metadata for nginx
         id: meta-nginx
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_NGINX }}
+          images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME_NGINX }}
 
       # Build client
       - name: Build client
