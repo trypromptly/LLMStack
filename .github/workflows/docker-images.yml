@@ -1,0 +1,17 @@
+name: Docker Images CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build LLMStack API server image
+        run: docker build . --file Dockerfile --tag llmstack-api:latest
+      - name: Build LLMStack nginx image
+        run: docker build . --file Dockerfile.nginx --tag llmstack-nginx:latest
