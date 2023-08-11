@@ -19,13 +19,15 @@ Clone this repository or downoad the latest release. Copy `.env.prod` to `.env` 
 cp .env.prod .env
 ```
 
-Start the docker containers:
+Run LLMStack using the following command:
 
 ```
-docker compose up
+./run-llmstack.sh
 ```
 
-Point your browser to [localhost:3000](http://localhost:3000) to login into the platform. LLMStack deployment comes with a default admin account whose credentials are `admin` and `promptly`. _Be sure to change the password from admin panel after logging in_.
+Once LLMStack is up and ready, it should automatically open your browser and point it to [localhost:3000](http://localhost:3000). You can also alternatively use `docker compose up` to manually start the containers and open [localhost:3000](http://localhost:3000) to login into the platform. Make sure to wait for the API server to be ready before trying to load LLMStack.
+
+LLMStack deployment comes with a default admin account whose credentials are `admin` and `promptly`. _Be sure to change the password from admin panel after logging in_.
 
 > Users of the platform can add their own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `.env` file. Make sure to restart the containers after adding the keys.
 
@@ -85,7 +87,7 @@ To update documentation, make changes to `web/docs` directory and run `npm run b
 
 ## Contributing
 
-We welcome contributions to LLMStack. Please check out our [contributing guide](CONTRIBUTING.md) to learn more about how you can contribute to LLMStack.
+We welcome contributions to LLMStack. Please check out our [contributing guide](https://llmstack.ai/docs/guides/Contribution-Guide) to learn more about how you can contribute to LLMStack.
 
 ## License
 
