@@ -80,6 +80,8 @@ class URLSpider(CrawlSpider):
 
     def __init__(self, url, output, max_depth=0, allowed_domains=None, allowed_regex=None, denied_regex=None, use_renderer=False, *args, **kwargs):
         self.start_urls = [url]
+        unstructured_trace = logging.getLogger('unstructured.trace')
+        unstructured_trace.disabled = True
         if not allowed_domains:
             self.allowed_domains = [get_domain(url)]
         else:
@@ -117,7 +119,7 @@ class URLSpider(CrawlSpider):
     def get_text_from_html(self, html_response):
         text_data = [
             text.strip().rstrip() for text in html_response.xpath(
-            '//*[not(self::script or self::style)]/text()',
+                '//*[not(self::script or self::style)]/text()',
             ).extract()
         ]
         text_data = [text for text in text_data if text != '']
@@ -140,7 +142,7 @@ class URLSpider(CrawlSpider):
 
             data['hrefs'] = [
                 link for link in Selector(text=html_content, type='html').css(
-                'a::attr(href)',
+                    'a::attr(href)',
                 ).getall()
             ]
 
@@ -169,7 +171,7 @@ class URLSpider(CrawlSpider):
 
             data['hrefs'] = [
                 link for link in Selector(text=html_content, type='html').css(
-                'a::attr(href)',
+                    'a::attr(href)',
                 ).getall()
             ]
 
@@ -203,6 +205,7 @@ def run_url_spider_in_process(url, max_depth=0, allowed_domains=None, allow_rege
     result = mp.Queue()
     mp.Process(
         target=_run_url_spider_process,
-        args=(url, result, max_depth, allowed_domains, allow_regex, deny_regex, use_renderer),
+        args=(url, result, max_depth, allowed_domains,
+              allow_regex, deny_regex, use_renderer),
     ).start()
     return result.get()

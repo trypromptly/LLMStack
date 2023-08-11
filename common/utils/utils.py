@@ -25,7 +25,7 @@ country_loc_reader = geoip2.database.Reader(
 
 
 def get_location(ip):
-    if not ip:
+    if not ip or not city_loc_reader or not country_loc_reader:
         return {}
 
     try:

@@ -8,12 +8,14 @@ class BaseConfig(AppConfig):
     label = 'base'
 
     def ready(self):
+        from django.contrib.auth.models import User
+        from .models import create_user_profile
+
+        post_save.connect(create_user_profile, sender=User)
+
         # call admin user if not exists
         try:
             from .management.commands.loadfixtures import Command
             Command().handle()
         except Exception as e:
             pass
-        from django.contrib.auth.models import User
-        from .models import create_user_profile
-        post_save.connect(create_user_profile, sender=User)

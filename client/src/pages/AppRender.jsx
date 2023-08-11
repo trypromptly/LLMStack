@@ -23,7 +23,7 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
     window.location.protocol === "https:" ? "wss" : "ws"
   }://${
     process.env.NODE_ENV === "development"
-      ? process.env.REACT_APP_API_SERVER || "localhost:8000"
+      ? process.env.REACT_APP_API_SERVER || "localhost:9000"
       : window.location.host
   }/ws`;
 
@@ -46,7 +46,9 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
           setApp(response.data);
           setRenderMode("published");
           setWsUrl(`${wsUrlPrefix}/apps/${response?.data?.uuid}`);
-          document.title = `${response.data.name} | Promptly`;
+          document.title = `${response.data.name} | ${
+            process.env.REACT_APP_SITE_NAME || "LLMStack"
+          }`;
           ReactGA.send({
             hitType: "pageview",
             page: window.location.href,
@@ -71,7 +73,9 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
           setApp(response.data);
           setRenderMode("published");
           setWsUrl(`${wsUrlPrefix}/apps/${response?.data?.uuid}`);
-          document.title = `${response.data.name} | Promptly`;
+          document.title = `${response.data.name} | ${
+            process.env.REACT_APP_SITE_NAME || "LLMStack"
+          }`;
           ReactGA.send({
             hitType: "pageview",
             page: window.location.href,

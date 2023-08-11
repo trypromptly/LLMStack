@@ -13,14 +13,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv(
-    'DJANGO_SECRET_KEY', 'django-insecure-o25+*nb2h8_f6t7_^r7r1e#_p@0b)0(i@-wr(h1@!enw^co2&m',
+    'SECRET_KEY', 'django-insecure-o25+*nb2h8_f6t7_^r7r1e#_p@0b)0(i@-wr(h1@!enw^co2&m',
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv(
-    'DJANGO_ALLOWED_HOSTS',
+    'ALLOWED_HOSTS',
     '127.0.0.1,localhost',
 ).split(',')
 
@@ -31,7 +31,7 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-CIPHER_KEY_SALT = os.getenv('DJANGO_CIPHER_KEY_SALT', None)
+CIPHER_KEY_SALT = os.getenv('CIPHER_KEY_SALT', None)
 
 ADMIN_ENABLED = os.getenv('ADMIN_ENABLED', True)
 
@@ -103,14 +103,14 @@ ASGI_APPLICATION = 'llmstack.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.{}'.format(
-            os.getenv('DATABASE_ENGINE', 'sqlite3'),
+            os.getenv('DATABASE_ENGINE', 'postgresql'),
         ),
         'NAME': os.getenv(
-            'DATABASE_NAME', os.path.join(BASE_DIR, 'db.sqlite3'),
+            'DATABASE_NAME', 'llmstack',
         ),
-        'USER': os.getenv('DATABASE_USERNAME', 'user'),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'password'),
-        'HOST': os.getenv('DATABASE_HOST', '127.0.0.1'),
+        'USER': os.getenv('DATABASE_USERNAME', 'llmstack'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'llmstack'),
+        'HOST': os.getenv('DATABASE_HOST', 'postgres'),
         'PORT': os.getenv('DATABASE_PORT', 5432),
     },
 }
@@ -159,7 +159,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 REACT_APP_DIR = os.path.join(BASE_DIR, 'client')
-STATIC_URL = os.getenv('DJANGO_STATIC_URL', 'static/')
+STATIC_URL = os.getenv('STATIC_URL', 'static/')
 STATICFILES_DIRS = [
     os.path.join(REACT_APP_DIR, 'build', 'static'),
 ]
@@ -195,16 +195,16 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
+            'level': os.getenv('DJANGO_LOG_LEVEL', os.getenv('LOG_LEVEL', 'ERROR')),
         },
         'rq.worker': {
             'handlers': ['console'],
-            'level': os.getenv('RQ_LOG_LEVEL', 'ERROR'),
+            'level': os.getenv('RQ_LOG_LEVEL', os.getenv('LOG_LEVEL', 'ERROR')),
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': os.getenv('LOG_LEVEL', 'DEBUG'),
+        'level': os.getenv('LOG_LEVEL', 'ERROR'),
     },
 }
 
@@ -226,12 +226,12 @@ REST_FRAMEWORK = {
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/1",
+        'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/1",
         'TIMEOUT': 3600,
     },
     'app_session': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/2",
+        'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/2",
         'TIMEOUT': 3600,
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
@@ -239,7 +239,7 @@ CACHES = {
     },
     'app_session_data': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/3",
+        'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/3",
         'TIMEOUT': 3600,
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
@@ -278,7 +278,7 @@ USE_CUSTOM_EMBEDDING = os.getenv('USE_CUSTOM_EMBEDDING', 'False') == 'True'
 
 RQ_QUEUES = {
     'default': {
-        'HOST': os.getenv('REDIS_HOST', 'localhost'),
+        'HOST': os.getenv('REDIS_HOST', 'redis'),
         'PORT': os.getenv('REDIS_PORT', 6379),
         'DB': os.getenv('REDIS_DB', 0),
         'DEFAULT_TIMEOUT': 1500,

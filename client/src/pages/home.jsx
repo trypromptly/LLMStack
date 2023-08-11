@@ -412,7 +412,9 @@ export default function HomePage({ isSharedPageMode }) {
             response.data?.name !== undefined &&
             response.data?.name !== "Untitled"
           ) {
-            document.title = `${response.data.name} | Promptly`;
+            document.title = `${response.data.name} | ${
+              process.env.REACT_APP_SITE_NAME || "LLMStack"
+            }`;
           }
         })
         .catch((error) => {
