@@ -52,8 +52,11 @@ class AppRunner:
         self.app_init()
 
         request_user_email = ''
-        if self.app_run_request_user and not self.app_run_request_user.is_anonymous:
-            request_user_email = self.app_run_request_user.email
+        if not self.app_run_request_user.is_anonymous:
+            if self.app_run_request_user and self.app_run_request_user.email and len(self.app_run_request_user.email) > 0:
+                request_user_email = self.app_run_request_user.email
+            elif self.app_run_request_user and self.app_run_request_user.username and len(self.app_run_request_user.username) > 0:
+                request_user_email = self.app_run_request_user.username
 
         request_ip = request.headers.get(
             'X-Forwarded-For', request.META.get(

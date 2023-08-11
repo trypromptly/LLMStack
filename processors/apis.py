@@ -328,14 +328,22 @@ class EndpointViewSet(viewsets.ViewSet):
             ),
         ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
 
+        request_user_email = ''
+        if request.user and request.user.email and len(request.user.email) > 0:
+            request_user_email = request.user.email
+        elif request.user and request.user.username and len(request.user.username) > 0:
+            # Use username as email if email is not set
+            request_user_email = request.user.username
+            
         input_request = InputRequest(
             request_endpoint_uuid=str(endpoint.uuid), request_app_uuid='',
             request_app_session_key='', request_owner=request.user,
-            request_uuid=str(uuid.uuid4()), request_user_email=request.user.email,
+            request_uuid=str(uuid.uuid4()), request_user_email=request_user_email,
             request_ip=request_ip, request_location=request_location,
             request_user_agent=request_user_agent, request_body=request.data,
             request_content_type=request.content_type,
         )
+        logger.info("Request: {}".format(input_request))
 
         try:
             invoke_result = self.run_endpoint(
