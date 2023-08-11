@@ -18,7 +18,6 @@ db.sqlite3
 Dockerfile
 docker-compose.yml
 docker-compose.dev.yml
-fixtures
 nginx
 tests
 web
