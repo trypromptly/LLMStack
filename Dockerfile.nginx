@@ -1,4 +1,4 @@
-FROM llmstack-api:latest as builder
+FROM ${REGISTRY:-}llmstack-api:${TAG:-latest} as builder
 FROM nginx:stable-alpine3.17-slim
 
 RUN rm /etc/nginx/conf.d/default.conf
