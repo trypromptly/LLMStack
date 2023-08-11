@@ -107,8 +107,7 @@ jobs:
           cache-to: type=gha,mode=max
           file: Dockerfile.nginx
           platforms: linux/amd64,linux/arm64
-        env:
-          REGISTRY: ${{ env.REGISTRY }}/${{ env.ORG }}/
+          build-args: REGISTRY=${{ env.REGISTRY }}/${{ env.ORG }}/
 
       - name: Sign the published LLMStack API Docker image
         if: ${{ github.event_name != 'pull_request' }}
