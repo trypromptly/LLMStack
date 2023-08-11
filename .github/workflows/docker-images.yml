@@ -2,7 +2,7 @@ name: Docker Images CI
 
 on:
   push:
-    branches: ["main", "develop"]
+    branches: ["main"]
     # Publish semver tags as releases.
     tags: ["v*.*.*"]
   pull_request:
@@ -63,7 +63,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME_API }}
           tags: |
-            type=raw,value=latest
+            type=raw,value=latest,event=push,enabled={{is_default_branch}}
+            type=semver,enabled={{starts_with(github.ref, 'refs/tags/v')}},pattern={{version}}
 
       - name: Extract Docker metadata for nginx
         id: meta-nginx
@@ -71,7 +72,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME_NGINX }}
           tags: |
-            type=raw,value=latest
+            type=raw,value=latest,event=push,enabled={{is_default_branch}}
+            type=semver,enabled={{starts_with(github.ref, 'refs/tags/v')}},pattern={{version}}
 
       # Build client
       - name: Build client
