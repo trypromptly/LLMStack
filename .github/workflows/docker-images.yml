@@ -5,13 +5,14 @@ on:
     branches: ["main"]
     # Publish semver tags as releases.
     tags:
-      - 'v*'
+      - "v*"
 
 env:
   REGISTRY: ghcr.io
   ORG: trypromptly
   IMAGE_NAME_API: "llmstack-api"
   IMAGE_NAME_NGINX: "llmstack-nginx"
+  IMAGE_NAME_PLAYWRIGHT: "llmstack-playwright"
 
 jobs:
   build:
@@ -68,6 +69,12 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME_NGINX }}
 
+      - name: Extract Docker metadata for playwright
+        id: meta-playwright
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME_PLAYWRIGHT }}
+
       # Build client
       - name: Build client
         run: |
@@ -104,6 +111,20 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: REGISTRY=${{ env.REGISTRY }}/${{ env.ORG }}/
 
+      - name: Build and push LLMStack playwright Docker image
+        id: build-and-push-playwright
+        uses: docker/build-push-action@v4
+        with:
+          context: playwright
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-playwright.outputs.tags }}
+          labels: ${{ steps.meta-playwright.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: REGISTRY=${{ env.REGISTRY }}/${{ env.ORG }}/
+
       - name: Sign the published LLMStack API Docker image
         if: ${{ github.event_name != 'pull_request' }}
         env:
@@ -119,4 +140,11 @@ jobs:
         env:
           TAGS: ${{ steps.meta-nginx.outputs.tags }}
           DIGEST: ${{ steps.build-and-push-nginx.outputs.digest }}
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      - name: Sign the published LLMStack playwright Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          TAGS: ${{ steps.meta-playwright.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push-playwright.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
