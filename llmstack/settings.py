@@ -276,6 +276,8 @@ WEAVIATE_EMBEDDINGS_API_RATE_LIMIT = 1000
 WEAVIATE_EMBEDDINGS_BATCH_SIZE = 50
 USE_CUSTOM_EMBEDDING = os.getenv('USE_CUSTOM_EMBEDDING', 'False') == 'True'
 
+PLAYWRIGHT_URL = os.getenv('PLAYWRIGHT_URL', 'ws://playwright:30000/ws')
+
 RQ_QUEUES = {
     'default': {
         'HOST': os.getenv('REDIS_HOST', 'redis'),

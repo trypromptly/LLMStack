@@ -12,6 +12,8 @@ from scrapy.spiders import Rule
 from scrapy.spiders import SitemapSpider
 from unstructured.partition.auto import partition_html
 
+from django.conf import settings
+
 CRAWLER_SETTINGS = {
     'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
     'ROBOTSTXT_OBEY': True,
@@ -67,7 +69,7 @@ def run_sitemap_spider_in_process(sitemap_url):
 
 async def run_playwright(url):
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch()
+        browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') else await playwright.chromium.launch()
         page = await browser.new_page()
         await page.goto(url)
         html_content = await page.content()
