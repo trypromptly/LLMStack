@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   api:
-    image: ghcr.io/trypromptly/llmstack-api:latest
+    image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-api:latest
     build:
       context: .
       cache_from:
@@ -17,7 +17,7 @@ services:
     cap_add:
       - SYS_PTRACE
   rqworker:
-    image: ghcr.io/trypromptly/llmstack-api:latest
+    image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-api:latest
     build:
       context: .
       cache_from:
@@ -32,7 +32,7 @@ services:
     env_file:
       - .env
   nginx:
-    image: ghcr.io/trypromptly/llmstack-nginx:latest
+    image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-nginx:latest
     build:
       context: .
       dockerfile: Dockerfile.nginx
@@ -44,6 +44,20 @@ services:
       - .env
     depends_on:
       - api
+  playwright:
+    image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-playwright:latest
+    build:
+      context: playwright
+      dockerfile: Dockerfile
+      cache_from:
+        - llmstack-playwright:latest
+    command: npx --yes playwright launch-server --browser chromium --config /config.json
+    expose:
+      - 30000
+    ipc: host
+    user: pwuser
+    security_opt:
+      - seccomp:playwright/seccomp_profile.json
   redis:
     image: redis:alpine
     command: redis-server

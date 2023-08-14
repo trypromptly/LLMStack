@@ -3,7 +3,6 @@ FROM python:3.11-slim AS builder
 
 ADD requirements_base.txt /requirements_base.txt
 RUN pip install --no-cache-dir -r /requirements_base.txt
-RUN playwright install chromium
 
 ADD requirements_datasources.txt /requirements_datasources.txt
 RUN pip install --no-cache-dir -r /requirements_datasources.txt
@@ -26,17 +25,7 @@ RUN groupadd -r ${APP_USER} && useradd --no-log-init -r -g ${APP_USER} ${APP_USE
     && mkdir -p /home/${APP_USER} \
     && chown -R ${APP_USER}:${APP_USER} /home/${APP_USER}
 
-RUN apt-get update && apt-get install -y libpcre3 \
-    mime-support \
-    ffmpeg \
-    postgresql-client \
-    gstreamer1.0-libav \
-    libnss3-tools \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libxkbcommon-x11-0 \
-    libxcomposite1 \
-    libxdamage1 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y postgresql-client mime-support ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Copy application code
 COPY --from=builder /code/apps /code/apps
@@ -59,9 +48,6 @@ COPY --from=builder /code/docker-entrypoint.sh /code/docker-entrypoint.sh
 COPY --from=builder /root/.cache/pip /root/.cache/pip
 COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
-
-COPY --from=builder /root/.cache/ms-playwright /home/${APP_USER}/.cache/ms-playwright
-RUN chown -R ${APP_USER}:${APP_USER} /home/${APP_USER}/.cache
 
 WORKDIR /code/
 
