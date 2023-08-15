@@ -1,11 +1,7 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 
 from django.utils.log import DEFAULT_LOGGING
-
-load_dotenv(dotenv_path='.env.dev')
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,9 +20,11 @@ ALLOWED_HOSTS = os.getenv(
     '127.0.0.1,localhost',
 ).split(',')
 
+LLMSTACK_PORT = os.getenv('LLMSTACK_PORT', 3000)
+
 CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS',
-    'http://127.0.0.1:3000,http://localhost:3000',
+    f'http://127.0.0.1:{LLMSTACK_PORT},http://localhost:{LLMSTACK_PORT}',
 ).split(',')
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
