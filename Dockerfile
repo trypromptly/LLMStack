@@ -1,5 +1,5 @@
 # Stage 1: Compile and build code
-FROM python:3.11-slim AS builder
+FROM python:3.11 AS builder
 
 ADD requirements_base.txt /requirements_base.txt
 RUN pip install --no-cache-dir -r /requirements_base.txt
