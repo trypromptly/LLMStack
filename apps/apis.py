@@ -306,8 +306,7 @@ class AppViewSet(viewsets.ViewSet):
 
         # Cleanup rungraph 
         # Delete all the run_graph entries
-        for entry in run_graph_entries:
-            entry.delete()
+        run_graph_entries.delete()
             
         # Delete all the endpoint entries
         for entry in endpoint_entries:
