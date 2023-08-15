@@ -38,6 +38,8 @@ services:
       dockerfile: Dockerfile.nginx
       cache_from:
         - llmstack-nginx:latest
+      args:
+        - REGISTRY=${REGISTRY:-ghcr.io/trypromptly/}
     ports:
       - ${LLMSTACK_PORT:-3000}:80
     env_file:
