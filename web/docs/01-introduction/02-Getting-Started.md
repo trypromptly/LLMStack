@@ -5,9 +5,21 @@ sidebar_label: Getting Started
 ---
 
 ## Getting Started
-To get started with LLMStack, you can either use the prebuilt docker image or build from source.
+To get started with LLMStack, you can either use the prebuilt release archive or build from source.
 
-### Docker Image
+### Use Prebuilt Release
+Download the latest release from [here](https://github.com/trypromptly/LLMStack/releases). Extract the archive and run the following command from the extracted directory.
+```bash
+cp .env.prod .env
+```
+:::info
+If you would like to add any default keys to your LLMStack installation you can add by modifying the `.env` file. 
+:::
+
+Start the docker containers:
+```bash
+docker compose up
+```
 
 ### Build from Source
 1. Clone the repository

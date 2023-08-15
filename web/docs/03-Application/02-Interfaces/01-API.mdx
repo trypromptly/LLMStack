@@ -1,0 +1,135 @@
+---
+id: api
+title: API
+sidebar_label: API
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+LLMstack has been designed as an API first platform. Most of the platform feature are available via an API. Hence any app built using LLMStack can be accessed via the API. The API for an application support a streaming mode and a non streaming mode. 
+
+### Streaming Mode
+In streaming mode, the API will return a stream of data as soon as data is available from any processor.
+
+<Tabs>
+<TabItem value="js" label="JavaScript">
+
+```js
+const axios = require('axios');
+
+const url = 'https://trypromptly.com/api/apps/966a9f11-2262-4466-af29-bd6c7b35b632/run';
+const PROMPTLY_TOKEN = '<token_value>';
+const payload = {
+  "input": {
+   "text": "Hello World"
+  },
+  "stream": true,
+}
+const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Token ' + PROMPTLY_TOKEN,
+
+  }
+axios
+  .post(url, payload, { headers, responseType: 'stream' })
+  .then(response => {
+    response.data.on('data', line => {
+      if (line) {
+        console.log(line.toString('utf8'));
+      }
+    });
+  })
+  .catch(error => {
+    console.error(error);
+  });
+
+
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+import requests
+
+PROMPTLY_TOKEN = '<token_value>'    
+url = 'https://trypromptly.com/api/apps/<app-id>/run'
+
+payload = {
+  "input": {
+    "text": "Hello World"
+  },
+  "stream": True,
+}
+headers = {
+  "Content-Type": "application/json",
+  "Authorization": "Token " + PROMPTLY_TOKEN,
+}
+
+response = requests.post(url, headers=headers, json=payload, stream=True)
+for line in response.iter_lines():
+  if line:
+    print(line.decode('utf8'))
+```
+
+</TabItem>
+</Tabs>
+
+### Non Streaming Mode
+In non streaming mode, the API will return the output of the application once the application has completed processing.
+
+
+<Tabs>
+<TabItem value="js" label="JavaScript">
+
+```js
+ const axios = require('axios');
+
+const url = 'https://trypromptly.com/api/apps/<app-id>/run';
+const PROMPTLY_TOKEN = '<token_value>';
+const payload = {
+  "input": {
+    "text": "Hello World"
+  },
+  "stream": false,
+}
+const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Token ' + PROMPTLY_TOKEN,
+
+  }
+
+axios.post(url, payload, { headers: headers})
+  .then((response) => {
+  console.log(response.data);
+});
+```
+
+</TabItem>
+<TabItem value="py" label="Python">
+
+```py
+import requests
+
+PROMPTLY_TOKEN = '<token_value>'    
+url = 'https://trypromptly.com/api/apps/<app-id>/run'
+
+payload = {
+  "input": {
+    "text": "Hello World"
+  },
+  "stream": False,
+}
+headers = {
+  "Content-Type": "application/json",
+  "Authorization": "Token " + PROMPTLY_TOKEN,
+}
+
+response = requests.request("POST", url, headers=headers, json=payload)
+
+print(response.text.encode('utf8'))
+```
+
+</TabItem>
+</Tabs>
+

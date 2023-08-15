@@ -1,5 +1,5 @@
 ---
-id: Data
+id: data
 title: Data
 sidebar_label: Data
 ---
