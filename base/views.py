@@ -25,6 +25,7 @@ def index(request):
     with open(os.path.join(settings.REACT_APP_DIR, 'build', 'index.html')) as f:
         template = Template(f.read())
         context = Context(
-            {'page_title': page_title},
+            {'page_title': page_title, 'page_description': None,
+                'page_keywords': None, 'site_name': None},
         )
         return HttpResponse(template.render(context=context))
