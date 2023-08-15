@@ -1,4 +1,6 @@
 ARG REGISTRY
+ARG TAG
+
 FROM ${REGISTRY:-}llmstack-api:${TAG:-latest} as builder
 FROM nginx:stable-alpine3.17-slim
 

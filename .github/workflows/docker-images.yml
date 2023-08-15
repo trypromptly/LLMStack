@@ -109,7 +109,9 @@ jobs:
           cache-to: type=gha,mode=max
           file: Dockerfile.nginx
           platforms: linux/amd64,linux/arm64
-          build-args: REGISTRY=${{ env.REGISTRY }}/${{ env.ORG }}/
+          build-args: |
+            REGISTRY=${{ env.REGISTRY }}/${{ env.ORG }}/
+            TAG=main
 
       - name: Build and push LLMStack playwright Docker image
         id: build-and-push-playwright
@@ -121,9 +123,8 @@ jobs:
           labels: ${{ steps.meta-playwright.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          file: Dockerfile
+          file: playwright/Dockerfile
           platforms: linux/amd64,linux/arm64
-          build-args: REGISTRY=${{ env.REGISTRY }}/${{ env.ORG }}/
 
       - name: Sign the published LLMStack API Docker image
         if: ${{ github.event_name != 'pull_request' }}
