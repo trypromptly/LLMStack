@@ -3,8 +3,6 @@ import uuid
 from urllib.parse import urlparse
 
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 
@@ -127,9 +125,16 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             DataSource, uuid=uuid.UUID(uid), owner=request.user,
         )
 
-        # Delete the data source and cleanup all data source entries associated with it
+        # Delete all datasource entries associated with the datasource
+        datasource_entries = DataSourceEntry.objects.filter(
+            datasource=datasource,
+        )
+        for entry in datasource_entries:
+            DataSourceEntryViewSet().delete(request=request, uid=str(entry.uuid))
+        
+        # Delete the data from data store
         delete_data_source_task(datasource)
-
+        
         datasource.delete()
         return DRFResponse(status=204)
 

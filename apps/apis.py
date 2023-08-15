@@ -301,17 +301,17 @@ class AppViewSet(viewsets.ViewSet):
 
         # Cleanup app run_graph
         run_graph_entries = app.run_graph.all()
-        endpoint_entries = filter(lambda x: x != None, set(list(map(lambda x: x.entry_endpoint, run_graph_entries)) +
-                                                           list(map(lambda x: x.exit_endpoint, run_graph_entries))))
+        endpoint_entries = list(filter(lambda x: x != None, set(list(map(lambda x: x.entry_endpoint, run_graph_entries)) +
+                                                           list(map(lambda x: x.exit_endpoint, run_graph_entries)))))
 
+        # Cleanup rungraph 
+        # Delete all the run_graph entries
+        run_graph_entries.delete()
+            
         # Delete all the endpoint entries
         for entry in endpoint_entries:
             EndpointViewSet.delete(self, request, id=str(
                 entry.parent_uuid), force_delete_app=True)
-
-        # Delete all the run_graph entries
-        for entry in run_graph_entries:
-            entry.delete()
 
         app.delete()
 

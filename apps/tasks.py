@@ -1,6 +1,5 @@
 import logging
 import uuid
-from typing import Any
 from typing import List
 
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
@@ -9,6 +8,7 @@ from datasources.models import DataSource
 from datasources.models import DataSourceEntry
 from datasources.models import DataSourceEntryStatus
 from datasources.types import DataSourceTypeFactory
+import weaviate
 
 logger = logging.getLogger(__name__)
 
@@ -65,11 +65,23 @@ def delete_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
         datasource.type,
     )
     datasource_entry_handler = datasource_entry_handler_cls(datasource)
-    datasource_entry_items = datasource_entry_handler.delete_entry(
-        entry_data.config,
-    )
-
-    entry_data.delete()
+    try:
+        datasource_entry_items = datasource_entry_handler.delete_entry(
+            entry_data.config,
+        )
+        entry_data.delete()
+    except weaviate.exceptions.UnexpectedStatusCodeException:
+        logger.exception("Error deleting data source entry from weaviate")
+        entry_data.delete()
+    except Exception as e:
+        logger.exception(
+            f'Error deleting data_source_entry: %s' %
+            str(entry_data.name),
+        )
+        entry_data.status = DataSourceEntryStatus.FAILED
+        entry_data.config = {'errors': {'message':"Error in deleting data source entry"}}
+        entry_data.save()
+    
     datasource.save()
     return datasource_entry_items
 
