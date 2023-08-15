@@ -408,21 +408,6 @@
   },
   {
     "model": "apiabstractor.apibackend",
-    "pk": 6,
-    "fields": {
-      "name": "Text-QnA",
-      "slug": "promptly_text_qna",
-      "description": "Answers questions based on the provided information",
-      "api_provider": 4,
-      "api_endpoint": "textqna",
-      "params": {},
-      "input_schema": {},
-      "output_schema": {},
-      "config_schema": {}
-    }
-  },
-  {
-    "model": "apiabstractor.apibackend",
     "pk": 7,
     "fields": {
       "name": "Text-Chat",
