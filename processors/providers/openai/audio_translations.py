@@ -5,25 +5,25 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from common.promptly.blocks.vendor.openai import OpenAIAPIInputEnvironment
-from common.promptly.blocks.vendor.openai import OpenAIAPIProcessorOutputMetadata
-from common.promptly.blocks.vendor.openai import OpenAIAudioTranslationsProcessor
-from common.promptly.blocks.vendor.openai import OpenAIAudioTranslationsProcessorConfiguration
-from common.promptly.blocks.vendor.openai import OpenAIAudioTranslationsProcessorInput
-from common.promptly.blocks.vendor.openai import OpenAIAudioTranslationsProcessorOutput
-from common.promptly.blocks.vendor.openai import OpenAIFile
-from common.promptly.core.base import BaseErrorOutput
+from common.blocks.llm.openai import OpenAIAPIInputEnvironment
+from common.blocks.llm.openai import OpenAIAPIProcessorOutputMetadata
+from common.blocks.llm.openai import OpenAIAudioTranslationsProcessor
+from common.blocks.llm.openai import OpenAIAudioTranslationsProcessorConfiguration
+from common.blocks.llm.openai import OpenAIAudioTranslationsProcessorInput
+from common.blocks.llm.openai import OpenAIAudioTranslationsProcessorOutput
+from common.blocks.llm.openai import OpenAIFile
+from common.blocks.http import BaseErrorOutput
 from common.utils.utils import get_key_or_raise
 from common.utils.utils import validate_parse_data_uri
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import DataUrl
 
 
 logger = logging.getLogger(__name__)
 
 
-class AudioTranslationsInput(BaseSchema):
+class AudioTranslationsInput(ApiProcessorSchema):
     file: str = Field(
         default='',
         description='The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.', accepts={'audio/*': []},  maxSize=20000000, widget='file',
@@ -36,7 +36,7 @@ class AudioTranslationsInput(BaseSchema):
     )
 
 
-class AudioTranslationsOutput(OpenAIAudioTranslationsProcessorOutput, BaseSchema):
+class AudioTranslationsOutput(OpenAIAudioTranslationsProcessorOutput, ApiProcessorSchema):
     text: str = Field(
         default='', description='The translated text', widget='textarea',
     )
@@ -45,7 +45,7 @@ class AudioTranslationsOutput(OpenAIAudioTranslationsProcessorOutput, BaseSchema
     )
 
 
-class AudioTranslationsConfiguration(OpenAIAudioTranslationsProcessorConfiguration, BaseSchema):
+class AudioTranslationsConfiguration(OpenAIAudioTranslationsProcessorConfiguration, ApiProcessorSchema):
     model: str = Field(
         default='whisper-1',
         description='ID of the model to use. Only `whisper-1` is currently available.\n',

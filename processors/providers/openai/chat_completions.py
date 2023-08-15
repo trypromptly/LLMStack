@@ -11,14 +11,14 @@ from pydantic import confloat
 from pydantic import conint
 from pydantic import Field
 
-from common.promptly.blocks.vendor.openai import ChatCompletionsModel
-from common.promptly.blocks.vendor.openai import FunctionCall as OpenAIFunctionCall
-from common.promptly.blocks.vendor.openai import OpenAIChatCompletionsAPIProcessor
-from common.promptly.blocks.vendor.openai import OpenAIChatCompletionsAPIProcessorConfiguration
-from common.promptly.blocks.vendor.openai import OpenAIChatCompletionsAPIProcessorInput
-from common.promptly.blocks.vendor.openai import OpenAIChatCompletionsAPIProcessorOutput
+from common.blocks.llm.openai import ChatCompletionsModel
+from common.blocks.llm.openai import FunctionCall as OpenAIFunctionCall
+from common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessor
+from common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessorConfiguration
+from common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessorInput
+from common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessorOutput
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import CHAT_WIDGET_NAME
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class ChatMessage(BaseModel):
     )
 
 
-class FunctionCall(BaseSchema):
+class FunctionCall(ApiProcessorSchema):
     name: str = Field(
         default='', description='The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.',
     )
@@ -69,7 +69,7 @@ class FunctionCall(BaseSchema):
     )
 
 
-class ChatCompletionsInput(BaseSchema):
+class ChatCompletionsInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default='', description='A message from the system, which will be prepended to the chat history.', widget='textarea',
     )
@@ -88,7 +88,7 @@ class ChatCompletionsInput(BaseSchema):
         title = 'Chat Completions Input'
 
 
-class ChatCompletionsOutput(BaseSchema):
+class ChatCompletionsOutput(ApiProcessorSchema):
     choices: List[ChatMessage] = Field(
         default=[], description='Messages', widget=CHAT_WIDGET_NAME,
     )
@@ -97,7 +97,7 @@ class ChatCompletionsOutput(BaseSchema):
     )
 
 
-class ChatCompletionsConfiguration(OpenAIChatCompletionsAPIProcessorConfiguration, BaseSchema):
+class ChatCompletionsConfiguration(OpenAIChatCompletionsAPIProcessorConfiguration, ApiProcessorSchema):
     model: ChatCompletionsModel = Field(
         default=ChatCompletionsModel.GPT_3_5,
         description='ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.',

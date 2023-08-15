@@ -1,9 +1,7 @@
 import logging
 import time
-from types import TracebackType
 from typing import Any
 from typing import NamedTuple
-from typing import Type
 
 from jinja2 import Template
 

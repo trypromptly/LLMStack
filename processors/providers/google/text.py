@@ -13,12 +13,12 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 logger = logging.getLogger(__name__)
 
 
-class TextInput(BaseSchema):
+class TextInput(ApiProcessorSchema):
     prompt: str = Field(
         description='Text input to generate model response. Prompts can include preamble, questions, suggestions, instructions, or examples.',
     )
@@ -49,11 +49,11 @@ class TextPrediction(BaseModel):
     safetyAttributes: Optional[SafetyAttributes]
 
 
-class TextOutput(BaseSchema):
+class TextOutput(ApiProcessorSchema):
     prediction: TextPrediction
 
 
-class TextConfiguration(BaseSchema):
+class TextConfiguration(ApiProcessorSchema):
     temperature: float = Field(description='The temperature is used for sampling during the response generation, which occurs when topP and topK are applied. Temperature controls the degree of randomness in token selection. Lower temperatures are good for prompts that require a more deterministic and less open-ended or creative response, while higher temperatures can lead to more diverse or creative results. A temperature of 0 is deterministic: the highest probability response is always selected. For most use cases, try starting with a temperature of 0.2.', le=1.0, ge=0.0, multiple_of=0.05, default=0.0)
     maxOutputTokens: int = Field(
         description='Maximum number of tokens that can be generated in the response. Specify a lower value for shorter responses and a higher value for longer responses.', le=1024, ge=1, default=256, multiple_of=1,

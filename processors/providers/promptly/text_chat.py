@@ -14,7 +14,7 @@ from pydantic import Field
 from datasources.models import DataSource
 from datasources.types import DataSourceTypeFactory
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class TextChatCompletionsModel(str, Enum):
         return self.value
 
 
-class TextChatConfiguration(BaseSchema):
+class TextChatConfiguration(ApiProcessorSchema):
     model: TextChatCompletionsModel = Field(
         default=TextChatCompletionsModel.GPT_3_5,
         description='ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.',
@@ -70,14 +70,14 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
     )
 
 
-class TextChatInput(BaseSchema):
+class TextChatInput(ApiProcessorSchema):
     question: str = Field(..., description='Question to answer')
     search_filters: str = Field(
         title='Search filters', default=None, description='Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata', advanced_parameter=True,
     )
 
 
-class TextChatOutput(BaseSchema):
+class TextChatOutput(ApiProcessorSchema):
     answer: str = Field(..., description='Answer to the question')
 
 

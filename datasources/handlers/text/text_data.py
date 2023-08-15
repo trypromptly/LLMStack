@@ -1,11 +1,11 @@
 import logging
 from typing import List
 
-from common.promptly.vectorstore import Document
+from common.blocks.data.store.vectorstore import Document
 from common.utils.splitter import SpacyTextSplitter
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 
 logger = logging.getLogger(__file__)
@@ -31,7 +31,7 @@ class TextSchema(DataSourceSchema):
         )
 
 
-class TextDataSource(DataSourceTypeInterface[TextSchema]):
+class TextDataSource(DataSourceProcessor[TextSchema]):
 
     @staticmethod
     def name() -> str:

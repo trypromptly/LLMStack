@@ -11,32 +11,32 @@ from pydantic import confloat
 from pydantic import conint
 from pydantic import Field
 
-from common.promptly.blocks.vendor.openai import CompletionsModel
-from common.promptly.blocks.vendor.openai import OpenAICompletionsAPIProcessor
-from common.promptly.blocks.vendor.openai import OpenAICompletionsAPIProcessorConfiguration
-from common.promptly.blocks.vendor.openai import OpenAICompletionsAPIProcessorInput
-from common.promptly.blocks.vendor.openai import OpenAICompletionsAPIProcessorOutput
+from common.blocks.llm.openai import CompletionsModel
+from common.blocks.llm.openai import OpenAICompletionsAPIProcessor
+from common.blocks.llm.openai import OpenAICompletionsAPIProcessorConfiguration
+from common.blocks.llm.openai import OpenAICompletionsAPIProcessorInput
+from common.blocks.llm.openai import OpenAICompletionsAPIProcessorOutput
 from common.utils.utils import get_key_or_raise
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import TEXT_WIDGET_NAME
 
 
 logger = logging.getLogger(__name__)
 
 
-class CompletionsInput(BaseSchema):
+class CompletionsInput(ApiProcessorSchema):
     prompt: str = Field(default='', description='The prompt(s) to generate completions for, encoded as a string, array of strings, array of tokens, or array of token arrays.\n\nNote that <|endoftext|> is the document separator that the model sees during training, so if a prompt is not specified the model will generate as if from the beginning of a new document.')
 
 
-class CompletionsOutput(BaseSchema):
+class CompletionsOutput(ApiProcessorSchema):
     choices: List[str] = Field(default=[], widget=TEXT_WIDGET_NAME)
     api_response: Optional[dict] = Field(
         default={}, description='Raw processor output.', widget='hidden',
     )
 
 
-class CompletionsConfiguration(OpenAICompletionsAPIProcessorConfiguration, BaseSchema):
+class CompletionsConfiguration(OpenAICompletionsAPIProcessorConfiguration, ApiProcessorSchema):
     model: CompletionsModel = Field(
         default=CompletionsModel.TEXT_DAVINCI_003,
         description='ID of the model to use. You can use the [List models](/docs/api-reference/models/list) API to see all of your available models, or see our [Model overview](/docs/models/overview) for descriptions of them.',

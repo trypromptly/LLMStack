@@ -1,22 +1,18 @@
-import abc
-import copy
 import logging
 import time
-from enum import Enum
 from typing import Any
-from typing import Dict
-from typing import Generic
-from typing import Type
 from typing import TypeVar
 
 import ujson as json
 from pydantic import AnyUrl
-from pydantic import BaseModel
 
+from common.blocks.base.schema import BaseSchema as _Schema
+from common.blocks.base.processor import BaseInputType, BaseOutputType, BaseConfigurationType, ProcessorInterface
 from common.utils.utils import hydrate_input
 from play.actor import Actor
 from play.actor import BookKeepingData
 from play.utils import extract_jinja2_variables
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -41,88 +37,15 @@ class DataUrl(AnyUrl):
             },
         )
 
+class ApiProcessorSchema(_Schema):
+    pass
 
-def custom_json_dumps(v, **kwargs):
-    default_arg = kwargs.get('default', None)
-    return json.dumps(v, default=default_arg)
-
-
-def custom_json_loads(v, **kwargs):
-    return json.loads(v, **kwargs)
-
-
-class BaseSchema(BaseModel):
-    class Config:
-        json_dumps = custom_json_dumps
-        json_loads = custom_json_loads
-    """
-    This is Base Schema model for all API processor schemas
-    """
-    @classmethod
-    def get_json_schema(cls):
-        return cls.schema_json(indent=2)
-
-    @classmethod
-    def get_schema(cls):
-        return cls.schema()
-
-    @classmethod
-    def get_ui_schema(cls):
-        schema = cls.get_schema()
-        ui_schema = {}
-        for key in schema.keys():
-            if key == 'properties':
-                ui_schema['ui:order'] = list(schema[key].keys())
-                ui_schema[key] = {}
-                for prop_key in schema[key].keys():
-                    ui_schema[key][prop_key] = {}
-                    if 'title' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:label'] = schema[key][prop_key]['title']
-                    if 'description' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:description'] = schema[key][prop_key]['description']
-                    if 'type' in schema[key][prop_key]:
-                        if schema[key][prop_key]['type'] == 'string' and prop_key in ('data', 'text', 'content'):
-                            ui_schema[key][prop_key]['ui:widget'] = 'textarea'
-                        elif schema[key][prop_key]['type'] == 'string' and 'format' not in schema[key][prop_key]:
-                            ui_schema[key][prop_key]['ui:widget'] = 'text'
-                        elif schema[key][prop_key]['type'] == 'integer' or schema[key][prop_key]['type'] == 'number':
-                            if 'minimum' in schema[key][prop_key] and 'maximum' in schema[key][prop_key]:
-                                ui_schema[key][prop_key]['ui:widget'] = 'range'
-                                ui_schema[key][prop_key]['ui:options'] = {
-                                    'min': schema[key][prop_key]['minimum'], 'max': schema[key][prop_key]['maximum'],
-                                }
-                            else:
-                                ui_schema[key][prop_key]['ui:widget'] = 'updown'
-                        elif schema[key][prop_key]['type'] == 'boolean':
-                            ui_schema[key][prop_key]['ui:widget'] = 'checkbox'
-                        # elif schema[key][prop_key]['type'] == 'array':
-                        #     ui_schema[key][prop_key]['ui:widget'] = 'array'
-                    if 'enum' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:widget'] = 'select'
-                        ui_schema[key][prop_key]['ui:options'] = {
-                            'enumOptions': [
-                                {'value': val, 'label': val} for val in schema[key][prop_key]['enum']
-                            ],
-                        }
-                    if 'widget' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:widget'] = schema[key][prop_key]['widget']
-                    if 'format' in schema[key][prop_key] and schema[key][prop_key]['format'] == 'date-time':
-                        ui_schema[key][prop_key]['ui:widget'] = 'datetime'
-                    ui_schema[key][prop_key]['ui:advanced'] = schema[key][prop_key].get(
-                        'advanced_parameter', True,
-                    )
-            else:
-                ui_schema[key] = copy.deepcopy(schema[key])
-        return ui_schema['properties']
-
-
-class ApiProcessorInterface(Generic[InputSchemaType, OutputSchemaType, ConfigurationSchemaType], Actor):
+class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, BaseConfigurationType], Actor):
     """
     Abstract class for API processors
     """
-
     def __init__(self, input, config, env, output_stream=None, dependencies=[], session_data=None):
-        super().__init__(dependencies=dependencies)
+        Actor.__init__(self, dependencies=dependencies)
 
         # TODO: This is for backward compatibility. Remove this once all the processors are updated
         if 'datasource' in config and isinstance(config['datasource'], str):
@@ -130,72 +53,32 @@ class ApiProcessorInterface(Generic[InputSchemaType, OutputSchemaType, Configura
         if 'datasources' in config and isinstance(config['datasources'], str):
             config['datasources'] = [config['datasources']]
 
-        configuration_cls = self.__class__.__orig_bases__[0].__args__[2]
-        input_cls = self.__class__.__orig_bases__[0].__args__[0]
-        self._config = configuration_cls(**config)
-        self._input = input_cls(**input)
+        self._config = self._get_configuration_class()(**config)
+        self._input = self._get_input_class()(**input)
         self._env = env
         self._output_stream = output_stream
 
-        self.process_session_data(session_data)
-
-    @staticmethod
-    def name() -> str:
-        raise NotImplementedError
-
-    @staticmethod
-    def slug() -> str:
-        raise NotImplementedError
-
-    @classmethod
-    def get_configuration_schema(cls) -> dict:
-        api_processor_interface_class = cls.__orig_bases__[0]
-        return api_processor_interface_class.__args__[2].get_json_schema()
-
-    @classmethod
-    def get_configuration_ui_schema(cls) -> dict:
-        api_processor_interface_class = cls.__orig_bases__[0]
-        return api_processor_interface_class.__args__[2].get_ui_schema()
-
-    @classmethod
-    def get_input_schema(cls) -> dict:
-        api_processor_interface_class = cls.__orig_bases__[0]
-        return api_processor_interface_class.__args__[0].get_json_schema()
-
-    @classmethod
-    def get_input_ui_schema(cls) -> dict:
-        api_processor_interface_class = cls.__orig_bases__[0]
-        return api_processor_interface_class.__args__[0].get_ui_schema()
-
+        self.process_session_data(session_data) 
+    
     @classmethod
     def get_output_schema(cls) -> dict:
-        api_processor_interface_class = cls.__orig_bases__[0]
-        schema = json.loads(
-            api_processor_interface_class.__args__[
-                1
-            ].get_json_schema(),
-        )
+        schema = json.loads(cls._get_output_schema())
+        
         if 'description' in schema:
-            del schema['description']
+            schema.pop('description')
         if 'title' in schema:
-            del schema['title']
+            schema.pop('title')
         if 'api_response' in schema['properties']:
-            del schema['properties']['api_response']
-
-        for key in schema['properties'].keys():
-            if 'title' in schema['properties'][key]:
-                del schema['properties'][key]['title']
-
+            schema['properties'].pop('api_response')
+        for property in schema['properties']:
+            if 'title' in schema['properties'][property]:
+                schema['properties'][property].pop('title')
         return json.dumps(schema)
 
     @classmethod
     def get_output_ui_schema(cls) -> dict:
-        api_processor_interface_class = cls.__orig_bases__[0]
-        ui_schema = api_processor_interface_class.__args__[1].get_ui_schema()
-        ui_schema = {}
-        schema = api_processor_interface_class.__args__[
-            1
-        ].get_schema()
+        ui_schema = cls._get_output_ui_schema()
+        schema = json.loads(cls._get_output_schema())
         for key in schema['properties'].keys():
             if 'widget' in schema['properties'][key]:
                 ui_schema[key] = {
@@ -207,12 +90,6 @@ class ApiProcessorInterface(Generic[InputSchemaType, OutputSchemaType, Configura
 
         return ui_schema
 
-    @classmethod
-    def get_output_cls(cls) -> Type[BaseSchema]:
-        api_processor_interface_class = cls.__orig_bases__[0]
-        return api_processor_interface_class.__args__[1]
-
-    @abc.abstractmethod
     def process(self) -> dict:
         raise NotImplementedError
 
@@ -250,7 +127,7 @@ class ApiProcessorInterface(Generic[InputSchemaType, OutputSchemaType, Configura
         result = self.process(processed_input)
         if isinstance(result, dict):
             return result
-        elif isinstance(result, BaseSchema):
+        elif isinstance(result, ApiProcessorSchema):
             return result.dict()
         else:
             LOGGER.exception('Invalid result type')

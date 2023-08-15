@@ -8,7 +8,7 @@ from pydantic import Field
 
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import AUDIO_WIDGET_NAME
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 SCOPES = ['https://www.googleapis.com/auth/cloud-platform']
 
@@ -34,19 +34,19 @@ class AudioConfig(BaseModel):
     )
 
 
-class TextToSpeechInput(BaseSchema):
+class TextToSpeechInput(ApiProcessorSchema):
     input_text: str = Field(
         default='', description='Text to convert to speech.',
     )
 
 
-class TextToSpeechOutput(BaseSchema):
+class TextToSpeechOutput(ApiProcessorSchema):
     audio_content: Optional[str] = Field(
         default=None, description='The output audio content in base64 format.', widget=AUDIO_WIDGET_NAME,
     )
 
 
-class TextToSpeechConfiguration(BaseSchema):
+class TextToSpeechConfiguration(ApiProcessorSchema):
     voice: VoiceConfig = Field(
         default=VoiceConfig(), description='Voice configuration.',
     )

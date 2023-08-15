@@ -4,25 +4,25 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from common.promptly.blocks.http import HttpAPIProcessor as CoreHttpAPIProcessor
-from common.promptly.blocks.http import HttpAPIProcessorConfiguration
-from common.promptly.blocks.http import HttpAPIProcessorInput
-from common.promptly.blocks.http import HttpAPIProcessorOutput
+from common.blocks.http import HttpAPIProcessor as CoreHttpAPIProcessor
+from common.blocks.http import HttpAPIProcessorConfiguration
+from common.blocks.http import HttpAPIProcessorInput
+from common.blocks.http import HttpAPIProcessorOutput
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 logger = logging.getLogger(__name__)
 
 
-class PromptlyHttpAPIProcessorInput(HttpAPIProcessorInput, BaseSchema):
+class PromptlyHttpAPIProcessorInput(HttpAPIProcessorInput, ApiProcessorSchema):
     pass
 
 
-class PromptlyHttpAPIProcessorOutput(HttpAPIProcessorOutput, BaseSchema):
+class PromptlyHttpAPIProcessorOutput(HttpAPIProcessorOutput, ApiProcessorSchema):
     content: Optional[bytes] = Field(widget='hidden')
 
 
-class PromptlyHttpAPIProcessorConfiguration(HttpAPIProcessorConfiguration, BaseSchema):
+class PromptlyHttpAPIProcessorConfiguration(HttpAPIProcessorConfiguration, ApiProcessorSchema):
     timeout: Optional[int] = Field(
         description='Timeout in seconds', default=5, example=10, advanced_parameter=False, ge=0, le=60,
     )

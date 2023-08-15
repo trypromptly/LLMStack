@@ -16,7 +16,7 @@ from .utils import get_sampler_grpc_enum
 from .utils import GuidancePreset
 from .utils import Sampler
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import IMAGE_WIDGET_NAME
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 logger = logging.getLogger(__name__)
 
 
-class ImageToImageConfiguration(BaseSchema):
+class ImageToImageConfiguration(ApiProcessorSchema):
     engine_id: str = 'stable-diffusion-512-v2-0'
     """
     Inference engine (model) to use.
@@ -67,13 +67,13 @@ class ImageToImageConfiguration(BaseSchema):
     """
 
 
-class ImageToImageInput(BaseSchema):
+class ImageToImageInput(ApiProcessorSchema):
     init_image: str
     prompt: str
     negative_prompt: Optional[str] = None
 
 
-class ImageToImageOutput(BaseSchema):
+class ImageToImageOutput(ApiProcessorSchema):
     answer: List[str] = Field(
         default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
     )

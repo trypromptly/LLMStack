@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import Field
 
-from common.promptly.vectorstore import Document
+from common.blocks.data.store.vectorstore import Document
 from common.utils.splitter import CSVTextSplitter
 from common.utils.text_extract import extract_text_from_b64_json
 from common.utils.text_extract import ExtraParams
@@ -12,7 +12,7 @@ from common.utils.splitter import SpacyTextSplitter
 from common.utils.utils import validate_parse_data_uri
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 from datasources.models import DataSource
 from base.models import Profile
@@ -54,7 +54,7 @@ class GdriveFileSchema(DataSourceSchema):
         )
 
 
-class GdriveFileDataSource(DataSourceTypeInterface[GdriveFileSchema]):
+class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
 
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)

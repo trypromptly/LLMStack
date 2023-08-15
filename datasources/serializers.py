@@ -1,3 +1,5 @@
+import json 
+
 from rest_framework import serializers
 
 from .models import DataSource
@@ -16,7 +18,7 @@ class DataSourceTypeSerializer(serializers.ModelSerializer):
         )
         if datasource_type_handler_cls is None:
             return {}
-        return datasource_type_handler_cls.get_entry_config_schema()
+        return json.loads(datasource_type_handler_cls.get_input_schema())
 
     def get_entry_config_ui_schema(self, obj):
         datasource_type_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
@@ -24,7 +26,7 @@ class DataSourceTypeSerializer(serializers.ModelSerializer):
         )
         if datasource_type_handler_cls is None:
             return {}
-        return datasource_type_handler_cls.get_entry_config_ui_schema()
+        return datasource_type_handler_cls.get_input_ui_schema()
 
     class Meta:
         model = DataSourceType

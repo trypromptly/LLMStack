@@ -16,7 +16,7 @@ from stability_sdk import client
 
 from common.utils.utils import get_key_or_raise
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import IMAGE_WIDGET_NAME
 from processors.providers.stabilityai.utils import get_guidance_preset_enum
 from processors.providers.stabilityai.utils import get_sampler_grpc_enum
@@ -40,7 +40,7 @@ class StableDiffusionModel(str, Enum):
         return self.value
 
 
-class TextToImageInput(BaseSchema):
+class TextToImageInput(ApiProcessorSchema):
     prompt: List[str] = Field(
         default=[''], description='Text prompt to use for image generation.',
     )
@@ -50,7 +50,7 @@ class TextToImageInput(BaseSchema):
     )
 
 
-class TextToImageOutput(BaseSchema):
+class TextToImageOutput(ApiProcessorSchema):
     answer: List[str] = Field(
         default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
     )
@@ -59,7 +59,7 @@ class TextToImageOutput(BaseSchema):
     )
 
 
-class TextToImageConfiguration(BaseSchema):
+class TextToImageConfiguration(ApiProcessorSchema):
     engine_id: StableDiffusionModel = Field(
         default=StableDiffusionModel.STABLE_DIFFUSION_V1_5, description='Inference engine (model) to use.', advanced_parameter=False,
     )

@@ -5,23 +5,23 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from common.promptly.blocks.vendor.openai import OpenAIAPIInputEnvironment
-from common.promptly.blocks.vendor.openai import OpenAIAPIProcessorOutputMetadata
-from common.promptly.blocks.vendor.openai import OpenAIAudioTranscriptionProcessor
-from common.promptly.blocks.vendor.openai import OpenAIAudioTranscriptionsProcessorConfiguration
-from common.promptly.blocks.vendor.openai import OpenAIAudioTranscriptionsProcessorInput
-from common.promptly.blocks.vendor.openai import OpenAIAudioTranscriptionsProcessorOutput
-from common.promptly.blocks.vendor.openai import OpenAIFile
+from common.blocks.llm.openai import OpenAIAPIInputEnvironment
+from common.blocks.llm.openai import OpenAIAPIProcessorOutputMetadata
+from common.blocks.llm.openai import OpenAIAudioTranscriptionProcessor
+from common.blocks.llm.openai import OpenAIAudioTranscriptionsProcessorConfiguration
+from common.blocks.llm.openai import OpenAIAudioTranscriptionsProcessorInput
+from common.blocks.llm.openai import OpenAIAudioTranscriptionsProcessorOutput
+from common.blocks.llm.openai import OpenAIFile
 from common.utils.utils import get_key_or_raise
 from common.utils.utils import validate_parse_data_uri
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import DataUrl
 
 logger = logging.getLogger(__name__)
 
 
-class AudioTranscriptionInput(BaseSchema):
+class AudioTranscriptionInput(ApiProcessorSchema):
     file: str = Field(
         default='', description='The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.', accepts={'audio/*': []}, maxSize=20000000, widget='file',
     )
@@ -33,7 +33,7 @@ class AudioTranscriptionInput(BaseSchema):
     )
 
 
-class AudioTranscriptionOutput(OpenAIAudioTranscriptionsProcessorOutput, BaseSchema):
+class AudioTranscriptionOutput(OpenAIAudioTranscriptionsProcessorOutput, ApiProcessorSchema):
     text: str = Field(
         default='', description='The transcribed text', widget='textarea',
     )
@@ -42,7 +42,7 @@ class AudioTranscriptionOutput(OpenAIAudioTranscriptionsProcessorOutput, BaseSch
     )
 
 
-class AudioTranscriptionConfiguration(OpenAIAudioTranscriptionsProcessorConfiguration, BaseSchema):
+class AudioTranscriptionConfiguration(OpenAIAudioTranscriptionsProcessorConfiguration, ApiProcessorSchema):
     model: str = Field(
         default='whisper-1',
         description='ID of the model to use. Only `whisper-1` is currently available.\n',

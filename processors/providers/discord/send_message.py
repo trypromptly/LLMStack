@@ -7,26 +7,26 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from common.promptly.blocks.http import BearerTokenAuth
-from common.promptly.blocks.http import HttpAPIProcessor
-from common.promptly.blocks.http import HttpAPIProcessorInput
-from common.promptly.blocks.http import HttpMethod
-from common.promptly.blocks.http import JsonBody
+from common.blocks.http import BearerTokenAuth
+from common.blocks.http import HttpAPIProcessor
+from common.blocks.http import HttpAPIProcessorInput
+from common.blocks.http import HttpMethod
+from common.blocks.http import JsonBody
 from play.actor import BookKeepingData
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 
 logger = logging.getLogger(__name__)
 
 
-class DiscordEmbed(BaseSchema):
+class DiscordEmbed(ApiProcessorSchema):
     title: str
     description: str
     color: Optional[int]
 
 
-class DiscordSendMessageInput(BaseSchema):
+class DiscordSendMessageInput(ApiProcessorSchema):
     discord_user_id: str
     discord_username: str
     discord_global_name: str
@@ -38,11 +38,11 @@ class DiscordSendMessageInput(BaseSchema):
     embeds: Optional[List[DiscordEmbed]]
 
 
-class DiscordSendMessageOutput(BaseSchema):
+class DiscordSendMessageOutput(ApiProcessorSchema):
     code: int
 
 
-class DiscordSendMessageConfiguration(BaseSchema):
+class DiscordSendMessageConfiguration(ApiProcessorSchema):
     pass
 
 

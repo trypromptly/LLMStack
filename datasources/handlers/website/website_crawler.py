@@ -4,12 +4,12 @@ from typing import Optional
 
 from pydantic import Field
 
-from common.promptly.vectorstore import Document
+from common.blocks.data.store.vectorstore import Document
 from common.utils.crawlers import run_url_spider_in_process
 from common.utils.splitter import SpacyTextSplitter
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 
 logger = logging.getLogger(__file__)
@@ -37,7 +37,7 @@ class WebsiteCrawlerSchema(DataSourceSchema):
         )
 
 
-class WebsiteCrawlerDataSource(DataSourceTypeInterface[WebsiteCrawlerSchema]):
+class WebsiteCrawlerDataSource(DataSourceProcessor[WebsiteCrawlerSchema]):
     @staticmethod
     def name() -> str:
         return 'website crawler'

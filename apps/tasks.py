@@ -4,7 +4,7 @@ from typing import Any
 from typing import List
 
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.models import DataSource
 from datasources.models import DataSourceEntry
 from datasources.models import DataSourceEntryStatus
@@ -19,7 +19,7 @@ def add_data_entry_task(datasource: DataSource, datasource_entry_items: List[Dat
     datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
         datasource.type,
     )
-    datasource_entry_handler: DataSourceTypeInterface = datasource_entry_handler_cls(
+    datasource_entry_handler: DataSourceProcessor = datasource_entry_handler_cls(
         datasource,
     )
 

@@ -1,10 +1,10 @@
 import os
 import unittest
 
-from common.promptly.vectorstore import Document
-from common.promptly.vectorstore import DocumentQuery
-from common.promptly.vectorstore.chroma import Chroma
-from common.promptly.vectorstore.weaviate import Weaviate
+from common.blocks.data.store.vectorstore import Document
+from common.blocks.data.store.vectorstore import DocumentQuery
+from common.blocks.data.store.vectorstore.chroma import Chroma
+from common.blocks.data.store.vectorstore.weaviate import Weaviate
 
 
 class ChromaTest(unittest.TestCase):
