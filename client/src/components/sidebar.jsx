@@ -21,7 +21,6 @@ import {
   ListItemButton,
   ListItemText,
 } from "@mui/material";
-import icon from "../assets/icon.png";
 import {
   ApiOutlined,
   AppstoreAddOutlined,
@@ -35,6 +34,12 @@ import {
 } from "@ant-design/icons";
 import { onLogoutClick } from "./logout";
 import { LoggedOutModal } from "./LoggedOutModal";
+
+const icon = require(`../assets/${
+  process.env.REACT_APP_SITE_NAME
+    ? process.env.REACT_APP_SITE_NAME.toLowerCase()
+    : "llmstack"
+}-icon.png`);
 
 const { Panel } = Collapse;
 const { Sider } = Layout;
@@ -50,8 +55,8 @@ const siderStyle = {
 
 const iconStyle = {
   width: "54px",
-  borderRadius: "5px",
-  border: "solid 1px #183a58",
+  borderRadius: process.env.REACT_APP_SITE_NAME ? "5px" : "inherit",
+  border: process.env.REACT_APP_SITE_NAME ? "solid 1px #183a58" : "inherit",
 };
 
 const menuItemStyle = {

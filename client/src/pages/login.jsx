@@ -7,10 +7,10 @@ import Paper from "@mui/material/Paper";
 import { styled } from "@mui/system";
 import { postData } from "./dataUtil";
 
-import logo from "../assets/images/llmstack-logo-light.png";
+import logo from "../assets/llmstack-logo.svg";
 
 const Logo = styled("img")({
-  width: "50%",
+  width: "60%",
   marginBottom: 20,
 });
 

@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/static/images/icon.png" />
+    <link
+      rel="icon"
+      href="%PUBLIC_URL%/static/images/{{ site_name|default:'llmstack' }}-icon.png"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta
@@ -13,7 +16,10 @@
       name="keywords"
       content="{{ page_keywords|default:'No-code AI app builder, chatbot builder, generative AI apps, Custom ChatGPT, share prompts, OpenAI completions, image generation, Stable Diffusion, API caching, Prototype ML apps' }}"
     />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/static/images/icon.png" />
+    <link
+      rel="apple-touch-icon"
+      href="%PUBLIC_URL%/static/images/{{ site_name|default:'llmstack' }}-icon.png"
+    />
     <!-- <link rel="manifest" href="%PUBLIC_URL%/manifest.json" /> -->
     <!-- prettier-ignore -->
     <title>
@@ -47,6 +53,5 @@
     ></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
-
   </body>
 </html>

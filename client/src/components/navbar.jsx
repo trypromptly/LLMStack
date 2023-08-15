@@ -1,7 +1,12 @@
 import React from "react";
 import { Button, Space, Image, Dropdown } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
-import icon from "../assets/icon.png";
+
+const icon = require(`../assets/${
+  process.env.REACT_APP_SITE_NAME
+    ? process.env.REACT_APP_SITE_NAME.toLowerCase()
+    : "llmstack"
+}-icon.png`);
 
 const iconStyle = {
   width: "32px",
