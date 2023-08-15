@@ -9,11 +9,11 @@
 
 Build tailor-made generative AI applications, chatbots and agents that cater to your unique needs by chaining multiple LLMs. Seamlessly integrate your own data and GPT-powered models without any coding experience using LLMStack's no-code builder. Trigger your AI chains from Slack or Discord. Deploy to the cloud or on-premise.
 
-## Quickstart
+## Getting Started
 
 **_Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow the instructions below to deploy LLMStack on your own infrastructure._**
 
-Clone this repository or downoad the latest release. Copy `.env.prod` to `.env` and update `SECRET_KEY`, `CIPHER_SALT` and `DATABASE_PASSWORD` in `.env` file:
+Clone this repository or downoad the latest release. Install [docker](https://docs.docker.com/engine/install/) if not already installed. Copy `.env.prod` to `.env` and update `SECRET_KEY`, `CIPHER_SALT` and `DATABASE_PASSWORD` in `.env` file:
 
 ```
 cp .env.prod .env
@@ -24,6 +24,8 @@ Run LLMStack using the following command:
 ```
 ./run-llmstack.sh
 ```
+
+> If you are on Windows, you can use `run-llmstack.bat` instead
 
 Once LLMStack is up and ready, it should automatically open your browser and point it to [localhost:3000](http://localhost:3000). You can also alternatively use `docker compose up` to manually start the containers and open [localhost:3000](http://localhost:3000) to login into the platform. Make sure to wait for the API server to be ready before trying to load LLMStack.
 
@@ -77,9 +79,19 @@ Check out our documentation at [llmstack.ai/docs](https://llmstack.ai/docs/) to 
 
 ## Development
 
-> Remember to run `npm run build` before starting your containers for development. Make sure to run `npm install` in the client directory before running `npm start` or `npm run build`.
+Run the following commands from the root of the repository to bring up the application containers in development mode. Make sure you have [docker](https://docs.docker.com/engine/install/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) installed on your system before running these commands.
 
-Run `docker compose -f docker-compose.dev.yml --env-file .env.dev up` to start the containers in development mode. This will mount the source code into the containers and restart the containers on code changes. Update `.env.dev` as needed. Please note that LLMStack is available at [http://localhost:9000](http://localhost:9000) in development mode.
+```bash
+cd client
+npm install
+npm run build
+cd ..
+docker compose -f docker-compose.dev.yml --env-file .env.dev up --build
+```
+
+This will mount the source code into the containers and restart the containers on code changes. Update `.env.dev` as needed. Please note that LLMStack is available at [http://localhost:9000](http://localhost:9000) in development mode.
+
+> You can skip running `npm install` and `npm run build` if you have already built the client before
 
 For frontend development, you can use `npm start` to start the development server in client directory. You can also use `npm run build` to build the frontend and serve it from the backend server.
 
