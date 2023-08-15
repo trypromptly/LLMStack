@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class TextChatExample(BaseModel):
     )
 
 
-class TextChatInput(BaseSchema):
+class TextChatInput(ApiProcessorSchema):
     context: Optional[str] = Field(
         description='Context shapes how the model responds throughout the conversation. For example, you can use context to specify words the model can or cannot use, topics to focus on or avoid, or the response format or style.',
     )
@@ -74,11 +74,11 @@ class TextChatPrediction(BaseModel):
     )
 
 
-class TextChatOutput(BaseSchema):
+class TextChatOutput(ApiProcessorSchema):
     prediction: TextChatPrediction
 
 
-class TextChatConfiguration(BaseSchema):
+class TextChatConfiguration(ApiProcessorSchema):
     temperature: float = Field(description='The temperature is used for sampling during the response generation, which occurs when topP and topK are applied. Temperature controls the degree of randomness in token selection. Lower temperatures are good for prompts that require a more deterministic and less open-ended or creative response, while higher temperatures can lead to more diverse or creative results. A temperature of 0 is deterministic: the highest probability response is always selected. For most use cases, try starting with a temperature of 0.2.', default=0.0, le=1.0, ge=0.0, multiple_of=0.1)
     maxOutputTokens: Optional[int] = Field(
         description='Maximum number of tokens that can be generated in the response. Specify a lower value for shorter responses and a higher value for longer responses.', le=1024, ge=1, default=256, multiple_of=1,

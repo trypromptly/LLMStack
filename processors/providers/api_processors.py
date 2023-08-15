@@ -1,11 +1,8 @@
 import logging
 
-from functools import lru_cache
-
 from .api_processor_interface import ApiProcessorInterface
 
 logger = logging.getLogger(__name__)
-
 
 class ApiProcessorFactory:
     """

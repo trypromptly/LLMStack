@@ -7,18 +7,18 @@ from pydantic import conint
 from pydantic import Field
 from pydantic import HttpUrl
 
-from common.promptly.vectorstore import Document
-from common.promptly.vectorstore.temp_weaviate import TempWeaviate
+from common.blocks.data.store.vectorstore import Document
+from common.blocks.data.store.vectorstore.temp_weaviate import TempWeaviate
 from common.utils.text_extract import extract_text_from_url
 from common.utils.text_extract import ExtraParams
 from common.utils.splitter import SpacyTextSplitter
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 logger = logging.getLogger(__name__)
 
 
-class HttpUriTextExtractorConfiguration(BaseSchema):
+class HttpUriTextExtractorConfiguration(ApiProcessorSchema):
     document_limit: Optional[conint(ge=0, le=10)] = Field(
         description='The maximum number of documents to return', default=1, advanced_parameter=True,
     )
@@ -27,7 +27,7 @@ class HttpUriTextExtractorConfiguration(BaseSchema):
     )
 
 
-class HttpUriTextExtractorInput(BaseSchema):
+class HttpUriTextExtractorInput(ApiProcessorSchema):
     url: str = Field(
         default='', description='The URL to extract text from', widget='text',
     )
@@ -36,7 +36,7 @@ class HttpUriTextExtractorInput(BaseSchema):
     )
 
 
-class HttpUriTextExtractorOutput(BaseSchema):
+class HttpUriTextExtractorOutput(ApiProcessorSchema):
     text: str = Field(
         default='', description='The extracted text from the URL',
     )

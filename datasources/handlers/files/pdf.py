@@ -9,12 +9,12 @@ from pydantic import Field
 from unstructured.documents.elements import PageBreak
 from unstructured.partition.pdf import partition_pdf
 
-from common.promptly.vectorstore import Document
+from common.blocks.data.store.vectorstore import Document
 from common.utils.splitter import SpacyTextSplitter
 from common.utils.utils import validate_parse_data_uri
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 from datasources.models import DataSource
 from base.models import Profile
@@ -56,7 +56,7 @@ class PdfSchema(DataSourceSchema):
         )
 
 
-class PDFDataSource(DataSourceTypeInterface[PdfSchema]):
+class PDFDataSource(DataSourceProcessor[PdfSchema]):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)

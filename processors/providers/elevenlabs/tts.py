@@ -10,7 +10,7 @@ from pydantic import Field
 
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import AUDIO_WIDGET_NAME
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 
 logger = logging.getLogger(__name__)
@@ -30,19 +30,19 @@ class VoiceSettings(BaseModel):
     )
 
 
-class TextToSpeechInput(BaseSchema):
+class TextToSpeechInput(ApiProcessorSchema):
     input_text: str = Field(
         default='', description='Text to convert to speech.',
     )
 
 
-class TextToSpeechOutput(BaseSchema):
+class TextToSpeechOutput(ApiProcessorSchema):
     audio_content: Optional[str] = Field(
         default=None, description='The output audio content in base64 format.', widget=AUDIO_WIDGET_NAME,
     )
 
 
-class TextToSpeechConfiguration(BaseSchema):
+class TextToSpeechConfiguration(ApiProcessorSchema):
     voice_id: str = Field(
         default='21m00Tcm4TlvDq8ikWAM', description='Voice ID to be used, you can use https://api.elevenlabs.io/v1/voices to list all the available voices.', advanced_parameter=False,
     )

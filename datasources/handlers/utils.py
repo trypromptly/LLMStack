@@ -1,4 +1,4 @@
-from common.promptly.vectorstore import Document
+from common.blocks.data.store.vectorstore import Document
 from common.utils.splitter import CSVTextSplitter
 from common.utils.text_extract import extract_text_elements
 from common.utils.splitter import SpacyTextSplitter

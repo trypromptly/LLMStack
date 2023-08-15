@@ -8,20 +8,20 @@ from asgiref.sync import async_to_sync
 from pydantic import conint
 from pydantic import Field
 
-from common.promptly.vectorstore import Document
-from common.promptly.vectorstore.temp_weaviate import TempWeaviate
+from common.blocks.data.store.vectorstore import Document
+from common.blocks.data.store.vectorstore.temp_weaviate import TempWeaviate
 from common.utils.text_extract import extract_text_from_b64_json
 from common.utils.text_extract import ExtraParams
 from common.utils.splitter import SpacyTextSplitter
 from common.utils.utils import validate_parse_data_uri
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import DataUrl
 
 logger = logging.getLogger(__name__)
 
 
-class DataUriTextExtractorConfiguration(BaseSchema):
+class DataUriTextExtractorConfiguration(ApiProcessorSchema):
     document_limit: Optional[conint(ge=0, le=10)] = Field(
         description='The maximum number of documents to return', default=1, advanced_parameter=True,
     )
@@ -30,7 +30,7 @@ class DataUriTextExtractorConfiguration(BaseSchema):
     )
 
 
-class DataUriTextExtractorInput(BaseSchema):
+class DataUriTextExtractorInput(ApiProcessorSchema):
     file: str = Field(
         default='', description='The file to extract text from', accepts={
             'application/pdf': [],
@@ -51,7 +51,7 @@ class DataUriTextExtractorInput(BaseSchema):
     )
 
 
-class DataUriTextExtractorOutput(BaseSchema):
+class DataUriTextExtractorOutput(ApiProcessorSchema):
     text: str = Field(
         default='', description='The extracted text from the file', widget='textarea',
     )

@@ -7,16 +7,15 @@ from typing import Optional
 from pydantic import Field
 from pydantic import SecretStr
 
-from common.promptly.blocks.data_extracter.aws_s3_path import AWSS3PathDataExtractorBlock
-from common.promptly.blocks.data_extracter.aws_s3_path import AWSS3PathDataExtractorBlockInput
-from common.promptly.vectorstore import Document
+from common.blocks.data.source.s3_path import S3Path, S3PathInput, S3PathConfiguration
+from common.blocks.data.store.vectorstore import Document
 from common.utils.splitter import CSVTextSplitter
 from common.utils.text_extract import extract_text_from_b64_json
 from common.utils.splitter import SpacyTextSplitter
 from common.utils.utils import validate_parse_data_uri
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 from datasources.models import DataSource
 from base.models import Profile
@@ -70,7 +69,7 @@ class S3FileSchema(DataSourceSchema):
         )
 
 
-class S3FileDataSource(DataSourceTypeInterface[S3FileSchema]):
+class S3FileDataSource(DataSourceProcessor[S3FileSchema]):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)
@@ -110,25 +109,26 @@ class S3FileDataSource(DataSourceTypeInterface[S3FileSchema]):
         else:
             region_name = self.profile.get_vendor_key('aws_default_region')
 
-        s3_file_data_extractor = AWSS3PathDataExtractorBlock(
-            configuration={'aws_access_key_id': aws_access_key_id,
-                           'aws_secret_access_key': aws_secret_access_key_secret, 'region_name': region_name},
-        )
+    
+        result = S3Path().process(
+            input=S3PathInput(bucket=entry.bucket, path=entry.path), 
+            configuration=S3PathConfiguration(
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key_secret,
+                region_name=region_name,
+            ))
+        document = result.documents[0]
 
-        result = s3_file_data_extractor.process(
-            AWSS3PathDataExtractorBlockInput(
-                path=entry.path, bucket=entry.bucket).dict(),
-        )
 
-        if result.result.metadata.http_status_code != 200:
+        if document.metadata['HTTPHeader']['http_status_code'] != 200:
             logger.error(
                 f'Error fetching file from S3: {result.result.metadata.http_status}',
             )
             raise Exception('Error fetching file from S3')
 
-        mime_type = result.result.metadata.content_type
+        mime_type = document.metadata['HTTPHeader']['content_type']
         base64_encoded_file_content = base64.b64encode(
-            result.result.content,
+            document.content,
         ).decode()
 
         data_url = 'data:{};name={};base64,{}'.format(

@@ -7,24 +7,24 @@ from asgiref.sync import async_to_sync
 from pydantic import conint
 from pydantic import Field
 
-from common.promptly.blocks.vendor.openai import OpenAIAPIInputEnvironment
-from common.promptly.blocks.vendor.openai import OpenAIFile
-from common.promptly.blocks.vendor.openai import OpenAIImageEditsProcessor
-from common.promptly.blocks.vendor.openai import OpenAIImageEditsProcessorConfiguration
-from common.promptly.blocks.vendor.openai import OpenAIImageEditsProcessorInput
-from common.promptly.blocks.vendor.openai import OpenAIImageEditsProcessorOutput
-from common.promptly.blocks.vendor.openai import Size
+from common.blocks.llm.openai import OpenAIAPIInputEnvironment
+from common.blocks.llm.openai import OpenAIFile
+from common.blocks.llm.openai import OpenAIImageEditsProcessor
+from common.blocks.llm.openai import OpenAIImageEditsProcessorConfiguration
+from common.blocks.llm.openai import OpenAIImageEditsProcessorInput
+from common.blocks.llm.openai import OpenAIImageEditsProcessorOutput
+from common.blocks.llm.openai import Size
 from common.utils.utils import get_key_or_raise
 from common.utils.utils import validate_parse_data_uri
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import DataUrl
 from processors.providers.api_processor_interface import IMAGE_WIDGET_NAME
 
 logger = logging.getLogger(__name__)
 
 
-class ImagesEditInput(BaseSchema):
+class ImagesEditInput(ApiProcessorSchema):
     image: Optional[str] = Field(
         default='',
         description='The image to edit. Must be a valid PNG file, less than 4MB, and square. If mask is not provided, image must have transparency, which will be used as the mask.',
@@ -40,13 +40,13 @@ class ImagesEditInput(BaseSchema):
     )
 
 
-class ImagesEditOutput(BaseSchema):
+class ImagesEditOutput(ApiProcessorSchema):
     answer: List[str] = Field(
         default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
     )
 
 
-class ImagesEditConfiguration(OpenAIImageEditsProcessorConfiguration, BaseSchema):
+class ImagesEditConfiguration(OpenAIImageEditsProcessorConfiguration, ApiProcessorSchema):
     size: Optional[Size] = Field(
         '1024x1024',
         description='The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.',

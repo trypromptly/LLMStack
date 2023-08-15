@@ -11,14 +11,14 @@ from bs4 import BeautifulSoup
 from bs4 import NavigableString
 from pydantic import Field
 
-from common.promptly.blocks.http import BearerTokenAuth
-from common.promptly.blocks.http import HttpAPIProcessor
-from common.promptly.blocks.http import HttpAPIProcessorInput
-from common.promptly.blocks.http import HttpMethod
-from common.promptly.blocks.http import JsonBody
+from common.blocks.http import BearerTokenAuth
+from common.blocks.http import HttpAPIProcessor
+from common.blocks.http import HttpAPIProcessorInput
+from common.blocks.http import HttpMethod
+from common.blocks.http import JsonBody
 from play.actor import BookKeepingData
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 logger = logging.getLogger(__name__)
 
@@ -126,21 +126,21 @@ def html_to_slack_layout_blocks(html_doc):
     return blocks
 
 
-class Attachment(BaseSchema):
+class Attachment(ApiProcessorSchema):
     pretext: str
     text: str
 
 
-class Block(BaseSchema):
+class Block(ApiProcessorSchema):
     type: str
     text: Dict
 
 
-class Text(BaseSchema):
+class Text(ApiProcessorSchema):
     text: str
 
 
-class SlackPostMessageInput(BaseSchema):
+class SlackPostMessageInput(ApiProcessorSchema):
     slack_user: str
     slack_user_email: str
     token: str
@@ -152,11 +152,11 @@ class SlackPostMessageInput(BaseSchema):
     thread_ts: Optional[str]
 
 
-class SlackPostMessageOutput(BaseSchema):
+class SlackPostMessageOutput(ApiProcessorSchema):
     code: int
 
 
-class SlackPostMessageConfiguration(BaseSchema):
+class SlackPostMessageConfiguration(ApiProcessorSchema):
     pass
 
 

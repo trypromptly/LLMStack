@@ -6,22 +6,22 @@ from asgiref.sync import async_to_sync
 from pydantic import conint
 from pydantic import Field
 
-from common.promptly.blocks.vendor.openai import OpenAIAPIProcessorOutput
-from common.promptly.blocks.vendor.openai import OpenAIAPIProcessorOutputMetadata
-from common.promptly.blocks.vendor.openai import OpenAIImageGenerationsProcessor
-from common.promptly.blocks.vendor.openai import OpenAIImageGenerationsProcessorConfiguration
-from common.promptly.blocks.vendor.openai import OpenAIImageGenerationsProcessorInput
-from common.promptly.blocks.vendor.openai import OpenAIImageGenerationsProcessorOutput
-from common.promptly.blocks.vendor.openai import Size
+from common.blocks.llm.openai import OpenAIAPIProcessorOutput
+from common.blocks.llm.openai import OpenAIAPIProcessorOutputMetadata
+from common.blocks.llm.openai import OpenAIImageGenerationsProcessor
+from common.blocks.llm.openai import OpenAIImageGenerationsProcessorConfiguration
+from common.blocks.llm.openai import OpenAIImageGenerationsProcessorInput
+from common.blocks.llm.openai import OpenAIImageGenerationsProcessorOutput
+from common.blocks.llm.openai import Size
 from common.utils.utils import get_key_or_raise
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import IMAGE_WIDGET_NAME
 
 logger = logging.getLogger(__name__)
 
 
-class ImagesGenerationsInput(BaseSchema):
+class ImagesGenerationsInput(ApiProcessorSchema):
     prompt: str = Field(
         ...,
         description='A text description of the desired image(s). The maximum length is 1000 characters.',
@@ -29,7 +29,7 @@ class ImagesGenerationsInput(BaseSchema):
     )
 
 
-class ImagesGenerationsOutput(OpenAIAPIProcessorOutput, BaseSchema):
+class ImagesGenerationsOutput(OpenAIAPIProcessorOutput, ApiProcessorSchema):
     metadata: Optional[OpenAIAPIProcessorOutputMetadata] = Field(
         widget='hidden',
     )
@@ -38,7 +38,7 @@ class ImagesGenerationsOutput(OpenAIAPIProcessorOutput, BaseSchema):
     )
 
 
-class ImagesGenerationsConfiguration(OpenAIImageGenerationsProcessorConfiguration, BaseSchema):
+class ImagesGenerationsConfiguration(OpenAIImageGenerationsProcessorConfiguration, ApiProcessorSchema):
     size: Optional[Size] = Field(
         '1024x1024',
         description='The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.',

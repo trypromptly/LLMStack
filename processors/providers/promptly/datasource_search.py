@@ -12,12 +12,12 @@ from pydantic import Field
 from datasources.models import DataSource
 from datasources.types import DataSourceTypeFactory
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 logger = logging.getLogger(__name__)
 
 
-class DataSourceSearchInput(BaseSchema):
+class DataSourceSearchInput(ApiProcessorSchema):
     query: str
 
 
@@ -26,7 +26,7 @@ class DocumentMetadata(BaseModel):
     distance: float = Field(0.0, description='Distance of the document')
 
 
-class Document(BaseSchema):
+class Document(ApiProcessorSchema):
     content: str = Field(
         None, description='Content of the document', widget='text',
     )
@@ -34,12 +34,12 @@ class Document(BaseSchema):
     metadata: DocumentMetadata = Field(description='Metadata of the document')
 
 
-class DataSourceSearchOutput(BaseSchema):
+class DataSourceSearchOutput(ApiProcessorSchema):
     answers: List[Document] = []
     answers_text: str = Field(description='All answers as text')
 
 
-class DataSourceSearchConfigurations(BaseSchema):
+class DataSourceSearchConfigurations(ApiProcessorSchema):
     datasources: List[str] = Field(
         None,
         description='Datasource to use', widget='datasource', advanced_parameter=False,

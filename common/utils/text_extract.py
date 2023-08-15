@@ -1,5 +1,6 @@
 import base64
 import logging
+import re
 from io import BytesIO
 from typing import List
 from typing import Optional
@@ -23,8 +24,6 @@ from common.utils.audio_loader import partition_audio
 from common.utils.audio_loader import partition_video
 from common.utils.audio_loader import partition_youtube_audio
 from common.utils.crawlers import run_url_spider_in_process
-from common.utils.utils import get_url_content_type
-from common.utils.utils import is_youtube_video_url
 
 logger = logging.getLogger(__name__)
 headers = {
@@ -47,18 +46,28 @@ class ExtraParams:
     def azure_openai_key(self):
         return self._azure_openai_key
 
+def get_url_content_type(url):
+    response = requests.head(url, allow_redirects=True)
+
+    content_type = response.headers.get('Content-Type', '')
+    return content_type
+
+def is_youtube_video_url(url):
+    youtube_regex = r'(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?([a-zA-Z0-9_-]{11})'
+    match = re.match(youtube_regex, url)
+    return match is not None
 
 def extract_text_elements(mime_type, data, file_name, charset='utf-8', extra_params: Optional[ExtraParams] = None) -> List[Element]:
     data_fp = BytesIO(data)
     elements = []
     if mime_type == 'application/pdf':
         elements = partition_pdf(file=data_fp)
-    elif mime_type == 'application/rtf':
+    elif mime_type == 'application/rtf' or mime_type == 'text/rtf':
         elements = partition_text(text=rtf_to_text(data.decode(charset)))
     elif mime_type == 'text/plain':
         elements = partition_text(text=data.decode(charset))
     elif mime_type == 'application/json':
-        elements = partition_json(text=data.decode(charset))
+        elements = [Text(text=data.decode(charset), metadata=ElementMetadata(filename=file_name))]
     elif mime_type == 'text/csv' or mime_type == 'application/csv':
         elements = [
             Text(

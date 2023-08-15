@@ -7,9 +7,8 @@ from typing import Optional
 from pydantic import Field
 from pydantic import SecretStr
 
-from common.promptly.blocks.data_extracter.aws_s3_bucket import AWSS3BucketDataExtractorBlock
-from common.promptly.blocks.data_extracter.aws_s3_bucket import AWSS3BucketDataExtractorBlockInput
-from common.promptly.vectorstore import Document
+from common.blocks.data.source.s3_bucket import S3Bucket, S3BucketInput, S3BucketConfiguration
+from common.blocks.data.store.vectorstore import Document
 from common.utils.splitter import CSVTextSplitter
 from common.utils.text_extract import extract_text_from_b64_json
 from common.utils.text_extract import ExtraParams
@@ -17,7 +16,7 @@ from common.utils.splitter import SpacyTextSplitter
 from common.utils.utils import validate_parse_data_uri
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 from datasources.models import DataSource
 from base.models import Profile
@@ -73,7 +72,7 @@ class S3BucketSchema(DataSourceSchema):
         )
 
 
-class S3BucketDataSource(DataSourceTypeInterface[S3BucketSchema]):
+class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)
@@ -115,24 +114,20 @@ class S3BucketDataSource(DataSourceTypeInterface[S3BucketSchema]):
         else:
             region_name = self.profile.get_vendor_key('aws_default_region')
 
-        s3_bucket_data_extractor = AWSS3BucketDataExtractorBlock(
-            configuration={'aws_access_key_id': aws_access_key_id,
-                           'aws_secret_access_key': aws_secret_access_key_secret, 'region_name': region_name},
-        )
-
-        result = s3_bucket_data_extractor.process(
-            AWSS3BucketDataExtractorBlockInput(
-                bucket=bucket_name,
-                regex=entry.regex,
-            ).dict(),
-        )
-
-        bucket_data = result.data
+        result = S3Bucket().process(
+            input=S3BucketInput(bucket=bucket_name, regex=entry.regex), 
+            configuration=S3BucketConfiguration(
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key_secret,
+                region_name=region_name,
+            ))
+        
         data_source_entries = []
-        for file_data in bucket_data:
-            file_name = file_data.path
+        
+        for document in result.documents:
+            file_name = document.metadata['file_name']
             base64_encoded_file_content = base64.b64encode(
-                file_data.content,
+                document.content,
             ).decode()
             data_url = 'data:{};name={};base64,{}'.format(
                 mime_type, file_name, base64_encoded_file_content,
@@ -143,6 +138,7 @@ class S3BucketDataSource(DataSourceTypeInterface[S3BucketSchema]):
                     'mime_type': mime_type, 'file_name': file_name, 'file_data': file_data},
             )
             data_source_entries.append(data_source_entry)
+
 
         return data_source_entries
 

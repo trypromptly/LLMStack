@@ -4,30 +4,30 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from common.promptly.blocks.vendor.cohere import CohereAPIInputEnvironment
-from common.promptly.blocks.vendor.cohere import CohereGenerateAPIProcessor
-from common.promptly.blocks.vendor.cohere import CohereGenerateAPIProcessorConfiguration
-from common.promptly.blocks.vendor.cohere import CohereGenerateAPIProcessorInput
-from common.promptly.blocks.vendor.cohere import CohereGenerateAPIProcessorOutput
-from common.promptly.blocks.vendor.cohere import CohereGenerateAPIProcessorOutputMetadata
-from common.promptly.blocks.vendor.cohere import GenerateModel
+from common.blocks.llm.cohere import CohereAPIInputEnvironment
+from common.blocks.llm.cohere import CohereGenerateAPIProcessor
+from common.blocks.llm.cohere import CohereGenerateAPIProcessorConfiguration
+from common.blocks.llm.cohere import CohereGenerateAPIProcessorInput
+from common.blocks.llm.cohere import CohereGenerateAPIProcessorOutput
+from common.blocks.llm.cohere import CohereGenerateAPIProcessorOutputMetadata
+from common.blocks.llm.cohere import GenerateModel
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 logger = logging.getLogger(__name__)
 
 
-class GenerateInput(CohereGenerateAPIProcessorInput, BaseSchema):
+class GenerateInput(CohereGenerateAPIProcessorInput, ApiProcessorSchema):
     env: Optional[CohereAPIInputEnvironment] = Field(widget='hidden')
 
 
-class GenerateOutput(CohereGenerateAPIProcessorOutput, BaseSchema):
+class GenerateOutput(CohereGenerateAPIProcessorOutput, ApiProcessorSchema):
     metadata: Optional[CohereGenerateAPIProcessorOutputMetadata] = Field(
         widget='hidden',
     )
 
 
-class GenerateConfiguration(CohereGenerateAPIProcessorConfiguration, BaseSchema):
+class GenerateConfiguration(CohereGenerateAPIProcessorConfiguration, ApiProcessorSchema):
     model: GenerateModel = Field(
         advanced_parameter=False,
         default=GenerateModel.MEDIUM,

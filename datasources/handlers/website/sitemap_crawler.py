@@ -4,14 +4,14 @@ from typing import Optional
 
 from pydantic import Field
 
-from common.promptly.vectorstore import Document
+from common.blocks.data.store.vectorstore import Document
 from common.utils.text_extract import extract_text_from_url
 from common.utils.text_extract import ExtraParams
 from common.utils.splitter import SpacyTextSplitter
 from common.utils.utils import extract_urls_from_sitemap
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 from datasources.models import DataSource
 from base.models import Profile
@@ -41,7 +41,7 @@ class SitemapURLSchema(DataSourceSchema):
         )
 
 
-class SitemapCrawlerDataSource(DataSourceTypeInterface[SitemapURLSchema]):
+class SitemapCrawlerDataSource(DataSourceProcessor[SitemapURLSchema]):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)

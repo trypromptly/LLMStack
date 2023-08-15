@@ -23,7 +23,7 @@ from common.utils.utils import get_url_content_type
 from common.utils.utils import is_sitemap_url
 from common.utils.utils import is_youtube_video_url
 from common.utils.utils import scrape_url
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.types import DataSourceTypeFactory
 from jobs.adhoc import DataSourceEntryProcessingJob
 
@@ -152,7 +152,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             )
             return DRFResponse({'errors': ['No handler found for data source type']}, status=400)
 
-        datasource_entry_handler: DataSourceTypeInterface = datasource_entry_handler_cls(
+        datasource_entry_handler: DataSourceProcessor = datasource_entry_handler_cls(
             datasource,
         )
 

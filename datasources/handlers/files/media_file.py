@@ -4,14 +4,14 @@ from typing import Optional
 
 from pydantic import Field
 
-from common.promptly.vectorstore import Document
+from common.blocks.data.store.vectorstore import Document
 from common.utils.text_extract import extract_text_from_b64_json
 from common.utils.text_extract import ExtraParams
 from common.utils.splitter import SpacyTextSplitter
 from common.utils.utils import validate_parse_data_uri
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceTypeInterface
+from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class MediaFileSchema(DataSourceSchema):
         )
 
 
-class MediaFileDataSource(DataSourceTypeInterface[MediaFileSchema]):
+class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
     @staticmethod
     def name() -> str:
         return 'media_file'

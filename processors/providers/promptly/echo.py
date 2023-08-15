@@ -3,21 +3,21 @@ import logging
 from asgiref.sync import async_to_sync
 
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 
 logger = logging.getLogger(__name__)
 
 
-class EchoProcessorInput(BaseSchema):
+class EchoProcessorInput(ApiProcessorSchema):
     input_str: str = 'Hello World!'
     stream: bool = False
 
 
-class EchoProcessorOutput(BaseSchema):
+class EchoProcessorOutput(ApiProcessorSchema):
     output_str: str = ''
 
 
-class EchoProcessorConfiguration(BaseSchema):
+class EchoProcessorConfiguration(ApiProcessorSchema):
     pass
 
 

@@ -1,25 +1,23 @@
-import copy
 import json
 import logging
-from abc import ABC
 from string import Template
-from typing import Generic
 from typing import List
 from typing import Optional
 from typing import TypeVar
 
-from django.conf import settings
 from pydantic import BaseModel
 
-from common.promptly.blocks.embeddings.openai_embedding import EmbeddingAPIProvider
-from common.promptly.blocks.embeddings.openai_embedding import OpenAIEmbeddingConfiguration
-from common.promptly.blocks.embeddings.openai_embedding import OpenAIEmbeddingInput
-from common.promptly.blocks.embeddings.openai_embedding import OpenAIEmbeddingOutput
-from common.promptly.blocks.embeddings.openai_embedding import OpenAIEmbeddingsProcessor
-from common.promptly.vectorstore import Document
-from common.promptly.vectorstore import DocumentQuery
-from common.promptly.vectorstore import VectorStoreInterface
-from common.promptly.vectorstore.weaviate import Weaviate as PromptlyWeaviate
+from common.blocks.base.schema import BaseSchema as _Schema
+from common.blocks.base.processor import ProcessorInterface, BaseInputType
+from common.blocks.embeddings.openai_embedding import EmbeddingAPIProvider
+from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingConfiguration
+from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingInput
+from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingOutput
+from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingsProcessor
+from common.blocks.data.store.vectorstore import Document
+from common.blocks.data.store.vectorstore import DocumentQuery
+from common.blocks.data.store.vectorstore import VectorStoreInterface
+from common.blocks.data.store.vectorstore.weaviate import Weaviate as PromptlyWeaviate
 from datasources.models import DataSource
 from base.models import Profile
 from base.models import VectorstoreEmbeddingEndpoint
@@ -34,8 +32,7 @@ WEAVIATE_SCHEMA = Template('''
 ''')
 
 
-class DataSourceSchema(BaseModel):
-
+class DataSourceSchema(_Schema):
     """
     This is Base Schema model for all data source type schemas
     """
@@ -46,52 +43,6 @@ class DataSourceSchema(BaseModel):
     @ staticmethod
     def get_content_key() -> str:
         raise NotImplementedError
-
-    @ classmethod
-    def get_json_schema(cls):
-        return super().schema_json(indent=2)
-
-    @ classmethod
-    def get_schema(cls):
-        return super().schema()
-
-    @ classmethod
-    def get_ui_schema(cls):
-        schema = cls.get_schema()
-        ui_schema = {}
-        for key in schema.keys():
-            if key == 'properties':
-                ui_schema['ui:order'] = list(schema[key].keys())
-                ui_schema[key] = {}
-                for prop_key in schema[key].keys():
-                    ui_schema[key][prop_key] = {}
-                    if 'title' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:label'] = schema[key][prop_key]['title']
-                    if 'description' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:description'] = schema[key][prop_key]['description']
-                    if 'type' in schema[key][prop_key]:
-                        if schema[key][prop_key]['type'] == 'string' and prop_key in ('data', 'text', 'content'):
-                            ui_schema[key][prop_key]['ui:widget'] = 'textarea'
-                        elif schema[key][prop_key]['type'] == 'string':
-                            ui_schema[key][prop_key]['ui:widget'] = 'text'
-                        elif schema[key][prop_key]['type'] == 'integer' or schema[key][prop_key]['type'] == 'number':
-                            ui_schema[key][prop_key]['ui:widget'] = 'updown'
-                        elif schema[key][prop_key]['type'] == 'boolean':
-                            ui_schema[key][prop_key]['ui:widget'] = 'checkbox'
-                    if 'enum' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:widget'] = 'select'
-                        ui_schema[key][prop_key]['ui:options'] = {
-                            'enumOptions': [
-                                {'value': val, 'label': val} for val in schema[key][prop_key]['enum']
-                            ],
-                        }
-                    if 'widget' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:widget'] = schema[key][prop_key]['widget']
-                    if 'format' in schema[key][prop_key] and schema[key][prop_key]['format'] == 'date-time':
-                        ui_schema[key][prop_key]['ui:widget'] = 'datetime'
-            else:
-                ui_schema[key] = copy.deepcopy(schema[key])
-        return ui_schema['properties']
 
 
 class DataSourceEntryItem(BaseModel):
@@ -106,24 +57,7 @@ class DataSourceEntryItem(BaseModel):
     data: Optional[dict] = None
 
 
-class DataSourceTypeInterface(Generic[EntryConfigurationSchemaType], ABC):
-    @staticmethod
-    def name(self) -> str:
-        raise NotImplementedError
-
-    @staticmethod
-    def slug() -> str:
-        raise NotImplementedError
-
-    @classmethod
-    def get_entry_config_schema(cls) -> EntryConfigurationSchemaType:
-        datasource_type_interface = cls.__orig_bases__[0]
-        return datasource_type_interface.__args__[0].get_schema()
-
-    @classmethod
-    def get_entry_config_ui_schema(cls) -> EntryConfigurationSchemaType:
-        datasource_type_interface = cls.__orig_bases__[0]
-        return datasource_type_interface.__args__[0].get_ui_schema()
+class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
     @classmethod
     def get_content_key(cls) -> str:

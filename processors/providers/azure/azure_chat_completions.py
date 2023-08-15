@@ -6,12 +6,12 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from common.promptly.blocks.vendor.azure_openai import AzureOpenAIChatCompletionsAPIProcessor
-from common.promptly.blocks.vendor.azure_openai import AzureOpenAIChatCompletionsAPIProcessorConfiguration
-from common.promptly.blocks.vendor.azure_openai import AzureOpenAIChatCompletionsAPIProcessorInput
-from common.promptly.blocks.vendor.azure_openai import AzureOpenAIChatCompletionsAPIProcessorOutput
+from common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessor
+from common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessorConfiguration
+from common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessorInput
+from common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessorOutput
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import CHAT_WIDGET_NAME
 
 
@@ -33,14 +33,14 @@ class Role(str, Enum):
         return self.value
 
 
-class ChatMessage(BaseSchema):
+class ChatMessage(ApiProcessorSchema):
     role: Optional[Role] = Field(
         default=Role.USER, description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
     )
     content: Optional[str] = Field(default='', description='The message text.')
 
 
-class AzureChatCompletionsInput(BaseSchema):
+class AzureChatCompletionsInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default='', description='A message from the system, which will be prepended to the chat history.', widget='textarea',
     )
@@ -52,7 +52,7 @@ class AzureChatCompletionsInput(BaseSchema):
     )
 
 
-class AzureChatCompletionsOutput(BaseSchema):
+class AzureChatCompletionsOutput(ApiProcessorSchema):
     choices: List[ChatMessage] = Field(
         default=[], description='Messages', widget=CHAT_WIDGET_NAME,
     )
@@ -94,7 +94,7 @@ def num_tokens_from_messages(messages, model='gpt-35-turbo'):
     return num_tokens
 
 
-class AzureChatCompletionsConfiguration(AzureOpenAIChatCompletionsAPIProcessorConfiguration, BaseSchema):
+class AzureChatCompletionsConfiguration(AzureOpenAIChatCompletionsAPIProcessorConfiguration, ApiProcessorSchema):
     base_url: Optional[str] = Field(
         description='This value can be found in the Keys & Endpoint section when examining your resource from the Azure portal. An example endpoint is: https://docs-test-001.openai.azure.com/.',
     )

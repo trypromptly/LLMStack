@@ -7,24 +7,24 @@ from asgiref.sync import async_to_sync
 from pydantic import conint
 from pydantic import Field
 
-from common.promptly.blocks.vendor.openai import OpenAIAPIInputEnvironment
-from common.promptly.blocks.vendor.openai import OpenAIFile
-from common.promptly.blocks.vendor.openai import OpenAIImageVariationsProcessor
-from common.promptly.blocks.vendor.openai import OpenAIImageVariationsProcessorConfiguration
-from common.promptly.blocks.vendor.openai import OpenAIImageVariationsProcessorInput
-from common.promptly.blocks.vendor.openai import OpenAIImageVariationsProcessorOutput
-from common.promptly.blocks.vendor.openai import Size
+from common.blocks.llm.openai import OpenAIAPIInputEnvironment
+from common.blocks.llm.openai import OpenAIFile
+from common.blocks.llm.openai import OpenAIImageVariationsProcessor
+from common.blocks.llm.openai import OpenAIImageVariationsProcessorConfiguration
+from common.blocks.llm.openai import OpenAIImageVariationsProcessorInput
+from common.blocks.llm.openai import OpenAIImageVariationsProcessorOutput
+from common.blocks.llm.openai import Size
 from common.utils.utils import get_key_or_raise
 from common.utils.utils import validate_parse_data_uri
 from processors.providers.api_processor_interface import ApiProcessorInterface
-from processors.providers.api_processor_interface import BaseSchema
+from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import DataUrl
 from processors.providers.api_processor_interface import IMAGE_WIDGET_NAME
 
 logger = logging.getLogger(__name__)
 
 
-class ImagesVariationsInput(BaseSchema):
+class ImagesVariationsInput(ApiProcessorSchema):
     image: Optional[str] = Field(
         default='', description='The image to use as the basis for the variation(s). Must be a valid PNG file, less than 4MB, and square.', accepts={'image/png': []}, maxSize=4000000, widget='file',
     )
@@ -33,13 +33,13 @@ class ImagesVariationsInput(BaseSchema):
     )
 
 
-class ImagesVariationsOutput(BaseSchema):
+class ImagesVariationsOutput(ApiProcessorSchema):
     answer: List[str] = Field(
         default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
     )
 
 
-class ImagesVariationsConfiguration(OpenAIImageVariationsProcessorConfiguration, BaseSchema):
+class ImagesVariationsConfiguration(OpenAIImageVariationsProcessorConfiguration, ApiProcessorSchema):
     size: Optional[Size] = Field(
         '1024x1024',
         description='The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.',
