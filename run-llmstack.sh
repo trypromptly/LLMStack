@@ -19,7 +19,7 @@ else
     echo ".env file not found"
 fi
 
-docker compose up -d
+docker compose up -d --pull always
 
 # If the output of the curl command contains "200", it means the server is ready
 while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:${LLMSTACK_PORT:-3000})" != "200" ]]; do
@@ -27,7 +27,7 @@ while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:${LLMSTACK_PORT:-
     sleep 3
 done
 
-echo "LLMStack is ready!"
+echo "LLMStack is ready at http://localhost:${LLMSTACK_PORT:-3000}"
 
 # Open the web browser
 case "$(uname)" in

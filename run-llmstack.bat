@@ -9,7 +9,7 @@ if exist .env (
   exit /B
 )
 
-start /B docker-compose up -d
+start /B docker-compose up -d --pull always
 
 :loop
   rem make a curl request and store the output
