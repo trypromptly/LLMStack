@@ -301,6 +301,7 @@ PROCESSOR_PROVIDERS = [
     'processors.providers.cohere',
     'processors.providers.elevenlabs',
     'processors.providers.google',
+    'processors.providers.localai',
     'processors.providers.openai',
     'processors.providers.promptly',
     'processors.providers.stabilityai',
