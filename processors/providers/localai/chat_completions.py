@@ -61,12 +61,12 @@ class ChatCompletionsOutput(ApiProcessorSchema):
 
 class ChatCompletionsConfiguration(ApiProcessorSchema):
     base_url: str = Field(description="Base URL", advanced_parameter=False)
-    model: str = Field(description="Model name", widget='customselect', advanced_parameter=False)
+    model: str = Field(description="Model name", widget='customselect', advanced_parameter=False, 
+                       options=['ggml-gpt4all-j'])
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(
         1024,
         description='The maximum number of tokens allowed for the generated answer. By default, the number of tokens the model can return will be (4096 - prompt tokens).\n',
         example=1024,
-        advanced_parameter=False,
     )
     temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
         default=0.7,
@@ -74,7 +74,7 @@ class ChatCompletionsConfiguration(ApiProcessorSchema):
         example=1,
         advanced_parameter=False,
     )
-    timeout: int = Field(default=60, description='Timeout in seconds', advanced_parameter=False)
+    timeout: int = Field(default=60, description='Timeout in seconds')
 
 class ChatCompletions(ApiProcessorInterface[ChatCompletionInput, ChatCompletionsOutput, ChatCompletionsConfiguration]):
     def name() -> str:

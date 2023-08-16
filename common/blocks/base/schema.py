@@ -82,6 +82,12 @@ class BaseSchema(BaseModel):
 
         if 'widget' in prop_schema_dict:
             ui_prop['ui:widget'] = prop_schema_dict['widget']
+        
+        if 'options' in prop_schema_dict:
+            ui_prop['ui:options'] = {
+                'enumOptions' : [{'value': val, 'label': val} for val in prop_schema_dict['options']],
+                'values': prop_schema_dict['options']
+            }
                     
         if prop_schema_dict.get('format') == 'date-time':
             ui_prop['ui:widget'] = 'datetime'
