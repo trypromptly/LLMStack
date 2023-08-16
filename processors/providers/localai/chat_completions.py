@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field, confloat, conint
 from processors.providers.api_processor_interface import CHAT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema
-from common.blocks.http import HttpAPIProcessor, HttpMethod, JsonBody
+from common.blocks.http import BearerTokenAuth, HttpAPIProcessor, HttpMethod, JsonBody, NoAuth
 from common.blocks.http import HttpAPIProcessorInput
 from common.blocks.http import HttpAPIProcessorOutput
 
@@ -60,9 +60,9 @@ class ChatCompletionsOutput(ApiProcessorSchema):
     )
 
 class ChatCompletionsConfiguration(ApiProcessorSchema):
-    base_url: str = Field(description="Base URL", advanced_parameter=False)
+    base_url: Optional[str] = Field(description="Base URL")
     model: str = Field(description="Model name", widget='customselect', advanced_parameter=False, 
-                       options=['ggml-gpt4all-j'])
+                       options=['ggml-gpt4all-j'], default='ggml-gpt4all-j')
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(
         1024,
         description='The maximum number of tokens allowed for the generated answer. By default, the number of tokens the model can return will be (4096 - prompt tokens).\n',
@@ -84,6 +84,14 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionInput, ChatCompletions
         return 'localai_chatcompletions'
     
     def process(self) -> dict:
+        env = self._env
+        base_url = env.get("localai_base_url") 
+        if self._config.base_url:
+            base_url = self._config.base_url
+            
+        if not base_url:
+            raise Exception("Base URL is not set")
+            
         system_message = self._input.system_message
         
         chat_messages = [{"role": "system", "content": system_message}] if system_message else []
@@ -97,7 +105,9 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionInput, ChatCompletions
             "temperature": self._config.temperature,
         }
         http_input = HttpAPIProcessorInput(
-            url=f"{self._config.base_url}/v1/chat/completions",
+            url=f"{base_url}/v1/chat/completions",
+            authorization= BearerTokenAuth(token=env.get("localai_api_key")) if env.get("localai_api_key") else NoAuth(),
+
             method=HttpMethod.POST,
             body=JsonBody(json_body=api_request_body)
         )

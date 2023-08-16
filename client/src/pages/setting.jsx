@@ -40,6 +40,8 @@ const SettingPage = () => {
     cohere_key: "",
     forefrontai_key: "",
     elevenlabs_key: "",
+    localai_api_key: "",
+    localai_base_url: "",
     logo: "",
   });
   const [loading, setLoading] = useState(true);
@@ -62,6 +64,8 @@ const SettingPage = () => {
           google_service_account_json_key:
             profile.google_service_account_json_key,
           azure_openai_api_key: profile.azure_openai_api_key,
+          localai_api_key: profile.localai_api_key,
+          localai_base_url: profile.localai_base_url,
           logo: profile.logo,
           user_email: profile.user_email,
         });
@@ -92,6 +96,8 @@ const SettingPage = () => {
           google_service_account_json_key:
             profile.google_service_account_json_key,
           azure_openai_api_key: profile.azure_openai_api_key,
+          localai_api_key: profile.localai_api_key,
+          localai_base_url: profile.localai_base_url,
           logo: profile.logo,
         });
         setLoading(false);
@@ -259,6 +265,50 @@ const SettingPage = () => {
                           setUpdateKeys(
                             updateKeys.add("google_service_account_json_key"),
                           );
+                        }}
+                      />
+                    </Col>
+                  </Row>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={24} md={14}>
+                <Form.Item label="LocalAI Base URL">
+                  <Row>
+                    <Col xs={24} md={16}>
+                      {" "}
+                      <Input
+                        value={formData.localai_base_url}
+                        disabled={!profileFlags.CAN_ADD_KEYS}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            localai_base_url: e.target.value,
+                          });
+                          setUpdateKeys(updateKeys.add("localai_base_url"));
+                        }}
+                      />
+                    </Col>
+                  </Row>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={24} md={14}>
+                <Form.Item label="LocalAI API Key">
+                  <Row>
+                    <Col xs={24} md={16}>
+                      {" "}
+                      <Input.Password
+                        value={formData.localai_api_key}
+                        disabled={!profileFlags.CAN_ADD_KEYS}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            localai_api_key: e.target.value,
+                          });
+                          setUpdateKeys(updateKeys.add("localai_api_key"));
                         }}
                       />
                     </Col>

@@ -1,7 +1,7 @@
 from typing import List
 from typing import Optional
 from pydantic import Field, confloat, conint
-from common.blocks.http import HttpAPIProcessor, HttpMethod, JsonBody
+from common.blocks.http import BearerTokenAuth, HttpAPIProcessor, HttpMethod, JsonBody, NoAuth
 from common.blocks.http import HttpAPIProcessorInput
 from common.blocks.http import HttpAPIProcessorOutput
 from processors.providers.api_processor_interface import TEXT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema
@@ -15,8 +15,8 @@ class CompletionsOutput(ApiProcessorSchema):
     choices: List[str] = Field(default=[], widget=TEXT_WIDGET_NAME)
 
 class CompletionsConfiguration(ApiProcessorSchema):
-    base_url: str = Field(description="Base URL", advanced_parameter=False)
-    model: str = Field(description="Model name", widget='customselect', advanced_parameter=False, options=['ggml-gpt4all-j'])
+    base_url: Optional[str] = Field(description="Base URL")
+    model: str = Field(description="Model name", widget='customselect', advanced_parameter=False, options=['ggml-gpt4all-j'], default='ggml-gpt4all-j')
 
     max_tokens: Optional[conint(ge=1, le=4096)] = Field(
         1024,
@@ -44,6 +44,15 @@ class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOu
         return 'localai_completions'
     
     def process(self) -> dict:
+        env = self._env
+        base_url = env.get("localai_base_url") 
+        
+        if self._config.base_url:
+            base_url = self._config.base_url
+        
+        if not base_url:
+            raise Exception("Base URL is not set")
+            
         api_request_body = {
             "model" : self._config.model,
             "prompt": self._input.prompt,
@@ -57,7 +66,8 @@ class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOu
         
         
         http_input = HttpAPIProcessorInput(
-            url=f"{self._config.base_url}/v1/completions",
+            url=f"{base_url}/v1/completions",
+            authorization= BearerTokenAuth(token=env.get("localai_api_key")) if env.get("localai_api_key") else NoAuth(),
             method=HttpMethod.POST,
             body=JsonBody(json_body=api_request_body)
         )

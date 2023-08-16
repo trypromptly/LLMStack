@@ -79,6 +79,12 @@ class AbstractProfile(models.Model):
     aws_default_region = models.CharField(
         max_length=64, default=None, help_text='AWS default region to use with AWS backend', null=True, blank=True,
     )
+    localai_api_key = models.CharField(
+        max_length=256, default=None, help_text='LocalAI API key to use with LocalAI backend', null=True, blank=True,
+    )
+    localai_base_url = models.CharField(
+        max_length=256, default=None, help_text='LocalAI base URL to use with LocalAI processors', null=True, blank=True,
+    )
     logo = models.TextField(
         default='', help_text='Logo to use for the user', null=True, blank=True,
     )
@@ -154,6 +160,10 @@ class AbstractProfile(models.Model):
             return self.decrypt_value(api_key_value) if api_key_value else None
         elif attrname in ['aws_access_key_id']:
             return api_key_value
+        elif attrname == 'localai_api_key':
+            return self.decrypt_value(api_key_value) if api_key_value else None
+        elif attrname == 'localai_base_url':
+            return api_key_value
         else:
             return None
 
@@ -188,6 +198,8 @@ class AbstractProfile(models.Model):
             'aws_secret_access_key': self.get_vendor_key('aws_secret_access_key'),
             'aws_default_region': self.get_vendor_key('aws_default_region'),
             'azure_openai_endpoint': self.get_vendor_key('azure_openai_endpoint'),
+            'localai_api_key': self.get_vendor_key('localai_key'),
+            'localai_base_url': self.get_vendor_key('localai_base_url'),
             'weaviate_url': self.weaviate_url,
             'weaviate_api_key': self.weaviate_api_key,
             'weaviate_embedding_endpoint': self.vectostore_embedding_endpoint,
