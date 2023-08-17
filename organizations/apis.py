@@ -158,6 +158,14 @@ class OrganizationSettingsViewSet(viewsets.ModelViewSet):
         organization_settings.aws_default_region = request.data.get(
             'aws_default_region', None,
         )
+        
+        organization_settings.localai_api_key = request.data.get(
+            'localai_api_key', None,
+        )
+        
+        organization_settings.localai_base_url = request.data.get(
+            'localai_base_url', None,
+        )
         organization_settings.vectorstore_weaviate_url = request.data.get(
             'vectorstore_weaviate_url', None,
         )
