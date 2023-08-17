@@ -1,12 +1,15 @@
-from typing import List
+import logging 
+
+from typing import Generator, List
 from typing import Optional
 from pydantic import Field, confloat, conint
-from common.blocks.http import BearerTokenAuth, HttpAPIProcessor, HttpMethod, JsonBody, NoAuth
-from common.blocks.http import HttpAPIProcessorInput
-from common.blocks.http import HttpAPIProcessorOutput
+from common.blocks.llm.localai import LocalAICompletionsAPIProcessor, LocalAICompletionsAPIProcessorConfiguration, LocalAICompletionsAPIProcessorInput, LocalAICompletionsAPIProcessorOutput
+from common.blocks.llm.openai import OpenAIAPIInputEnvironment, OpenAIAPIProcessorConfiguration, OpenAIAPIProcessorInput, OpenAIAPIProcessorOutput
 from processors.providers.api_processor_interface import TEXT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema
 
 from asgiref.sync import async_to_sync
+
+logger = logging.getLogger(__name__)
 
 class CompletionsInput(ApiProcessorSchema):
     prompt: str = Field(description="Prompt text")
@@ -35,6 +38,7 @@ class CompletionsConfiguration(ApiProcessorSchema):
         example=1,
     )
     timeout : Optional[int] = Field(default=60, description="Timeout in seconds", example=60)
+    stream: Optional[bool] = Field(default=False, description="Stream output", example=False)
 
 class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
     def name() -> str:
@@ -46,42 +50,51 @@ class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOu
     def process(self) -> dict:
         env = self._env
         base_url = env.get("localai_base_url") 
+        api_key = env.get("localai_api_key")
         
         if self._config.base_url:
             base_url = self._config.base_url
         
         if not base_url:
             raise Exception("Base URL is not set")
-            
-        api_request_body = {
-            "model" : self._config.model,
-            "prompt": self._input.prompt,
-        }
-        if self._config.temperature:
-            api_request_body["temperature"] = self._config.temperature
-        if self._config.top_p:
-            api_request_body["top_p"] = self._config.top_p
-        if self._config.max_tokens:
-            api_request_body["max_tokens"] = self._config.max_tokens
         
+        if self._config.stream:
+            result_iter: Generator[LocalAICompletionsAPIProcessorOutput, None, None] = LocalAICompletionsAPIProcessor(
+                configuration=LocalAICompletionsAPIProcessorConfiguration(
+                    base_url=base_url,
+                    model=self._config.model,
+                    max_tokens=self._config.max_tokens,
+                    temperature=self._config.temperature,
+                    top_p=self._config.top_p,
+                    timeout=self._config.timeout,
+                    stream=True
+                ).dict()
+                ).process_iter(LocalAICompletionsAPIProcessorInput(
+                    prompt=self._input.prompt, 
+                    env=OpenAIAPIInputEnvironment(openai_api_key=api_key)
+                    ).dict())
+            for result in result_iter:
+                async_to_sync(self._output_stream.write)(
+                    CompletionsOutput(choices=result.choices))
         
-        http_input = HttpAPIProcessorInput(
-            url=f"{base_url}/v1/completions",
-            authorization= BearerTokenAuth(token=env.get("localai_api_key")) if env.get("localai_api_key") else NoAuth(),
-            method=HttpMethod.POST,
-            body=JsonBody(json_body=api_request_body)
-        )
-        http_api_processor = HttpAPIProcessor({'timeout': self._config.timeout})
-        http_response = http_api_processor.process(
-            http_input.dict(),
-        )
-        # If the response is ok, return the choices
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
-            choices = list(map(lambda entry: entry['text'], http_response.content_json['choices']))            
         else:
-            raise Exception("Error in processing request, details: {}".format(http_response.content))
-        
-        async_to_sync(self._output_stream.write)(CompletionsOutput(choices=choices))
+            result: LocalAICompletionsAPIProcessorOutput = LocalAICompletionsAPIProcessor(
+                configuration=LocalAICompletionsAPIProcessorConfiguration(
+                    base_url=base_url,
+                    model=self._config.model,
+                    max_tokens=self._config.max_tokens,
+                    temperature=self._config.temperature,
+                    top_p=self._config.top_p,
+                    timeout=self._config.timeout,
+                    stream=False
+                ).dict()
+                ).process(LocalAICompletionsAPIProcessorInput(
+                    prompt=self._input.prompt, 
+                    env=OpenAIAPIInputEnvironment(openai_api_key=api_key)
+                    ).dict())
+            choices = result.choices
+            async_to_sync(self._output_stream.write)(CompletionsOutput(choices=choices))
+                
         output = self._output_stream.finalize()
         return output
     
