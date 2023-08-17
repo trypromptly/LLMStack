@@ -6,7 +6,11 @@ export default function MuiCustomSelect(props) {
     props.value || props?.schema?.default || "",
   );
   const [options, setOptions] = useState(
-    (props?.options?.enumOptions || []).map((o) => o.value),
+    (
+      props?.options?.enumOptions ||
+      props?.uiSchema?.["ui:options"]?.["enumOptions"] ||
+      []
+    ).map((o) => o.value),
   );
 
   useEffect(() => {

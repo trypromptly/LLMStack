@@ -13,6 +13,8 @@ import elevenLabsIcon_light from "../../assets/images/elevenlabs-icon-light.png"
 import elevenLabsIcon_dark from "../../assets/images/elevenlabs-icon-dark.png";
 import vertexAiIcon_light from "../../assets/images/vertexai-icon-light.png";
 import vertexAiIcon_dark from "../../assets/images/vertexai-icon-dark.png";
+import localAiIcon_light from "../../assets/images/localai-icon-light.png";
+import localAiIcon_dark from "../../assets/images/localai-icon-dark.png";
 
 const getIconImage = (icon, isActive) => {
   switch (icon?.replaceAll(" ", "").toLowerCase()) {
@@ -30,6 +32,8 @@ const getIconImage = (icon, isActive) => {
       return isActive ? elevenLabsIcon_dark : elevenLabsIcon_light;
     case "google":
       return isActive ? vertexAiIcon_dark : vertexAiIcon_light;
+    case "localai":
+      return isActive ? localAiIcon_dark : localAiIcon_light;
     default:
       return promptlyIcon_light;
   }

@@ -93,6 +93,12 @@ class OrganizationSettings(models.Model):
     aws_default_region = models.CharField(
         max_length=64, default=None, help_text='AWS default region to use with AWS backend', null=True, blank=True,
     )
+    localai_api_key = models.CharField(
+        max_length=256, default=None, help_text='LocalAI API key to use with LocalAI backend', null=True, blank=True,
+    )
+    localai_base_url = models.CharField(
+        max_length=256, default=None, help_text='LocalAI base URL to use with LocalAI backend', null=True, blank=True,
+    )
     vectorstore_weaviate_url = models.CharField(
         max_length=256, default=None, help_text='Vectorstore URL to use with Vectorstore backend', null=True, blank=True,
     )

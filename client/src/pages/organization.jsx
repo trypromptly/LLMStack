@@ -175,6 +175,16 @@ const settingsSchema = {
       description: "AWS default region",
       title: "AWS Default Region",
     },
+    localai_api_key: {
+      type: ["string", "null"],
+      description: "LocalAI API key",
+      title: "LocalAI API Key",
+    },
+    localai_base_url: {
+      type: ["string", "null"],
+      description: "LocalAI base URL",
+      title: "LocalAI Base URL",
+    },
     vectorstore_weaviate_url: {
       type: ["string", "null"],
       description: "Vectorstore Weaviate URL",

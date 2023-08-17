@@ -123,6 +123,23 @@ class ProfileViewSet(viewsets.ViewSet):
                 ).decode('utf-8')
             else:
                 profile.azure_openai_api_key = ''
+        if 'localai_api_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+            should_update = True
+            localai_api_key = request.data.get('localai_api_key')
+            if localai_api_key and len(localai_api_key) > 0:
+                profile.localai_api_key = profile.encrypt_value(
+                    localai_api_key,
+                ).decode('utf-8')
+            else:
+                profile.localai_api_key = '' 
+        
+        if 'localai_base_url' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+            should_update = True
+            localai_base_url = request.data.get('localai_base_url')
+            if localai_base_url and len(localai_base_url) > 0:
+                profile.localai_base_url = localai_base_url
+            else:
+                profile.localai_base_url = ''
 
         if 'logo' in request.data:
             should_update = True

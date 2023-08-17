@@ -13,7 +13,6 @@ from common.blocks.llm.openai import OpenAIImageGenerationsProcessorConfiguratio
 from common.blocks.llm.openai import OpenAIImageGenerationsProcessorInput
 from common.blocks.llm.openai import OpenAIImageGenerationsProcessorOutput
 from common.blocks.llm.openai import Size
-from common.utils.utils import get_key_or_raise
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import IMAGE_WIDGET_NAME

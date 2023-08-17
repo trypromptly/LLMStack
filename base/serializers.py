@@ -13,6 +13,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     elevenlabs_key = serializers.SerializerMethodField()
     google_service_account_json_key = serializers.SerializerMethodField()
     azure_openai_api_key = serializers.SerializerMethodField()
+    localai_api_key = serializers.SerializerMethodField()
+    localai_base_url = serializers.SerializerMethodField()
+    
     avatar = serializers.SerializerMethodField()
 
     def get_openai_key(self, obj):
@@ -35,6 +38,12 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_azure_openai_api_key(self, obj):
         return obj.decrypt_value(obj.azure_openai_api_key)
+    
+    def get_localai_api_key(self, obj):
+        return obj.decrypt_value(obj.localai_api_key)
+    
+    def get_localai_base_url(self, obj):
+        return obj.localai_base_url
 
     def get_avatar(self, obj):
         return obj.user.socialaccount_set.first().get_avatar_url() if obj.user.socialaccount_set.first() else None
@@ -46,5 +55,5 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = [
             'name', 'user_email', 'token', 'openai_key',
-            'stabilityai_key', 'cohere_key', 'forefrontai_key', 'elevenlabs_key', 'google_service_account_json_key', 'azure_openai_api_key', 'logo', 'organization', 'avatar',
+            'stabilityai_key', 'cohere_key', 'forefrontai_key', 'elevenlabs_key', 'google_service_account_json_key', 'azure_openai_api_key', 'localai_api_key', 'localai_base_url', 'logo', 'organization', 'avatar',
         ]
