@@ -13,7 +13,7 @@ from pydantic import conint
 from pydantic import Extra
 from pydantic import Field
 
-from common.blocks.http import BearerTokenAuth
+from common.blocks.http import BearerTokenAuth, NoAuth
 from common.blocks.http import HttpAPIProcessor
 from common.blocks.http import HttpAPIProcessorInput
 from common.blocks.http import HttpAPIProcessorOutput
@@ -50,7 +50,7 @@ def process_openai_error_response(response: HttpAPIProcessorOutput) -> str:
 
 
 class OpenAIAPIInputEnvironment(BaseInputEnvironment):
-    openai_api_key: str = Field(..., description='OpenAI API Key')
+    openai_api_key: Optional[str] = Field(..., description='OpenAI API Key')
     user: Optional[str] = Field(default='', description='User')
 
 
@@ -110,7 +110,7 @@ class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseCon
                 json_body=(self._get_api_request_payload(input, configuration)),
             ),
             headers={},
-            authorization=BearerTokenAuth(token=input.env.openai_api_key),
+            authorization=BearerTokenAuth(token=input.env.openai_api_key) if input.env.openai_api_key else NoAuth(),
         )
 
         http_status_is_ok = True
@@ -149,7 +149,7 @@ class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseCon
                 json_body=(self._get_api_request_payload(input, configuration)),
             ),
             headers={},
-            authorization=BearerTokenAuth(token=input.env.openai_api_key),
+            authorization=BearerTokenAuth(token=input.env.openai_api_key) if input.env.openai_api_key else NoAuth(),
         )
 
         http_response = http_api_processor.process(
