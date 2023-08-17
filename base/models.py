@@ -153,17 +153,17 @@ class AbstractProfile(models.Model):
         elif attrname == 'google_service_account_json_key':
             return self.decrypt_value(api_key_value) if api_key_value else settings.DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY
         elif attrname == 'aws_secret_access_key':
-            return self.decrypt_value(api_key_value) if api_key_value else None
+            return self.decrypt_value(api_key_value) if api_key_value else settings.DEFAULT_AWS_SECRET_ACCESS_KEY
         elif attrname == 'aws_default_region':
-            return self.decrypt_value(api_key_value) if api_key_value else None
+            return self.decrypt_value(api_key_value) if api_key_value else settings.DEFAULT_AWS_DEFAULT_REGION
         elif attrname == 'azure_openai_endpoint':
-            return self.decrypt_value(api_key_value) if api_key_value else None
+            return self.decrypt_value(api_key_value) if api_key_value else settings.DEFAULT_AZURE_OPENAI_ENDPOINT
         elif attrname in ['aws_access_key_id']:
-            return api_key_value
+            return api_key_value if api_key_value else settings.DEFAULT_AWS_ACCESS_KEY_ID
         elif attrname == 'localai_api_key':
-            return self.decrypt_value(api_key_value) if api_key_value else None
+            return self.decrypt_value(api_key_value) if api_key_value else settings.DEFAULT_LOCALAI_API_KEY
         elif attrname == 'localai_base_url':
-            return api_key_value
+            return api_key_value if api_key_value else settings.DEFAULT_LOCALAI_BASE_URL
         else:
             return None
 
