@@ -77,8 +77,8 @@ services:
     environment:
       POSTGRES_HOST_AUTH_METHOD: "password"
       PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER:-llmstack}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-llmstack}
+      POSTGRES_USER: ${DATABASE_USER:-llmstack}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-llmstack}
     env_file:
       - .env
   weaviate:
