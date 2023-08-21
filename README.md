@@ -4,10 +4,15 @@
 <p align="center">
     <em>LLMStack is a no-code platform for building generative AI applications, chatbots, agents and connecting them to your data and business processes.</em>
 </p>
+<p align="center">
+    <a href="https://llmstack.ai/docs/getting-started/introduction#quickstart" target="_blank">Quickstart</a> | <a href="https://llmstack.ai/docs/" target="_blank">Documentation</a> | <a href="trypromptly.com" target="_blank">Promptly</a>
+</p>
 
 ## Overview
 
 Build tailor-made generative AI applications, chatbots and agents that cater to your unique needs by chaining multiple LLMs. Seamlessly integrate your own data and GPT-powered models without any coding experience using LLMStack's no-code builder. Trigger your AI chains from Slack or Discord. Deploy to the cloud or on-premise.
+
+https://github.com/trypromptly/LLMStack/assets/431988/1cb48899-0061-4f9a-ac26-aa711fdda7cb
 
 ## Getting Started
 
