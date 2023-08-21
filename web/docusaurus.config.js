@@ -46,6 +46,9 @@ const config = {
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
         },
+        gtag: {
+          trackingID: "G-XZ40100Y5C",
+        },
       }),
     ],
   ],
@@ -55,6 +58,7 @@ const config = {
     ({
       image:
         "https://storage.googleapis.com/trypromptly-static/static/images/opengraph.jpg",
+      defaultMode: "dark",
       navbar: {
         title: "",
         logo: {
@@ -65,7 +69,7 @@ const config = {
         items: [
           {
             type: "docSidebar",
-            sidebarId: "tutorialSidebar",
+            sidebarId: "docSidebar",
             position: "left",
             label: "Docs",
           },
@@ -83,20 +87,20 @@ const config = {
             title: "Docs",
             items: [
               {
-                label: "Application",
-                to: "/docs/application/",
+                label: "LLMStack UI",
+                to: "/docs/getting-started/ui",
               },
               {
-                label: "Processor",
-                to: "/docs/processor/",
+                label: "Processors",
+                to: "/docs/processors/introduction",
               },
               {
-                label: "Data",
-                to: "/docs/data/",
+                label: "Apps",
+                to: "/docs/apps/introduction",
               },
               {
-                label: "Contribution Guide",
-                to: "/docs/guides/Contribution-Guide",
+                label: "Datasources",
+                to: "/docs/datasources/introduction",
               },
             ],
           },

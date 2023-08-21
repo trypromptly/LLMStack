@@ -5,7 +5,10 @@
  */
 
 /* You can override the default Infima variables here. */
+@import url("https://fonts.googleapis.com/css2?family=Lato&family=Noto+Sans&display=swap");
+
 :root {
+  --ifm-font-family-base: "Noto Sans", sans-serif;
   --ifm-color-primary: #1046a2;
   --ifm-color-primary-dark: #0e3f92;
   --ifm-color-primary-darker: #0e3b8a;

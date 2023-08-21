@@ -1,0 +1,4 @@
+---
+id: localai
+title: LocalAI
+---

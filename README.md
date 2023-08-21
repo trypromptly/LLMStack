@@ -13,7 +13,7 @@ Build tailor-made generative AI applications, chatbots and agents that cater to 
 
 **_Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow the instructions below to deploy LLMStack on your own infrastructure._**
 
-Clone this repository or downoad the latest release. Install [docker](https://docs.docker.com/engine/install/) if not already installed. Copy `.env.prod` to `.env` and update `SECRET_KEY`, `CIPHER_SALT` and `DATABASE_PASSWORD` in `.env` file:
+Clone this repository or download the latest release. Install [docker](https://docs.docker.com/engine/install/) if not already installed. Copy `.env.prod` to `.env` and update `SECRET_KEY`, `CIPHER_SALT` and `DATABASE_PASSWORD` in `.env` file:
 
 ```
 cp .env.prod .env
@@ -99,7 +99,7 @@ To update documentation, make changes to `web/docs` directory and run `npm run b
 
 ## Contributing
 
-We welcome contributions to LLMStack. Please check out our [contributing guide](https://llmstack.ai/docs/guides/Contribution-Guide) to learn more about how you can contribute to LLMStack.
+We welcome contributions to LLMStack. Please check out our [contributing guide](https://llmstack.ai/docs/guides/contributing) to learn more about how you can contribute to LLMStack.
 
 ## License
 
