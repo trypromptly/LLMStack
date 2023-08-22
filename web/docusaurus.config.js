@@ -64,7 +64,6 @@ const config = {
     ({
       image:
         "https://storage.googleapis.com/trypromptly-static/static/images/opengraph.jpg",
-      defaultMode: "dark",
       navbar: {
         title: "",
         logo: {
@@ -146,6 +145,11 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
+      },
+      colorMode: {
+        defaultMode: "dark",
+        disableSwitch: false,
+        respectPrefersColorScheme: true,
       },
     }),
 };
