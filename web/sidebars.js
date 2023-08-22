@@ -40,6 +40,7 @@ const sidebars = {
         "processors/cohere",
         "processors/stability",
         "processors/elevenlabs",
+        "processors/localai",
       ],
     },
     {
