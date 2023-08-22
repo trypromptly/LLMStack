@@ -69,7 +69,7 @@ services:
       - ${POSTGRES_VOLUME}:/var/lib/postgresql/data/pgdata
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
-      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_USER: ${DATABASE_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-}
       PGDATA: /var/lib/postgresql/data/pgdata
     env_file:
