@@ -46,7 +46,7 @@ LLMStack comes with a default admin account whose credentials are `admin` and `p
 />
 
 :::note
-If you are deploying LLMStack on a server, make sure to update `ALLOWED_HOSTS` in `.env` file to include the hostname of your server. Refer to the [configuration](config.md) section for more information.
+If you are deploying LLMStack on a server, make sure to update `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` in `.env` file to include the hostname of your server. Refer to the [configuration](config.md) section for more information.
 :::
 
 Instead of downloading the release, you can also clone the repository and run the above commands in the cloned repository.
@@ -86,3 +86,7 @@ Datasources are used to provide context to LLMs to build applications that can p
 ### Variables
 
 Variables are used in LLMStack to provide dynamic values to the processors. For example, you can use variables to provide the name of the user to the processors. Variables are provided in the form `{{name}}` where `name` is the variable name. In App editor, data from previous processors/steps is available as variables and can be used in subsequent processors/steps.
+
+:::tip
+If you have questions, suggestions or need help, feel free to join our [Discord server](https://discord.gg/3JsEzSXspJ) or start a discussion on our [Github Discussions](https://github.com/trypromptly/LLMStack/discussions) page.
+:::
