@@ -79,6 +79,10 @@ const config = {
             label: "Docs",
           },
           {
+            label: "Blog",
+            to: "/blog",
+          },
+          {
             href: "https://github.com/trypromptly/LLMStack",
             label: "GitHub",
             position: "right",
@@ -131,7 +135,7 @@ const config = {
             items: [
               {
                 label: "Blog",
-                href: "https://blog.trypromptly.com",
+                to: "/blog",
               },
               {
                 label: "GitHub",
