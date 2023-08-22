@@ -45,6 +45,10 @@ LLMStack comes with a default admin account whose credentials are `admin` and `p
   loop
 />
 
+:::note
+If you are deploying LLMStack on a server, make sure to update `ALLOWED_HOSTS` in `.env` file to include the hostname of your server. Refer to the [configuration](config.md) section for more information.
+:::
+
 Instead of downloading the release, you can also clone the repository and run the above commands in the cloned repository.
 
 ```

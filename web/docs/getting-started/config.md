@@ -15,6 +15,7 @@ You can configure the LLMStack installation by editing the `.env` file in the ro
 | `WEAVIATE_VOLUME`   | Path to the directory where the weaviate data will be stored. By default, data is stored in `/tmp` which is ephemeral. Make sure to change this to a persistent directory if you want to persist the data. | `/tmp/weaviate_llmstack` |
 | `LLMSTACK_PORT`     | Port on which the LLMStack web server will listen.                                                                                                                                                         | `3000`                   |
 | `LOG_LEVEL`         | Log level for the LLMStack web server.                                                                                                                                                                     | `ERROR`                  |
+| `ALLOWED_HOSTS`     | Comma separated list of allowed hosts for the LLMStack API server server.                                                                                                                                  | `localhost`              |
 
 ## Default Platform Keys
 
