@@ -86,9 +86,7 @@ class CSVTextSplitter(TextSplitter):
         file_handle = StringIO(text)
         csv_reader = csv.DictReader(file_handle)
         for i, row in enumerate(csv_reader):
-            content = '\n\n'.join(
-                f'{k.strip()}: {v.strip()}' for k, v in row.items()
-            )
+            content = '\n\n'.join(f'{k}: {v}' for k, v in row.items())
             chunks.append(content)
         return chunks
 
