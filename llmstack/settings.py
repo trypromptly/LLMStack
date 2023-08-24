@@ -317,7 +317,6 @@ DATASOURCE_TYPE_PROVIDERS = [
     'datasources.handlers.amazon',
     'datasources.handlers.files',
     'datasources.handlers.google',
-    'datasources.handlers.notion',
     'datasources.handlers.text',
     'datasources.handlers.website',
 ]

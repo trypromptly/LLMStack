@@ -85,7 +85,7 @@ def delete_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
         entry_data.save()
     
     datasource.save()
-    return datasource_entry_items
+    return
 
 def resync_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
     logger.info(f'Resyncing task for data_source_entry: %s' % str(entry_data))
