@@ -1,3 +1,4 @@
+from enum import Enum
 import json
 import logging
 from string import Template
@@ -56,13 +57,23 @@ class DataSourceEntryItem(BaseModel):
     metadata: dict = {}
     data: Optional[dict] = None
 
-
+class DataSourceSyncType(str, Enum):
+    FULL = 'full'
+    INCREMENTAL = 'incremental'
+    
+class DataSourceSyncConfiguration(_Schema):
+    sync_type: DataSourceSyncType = 'full'
+    
 class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
     @classmethod
     def get_content_key(cls) -> str:
         datasource_type_interface = cls.__orig_bases__[0]
         return datasource_type_interface.__args__[0].get_content_key()
+    
+    @classmethod
+    def get_sync_configuration(cls) -> Optional[dict]:
+        return None
 
     @classmethod
     def get_weaviate_schema(cls, class_name: str) -> dict:
@@ -158,6 +169,7 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
             return None
 
     def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
+        logger.info(f'Adding data_source_entry: {data}')
         documents = self.get_data_documents(data)
 
         documents = map(
@@ -206,7 +218,13 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
                 self.vectorstore._client.data_object.delete(
                     document_id, self.datasource_class_name,
                 )
-
+    
+    def resync_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
+        # Delete old data 
+        self.delete_entry(data)
+        # Add new data
+        return self.add_entry(DataSourceEntryItem(**data["input"])) 
+    
     def delete_all_entries(self) -> None:
         self.vectorstore._client.schema.delete_class(
             self.datasource_class_name,

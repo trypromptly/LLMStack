@@ -48,4 +48,8 @@ urlpatterns = [
         'api/datasource_entries/<str:uid>/text_content',
         apis.DataSourceEntryViewSet.as_view({'get': 'text_content'}),
     ),
+    path(
+        'api/datasource_entries/<str:uid>/resync',
+        apis.DataSourceEntryViewSet.as_view({'post': 'resync'}),
+    ),
 ]

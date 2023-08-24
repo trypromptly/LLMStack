@@ -13,7 +13,7 @@ from .models import DataSourceType
 from .serializers import DataSourceEntrySerializer
 from .serializers import DataSourceSerializer
 from .serializers import DataSourceTypeSerializer
-from apps.tasks import add_data_entry_task
+from apps.tasks import add_data_entry_task, resync_data_entry_task
 from apps.tasks import delete_data_entry_task
 from apps.tasks import delete_data_source_task
 from common.utils.utils import extract_urls_from_sitemap
@@ -87,7 +87,18 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         )
         return DRFResponse({'content': content, 'metadata': metadata})
 
+    def resync(self, request, uid):
+        datasource_entry_object = get_object_or_404(
+            DataSourceEntry, uuid=uuid.UUID(uid),
+        )
+        if datasource_entry_object.datasource.owner != request.user:
+            return DRFResponse(status=404)
 
+        resync_data_entry_task(
+            datasource_entry_object.datasource, datasource_entry_object,
+        )
+
+        return DRFResponse(status=202)
 class DataSourceViewSet(viewsets.ModelViewSet):
     queryset = DataSource.objects.all()
     serializer_class = DataSourceSerializer

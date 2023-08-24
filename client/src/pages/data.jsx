@@ -15,6 +15,7 @@ import { TextareaAutosize } from "@mui/base";
 
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import SyncOutlinedIcon from "@mui/icons-material/SyncOutlined";
 import PeopleOutlineOutlinedIcon from "@mui/icons-material/PeopleOutlineOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 
@@ -313,6 +314,8 @@ export default function DataPage() {
         title: "Action",
         key: "operation",
         render: (record) => {
+          const isAdhocSyncSupported = record?.sync_config;
+
           return (
             <Box>
               <IconButton
@@ -330,8 +333,22 @@ export default function DataPage() {
                   setDeleteConfirmationModalOpen(true);
                 }}
               >
-                <DeleteOutlineOutlinedIcon />
+                <DeleteOutlineOutlinedIcon className="delete-dataentry-icon" />
               </IconButton>
+              {isAdhocSyncSupported && (
+                <IconButton
+                  onClick={() => {
+                    axios()
+                      .post(`/api/datasource_entries/${record.uuid}/resync`)
+                      .then((response) => {
+                        reloadDataSourceEntries();
+                        reloadDataSourceEntries();
+                      });
+                  }}
+                >
+                  <SyncOutlinedIcon className="resync-dataentry-icon" />
+                </IconButton>
+              )}
             </Box>
           );
         },
@@ -348,8 +365,10 @@ export default function DataPage() {
         onRow={(record, rowIndex) => {
           return {
             onClick: (event) => {
-              setDataSourceEntryData(record);
-              setDataSourceEntryDrawerOpen(true);
+              if (event.target.tagName === "TD") {
+                setDataSourceEntryData(record);
+                setDataSourceEntryDrawerOpen(true);
+              }
             },
           };
         }}

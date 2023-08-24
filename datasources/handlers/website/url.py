@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import Any, List
 from typing import Optional
 
 from pydantic import Field
@@ -9,7 +9,7 @@ from common.utils.text_extract import extract_text_from_url
 from common.utils.text_extract import ExtraParams
 from common.utils.splitter import SpacyTextSplitter
 from common.utils.utils import extract_urls_from_sitemap
-from datasources.handlers.datasource_type_interface import DataSourceEntryItem
+from datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSyncConfiguration, DataSourceSyncType
 from datasources.handlers.datasource_type_interface import DataSourceSchema
 from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
@@ -54,6 +54,26 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
     @staticmethod
     def slug() -> str:
         return 'url'
+    
+    @classmethod
+    def get_sync_configuration(cls) -> Optional[dict]:
+        return DataSourceSyncConfiguration(sync_type=DataSourceSyncType.FULL).dict()
+    
+    def get_url_data(self, url: str) -> Optional[DataSourceEntryItem]:
+        if not url.startswith('https://') and not url.startswith('http://'):
+            url = f'https://{url}'
+
+        text = extract_text_from_url(
+            url, extra_params=ExtraParams(openai_key=self.openai_key),
+        )
+        docs = [
+            Document(
+                page_content_key=self.get_content_key(), page_content=t, metadata={
+                    'source': url,
+                },
+            ) for t in SpacyTextSplitter(chunk_size=1500, length_func=len).split_text(text)
+        ]
+        return docs
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = URLSchema(**data)
@@ -83,22 +103,11 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
 
         return list(map(lambda entry: DataSourceEntryItem(name=entry, data={'url': entry}), urls + sitemap_urls))
 
+    
+    
     def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         url = data.data['url']
-        if not url.startswith('https://') and not url.startswith('http://'):
-            url = f'https://{url}'
-
-        text = extract_text_from_url(
-            url, extra_params=ExtraParams(openai_key=self.openai_key),
-        )
-        docs = [
-            Document(
-                page_content_key=self.get_content_key(), page_content=t, metadata={
-                    'source': url,
-                },
-            ) for t in SpacyTextSplitter(chunk_size=1500, length_func=len).split_text(text)
-        ]
-        return docs
+        return self.get_url_data(url)
 
     def similarity_search(self, query: str, *args, **kwargs) -> List[dict]:
         return super().similarity_search(query, *args, **kwargs)

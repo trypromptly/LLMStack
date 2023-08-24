@@ -30,7 +30,9 @@ def add_data_entry_task(datasource: DataSource, datasource_entry_items: List[Dat
         )
         try:
             result = datasource_entry_handler.add_entry(datasource_entry_item)
-            datasource_entry_object.config = result.config
+            datasource_entry_config = result.config
+            datasource_entry_config["input"] = datasource_entry_item.dict()            
+            datasource_entry_object.config = datasource_entry_config
             datasource_entry_object.size = result.size
             datasource_entry_object.status = DataSourceEntryStatus.READY
             datasource_entries_size += result.size
@@ -85,6 +87,30 @@ def delete_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
     datasource.save()
     return datasource_entry_items
 
+def resync_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
+    logger.info(f'Resyncing task for data_source_entry: %s' % str(entry_data))
+    
+    datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
+        datasource.type,
+    )
+    datasource_entry_handler: DataSourceProcessor = datasource_entry_handler_cls(
+        datasource,
+    )
+    entry_data.status = DataSourceEntryStatus.PROCESSING
+    entry_data.save()
+    old_size = entry_data.size
+    
+    result = datasource_entry_handler.resync_entry(entry_data.config)
+    entry_data.size = result.size
+    config_entry = result.config
+    config_entry["input"] = entry_data.config["input"]
+    entry_data.config = config_entry
+    entry_data.status = DataSourceEntryStatus.READY
+    entry_data.save()
+    
+    datasource.size = datasource.size - old_size + result.size
+    datasource.save()
+    
 
 def delete_data_source_task(datasource):
     datasource_type = datasource.type
