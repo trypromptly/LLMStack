@@ -30,9 +30,9 @@ def add_data_entry_task(datasource: DataSource, datasource_entry_items: List[Dat
         )
         try:
             result = datasource_entry_handler.add_entry(datasource_entry_item)
-            config_entry = result.config
-            config_entry["input"] = datasource_entry_item.dict()            
-            datasource_entry_object.config = config_entry
+            datasource_entry_config = result.config
+            datasource_entry_config["input"] = datasource_entry_item.dict()            
+            datasource_entry_object.config = datasource_entry_config
             datasource_entry_object.size = result.size
             datasource_entry_object.status = DataSourceEntryStatus.READY
             datasource_entries_size += result.size

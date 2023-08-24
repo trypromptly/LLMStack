@@ -62,7 +62,7 @@ class DataSourceSyncType(str, Enum):
     INCREMENTAL = 'incremental'
     
 class DataSourceSyncConfiguration(_Schema):
-    sync_type: str = 'full'
+    sync_type: DataSourceSyncType = 'full'
     
 class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
