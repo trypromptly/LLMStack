@@ -3,7 +3,7 @@ import importlib
 import logging
 import uuid
 from enum import Enum
-from typing import Any
+from typing import Optional
 from typing import List
 
 import openai
@@ -50,6 +50,16 @@ If you cannot answer the question based on the provided context, say you don't k
 No answer should go out of the provided input. If the provided input is empty, return saying you don't know the answer.
 Keep the answers terse.""", description='Instructions for the chatbot', widget='textarea', advanced_parameter=True,
     )
+    show_citations: bool = Field(
+        title='Show citations', default=False,
+        description='Show citations for the answer',
+        advanced_parameter=True,
+    )
+    citation_instructions: str = Field(
+        """Use source value to provide citations for the answer. Citations must be in a new line after the answer.""",
+        widget='textarea', advanced_parameter=True,
+        description='Instructions for the chatbot')
+    
     k: int = Field(
         title='Documents Count', default=8,
         description='Number of documents from similarity search to use as context',
@@ -77,8 +87,15 @@ class TextChatInput(ApiProcessorSchema):
     )
 
 
+class Citation(ApiProcessorSchema):
+    text: str
+    source: Optional[str]
+    certainty: Optional[float]
+    distance: Optional[float]
+    
 class TextChatOutput(ApiProcessorSchema):
-    answer: str = Field(..., description='Answer to the question')
+    answer: str = Field(..., description='Answer to the question', widget='textarea')
+    citations: Optional[List[Citation]] 
 
 
 class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConfiguration]):
@@ -162,17 +179,26 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         ]
 
         if (len(docs) > 0):
-            self._context = '\n'.join([d.page_content for d in docs])
+            self._context = ''
+            for d in docs:
+                self._context = self._context + '\n-----'
+                self._context = self._context + '\nContent: ' + d.page_content
+                if self._config.show_citations:
+                    self._context = self._context + '\nMetadata: ' + ', '.join(f'{k}: {v}' for k, v in d.metadata.items())
             # Remove invalid characters from docs
             self._context = self._context.replace('\u0000', '')
 
+        instructions = self._config.instructions
+        if self._config.show_citations:
+            instructions = instructions + ' ' + self._config.citation_instructions
         system_message = {
             'role': 'system',
             'content': self._config.system_message_prefix,
         }
+        
         context_message = {
             'role': 'user',
-            'content': self._config.instructions + '\n----\ncontext: ' + self._context,
+            'content': instructions + '\n----\ncontext: ' + self._context,
         }
         self._chat_history.append(
             {'role': 'user', 'content': input['question']},
@@ -213,12 +239,19 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         else:
             raise Exception('No OpenAI API key provided')
 
+        
         for data in result:
             if data.get('object') and data.get('object') == 'chat.completion.chunk' and data.get('choices') and len(data.get('choices')) > 0 and data['choices'][0].get('delta') and data['choices'][0]['delta'].get('content'):
                 async_to_sync(output_stream.write)(
-                    TextChatOutput(answer=data['choices'][0]['delta']['content']),
-                )
+                    TextChatOutput(
+                        answer=data['choices'][0]['delta']['content']
+                ))
 
+        if len(docs) > 0:
+            async_to_sync(output_stream.write)(
+                TextChatOutput(answer='', citations=list(map(lambda d: Citation(
+                            text=d.page_content, source=d.metadata['source'], certainty=d.metadata['certainty'], distance=d.metadata['distance']), docs))))
+            
         output = output_stream.finalize()
 
         self._chat_history.append(
