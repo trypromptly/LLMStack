@@ -105,7 +105,3 @@ To update documentation, make changes to `web/docs` directory and run `npm run b
 ## Contributing
 
 We welcome contributions to LLMStack. Please check out our [contributing guide](https://llmstack.ai/docs/guides/contributing) to learn more about how you can contribute to LLMStack.
-
-## License
-
-LLMStack is licensed under the [Elastic License (ELv2)](LICENSE.md).
