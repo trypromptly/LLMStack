@@ -66,7 +66,7 @@ services:
     command: "postgres -c fsync=off -c full_page_writes=off -c synchronous_commit=OFF"
     restart: unless-stopped
     volumes:
-      - ${POSTGRES_VOLUME}:/var/lib/postgresql/data/pgdata
+      - ${POSTGRES_VOLUME}:/var/lib/
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
       POSTGRES_USER: ${DATABASE_USERNAME:-postgres}
