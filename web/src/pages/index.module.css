@@ -25,6 +25,11 @@
   color: #2c3746;
 }
 
+.githubButtons {
+  gap: 1rem;
+  padding: 1rem;
+}
+
 [data-theme="dark"] .heroBanner {
   background-image: radial-gradient(circle, #061522, #032c52);
 }

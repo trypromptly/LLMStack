@@ -155,6 +155,13 @@ const config = {
         disableSwitch: false,
         respectPrefersColorScheme: true,
       },
+      scripts: [
+        {
+          src: "https://buttons.github.io/buttons.js",
+          async: true,
+          defer: true,
+        },
+      ],
     }),
 };
 
