@@ -42,9 +42,10 @@ from apps.integration_configs import SlackIntegrationConfig
 from apps.integration_configs import WebIntegrationConfig
 from emails.sender import EmailSender
 from emails.templates.factory import EmailTemplateFactory
-from processors.models import ApiBackend
+from processors.models import ApiBackend, ApiProvider
 from processors.models import Endpoint
 from base.models import Profile
+from apps.yaml_loader import get_app_template_by_slug, get_app_templates_from_contrib
 
 logger = logging.getLogger(__name__)
 
@@ -205,15 +206,36 @@ class AppViewSet(viewsets.ViewSet):
     def getTemplates(self, request, slug=None):
         json_data = None
         if slug:
-            object = get_object_or_404(AppTemplate, slug=slug)
-            serializer = AppTemplateSerializer(
-                instance=object, context={'hide_details': False},
-            )
-            json_data = serializer.data
+            object = get_app_template_by_slug(slug)
+            if object:
+                object_dict = object.dict()
+                # For backward compatibility with old app templates
+                for page in object_dict['pages']:
+                    page['schema'] = page['input_schema']
+                    page['ui_schema'] = page['input_ui_schema']
+                json_data = object_dict
+            else:
+                object = get_object_or_404(AppTemplate, slug=slug)
+                serializer = AppTemplateSerializer(
+                    instance=object, context={'hide_details': False},
+                )
+                json_data = serializer.data
         else:
             queryset = AppTemplate.objects.all().order_by('order')
             serializer = AppTemplateSerializer(queryset, many=True)
             json_data = serializer.data
+
+            # Add app templates from contrib
+            app_template_slugs = list(map(lambda x: x['slug'], json_data))
+            app_templates_from_yaml = get_app_templates_from_contrib()
+            for app_template in app_templates_from_yaml:
+                if app_template.slug not in app_template_slugs:
+                    # When listing, do not show pages and app
+                    app_template_dict = app_template.dict()
+                    app_template_dict.pop('pages')
+                    app_template_dict.pop('app')
+                    json_data.append(app_template_dict)
+
         return DRFResponse(json_data)
 
     def publish(self, request, uid):
@@ -302,12 +324,12 @@ class AppViewSet(viewsets.ViewSet):
         # Cleanup app run_graph
         run_graph_entries = app.run_graph.all()
         endpoint_entries = list(filter(lambda x: x != None, set(list(map(lambda x: x.entry_endpoint, run_graph_entries)) +
-                                                           list(map(lambda x: x.exit_endpoint, run_graph_entries)))))
+                                                                list(map(lambda x: x.exit_endpoint, run_graph_entries)))))
 
-        # Cleanup rungraph 
+        # Cleanup rungraph
         # Delete all the run_graph entries
         run_graph_entries.delete()
-            
+
         # Delete all the endpoint entries
         for entry in endpoint_entries:
             EndpointViewSet.delete(self, request, id=str(
@@ -418,7 +440,8 @@ class AppViewSet(viewsets.ViewSet):
 
     def post(self, request):
         owner = request.user
-        app_type = get_object_or_404(AppType, id=request.data['app_type'])
+        app_type = get_object_or_404(AppType, id=request.data['app_type']) if 'app_type' in request.data else get_object_or_404(
+            AppType, slug=request.data['app_type_slug'])
         app_name = request.data['name']
         app_description = request.data['description'] if 'description' in request.data else ''
         app_config = request.data['config'] if 'config' in request.data else {}
@@ -435,9 +458,18 @@ class AppViewSet(viewsets.ViewSet):
         # Iterate over processors and create an endpoint for each using api_backend
         # and then use that to create AppRunGraphEntry to create the graph
         for processor in processors:
-            api_backend_obj = get_object_or_404(
-                ApiBackend, id=processor['api_backend'],
-            )
+            api_backend_obj = None
+            if 'processor_slug' in processor and 'provider_slug' in processor:
+                provider = get_object_or_404(
+                    ApiProvider, slug=processor['provider_slug'],
+                )
+                api_backend_obj = get_object_or_404(
+                    ApiBackend, slug=processor['processor_slug'], api_provider=provider,
+                )
+            else:
+                api_backend_obj = get_object_or_404(
+                    ApiBackend, id=processor['api_backend'],
+                )
             endpoint = Endpoint.objects.create(
                 name=f'{app_name}:{api_backend_obj.name}',
                 owner=owner,
@@ -485,9 +517,10 @@ class AppViewSet(viewsets.ViewSet):
             edge.save()
             graph_edges.append(edge)
 
+        template_slug = request.data['template_slug'] if 'template_slug' in request.data else None
         template = AppTemplate.objects.filter(
-            slug=request.data['template_slug'],
-        ).first() if 'template_slug' in request.data else None
+            slug=template_slug,
+        ).first() if template_slug else None
 
         app = App.objects.create(
             name=app_name,
@@ -500,6 +533,7 @@ class AppViewSet(viewsets.ViewSet):
             output_template=app_output_template,
             data_transformer=app_data_transformer,
             template=template,
+            template_slug=template_slug,
         )
         app.run_graph.set(graph_edges)
         app.save()

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 def custom_json_dumps(v, **kwargs):
     import ujson as json
 
@@ -13,39 +14,12 @@ def custom_json_loads(v, **kwargs):
     return json.loads(v, **kwargs)
 
 
-class BaseSchema(BaseModel):
-    class Config:
-        json_dumps = custom_json_dumps
-        json_loads = custom_json_loads
-        
-    @ classmethod
-    def get_json_schema(cls):
-        return super().schema_json(indent=2)
-    
-    @ classmethod
-    def get_schema(cls):
-        return super().schema()
-    
-    @ classmethod
-    def get_ui_schema(cls):
-        """
-        This function receives a class method; gets the schema of the class
-        Calls the function form_ui_per_prop to form the dictionary of UI schema values
-        The resultant UI Schema only contains the properties
-        """
-        schema = cls.get_schema()
-        ui_schema = {
-            'ui:order': list(schema['properties'].keys()),
-            'properties': {}
-        }
+def get_ui_schema_from_json_schema(json_schema):
+    """
+    This function receives a json schema and returns a UI schema
+    """
 
-        for p_key, p_val in schema['properties'].items():
-            ui_schema['properties'][p_key] = cls.form_ui_per_prop(p_key, p_val)
-
-        return ui_schema['properties']
-
-    @ classmethod
-    def form_ui_per_prop(cls, p_key, prop_schema_dict):
+    def form_ui_per_prop(p_key, prop_schema_dict):
         """
         This functions receives the property key and its schema dictionary
         It checks the type of the property value and based on its type,
@@ -82,17 +56,51 @@ class BaseSchema(BaseModel):
 
         if 'widget' in prop_schema_dict:
             ui_prop['ui:widget'] = prop_schema_dict['widget']
-        
+
         if 'options' in prop_schema_dict:
             ui_prop['ui:options'] = {
-                'enumOptions' : [{'value': val, 'label': val} for val in prop_schema_dict['options']],
+                'enumOptions': [{'value': val, 'label': val} for val in prop_schema_dict['options']],
                 'values': prop_schema_dict['options']
             }
-                    
+
         if prop_schema_dict.get('format') == 'date-time':
             ui_prop['ui:widget'] = 'datetime'
-        
+
         # Unless explicitly mentioned, all properties are advanced parameters
-        ui_prop['ui:advanced'] = prop_schema_dict.get('advanced_parameter', True)
+        ui_prop['ui:advanced'] = prop_schema_dict.get(
+            'advanced_parameter', True)
 
         return ui_prop
+
+    ui_schema = {
+        'ui:order': list(json_schema['properties'].keys()),
+        'properties': {}
+    }
+
+    for p_key, p_val in json_schema['properties'].items():
+        ui_schema['properties'][p_key] = form_ui_per_prop(p_key, p_val)
+
+    return ui_schema['properties']
+
+
+class BaseSchema(BaseModel):
+    class Config:
+        json_dumps = custom_json_dumps
+        json_loads = custom_json_loads
+
+    @ classmethod
+    def get_json_schema(cls):
+        return super().schema_json(indent=2)
+
+    @ classmethod
+    def get_schema(cls):
+        return super().schema()
+
+    @ classmethod
+    def get_ui_schema(cls):
+        """
+        This function receives a class method; gets the schema of the class
+        Calls the function form_ui_per_prop to form the dictionary of UI schema values
+        The resultant UI Schema only contains the properties
+        """
+        return get_ui_schema_from_json_schema(cls.get_schema())

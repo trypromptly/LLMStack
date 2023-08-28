@@ -1,0 +1,61 @@
+name: "File Chat"
+slug: "file-chatbot"
+category_slugs: ["chatbot"]
+description: 'Build you own "Chat with File" app that let''s you upload any PDF, RTF, TXT, DOCX, PPTX files and ask questions on their contents.'
+provider_slug: "promptly"
+pages:
+  - title: "Chatbot configuration"
+    description: "Configure your file chatbot"
+    input_fields:
+      - name: "header_message"
+        title: "Header"
+        type: "string"
+        widget: "richtext"
+        description: "Content to show at the top of the chat window"
+        path: "config.input_template"
+      - name: "welcome_message"
+        title: "Welcome Message"
+        type: "string"
+        description: "This is the message the chatbot greets user with"
+        path: "config.welcome_message"
+      - name: "assistant_image"
+        title: "Chatbot Image"
+        type: "file"
+        description: "Avatar to use for your chatbot"
+        path: "config.assistant_image"
+      - name: "question_description"
+        title: "Question help text"
+        type: "string"
+        description: "Help text to show below the question input box"
+        path: "input_schema.properties.question.description"
+app:
+  name: "File Chatbot"
+  slug: "file-chatbot"
+  description: "File Chatbot"
+  type_slug: "text-chat"
+  input_fields:
+    - name: "file"
+      title: "File"
+      type: "string"
+      widget: "file"
+      description: "Drop here the file you want to ask questions on"
+      format: "data-uri"
+      pattern: "data:(.*);name=(.*);base64,(.*)"
+    - name: "question"
+      title: "Question"
+      type: "string"
+      description: "Enter your question here"
+  output_template:
+    markdown: |
+      {{ config.input_template }}
+  processors:
+    - id: "_inputs1"
+      provider_slug: "promptly"
+      processor_slug: "promptly_data_uri_text_extract"
+      input:
+        {
+          "file": "",
+          "query": "{{_inputs0.question}} ",
+          "file_data": "{{_inputs0.file}} ",
+        }
+      config: { "document_limit": 2, "text_chunk_size": 1500 }

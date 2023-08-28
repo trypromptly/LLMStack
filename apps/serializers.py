@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.yaml_loader import get_app_template_by_slug
+
 from .models import App
 from .models import AppHub
 from .models import AppRunGraphEntry
@@ -191,7 +193,13 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return obj.last_modified_by.email if (obj.last_modified_by and obj.has_write_permission(self._request_user)) else None
 
     def get_template(self, obj):
-        return AppTemplateSerializer(instance=obj.template).data if obj.template else None
+        if obj.template:
+            return AppTemplateSerializer(instance=obj.template).data
+        elif obj.template_slug is not None:
+            app_template = get_app_template_by_slug(obj.template_slug)
+            if app_template:
+                return app_template.dict()
+        return None
 
     def get_web_config(self, obj):
         return obj.web_config if obj.has_write_permission(self._request_user) else None
