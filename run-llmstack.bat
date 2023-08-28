@@ -3,7 +3,7 @@ setlocal
 
 rem set LLMSTACK_PORT and other environment variables
 if exist .env (
-  for /F "delims=# eol=# tokens=1,2" %%i in (.env) do set "%%i=%%j"
+  for /F "delims== eol=# tokens=1,2" %%i in (.env) do set "%%i=%%j"
 ) else (
   echo ".env file not found"
   exit /B
