@@ -35,6 +35,7 @@ COPY --from=builder /code/client/build/static /code/client/build/static
 COPY --from=builder /code/common /code/common
 COPY --from=builder /code/datasources /code/datasources
 COPY --from=builder /code/emails /code/emails
+COPY --from=builder /code/contrib/apps /code/contrib/apps
 COPY --from=builder /code/fixtures /code/fixtures
 COPY --from=builder /code/jobs /code/jobs
 COPY --from=builder /code/llmstack /code/llmstack
