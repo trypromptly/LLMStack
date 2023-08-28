@@ -321,5 +321,5 @@ DATASOURCE_TYPE_PROVIDERS = [
     'datasources.handlers.website',
 ]
 
-APP_TEMPLATES_DIR = os.getenv('APP_TEMPATES_PATH', os.path.join(
+APP_TEMPLATES_DIR = os.getenv('APP_TEMPATES_DIR', os.path.join(
     BASE_DIR, 'contrib', 'apps', 'templates'))
