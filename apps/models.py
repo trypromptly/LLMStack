@@ -166,6 +166,9 @@ class App(models.Model):
     template = models.ForeignKey(
         AppTemplate, on_delete=models.DO_NOTHING, help_text='Template used for this app', default=None, null=True, blank=True,
     )
+    template_slug = models.CharField(
+        max_length=100, help_text='Slug of the template used for this app', default=None, null=True, blank=True,
+    )
     is_public = models.BooleanField(
         default=True, help_text='Whether the app is public or not',
     )
@@ -337,6 +340,7 @@ class TestCase(models.Model):
     last_updated_at = models.DateTimeField(
         auto_now=True, help_text='Time at which the app instance was last updated',
     )
+
 
 @receiver(pre_save, sender=App)
 def update_app_pre_save(sender, instance, **kwargs):
