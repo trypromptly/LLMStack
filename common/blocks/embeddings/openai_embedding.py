@@ -8,7 +8,6 @@ from typing import Generic
 from typing import List
 from typing import Optional
 
-import openai
 from pydantic import Field
 
 from common.blocks.base.processor import BaseConfiguration
@@ -64,6 +63,7 @@ class OpenAIEmbeddingsProcessor(ProcessorInterface[OpenAIEmbeddingInput, OpenAIE
         super().__init__(configuration, cache_manager, input_tx_cb, output_tx_cb)
 
     def process(self, input: OpenAIEmbeddingInput, configuration: OpenAIEmbeddingConfiguration) -> OpenAIEmbeddingOutput:
+        import openai
         importlib.reload(openai)
 
         result = None
