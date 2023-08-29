@@ -23,8 +23,38 @@ def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseMode
     Returns:
         Type['BaseModel']: The dynamically created Pydantic model.
     """
-    return create_model(
-        f'{name}', **{field['name']: (int if field['type'] == 'int' else str, Field(**{k: field[k] for k in field})) for field in input_fields})
+    datatype_map = {
+        'int': int,
+        'string': str,
+        'bool': bool,
+        'float': float,
+        'dict': dict,
+        'list': list,
+        'file': str,
+        'image': str,
+        'text': str
+    }
+
+    fields = {}
+    for field in input_fields:
+        datatype = datatype_map[field['type']
+                                ] if 'type' in field and field['type'] in datatype_map else str
+
+        if 'type' in field and field['type'] == 'file':
+            field['widget'] = 'file'
+            field['format'] = 'data-url'
+            field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
+        elif 'type' in field and field['type'] == 'image':
+            field['widget'] = 'file'
+            field['format'] = 'data-url'
+            field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
+        elif 'type' in field and field['type'] == 'text':
+            field['widget'] = 'textarea'
+
+        fields[field['name']] = (datatype, Field(
+            **{k: field[k] for k in field}))
+
+    return create_model(f'{name}', **fields)
 
 
 def get_app_template_from_yaml(yaml_file: str) -> dict:
