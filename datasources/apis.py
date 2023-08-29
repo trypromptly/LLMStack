@@ -1,6 +1,6 @@
 import logging
 import uuid
-from urllib.parse import urlparse
+import time 
 
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -13,20 +13,14 @@ from .models import DataSourceType
 from .serializers import DataSourceEntrySerializer
 from .serializers import DataSourceSerializer
 from .serializers import DataSourceTypeSerializer
-from apps.tasks import add_data_entry_task, resync_data_entry_task
+from apps.tasks import add_data_entry_task, extract_urls_task, resync_data_entry_task
 from apps.tasks import delete_data_entry_task
 from apps.tasks import delete_data_source_task
-from common.utils.utils import extract_urls_from_sitemap
-from common.utils.utils import get_url_content_type
-from common.utils.utils import is_sitemap_url
-from common.utils.utils import is_youtube_video_url
-from common.utils.utils import scrape_url
 from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.types import DataSourceTypeFactory
-from jobs.adhoc import DataSourceEntryProcessingJob
+from jobs.adhoc import DataSourceEntryProcessingJob, ExtractURLJob
 
 logger = logging.getLogger(__name__)
-
 
 class DataSourceTypeViewSet(viewsets.ModelViewSet):
     queryset = DataSourceType.objects.all()
@@ -218,53 +212,25 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         if not url.startswith('https://') and not url.startswith('http://'):
             url = f'https://{url}'
+    
 
-        url_content_type = get_url_content_type(url=url)
-        url_content_type_parts = url_content_type.split(';')
-        mime_type = url_content_type_parts[0]
-        if mime_type != 'text/html' or is_youtube_video_url(url):
-            return DRFResponse({'urls': [url]})
+        logger.info("Staring job to extract urls")
 
-        # Get url domain
-        domain = urlparse(url).netloc
-        protocol = urlparse(url).scheme
-
-        if is_sitemap_url(url):
-            urls = extract_urls_from_sitemap(url)
-            return DRFResponse({'urls': urls})
-        else:
+        job = ExtractURLJob.create(
+                func=extract_urls_task, args=[
+                    url
+                ],
+            ).add_to_queue()
+        
+        # Wait for job to finish and return the result
+        while True:
+            time.sleep(1)
+            if job.is_failed or job.is_finished or job.is_stopped or job.is_canceled:
+                break
+        
+        if job.is_failed or job.is_stopped or job.is_canceled:
             urls = [url]
-            try:
-                scrapped_url = scrape_url(url)
-                hrefs = scrapped_url[0].get('hrefs', [url]) if len(
-                    scrapped_url,
-                ) > 0 else [url]
-
-                hrefs = list(set(map(lambda x: x.split('?')[0], hrefs)))
-                paths = list(filter(lambda x: x.startswith('/'), hrefs))
-                fq_urls = list(
-                    filter(lambda x: not x.startswith('/'), hrefs),
-                )
-
-                urls = [
-                    url,
-                ] + list(map(lambda entry: f'{protocol}://{domain}{entry}', paths)) + fq_urls
-
-                # Make sure everything is a url
-                urls = list(
-                    filter(
-                        lambda x: x.startswith(
-                            'https://',
-                        ) or x.startswith('http://'), urls,
-                    ),
-                )
-
-                # Filter out urls that are not from the same domain
-                urls = list(
-                    set(filter(lambda x: urlparse(x).netloc == domain, urls)),
-                )
-
-            except Exception as e:
-                logger.exception(f'Error while extracting urls: {e}')
-
-            return DRFResponse({'urls': urls})
+        else:
+            urls = job.result
+        
+        return DRFResponse({'urls': urls})
