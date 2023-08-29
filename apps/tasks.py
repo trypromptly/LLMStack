@@ -119,3 +119,62 @@ def delete_data_source_task(datasource):
     )
     datasource_entry_handler = datasource_entry_handler_cls(datasource)
     datasource_entry_handler.delete_all_entries()
+
+
+def extract_urls_task(url):
+    from urllib.parse import urlparse
+    from common.utils.utils import extract_urls_from_sitemap
+    from common.utils.utils import get_url_content_type
+    from common.utils.utils import is_sitemap_url
+    from common.utils.utils import is_youtube_video_url
+    from common.utils.utils import scrape_url
+    
+    url_content_type = get_url_content_type(url=url)
+    url_content_type_parts = url_content_type.split(';')
+    mime_type = url_content_type_parts[0]
+    if mime_type != 'text/html' or is_youtube_video_url(url):
+        return [url]
+
+    # Get url domain
+    domain = urlparse(url).netloc
+    protocol = urlparse(url).scheme
+
+    if is_sitemap_url(url):
+        urls = extract_urls_from_sitemap(url)
+        return urls
+    else:
+        urls = [url]
+        try:
+            scrapped_url = scrape_url(url)
+            hrefs = scrapped_url[0].get('hrefs', [url]) if len(
+                scrapped_url,
+            ) > 0 else [url]
+
+            hrefs = list(set(map(lambda x: x.split('?')[0], hrefs)))
+            paths = list(filter(lambda x: x.startswith('/'), hrefs))
+            fq_urls = list(
+                filter(lambda x: not x.startswith('/'), hrefs),
+            )
+
+            urls = [
+                url,
+            ] + list(map(lambda entry: f'{protocol}://{domain}{entry}', paths)) + fq_urls
+
+            # Make sure everything is a url
+            urls = list(
+                filter(
+                    lambda x: x.startswith(
+                        'https://',
+                    ) or x.startswith('http://'), urls,
+                ),
+            )
+
+            # Filter out urls that are not from the same domain
+            urls = list(
+                set(filter(lambda x: urlparse(x).netloc == domain, urls)),
+            )
+
+        except Exception as e:
+            logger.exception(f'Error while extracting urls: {e}')
+
+        return urls

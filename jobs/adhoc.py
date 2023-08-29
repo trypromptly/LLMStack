@@ -40,3 +40,9 @@ class HistoryPersistenceJob(ProcessingJob):
     @classmethod
     def generate_job_id(cls):
         return '{}'.format(str(uuid.uuid4()))
+
+
+class ExtractURLJob(ProcessingJob):
+    @classmethod
+    def generate_job_id(cls):
+        return '{}'.format(str(uuid.uuid4()))
