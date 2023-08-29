@@ -46,7 +46,6 @@ from processors.models import ApiBackend, ApiProvider
 from processors.models import Endpoint
 from base.models import Profile
 from apps.yaml_loader import get_app_template_by_slug, get_app_templates_from_contrib
-from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
