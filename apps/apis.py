@@ -46,6 +46,7 @@ from processors.models import ApiBackend, ApiProvider
 from processors.models import Endpoint
 from base.models import Profile
 from apps.yaml_loader import get_app_template_by_slug, get_app_templates_from_contrib
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -330,6 +331,11 @@ class AppViewSet(viewsets.ViewSet):
         # Delete all the run_graph entries
         run_graph_entries.delete()
 
+        app_run_graph_entries = AppRunGraphEntry.objects.filter(
+            Q(entry_endpoint__in=endpoint_entries) | Q(exit_endpoint__in=endpoint_entries),
+        )
+        app_run_graph_entries.delete()
+        
         # Delete all the endpoint entries
         for entry in endpoint_entries:
             EndpointViewSet.delete(self, request, id=str(
