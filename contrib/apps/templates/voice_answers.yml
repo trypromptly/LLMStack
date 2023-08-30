@@ -1,0 +1,91 @@
+name: "Voice Answers"
+slug: "voice-answers"
+category_slugs: ["voice"]
+description: "Augment your search with AI and provide voice-based answers for a richer experience. Ensure to add your ElevenLabs API key in Settings."
+provider_slug: "promptly"
+pages:
+  - title: "Settings"
+    description: "Configure voice answers parameters. Make sure to add your ElevenLabs API key in Settings."
+    input_fields:
+      - name: "voice_id"
+        title: "Voice ID"
+        type: "string"
+        description: "Voice ID to be used, you can use https://api.elevenlabs.io/v1/voices to list all the available voices."
+        path: "processors[2].config.voice_id"
+      - name: "ai_system_message"
+        title: "AI System Message"
+        type: "string"
+        widget: "textarea"
+        description: "System instructions to the ChatGPT model"
+        path: "processors[1].input.system_message"
+app:
+  name: "Voice answers"
+  slug: "voice-answers"
+  description: "Voice answers"
+  type_slug: "web"
+  input_fields:
+    - name: "file"
+      title: "File"
+      type: "file"
+      description: "Drop here the file you want to ask questions on"
+    - name: "question"
+      title: "Question"
+      type: "string"
+      description: "Enter your question here"
+  output_template:
+    markdown: |
+      {{_inputs2.choices[0].content}}
+
+      ![Audio]({{_inputs3.audio_content}})
+  processors:
+    - id: "_inputs1"
+      provider_slug: "promptly"
+      processor_slug: "promptly_data_uri_text_extract"
+      input:
+        {
+          "file": "",
+          "query": "{{_inputs0.question}} ",
+          "file_data": "{{_inputs0.file}} ",
+        }
+      config: { "document_limit": 2, "text_chunk_size": 1500 }
+    - id: "_inputs2"
+      provider_slug: "openai"
+      processor_slug: "openai_chatgpt"
+      input:
+        {
+          "messages":
+            [
+              {
+                "name": "",
+                "role": "user",
+                "content": "Context: {{_inputs1.text}} \n\n---\n\nQuestion: {{_inputs0.question}} ",
+                "function_call": { "arguments": "" },
+              },
+            ],
+          "chat_history": [],
+          "system_message": "You are a helpful AI assistant that answers user's questions based on provided context",
+        }
+      config:
+        {
+          "n": 1,
+          "model": "gpt-3.5-turbo",
+          "top_p": 1,
+          "stream": true,
+          "max_tokens": 1024,
+          "temperature": 0.7,
+          "retain_history": false,
+          "presence_penalty": 0,
+          "frequency_penalty": 0,
+          "auto_prune_chat_history": false,
+        }
+    - id: "_inputs3"
+      provider_slug: "elevenlabs"
+      processor_slug: "elevenlabs_text_to_speech"
+      input: { "input_text": "{{_inputs2.choices[0].content}} " }
+      config:
+        {
+          "model_id": "eleven_monolingual_v1",
+          "voice_id": "21m00Tcm4TlvDq8ikWAM",
+          "voice_settings": { "stability": 0.75, "similarity_boost": 0.75 },
+          "optimize_streaming_latency": 0,
+        }

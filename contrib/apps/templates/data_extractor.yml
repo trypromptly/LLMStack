@@ -1,0 +1,61 @@
+name: "Data Extractor"
+slug: "data-extractor"
+category_slugs: ["text", "productivity"]
+description: "Extract structured data from unstructured data. Simply define the features you want to extract and use the saved app to extract structured info from the provided text."
+provider_slug: "promptly"
+pages:
+  - title: "Configuration"
+    description: "Feature definition"
+    input_fields:
+      - name: "features"
+        title: "Features to extract"
+        description: 'List of features and the format to extract from input. For example, "Name and birthday of all candidates in the text"'
+        path: "processors[0].input.messages[1].content"
+        type: "text"
+app:
+  name: "Data Extractor"
+  slug: "data-extractor"
+  description: "Extract structured data from unstructured data. Simply define the features you want to extract and use the saved app to extract structured info from the provided text."
+  type_slug: "web"
+  input_fields:
+    - name: "input"
+      title: "Input"
+      type: "text"
+      description: "Source text to extract features from"
+    - name: "format"
+      title: "Format"
+      type: "string"
+      description: "Output data format"
+  output_template:
+    markdown: "{{_inputs1.choices[0].content}}"
+  processors:
+    - id: "_inputs1"
+      provider_slug: "openai"
+      processor_slug: "openai_chatgpt"
+      input:
+        {
+          "messages":
+            [
+              {
+                "name": "",
+                "role": "user",
+                "content": "Input: {{_inputs0.input}} \n---\nOutput format: {{_inputs0.format}} ",
+                "function_call": { "arguments": "" },
+              },
+            ],
+          "chat_history": [],
+          "system_message": "Assistant that helps extract structured data from unstructured data",
+        }
+      config:
+        {
+          "n": 1,
+          "model": "gpt-4",
+          "top_p": 1,
+          "stream": true,
+          "max_tokens": 1991,
+          "temperature": 0.7,
+          "retain_history": false,
+          "presence_penalty": 0,
+          "frequency_penalty": 0,
+          "auto_prune_chat_history": false,
+        }

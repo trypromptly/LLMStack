@@ -14,8 +14,7 @@ pages:
         path: "config.welcome_message"
       - name: "assistant_image"
         title: "Assistant Image"
-        type: "string"
-        widget: "file"
+        type: "image"
         description: "Icon to show for the messages from assistant"
         path: "config.assistant_image"
   - title: "Data"
@@ -23,8 +22,7 @@ pages:
     input_fields:
       - name: "datasource"
         title: "Datasource"
-        type: "List[string]"
-        widget: "datasource"
+        type: "datasource"
         description: "Select the data for the chatbot to answer from. Click on the icon to the right to add new data"
         path: "processors[0].config.datasource"
   - title: "Finish"
@@ -32,8 +30,7 @@ pages:
     input_fields:
       - name: "window_color"
         title: "Primary Color of Chat Window"
-        type: "string"
-        widget: "color"
+        type: "color"
         description: "Color of the chat window"
         path: "config.window_color"
       - name: "chat_bubble_text"
@@ -44,10 +41,9 @@ pages:
         path: "config.chat_bubble_text"
       - name: "chat_bubble_style"
         title: "App Bubble Style"
-        type: "string"
+        type: "text"
         default: null
         description: "CSS style object to apply to the app bubble when embedded in another page. Leave empty to use a chat bubble icon"
-        widget: "textarea"
         advanced_parameter: true
         path: "config.chat_bubble_style"
 app:

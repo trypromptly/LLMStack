@@ -1,0 +1,86 @@
+name: "Voice Chat"
+slug: "voice-chat"
+category_slugs: ["chatbot"]
+description: "With this template, create an app that lets users ask questions by recording their voice. Whisper transcribes user's speech to text, passes it to ChatGPT along with relevant data to generate an answer. ElevenLabs will generate the final response in the provided voice"
+provider_slug: "Open AI"
+pages:
+  - title: "Basic"
+    description: "Configure voice settings"
+    input_fields:
+      - name: "assistant_image"
+        title: "Assistant Image"
+        type: "image"
+        description: "Icon to show for the messages from assistant"
+        path: "config.assistant_image"
+      - name: "assistant_voice"
+        title: "Assistant Speech Voice"
+        type: "string"
+        description: "ElevenLabs Voice ID to use for your assistant.  You can use https://api.elevenlabs.io/v1/voices to list all the available voices."
+        path: "processors[2].config.voice_id"
+      - name: "speech_model"
+        title: "Speech Model"
+        type: "string"
+        description: "ElevenLabs speech model to use for your assistant. You can query them using GET https://api.elevenlabs.io/v1/models."
+        path: "processors[2].config.model_id"
+  - title: "Finish"
+    description: "Supporting Data"
+    input_fields:
+      - name: "datasource"
+        title: "Datasource"
+        type: "datasource"
+        description: "Select the data for the chatbot to answer from. Click on the icon to the right to add new data"
+        path: "processors[1].config.datasource"
+      - name: "speech_to_text_prompt"
+        title: "Speech to Text Prompt"
+        type: "text"
+        description: "Optional prompt to guide the Whisper model for text generation from speech"
+        path: "processors[0].input.prompt"
+app:
+  name: "Voice Chat"
+  slug: "voice-chat"
+  description: "With this template, create an app that lets users ask questions by recording their voice. Whisper transcribes user's speech to text, passes it to ChatGPT along with relevant data to generate an answer. ElevenLabs will generate the final response in the provided voice"
+  type_slug: "text-chat"
+  input_fields:
+    - name: "question"
+      title: "Question"
+      type: "voice"
+      description: "Ask your question"
+  output_template:
+    markdown: |
+      ## You asked
+      {{_inputs1.text}}
+
+      ![Audio]({{_inputs3.audio_content}})"
+  processors:
+    - id: "_inputs1"
+      provider_slug: "openai"
+      processor_slug: "openai_audio_transcriptions"
+      input: { "file": "", "prompt": "", "file_data": "{{_inputs0.question}} " }
+      config:
+        { "model": "whisper-1", "temperature": 0, "response_format": "json" }
+    - id: "_inputs2"
+      provider_slug: "promptly"
+      processor_slug: "promptly_text_chat"
+      input: { "question": "{{_inputs1.text}} " }
+      config:
+        {
+          "k": 8,
+          "model": "gpt-3.5-turbo",
+          "temperature": 0.7,
+          "instructions": "You are a chatbot that uses the provided context to answer the user's question.\nIf you cannot answer the question based on the provided context, say you don't know the answer.\nNo answer should go out of the provided input. If the provided input is empty, return saying you don't know the answer.\nKeep the answers terse.",
+          "chat_history_limit": 20,
+          "system_message_prefix": "You are a helpful chat assistant",
+          "use_azure_if_available": true,
+          "chat_history_in_doc_search": 0,
+        }
+    - id: "_inputs3"
+      provider_slug: "elevenlabs"
+      processor_slug: "elevenlabs_text_to_speech"
+      input: { "input_text": "{{_inputs2.answer}} " }
+      config:
+        {
+          "model_id": "eleven_monolingual_v1",
+          "voice_id": "21m00Tcm4TlvDq8ikWAM",
+          "voice_settings": { "stability": 0.75, "similarity_boost": 0.75 },
+          "optimize_streaming_latency": 0,
+        }

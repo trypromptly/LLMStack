@@ -1,0 +1,77 @@
+name: "Character Chat"
+slug: "character-chatbot"
+category_slugs: ["chatbot"]
+description: "Bring your favorite characters to life using this template. Simply define a few features of the character you want to create a bot for and start chatting away."
+provider_slug: "promptly"
+pages:
+  - title: "Character configuration"
+    description: "Configure your character parameters"
+    input_fields:
+      - name: "header_message"
+        title: "Header"
+        type: "richtext"
+        description: "Content to show at the top of the chat window"
+        path: "config.input_template"
+      - name: "welcome_message"
+        title: "Welcome Message"
+        type: "string"
+        description: "This is the message the character greets users with"
+        path: "config.welcome_message"
+      - name: "assistant_image"
+        title: "Character Image"
+        type: "image"
+        description: "Avatar to use for your character"
+        path: "config.assistant_image"
+      - name: "question_description"
+        title: "Question help text"
+        type: "string"
+        description: "Help text to show below the question input box"
+        path: "input_schema.properties.question.description"
+      - name: "character_behavior_message"
+        title: "Character definition"
+        type: "text"
+        path: "processors[0].input.system_message"
+app:
+  name: "Character Chat"
+  slug: "character-chatbot"
+  description: "Bring your favorite characters to life using this template. Simply define a few features of the character you want to create a bot for and start chatting away."
+  type_slug: "text-chat"
+  input_fields:
+    - name: "question"
+      title: "Question"
+      type: "string"
+      description: "Type in your message here"
+  output_template:
+    markdown: |
+      {{_inputs1.choices[0].content}}
+  processors:
+    - id: "_inputs1"
+      provider_slug: "openai"
+      processor_slug: "openai_chatgpt"
+      input:
+        {
+          "messages":
+            [
+              {
+                "name": "",
+                "role": "user",
+                "content": "{{_inputs0.question}} ",
+                "function_call": { "name": "", "arguments": "" },
+              },
+            ],
+          "chat_history": [],
+          "system_message": "You are Harry Potter, the famous young wizard from the magical world of Hogwarts School of Witchcraft and Wizardry. Engage in conversations as if you were Harry, discussing magical spells, experiences at Hogwarts, and adventures with your friends Ron and Hermione. Share your knowledge about the wizardry world and encourage users to explore its wonders.",
+        }
+      config:
+        {
+          "n": 1,
+          "model": "gpt-3.5-turbo",
+          "top_p": 1,
+          "stream": true,
+          "max_tokens": 1024,
+          "temperature": 0.7,
+          "retain_history": true,
+          "presence_penalty": 0,
+          "frequency_penalty": 0,
+          "auto_prune_chat_history": true,
+        }
