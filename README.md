@@ -12,7 +12,11 @@
 
 Build tailor-made generative AI applications, chatbots and agents that cater to your unique needs by chaining multiple LLMs. Seamlessly integrate your own data and GPT-powered models without any coding experience using LLMStack's no-code builder. Trigger your AI chains from Slack or Discord. Deploy to the cloud or on-premise.
 
-https://github.com/trypromptly/LLMStack/assets/431988/1cb48899-0061-4f9a-ac26-aa711fdda7cb
+
+![llmstack-quickstart](https://github.com/trypromptly/LLMStack/assets/431988/72de45f5-23f9-4cd3-91b0-7d5ae97534c3)
+<p align="center">
+  <em>See full demo video <a href="https://youtu.be/8icy1Ccs2lk" target="_blank">here</a></em>
+</p>
 
 ## Getting Started
 
