@@ -32,24 +32,52 @@ def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseMode
         'list': list,
         'file': str,
         'image': str,
-        'text': str
+        'text': str,
+        'richtext': str,
+        'datasource': str,
+        'color': str,
+        'voice': str,
     }
 
     fields = {}
     for field in input_fields:
-        datatype = datatype_map[field['type']
-                                ] if 'type' in field and field['type'] in datatype_map else str
+        field_type = field['type'] if 'type' in field else 'string'
+        datatype = datatype_map[field_type] if field_type in datatype_map else str
 
-        if 'type' in field and field['type'] == 'file':
+        if field_type == 'file':
             field['widget'] = 'file'
             field['format'] = 'data-url'
             field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
-        elif 'type' in field and field['type'] == 'image':
+        elif field_type == 'image':
             field['widget'] = 'file'
             field['format'] = 'data-url'
             field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
-        elif 'type' in field and field['type'] == 'text':
+        elif field_type == 'text':
             field['widget'] = 'textarea'
+        elif field_type == 'richtext':
+            field['widget'] = 'richtext'
+        elif field_type == 'datasource':
+            field['widget'] = 'datasource'
+            if 'default' not in field:
+                field['default'] = []
+        elif field_type == 'color':
+            field['widget'] = 'color'
+        elif field_type == 'voice':
+            field['widget'] = 'voice'
+            field['format'] = 'data-url'
+            field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
+
+        if field_type == 'select' and 'options' in field and len(field['options']) > 0:
+            field['enumNames'] = [option['label']
+                                  or '' for option in field['options']]
+            field['enum'] = [option['value']
+                             or None for option in field['options']]
+            field['widget'] = 'select'
+
+            # For select fields, the datatype is the type of the first option
+            datatype = type(field['options'][0]['value'])
+
+        field.pop('options', None)
 
         fields[field['name']] = (datatype, Field(
             **{k: field[k] for k in field}))
