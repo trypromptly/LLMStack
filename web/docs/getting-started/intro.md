@@ -57,6 +57,14 @@ git clone https://github.com/trypromptly/LLMStack.git
 
 Users of the platform can add their own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `.env` file. Make sure to restart the containers after adding the keys.
 
+## Updating
+
+To update LLMStack to the new release, download the latest release from LLMStack's [releases page](https://github.com/trypromptly/LLMStack/releases) and extract it. Navigate to the extracted directory, copy the `.env` file from old installation to here and run the following command:
+
+```
+./run-llmstack.sh
+```
+
 :::caution
 Remember to update `POSTGRES_VOLUME`, `REDIS_VOLUME` and `WEAVIATE_VOLUME` in `.env` file if you want to persist data across container restarts.
 :::

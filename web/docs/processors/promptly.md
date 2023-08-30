@@ -26,10 +26,13 @@ The `Text-Chat` processor is a high level abstraction built on top of OpenAI's c
 - `temperature`: Temperature to use for the LLM.
 - `use_azure_if_available`: Use Azure's OpenAI models if a key is configured in the settings or in the organization that the user is part of.
 - `chat_history_in_doc_search`: Include chat history in the search query to the vector store.
+- `show_citations`: Cites the sources used to generate the answer.
+- `citation_instructions`: Instructions to pass in the messages to the LLM for citations. This can be used to control how the citations are generated and presented.
 
 ### Output
 
 - `answer`: The answer from the AI model.
+- `citations`: The list citations for the answer.
 
 ## Datasource search
 
