@@ -53,6 +53,28 @@ export default function Home() {
     >
       <HomepageHeader />
       <main>
+        <div
+          style={{
+            position: "relative",
+            paddingBottom: "64.92335437330928%",
+            height: 0,
+          }}
+        >
+          <iframe
+            src="https://www.loom.com/embed/1399a39c19394d9cad224e2e62c15285?sid=24115d9b-7ad4-4e5f-bdd9-110895fc1bae"
+            frameborder="0"
+            webkitallowfullscreen
+            mozallowfullscreen
+            allowfullscreen
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+            }}
+          ></iframe>
+        </div>
         <HomepageFeatures />
       </main>
     </Layout>
