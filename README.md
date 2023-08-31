@@ -44,6 +44,15 @@ LLMStack deployment comes with a default admin account whose credentials are `ad
 
 > Remember to update `POSTGRES_VOLUME`, `REDIS_VOLUME` and `WEAVIATE_VOLUME` in `.env` file if you want to persist data across container restarts.
 
+<div>
+  <a href="https://www.loom.com/share/1399a39c19394d9cad224e2e62c15285">
+    <p>LLMStack: Quickstart video</p>
+  </a>  
+  <a href="https://www.loom.com/share/1399a39c19394d9cad224e2e62c15285">
+    <img style="max-width:828px;" src="https://cdn.loom.com/sessions/thumbnails/1399a39c19394d9cad224e2e62c15285-with-play.gif">
+  </a>
+</div>
+
 ## Features
 
 **🔗 Chain multiple models**: LLMStack allows you to chain multiple LLMs together to build complex generative AI applications.
