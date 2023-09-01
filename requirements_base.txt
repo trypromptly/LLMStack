@@ -51,7 +51,7 @@ python-dateutil==2.8.2
 python3-openid==3.2.0
 pytz==2022.7
 PyYAML==6.0
-redis==4.5.1
+redis==4.5.4
 rfc3986==1.5.0
 rq==1.13.0
 sendgrid==6.10.0
