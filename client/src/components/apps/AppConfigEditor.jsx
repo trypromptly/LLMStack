@@ -19,10 +19,8 @@ export function AppConfigEditor({
   appType,
   activeStep,
   setActiveStep,
-  inputSchema,
-  setInputSchema,
-  inputUiSchema,
-  setInputUiSchema,
+  inputFields,
+  setInputFields,
   config,
   setConfig,
 }) {
@@ -63,25 +61,8 @@ export function AppConfigEditor({
           </AccordionSummary>
           <AccordionDetails>
             <AppInputSchemaEditor
-              schema={inputSchema}
-              setSchema={setInputSchema}
-              uiSchema={inputUiSchema}
-              setUiSchema={setInputUiSchema}
-              initSchema={
-                appType?.slug === "slack"
-                  ? {
-                      name: "Text",
-                      description: "Incoming message from Slack",
-                      type: "string",
-                      required: true,
-                    }
-                  : {
-                      name: "Question",
-                      description: "Modify your fields here",
-                      type: "string",
-                      required: true,
-                    }
-              }
+              fields={inputFields}
+              setFields={setInputFields}
               readOnly={appType?.slug === "slack"}
             />
           </AccordionDetails>

@@ -28,8 +28,9 @@ logger = logging.getLogger(__name__)
 
 
 class AppRunner:
-    def __init__(self, app, request_uuid, request: Request, app_owner, session_id=None):
+    def __init__(self, app, app_data, request_uuid, request: Request, app_owner, session_id=None):
         self.app = app
+        self.app_data = app_data
         self.stream = request.data.get('stream', False)
         self.app_owner_profile = app_owner
         self.request = request
@@ -112,46 +113,81 @@ class AppRunner:
             raise Exception('App not found')
 
     def _get_processor_actor_configs(self):
-        # Get all processors from run_graph and remove empty ones
-        processors = [
-            x.exit_endpoint for x in self.app.run_graph.all().order_by(
-                'id',
-            ) if x is not None and x.exit_endpoint is not None
-        ]
-        vendor_env = self.app_owner_profile.get_vendor_env()
-        processor_configs = {}
-
         processor_actor_configs = []
-        # Create a list of actor configs for each processor
-        for processor, index in zip(processors, range(1, len(processors)+1)):
-            processor_cls = ApiProcessorFactory.get_api_processor(
-                processor.api_backend.slug,
-            )
-            app_session_data = get_app_session_data(
-                self.app_session, processor,
-            )
-            if not app_session_data:
-                app_session_data = create_app_session_data(
-                    self.app_session, processor, {},
-                )
+        processor_configs = {}
+        vendor_env = self.app_owner_profile.get_vendor_env()
 
-            processor_actor_configs.append(
-                ActorConfig(
-                    name=str(processor.uuid), template_key=f'_inputs{index}', actor=processor_cls, kwargs={
-                        'env': vendor_env,
-                        'input': convert_template_vars_from_legacy_format(processor.input),
-                        'config': convert_template_vars_from_legacy_format(processor.config),
-                        'session_data': app_session_data['data'] if app_session_data and 'data' in app_session_data else {},
-                    },
-                    output_cls=processor_cls.get_output_cls(),
-                ),
-            )
-            processor_configs[str(processor.uuid)] = {
-                'app_session': self.app_session,
-                'app_session_data': app_session_data,
-                'processor': processor,
-                'template_key': f'_inputs{index}',
-            }
+        if self.app_data and 'processors' in self.app_data:
+            processors = self.app_data['processors']
+
+            # Create a list of actor configs for each processor
+            for processor, index in zip(processors, range(1, len(processors)+1)):
+                processor_cls = ApiProcessorFactory.get_api_processor(
+                    processor['processor_slug'],
+                )
+                app_session_data = get_app_session_data(
+                    self.app_session, processor,
+                )
+                if not app_session_data:
+                    app_session_data = create_app_session_data(
+                        self.app_session, processor, {},
+                    )
+
+                processor_actor_configs.append(
+                    ActorConfig(
+                        name=processor['id'], template_key=f'_inputs{index}', actor=processor_cls, kwargs={
+                            'env': vendor_env,
+                            'input': convert_template_vars_from_legacy_format(processor['input']),
+                            'config': convert_template_vars_from_legacy_format(processor['config']),
+                            'session_data': app_session_data['data'] if app_session_data and 'data' in app_session_data else {},
+                        },
+                        output_cls=processor_cls.get_output_cls(),
+                    ),
+                )
+                processor_configs[processor['id']] = {
+                    'app_session': self.app_session,
+                    'app_session_data': app_session_data,
+                    'processor': processor,
+                    'template_key': f'_inputs{index}',
+                }
+        else:
+            # Get all processors from run_graph and remove empty ones
+            processors = [
+                x.exit_endpoint for x in self.app.run_graph.all().order_by(
+                    'id',
+                ) if x is not None and x.exit_endpoint is not None
+            ]
+
+            # Create a list of actor configs for each processor
+            for processor, index in zip(processors, range(1, len(processors)+1)):
+                processor_cls = ApiProcessorFactory.get_api_processor(
+                    processor.api_backend.slug,
+                )
+                app_session_data = get_app_session_data(
+                    self.app_session, processor,
+                )
+                if not app_session_data:
+                    app_session_data = create_app_session_data(
+                        self.app_session, processor, {},
+                    )
+
+                processor_actor_configs.append(
+                    ActorConfig(
+                        name=str(processor.uuid), template_key=f'_inputs{index}', actor=processor_cls, kwargs={
+                            'env': vendor_env,
+                            'input': convert_template_vars_from_legacy_format(processor.input),
+                            'config': convert_template_vars_from_legacy_format(processor.config),
+                            'session_data': app_session_data['data'] if app_session_data and 'data' in app_session_data else {},
+                        },
+                        output_cls=processor_cls.get_output_cls(),
+                    ),
+                )
+                processor_configs[str(processor.uuid)] = {
+                    'app_session': self.app_session,
+                    'app_session_data': app_session_data,
+                    'processor': processor,
+                    'template_key': f'_inputs{index}',
+                }
         return processor_actor_configs, processor_configs
 
     def _start(self, input_data, app_session, actor_configs, csp, template):
@@ -208,7 +244,8 @@ class AppRunner:
         self._is_app_accessible()
 
         template = convert_template_vars_from_legacy_format(
-            self.app.output_template.get('markdown', ''),
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
         )
 
         debug_data = []

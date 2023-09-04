@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import validator from "@rjsf/validator-ajv8";
 import {
@@ -20,22 +20,25 @@ import ThemedJsonForm from "../ThemedJsonForm";
 import { TextFieldWithVars } from "./TextFieldWithVars";
 
 function AppTemplatePage(props) {
-  const { app, setApp, page } = props;
+  const { appData, setAppData, page } = props;
   const [userFormData, setUserFormData] = useState({});
 
-  const updateApp = (formData) => {
-    // For each property in the formData, set the corresponding property in the app based on the path in the property in schema
-    const properties = page.schema.properties;
-    Object.keys(formData).forEach((key) => {
-      if (!properties[key] || !properties[key].path) {
-        return;
-      }
-      const path = properties[key].path;
-      set(app, path, formData[key] === undefined ? "" : formData[key]);
-    });
+  const updateApp = useCallback(
+    (formData) => {
+      // For each property in the formData, set the corresponding property in the app based on the path in the property in schema
+      const properties = page.schema.properties;
+      Object.keys(formData).forEach((key) => {
+        if (!properties[key] || !properties[key].path) {
+          return;
+        }
+        const path = properties[key].path;
+        set(appData, path, formData[key] === undefined ? "" : formData[key]);
+      });
 
-    setApp((oldApp) => ({ ...oldApp, ...app }));
-  };
+      setAppData({ ...appData });
+    },
+    [appData, page, setAppData],
+  );
 
   useEffect(() => {
     if (!page) {
@@ -45,7 +48,7 @@ function AppTemplatePage(props) {
     const newFormData = Object.keys(page?.schema?.properties || {}).reduce(
       (acc, key) => {
         const path = page.schema.properties[key].path;
-        set(acc, key, get(app, path, null));
+        set(acc, key, get(appData, path, null));
         return acc;
       },
       {},
@@ -54,7 +57,7 @@ function AppTemplatePage(props) {
       ...oldUserFormData,
       ...newFormData,
     }));
-  }, [app, page]);
+  }, [appData, page]);
 
   if (!page) {
     return null;
@@ -185,8 +188,10 @@ export function AppTemplate(props) {
           return (
             <AppTemplatePage
               key={index}
-              app={app}
-              setApp={setApp}
+              appData={app?.data}
+              setAppData={(appData) => {
+                setApp({ data: { ...app?.data, ...appData } });
+              }}
               page={index === activeStep ? page : null}
             />
           );

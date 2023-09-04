@@ -65,6 +65,8 @@ class App(BaseModel):
     slug: str = Field(None, description='Unique slug for the app')
     type_slug: str = Field(None, description='Slug of the app type')
     description: str = Field(None, description='Description of the app')
+    config: Optional[dict] = Field(
+        None, description='Configuration for the app')
     input_fields: Optional[List[InputField]] = Field(
         None, description='Input fields for the app')
     input_schema: Optional[dict] = Field(

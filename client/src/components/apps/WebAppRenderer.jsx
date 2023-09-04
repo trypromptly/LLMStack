@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { Button } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { CircularProgress, Grid } from "@mui/material";
-import { stitchObjects } from "../../data/utils";
+import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
 import FileUploadWidget from "../form/DropzoneFileWidget";
 import { Errors } from "../Output";
 import MarkdownRenderer from "./MarkdownRenderer";
@@ -44,6 +44,9 @@ function CustomVoiceRecorderWidget(props) {
 }
 
 export function WebAppRenderer({ app, ws }) {
+  const { schema, uiSchema } = getJSONSchemaFromInputFields(
+    app?.data?.input_fields,
+  );
   const [appSessionId, setAppSessionId] = useState(null);
   const [output, setOutput] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -51,7 +54,7 @@ export function WebAppRenderer({ app, ws }) {
   const [errors, setErrors] = useState(null);
   const templateEngine = new Liquid();
   const outputTemplate = templateEngine.parse(
-    app?.output_template?.markdown || "",
+    app?.data?.output_template?.markdown || "",
   );
   const chunkedOutput = useRef({});
   const streamStarted = useRef(false);
@@ -149,9 +152,9 @@ export function WebAppRenderer({ app, ws }) {
       <LexicalRenderer text={app.config?.input_template} />
       <ThemeProvider theme={defaultTheme}>
         <Form
-          schema={app.input_schema}
+          schema={schema}
           uiSchema={{
-            ...app.input_ui_schema,
+            ...uiSchema,
             ...{
               "ui:submitButtonOptions": { props: { disabled: isRunning } },
             },

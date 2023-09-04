@@ -38,15 +38,17 @@ def create_app_session_data(app_session, endpoint, data):
     if not app_session:
         return None
 
+    endpoint_id = endpoint['id'] if isinstance(endpoint, dict) else endpoint.id
+
     app_session_data = {
         'app_session': app_session,
-        'endpoint': endpoint.id,
+        'endpoint': endpoint_id,
         'data': data,
         'created_at': str(datetime.now()),
         'last_updated_at': str(datetime.now()),
     }
     app_session_data_store.set(
-        f'app_session_data_{app_session["uuid"]}_{endpoint.id}', json.dumps(
+        f'app_session_data_{app_session["uuid"]}_{endpoint_id}', json.dumps(
             app_session_data), APP_SESSION_TIMEOUT,
     )
     return app_session_data
@@ -64,8 +66,10 @@ def get_app_session_data(app_session, endpoint):
     if not app_session:
         return None
 
+    endpoint_id = endpoint['id'] if isinstance(endpoint, dict) else endpoint.id
+
     app_session_data = app_session_data_store.get(
-        f'app_session_data_{app_session["uuid"]}_{endpoint.id}',
+        f'app_session_data_{app_session["uuid"]}_{endpoint_id}',
     )
     if app_session_data is None:
         return None

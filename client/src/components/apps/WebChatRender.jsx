@@ -8,7 +8,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
-import { stitchObjects } from "../../data/utils";
+import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
 import { LexicalRenderer } from "./lexical/LexicalRenderer";
 import { Errors } from "../Output";
 
@@ -99,6 +99,9 @@ const MemoizedMessage = React.memo(
 );
 
 export function WebChatRender({ app, isMobile, embed = false, ws }) {
+  const { schema, uiSchema } = getJSONSchemaFromInputFields(
+    app?.data?.input_fields,
+  );
   const [userFormData, setUserFormData] = useState({});
   const [appSessionId, setAppSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -113,7 +116,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
   });
   const templateEngine = new Liquid();
   const outputTemplate = templateEngine.parse(
-    app?.output_template?.markdown || "",
+    app?.data?.output_template?.markdown || "",
   );
   const chunkedOutput = useRef({});
   const chunkedMessages = useRef([]);
@@ -444,14 +447,14 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
           <ThemeProvider theme={defaultTheme}>
             <Form
               formData={userFormData}
-              schema={app.input_schema}
+              schema={schema}
               uiSchema={{
-                ...app?.input_ui_schema,
+                ...uiSchema,
                 "ui:submitButtonOptions": {
                   norender:
-                    Object.keys(app?.input_schema?.properties).length <= 1 &&
-                    Object.keys(app?.input_ui_schema)
-                      .map((key) => app?.input_ui_schema[key]?.["ui:widget"])
+                    Object.keys(schema?.properties).length <= 1 &&
+                    Object.keys(uiSchema)
+                      .map((key) => uiSchema[key]?.["ui:widget"])
                       .filter((x) => x === "voice").length === 0
                       ? true
                       : false,
@@ -459,7 +462,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
               }}
               validator={validator}
               onSubmit={({ formData }) => {
-                if (Object.keys(app?.input_schema?.properties).length > 1) {
+                if (Object.keys(schema?.properties).length > 1) {
                   setUserFormData(formData);
                 }
                 runApp(formData);

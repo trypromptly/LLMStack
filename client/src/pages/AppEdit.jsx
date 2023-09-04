@@ -47,6 +47,7 @@ import { ReactComponent as WebIcon } from "../assets/images/icons/web.svg";
 import { AppApiExamples } from "../components/apps/AppApiExamples";
 import { AppTemplate } from "../components/apps/AppTemplate";
 import { AppTests } from "../components/apps/AppTests";
+import { apiBackendsState } from "../data/atoms";
 
 const menuItems = [
   {
@@ -100,16 +101,17 @@ const menuItems = [
 export default function AppEditPage(props) {
   const { appId } = useParams();
   const { page } = props;
-  const [appInputUiSchema, setAppInputUiSchema] = useState({});
+  const apiBackends = useRecoilValue(apiBackendsState);
+  const [appInputFields, setAppInputFields] = useState([]);
   const [app, setApp] = useState(null);
   const [isPublished, setIsPublished] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showSharingModal, setShowSharingModal] = useState(false);
   const [showUnpublishModal, setShowUnpublishModal] = useState(false);
+  const [processors, setProcessors] = useState([]);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [appTemplate, setAppTemplate] = useState(null);
-  const [appInputSchema, setAppInputSchema] = useState({});
   const [appOutputTemplate, setAppOutputTemplate] = useState({});
   const [missingKeys, setMissingKeys] = useState([]);
   const [appVisibility, setAppVisibility] = useState(3);
@@ -133,22 +135,21 @@ export default function AppEditPage(props) {
           setApp(app);
 
           setIsPublished(app.is_published);
-          setAppInputSchema(
-            app.input_schema && Object.keys(app.input_schema).length > 0
-              ? app.input_schema
-              : {
-                  type: "object",
-                  properties: {
-                    question: {
-                      type: "string",
-                      title: "Question",
-                      description: "Enter your question here",
-                    },
-                  },
-                },
+          setAppInputFields(
+            app?.data?.input_fields || [
+              {
+                name: "question",
+                title: "Question",
+                description: "Modify your fields here",
+                type: "string",
+                required: true,
+              },
+            ],
           );
-          setAppOutputTemplate(app.output_template);
-          setAppInputUiSchema(app.input_ui_schema || {});
+          setProcessors(app?.data?.processors || app?.processors || []);
+          setAppOutputTemplate(
+            app?.data?.output_template || app?.output_template,
+          );
           setAppVisibility(app.visibility);
 
           if (app?.template) {
@@ -189,12 +190,27 @@ export default function AppEditPage(props) {
   }, [app?.processors, profile]);
 
   useEffect(() => {
-    setApp((app) => ({ ...app, input_schema: appInputSchema }));
-  }, [appInputSchema]);
+    // If processors are coming from app.data, replace provider_slug and processor_slug with api_backend
+    if (app?.data?.processors) {
+      setProcessors(
+        app.data.processors.map((processor) => ({
+          ...processor,
+          api_backend: apiBackends.find(
+            (apiBackend) =>
+              apiBackend.slug === processor.processor_slug &&
+              apiBackend.api_provider.slug === processor.provider_slug,
+          ),
+        })),
+      );
+    }
+  }, [app?.data?.processors, apiBackends]);
 
   useEffect(() => {
-    setApp((app) => ({ ...app, input_ui_schema: appInputUiSchema }));
-  }, [appInputUiSchema]);
+    setApp((app) => ({
+      ...app,
+      data: { ...app?.data, input_fields: appInputFields },
+    }));
+  }, [appInputFields]);
 
   useEffect(() => {
     setApp((app) => ({ ...app, output_template: appOutputTemplate }));
@@ -221,19 +237,22 @@ export default function AppEditPage(props) {
       const updatedApp = {
         name: app?.name,
         description: "",
-        config: app?.config,
+        config: app?.data?.config,
         app_type: app?.type?.id,
-        input_schema: appInputSchema,
-        input_ui_schema: appInputUiSchema,
+        type_slug: app?.type?.slug,
+        input_fields: appInputFields,
         output_template: appOutputTemplate,
         web_config: app?.web_config || {},
         slack_config: app?.slack_config || {},
         discord_config: app?.discord_config || {},
-        processors: app?.processors.map((processor) => ({
-          api_backend: processor.api_backend.id,
+        processors: processors.map((processor, index) => ({
+          id: `_inputs${index + 1}`,
+          provider_slug: processor.api_backend?.api_provider?.slug,
+          processor_slug: processor.api_backend?.slug,
+          // api_backend: processor.api_backend.id,
           config: processor.config,
           input: processor.input,
-          endpoint: processor.endpoint?.uuid || processor.endpoint,
+          // endpoint: processor.endpoint?.uuid || processor.endpoint,
         })),
       };
 
@@ -461,20 +480,40 @@ export default function AppEditPage(props) {
           <Box sx={{ alignSelf: "flex-start" }}>
             {selectedMenuItem === "editor" && (
               <AppEditor
-                processors={app?.processors || []}
-                setProcessors={(newProcessors) =>
-                  setApp((app) => ({ ...app, processors: newProcessors }))
-                }
-                appConfig={app?.config || {}}
+                processors={processors}
+                setProcessors={(newProcessors) => {
+                  setApp((app) => ({
+                    ...app,
+                    processors: newProcessors,
+                    data: { ...app.data, processors: newProcessors },
+                  }));
+                  setProcessors(newProcessors);
+                }}
+                appConfig={app?.data?.config || app?.config || {}}
                 setAppConfig={(newConfig) =>
-                  setApp((app) => ({ ...app, config: newConfig }))
+                  setApp((app) => ({
+                    ...app,
+                    config: newConfig,
+                    data: {
+                      ...app?.data,
+                      config: newConfig,
+                    },
+                  }))
                 }
-                appInputSchema={appInputSchema}
-                setAppInputSchema={setAppInputSchema}
-                appInputUiSchema={appInputUiSchema}
-                setAppInputUiSchema={setAppInputUiSchema}
+                appInputFields={appInputFields}
+                setAppInputFields={setAppInputFields}
                 appOutputTemplate={appOutputTemplate}
-                setAppOutputTemplate={setAppOutputTemplate}
+                setAppOutputTemplate={(template) => {
+                  setApp((app) => ({
+                    ...app,
+                    output_template: template,
+                    data: {
+                      ...app?.data,
+                      output_template: template,
+                    },
+                  }));
+                  setAppOutputTemplate(template);
+                }}
                 app={app}
                 setApp={setApp}
                 saveApp={saveApp}
@@ -523,7 +562,9 @@ export default function AppEditPage(props) {
             {selectedMenuItem === "template" && (
               <AppTemplate
                 app={app}
-                setApp={setApp}
+                setApp={(newApp) =>
+                  setApp((oldApp) => ({ ...oldApp, ...newApp }))
+                }
                 appTemplate={appTemplate}
                 saveApp={saveApp}
               />

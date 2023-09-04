@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.yaml_loader import get_app_template_by_slug
 
-from .models import App
+from .models import App, AppData
 from .models import AppHub
 from .models import AppRunGraphEntry
 from .models import AppSession
@@ -94,6 +94,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
             fields = ['name', 'slug']
 
     type = AppTypeSerializer()
+    data = serializers.SerializerMethodField()
     processors = serializers.SerializerMethodField()
     unique_processors = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
@@ -133,10 +134,21 @@ class AppSerializer(DynamicFieldsModelSerializer):
     def get_output_template(self, obj):
         return convert_template_vars_from_legacy_format(obj.output_template) if obj.output_template else None
 
+    def get_data(self, obj):
+        app_data = AppData.objects.filter(
+            app_uuid=obj.uuid).order_by('-created_at').first()
+        if app_data:
+            return app_data.data
+        return None
+
     def get_app_type_name(self, obj):
         return obj.type.name
 
     def get_processors(self, obj):
+        data = self.get_data(obj)
+        if data:
+            return None
+
         processors = []
         if obj.has_write_permission(self._request_user) and obj.run_graph:
             nodes = obj.run_graph.all()
@@ -167,6 +179,8 @@ class AppSerializer(DynamicFieldsModelSerializer):
 
     def get_unique_processors(self, obj):
         if obj.has_write_permission(self._request_user):
+            return []
+            data = self.get_data(obj)
             processors = self.get_processors(obj)
             unique_processors = []
             for processor in processors:
@@ -210,7 +224,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
     class Meta:
         model = App
         fields = [
-            'name', 'description', 'config', 'input_schema', 'data_transformer',
+            'name', 'description', 'config', 'input_schema', 'data',
             'type', 'uuid', 'published_uuid', 'is_published', 'unique_processors',
             'input_ui_schema', 'output_template', 'created_at', 'last_updated_at',
             'logo', 'is_shareable', 'has_footer', 'domain', 'visibility', 'accessible_by',

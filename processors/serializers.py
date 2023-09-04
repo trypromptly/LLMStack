@@ -70,7 +70,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApiBackend
         fields = [
-            'id', 'name', 'api_provider', 'api_endpoint', 'params', 'description', 'input_schema',
+            'id', 'name', 'slug', 'api_provider', 'api_endpoint', 'params', 'description', 'input_schema',
             'output_schema', 'config_schema', 'config_ui_schema', 'input_ui_schema', 'output_ui_schema',
         ]
 

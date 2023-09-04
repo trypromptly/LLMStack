@@ -20,7 +20,7 @@ from rest_framework.response import Response as DRFResponse
 
 from processors.apis import EndpointViewSet
 
-from .models import App
+from .models import App, AppData
 from .models import AppAccessPermission
 from .models import AppHub
 from .models import AppRunGraphEntry
@@ -331,16 +331,20 @@ class AppViewSet(viewsets.ViewSet):
         run_graph_entries.delete()
 
         app_run_graph_entries = AppRunGraphEntry.objects.filter(
-            Q(entry_endpoint__in=endpoint_entries) | Q(exit_endpoint__in=endpoint_entries),
+            Q(entry_endpoint__in=endpoint_entries) | Q(
+                exit_endpoint__in=endpoint_entries),
         )
         app_run_graph_entries.delete()
-        
+
         # Delete all the endpoint entries
         for entry in endpoint_entries:
             EndpointViewSet.delete(self, request, id=str(
                 entry.parent_uuid), force_delete_app=True)
 
         app.delete()
+
+        # Delete AppData
+        AppData.objects.filter(app_uuid=app.uuid).delete()
 
         return DRFResponse(status=200)
 
@@ -355,14 +359,6 @@ class AppViewSet(viewsets.ViewSet):
             return DRFResponse(status=403)
 
         app.name = request.data['name']
-        app.description = request.data['description']
-        app.config = request.data['config']
-        app.input_schema = request.data['input_schema']
-        app.input_ui_schema = request.data['input_ui_schema'] if 'input_ui_schema' in request.data else {
-        }
-        app.output_template = request.data['output_template'] if 'output_template' in request.data else {
-        }
-        app.data_transformer = request.data['data_transformer'] if 'data_transformer' in request.data else ''
         app.web_integration_config = WebIntegrationConfig(**request.data['web_config']).to_dict(
             app_owner_profile.encrypt_value,
         ) if 'web_config' in request.data and request.data['web_config'] else {}
@@ -372,72 +368,27 @@ class AppViewSet(viewsets.ViewSet):
         app.discord_integration_config = DiscordIntegrationConfig(**request.data['discord_config']).to_dict(
             app_owner_profile.encrypt_value,
         ) if 'discord_config' in request.data and request.data['discord_config'] else {}
-        processors = request.data['processors']
-        endpoints = []
-        graph_edges = []
 
-        # Redo the graph edges
-        for processor in processors:
-            existing_endpoint = Endpoint.objects.filter(
-                uuid=processor['endpoint'],
-            ).first() if 'endpoint' in processor else None
-
-            if existing_endpoint and existing_endpoint.input == processor['input'] and existing_endpoint.config == processor['config']:
-                endpoints.append(existing_endpoint)
-                continue
-
-            api_backend_obj = get_object_or_404(
-                ApiBackend, id=processor['api_backend'],
+        # Find the versioned app data and update it
+        app_data = {
+            'name': request.data['name'] if 'name' in request.data else 'Untitled',
+            'description': request.data['description'] if 'description' in request.data else '',
+            'config': request.data['config'] if 'config' in request.data else {},
+            'input_fields': request.data['input_fields'] if 'input_fields' in request.data else [],
+            'output_template': request.data['output_template'] if 'output_template' in request.data else {},
+            'processors': request.data['processors'] if 'processors' in request.data else []
+        }
+        versioned_app_data = AppData.objects.filter(
+            app_uuid=app.uuid, is_draft=True).first()
+        if versioned_app_data:
+            versioned_app_data.comment = request.data['comment'] if 'comment' in request.data else ''
+            versioned_app_data.data = app_data
+            versioned_app_data.save()
+        else:
+            AppData.objects.create(
+                app_uuid=app.uuid, data=app_data, is_draft=True, comment=request.data['comment'] if 'comment' in request.data else ''
             )
-            endpoint = Endpoint.objects.create(
-                name=f'{app.name}:{api_backend_obj.name}',
-                owner=app.owner,
-                api_backend=api_backend_obj,
-                draft=False,
-                is_live=True,
-                is_app=True,
-                parent_uuid=existing_endpoint.parent_uuid if existing_endpoint else None,
-                input=processor['input'] if 'input' in processor else {},
-                config=processor['config'] if 'config' in processor else {},
-                version=existing_endpoint.version + 1 if existing_endpoint else 0,
-            )
-            endpoints.append(endpoint)
 
-        # First edge is from the app input to the first endpoint
-        if len(endpoints) > 0:
-            edge = AppRunGraphEntry.objects.create(
-                owner=app.owner,
-                entry_endpoint=None,
-                exit_endpoint=endpoints[0],
-                data_transformer=app.data_transformer,
-            )
-            edge.save()
-            graph_edges.append(edge)
-
-        for i in range(len(endpoints)):
-            if i == len(endpoints) - 1:
-                break
-            edge = AppRunGraphEntry.objects.create(
-                owner=app.owner,
-                entry_endpoint=endpoints[i],
-                exit_endpoint=endpoints[i+1],
-                data_transformer='',
-            )
-            edge.save()
-            graph_edges.append(edge)
-
-        # Add the last edge from the last endpoint to the app output
-        if len(endpoints) > 0:
-            edge = AppRunGraphEntry.objects.create(
-                owner=app.owner,
-                entry_endpoint=endpoints[-1],
-                exit_endpoint=None,
-                data_transformer='',
-            )
-            edge.save()
-            graph_edges.append(edge)
-
-        app.run_graph.set(graph_edges)
         app.last_modified_by = request.user
         app.save()
 
@@ -445,82 +396,18 @@ class AppViewSet(viewsets.ViewSet):
 
     def post(self, request):
         owner = request.user
+        app_type_slug = request.data['app_type_slug'] if 'app_type_slug' in request.data else None
         app_type = get_object_or_404(AppType, id=request.data['app_type']) if 'app_type' in request.data else get_object_or_404(
-            AppType, slug=request.data['app_type_slug'])
+            AppType, slug=app_type_slug)
         app_name = request.data['name']
         app_description = request.data['description'] if 'description' in request.data else ''
         app_config = request.data['config'] if 'config' in request.data else {}
-        app_input_schema = request.data['input_schema']
-        app_input_ui_schema = request.data['input_ui_schema'] if 'input_ui_schema' in request.data else {
-        }
+        app_input_fields = request.data['input_fields'] if 'input_fields' in request.data else [
+        ]
         app_output_template = request.data['output_template'] if 'output_template' in request.data else {
         }
-        app_data_transformer = request.data['data_transformer'] if 'data_transformer' in request.data else ''
-        processors = request.data['processors']
-        endpoints = []
-        graph_edges = []
-
-        # Iterate over processors and create an endpoint for each using api_backend
-        # and then use that to create AppRunGraphEntry to create the graph
-        for processor in processors:
-            api_backend_obj = None
-            if 'processor_slug' in processor and 'provider_slug' in processor:
-                provider = get_object_or_404(
-                    ApiProvider, slug=processor['provider_slug'],
-                )
-                api_backend_obj = get_object_or_404(
-                    ApiBackend, slug=processor['processor_slug'], api_provider=provider,
-                )
-            else:
-                api_backend_obj = get_object_or_404(
-                    ApiBackend, id=processor['api_backend'],
-                )
-            endpoint = Endpoint.objects.create(
-                name=f'{app_name}:{api_backend_obj.name}',
-                owner=owner,
-                api_backend=api_backend_obj,
-                draft=False,
-                is_live=True,
-                is_app=True,
-                parent_uuid=None,
-                input=processor['input'] if 'input' in processor else {},
-                config=processor['config'] if 'config' in processor else {},
-            )
-            endpoints.append(endpoint)
-
-        # First edge is from the app input to the first endpoint
-        if len(endpoints) > 0:
-            edge = AppRunGraphEntry.objects.create(
-                owner=owner,
-                entry_endpoint=None,
-                exit_endpoint=endpoints[0],
-                data_transformer=app_data_transformer,
-            )
-            edge.save()
-            graph_edges.append(edge)
-
-        for i in range(len(endpoints)):
-            if i == len(endpoints) - 1:
-                break
-            edge = AppRunGraphEntry.objects.create(
-                owner=owner,
-                entry_endpoint=endpoints[i],
-                exit_endpoint=endpoints[i+1],
-                data_transformer='',
-            )
-            edge.save()
-            graph_edges.append(edge)
-
-        # Add the last edge from the last endpoint to the app output
-        if len(endpoints) > 0:
-            edge = AppRunGraphEntry.objects.create(
-                owner=owner,
-                entry_endpoint=endpoints[-1],
-                exit_endpoint=None,
-                data_transformer='',
-            )
-            edge.save()
-            graph_edges.append(edge)
+        app_processors = request.data['processors'] if 'processors' in request.data else [
+        ]
 
         template_slug = request.data['template_slug'] if 'template_slug' in request.data else None
         template = AppTemplate.objects.filter(
@@ -532,16 +419,21 @@ class AppViewSet(viewsets.ViewSet):
             owner=owner,
             description=app_description,
             type=app_type,
-            config=app_config,
-            input_schema=app_input_schema,
-            input_ui_schema=app_input_ui_schema,
-            output_template=app_output_template,
-            data_transformer=app_data_transformer,
             template=template,
             template_slug=template_slug,
         )
-        app.run_graph.set(graph_edges)
-        app.save()
+        app_data = {
+            'name': app_name,
+            'type_slug': app_type.slug,
+            'description': app_description,
+            'config': app_config,
+            'input_fields': app_input_fields,
+            'output_template': app_output_template,
+            'processors': app_processors,
+        }
+        AppData.objects.create(
+            app_uuid=app.uuid, data=app_data, is_draft=True, comment='First version'
+        )
 
         return DRFResponse(AppSerializer(instance=app).data, status=201)
 
@@ -573,9 +465,11 @@ class AppViewSet(viewsets.ViewSet):
     async def run_app_internal_async(self, uid, session_id, request_uuid, request):
         return await database_sync_to_async(self.run_app_internal)(uid, session_id, request_uuid, request)
 
-    def run_app_internal(self, uid, session_id, request_uuid, request, platform=None):
+    def run_app_internal(self, uid, session_id, request_uuid, request, platform=None, preview=True):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
+        app_data_obj = AppData.objects.filter(
+            app_uuid=app.uuid, is_draft=preview).order_by('-created_at').first()
 
         app_runner_class = None
         if platform == 'discord':
@@ -586,7 +480,7 @@ class AppViewSet(viewsets.ViewSet):
             app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
 
         app_runner = app_runner_class(
-            app=app, request_uuid=request_uuid, request=request, session_id=session_id, app_owner=app_owner,
+            app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid, request=request, session_id=session_id, app_owner=app_owner,
         )
 
         return app_runner.run_app()

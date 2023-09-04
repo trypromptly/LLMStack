@@ -5,6 +5,7 @@ import { ProcessorEditor } from "./ProcessorEditor";
 import { AppConfigEditor } from "./AppConfigEditor";
 import { AppOutputEditor } from "./AppOutputEditor";
 import { AddProcessorDivider } from "./AddProcessorDivider";
+import { getJSONSchemaFromInputFields } from "../../data/utils";
 
 export function AppEditor(props) {
   const {
@@ -14,10 +15,8 @@ export function AppEditor(props) {
     setProcessors,
     appConfig,
     setAppConfig,
-    appInputSchema,
-    setAppInputSchema,
-    appInputUiSchema,
-    setAppInputUiSchema,
+    appInputFields,
+    setAppInputFields,
     appOutputTemplate,
     setAppOutputTemplate,
     tourInputRef,
@@ -30,10 +29,11 @@ export function AppEditor(props) {
   const [outputSchemas, setOutputSchemas] = useState([]);
 
   useEffect(() => {
+    const { schema } = getJSONSchemaFromInputFields(appInputFields);
     setOutputSchemas([
       {
         label: "1. Input",
-        items: appInputSchema,
+        items: schema,
         pillPrefix: "[1] Input / ",
       },
       ...processors.map((p, index) => {
@@ -46,7 +46,7 @@ export function AppEditor(props) {
         };
       }),
     ]);
-  }, [appInputSchema, processors]);
+  }, [appInputFields, processors]);
 
   return (
     <Box>
@@ -57,10 +57,8 @@ export function AppEditor(props) {
           setActiveStep={setActiveStep}
           config={appConfig}
           setConfig={setAppConfig}
-          inputSchema={appInputSchema}
-          setInputSchema={setAppInputSchema}
-          inputUiSchema={appInputUiSchema}
-          setInputUiSchema={setAppInputUiSchema}
+          inputFields={appInputFields}
+          setInputFields={setAppInputFields}
           processors={processors}
           setProcessors={setProcessors}
           outputSchemas={outputSchemas}
@@ -84,8 +82,12 @@ export function AppEditor(props) {
           showProcessorSelector={true}
           setProcessorBackend={(apiBackend) => {
             const newProcessors = [...processors];
+            console.log("apiBackend", apiBackend, newProcessors);
             newProcessors.push({
+              id: `_inputs${newProcessors.length + 1}`,
               api_backend: apiBackend,
+              processor_slug: apiBackend?.slug,
+              provider_slug: apiBackend?.api_provider?.slug,
               endpoint: null,
               input: null,
               config: null,

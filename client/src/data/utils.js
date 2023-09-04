@@ -44,3 +44,91 @@ export function stitchObjects(obj1, obj2) {
   }
   return newObj;
 }
+
+/**
+ *
+ * @param {*} inputFields - array of input fields with name, title, description, type, required etc.,
+ * @returns {object} schema
+ */
+export function getJSONSchemaFromInputFields(inputFields) {
+  let schema = {
+    type: "object",
+    properties: {},
+  };
+
+  let uiSchema = {};
+  let order = [];
+  let required = [];
+
+  inputFields &&
+    inputFields.forEach((field) => {
+      order.push(field.name);
+
+      if (field.required) {
+        required.push(field.name);
+      }
+
+      schema.properties[field.name] = {
+        type:
+          field.type === "text" ||
+          field.type === "voice" ||
+          field.type === "file" ||
+          field.type === "select"
+            ? "string"
+            : field.type,
+        title: field.title,
+        description: field.description,
+      };
+
+      if (field.default) {
+        schema.properties[field.name].default = field.default;
+      }
+
+      if (field.type === "text") {
+        uiSchema[field.name] = {
+          "ui:widget": "textarea",
+        };
+      }
+
+      if (field.type === "boolean") {
+        uiSchema[field.name] = {
+          "ui:widget": "radio",
+        };
+      }
+
+      if (field.type === "file") {
+        uiSchema[field.name] = {
+          "ui:widget": "file",
+        };
+        schema.properties[field.name].format = "data-url";
+        schema.properties[field.name].pattern =
+          "data:(.*);name=(.*);base64,(.*)";
+      }
+
+      if (field.type === "voice") {
+        uiSchema[field.name] = {
+          "ui:widget": "voice",
+        };
+        schema.properties[field.name].format = "data-url";
+        schema.properties[field.name].pattern =
+          "data:(.*);name=(.*);base64,(.*)";
+      }
+
+      if (field.type === "select") {
+        uiSchema[field.name] = {
+          "ui:widget": "select",
+        };
+        schema.properties[field.name].enum = field.options.map(
+          (option) => option.value,
+        );
+        schema.properties[field.name].enumNames = field.options.map(
+          (option) => option.label,
+        );
+      }
+    });
+
+  uiSchema["ui:order"] = order;
+  uiSchema["ui:required"] = required;
+
+  return { schema, uiSchema };
+}
