@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import App
+from .models import AppData
 from .models import AppHub
 from .models import AppRunGraphEntry
 from .models import AppSession
@@ -19,6 +20,7 @@ class AppHubAdmin(admin.ModelAdmin):
 admin.site.register(AppType)
 admin.site.register(AppRunGraphEntry)
 admin.site.register(App)
+admin.site.register(AppData)
 admin.site.register(AppSession)
 admin.site.register(AppSessionData)
 admin.site.register(AppTemplate)

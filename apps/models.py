@@ -241,6 +241,34 @@ class App(models.Model):
         return self.name + ' - ' + self.owner.username
 
 
+class AppData(models.Model):
+    """
+    Represents versioned app data
+    """
+    app_uuid = models.UUIDField(
+        default=None, help_text='UUID of the app', null=True, blank=True,
+    )
+    data = models.JSONField(
+        default=dict, blank=True,
+        help_text='Data for this endpoint',
+    )
+    comment = models.TextField(
+        default='', blank=True, help_text='Comment for this app version',
+    )
+    is_draft = models.BooleanField(
+        default=True, help_text='Whether the data is draft or not',
+    )
+    is_dirty = models.BooleanField(
+        default=False, help_text='Whether the data is dirty or not',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, help_text='Time at which the app instance was created',
+    )
+    last_updated_at = models.DateTimeField(
+        auto_now=True, help_text='Time at which the app instance was last updated',
+    )
+
+
 class AppHub(models.Model):
     app = models.ForeignKey(
         App, on_delete=models.DO_NOTHING, help_text='Public apps',
@@ -342,7 +370,7 @@ class TestCase(models.Model):
     )
 
 
-@receiver(pre_save, sender=App)
+@ receiver(pre_save, sender=App)
 def update_app_pre_save(sender, instance, **kwargs):
     from apps.app_types import AppTypeFactory
 
