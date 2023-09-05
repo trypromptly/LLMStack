@@ -117,7 +117,6 @@ def get_app_template_from_yaml(yaml_file: str) -> dict:
         app['input_schema'].pop('title')
         app['input_ui_schema'] = get_ui_schema_from_json_schema(
             input_model.schema())
-        app.pop('input_fields')
 
         return AppTemplate(**yaml_dict)
 
