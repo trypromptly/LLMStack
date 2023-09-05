@@ -62,7 +62,7 @@ app:
   processors:
     - id: "_inputs1"
       provider_slug: "promptly"
-      processor_slug: "promptly_text_chat"
+      processor_slug: "text_chat"
       input: { "question": "{{_inputs0.question}} " }
       config:
         {

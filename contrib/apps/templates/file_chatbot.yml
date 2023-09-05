@@ -48,7 +48,7 @@ app:
   processors:
     - id: "_inputs1"
       provider_slug: "promptly"
-      processor_slug: "promptly_data_uri_text_extract"
+      processor_slug: "data_uri_text_extract"
       input:
         {
           "file": "",
@@ -58,7 +58,7 @@ app:
       config: { "document_limit": 2, "text_chunk_size": 1500 }
     - id: "_inputs2"
       provider_slug: "openai"
-      processor_slug: "openai_chatgpt"
+      processor_slug: "chatgpt"
       input:
         {
           "messages":

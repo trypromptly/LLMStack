@@ -54,13 +54,13 @@ app:
   processors:
     - id: "_inputs1"
       provider_slug: "openai"
-      processor_slug: "openai_audio_transcriptions"
+      processor_slug: "audio_transcriptions"
       input: { "file": "", "prompt": "", "file_data": "{{_inputs0.question}} " }
       config:
         { "model": "whisper-1", "temperature": 0, "response_format": "json" }
     - id: "_inputs2"
       provider_slug: "promptly"
-      processor_slug: "promptly_text_chat"
+      processor_slug: "text_chat"
       input: { "question": "{{_inputs1.text}} " }
       config:
         {
@@ -75,7 +75,7 @@ app:
         }
     - id: "_inputs3"
       provider_slug: "elevenlabs"
-      processor_slug: "elevenlabs_text_to_speech"
+      processor_slug: "text_to_speech"
       input: { "input_text": "{{_inputs2.answer}} " }
       config:
         {

@@ -31,7 +31,7 @@ app:
   processors:
     - id: "_inputs1"
       provider_slug: "openai"
-      processor_slug: "openai_chatgpt"
+      processor_slug: "chatgpt"
       input:
         {
           "messages":
