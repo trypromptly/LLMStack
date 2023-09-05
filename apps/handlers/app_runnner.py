@@ -123,7 +123,7 @@ class AppRunner:
             # Create a list of actor configs for each processor
             for processor, index in zip(processors, range(1, len(processors)+1)):
                 processor_cls = ApiProcessorFactory.get_api_processor(
-                    processor['processor_slug'],
+                    processor['processor_slug'], processor['provider_slug'],
                 )
                 app_session_data = get_app_session_data(
                     self.app_session, processor,
@@ -161,7 +161,7 @@ class AppRunner:
             # Create a list of actor configs for each processor
             for processor, index in zip(processors, range(1, len(processors)+1)):
                 processor_cls = ApiProcessorFactory.get_api_processor(
-                    processor.api_backend.slug,
+                    processor.api_backend.slug, processor.api_backend.api_provider.slug,
                 )
                 app_session_data = get_app_session_data(
                     self.app_session, processor,

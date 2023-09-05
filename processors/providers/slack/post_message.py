@@ -164,11 +164,17 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
     """
     Slack Post Message API
     """
+    @staticmethod
     def name() -> str:
         return 'slack/post_message'
 
+    @staticmethod
     def slug() -> str:
-        return 'slack_post_message'
+        return 'post_message'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'slack'
 
     def process(self) -> dict:
         _env = self._env
@@ -178,7 +184,8 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
 
         try:
             rich_text = json.dumps(
-                html_to_slack_layout_blocks(f"<!doctype html><html><body>{markdown.markdown(input['text'])}</body></html>"),
+                html_to_slack_layout_blocks(
+                    f"<!doctype html><html><body>{markdown.markdown(input['text'])}</body></html>"),
             )
         except Exception as e:
             logger.exception('Error in processing markdown')

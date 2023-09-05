@@ -54,11 +54,15 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
     @staticmethod
     def slug() -> str:
         return 'url'
-    
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
+
     @classmethod
     def get_sync_configuration(cls) -> Optional[dict]:
         return DataSourceSyncConfiguration(sync_type=DataSourceSyncType.FULL).dict()
-    
+
     def get_url_data(self, url: str) -> Optional[DataSourceEntryItem]:
         if not url.startswith('https://') and not url.startswith('http://'):
             url = f'https://{url}'
@@ -103,8 +107,6 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
 
         return list(map(lambda entry: DataSourceEntryItem(name=entry, data={'url': entry}), urls + sitemap_urls))
 
-    
-    
     def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         url = data.data['url']
         return self.get_url_data(url)

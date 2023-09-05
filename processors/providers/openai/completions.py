@@ -73,17 +73,24 @@ class Completions(ApiProcessorInterface[CompletionsInput, CompletionsOutput, Com
     """
     OpenAI Completions
     """
+    @staticmethod
     def name() -> str:
         return 'open ai/completions'
 
+    @staticmethod
     def slug() -> str:
-        return 'openai_completions'
+        return 'completions'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'openai'
 
     def process(self) -> dict:
         _env = self._env
 
         completions_api_processor_input = OpenAICompletionsAPIProcessorInput(
-            env=_env, prompt=get_key_or_raise(self._input.dict(), 'prompt', 'No prompt found in input'),
+            env=_env, prompt=get_key_or_raise(
+                self._input.dict(), 'prompt', 'No prompt found in input'),
         )
         if self._config.stream != True:
             raise Exception('Stream must be true for this processor.')
@@ -94,7 +101,8 @@ class Completions(ApiProcessorInterface[CompletionsInput, CompletionsOutput, Com
 
         for result in result_iter:
             async_to_sync(self._output_stream.write)(
-                CompletionsOutput(choices=result.choices, api_response=result.metadata.raw_response),
+                CompletionsOutput(choices=result.choices,
+                                  api_response=result.metadata.raw_response),
             )
 
         output = self._output_stream.finalize()

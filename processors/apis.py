@@ -334,7 +334,7 @@ class EndpointViewSet(viewsets.ViewSet):
         elif request.user and request.user.username and len(request.user.username) > 0:
             # Use username as email if email is not set
             request_user_email = request.user.username
-            
+
         input_request = InputRequest(
             request_endpoint_uuid=str(endpoint.uuid), request_app_uuid='',
             request_app_session_key='', request_owner=request.user,
@@ -375,7 +375,7 @@ class EndpointViewSet(viewsets.ViewSet):
 
         # Pick a processor
         processor_cls = ApiProcessorFactory.get_api_processor(
-            endpoint.api_backend.slug,
+            endpoint.api_backend.slug, endpoint.api_backend.api_provider.slug,
         )
 
         if not app_session:

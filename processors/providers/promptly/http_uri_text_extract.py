@@ -52,8 +52,13 @@ class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput, HttpUr
         self.extracted_text = session_data['extracted_text'] if 'extracted_text' in session_data else None
         self.storage_index_name = session_data['storage_index_name'] if 'storage_index_name' in session_data else None
 
+    @staticmethod
     def slug() -> str:
-        return 'promptly_http_uri_text_extract'
+        return 'http_uri_text_extract'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
 
     def session_data_to_persist(self) -> dict:
         return {

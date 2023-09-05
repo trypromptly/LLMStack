@@ -65,11 +65,17 @@ class TextConfiguration(ApiProcessorSchema):
 
 
 class TextProcessor(ApiProcessorInterface[TextInput, TextOutput, TextConfiguration]):
+    @staticmethod
     def name() -> str:
         return 'google_text'
 
+    @staticmethod
     def slug() -> str:
-        return 'google_text'
+        return 'text'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'google'
 
     def process(self) -> dict:
         token = None
@@ -127,9 +133,9 @@ class TextProcessor(ApiProcessorInterface[TextInput, TextOutput, TextConfigurati
             async_to_sync(self._output_stream.write)(
                 TextOutput(
                     prediction=TextPrediction(
-                    content=response_data['predictions'][0]['content'],
-                    citationMetadata=response_data['predictions'][0]['citationMetadata'],
-                    safetyAttributes=response_data['predictions'][0]['safetyAttributes'],
+                        content=response_data['predictions'][0]['content'],
+                        citationMetadata=response_data['predictions'][0]['citationMetadata'],
+                        safetyAttributes=response_data['predictions'][0]['safetyAttributes'],
                     ),
                 ),
             )

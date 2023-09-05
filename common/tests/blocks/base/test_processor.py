@@ -9,49 +9,64 @@ from common.blocks.base.processor import BaseOutput
 from common.blocks.base.processor import BaseOutputType
 from common.blocks.base.processor import ProcessorInterface
 
+
 class TestInputModel(BaseModel):
     pass
+
+
 class TestOutputModel(BaseModel):
     pass
+
+
 class TestConfigurationModel(BaseModel):
     pass
 
+
 class TestProcessor(BaseProcessor[TestInputModel, TestOutputModel, TestConfigurationModel]):
-    @staticmethod 
+    @staticmethod
     def name() -> str:
         return 'Test Processor'
-    
+
     @staticmethod
     def slug() -> str:
         return 'test_processor'
-    
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
+
     def process(self, input: dict) -> TestOutputModel:
         pass
-    
+
+
 class TestProcessorTestCase(unittest.TestCase):
     def test_name(self):
         self.assertEqual(TestProcessor.name(), 'Test Processor')
-    
+
     def test_slug(self):
         self.assertEqual(TestProcessor.slug(), 'test_processor')
-    
+
     def test_get_input_cls(self):
         self.assertEqual(TestProcessor.get_input_cls(), TestInputModel)
-    
+
     def test_get_output_cls(self):
         self.assertEqual(TestProcessor.get_output_cls(), TestOutputModel)
-        
+
     def test_get_configuration_cls(self):
-        self.assertEqual(TestProcessor.get_configuration_cls(), TestConfigurationModel)
-    
+        self.assertEqual(TestProcessor.get_configuration_cls(),
+                         TestConfigurationModel)
+
     def test_get_input_schema(self):
-        self.assertEqual(TestProcessor.get_input_schema(), TestInputModel.schema_json())
-    
+        self.assertEqual(TestProcessor.get_input_schema(),
+                         TestInputModel.schema_json())
+
     def test_get_output_schema(self):
-        self.assertEqual(TestProcessor.get_output_schema(), TestOutputModel.schema_json())
-    
+        self.assertEqual(TestProcessor.get_output_schema(),
+                         TestOutputModel.schema_json())
+
     def test_get_configuration_schema(self):
-        self.assertEqual(TestProcessor.get_configuration_schema(), TestConfigurationModel.schema_json())
+        self.assertEqual(TestProcessor.get_configuration_schema(),
+                         TestConfigurationModel.schema_json())
 
 
 class TestProcessor1Input(BaseInput):

@@ -12,8 +12,10 @@ from common.blocks.base.schema import BaseSchema as Schema
 
 LOGGER = logging.getLogger(__name__)
 
+
 class BaseInputEnvironment(Schema):
     pass
+
 
 class BaseInput(Schema):
     env: Optional[BaseInputEnvironment] = Field(
@@ -47,7 +49,9 @@ class CacheManager(ABC):
 
 BaseInputType = TypeVar('BaseInputType', BaseInput, dict)
 BaseOutputType = TypeVar('BaseOutputType', BaseOutput, dict)
-BaseConfigurationType = TypeVar('BaseConfigurationType', BaseConfiguration, dict)
+BaseConfigurationType = TypeVar(
+    'BaseConfigurationType', BaseConfiguration, dict)
+
 
 class ProcessorInterface(Generic[BaseInputType, BaseOutputType, BaseConfigurationType], ABC):
     @staticmethod
@@ -58,6 +62,10 @@ class ProcessorInterface(Generic[BaseInputType, BaseOutputType, BaseConfiguratio
     def slug() -> str:
         raise NotImplementedError
 
+    @staticmethod
+    def provider_slug() -> str:
+        raise NotImplementedError
+
     @classmethod
     def _get_input_class(cls) -> BaseInputType:
         return cls.__orig_bases__[0].__args__[0]
@@ -65,7 +73,7 @@ class ProcessorInterface(Generic[BaseInputType, BaseOutputType, BaseConfiguratio
     @classmethod
     def _get_output_class(cls) -> BaseOutputType:
         return cls.__orig_bases__[0].__args__[1]
-    
+
     @classmethod
     def _get_configuration_class(cls) -> BaseConfigurationType:
         return cls.__orig_bases__[0].__args__[2]
@@ -84,22 +92,22 @@ class ProcessorInterface(Generic[BaseInputType, BaseOutputType, BaseConfiguratio
     def _get_configuration_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
         return api_processor_interface_class.__args__[2].schema_json()
-    
+
     @classmethod
     def _get_input_ui_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
         return api_processor_interface_class.__args__[0].get_ui_schema()
-    
-    @classmethod 
+
+    @classmethod
     def _get_output_ui_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
         return api_processor_interface_class.__args__[1].get_ui_schema()
-    
+
     @classmethod
     def _get_configuration_ui_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
         return api_processor_interface_class.__args__[2].get_ui_schema()
-    
+
     @classmethod
     def get_input_cls(cls) -> BaseInputType:
         return cls._get_input_class()
@@ -107,11 +115,11 @@ class ProcessorInterface(Generic[BaseInputType, BaseOutputType, BaseConfiguratio
     @classmethod
     def get_output_cls(cls) -> BaseOutputType:
         return cls._get_output_class()
-        
+
     @classmethod
     def get_configuration_cls(cls) -> BaseConfigurationType:
         return cls._get_configuration_class()
-   
+
     @classmethod
     def get_input_schema(cls) -> dict:
         return cls._get_input_schema()
@@ -119,34 +127,35 @@ class ProcessorInterface(Generic[BaseInputType, BaseOutputType, BaseConfiguratio
     @classmethod
     def get_output_schema(cls) -> dict:
         return cls._get_output_schema()
-    
+
     @classmethod
     def get_configuration_schema(cls) -> dict:
         return cls._get_configuration_schema()
-    
+
     @classmethod
     def get_input_ui_schema(cls) -> dict:
         return cls._get_input_ui_schema()
-    
-    @classmethod 
+
+    @classmethod
     def get_output_ui_schema(cls) -> dict:
         return cls._get_output_ui_schema()
-        
+
     @classmethod
     def get_configuration_ui_schema(cls) -> dict:
         return cls._get_configuration_ui_schema()
 
     def process(self, input: BaseInputType, configuration: BaseConfigurationType) -> BaseOutputType:
         raise NotImplementedError()
-    
+
     def process_iter(self, input: BaseInputType, configuration: BaseConfigurationType) -> Generator[BaseOutputType, None, None]:
         raise NotImplementedError()
-    
+
+
 class BaseProcessor(ProcessorInterface[BaseInputType, BaseOutputType, BaseConfigurationType]):
     """
     Base class for all processors
     """
-    
+
     def __init__(self, configuration: dict, cache_manager: CacheManager = None, input_tx_cb: callable = None, output_tx_cb: callable = None):
         self.configuration = self.parse_validate_configuration(configuration)
         self.cache_manager = cache_manager

@@ -76,15 +76,13 @@
     "pk": 1,
     "fields": {
       "name": "Completions",
-      "slug": "openai_completions",
+      "slug": "completions",
       "description": null,
       "api_provider": 1,
       "api_endpoint": "completions",
       "params": {
         "type": "object",
-        "required": [
-          "model"
-        ],
+        "required": ["model"],
         "properties": {
           "n": {
             "type": "integer",
@@ -156,7 +154,7 @@
     "pk": 2,
     "fields": {
       "name": "Image Generations",
-      "slug": "openai_image_generations",
+      "slug": "image_generations",
       "description": "Generates images from a given prompt",
       "api_provider": 1,
       "api_endpoint": "images/generations",
@@ -171,11 +169,7 @@
             "description": "The number of images to generate. Must be between 1 and 10."
           },
           "size": {
-            "enum": [
-              "256x256",
-              "512x512",
-              "1024x1024"
-            ],
+            "enum": ["256x256", "512x512", "1024x1024"],
             "type": "string",
             "default": "1024x1024",
             "description": "The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024."
@@ -185,10 +179,7 @@
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse."
           },
           "response_format": {
-            "enum": [
-              "url",
-              "b64_json"
-            ],
+            "enum": ["url", "b64_json"],
             "type": "string",
             "default": "url",
             "description": "The format in which the generated images are returned. Must be one of url or b64_json."
@@ -205,16 +196,13 @@
     "pk": 3,
     "fields": {
       "name": "Text2Image",
-      "slug": "stabilityai_text2image",
+      "slug": "text2image",
       "description": "Generates images from a series of prompts and negative prompts",
       "api_provider": 2,
       "api_endpoint": "text2image",
       "params": {
         "type": "object",
-        "required": [
-          "engine",
-          "seed"
-        ],
+        "required": ["engine", "seed"],
         "properties": {
           "seed": {
             "type": "integer",
@@ -293,15 +281,13 @@
     "pk": 4,
     "fields": {
       "name": "Generate",
-      "slug": "cohere_generate",
+      "slug": "generate",
       "description": "Generates completions for a given prompt",
       "api_provider": 3,
       "api_endpoint": "generate",
       "params": {
         "type": "object",
-        "required": [
-          "model"
-        ],
+        "required": ["model"],
         "properties": {
           "k": {
             "type": "integer",
@@ -326,11 +312,7 @@
             "description": "The ID of a custom playground preset. You can create presets in the playground. If you use a preset, the prompt parameter becomes optional, and any included parameters will override the preset's parameters."
           },
           "truncate": {
-            "enum": [
-              "NONE",
-              "START",
-              "END"
-            ],
+            "enum": ["NONE", "START", "END"],
             "type": "string",
             "default": "END",
             "description": "Passing START will discard the start of the input. END will discard the end of the input. In both cases, input is discarded until the remaining input is exactly the maximum input token length for the model.If NONE is selected, when the input exceeds the maximum input token length an error will be returned."
@@ -373,11 +355,7 @@
             "description": "Can be used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation."
           },
           "return_likelihoods": {
-            "enum": [
-              "GENERATION",
-              "ALL",
-              "NONE"
-            ],
+            "enum": ["GENERATION", "ALL", "NONE"],
             "type": "string",
             "default": "NONE",
             "description": "If GENERATION is selected, the token likelihoods will only be provided for generated text.If ALL is selected, the token likelihoods will be provided both for the prompt and the generated text."
@@ -394,15 +372,13 @@
     "pk": 5,
     "fields": {
       "name": "ChatGPT",
-      "slug": "openai_chatgpt",
+      "slug": "chatgpt",
       "description": "Takes a series of messages as input, and return a model-generated message as output",
       "api_provider": 1,
       "api_endpoint": "chat/completions",
       "params": {
         "type": "object",
-        "required": [
-          "model"
-        ],
+        "required": ["model"],
         "properties": {
           "n": {
             "type": "integer",
@@ -414,10 +390,7 @@
             "description": "Up to 4 sequences where the API will stop generating further tokens."
           },
           "model": {
-            "enum": [
-              "gpt-3.5-turbo",
-              "gpt-3.5-turbo-0301"
-            ],
+            "enum": ["gpt-3.5-turbo", "gpt-3.5-turbo-0301"],
             "type": "string",
             "default": "gpt-3.5-turbo",
             "description": "ID of the model to use. Currently, only gpt-3.5-turbo and gpt-3.5-turbo-0301 are supported."
@@ -460,7 +433,7 @@
     "pk": 7,
     "fields": {
       "name": "Text-Chat",
-      "slug": "promptly_text_chat",
+      "slug": "text_chat",
       "description": "Conversation style question and answering from provided data",
       "api_provider": 4,
       "api_endpoint": "textchat",
@@ -475,7 +448,7 @@
     "pk": 8,
     "fields": {
       "name": "Audio Transcription",
-      "slug": "openai_audio_transcriptions",
+      "slug": "audio_transcriptions",
       "description": "Transcribes the given audio file into text",
       "api_provider": 1,
       "api_endpoint": "whisper",
@@ -490,7 +463,7 @@
     "pk": 9,
     "fields": {
       "name": "Audio Translation",
-      "slug": "openai_audio_translations",
+      "slug": "audio_translations",
       "description": "Transcribes and translates the given audio file based on the prompt",
       "api_provider": 1,
       "api_endpoint": "whisper",
@@ -505,7 +478,7 @@
     "pk": 10,
     "fields": {
       "name": "URL Extractor",
-      "slug": "promptly_http_uri_text_extract",
+      "slug": "http_uri_text_extract",
       "description": "Extracts text from a given URL. Links can point to YouTube, PDF, PPTX, DOC, TEXT or XML files",
       "api_provider": 4,
       "api_endpoint": "promptly",
@@ -520,7 +493,7 @@
     "pk": 11,
     "fields": {
       "name": "File Extractor",
-      "slug": "promptly_data_uri_text_extract",
+      "slug": "data_uri_text_extract",
       "description": "Extracts text from file data passed as base64 encoded string to file_data",
       "api_provider": 4,
       "api_endpoint": "promptly",
@@ -535,7 +508,7 @@
     "pk": 12,
     "fields": {
       "name": "Datasource Search",
-      "slug": "promptly_data_source_search",
+      "slug": "datasource_search",
       "description": "Search across your data sources",
       "api_provider": 4,
       "api_endpoint": "promptly",
@@ -550,7 +523,7 @@
     "pk": 14,
     "fields": {
       "name": "ChatGPT",
-      "slug": "azure_chatgpt",
+      "slug": "chatgpt",
       "description": "Chat completions from Azure Open AI",
       "api_provider": 5,
       "api_endpoint": "azure_chatgpt",
@@ -565,7 +538,7 @@
     "pk": 15,
     "fields": {
       "name": "Text to Speech",
-      "slug": "elevenlabs_text_to_speech",
+      "slug": "text_to_speech",
       "description": "Transforms text into speech in a given voice",
       "api_provider": 6,
       "api_endpoint": "elevenlabs_text_to_speech",
@@ -580,7 +553,7 @@
     "pk": 16,
     "fields": {
       "name": "Image Variations",
-      "slug": "openai_images_variations",
+      "slug": "images_variations",
       "description": "Create variations of existing image",
       "api_provider": 1,
       "api_endpoint": "openai_images_variations",
@@ -595,7 +568,7 @@
     "pk": 17,
     "fields": {
       "name": "Image Edit",
-      "slug": "openai_images_edit",
+      "slug": "images_edit",
       "description": "Edit source image with a prompt",
       "api_provider": 1,
       "api_endpoint": "openai_images_edit",
@@ -610,7 +583,7 @@
     "pk": 18,
     "fields": {
       "name": "PaLM 2 For Chat",
-      "slug": "google_text_chat",
+      "slug": "text_chat",
       "description": "Chat completions from Google Vertex AI",
       "api_provider": 7,
       "api_endpoint": "google_text_chat",
@@ -625,7 +598,7 @@
     "pk": 19,
     "fields": {
       "name": "PaLM 2 For Text",
-      "slug": "google_text",
+      "slug": "text",
       "description": "Text completions from Google Vertex AI",
       "api_provider": 7,
       "api_endpoint": "google_text",
@@ -640,7 +613,7 @@
     "pk": 20,
     "fields": {
       "name": "Text Summarizer",
-      "slug": "promptly_text_summarizer",
+      "slug": "text_summarizer",
       "description": "Summarize given input text using OpenAI's models",
       "api_provider": 4,
       "api_endpoint": "promptly_text_summarizer",
@@ -655,7 +628,7 @@
     "pk": 21,
     "fields": {
       "name": "Completions",
-      "slug": "localai_completions",
+      "slug": "completions",
       "description": "Text completions from LocalAI",
       "api_provider": 8,
       "api_endpoint": "localai_completions",
@@ -670,7 +643,7 @@
     "pk": 22,
     "fields": {
       "name": "Chat Completions",
-      "slug": "localai_chatcompletions",
+      "slug": "chatgpt",
       "description": "Chat completions from LocalAI",
       "api_provider": 8,
       "api_endpoint": "localai_chatcompletions",

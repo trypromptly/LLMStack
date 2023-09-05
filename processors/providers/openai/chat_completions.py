@@ -188,11 +188,17 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionsInput, ChatCompletion
         self._chat_history = session_data['chat_history'] if 'chat_history' in session_data else [
         ]
 
+    @staticmethod
     def name() -> str:
         return 'open ai/chatgpt'
 
+    @staticmethod
     def slug() -> str:
-        return 'openai_chatgpt'
+        return 'chatgpt'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'openai'
 
     def session_data_to_persist(self) -> dict:
         if self._config.retain_history and self._config.auto_prune_chat_history:
@@ -201,11 +207,13 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionsInput, ChatCompletion
                 if isinstance(message, ChatMessage):
                     msg_dict = message.dict()
                     messages.append(
-                        {'role': msg_dict['role'], 'content': msg_dict['content']},
+                        {'role': msg_dict['role'],
+                            'content': msg_dict['content']},
                     )
                 elif isinstance(message, dict):
                     messages.append(
-                        {'role': message['role'], 'content': message['content']},
+                        {'role': message['role'],
+                            'content': message['content']},
                     )
                 else:
                     raise Exception('Invalid chat history')
@@ -238,9 +246,10 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionsInput, ChatCompletion
             for function in self._input.functions:
                 openai_functions.append(
                     OpenAIFunctionCall(
-                    name=function.name,
-                    description=function.description,
-                    parameters=json.loads(function.parameters) if function.parameters is not None else {},
+                        name=function.name,
+                        description=function.description,
+                        parameters=json.loads(
+                            function.parameters) if function.parameters is not None else {},
                     ),
                 )
 

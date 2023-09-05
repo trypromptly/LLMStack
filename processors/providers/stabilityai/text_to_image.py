@@ -99,11 +99,17 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
     """
     StabilityAI Images Generations API
     """
+    @staticmethod
     def name() -> str:
         return 'stability ai/text2image'
 
+    @staticmethod
     def slug() -> str:
-        return 'stabilityai_text2image'
+        return 'text2image'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'stabilityai'
 
     def process(self) -> dict:
         stability_api_key = get_key_or_raise(
@@ -119,7 +125,8 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
             if p:
                 prompts.append(
                     generation.Prompt(
-                    text=p, parameters=generation.PromptParameters(weight=1),
+                        text=p, parameters=generation.PromptParameters(
+                            weight=1),
                     ),
                 )
 
@@ -127,7 +134,8 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
             if p:
                 prompts.append(
                     generation.Prompt(
-                    text=p, parameters=generation.PromptParameters(weight=-1),
+                        text=p, parameters=generation.PromptParameters(
+                            weight=-1),
                     ),
                 )
 
@@ -170,7 +178,8 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
                     if image_data['type'] == 'ARTIFACT_IMAGE':
                         async_to_sync(self._output_stream.write)(
                             TextToImageOutput(
-                            answer=(['' for _ in range(image_count)] + ['data:{};base64,{}'.format(image_data['mime'], image_data['binary'])]),
+                                answer=(['' for _ in range(
+                                    image_count)] + ['data:{};base64,{}'.format(image_data['mime'], image_data['binary'])]),
                             ),
                         )
                         image_count += 1

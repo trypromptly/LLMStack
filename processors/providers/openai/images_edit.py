@@ -65,11 +65,17 @@ class ImagesEdit(ApiProcessorInterface[ImagesEditInput, ImagesEditOutput, Images
     """
     OpenAI Images Generations API
     """
+    @staticmethod
     def name() -> str:
         return 'open ai/images_edit'
 
+    @staticmethod
     def slug() -> str:
-        return 'openai_images_edit'
+        return 'images_edit'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'openai'
 
     def process(self) -> dict:
         _env = self._env
@@ -91,7 +97,7 @@ class ImagesEdit(ApiProcessorInterface[ImagesEditInput, ImagesEditOutput, Images
         openai_images_edit_input = OpenAIImageEditsProcessorInput(
             env=OpenAIAPIInputEnvironment(
                 openai_api_key=get_key_or_raise(
-                _env, 'openai_api_key', 'No openai_api_key found in _env',
+                    _env, 'openai_api_key', 'No openai_api_key found in _env',
                 ),
             ),
             image=OpenAIFile(

@@ -86,7 +86,11 @@ class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
 
     @staticmethod
     def slug() -> str:
-        return 'S3_bucket'
+        return 's3_bucket'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'amazon'
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = S3BucketSchema(**data)
@@ -115,15 +119,15 @@ class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
             region_name = self.profile.get_vendor_key('aws_default_region')
 
         result = S3Bucket().process(
-            input=S3BucketInput(bucket=bucket_name, regex=entry.regex), 
+            input=S3BucketInput(bucket=bucket_name, regex=entry.regex),
             configuration=S3BucketConfiguration(
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key_secret,
                 region_name=region_name,
             ))
-        
+
         data_source_entries = []
-        
+
         for document in result.documents:
             file_name = document.metadata['file_name']
             base64_encoded_file_content = base64.b64encode(
@@ -138,7 +142,6 @@ class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
                     'mime_type': mime_type, 'file_name': file_name, 'file_data': file_data},
             )
             data_source_entries.append(data_source_entry)
-
 
         return data_source_entries
 

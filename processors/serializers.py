@@ -32,37 +32,43 @@ class ApiBackendSerializer(serializers.ModelSerializer):
     output_ui_schema = serializers.SerializerMethodField()
 
     def get_config_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(obj.slug)
+        processor_cls = ApiProcessorFactory.get_api_processor(
+            obj.slug, obj.api_provider.slug)
         if processor_cls is None:
             return {}
         return json.loads(processor_cls.get_configuration_schema())
 
     def get_input_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(obj.slug)
+        processor_cls = ApiProcessorFactory.get_api_processor(
+            obj.slug, obj.api_provider.slug)
         if processor_cls is None:
             return {}
         return json.loads(processor_cls.get_input_schema())
 
     def get_output_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(obj.slug)
+        processor_cls = ApiProcessorFactory.get_api_processor(
+            obj.slug, obj.api_provider.slug)
         if processor_cls is None:
             return {}
         return json.loads(processor_cls.get_output_schema())
 
     def get_config_ui_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(obj.slug)
+        processor_cls = ApiProcessorFactory.get_api_processor(
+            obj.slug, obj.api_provider.slug)
         if processor_cls is None:
             return {}
         return processor_cls.get_configuration_ui_schema()
 
     def get_input_ui_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(obj.slug)
+        processor_cls = ApiProcessorFactory.get_api_processor(
+            obj.slug, obj.api_provider.slug)
         if processor_cls is None:
             return {}
         return processor_cls.get_input_ui_schema()
 
     def get_output_ui_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(obj.slug)
+        processor_cls = ApiProcessorFactory.get_api_processor(
+            obj.slug, obj.api_provider.slug)
         if processor_cls is None:
             return {}
         return processor_cls.get_output_ui_schema()

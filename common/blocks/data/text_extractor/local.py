@@ -9,13 +9,17 @@ class LocalTextExtractorProcessor(ProcessorInterface[TextExtractorInput, TextExt
     @staticmethod
     def name() -> str:
         return "local_text_extractor"
-    
+
     @staticmethod
     def slug() -> str:
-        return "local_text_extractor"
-    
+        return "text_extractor"
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
+
     def process(self, input: TextExtractorInput, configuration: TextExtractorConfiguration) -> TextExtractorOutput:
-        
+
         elements = extract_text_elements(
             mime_type=input.mime_type, data=input.data, file_name=input.id, extra_params=ExtraParams(),
         )
@@ -30,4 +34,3 @@ class LocalTextExtractorProcessor(ProcessorInterface[TextExtractorInput, TextExt
                 }
             ), elements))
         )
-        

@@ -55,11 +55,17 @@ class AudioTranscription(ApiProcessorInterface[AudioTranscriptionInput, AudioTra
     """
     OpenAI Audio Transcription API
     """
+    @staticmethod
     def name() -> str:
         return 'open ai/audio_transcriptions'
 
+    @staticmethod
     def slug() -> str:
-        return 'openai_audio_transcriptions'
+        return 'audio_transcriptions'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'openai'
 
     def process(self) -> dict:
         _env = self._env
@@ -80,7 +86,7 @@ class AudioTranscription(ApiProcessorInterface[AudioTranscriptionInput, AudioTra
         audio_transcription_api_processor_input = OpenAIAudioTranscriptionsProcessorInput(
             env=OpenAIAPIInputEnvironment(
                 openai_api_key=get_key_or_raise(
-                _env, 'openai_api_key', 'No openai_api_key found in _env',
+                    _env, 'openai_api_key', 'No openai_api_key found in _env',
                 ),
             ),
             prompt=input.get('prompt', None), file=OpenAIFile(name=file_name, content=file_data, mime_type=mime_type),
@@ -89,7 +95,7 @@ class AudioTranscription(ApiProcessorInterface[AudioTranscriptionInput, AudioTra
         response: OpenAIAudioTranscriptionsProcessorOutput = OpenAIAudioTranscriptionProcessor(
             configuration=self._config.dict(),
         ).process(
-                input=audio_transcription_api_processor_input.dict(),
+            input=audio_transcription_api_processor_input.dict(),
         )
         async_to_sync(self._output_stream.write)(
             AudioTranscriptionOutput(text=response.text),

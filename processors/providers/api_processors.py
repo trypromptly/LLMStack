@@ -14,6 +14,6 @@ class ApiProcessorFactory:
         subclasses = ApiProcessorInterface.__subclasses__()
         for subclass in subclasses:
             # Convert to lowercase to avoid case sensitivity
-            if subclass.slug() == processor_slug:
+            if subclass.slug() == processor_slug and subclass.provider_slug() == provider_slug:
                 return subclass
         return None

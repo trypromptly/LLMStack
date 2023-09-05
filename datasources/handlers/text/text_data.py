@@ -41,6 +41,10 @@ class TextDataSource(DataSourceProcessor[TextSchema]):
     def slug() -> str:
         return 'text'
 
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
+
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = TextSchema(**data)
         data_source_entry = DataSourceEntryItem(

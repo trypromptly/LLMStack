@@ -46,6 +46,10 @@ class WebsiteCrawlerDataSource(DataSourceProcessor[WebsiteCrawlerSchema]):
     def slug() -> str:
         return 'website_crawler'
 
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
+
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         result = []
         entry = WebsiteCrawlerSchema(**data)

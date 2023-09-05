@@ -70,6 +70,10 @@ class PDFDataSource(DataSourceProcessor[PdfSchema]):
     def slug() -> str:
         return 'pdf'
 
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
+
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = PdfSchema(**data)
         mime_type, file_name, file_data = validate_parse_data_uri(entry.file)

@@ -59,11 +59,17 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
 
 
 class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeechOutput, TextToSpeechConfiguration]):
+    @staticmethod
     def name() -> str:
         return 'google_text_to_speech'
 
+    @staticmethod
     def slug() -> str:
-        return 'google_text_to_speech'
+        return 'text_to_speech'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'google'
 
     def process(self) -> dict:
         api_url = 'https://texttospeech.googleapis.com/v1/text:synthesize'

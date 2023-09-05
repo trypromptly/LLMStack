@@ -55,11 +55,17 @@ class DiscordSendMessageProcessor(
     Discord Send Message API
     """
 
+    @staticmethod
     def name() -> str:
         return 'discord/send_message'
 
+    @staticmethod
     def slug() -> str:
-        return 'discord_send_message'
+        return 'send_message'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'discord'
 
     def process(self) -> dict:
         _env = self._env

@@ -58,11 +58,17 @@ class ImagesVariations(ApiProcessorInterface[ImagesVariationsInput, ImagesVariat
     """
     OpenAI Images Generations API
     """
+    @staticmethod
     def name() -> str:
         return 'open ai/images_variations'
 
+    @staticmethod
     def slug() -> str:
-        return 'openai_images_variations'
+        return 'images_variations'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'openai'
 
     def process(self) -> dict:
         image = self._input.image or None
@@ -80,10 +86,11 @@ class ImagesVariations(ApiProcessorInterface[ImagesVariationsInput, ImagesVariat
         image_variations_api_processor_input = OpenAIImageVariationsProcessorInput(
             env=OpenAIAPIInputEnvironment(
                 openai_api_key=get_key_or_raise(
-                self._env, 'openai_api_key', 'No openai_api_key found in _env',
+                    self._env, 'openai_api_key', 'No openai_api_key found in _env',
                 ),
             ),
-            image=OpenAIFile(name=file_name, content=image_data, mime_type=mime_type),
+            image=OpenAIFile(name=file_name, content=image_data,
+                             mime_type=mime_type),
         )
         response: OpenAIImageVariationsProcessorOutput = OpenAIImageVariationsProcessor(
             configuration=self._config.dict(

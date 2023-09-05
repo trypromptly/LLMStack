@@ -81,7 +81,11 @@ class S3FileDataSource(DataSourceProcessor[S3FileSchema]):
 
     @staticmethod
     def slug() -> str:
-        return 'S3_file'
+        return 's3_file'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'amazon'
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = S3FileSchema(**data)
@@ -109,16 +113,14 @@ class S3FileDataSource(DataSourceProcessor[S3FileSchema]):
         else:
             region_name = self.profile.get_vendor_key('aws_default_region')
 
-    
         result = S3Path().process(
-            input=S3PathInput(bucket=entry.bucket, path=entry.path), 
+            input=S3PathInput(bucket=entry.bucket, path=entry.path),
             configuration=S3PathConfiguration(
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key_secret,
                 region_name=region_name,
             ))
         document = result.documents[0]
-
 
         if document.metadata['HTTPHeader']['http_status_code'] != 200:
             logger.error(

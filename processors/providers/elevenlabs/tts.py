@@ -58,11 +58,17 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
 
 
 class ElevenLabsTextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeechOutput, TextToSpeechConfiguration]):
+    @staticmethod
     def name() -> str:
         return 'elevenlabs_text_to_speech'
 
+    @staticmethod
     def slug() -> str:
-        return 'elevenlabs_text_to_speech'
+        return 'text_to_speech'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'elevenlabs'
 
     def process(self) -> dict:
 
@@ -95,7 +101,8 @@ class ElevenLabsTextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, T
                 output_data.write(chunk)
 
         async_to_sync(self._output_stream.write)(
-            TextToSpeechOutput(audio_content=base64.b64encode(output_data.getvalue()).decode('utf-8')),
+            TextToSpeechOutput(audio_content=base64.b64encode(
+                output_data.getvalue()).decode('utf-8')),
         )
 
         output = self._output_stream.finalize()

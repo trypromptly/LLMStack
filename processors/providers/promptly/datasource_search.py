@@ -53,9 +53,13 @@ class DataSourceSearchConfigurations(ApiProcessorSchema):
 
 
 class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, DataSourceSearchOutput, DataSourceSearchConfigurations]):
-    @ staticmethod
+    @staticmethod
     def slug() -> str:
-        return 'promptly_data_source_search'
+        return 'datasource_search'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
 
     def process(self) -> DataSourceSearchOutput:
         input_data = self._input
@@ -110,7 +114,7 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
 
         async_to_sync(self._output_stream.write)(
             DataSourceSearchOutput(
-            answers=answers, answers_text=answer_text,
+                answers=answers, answers_text=answer_text,
             ),
         )
         output = self._output_stream.finalize()

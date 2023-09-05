@@ -59,7 +59,7 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
         """Use source value to provide citations for the answer. Citations must be in a new line after the answer.""",
         widget='textarea', advanced_parameter=True,
         description='Instructions for the chatbot')
-    
+
     k: int = Field(
         title='Documents Count', default=8,
         description='Number of documents from similarity search to use as context',
@@ -92,10 +92,12 @@ class Citation(ApiProcessorSchema):
     source: Optional[str]
     certainty: Optional[float]
     distance: Optional[float]
-    
+
+
 class TextChatOutput(ApiProcessorSchema):
-    answer: str = Field(..., description='Answer to the question', widget='textarea')
-    citations: Optional[List[Citation]] 
+    answer: str = Field(..., description='Answer to the question',
+                        widget='textarea')
+    citations: Optional[List[Citation]]
 
 
 class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConfiguration]):
@@ -108,11 +110,17 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         ]
         self._context = session_data['context'] if 'context' in session_data else ''
 
+    @staticmethod
     def name() -> str:
         return 'promptly/text-chat'
 
+    @staticmethod
     def slug() -> str:
-        return 'promptly_text_chat'
+        return 'text_chat'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
 
     def session_data_to_persist(self) -> dict:
         return {'chat_history': self._chat_history[-self._config.chat_history_limit:] if self._config.chat_history_limit > 0 else [], 'context': self._context}
@@ -137,7 +145,8 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
                 search_filters = input['search_filters']
                 if len(self._chat_history) > 0 and self._config.chat_history_in_doc_search > 0:
                     search_query = search_query + '\n\n' + '\n\n'.join(
-                        [m['content'] for m in self._chat_history[-self._config.chat_history_in_doc_search:]],
+                        [m['content']
+                            for m in self._chat_history[-self._config.chat_history_in_doc_search:]],
                     )
 
                 output_docs = datasource_entry_handler.similarity_search(
@@ -184,7 +193,8 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
                 self._context = self._context + '\n-----'
                 self._context = self._context + '\nContent: ' + d.page_content
                 if self._config.show_citations:
-                    self._context = self._context + '\nMetadata: ' + ', '.join(f'{k}: {v}' for k, v in d.metadata.items())
+                    self._context = self._context + '\nMetadata: ' + \
+                        ', '.join(f'{k}: {v}' for k, v in d.metadata.items())
             # Remove invalid characters from docs
             self._context = self._context.replace('\u0000', '')
 
@@ -195,7 +205,7 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
             'role': 'system',
             'content': self._config.system_message_prefix,
         }
-        
+
         context_message = {
             'role': 'user',
             'content': instructions + '\n----\ncontext: ' + self._context,
@@ -239,19 +249,18 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         else:
             raise Exception('No OpenAI API key provided')
 
-        
         for data in result:
             if data.get('object') and data.get('object') == 'chat.completion.chunk' and data.get('choices') and len(data.get('choices')) > 0 and data['choices'][0].get('delta') and data['choices'][0]['delta'].get('content'):
                 async_to_sync(output_stream.write)(
                     TextChatOutput(
                         answer=data['choices'][0]['delta']['content']
-                ))
+                    ))
 
         if len(docs) > 0:
             async_to_sync(output_stream.write)(
                 TextChatOutput(answer='', citations=list(map(lambda d: Citation(
-                            text=d.page_content, source=d.metadata['source'], certainty=d.metadata['certainty'], distance=d.metadata['distance']), docs))))
-            
+                    text=d.page_content, source=d.metadata['source'], certainty=d.metadata['certainty'], distance=d.metadata['distance']), docs))))
+
         output = output_stream.finalize()
 
         self._chat_history.append(

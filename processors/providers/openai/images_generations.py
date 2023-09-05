@@ -57,11 +57,17 @@ class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGene
     """
     OpenAI Images Generations API
     """
+    @staticmethod
     def name() -> str:
         return 'open ai/image generations'
 
+    @staticmethod
     def slug() -> str:
-        return 'openai_image_generations'
+        return 'image_generations'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'openai'
 
     def process(self) -> dict:
         _env = self._env
@@ -80,7 +86,7 @@ class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGene
 
         async_to_sync(self._output_stream.write)(
             ImagesGenerationsOutput(
-            data=response.answer, metadata=response.metadata,
+                data=response.answer, metadata=response.metadata,
             ),
         )
 

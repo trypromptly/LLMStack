@@ -29,8 +29,13 @@ class PromptlyHttpAPIProcessorConfiguration(HttpAPIProcessorConfiguration, ApiPr
 
 
 class PromptlyHttpAPIProcessor(ApiProcessorInterface[PromptlyHttpAPIProcessorInput, PromptlyHttpAPIProcessorOutput, PromptlyHttpAPIProcessorConfiguration]):
+    @staticmethod
     def slug() -> str:
-        return 'promptly_http_api_processor'
+        return 'http_api_processor'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
 
     def session_data_to_persist(self) -> dict:
         return {}
@@ -40,7 +45,8 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[PromptlyHttpAPIProcessorInp
             url=self._input.url, method=self._input.method, headers=self._input.headers or {}, body=self._input.body, authorization=self._input.authorization,
         )
         response = CoreHttpAPIProcessor(
-            PromptlyHttpAPIProcessorConfiguration(allow_redirects=self._config.allow_redirects, timeout=self._config.timeout).dict(),
+            PromptlyHttpAPIProcessorConfiguration(
+                allow_redirects=self._config.allow_redirects, timeout=self._config.timeout).dict(),
         ).process(request.dict())
 
         async_to_sync(self._output_stream.write)(

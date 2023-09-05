@@ -83,11 +83,17 @@ class ImageToImage(ApiProcessorInterface[ImageToImageInput, ImageToImageOutput, 
     """
     StabilityAI Images Generations API
     """
+    @staticmethod
     def name() -> str:
         return 'stability ai/image2image'
 
+    @staticmethod
     def slug() -> str:
-        return 'stabilityai_image2image'
+        return 'image2image'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'stabilityai'
 
     def process(self, input: dict) -> dict:
         _env = self._env

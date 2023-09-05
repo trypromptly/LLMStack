@@ -55,6 +55,10 @@ class SitemapCrawlerDataSource(DataSourceProcessor[SitemapURLSchema]):
     def slug() -> str:
         return 'sitemap_url'
 
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
+
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = SitemapURLSchema(**data)
         sitemap_urls = []

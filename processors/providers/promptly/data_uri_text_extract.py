@@ -69,8 +69,13 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
         self.extracted_text = session_data['extracted_text'] if 'extracted_text' in session_data else ''
         self.storage_index_name = session_data['storage_index_name'] if 'storage_index_name' in session_data else ''
 
+    @staticmethod
     def slug() -> str:
-        return 'promptly_data_uri_text_extract'
+        return 'data_uri_text_extract'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
 
     def session_data_to_persist(self) -> dict:
         return {
@@ -121,7 +126,8 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
             )
 
             async_to_sync(self._output_stream.write)(
-                DataUriTextExtractorOutput(text='\n'.join([document.page_content for document in documents])),
+                DataUriTextExtractorOutput(text='\n'.join(
+                    [document.page_content for document in documents])),
             )
             output = self._output_stream.finalize()
             return output
@@ -155,7 +161,8 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
             )
 
             async_to_sync(self._output_stream.write)(
-                DataUriTextExtractorOutput(text='\n'.join([document.page_content for document in documents])),
+                DataUriTextExtractorOutput(text='\n'.join(
+                    [document.page_content for document in documents])),
             )
             output = self._output_stream.finalize()
             return output

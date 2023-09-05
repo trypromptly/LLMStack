@@ -125,11 +125,17 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
         self._chat_history = session_data['chat_history'] if 'chat_history' in session_data else [
         ]
 
+    @staticmethod
     def name() -> str:
         return 'azure/chatgpt'
 
+    @staticmethod
     def slug() -> str:
-        return 'azure_chatgpt'
+        return 'chatgpt'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'azure'
 
     def session_data_to_persist(self) -> dict:
         if self._config.retain_history and self._config.auto_prune_chat_history:
@@ -173,10 +179,10 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
 
         result_iter: Generator[AzureOpenAIChatCompletionsAPIProcessorOutput] = processor.process_iter(
             AzureOpenAIChatCompletionsAPIProcessorInput(
-            env={'azure_openai_api_key': azure_openai_api_key},
-            system_message=system_message,
-            chat_history=chat_history,
-            messages=messages,
+                env={'azure_openai_api_key': azure_openai_api_key},
+                system_message=system_message,
+                chat_history=chat_history,
+                messages=messages,
             ).dict(),
         )
 
@@ -185,7 +191,7 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
                 continue
             async_to_sync(self._output_stream.write)(
                 AzureChatCompletionsOutput(
-                choices=result.choices,
+                    choices=result.choices,
                 ),
             )
 

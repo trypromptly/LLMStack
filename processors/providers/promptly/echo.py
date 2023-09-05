@@ -26,11 +26,17 @@ class EchoProcessor(ApiProcessorInterface[EchoProcessorInput, EchoProcessorOutpu
     Echo processor
     """
 
+    @staticmethod
     def name() -> str:
         return 'promptly/echo'
 
+    @staticmethod
     def slug() -> str:
-        return 'promptly_echo'
+        return 'echo'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
 
     def process(self) -> dict:
         output_stream = self._output_stream

@@ -49,6 +49,10 @@ class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
     def slug() -> str:
         return 'media_file'
 
+    @staticmethod
+    def provider_slug() -> str:
+        return 'promptly'
+
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = MediaFileSchema(**data)
         mime_type, file_name, file_data = validate_parse_data_uri(entry.file)
@@ -59,7 +63,8 @@ class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
             )
 
         data_source_entry = DataSourceEntryItem(
-            name=file_name, data={'mime_type': mime_type, 'file_name': file_name, 'file_data': file_data},
+            name=file_name, data={'mime_type': mime_type,
+                                  'file_name': file_name, 'file_data': file_data},
         )
 
         return [data_source_entry]
@@ -73,7 +78,8 @@ class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
 
         file_text = extract_text_from_b64_json(
             mime_type=data.data['mime_type'],
-            base64_encoded_data=data.data['file_data'], file_name=data.data['file_name'], extra_params=ExtraParams(openai_key=openai_key),
+            base64_encoded_data=data.data['file_data'], file_name=data.data['file_name'], extra_params=ExtraParams(
+                openai_key=openai_key),
         )
 
         docs = [

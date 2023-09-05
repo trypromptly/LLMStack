@@ -58,11 +58,17 @@ class AudioTranslations(ApiProcessorInterface[AudioTranslationsInput, AudioTrans
     """
     OpenAI Audio Translations API
     """
+    @staticmethod
     def name() -> str:
         return 'open ai/audio_translations'
 
+    @staticmethod
     def slug() -> str:
-        return 'openai_audio_translations'
+        return 'audio_translations'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'openai'
 
     def process(self) -> dict:
         _env = self._env
@@ -83,7 +89,7 @@ class AudioTranslations(ApiProcessorInterface[AudioTranslationsInput, AudioTrans
         audio_translation_api_processor_input = OpenAIAudioTranslationsProcessorInput(
             env=OpenAIAPIInputEnvironment(
                 openai_api_key=get_key_or_raise(
-                _env, 'openai_api_key', 'No openai_api_key found in _env',
+                    _env, 'openai_api_key', 'No openai_api_key found in _env',
                 ),
             ),
             prompt=self._input.prompt, file=OpenAIFile(
@@ -93,7 +99,7 @@ class AudioTranslations(ApiProcessorInterface[AudioTranslationsInput, AudioTrans
         response: OpenAIAudioTranslationsProcessorOutput = OpenAIAudioTranslationsProcessor(
             configuration=self._config.dict(),
         ).process(
-                input=audio_translation_api_processor_input.dict(),
+            input=audio_translation_api_processor_input.dict(),
         )
         async_to_sync(self._output_stream.write)(
             AudioTranslationsOutput(text=response.text),

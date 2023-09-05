@@ -43,11 +43,17 @@ class Generate(ApiProcessorInterface[GenerateInput, GenerateOutput, GenerateConf
     """
     Cohere Generate API
     """
+    @staticmethod
     def name() -> str:
         return 'cohere_generate'
 
+    @staticmethod
     def slug() -> str:
-        return 'cohere_generate'
+        return 'generate'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'cohere'
 
     def process(self) -> dict:
         _env = self._env
@@ -67,7 +73,7 @@ class Generate(ApiProcessorInterface[GenerateInput, GenerateOutput, GenerateConf
 
         async_to_sync(self._output_stream.write)(
             GenerateOutput(
-            metadata=result.metadata, choices=result.choices,
+                metadata=result.metadata, choices=result.choices,
             ),
         )
         output = self._output_stream.finalize()

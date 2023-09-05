@@ -90,11 +90,17 @@ class TextChatConfiguration(ApiProcessorSchema):
 
 
 class TextChatProcessor(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConfiguration]):
+    @staticmethod
     def name() -> str:
         return 'google_text_chat'
 
+    @staticmethod
     def slug() -> str:
-        return 'google_text_chat'
+        return 'text_chat'
+
+    @staticmethod
+    def provider_slug() -> str:
+        return 'google'
 
     def process(self) -> dict:
         token = None
