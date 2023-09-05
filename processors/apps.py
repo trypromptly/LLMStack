@@ -23,5 +23,5 @@ class ProcessorsConfig(AppConfig):
     label = 'apiabstractor'
 
     def ready(self) -> None:
-        logger.info("Initializaing Processor subclasses")
+        logger.info("Initializing Processor subclasses")
         load_processor_subclasses()
