@@ -5,7 +5,8 @@ from django.db import migrations
 
 def build_input_fields_from_input_schema(input_schema, input_ui_schema):
     input_fields = []
-    required_fields = input_schema['required']
+    required_fields = input_schema['required'] if 'required' in input_schema else [
+    ]
     for key in input_schema['properties']:
         input_field = {
             'name': key,
