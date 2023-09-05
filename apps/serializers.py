@@ -179,12 +179,11 @@ class AppSerializer(DynamicFieldsModelSerializer):
 
     def get_unique_processors(self, obj):
         if obj.has_write_permission(self._request_user):
-            return []
             data = self.get_data(obj)
-            processors = self.get_processors(obj)
+            processors = data.get('processors', []) if data else []
             unique_processors = []
             for processor in processors:
-                name = f"{processor['api_backend']['api_provider']['name']} / {processor['api_backend']['name']}"
+                name = f"{processor['provider_slug']} / {processor['processor_slug']}"
                 if name not in unique_processors:
                     unique_processors.append(name)
             return unique_processors
