@@ -82,7 +82,6 @@ export function AppEditor(props) {
           showProcessorSelector={true}
           setProcessorBackend={(apiBackend) => {
             const newProcessors = [...processors];
-            console.log("apiBackend", apiBackend, newProcessors);
             newProcessors.push({
               id: `_inputs${newProcessors.length + 1}`,
               api_backend: apiBackend,
