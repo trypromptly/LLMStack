@@ -162,6 +162,10 @@ class SlackAppRunner(AppRunner):
         if self.request.data.get('type') == 'event_callback' and (self.request.data.get('api_app_id') != self.slack_config.get('app_id') or self.request.data.get('event').get('type') != 'app_mention'):
             raise Exception('Invalid Slack request')
 
+        # URL verification is allowed without any further checks
+        if self.request.data.get('type') == 'url_verification':
+            return True
+
         return super()._is_app_accessible()
 
     def run_app(self):
