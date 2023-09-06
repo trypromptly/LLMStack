@@ -22,6 +22,7 @@ import {
   Stack,
   SvgIcon,
 } from "@mui/material";
+import ChangeHistoryIcon from "@mui/icons-material/ChangeHistory";
 import EditIcon from "@mui/icons-material/Edit";
 import PreviewIcon from "@mui/icons-material/Preview";
 import TimelineIcon from "@mui/icons-material/Timeline";
@@ -47,6 +48,7 @@ import { ReactComponent as WebIcon } from "../assets/images/icons/web.svg";
 import { AppApiExamples } from "../components/apps/AppApiExamples";
 import { AppTemplate } from "../components/apps/AppTemplate";
 import { AppTests } from "../components/apps/AppTests";
+import { AppVersions } from "../components/apps/AppVersions";
 import { apiBackendsState } from "../data/atoms";
 
 const menuItems = [
@@ -69,6 +71,11 @@ const menuItems = [
     name: "Tests",
     value: "tests",
     icon: <SvgIcon component={TestsIcon} />,
+  },
+  {
+    name: "Versions",
+    value: "versions",
+    icon: <SvgIcon component={ChangeHistoryIcon} />,
   },
   {
     name: "Integrations",
@@ -526,6 +533,7 @@ export default function AppEditPage(props) {
             {selectedMenuItem === "preview" && <AppPreview app={app} />}
             {selectedMenuItem === "history" && <AppRunHistory app={app} />}
             {selectedMenuItem === "tests" && <AppTests app={app} />}
+            {selectedMenuItem === "versions" && <AppVersions app={app} />}
             {selectedMenuItem === "integrations/website" && (
               <AppWebConfigEditor
                 app={app}

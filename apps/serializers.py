@@ -313,6 +313,23 @@ class AppTemplateSerializer(serializers.ModelSerializer):
         ]
 
 
+class AppDataSerializer(serializers.ModelSerializer):
+
+    data = serializers.SerializerMethodField()
+
+    def get_data(self, obj):
+        hide_details = self.context.get('hide_details', True)
+        if hide_details:
+            return None
+
+        return obj.data
+
+    class Meta:
+        model = AppData
+        fields = ['version', 'app_uuid', 'data',
+                  'created_at', 'last_updated_at', 'is_draft', 'comment']
+
+
 class AppHubSerializer(serializers.ModelSerializer):
     published_uuid = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()

@@ -29,7 +29,7 @@ from .models import AppType
 from .models import AppVisibility
 from .models import TestCase
 from .models import TestSet
-from .serializers import AppHubSerializer
+from .serializers import AppDataSerializer, AppHubSerializer
 from .serializers import AppSerializer
 from .serializers import AppTemplateSerializer
 from .serializers import AppTypeSerializer
@@ -140,6 +140,33 @@ class AppViewSet(viewsets.ViewSet):
         )
         return DRFResponse(serializer.data)
 
+    def versions(self, request, uid=None, version=None):
+        draft = request.query_params.get('draft', False)
+
+        if not uid:
+            return DRFResponse(status=400, data={'message': 'uid is required'})
+
+        app = get_object_or_404(
+            App,
+            Q(uuid=uuid.UUID(uid), owner=request.user) |
+            Q(uuid=uuid.UUID(uid), accessible_by__contains=[
+                request.user.email], visibility=AppVisibility.PRIVATE, is_published=True),
+        )
+
+        if version:
+            versioned_app_data = AppData.objects.filter(
+                app_uuid=app.uuid, version=version, is_draft=draft
+            ).first()
+            if versioned_app_data:
+                return DRFResponse(AppDataSerializer(versioned_app_data, context={'hide_details': False}).data)
+            else:
+                return DRFResponse(status=404, data={'message': 'Version not found'})
+        else:
+            queryset = AppData.objects.all().filter(
+                app_uuid=app.uuid).order_by('-created_at')
+            serializer = AppDataSerializer(queryset, many=True)
+            return DRFResponse(serializer.data)
+
     @xframe_options_exempt
     def getByPublishedUUID(self, request, published_uuid):
         app = get_object_or_404(App, published_uuid=published_uuid)
@@ -156,7 +183,7 @@ class AppViewSet(viewsets.ViewSet):
                 (
                         request.user.is_authenticated and ((app.visibility == AppVisibility.ORGANIZATION and Profile.objects.get(user=app.owner).organization == Profile.objects.get(user=request.user).organization) or
                                                            (app.visibility == AppVisibility.PRIVATE and request.user.email in app.accessible_by))
-                    ):
+                ):
                 serializer = AppSerializer(
                     instance=app, request_user=request.user,
                 )
@@ -388,8 +415,11 @@ class AppViewSet(viewsets.ViewSet):
             versioned_app_data.is_draft = draft
             versioned_app_data.save()
         else:
+            # Find the total number of published versions
+            published_versions = AppData.objects.filter(
+                app_uuid=app.uuid, is_draft=False).count()
             AppData.objects.create(
-                app_uuid=app.uuid, data=app_data, comment=comment, is_draft=draft
+                app_uuid=app.uuid, data=app_data, comment=comment, is_draft=draft, version=published_versions,
             )
 
         app.last_modified_by = request.user

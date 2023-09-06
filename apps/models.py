@@ -248,6 +248,9 @@ class AppData(models.Model):
     app_uuid = models.UUIDField(
         default=None, help_text='UUID of the app', null=True, blank=True,
     )
+    version = models.IntegerField(
+        default=0, help_text='Version of the app',
+    )
     data = models.JSONField(
         default=dict, blank=True,
         help_text='Data for this endpoint',
@@ -267,6 +270,9 @@ class AppData(models.Model):
     last_updated_at = models.DateTimeField(
         auto_now=True, help_text='Time at which the app instance was last updated',
     )
+
+    def __str__(self) -> str:
+        return f'{self.app_uuid}_{"draft" if self.is_draft else "published"}_v{self.version}'
 
 
 class AppHub(models.Model):

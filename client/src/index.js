@@ -161,6 +161,15 @@ if (
       errorElement: <ErrorPage />,
     },
     {
+      path: "/apps/:appId/versions",
+      element: (
+        <App>
+          <AppEditPage page="versions" />
+        </App>
+      ),
+      errorElement: <ErrorPage />,
+    },
+    {
       path: "/apps/:appId/integrations/website",
       element: (
         <App>
