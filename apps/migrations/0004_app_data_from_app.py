@@ -15,6 +15,9 @@ def build_input_fields_from_input_schema(input_schema, input_ui_schema):
             'description': input_schema['properties'][key]['description'],
         }
 
+        if 'default' in input_schema['properties'][key]:
+            input_field['default'] = input_schema['properties'][key]['default']
+
         # Select options
         if 'enum' in input_schema['properties'][key] and 'enumNames' in input_schema['properties'][key]:
             input_field['type'] = 'select'
@@ -24,8 +27,6 @@ def build_input_fields_from_input_schema(input_schema, input_ui_schema):
                     'value': input_schema['properties'][key]['enum'][i],
                 } for i in range(len(input_schema['properties'][key]['enum']))
             ]
-            input_field['enum'] = input_schema['properties'][key]['enum']
-            input_field['enumNames'] = input_schema['properties'][key]['enumNames']
 
         if key in input_ui_schema:
             if 'ui:widget' in input_ui_schema[key]:
