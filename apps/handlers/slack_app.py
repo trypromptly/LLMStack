@@ -17,6 +17,8 @@ from play.utils import convert_template_vars_from_legacy_format
 from base.models import Profile
 from processors.providers.slack.post_message import SlackPostMessageProcessor
 
+from django.contrib.auth.models import User, AnonymousUser
+
 logger = logging.getLogger(__name__)
 
 
@@ -61,15 +63,12 @@ class SlackAppRunner(AppRunner):
                 )
                 if slack_user_email is not None:
                     self._slack_user_email = slack_user_email
-                    profile_object = Profile.objects.get(
-                        user__email=slack_user_email,
-                    )
-                    if profile_object is not None:
-                        return profile_object.user
+                    user_object = User.objects.get(email=slack_user_email)
+                    return user_object if user_object is not None else AnonymousUser()
             except Exception as e:
-                pass
+                logger.exception(f"Error in fetching user object from slack payload {slack_request_payload}")
 
-        return None
+        return AnonymousUser()
 
     def _get_slack_app_seession_id(self, slack_request_payload):
         if slack_request_payload['type'] == 'event_callback' and 'event' in slack_request_payload:
