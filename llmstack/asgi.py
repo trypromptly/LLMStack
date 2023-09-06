@@ -24,6 +24,7 @@ application = ProtocolTypeRouter({
     'websocket': AuthMiddlewareStack(
         URLRouter([
             path('ws/apps/<str:app_id>', AppConsumer.as_asgi()),
+            path('ws/apps/<str:app_id>/<str:preview>', AppConsumer.as_asgi()),
         ]),
     ),
 })

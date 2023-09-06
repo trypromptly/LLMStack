@@ -18,6 +18,7 @@ import { isMobileState } from "../../data/atoms";
 import { get, set } from "lodash";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { TextFieldWithVars } from "./TextFieldWithVars";
+import { AppSaveButtons } from "./AppSaveButtons";
 
 function AppTemplatePage(props) {
   const { appData, setAppData, page } = props;
@@ -152,10 +153,8 @@ export function AppTemplate(props) {
   const handleSave = () => {
     setLoading(true);
     setActiveStep(steps.length);
-    saveApp(app).finally(() => {
-      setLoading(false);
-      setAppSaved(true);
-    });
+    setLoading(false);
+    setAppSaved(true);
   };
 
   if (!app?.template || !appTemplate) {
@@ -203,19 +202,22 @@ export function AppTemplate(props) {
             color="inherit"
             disabled={activeStep === 0}
             onClick={handleBack}
-            sx={{ mr: 1, textTransform: "none" }}
+            sx={{ mr: 1, textTransform: "none", margin: "20px 0" }}
             variant="outlined"
           >
             Back
           </Button>
           <Box sx={{ flex: "1 1 auto" }} />
-          {activeStep < steps.length && (
+          {activeStep === steps.length - 1 && (
+            <AppSaveButtons saveApp={saveApp} postSave={handleSave} />
+          )}
+          {activeStep < steps.length - 1 && (
             <Button
-              onClick={activeStep < steps.length - 1 ? handleNext : handleSave}
+              onClick={handleNext}
               variant="contained"
-              sx={{ textTransform: "none" }}
+              sx={{ textTransform: "none", margin: "20px 0" }}
             >
-              {activeStep >= steps.length - 1 ? "Save App" : "Next"}
+              Next
             </Button>
           )}
         </Box>

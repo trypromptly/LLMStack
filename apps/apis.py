@@ -368,6 +368,8 @@ class AppViewSet(viewsets.ViewSet):
         app.discord_integration_config = DiscordIntegrationConfig(**request.data['discord_config']).to_dict(
             app_owner_profile.encrypt_value,
         ) if 'discord_config' in request.data and request.data['discord_config'] else {}
+        draft = request.data['draft'] if 'draft' in request.data else True
+        comment = request.data['comment'] if 'comment' in request.data else ''
 
         # Find the versioned app data and update it
         app_data = {
@@ -381,12 +383,13 @@ class AppViewSet(viewsets.ViewSet):
         versioned_app_data = AppData.objects.filter(
             app_uuid=app.uuid, is_draft=True).first()
         if versioned_app_data:
-            versioned_app_data.comment = request.data['comment'] if 'comment' in request.data else ''
+            versioned_app_data.comment = comment
             versioned_app_data.data = app_data
+            versioned_app_data.is_draft = draft
             versioned_app_data.save()
         else:
             AppData.objects.create(
-                app_uuid=app.uuid, data=app_data, is_draft=True, comment=request.data['comment'] if 'comment' in request.data else ''
+                app_uuid=app.uuid, data=app_data, comment=comment, is_draft=draft
             )
 
         app.last_modified_by = request.user
@@ -408,6 +411,8 @@ class AppViewSet(viewsets.ViewSet):
         }
         app_processors = request.data['processors'] if 'processors' in request.data else [
         ]
+        draft = request.data['draft'] if 'draft' in request.data else True
+        comment = request.data['comment'] if 'comment' in request.data else 'First version'
 
         template_slug = request.data['template_slug'] if 'template_slug' in request.data else None
         template = AppTemplate.objects.filter(
@@ -432,7 +437,7 @@ class AppViewSet(viewsets.ViewSet):
             'processors': app_processors,
         }
         AppData.objects.create(
-            app_uuid=app.uuid, data=app_data, is_draft=True, comment='First version'
+            app_uuid=app.uuid, data=app_data, is_draft=draft, comment=comment,
         )
 
         return DRFResponse(AppSerializer(instance=app).data, status=201)
@@ -462,14 +467,19 @@ class AppViewSet(viewsets.ViewSet):
             logger.exception('Error while running app')
             return DRFResponse({'errors': [str(e)]}, status=400)
 
-    async def run_app_internal_async(self, uid, session_id, request_uuid, request):
-        return await database_sync_to_async(self.run_app_internal)(uid, session_id, request_uuid, request)
+    async def run_app_internal_async(self, uid, session_id, request_uuid, request, preview=False):
+        return await database_sync_to_async(self.run_app_internal)(uid, session_id, request_uuid, request, preview=preview)
 
-    def run_app_internal(self, uid, session_id, request_uuid, request, platform=None, preview=True):
+    def run_app_internal(self, uid, session_id, request_uuid, request, platform=None, preview=False):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
         app_data_obj = AppData.objects.filter(
             app_uuid=app.uuid, is_draft=preview).order_by('-created_at').first()
+
+        # If we are running a published app, use the published app data
+        if not app_data_obj and preview:
+            app_data_obj = AppData.objects.filter(
+                app_uuid=app.uuid, is_draft=False).order_by('-created_at').first()
 
         app_runner_class = None
         if platform == 'discord':

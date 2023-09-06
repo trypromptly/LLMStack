@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Box, Button, Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { ProcessorEditor } from "./ProcessorEditor";
 import { AppConfigEditor } from "./AppConfigEditor";
 import { AppOutputEditor } from "./AppOutputEditor";
 import { AddProcessorDivider } from "./AddProcessorDivider";
 import { getJSONSchemaFromInputFields } from "../../data/utils";
+import { AppSaveButtons } from "./AppSaveButtons";
 
 export function AppEditor(props) {
   const {
@@ -24,7 +24,6 @@ export function AppEditor(props) {
     tourOutputRef,
     tourSaveRef,
   } = props;
-  const { appId } = useParams();
   const [activeStep, setActiveStep] = useState(1);
   const [outputSchemas, setOutputSchemas] = useState([]);
 
@@ -114,15 +113,9 @@ export function AppEditor(props) {
           maxWidth: "900px",
           margin: "auto",
         }}
+        ref={tourSaveRef}
       >
-        <Button
-          onClick={saveApp}
-          variant="contained"
-          style={{ textTransform: "none", margin: "20px 0" }}
-          ref={tourSaveRef}
-        >
-          {appId ? "Save App" : "Create App"}
-        </Button>
+        <AppSaveButtons saveApp={saveApp} />
       </Stack>
     </Box>
   );

@@ -1,5 +1,6 @@
-import { Box, Button, Stack, TextField } from "@mui/material";
+import { Box, Stack, TextField } from "@mui/material";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
+import { AppSaveButtons } from "./AppSaveButtons";
 
 export function AppDiscordConfigEditor(props) {
   const { app, discordConfig, saveApp, setDiscordConfig } = props;
@@ -97,13 +98,7 @@ export function AppDiscordConfigEditor(props) {
           margin: "auto",
         }}
       >
-        <Button
-          onClick={saveApp}
-          variant="contained"
-          style={{ textTransform: "none", margin: "20px 0" }}
-        >
-          Save App
-        </Button>
+        <AppSaveButtons saveApp={saveApp} />
       </Stack>
     </Box>
   );

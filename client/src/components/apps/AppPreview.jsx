@@ -20,7 +20,7 @@ export function AppPreview(props) {
 
   useEffect(() => {
     if (!ws) {
-      setWs(new Ws(`${wsUrlPrefix}/apps/${app?.uuid}`));
+      setWs(new Ws(`${wsUrlPrefix}/apps/${app?.uuid}/preview`));
     }
   }, [app, ws, wsUrlPrefix]);
 

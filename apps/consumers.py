@@ -44,6 +44,7 @@ def _build_request_from_input(post_data, scope):
 class AppConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.app_id = self.scope['url_route']['kwargs']['app_id']
+        self.preview = True if 'preview' in self.scope['url_route']['kwargs'] else False
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -62,7 +63,7 @@ class AppConsumer(AsyncWebsocketConsumer):
             try:
                 request_uuid = str(uuid.uuid4())
                 request = await _build_request_from_input({'input': input, 'stream': True}, self.scope)
-                output_stream = await AppViewSet().run_app_internal_async(self.app_id, self._session_id, request_uuid, request)
+                output_stream = await AppViewSet().run_app_internal_async(self.app_id, self._session_id, request_uuid, request, self.preview)
                 async for output in output_stream:
                     if 'errors' in output or 'session' in output:
                         await self.send(text_data=output)

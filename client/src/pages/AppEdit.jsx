@@ -232,11 +232,13 @@ export default function AppEditPage(props) {
     });
   };
 
-  const saveApp = () => {
+  const saveApp = (draft = true, comment = "") => {
     return new Promise((resolve, reject) => {
       const updatedApp = {
         name: app?.name,
         description: "",
+        draft: draft,
+        comment: comment,
         config: app?.data?.config,
         app_type: app?.type?.id,
         type_slug: app?.type?.slug,
@@ -249,10 +251,8 @@ export default function AppEditPage(props) {
           id: `_inputs${index + 1}`,
           provider_slug: processor.api_backend?.api_provider?.slug,
           processor_slug: processor.api_backend?.slug,
-          // api_backend: processor.api_backend.id,
           config: processor.config,
           input: processor.input,
-          // endpoint: processor.endpoint?.uuid || processor.endpoint,
         })),
       };
 
