@@ -241,6 +241,7 @@ class AppTemplateCategorySerializer(serializers.ModelSerializer):
 class AppTemplateSerializer(serializers.ModelSerializer):
     class AppTemplateAppSerializer(serializers.ModelSerializer):
         processors = serializers.SerializerMethodField()
+        input_fields = serializers.SerializerMethodField()
 
         def get_processors(self, obj):
             processors = []
@@ -258,6 +259,8 @@ class AppTemplateSerializer(serializers.ModelSerializer):
                         'input': node.input,
                         'config': node.config,
                         'api_backend': ApiBackendSerializer(instance=node.api_backend).data,
+                        'processor_slug': node.api_backend.slug,
+                        'provider_slug': node.api_backend.api_provider.slug,
                         'endpoint': str(node.uuid),
                     })
                     node_to_find = node
@@ -271,11 +274,19 @@ class AppTemplateSerializer(serializers.ModelSerializer):
                     node = edge.exit_endpoint if edge else None
             return processors
 
+        def get_input_fields(self, obj):
+            app_data = AppData.objects.filter(
+                app_uuid=obj.uuid).order_by('-created_at').first()
+            if app_data:
+                return app_data.data.get('input_fields', [])
+            return []
+        
         class Meta:
             model = App
             fields = [
                 'config', 'input_schema', 'type',
                 'input_ui_schema', 'output_template', 'processors',
+                'input_fields'
             ]
 
     app = serializers.SerializerMethodField()
