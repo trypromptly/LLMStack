@@ -26,7 +26,7 @@ pages:
         title: "Question help text"
         type: "string"
         description: "Help text to show below the question input box"
-        path: "input_schema.properties.question.description"
+        path: "input_fields[0].description"
       - name: "character_behavior_message"
         title: "Character definition"
         type: "text"

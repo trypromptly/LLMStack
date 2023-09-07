@@ -19,7 +19,7 @@ class FileChatbotBasicSchema(BaseSchema):
         description='Avatar to use for your chatbot', path='config.assistant_image',
     )
     question_description: str = Field(
-        title='Question help text', path='input_schema.properties.question.description', description='Help text to show below the question input box',
+        title='Question help text', path='input_fields[1].description', description='Help text to show below the question input box',
     )
 
 

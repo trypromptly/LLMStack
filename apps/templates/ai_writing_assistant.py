@@ -35,22 +35,22 @@ class VocabularyEnum(str, Enum):
 
 class AIWritingAssistantSetting(BaseSchema):
     formality: FomalityEnum = Field(
-        description='Formality of the text', path='input_schema.properties.formality.default',
+        description='Formality of the text', path='input_fields[1].default',
     )
 
     tone: ToneEnum = Field(
         description='Tone of the text',
-        path='input_schema.properties.tone.default',
+        path='input_fields[2].default',
     )
 
     vocabulary: VocabularyEnum = Field(
         description='Vocabulary of the text',
-        path='input_schema.properties.vocabulary.default',
+        path='input_fields[3].default',
     )
 
     profession: str = Field(
         description='Profession of the writer',
-        path='input_schema.properties.profession.default',
+        path='input_fields[4].default',
     )
 
 
