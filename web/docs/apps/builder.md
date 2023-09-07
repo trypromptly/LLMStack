@@ -53,6 +53,10 @@ In sessions view, you can see the pairs of requests and responses in each sessio
 
 Tests tab allows you to write tests for your app. You can create test sets by clicking on the `Create Test Set` button, provide a name, add input and expected output. You can add more test cases to the test set once it is created. To run the test suite, simply click on the `play` icon in the actions tab of the test suite. You can also run individual test cases by clicking on the `play` icon in the actions tab of the test case.
 
+## Versions
+
+Versions tab allows you to manage versions of your app. You can create a new version of your app by clicking on the `Save App` button and providing a change description. You can use `Save Draft` button and preview changes while you are working on your changes before publishing them to your live app. You can also view the history of your app versions by clicking on the `Versions` tab in the app menu. You can also view the history of individual versions by clicking on the version number in the versions page.
+
 ## Integrations
 
 Integrations tab allows you to connect your app to other platforms. You can connect your app to Slack, Discord and more. You can also embed your app in your website using the embed code. You can integrate your app in existing products to provide AI capabilities to your users using the app API.

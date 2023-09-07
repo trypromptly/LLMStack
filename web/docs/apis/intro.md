@@ -27,6 +27,10 @@ You will need to parse the output in your client code and stitch the chunks toge
 
 ### Endpoints
 
+:::warning
+Endpoints are going to be deprecated in the future releases. Please use [Apps](/docs/apps/introduction) instead.
+:::
+
 Run an endpoint.
 
 ```bash

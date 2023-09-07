@@ -3,6 +3,10 @@ id: introduction
 title: Endpoints
 ---
 
+:::warning
+Endpoints are going to be deprecated in the future releases. Please use [Apps](/docs/apps/introduction) instead.
+:::
+
 Endpoints are instances of processors with predefined configuration parameters and can optionally include variables to be filled during runtime. They are available as HTTP APIs that can be invoked using the API key and the endpoint UUID. Endpoints are useful for creating multiple versions of the same processor with different configuration parameters. They can be versioned and form building blocks for apps.
 
 To illustrate how endpoints are used, imagine you have perfected a prompt for GPT-4 that allows you to extract structured information from a given text. You can create an endpoint with `ChatGPT` processor and the prompt as configuration on LLMStack. You can now use this endpoint in your application to extract structured information from text. If you need to make changes to the prompt, you can create a new version of the endpoint in LLMStack without changing the application code.

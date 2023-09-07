@@ -23,7 +23,7 @@ The Apps page is the first page you see when you log in to LLMStack. It gives yo
 
 ## App Builder
 
-The App Builder page allows you to build powerful AI applications using LLMStack. You can connect multiple processors, add data sources, share apps, integrate apps with external services and deploy your apps to production.
+The App Builder page allows you to build powerful AI applications using LLMStack. You can connect multiple processors, add data sources, share apps, integrate apps with external services and deploy your apps to production. You can also version your apps, test them and share them with your team.
 
 ![App Builder Page](/img/ui/llmstack-app-builder.png)
 
