@@ -211,7 +211,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
         elif obj.template_slug is not None:
             app_template = get_app_template_by_slug(obj.template_slug)
             if app_template:
-                return app_template.dict()
+                return app_template.dict(exclude_none=True)
         return None
 
     def get_web_config(self, obj):

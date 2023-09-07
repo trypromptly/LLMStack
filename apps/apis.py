@@ -235,7 +235,7 @@ class AppViewSet(viewsets.ViewSet):
         if slug:
             object = get_app_template_by_slug(slug)
             if object:
-                object_dict = object.dict()
+                object_dict = object.dict(exclude_none=True)
                 # For backward compatibility with old app templates
                 for page in object_dict['pages']:
                     page['schema'] = page['input_schema']
