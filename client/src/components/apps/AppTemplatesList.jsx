@@ -59,13 +59,6 @@ export function AppTemplatesList() {
       app_type_slug: appTemplate.app?.type_slug,
       template_slug: appTemplate.slug,
     };
-    payload.processors = payload.processors.map((processor) => ({
-      api_backend: processor.api_backend?.id,
-      provider_slug: processor.provider_slug,
-      processor_slug: processor.processor_slug,
-      config: processor.config,
-      input: processor.input,
-    }));
     axios()
       .post("/api/apps", payload)
       .then((response) => {
