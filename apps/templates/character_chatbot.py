@@ -19,7 +19,7 @@ class CharacterChatbotBasicSchema(BaseSchema):
         description='Avatar to use for your character', path='config.assistant_image',
     )
     question_description: str = Field(
-        title='Question help text', path='input_schema.properties.question.description', description='Help text to show below the question input box',
+        title='Question help text', path='input_fields[0].description', description='Help text to show below the question input box',
     )
     character_behavior_message: str = Field(
         title='Character definition', widget='textarea', path='processors[0].input.system_message',
