@@ -187,6 +187,12 @@ class App(models.Model):
     accessible_by = ArrayField(
         models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can access the app', blank=True,
     )
+    read_accessible_by = ArrayField(
+        models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can access the app', blank=True,
+    )
+    write_accessible_by = ArrayField(
+        models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can modify the app', blank=True,
+    )
     access_permission = models.PositiveSmallIntegerField(
         default=AppAccessPermission.READ, choices=AppAccessPermission.choices, help_text='Permission for users who can access the app',
     )
@@ -235,7 +241,7 @@ class App(models.Model):
         if not user or not user.is_authenticated:
             return False
 
-        return self.owner == user or (self.access_permission == AppAccessPermission.WRITE and user.email in self.accessible_by)
+        return self.owner == user or (self.is_published == True and user.email in self.write_accessible_by)
 
     def __str__(self) -> str:
         return self.name + ' - ' + self.owner.username

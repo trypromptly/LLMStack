@@ -111,8 +111,9 @@ class AppViewSet(viewsets.ViewSet):
             app = get_object_or_404(
                 App,
                 Q(uuid=uuid.UUID(uid), owner=request.user) |
-                Q(uuid=uuid.UUID(uid), accessible_by__contains=[
-                  request.user.email], visibility=AppVisibility.PRIVATE, is_published=True),
+                Q(uuid=uuid.UUID(uid), read_accessible_by__contains=[
+                  request.user.email], is_published=True) | Q(uuid=uuid.UUID(uid), write_accessible_by__contains=[
+                      request.user.email], is_published=True),
             )
             serializer = AppSerializer(
                 instance=app, fields=fields, request_user=request.user,
@@ -131,9 +132,8 @@ class AppViewSet(viewsets.ViewSet):
             fields = fields.split(',')
 
         queryset = App.objects.all().filter(
-            accessible_by__contains=[
-                request.user.email,
-            ], visibility=AppVisibility.PRIVATE, is_published=True,
+            Q(read_accessible_by__contains=[request.user.email,]) |
+            Q(write_accessible_by__contains=[request.user.email,]), is_published=True,
         ).order_by('-last_updated_at')
         serializer = AppSerializer(
             queryset, many=True, fields=fields, request_user=request.user,
@@ -149,8 +149,8 @@ class AppViewSet(viewsets.ViewSet):
         app = get_object_or_404(
             App,
             Q(uuid=uuid.UUID(uid), owner=request.user) |
-            Q(uuid=uuid.UUID(uid), accessible_by__contains=[
-                request.user.email], visibility=AppVisibility.PRIVATE, is_published=True),
+            Q(uuid=uuid.UUID(uid), write_accessible_by__contains=[
+                request.user.email], is_published=True),
         )
 
         if version:
@@ -182,8 +182,8 @@ class AppViewSet(viewsets.ViewSet):
                     (app.visibility == AppVisibility.PUBLIC or app.visibility == AppVisibility.UNLISTED) or \
                 (
                         request.user.is_authenticated and ((app.visibility == AppVisibility.ORGANIZATION and Profile.objects.get(user=app.owner).organization == Profile.objects.get(user=request.user).organization) or
-                                                           (app.visibility == AppVisibility.PRIVATE and request.user.email in app.accessible_by))
-                ):
+                                                           (request.user.email in app.read_accessible_by or request.user.email in app.write_accessible_by))
+                    ):
                 serializer = AppSerializer(
                     instance=app, request_user=request.user,
                 )
@@ -279,40 +279,52 @@ class AppViewSet(viewsets.ViewSet):
                 app.visibility = AppVisibility.ORGANIZATION
             elif request.data['visibility'] == 0 and (flag_enabled('CAN_PUBLISH_PRIVATE_APPS', request=request) or app.visibility == AppVisibility.PRIVATE):
                 app.visibility = AppVisibility.PRIVATE
-                if 'accessible_by' in request.data:
-                    # Filter out invalid email addresses from accessible_by
-                    valid_emails = []
-                    for email in request.data['accessible_by']:
-                        try:
-                            validate_email(email)
-                            valid_emails.append(email)
-                        except ValidationError:
-                            pass
 
-                    # Only allow a maximum of 20 users to be shared with. Trim the list if it is more than 20
-                    if len(valid_emails) > 20:
-                        valid_emails = valid_emails[:20]
+        if flag_enabled('CAN_PUBLISH_PRIVATE_APPS', request=request) or app.visibility == AppVisibility.PRIVATE:
+            new_emails = []
+            old_read_accessible_by = app.read_accessible_by or []
+            old_write_accessible_by = app.write_accessible_by or []
+            if 'read_accessible_by' in request.data:
+                # Filter out invalid email addresses from read_accessible_by
+                valid_emails = []
+                for email in request.data['read_accessible_by']:
+                    try:
+                        validate_email(email)
+                        valid_emails.append(email)
+                    except ValidationError:
+                        pass
 
-                    new_emails = list(
-                        set(valid_emails) -
-                        set(app.accessible_by),
-                    )
-                    app.accessible_by = valid_emails
-                    app.access_permission = request.data[
-                        'access_permission'
-                    ] if 'access_permission' in request.data else AppAccessPermission.READ
+                app.read_accessible_by = valid_emails[:20]
 
-                    # Send email to new users
-                    # TODO: Use multisend to send emails in bulk
-                    for new_email in new_emails:
-                        email_template_cls = EmailTemplateFactory.get_template_by_name(
-                            'app_shared'
-                        )
-                        share_email = email_template_cls(
-                            uuid=app.uuid, published_uuid=app.published_uuid, app_name=app.name, owner_first_name=app.owner.first_name, owner_email=app.owner.email, can_edit=app.access_permission == AppAccessPermission.WRITE, share_to=new_email
-                        )
-                        share_email_sender = EmailSender(share_email)
-                        share_email_sender.send()
+            if 'write_accessible_by' in request.data:
+                # Filter out invalid email addresses from write_accessible_by
+                valid_emails = []
+                for email in request.data['write_accessible_by']:
+                    try:
+                        validate_email(email)
+                        valid_emails.append(email)
+                    except ValidationError:
+                        pass
+
+                app.write_accessible_by = valid_emails[:20]
+
+            new_emails = list(
+                set(app.read_accessible_by).union(set(app.write_accessible_by)) -
+                set(old_read_accessible_by).union(
+                    set(old_write_accessible_by)),
+            )
+
+            # Send email to new users
+            # TODO: Use multisend to send emails in bulk
+            for new_email in new_emails:
+                email_template_cls = EmailTemplateFactory.get_template_by_name(
+                    'app_shared'
+                )
+                share_email = email_template_cls(
+                    uuid=app.uuid, published_uuid=app.published_uuid, app_name=app.name, owner_first_name=app.owner.first_name, owner_email=app.owner.email, can_edit=app.access_permission == AppAccessPermission.WRITE, share_to=new_email
+                )
+                share_email_sender = EmailSender(share_email)
+                share_email_sender.send()
 
         app_newly_published = not app.is_published
         app.is_published = True
@@ -379,9 +391,8 @@ class AppViewSet(viewsets.ViewSet):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner_profile = get_object_or_404(Profile, user=app.owner)
         if app.owner != request.user and not (
-            app.visibility == AppVisibility.PRIVATE
-            and app.access_permission == AppAccessPermission.WRITE
-            and request.user.email in app.accessible_by
+            app.is_published == True
+            and request.user.email in app.write_accessible_by
         ):
             return DRFResponse(status=403)
 

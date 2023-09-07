@@ -382,6 +382,18 @@ export default function AppEditPage(props) {
                   app={app}
                   setIsPublished={setIsPublished}
                   setAppVisibility={setAppVisibility}
+                  setReadAccessibleBy={(readAccessibleBy) =>
+                    setApp((app) => ({
+                      ...app,
+                      read_accessible_by: readAccessibleBy,
+                    }))
+                  }
+                  setWriteAccessibleBy={(writeAccessibleBy) => {
+                    setApp((app) => ({
+                      ...app,
+                      write_accessible_by: writeAccessibleBy,
+                    }));
+                  }}
                 />
                 <UnpublishModal
                   show={showUnpublishModal}

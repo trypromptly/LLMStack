@@ -109,7 +109,7 @@ class AppRunner:
         if self.app.visibility == AppVisibility.ORGANIZATION and self.app_owner_profile.organization != Profile.objects.get(user=self.app_run_request_user).organization:
             raise Exception('App not found')
 
-        if self.app.visibility == AppVisibility.PRIVATE and self.app_run_request_user != self.app.owner and self.app_run_request_user.email not in self.app.accessible_by:
+        if self.app.visibility == AppVisibility.PRIVATE and self.app_run_request_user != self.app.owner and self.app_run_request_user.email not in self.app.read_accessible_by and self.app_run_request_user.email not in self.app.write_accessible_by:
             raise Exception('App not found')
 
     def _get_processor_actor_configs(self):

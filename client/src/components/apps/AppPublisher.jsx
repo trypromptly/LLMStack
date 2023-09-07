@@ -4,6 +4,7 @@ import { axios } from "../../data/axios";
 import { useRecoilValue } from "recoil";
 import { enqueueSnackbar } from "notistack";
 import {
+  Box,
   Button,
   CircularProgress,
   Dialog,
@@ -11,11 +12,28 @@ import {
   DialogContent,
   DialogActions,
   FormControl,
-  InputLabel,
+  IconButton,
   MenuItem,
   Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
   TextField,
 } from "@mui/material";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+
+const shareDialogStyles = {
+  width: "100%",
+  maxWidth: 500,
+  margin: "auto",
+  "& .MuiButtonBase-root": {
+    "&.MuiButton-root": {
+      textTransform: "none",
+    },
+  },
+};
 
 function PublishModalInternal({
   show,
@@ -23,14 +41,26 @@ function PublishModalInternal({
   app,
   setIsPublished,
   setAppVisibility = null,
+  setReadAccessibleBy = null,
+  setWriteAccessibleBy = null,
   editSharing = false,
 }) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [done, setDone] = useState(false);
   const [visibility, setVisibility] = useState(app?.visibility);
-  const [accessibleBy, setAccessibleBy] = useState(app?.accessible_by || []);
-  const [accessPermission, setAccessPermission] = useState(
-    app?.access_permission || 0,
+  const [accessibleByEmail, setAccessibleByEmail] = useState("");
+  const [accessibleBy, setAccessibleBy] = useState(
+    (
+      app?.read_accessible_by?.map((entry) => ({
+        email: entry,
+        access: 0,
+      })) || []
+    ).concat(
+      app?.write_accessible_by?.map((entry) => ({
+        email: entry,
+        access: 1,
+      })),
+    ) || [],
   );
   const profileFlags = useRecoilValue(profileFlagsState);
 
@@ -92,14 +122,28 @@ function PublishModalInternal({
     axios()
       .post(`/api/apps/${app.uuid}/publish`, {
         visibility: visibility,
-        accessible_by: accessibleBy,
-        access_permission: accessPermission,
+        read_accessible_by: accessibleBy
+          .filter((entry) => entry.access === 0)
+          .map((entry) => entry.email),
+        write_accessible_by: accessibleBy
+          .filter((entry) => entry.access === 1)
+          .map((entry) => entry.email),
       })
       .then(() => {
         setIsPublished(true);
         setDone(true);
         if (setAppVisibility) {
           setAppVisibility(visibility);
+        }
+        if (setReadAccessibleBy) {
+          setReadAccessibleBy(
+            accessibleBy.filter((entry) => entry.access === 0),
+          );
+        }
+        if (setWriteAccessibleBy) {
+          setWriteAccessibleBy(
+            accessibleBy.filter((entry) => entry.access === 1),
+          );
         }
       })
       .catch((error) => {
@@ -116,70 +160,127 @@ function PublishModalInternal({
   };
 
   return (
-    <Dialog open={show} onClose={() => setShow(false)}>
+    <Dialog open={show} onClose={() => setShow(false)} sx={shareDialogStyles}>
       <DialogTitle>{editSharing ? "App Sharing" : "Publish App"}</DialogTitle>
       <DialogContent>
         {done && <p>App {editSharing ? "saved" : "published"} successfully!</p>}
         {!done && (
-          <div>
-            <h5>Choose who can access this App</h5>
-            <FormControl style={{ width: "100%" }}>
-              <InputLabel id="visibility-label">Visibility</InputLabel>
+          <Box>
+            <p>
+              Choose a visiblity level for this app. This setting can be changed
+              later.
+            </p>
+            <p></p>
+            <FormControl fullWidth>
               <Select
-                labelId="visibility-label"
                 id="visibility"
                 value={visibility}
                 onChange={(e) => setVisibility(e.target.value)}
+                size="small"
+                renderValue={(value) =>
+                  visibilityOptions.find((option) => option.value === value)
+                    ?.label
+                }
               >
                 {visibilityOptions.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
-                    {option.label}
+                    {option.label}&nbsp;
                     <br />
                     <small>{option.description}</small>
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            {visibility === 0 && (
-              <div style={{ marginTop: 10, margin: "auto" }}>
-                <p>
-                  Select users who can access the app. Only users with given
-                  email addresses will be able to access the app.
-                </p>
-                <TextField
-                  label="Enter valid email addresses"
-                  value={accessibleBy}
-                  onChange={(e) => setAccessibleBy(e.target.value)}
-                  style={{ width: "75%" }}
-                />
-                <FormControl style={{ width: "25%" }}>
-                  <InputLabel id="access-permission-label">
-                    Permissions
-                  </InputLabel>
-                  <Select
-                    labelId="access-permission-label"
-                    id="access-permission"
-                    value={accessPermission}
-                    onChange={(e) => setAccessPermission(e.target.value)}
-                  >
-                    {accessPermissionOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                        <br />
-                        <small>{option.description}</small>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                &nbsp;
-              </div>
-            )}
-          </div>
+            <p></p>
+            <TableContainer
+              sx={{
+                ".MuiTableCell-root": {
+                  padding: "2px",
+                },
+                ".MuiTable-root": {
+                  marginTop: "10px",
+                },
+              }}
+            >
+              <p>Users with access:</p>
+              <TextField
+                label="Invite by email"
+                value={accessibleByEmail}
+                onChange={(e) => setAccessibleByEmail(e.target.value)}
+                size="small"
+                disabled={
+                  visibilityOptions.find((option) => option.value === 0) ===
+                  undefined
+                }
+              />
+              &nbsp;
+              <IconButton
+                variant="contained"
+                onClick={() => {
+                  // Verify email is valid
+                  if (
+                    !accessibleByEmail.match(
+                      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                    )
+                  ) {
+                    enqueueSnackbar("Invalid email address", {
+                      variant: "error",
+                    });
+                    return;
+                  }
+                  const newAccessibleBy = [...accessibleBy];
+                  newAccessibleBy.push({
+                    email: accessibleByEmail,
+                    access: 0,
+                  });
+                  setAccessibleBy(newAccessibleBy);
+                  setAccessibleByEmail("");
+                }}
+              >
+                <PersonAddIcon />
+              </IconButton>
+              <Table>
+                <TableBody>
+                  {accessibleBy.map((entry, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{entry.email}</TableCell>
+                      <TableCell>
+                        <FormControl>
+                          <Select
+                            id="access-permission"
+                            size="small"
+                            value={entry.access}
+                            onChange={(e) => {
+                              const newAccessibleBy = [...accessibleBy];
+                              newAccessibleBy[index].access = e.target.value;
+                              setAccessibleBy(newAccessibleBy);
+                            }}
+                            renderValue={(value) =>
+                              value === 0 ? "Viewer" : "Collaborator"
+                            }
+                            variant="standard"
+                          >
+                            {accessPermissionOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}&nbsp;
+                                <br />
+                                <small>{option.description}</small>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
         )}
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setShow(false)}>Cancel</Button>
-        <Button onClick={publishApp}>
+        <Button onClick={publishApp} variant="contained">
           {isPublishing ? (
             <CircularProgress />
           ) : done ? (
@@ -187,6 +288,7 @@ function PublishModalInternal({
               href={`/app/${app.published_uuid}`}
               target="_blank"
               rel="noreferrer"
+              style={{ color: "white", textDecoration: "none" }}
             >
               View Published App
             </a>
@@ -207,6 +309,8 @@ export function PublishModal({
   app,
   setIsPublished,
   setAppVisibility,
+  setReadAccessibleBy,
+  setWriteAccessibleBy,
 }) {
   return (
     <PublishModalInternal
@@ -215,6 +319,8 @@ export function PublishModal({
       app={app}
       setIsPublished={setIsPublished}
       setAppVisibility={setAppVisibility}
+      setReadAccessibleBy={setReadAccessibleBy}
+      setWriteAccessibleBy={setWriteAccessibleBy}
     />
   );
 }
@@ -270,7 +376,7 @@ export function UnpublishModal({ show, setShow, app, setIsPublished }) {
   };
 
   return (
-    <Dialog open={show} onClose={() => setShow(false)}>
+    <Dialog open={show} onClose={() => setShow(false)} sx={shareDialogStyles}>
       <DialogTitle>Unpublish App</DialogTitle>
       <DialogContent>
         {done && <p>App unpublished successfully!</p>}
@@ -283,7 +389,7 @@ export function UnpublishModal({ show, setShow, app, setIsPublished }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setShow(false)}>Cancel</Button>
-        <Button onClick={unpublishApp}>
+        <Button onClick={unpublishApp} variant="contained">
           {isUnpublishing ? (
             <CircularProgress />
           ) : done ? (

@@ -109,6 +109,8 @@ class AppSerializer(DynamicFieldsModelSerializer):
     web_config = serializers.SerializerMethodField()
     access_permission = serializers.SerializerMethodField()
     accessible_by = serializers.SerializerMethodField()
+    read_accessible_by = serializers.SerializerMethodField()
+    write_accessible_by = serializers.SerializerMethodField()
     last_modified_by_email = serializers.SerializerMethodField()
     template = serializers.SerializerMethodField()
     visibility = serializers.SerializerMethodField()
@@ -202,6 +204,12 @@ class AppSerializer(DynamicFieldsModelSerializer):
     def get_accessible_by(self, obj):
         return obj.accessible_by if obj.has_write_permission(self._request_user) else None
 
+    def get_read_accessible_by(self, obj):
+        return obj.read_accessible_by if obj.has_write_permission(self._request_user) else None
+
+    def get_write_accessible_by(self, obj):
+        return obj.write_accessible_by if obj.has_write_permission(self._request_user) else None
+
     def get_last_modified_by_email(self, obj):
         return obj.last_modified_by.email if (obj.last_modified_by and obj.has_write_permission(self._request_user)) else None
 
@@ -229,6 +237,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
             'logo', 'is_shareable', 'has_footer', 'domain', 'visibility', 'accessible_by',
             'access_permission', 'last_modified_by_email', 'owner_email', 'web_config',
             'slack_config', 'discord_config', 'app_type_name', 'processors', 'template',
+            'read_accessible_by', 'write_accessible_by'
         ]
 
 
