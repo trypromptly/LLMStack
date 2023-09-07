@@ -2,7 +2,20 @@ import React, { useState } from "react";
 import { profileFlagsState } from "../../data/atoms";
 import { axios } from "../../data/axios";
 import { useRecoilValue } from "recoil";
-import { message, Modal, Button, Select, Spin } from "antd";
+import { enqueueSnackbar } from "notistack";
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+} from "@mui/material";
 
 function PublishModalInternal({
   show,
@@ -90,7 +103,12 @@ function PublishModalInternal({
         }
       })
       .catch((error) => {
-        message.error(error.response?.data?.message || "Error publishing app");
+        enqueueSnackbar(
+          error.response?.data?.message || "Error publishing app",
+          {
+            variant: "error",
+          },
+        );
       })
       .finally(() => {
         setIsPublishing(false);
@@ -98,24 +116,72 @@ function PublishModalInternal({
   };
 
   return (
-    <Modal
-      title={editSharing ? "App Sharing" : "Publish App"}
-      open={show}
-      onOk={() => {
-        setDone(false);
-        setShow(false);
-      }}
-      onCancel={() => {
-        setDone(false);
-        setShow(false);
-      }}
-      footer={[
-        <Button key="back" onClick={() => setShow(false)}>
-          Cancel
-        </Button>,
-        <Button key="submit" type="primary" onClick={publishApp}>
+    <Dialog open={show} onClose={() => setShow(false)}>
+      <DialogTitle>{editSharing ? "App Sharing" : "Publish App"}</DialogTitle>
+      <DialogContent>
+        {done && <p>App {editSharing ? "saved" : "published"} successfully!</p>}
+        {!done && (
+          <div>
+            <h5>Choose who can access this App</h5>
+            <FormControl style={{ width: "100%" }}>
+              <InputLabel id="visibility-label">Visibility</InputLabel>
+              <Select
+                labelId="visibility-label"
+                id="visibility"
+                value={visibility}
+                onChange={(e) => setVisibility(e.target.value)}
+              >
+                {visibilityOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                    <br />
+                    <small>{option.description}</small>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {visibility === 0 && (
+              <div style={{ marginTop: 10, margin: "auto" }}>
+                <p>
+                  Select users who can access the app. Only users with given
+                  email addresses will be able to access the app.
+                </p>
+                <TextField
+                  label="Enter valid email addresses"
+                  value={accessibleBy}
+                  onChange={(e) => setAccessibleBy(e.target.value)}
+                  style={{ width: "75%" }}
+                />
+                <FormControl style={{ width: "25%" }}>
+                  <InputLabel id="access-permission-label">
+                    Permissions
+                  </InputLabel>
+                  <Select
+                    labelId="access-permission-label"
+                    id="access-permission"
+                    value={accessPermission}
+                    onChange={(e) => setAccessPermission(e.target.value)}
+                  >
+                    {accessPermissionOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                        <br />
+                        <small>{option.description}</small>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                &nbsp;
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setShow(false)}>Cancel</Button>
+        <Button onClick={publishApp}>
           {isPublishing ? (
-            <Spin />
+            <CircularProgress />
           ) : done ? (
             <a
               href={`/app/${app.published_uuid}`}
@@ -129,60 +195,9 @@ function PublishModalInternal({
           ) : (
             "Publish App"
           )}
-        </Button>,
-      ]}
-    >
-      {done && <p>App {editSharing ? "saved" : "published"} successfully!</p>}
-      {!done && (
-        <div>
-          <h5>Choose who can access this App</h5>
-          <Select
-            style={{ width: "100%" }}
-            value={visibility}
-            onChange={(value) => setVisibility(value)}
-          >
-            {visibilityOptions.map((option) => (
-              <Select.Option key={option.value} value={option.value}>
-                {option.label}
-                <br />
-                <small>{option.description}</small>
-              </Select.Option>
-            ))}
-          </Select>
-          {visibility === 0 && (
-            <div style={{ marginTop: 10, margin: "auto" }}>
-              <p>
-                Select users who can access the app. Only users with given email
-                addresses will be able to access the app.
-              </p>
-              <Select
-                mode="tags"
-                style={{ width: "75%" }}
-                placeholder="Enter valid email addresses"
-                value={accessibleBy}
-                onChange={(value) => setAccessibleBy(value)}
-                notFoundContent={null}
-              />
-              <Select
-                style={{ width: "25%" }}
-                placeholder="Select permissions"
-                value={accessPermission}
-                onChange={(value) => setAccessPermission(value)}
-              >
-                {accessPermissionOptions.map((option) => (
-                  <Select.Option key={option.value} value={option.value}>
-                    {option.label}
-                    <br />
-                    <small>{option.description}</small>
-                  </Select.Option>
-                ))}
-              </Select>
-              &nbsp;
-            </div>
-          )}
-        </div>
-      )}
-    </Modal>
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -242,8 +257,11 @@ export function UnpublishModal({ show, setShow, app, setIsPublished }) {
         setDone(true);
       })
       .catch((error) => {
-        message.error(
+        enqueueSnackbar(
           error.response?.data?.message || "Error unpublishing app",
+          {
+            variant: "error",
+          },
         );
       })
       .finally(() => {
@@ -252,33 +270,29 @@ export function UnpublishModal({ show, setShow, app, setIsPublished }) {
   };
 
   return (
-    <Modal
-      title={"Unpublish App"}
-      open={show}
-      onOk={() => {
-        setDone(false);
-        setShow(false);
-      }}
-      onCancel={() => {
-        setDone(false);
-        setShow(false);
-      }}
-      footer={[
-        <Button key="back" onClick={() => setShow(false)}>
-          Cancel
-        </Button>,
-        <Button key="submit" type="primary" onClick={unpublishApp}>
-          {isUnpublishing ? <Spin /> : done ? "Done" : "Yes, Unpublish App"}
-        </Button>,
-      ]}
-    >
-      {done && <p>App unpublished successfully!</p>}
-      {!done && (
-        <p>
-          Are you sure want to unpublish the app? This will make the app
-          unaccessible to anyone it was already shared with.
-        </p>
-      )}
-    </Modal>
+    <Dialog open={show} onClose={() => setShow(false)}>
+      <DialogTitle>Unpublish App</DialogTitle>
+      <DialogContent>
+        {done && <p>App unpublished successfully!</p>}
+        {!done && (
+          <p>
+            Are you sure want to unpublish the app? This will make the app
+            unaccessible to anyone it was already shared with.
+          </p>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setShow(false)}>Cancel</Button>
+        <Button onClick={unpublishApp}>
+          {isUnpublishing ? (
+            <CircularProgress />
+          ) : done ? (
+            "Done"
+          ) : (
+            "Yes, Unpublish App"
+          )}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
