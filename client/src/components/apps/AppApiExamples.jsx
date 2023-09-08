@@ -32,8 +32,8 @@ url = '${window.location.origin}/api/apps/${app?.uuid}/run'
 
 payload = {
   "input": {
-    ${Object.keys(app?.input_schema?.properties || {})
-      .map((k) => `"${k}": "<${k}_value>"`)
+    ${app?.data.input_fields
+      .map(({ name }) => `"${name}": "<${name}_value>"`)
       .join(",\n    ")}
   },
   "stream": False,
@@ -53,8 +53,8 @@ url = '${window.location.origin}/api/apps/${app?.uuid}/run'
 
 payload = {
   "input": {
-    ${Object.keys(app?.input_schema?.properties || {})
-      .map((k) => `"${k}": "<${k}_value>"`)
+    ${app?.data.input_fields
+      .map(({ name }) => `"${name}": "<${name}_value>"`)
       .join(",\n    ")}
   },
   "stream": True,
@@ -75,8 +75,8 @@ for line in response.iter_lines():
 --header 'Authorization: Token ${profile?.token}' \\
 --data-raw '{
   "input": {
-    ${Object.keys(app?.input_schema?.properties || {})
-      .map((k) => `"${k}": "<${k}_value>"`)
+    ${app?.data.input_fields
+      .map(({ name }) => `"${name}": "<${name}_value>"`)
       .join(",\n    ")}
   },
   "stream": false
@@ -88,8 +88,8 @@ for line in response.iter_lines():
 --header 'Authorization: Token ${profile?.token}' \\
 --data-raw '{
   "input": {
-    ${Object.keys(app?.input_schema?.properties || {})
-      .map((k) => `"${k}": "<${k}_value>"`)
+    ${app?.data.input_fields
+      .map(({ name }) => `"${name}": "<${name}_value>"`)
       .join(",\n    ")}
   },
   "stream": true
@@ -101,8 +101,8 @@ const url = '${window.location.origin}/api/apps/${app?.uuid}/run';
 const PROMPTLY_TOKEN = '${profile?.token}';
 const payload = {
   "input": {
-    ${Object.keys(app?.input_schema?.properties || {})
-      .map((k) => `"${k}": "<${k}_value>"`)
+    ${app?.data.input_fields
+      .map(({ name }) => `"${name}": "<${name}_value>"`)
       .join(",\n    ")}
   },
   "stream": false,
@@ -124,8 +124,8 @@ const url = '${window.location.origin}/api/apps/${app?.uuid}/run';
 const PROMPTLY_TOKEN = '${profile?.token}';
 const payload = {
   "input": {
-    ${Object.keys(app?.input_schema?.properties || {})
-      .map((k) => `"${k}": "<${k}_value>"`)
+    ${app?.data.input_fields
+      .map(({ name }) => `"${name}": "<${name}_value>"`)
       .join(",\n    ")}
   },
   "stream": true,
