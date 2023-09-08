@@ -114,6 +114,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
     last_modified_by_email = serializers.SerializerMethodField()
     template = serializers.SerializerMethodField()
     visibility = serializers.SerializerMethodField()
+    has_live_version = serializers.SerializerMethodField()
 
     def get_logo(self, obj):
         profile = Profile.objects.get(user=obj.owner)
@@ -142,6 +143,12 @@ class AppSerializer(DynamicFieldsModelSerializer):
         if app_data:
             return app_data.data
         return None
+    
+    def get_has_live_version(self, obj):
+        app_datas = AppData.objects.filter(
+            app_uuid=obj.uuid, is_draft=False).first()
+        return app_datas is not None
+        
 
     def get_app_type_name(self, obj):
         return obj.type.name
@@ -237,7 +244,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
             'logo', 'is_shareable', 'has_footer', 'domain', 'visibility', 'accessible_by',
             'access_permission', 'last_modified_by_email', 'owner_email', 'web_config',
             'slack_config', 'discord_config', 'app_type_name', 'processors', 'template',
-            'read_accessible_by', 'write_accessible_by'
+            'read_accessible_by', 'write_accessible_by', 'has_live_version'
         ]
 
 

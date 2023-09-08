@@ -21,6 +21,7 @@ import {
   Paper,
   Stack,
   SvgIcon,
+  Tooltip,
 } from "@mui/material";
 import ChangeHistoryIcon from "@mui/icons-material/ChangeHistory";
 import EditIcon from "@mui/icons-material/Edit";
@@ -401,27 +402,44 @@ export default function AppEditPage(props) {
                   app={app}
                   setIsPublished={setIsPublished}
                 />
+
                 {appId && app && (
-                  <Button
-                    variant="contained"
-                    color="success"
-                    style={{ textTransform: "none" }}
-                    disabled={app.owner_email !== profile.user_email}
-                    startIcon={
-                      isPublished ? (
-                        <UnpublishedIcon />
-                      ) : (
-                        <PublishedWithChangesIcon />
-                      )
-                    }
-                    onClick={() =>
-                      isPublished
-                        ? setShowUnpublishModal(true)
-                        : setShowPublishModal(true)
+                  <Tooltip
+                    arrow={true}
+                    title={
+                      app?.has_live_version
+                        ? isPublished
+                          ? "Unpublish App"
+                          : "Publish App"
+                        : "Please save App before publishing"
                     }
                   >
-                    {isPublished ? "Unpublish" : "Publish"}
-                  </Button>
+                    <span>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        style={{ textTransform: "none" }}
+                        disabled={
+                          app.owner_email !== profile.user_email ||
+                          !app?.has_live_version
+                        }
+                        startIcon={
+                          isPublished ? (
+                            <UnpublishedIcon />
+                          ) : (
+                            <PublishedWithChangesIcon />
+                          )
+                        }
+                        onClick={() =>
+                          isPublished
+                            ? setShowUnpublishModal(true)
+                            : setShowPublishModal(true)
+                        }
+                      >
+                        {isPublished ? "Unpublish" : "Publish"}
+                      </Button>
+                    </span>
+                  </Tooltip>
                 )}
               </Stack>
             </Stack>
