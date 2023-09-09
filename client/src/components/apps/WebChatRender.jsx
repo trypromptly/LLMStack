@@ -71,9 +71,9 @@ const MemoizedMessage = React.memo(
             : { textAlign: "right" }
         }
       >
-        {message.role === "bot" && app?.config?.assistant_image && (
+        {message.role === "bot" && app?.data?.config?.assistant_image && (
           <Avatar
-            src={app.config.assistant_image}
+            src={app.data?.config?.assistant_image}
             alt="Bot"
             style={{ margin: "16px 8px 16px 0px" }}
           />
@@ -108,7 +108,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
   const [errors, setErrors] = useState(null);
   const [showChat, setShowChat] = useState(!embed);
   const [chatBubbleStyle, setChatBubbleStyle] = useState({
-    backgroundColor: app?.config?.window_color,
+    backgroundColor: app?.data?.config?.window_color,
     color: "white",
     position: "fixed",
     right: 16,
@@ -138,7 +138,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
           root: {
             "& .MuiOutlinedInput-root": {
               "& > fieldset": {
-                border: `1px solid ${app?.config.window_color || "#ccc"}`,
+                border: `1px solid ${app?.data?.config.window_color || "#ccc"}`,
               },
               "&.Mui-focused > fieldset": { border: "1px solid #0f477e" },
               "&:hover > fieldset": { border: "1px solid #0f477e" },
@@ -204,22 +204,22 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
   }, [embed, showChat]);
 
   useEffect(() => {
-    if (app?.config?.welcome_message && messages.length === 0) {
+    if (app?.data?.config?.welcome_message && messages.length === 0) {
       setMessages([
         {
           role: "bot",
-          content: app.config.welcome_message,
+          content: app.data?.config?.welcome_message,
         },
       ]);
     }
 
     if (
-      app?.config?.chat_bubble_text &&
-      app?.config?.chat_bubble_style &&
+      app?.data?.config?.chat_bubble_text &&
+      app?.data?.config?.chat_bubble_style &&
       messages.length === 0
     ) {
       try {
-        const style = JSON.parse(app?.config?.chat_bubble_style);
+        const style = JSON.parse(app?.data?.config?.chat_bubble_style);
         setChatBubbleStyle((prevBubbleStyle) => ({
           ...prevBubbleStyle,
           ...style,
@@ -315,13 +315,15 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
         <Fab
           style={chatBubbleStyle}
           onClick={() => setShowChat(!showChat)}
-          variant={app?.config?.chat_bubble_text ? "extended" : "circular"}
+          variant={
+            app?.data?.config?.chat_bubble_text ? "extended" : "circular"
+          }
           ref={chatBubbleRef}
         >
           {showChat ? (
             <KeyboardArrowDownIcon />
-          ) : app?.config?.chat_bubble_text ? (
-            <span>{app?.config?.chat_bubble_text}</span>
+          ) : app?.data?.config?.chat_bubble_text ? (
+            <span>{app?.data?.config?.chat_bubble_text}</span>
           ) : (
             <QuestionAnswerIcon />
           )}
@@ -339,13 +341,13 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
           <div
             style={{
               display: "flex",
-              backgroundColor: app?.config.window_color,
+              backgroundColor: app?.data?.config.window_color,
               borderRadius: "8px 8px 0px 0px",
             }}
           >
-            {app?.config?.assistant_image && (
+            {app?.data?.config?.assistant_image && (
               <Avatar
-                src={app.config.assistant_image}
+                src={app.data?.config?.assistant_image}
                 alt="Bot"
                 style={{ margin: "10px 8px", border: "solid 1px #ccc" }}
               />
@@ -356,7 +358,9 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
                 fontWeight: 600,
                 fontSize: "18px",
                 color: "white",
-                padding: app?.config?.assistant_image ? "inherit" : "16px",
+                padding: app?.data?.config?.assistant_image
+                  ? "inherit"
+                  : "16px",
               }}
             >
               {app?.name}
@@ -365,7 +369,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
         )}
         <Stack sx={{ padding: "10px", overflow: "auto" }}>
           <LexicalRenderer
-            text={app.config?.input_template?.replaceAll(
+            text={app.data?.config?.input_template?.replaceAll(
               "<a href",
               "<a target='_blank' href",
             )}
@@ -401,9 +405,9 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
                   padding: 3,
                 }}
               >
-                {app?.config?.assistant_image && (
+                {app?.data?.config?.assistant_image && (
                   <Avatar
-                    src={app.config.assistant_image}
+                    src={app.data?.config?.assistant_image}
                     alt="Bot"
                     style={{ margin: "16px 8px 16px 0px" }}
                   />
@@ -418,8 +422,8 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
             {errors && <Errors runError={errors} />}
             {messages.filter((message) => message.role === "user").length ===
               0 &&
-              app?.config?.suggested_messages &&
-              app?.config?.suggested_messages.length > 0 && (
+              app?.data?.config?.suggested_messages &&
+              app?.data?.config?.suggested_messages.length > 0 && (
                 <Grid
                   sx={{
                     alignSelf: "flex-end",
@@ -427,20 +431,22 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
                     marginTop: "auto",
                   }}
                 >
-                  {app?.config?.suggested_messages.map((message, index) => (
-                    <Chip
-                      key={index}
-                      label={message}
-                      sx={{ margin: "5px 2px" }}
-                      onClick={() =>
-                        app?.input_schema?.properties &&
-                        runApp({
-                          [Object.keys(app?.input_schema?.properties)[0]]:
-                            message,
-                        })
-                      }
-                    />
-                  ))}
+                  {app?.data?.config?.suggested_messages.map(
+                    (message, index) => (
+                      <Chip
+                        key={index}
+                        label={message}
+                        sx={{ margin: "5px 2px" }}
+                        onClick={() =>
+                          app?.input_schema?.properties &&
+                          runApp({
+                            [Object.keys(app?.input_schema?.properties)[0]]:
+                              message,
+                          })
+                        }
+                      />
+                    ),
+                  )}
                 </Grid>
               )}
           </div>

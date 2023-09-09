@@ -149,7 +149,7 @@ export function WebAppRenderer({ app, ws }) {
         textAlign: "left",
       }}
     >
-      <LexicalRenderer text={app.config?.input_template} />
+      <LexicalRenderer text={app.data?.config?.input_template} />
       <ThemeProvider theme={defaultTheme}>
         <Form
           schema={schema}

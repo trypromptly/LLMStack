@@ -526,7 +526,7 @@ export default function AppEditPage(props) {
                   }));
                   setProcessors(newProcessors);
                 }}
-                appConfig={app?.data?.config || app?.config || {}}
+                appConfig={app?.data?.config || {}}
                 setAppConfig={(newConfig) =>
                   setApp((app) => ({
                     ...app,
