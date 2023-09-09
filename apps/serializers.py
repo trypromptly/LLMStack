@@ -129,7 +129,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return not profile.is_pro_subscriber() and not profile.organization
 
     def get_last_modified_by_email(self, obj):
-        return obj.last_modified_by.email if obj.last_modified_by else None
+        return obj.last_modified_by.email if obj.last_modified_by and obj.has_write_permission(self._request_user) else None
 
     def get_owner_email(self, obj):
         return obj.owner.email if obj.has_write_permission(self._request_user) else None
@@ -140,7 +140,9 @@ class AppSerializer(DynamicFieldsModelSerializer):
     def get_data(self, obj):
         app_data = AppData.objects.filter(
             app_uuid=obj.uuid).order_by('-created_at').first()
-        if app_data:
+        if app_data and app_data.data:
+            if not obj.has_write_permission(self._request_user):
+                app_data.data.pop('processors', None)
             return app_data.data
         return None
 
