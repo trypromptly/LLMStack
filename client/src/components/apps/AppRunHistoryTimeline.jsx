@@ -27,7 +27,7 @@ import AceEditor from "react-ace";
 import UAParser from "ua-parser-js";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { useRecoilValue } from "recoil";
-import { appsState, endpointsState } from "../../data/atoms";
+import { appsState } from "../../data/atoms";
 import { axios } from "../../data/axios";
 import { ReactComponent as DiscordIcon } from "../../assets/images/icons/discord.svg";
 import { ReactComponent as SlackIcon } from "../../assets/images/icons/slack.svg";
@@ -155,11 +155,10 @@ const ExpandedRowItem = ({ label, value, content_type = null }) => {
   );
 };
 
-const FilterBar = ({ apps, sessions, endpoints, users, onFilter }) => {
+const FilterBar = ({ apps, sessions, users, onFilter }) => {
   const [selectedApp, setSelectedApp] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedEndpoint, setSelectedEndpoint] = useState(null);
 
   return (
     <Stack
@@ -279,57 +278,6 @@ const FilterBar = ({ apps, sessions, endpoints, users, onFilter }) => {
           setSelectedUser(value);
         }}
       />
-      <Autocomplete
-        id="endpoint-selector"
-        sx={{ width: 250 }}
-        options={endpoints.filter((ep) => !ep.is_app && ep.version > 0)}
-        autoHighlight
-        getOptionLabel={(option) => option.name || ""}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            size="small"
-            label="Endpoint"
-            inputProps={{
-              ...params.inputProps,
-              autoComplete: "new-password",
-            }}
-          />
-        )}
-        groupBy={(option) => option.parent_uuid}
-        renderGroup={(params) => [
-          <Typography
-            key={params.key}
-            sx={{
-              fontWeight: 600,
-              fontSize: "0.8rem",
-              color: "#666",
-              padding: "10px",
-            }}
-          >
-            {endpoints.find((ep) => ep.uuid === params.group)?.name}
-          </Typography>,
-          params.children,
-        ]}
-        renderOption={(props, option) => (
-          <Box
-            component="li"
-            sx={{
-              fontSize: 14,
-              "& > span": {
-                marginRight: 2,
-                fontSize: 18,
-              },
-            }}
-            {...props}
-          >
-            {option.version}: {option.description}
-          </Box>
-        )}
-        onChange={(event, value) => {
-          setSelectedEndpoint(value);
-        }}
-      />
       <Button
         type="primary"
         style={{
@@ -341,7 +289,7 @@ const FilterBar = ({ apps, sessions, endpoints, users, onFilter }) => {
             app_uuid: selectedApp?.uuid || null,
             session_key: selectedSession?.name || null,
             request_user_email: selectedUser?.name || null,
-            endpoint_uuid: selectedEndpoint?.uuid || null,
+            endpoint_uuid: null,
           });
         }}
       >
@@ -354,7 +302,6 @@ const FilterBar = ({ apps, sessions, endpoints, users, onFilter }) => {
 export function AppRunHistoryTimeline(props) {
   const { filter, filteredColumns, showFilterBar } = props;
   const apps = useRecoilValue(appsState);
-  const endpoints = useRecoilValue(endpointsState);
   const [rows, setRows] = useState([]);
   const [expandedRows, setExpandedRows] = useState({});
   const [loading, setLoading] = useState(false);
@@ -375,10 +322,7 @@ export function AppRunHistoryTimeline(props) {
           apps.find((app) => app.uuid === row.app_uuid)?.name || "Deleted App"
         );
       }
-      return (
-        endpoints.find((ep) => ep.uuid === row.endpoint_uuid)?.name ||
-        "Playground"
-      );
+      return "Playground";
     } else if (column.id === "type") {
       return (
         <Tooltip title={row.app_uuid !== null ? "App" : "Endpoint"}>
@@ -534,7 +478,6 @@ export function AppRunHistoryTimeline(props) {
                     .map((row) => row.request_user_email),
                 ),
               ).map((request_user_email) => ({ name: request_user_email }))}
-              endpoints={endpoints}
               onFilter={(filters) => setFilters({ ...filters, ...{ page: 1 } })}
             />
             <Divider />

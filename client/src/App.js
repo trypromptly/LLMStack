@@ -28,11 +28,6 @@ const menuItems = [
     link: "/hub",
   },
   {
-    key: "2",
-    label: "Endpoints",
-    link: "/endpoint",
-  },
-  {
     key: "7",
     label: "Data",
     link: "/data",

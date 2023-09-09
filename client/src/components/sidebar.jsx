@@ -22,7 +22,6 @@ import {
   ListItemText,
 } from "@mui/material";
 import {
-  ApiOutlined,
   AppstoreAddOutlined,
   BankOutlined,
   HistoryOutlined,
@@ -67,7 +66,6 @@ function getNavItemIcon(itemLabel) {
   const iconMap = {
     Playground: <PlaySquareOutlined />,
     Home: <HomeOutlined />,
-    Endpoints: <ApiOutlined />,
     History: <HistoryOutlined />,
     Settings: <SettingOutlined />,
     Discover: <AppstoreOutlined />,
