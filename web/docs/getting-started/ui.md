@@ -29,15 +29,13 @@ The App Builder page allows you to build powerful AI applications using LLMStack
 
 ## Playground
 
-The Playground page allows you to test all the available processors in LLMStack. You can test the processors with your own input and configuration before using them in your apps or building an endpoint.
-
-You can create and manage your [endpoints](/docs/endpoints/introduction) from the Playground page.
+The Playground page allows you to test all the available processors in LLMStack. You can test the processors with your own input and configuration before using them in your apps.
 
 ![Playground Page](/img/ui/llmstack-playground.png)
 
 ## History
 
-The History page allows you to view the history of all the apps and endpoints that you have run. You can view the input, output and other information of each run.
+The History page allows you to view the history of all the apps and playground tests that you have run. You can view the input, output and other information of each run.
 
 ![History Page](/img/ui/llmstack-history.png)
 

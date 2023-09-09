@@ -79,10 +79,6 @@ Processors are the basic building blocks in LLMStack. These provide the function
 
 Providers are the entities that provide the functionality to the processors. For example, OpenAI's ChatGPT processor uses OpenAI's API to generate text. LLMStack comes with a few built-in providers like OpenAI, Cohere, Stability etc. Providers act as namespaces for the processors. You can also create your own providers and add them to LLMStack.
 
-### Endpoints
-
-Endpoints are instances of processors. You can create multiple endpoints based on a single processor. For example, you can create multiple endpoints for OpenAI's ChatGPT processor with different parameters and prompts. These endpoints can be invoked using APIs. Endpoints also form the basis of apps in LLMStack. When an app is created by chaining multiple processors, LLMStack creates an endpoint each of those processors and connects them together.
-
 ### Apps
 
 Apps are the final product of LLMStack. Apps are created by chaining multiple processors together. LLMStack provides a visual editor to create apps. Apps can be shared with other users of LLMStack installation. Apps can be invoked using APIs, from the UI or triggered from Slack, Discord etc.

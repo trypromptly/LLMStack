@@ -4,7 +4,7 @@ title: Endpoints
 ---
 
 :::warning
-Endpoints are going to be deprecated in the future releases. Please use [Apps](/docs/apps/introduction) instead.
+Endpoints are deprecated. Please use [Apps](/docs/apps/introduction) instead. This page is only available for users who have already created endpoints. To access the page, go to [http://localhost:3000/endpoint](http://localhost:3000/endpoint).
 :::
 
 Endpoints are instances of processors with predefined configuration parameters and can optionally include variables to be filled during runtime. They are available as HTTP APIs that can be invoked using the API key and the endpoint UUID. Endpoints are useful for creating multiple versions of the same processor with different configuration parameters. They can be versioned and form building blocks for apps.

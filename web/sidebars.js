@@ -45,12 +45,6 @@ const sidebars = {
     },
     {
       type: "category",
-      label: "Endpoints",
-      link: { type: "doc", id: "endpoints/introduction" },
-      items: [],
-    },
-    {
-      type: "category",
       label: "Apps",
       link: { type: "doc", id: "apps/introduction" },
       items: [

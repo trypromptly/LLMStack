@@ -3,7 +3,7 @@ id: introduction
 title: APIs
 ---
 
-LLMStack provides a set of APIs that you can use to access the functionality of LLMStack. You can use these APIs to run apps, endpoints and jobs, manage your data sources etc.,
+LLMStack provides a set of APIs that you can use to access the functionality of LLMStack. You can use these APIs to run apps, manage your data sources etc.,
 
 ## Authentication
 
@@ -11,7 +11,7 @@ All LLMStack APIs require authentication. You can authenticate using your API To
 
 ## Streaming Output
 
-For endpoint and app runs, if `stream` parameter is used, output is received in chunks of values for JSON keys. For example, if the output is a JSON object with keys `a`, `b` and `c`, you will receive the output in the following format:
+For app runs, if `stream` parameter is used, output is received in chunks of values for JSON keys. For example, if the output is a JSON object with keys `a`, `b` and `c`, you will receive the output in the following format:
 
 ```json
 {
@@ -24,29 +24,6 @@ For endpoint and app runs, if `stream` parameter is used, output is received in 
 You will need to parse the output in your client code and stitch the chunks together to get the complete output.
 
 ## API Reference
-
-### Endpoints
-
-:::warning
-Endpoints are going to be deprecated in the future releases. Please use [Apps](/docs/apps/introduction) instead.
-:::
-
-Run an endpoint.
-
-```bash
-POST /api/endpoints/<endpoint_uuid>
-```
-
-#### Request
-
-If the endpoint includes variables, you can pass the values for the variables in the request body. You can also pass `stream` parameter to stream the response.
-
-```json
-{
-  "template_values": <KEY_VALUE_JSON>,
-  "stream": <BOOLEAN>
-}
-```
 
 ### Apps
 
