@@ -122,6 +122,10 @@ class AppRunner:
 
             # Create a list of actor configs for each processor
             for processor, index in zip(processors, range(1, len(processors)+1)):
+                if 'processor_slug' not in processor or 'provider_slug' not in processor:
+                    raise Exception(
+                        'processor_slug and provider_slug are required for each processor')
+
                 processor_cls = ApiProcessorFactory.get_api_processor(
                     processor['processor_slug'], processor['provider_slug'],
                 )

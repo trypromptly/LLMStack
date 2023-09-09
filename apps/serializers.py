@@ -143,12 +143,11 @@ class AppSerializer(DynamicFieldsModelSerializer):
         if app_data:
             return app_data.data
         return None
-    
+
     def get_has_live_version(self, obj):
         app_datas = AppData.objects.filter(
             app_uuid=obj.uuid, is_draft=False).first()
         return app_datas is not None
-        
 
     def get_app_type_name(self, obj):
         return obj.type.name
@@ -192,9 +191,10 @@ class AppSerializer(DynamicFieldsModelSerializer):
             processors = data.get('processors', []) if data else []
             unique_processors = []
             for processor in processors:
-                name = f"{processor['provider_slug']} / {processor['processor_slug']}"
-                if name not in unique_processors:
-                    unique_processors.append(name)
+                if 'provider_slug' in processor and 'processor_slug' in processor:
+                    name = f"{processor['provider_slug']} / {processor['processor_slug']}"
+                    if name not in unique_processors:
+                        unique_processors.append(name)
             return unique_processors
 
         return []
@@ -296,7 +296,7 @@ class AppTemplateSerializer(serializers.ModelSerializer):
             if app_data:
                 return app_data.data.get('input_fields', [])
             return []
-        
+
         class Meta:
             model = App
             fields = [
