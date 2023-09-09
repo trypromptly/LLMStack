@@ -118,10 +118,10 @@ export function getJSONSchemaFromInputFields(inputFields) {
         uiSchema[field.name] = {
           "ui:widget": "select",
         };
-        schema.properties[field.name].enum = field.options.map(
+        schema.properties[field.name].enum = field.options?.map(
           (option) => option.value,
         );
-        schema.properties[field.name].enumNames = field.options.map(
+        schema.properties[field.name].enumNames = field.options?.map(
           (option) => option.label,
         );
       }

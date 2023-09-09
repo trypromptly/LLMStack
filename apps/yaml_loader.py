@@ -68,16 +68,10 @@ def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseMode
             field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
 
         if field_type == 'select' and 'options' in field and len(field['options']) > 0:
-            field['enumNames'] = [option['label']
-                                  or '' for option in field['options']]
-            field['enum'] = [option['value']
-                             or None for option in field['options']]
             field['widget'] = 'select'
 
             # For select fields, the datatype is the type of the first option
             datatype = type(field['options'][0]['value'])
-
-        field.pop('options', None)
 
         fields[field['name']] = (datatype, Field(
             **{k: field[k] for k in field}))
@@ -108,15 +102,6 @@ def get_app_template_from_yaml(yaml_file: str) -> dict:
             page['input_ui_schema'] = get_ui_schema_from_json_schema(
                 input_model.schema())
             page.pop('input_fields')
-
-        app = yaml_dict.get('app', {})
-        input_fields = app.get('input_fields', [])
-        input_model = get_input_model_from_fields(
-            app["name"], input_fields)
-        app['input_schema'] = input_model.schema()
-        app['input_schema'].pop('title')
-        app['input_ui_schema'] = get_ui_schema_from_json_schema(
-            input_model.schema())
 
         return AppTemplate(**yaml_dict)
 

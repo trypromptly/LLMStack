@@ -24,6 +24,7 @@ class InputField(BaseModel):
     title: str
     type: str = "string"
     widget: Optional[str]
+    options: Optional[List[Any]]
 
 
 class OutputTemplate(BaseModel):
