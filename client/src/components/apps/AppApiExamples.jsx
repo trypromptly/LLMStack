@@ -149,7 +149,7 @@ axios
   });
 
 `);
-  }, [app.input_schema, app.uuid, profile?.token]);
+  }, [app?.data?.input_fields, app?.uuid, profile?.token]);
 
   return (
     <div>
