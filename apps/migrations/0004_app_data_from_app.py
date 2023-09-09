@@ -104,7 +104,7 @@ class Migration(migrations.Migration):
                             app_uuid=app.uuid, data=app_data, is_draft=False
                         )
                     AppData.objects.create(
-                        app_uuid=app.uuid, data=app_data, is_draft=True
+                        app_uuid=app.uuid, data=app_data, is_draft=True, version=1 if app.is_published else 0
                     )
                 except Exception as e:
                     print(
