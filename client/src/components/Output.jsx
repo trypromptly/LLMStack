@@ -1,4 +1,4 @@
-import { Empty, Input, Space, Spin, Tabs, Tag, Row, Col } from "antd";
+import { Input, Space, Spin, Tabs, Tag, Row, Col } from "antd";
 import { List, ListItem } from "@mui/material";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-python";
@@ -7,6 +7,7 @@ import { createTheme } from "@mui/material/styles";
 
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "./ThemedJsonForm";
+import { Empty } from "./form/Empty";
 
 const { TextArea } = Input;
 
@@ -99,53 +100,7 @@ export function Result(props) {
       </Row>
     </Col>
   ) : (
-    <Empty description="No output" />
-  );
-}
-
-function Api(props) {
-  let api = `Save endpoint to see API usage`;
-  if (api && props.endpoint && !props.endpoint.draft) {
-    api = `curl -X POST https://trypromptly.com/api/endpoints/${props.endpoint.parent_uuid} \\
-    -H 'Content-Type: application/json' \\
-    -H 'Authorization: Token <PROMPTLY_TOKEN>' \\
-    -d '{"template_values": <KEY_VALUE_JSON>}'`;
-  }
-  return <TextArea value={api} disabled={true} style={textAreaStyle} />;
-}
-
-function Python(props) {
-  let python = `Save endpoint to see example code`;
-  if (python && props.endpoint && !props.endpoint.draft) {
-    python = `import requests
-
-PROMPTLY_API_KEY = <Your Promptly API Key>
-
-url = 'https://trypromptly.com/api/endpoints/${props.endpoint.parent_uuid}'
-headers = { 'Authorization': 'Token ' + PROMPTLY_API_KEY }
-body = {'template_values': {'key': 'value'}}
-    
-response = requests.post(url, headers=headers, json = body)`;
-  }
-
-  return (
-    <AceEditor
-      style={{
-        width: "100%",
-        fontFamily: "Source Code Pro, monospace",
-        fontSize: "14px",
-      }}
-      mode="python"
-      theme="github"
-      value={python}
-      wrapEnabled={true}
-      editorProps={{ $blockScrolling: true }}
-      readOnly={true}
-      setOptions={{
-        useWorker: false,
-        showGutter: false,
-      }}
-    />
+    <Empty emptyMessage="No output" />
   );
 }
 
@@ -176,16 +131,6 @@ export default function Output(props) {
               <Errors {...props} />
             </div>
           ),
-        },
-        {
-          key: "2",
-          label: "API",
-          children: <Api result={props.result} endpoint={props.endpoint} />,
-        },
-        {
-          key: "3",
-          label: "Python",
-          children: <Python result={props.result} endpoint={props.endpoint} />,
         },
       ]}
     />

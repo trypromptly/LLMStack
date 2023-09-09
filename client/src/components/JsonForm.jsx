@@ -4,11 +4,12 @@ import {
 } from "@jsonforms/material-renderers";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { JsonForms } from "@jsonforms/react";
-import { Empty, Tabs } from "antd";
+import { Tabs } from "antd";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
 import { useRecoilState } from "recoil";
+import { Empty } from "./form/Empty";
 
 const theme = createTheme({
   typography: {
@@ -57,15 +58,7 @@ export function ThemedJsonEditor(props) {
 
 export default function JsonForm(props) {
   if (Object.keys(props.schema).length === 0) {
-    return (
-      <Empty
-        image={Empty.PRESENTED_IMAGE_DEFAULT}
-        description={
-          props.emptyMessage ? props.emptyMessage : "Schema not found"
-        }
-        style={{ color: "#838383" }}
-      />
-    );
+    return <Empty emptyMessage={props.emptyMessage} />;
   }
 
   return (

@@ -16,7 +16,6 @@ const SignupPage = lazy(() => import("./pages/signup"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
 const HistoryPage = lazy(() => import("./pages/history"));
 const HistoryPageOld = lazy(() => import("./pages/historyold"));
-const EndpointPage = lazy(() => import("./pages/endpoint"));
 const SettingPage = lazy(() => import("./pages/setting"));
 const OrganizationPage = lazy(() => import("./pages/organization"));
 const TestPage = lazy(() => import("./pages/tests"));
@@ -242,14 +241,6 @@ if (
       element: (
         <App>
           <DashboardPage />
-        </App>
-      ),
-    },
-    {
-      path: "/endpoint",
-      element: (
-        <App>
-          <EndpointPage />
         </App>
       ),
     },

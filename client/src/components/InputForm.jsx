@@ -4,7 +4,8 @@ import { inputValueState, templateValueState } from "../data/atoms";
 import ThemedJsonForm from "./ThemedJsonForm";
 import { createTheme } from "@mui/material/styles";
 
-import { Badge, Tabs, Empty } from "antd";
+import { Tabs } from "antd";
+import { Empty as EmptyComponent } from "./form/Empty";
 
 const theme = createTheme({
   spacing: 2,
@@ -130,16 +131,6 @@ export function TemplateVariablesThemedForm(props) {
   );
 }
 
-function EmptyComponent(props) {
-  return (
-    <Empty
-      image={Empty.PRESENTED_IMAGE_DEFAULT}
-      description={props.emptyMessage ? props.emptyMessage : "Schema not found"}
-      style={{ color: "#838383" }}
-    />
-  );
-}
-
 export default function InputForm(props) {
   const input = useRecoilValue(inputValueState);
 
@@ -174,26 +165,6 @@ export default function InputForm(props) {
                 uiSchema={uiSchema}
                 submitBtn={props.submitBtn}
               />
-            ),
-        },
-        {
-          key: "2",
-          label: (
-            <Badge
-              dot={
-                Object.keys(
-                  input && input !== "" ? getTemplateVariables(input) : {},
-                ).length
-              }
-            >
-              Template Values&nbsp;
-            </Badge>
-          ),
-          children:
-            Object.keys(props.schema).length === 0 ? (
-              <EmptyComponent {...props} />
-            ) : (
-              <TemplateVariablesThemedForm />
             ),
         },
       ]}

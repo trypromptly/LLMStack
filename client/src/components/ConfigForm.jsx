@@ -1,4 +1,4 @@
-import { Empty, Tabs } from "antd";
+import { Tabs } from "antd";
 import { useRecoilState } from "recoil";
 import AceEditor from "react-ace";
 import validator from "@rjsf/validator-ajv8";
@@ -8,6 +8,7 @@ import "ace-builds/src-noconflict/theme-chrome";
 import ThemedJsonForm from "./ThemedJsonForm";
 import { endpointConfigValueState } from "../data/atoms";
 import CustomObjectFieldTemplate from "../components/ConfigurationFormObjectFieldTemplate";
+import { Empty as EmptyComponent } from "../components/form/Empty";
 
 export function ThemedForm(props) {
   const [data, setData] = useRecoilState(endpointConfigValueState);
@@ -43,16 +44,6 @@ export function ThemedJsonEditor() {
         useWorker: false,
         showGutter: false,
       }}
-    />
-  );
-}
-
-function EmptyComponent(props) {
-  return (
-    <Empty
-      image={Empty.PRESENTED_IMAGE_DEFAULT}
-      description={props.emptyMessage ? props.emptyMessage : "Schema not found"}
-      style={{ color: "#838383" }}
     />
   );
 }
