@@ -6,8 +6,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Typography,
 } from "@mui/material";
-import { Typography } from "antd";
 
 export function AppNameDialog({
   open,
