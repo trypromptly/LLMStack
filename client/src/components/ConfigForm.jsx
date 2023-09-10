@@ -1,4 +1,8 @@
-import { Tabs } from "antd";
+import * as React from "react";
+
+import { Box, Tab } from "@mui/material";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
+
 import { useRecoilState } from "recoil";
 import AceEditor from "react-ace";
 import validator from "@rjsf/validator-ajv8";
@@ -49,6 +53,8 @@ export function ThemedJsonEditor() {
 }
 
 export default function ConfigForm(props) {
+  const [value, setValue] = React.useState("form");
+
   let schema = props.schema ? JSON.parse(JSON.stringify(props.schema)) : {};
 
   if (props?.schema?.title) {
@@ -58,32 +64,34 @@ export default function ConfigForm(props) {
   }
 
   return (
-    <Tabs
-      type="card"
-      style={{ width: "100%" }}
-      defaultActiveKey="1"
-      items={[
-        {
-          key: "1",
-          label: "Config Form",
-          children:
-            Object.keys(props.schema).length === 0 ? (
-              <EmptyComponent {...props} />
-            ) : (
-              <ThemedForm schema={schema} uiSchema={props.uiSchema} />
-            ),
-        },
-        {
-          key: "2",
-          label: "JSON",
-          children:
-            Object.keys(props.schema).length === 0 ? (
-              <EmptyComponent {...props} />
-            ) : (
-              <ThemedJsonEditor {...props} />
-            ),
-        },
-      ]}
-    />
+    <Box sx={{ width: "100%" }}>
+      <TabContext value={value}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <TabList
+            onChange={(event, newValue) => {
+              setValue(newValue);
+            }}
+            aria-label="Config form tabs"
+          >
+            <Tab label="Config Form" value="form" />
+            <Tab label="JSON" value="json" />
+          </TabList>
+        </Box>
+        <TabPanel value="form" sx={{ padding: "4px" }}>
+          {Object.keys(props.schema).length === 0 ? (
+            <EmptyComponent {...props} />
+          ) : (
+            <ThemedForm schema={schema} uiSchema={props.uiSchema} />
+          )}
+        </TabPanel>
+        <TabPanel value="json" sx={{ padding: "4px" }}>
+          {Object.keys(props.schema).length === 0 ? (
+            <EmptyComponent {...props} />
+          ) : (
+            <ThemedJsonEditor {...props} />
+          )}
+        </TabPanel>
+      </TabContext>
+    </Box>
   );
 }
