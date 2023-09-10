@@ -1,25 +1,35 @@
 import React from "react";
-import { Modal, Button } from "antd";
+import {
+  Dialog,
+  Button,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from "@mui/material";
 
 export default function DeleteConfirmationModal(props) {
   const { id, open, onOk, onCancel, title, text } = props;
-
   return (
-    <Modal
-      title={title}
+    <Dialog
+      title={title ? title : "Logged Out"}
       open={open}
-      onOk={onOk}
       onCancel={onCancel}
-      footer={[
+    >
+      <DialogTitle id="delete-modal-title">Confirm Delete</DialogTitle>
+      <DialogContent>
+        <DialogContentText>{text}</DialogContentText>
+      </DialogContent>
+      <DialogActions>
         <Button key="cancel" onClick={() => onCancel(id)}>
           Cancel
-        </Button>,
+        </Button>
+        ,
         <Button key="submit" type="primary" onClick={() => onOk(id)}>
           Confirm
-        </Button>,
-      ]}
-    >
-      {text}
-    </Modal>
+        </Button>
+        ,
+      </DialogActions>
+    </Dialog>
   );
 }

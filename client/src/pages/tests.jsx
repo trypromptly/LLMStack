@@ -10,8 +10,6 @@ const AddTestCaseModal = (props) => {
   const [, setEndpoint] = useState(props.endpoint);
   const [form] = Form.useForm();
 
-  console.log(props);
-
   // Get latest versioned endpoint from endpoints recoil state
   useEffect(() => {
     if (props.endpoint) {
