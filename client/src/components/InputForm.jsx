@@ -1,10 +1,14 @@
+import * as React from "react";
+
 import validator from "@rjsf/validator-ajv8";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { inputValueState, templateValueState } from "../data/atoms";
 import ThemedJsonForm from "./ThemedJsonForm";
 import { createTheme } from "@mui/material/styles";
 
-import { Tabs } from "antd";
+import { Box, Tab } from "@mui/material";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
+
 import { Empty as EmptyComponent } from "./form/Empty";
 
 const theme = createTheme({
@@ -133,6 +137,7 @@ export function TemplateVariablesThemedForm(props) {
 
 export default function InputForm(props) {
   const input = useRecoilValue(inputValueState);
+  const [value, setValue] = React.useState("form");
 
   let schema = props.schema ? JSON.parse(JSON.stringify(props.schema)) : {};
   let uiSchema = props.uiSchema
@@ -146,28 +151,31 @@ export default function InputForm(props) {
     schema.title = "";
     schema.description = "";
   }
-
   return (
-    <Tabs
-      type="card"
-      style={{ width: "100%" }}
-      defaultActiveKey="1"
-      items={[
-        {
-          key: "1",
-          label: input_form_label,
-          children:
-            Object.keys(props.schema).length === 0 ? (
-              <EmptyComponent {...props} />
-            ) : (
-              <InputThemedForm
-                schema={schema}
-                uiSchema={uiSchema}
-                submitBtn={props.submitBtn}
-              />
-            ),
-        },
-      ]}
-    />
+    <Box sx={{ width: "100%" }}>
+      <TabContext value={value}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <TabList
+            onChange={(event, newValue) => {
+              setValue(newValue);
+            }}
+            aria-label="Config form tabs"
+          >
+            <Tab label="Input Form" value="form" />
+          </TabList>
+        </Box>
+        <TabPanel value="form" sx={{ padding: "4px" }}>
+          {Object.keys(props.schema).length === 0 ? (
+            <EmptyComponent {...props} />
+          ) : (
+            <InputThemedForm
+              schema={schema}
+              uiSchema={uiSchema}
+              submitBtn={props.submitBtn}
+            />
+          )}
+        </TabPanel>
+      </TabContext>
+    </Box>
   );
 }
