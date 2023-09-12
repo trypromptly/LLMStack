@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Button, Col, Divider, Row } from "antd";
+
+import { Stack, Grid, Divider, Button as MuiButton } from "@mui/material";
 
 import ApiBackendSelector from "../components/ApiBackendSelector";
 import { useRecoilState, useRecoilValue } from "recoil";
@@ -154,18 +155,18 @@ export default function HomePage() {
 
   const TestPrompt = () => {
     return (
-      <Button
+      <MuiButton
         type="primary"
         onClick={(e) => {
           if (isLoggedIn) {
             return testPrompt();
           }
         }}
-        style={{ backgroundColor: "#477c24" }}
         ref={tourRef6}
+        variant="contained"
       >
         {"Submit"}
-      </Button>
+      </MuiButton>
     );
   };
 
@@ -195,84 +196,57 @@ export default function HomePage() {
         tourRef5={tourRef5}
         tourRef6={tourRef6}
       />
-      <Col style={{ width: "100%", height: "100%" }}>
-        <Row gutter={[4, 4]} style={{ height: "100%" }}>
-          <Col
-            span={20}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-            }}
-            xs={24}
-            md={20}
-          >
-            <Row style={{ padding: "4px 0", width: "100%", flex: 1 }}>
-              <Col span={12} ref={tourRef4} xs={24} md={12}>
-                <div className="home-card" style={homeCardStyle}>
-                  <Row style={{ padding: "15px 2px" }}>
-                    <ApiBackendSelector innerRef={tourRef2} />
-                  </Row>
-                  <Divider style={{ margin: "0 0 10px" }} />
-                  <Row>
-                    <InputForm
-                      schema={
-                        apiBackendSelected
-                          ? apiBackendSelected.input_schema
-                          : {}
-                      }
-                      uiSchema={
-                        apiBackendSelected
-                          ? apiBackendSelected.input_ui_schema
-                          : {}
-                      }
-                      emptyMessage="Select your API Backend to see the parameters"
-                    />
-                  </Row>
-                  <Row
-                    style={{
-                      justifyContent: "end",
-                      margin: "10px",
-                    }}
-                  >
-                    {apiBackendSelected && <TestPrompt />}
-                  </Row>
-                </div>
-              </Col>
-              <Col span={12} ref={tourRef4} xs={24} md={12}>
-                <div className="home-card" style={homeCardStyle}>
-                  <Output
-                    result={output}
-                    endpoint={endpointSelected}
-                    loading={outputLoading}
-                    loadingTip={"Running the input..."}
-                    runError={runError}
-                    tokenCount={tokenCount}
-                    schema={apiBackendSelected?.output_schema || {}}
-                    uiSchema={apiBackendSelected?.output_ui_schema || {}}
-                    formData={processorResult || {}}
-                  />
-                </div>
-              </Col>
-            </Row>
-          </Col>
-          <Col span={4} ref={tourRef3} xs={24} md={4}>
-            <div className="home-card" style={homeCardStyle}>
-              <ConfigForm
-                schema={
-                  apiBackendSelected ? apiBackendSelected.config_schema : {}
-                }
-                uiSchema={
-                  apiBackendSelected ? apiBackendSelected.config_ui_schema : {}
-                }
-                formData={paramValues}
-                atomState={endpointConfigValueState}
-                emptyMessage="Select your API Backend to see the parameters"
-              />
-            </div>
-          </Col>
-        </Row>
-      </Col>
+      <Stack
+        spacing={2}
+        divider={<Divider orientation="horizontal" flexItem />}
+        sx={{ width: "100%", height: "100%", paddingTop: "5px" }}
+      >
+        <ApiBackendSelector innerRef={tourRef2} />
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4} sx={{ height: "100%" }}>
+            <Stack spacing={2}>
+              <div style={{ height: "10%" }}>
+                <InputForm
+                  schema={
+                    apiBackendSelected ? apiBackendSelected.input_schema : {}
+                  }
+                  uiSchema={
+                    apiBackendSelected ? apiBackendSelected.input_ui_schema : {}
+                  }
+                  emptyMessage="Select your API Backend to see the parameters"
+                />
+              </div>
+              <div>{apiBackendSelected && <TestPrompt />}</div>
+            </Stack>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <ConfigForm
+              schema={
+                apiBackendSelected ? apiBackendSelected.config_schema : {}
+              }
+              uiSchema={
+                apiBackendSelected ? apiBackendSelected.config_ui_schema : {}
+              }
+              formData={paramValues}
+              atomState={endpointConfigValueState}
+              emptyMessage="Select your API Backend to see the parameters"
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Output
+              result={output}
+              endpoint={endpointSelected}
+              loading={outputLoading}
+              loadingTip={"Running the input..."}
+              runError={runError}
+              tokenCount={tokenCount}
+              schema={apiBackendSelected?.output_schema || {}}
+              uiSchema={apiBackendSelected?.output_ui_schema || {}}
+              formData={processorResult || {}}
+            />
+          </Grid>
+        </Grid>
+      </Stack>
     </div>
   );
 }
