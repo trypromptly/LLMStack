@@ -33,21 +33,22 @@ const getContentFromMessage = ({ message, app }) => {
             .map((key) => message.content[key])
             .join("\n\n")
         : Object.keys(message.content)
-            .map(
-              (key) =>
-                `**${key}**: ${
-                  app &&
-                  app?.input_schema &&
-                  app?.input_schema?.properties &&
-                  app?.input_schema?.properties[key] &&
-                  app?.input_schema?.properties[key]?.format === "data-url"
-                    ? message.content[key]
-                        .split(",")[0]
-                        .split(";")[1]
-                        .split("=")[1]
-                    : message.content[key]
-                }`,
-            )
+            .map((key) => {
+              const inputField = app?.data?.input_fields?.find(
+                (input_field) => input_field.name === key,
+              );
+              return `**${key}**: ${
+                inputField &&
+                (inputField.type === "file" ||
+                  inputField.type === "voice" ||
+                  inputField.type === "image")
+                  ? message.content[key]
+                      .split(",")[0]
+                      .split(";")[1]
+                      .split("=")[1]
+                  : message.content[key]
+              }`;
+            })
             .join("\n\n");
     }
   } catch (e) {
@@ -438,10 +439,9 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
                         label={message}
                         sx={{ margin: "5px 2px" }}
                         onClick={() =>
-                          app?.input_schema?.properties &&
+                          app?.input_fields?.length > 0 &&
                           runApp({
-                            [Object.keys(app?.input_schema?.properties)[0]]:
-                              message,
+                            [Object.keys(app?.input_fields)[0].name]: message,
                           })
                         }
                       />
