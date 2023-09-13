@@ -17,7 +17,6 @@ const DashboardPage = lazy(() => import("./pages/dashboard"));
 const HistoryPage = lazy(() => import("./pages/history"));
 const SettingPage = lazy(() => import("./pages/setting"));
 const OrganizationPage = lazy(() => import("./pages/organization"));
-const TestPage = lazy(() => import("./pages/tests"));
 const AppRenderPage = lazy(() => import("./pages/AppRender"));
 const AppStudioPage = lazy(() => import("./pages/AppStudio"));
 const AppEditPage = lazy(() => import("./pages/AppEdit"));
@@ -248,14 +247,6 @@ if (
       element: (
         <App>
           <HistoryPage />
-        </App>
-      ),
-    },
-    {
-      path: "/test",
-      element: (
-        <App>
-          <TestPage />
         </App>
       ),
     },
