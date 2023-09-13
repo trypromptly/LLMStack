@@ -1,4 +1,5 @@
 import * as React from "react";
+// eslint-disable-next-line
 import AceEditor from "react-ace";
 
 import { List, ListItem } from "@mui/material";
@@ -55,15 +56,6 @@ const outputTheme = createTheme({
     },
   },
 });
-
-const textAreaStyle = {
-  fontFamily: "Source Code Pro, monospace",
-  color: "#000",
-  fontWeight: "500",
-  background: "#fffaec",
-  minHeight: 150,
-  height: "100%",
-};
 
 export function Errors(props) {
   let errors = props.runError?.errors || [];

@@ -136,16 +136,15 @@ export function TemplateVariablesThemedForm(props) {
 }
 
 export default function InputForm(props) {
-  const input = useRecoilValue(inputValueState);
   const [value, setValue] = React.useState("form");
 
   let schema = props.schema ? JSON.parse(JSON.stringify(props.schema)) : {};
   let uiSchema = props.uiSchema
     ? JSON.parse(JSON.stringify(props.uiSchema))
     : {};
-  let input_form_label = null;
-
-  input_form_label = props?.schema?.title ? props?.schema?.title : "Input Form";
+  let input_form_label = props?.schema?.title
+    ? props?.schema?.title
+    : "Input Form";
 
   if (props?.schema?.title) {
     schema.title = "";
@@ -161,7 +160,10 @@ export default function InputForm(props) {
             }}
             aria-label="Config form tabs"
           >
-            <Tab label="Input Form" value="form" />
+            <Tab
+              label={input_form_label ? input_form_label : "Input Form"}
+              value="form"
+            />
           </TabList>
         </Box>
         <TabPanel value="form" sx={{ padding: "4px" }}>

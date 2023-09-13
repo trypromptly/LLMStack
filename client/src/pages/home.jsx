@@ -19,13 +19,6 @@ import InputForm from "../components/InputForm";
 import ConfigForm from "../components/ConfigForm";
 import HomeTour from "../components/home/HomeTour";
 
-const homeCardStyle = {
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.2)",
-  height: "100%",
-};
-
 export default function HomePage() {
   const isLoggedIn = useRecoilValue(isLoggedInState);
   const [input] = useRecoilState(inputValueState);
