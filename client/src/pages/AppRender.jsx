@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { axios } from "../data/axios";
 import { Ws } from "../data/ws";
-import { Col, Row } from "antd";
+import { Stack } from "@mui/material";
 import ReactGA from "react-ga4";
 import { AppBar, Box, Button, Container, Toolbar } from "@mui/material";
 import { TwitterIcon, TwitterShareButton } from "react-share";
@@ -97,7 +97,7 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
   return app?.type?.slug === "text-chat" && embed && chatBubble ? (
     <WebChatRender app={app} isMobile={isMobile} embed={embed} ws={ws} />
   ) : (
-    <Col>
+    <Stack>
       {renderMode !== "preview" && !embed && (
         <AppBar
           position="static"
@@ -140,9 +140,9 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
           </Container>
         </AppBar>
       )}
-      <Row style={{ justifyContent: "center" }}>{headless && <p></p>}</Row>
+      <div style={{ justifyContent: "center" }}>{headless && <p></p>}</div>
       {error && (
-        <Row
+        <div
           style={{
             justifyContent: "center",
             paddingTop: 50,
@@ -164,25 +164,38 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
           >
             {isLoggedIn ? "Go To Hub" : "Login"}
           </Button>
-        </Row>
+        </div>
       )}
-      <Row>
+      <div>
         {app?.type?.slug === "web" && <WebAppRenderer app={app} ws={ws} />}
         {app?.type?.slug === "text-chat" && (
           <WebChatRender app={app} isMobile={isMobile} ws={ws} />
         )}
-      </Row>
-      <Row style={{ justifyContent: "center", bottom: "0px", marginTop: 10 }}>
-        {headless && app.has_footer && (
-          <p>
-            Powered by{" "}
-            <a href="https://trypromptly.com" target="_blank" rel="noreferrer">
-              Promptly
-            </a>
-          </p>
-        )}
-      </Row>
-    </Col>
+      </div>
+      <div style={{ width: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            bottom: "0px",
+            marginTop: 10,
+          }}
+        >
+          {headless && app.has_footer && (
+            <p>
+              Powered by{" "}
+              <a
+                href="https://trypromptly.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Promptly
+              </a>
+            </p>
+          )}
+        </div>
+      </div>
+    </Stack>
   );
 }
 
