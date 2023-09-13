@@ -15,6 +15,7 @@ const LoginPage = lazy(() => import("./pages/login"));
 const SignupPage = lazy(() => import("./pages/signup"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
 const HistoryPage = lazy(() => import("./pages/history"));
+const EndpointPage = lazy(() => import("./pages/endpoint"));
 const SettingPage = lazy(() => import("./pages/setting"));
 const OrganizationPage = lazy(() => import("./pages/organization"));
 const AppRenderPage = lazy(() => import("./pages/AppRender"));
@@ -239,6 +240,14 @@ if (
       element: (
         <App>
           <DashboardPage />
+        </App>
+      ),
+    },
+    {
+      path: "/endpoint",
+      element: (
+        <App>
+          <EndpointPage />
         </App>
       ),
     },
