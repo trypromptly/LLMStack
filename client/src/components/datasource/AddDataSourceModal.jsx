@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { Modal, Button, Input, Radio, Space } from "antd";
+import {
+  Button as MuiButton,
+  ButtonGroup,
+  TextField,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
 import { useRecoilValue, useRecoilState } from "recoil";
 import { dataSourcesState, dataSourceTypesState } from "../../data/atoms";
 import { axios } from "../../data/axios";
@@ -38,17 +47,68 @@ export function AddDataSourceModal({
   const reloadDataSourceEntries = useReloadDataSourceEntries();
 
   return (
-    <Modal
-      title={modalTitle}
-      open={open}
-      onCancel={handleCancelCb}
-      footer={[
-        <Button key="back" onClick={handleCancelCb}>
-          Cancel
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
+    <Dialog open={open} onClose={handleCancelCb}>
+      <DialogTitle>{modalTitle}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2}>
+          <TextField
+            label="Data Source Name"
+            value={dataSourceName}
+            onChange={(e) => setDataSourceName(e.target.value)}
+            disabled={datasource ? true : false}
+            required={true}
+            defaultValue={datasource?.name || "Untitled"}
+            size="small"
+            style={{ width: "100%", marginTop: "6px" }}
+            error={dataSourceNameError}
+          />
+          <span>Data Source Type</span>
+          <ButtonGroup
+            variant="outlined"
+            size="small"
+            style={{ display: "inline-block" }}
+            disabled={datasource ? true : false}
+          >
+            {dataSourceTypes.map((dataSourceType) => (
+              <MuiButton
+                key={dataSourceType.id}
+                variant="outlined"
+                onClick={(e) => {
+                  setDataSourceType(dataSourceType);
+                }}
+              >
+                {dataSourceType.name}
+              </MuiButton>
+            ))}
+          </ButtonGroup>
+          <ThemedJsonForm
+            schema={dataSourceType?.entry_config_schema || {}}
+            validator={validator}
+            uiSchema={{
+              ...(dataSourceType?.entry_config_ui_schema || {}),
+              ...{
+                "ui:submitButtonOptions": {
+                  norender: true,
+                },
+                "ui:DescriptionFieldTemplate": () => null,
+                "ui:TitleFieldTemplate": () => null,
+              },
+            }}
+            widgets={{
+              gdrive: CustomGdriveFileWidget,
+              webpageurls: CustomWebpageURLExtractorWidget,
+            }}
+            formData={formData}
+            onChange={({ formData }) => {
+              setFormData(formData);
+            }}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <MuiButton onClick={handleCancelCb}>Cancel</MuiButton>,
+        <MuiButton
+          variant="contained"
           onClick={() => {
             if (datasource) {
               axios()
@@ -86,59 +146,8 @@ export function AddDataSourceModal({
           }}
         >
           Submit
-        </Button>,
-      ]}
-    >
-      <Space direction="vertical" style={{ width: "100%" }}>
-        <Input
-          value={dataSourceName}
-          onChange={(e) => setDataSourceName(e.target.value)}
-          placeholder="Data Source Name"
-          disabled={datasource ? true : false}
-          required={true}
-          defaultValue={datasource?.name || "Untitled"}
-          status={dataSourceNameError ? "error" : ""}
-        />
-        <span>Data Source Type</span>
-        <Radio.Group
-          optionType="button"
-          value={dataSourceType?.id}
-          onChange={(e) => {
-            setDataSourceType(
-              dataSourceTypes.find(
-                (dataSourceType) => dataSourceType.id === e.target.value,
-              ),
-            );
-          }}
-          options={dataSourceTypes.map((dataSourceType) => ({
-            label: dataSourceType.name,
-            value: dataSourceType.id,
-          }))}
-          disabled={datasource ? true : false}
-        />
-        <ThemedJsonForm
-          schema={dataSourceType?.entry_config_schema || {}}
-          validator={validator}
-          uiSchema={{
-            ...(dataSourceType?.entry_config_ui_schema || {}),
-            ...{
-              "ui:submitButtonOptions": {
-                norender: true,
-              },
-              "ui:DescriptionFieldTemplate": () => null,
-              "ui:TitleFieldTemplate": () => null,
-            },
-          }}
-          widgets={{
-            gdrive: CustomGdriveFileWidget,
-            webpageurls: CustomWebpageURLExtractorWidget,
-          }}
-          formData={formData}
-          onChange={({ formData }) => {
-            setFormData(formData);
-          }}
-        />
-      </Space>
-    </Modal>
+        </MuiButton>
+      </DialogActions>
+    </Dialog>
   );
 }
