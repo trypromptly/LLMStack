@@ -1,4 +1,5 @@
 import axiosLib from "axios";
+import { enqueueSnackbar } from "notistack";
 
 export const axios = () => {
   const caxios = axiosLib.create({
@@ -17,6 +18,7 @@ export const axios = () => {
       ) {
         window.location.href = "/login";
       }
+      enqueueSnackbar("Error Occurred", { variant: "error" });
       return Promise.reject(error);
     },
   );
