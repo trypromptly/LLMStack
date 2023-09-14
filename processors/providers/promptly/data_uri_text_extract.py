@@ -138,6 +138,7 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
 
         text = extract_text_from_b64_json(
             mime_type=mime_type, base64_encoded_data=data,
+            file_name=file_name,
             extra_params=ExtraParams(openai_key=openai_api_key),
         )
         self.extracted_text = text

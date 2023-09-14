@@ -343,8 +343,6 @@ class EndpointViewSet(viewsets.ViewSet):
             request_user_agent=request_user_agent, request_body=request.data,
             request_content_type=request.content_type,
         )
-        logger.info("Request: {}".format(input_request))
-
         try:
             invoke_result = self.run_endpoint(
                 endpoint=endpoint, run_as_user=request.user, input_request=input_request, template_values=template_values, bypass_cache=bypass_cache, input=input, config=config, app_session=None, stream=stream,
