@@ -27,7 +27,7 @@ class Organization(models.Model):
     domains = PGArrayField(
         models.CharField(max_length=100), default=list, help_text='List of allowed domains of the organization',
     ) if connection.vendor == 'postgresql' else ArrayField(
-        default='', help_text='List of allowed domains of the organization',
+        null=True, help_text='List of allowed domains of the organization',
     )
     admin_email = models.EmailField(
         max_length=100, help_text='Email of the admin of the organization',

@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         ))
     else:
         accessible_by_field = ('accessible_by', ArrayField(
-            default='',
+            null=True,
             help_text='List of user emails or domains who can access the app',
             blank=True,
         ))

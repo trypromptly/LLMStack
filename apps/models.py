@@ -189,17 +189,17 @@ class App(models.Model):
     accessible_by = PGArrayField(
         models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can access the app', blank=True,
     ) if connection.vendor == 'postgresql' else ArrayField(
-        default='', help_text='List of user emails or domains who can access the app', blank=True,
+        null=True, help_text='List of user emails or domains who can access the app', blank=True,
     )
     read_accessible_by = PGArrayField(
         models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can access the app', blank=True,
     ) if connection.vendor == 'postgresql' else ArrayField(
-        default='', help_text='List of user emails or domains who can access the app', blank=True,
+        null=True, help_text='List of user emails or domains who can access the app', blank=True,
     )
     write_accessible_by = PGArrayField(
         models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can modify the app', blank=True,
     ) if connection.vendor == 'postgresql' else ArrayField(
-        default='', help_text='List of user emails or domains who can modify the app', blank=True,
+        null=True, help_text='List of user emails or domains who can modify the app', blank=True,
     )
     access_permission = models.PositiveSmallIntegerField(
         default=AppAccessPermission.READ, choices=AppAccessPermission.choices, help_text='Permission for users who can access the app',

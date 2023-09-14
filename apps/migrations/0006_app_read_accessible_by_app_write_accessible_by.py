@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             model_name='app',
             name='read_accessible_by',
             field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=320), blank=True, default=list, help_text='List of user emails or domains who can access the app', size=None) if connection.vendor == 'postgresql' else ArrayField(
-                default='', help_text='List of user emails or domains who can access the app', blank=True,
+                null=True, help_text='List of user emails or domains who can access the app', blank=True,
             ),
         ),
         migrations.AddField(
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             name='write_accessible_by',
             field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(
                 max_length=320), blank=True, default=list, help_text='List of user emails or domains who can modify the app', size=None) if connection.vendor == 'postgresql' else ArrayField(
-                default='', help_text='List of user emails or domains who can modify the app', blank=True,
+                null=True, help_text='List of user emails or domains who can modify the app', blank=True,
             ),
         ),
     ]

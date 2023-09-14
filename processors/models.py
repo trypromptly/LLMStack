@@ -272,7 +272,7 @@ class RunEntry(models.Model):
     processor_runs = PGArrayField(
         models.JSONField(default=dict, blank=True), default=list, help_text='Array of processor data for each endpoint including input and output data',
     ) if connection.vendor == 'postgresql' else ArrayField(
-        default='', help_text='Array of processor data for each endpoint including input and output data',
+        null=True, help_text='Array of processor data for each endpoint including input and output data',
     )
     platform_data = models.JSONField(
         default=dict, blank=True, help_text='Platform data for the run',

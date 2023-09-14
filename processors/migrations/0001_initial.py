@@ -337,7 +337,7 @@ class Migration(migrations.Migration):
                 ('response_headers', models.JSONField(
                     blank=True, default=dict, help_text='Response headers')),
                 ('processor_runs', django.contrib.postgres.fields.ArrayField(base_field=models.JSONField(blank=True, default=dict), default=list, help_text='Array of processor data for each endpoint including input and output data', size=None) if connection.vendor == 'postgresql' else ArrayField(
-                    default='', help_text='Array of processor data for each endpoint including input and output data',
+                    null=True, help_text='Array of processor data for each endpoint including input and output data',
                 )),
                 ('platform_data', models.JSONField(blank=True,
                  default=dict, help_text='Platform data for the run')),

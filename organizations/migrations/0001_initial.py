@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         ))
     else:
         domains_field = ('domains', ArrayField(
-            default='',
+            null=True,
             help_text='List of allowed domains of the organization',
             blank=True,
         ))
