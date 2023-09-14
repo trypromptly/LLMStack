@@ -7,7 +7,7 @@ from nacl.signing import VerifyKey
 from pydantic import Field
 from rest_framework.exceptions import NotAuthenticated
 
-from apps.models import App
+from apps.models import App, AppData
 from apps.types.app_type_interface import AppTypeInterface
 from apps.types.app_type_interface import BaseSchema
 
@@ -61,14 +61,15 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
 
             slash_command_name = config['slash_command_name']
             slash_command_options = []
-            properties = app.input_schema['properties']
-
-            for input_field in properties:
+            app_data = AppData.objects.filter(app_uuid=app.uuid, is_draft=False).order_by('-created_at').first() or AppData.objects.filter(app_uuid=app.uuid, is_draft=True).order_by('-created_at').first()
+            input_fields = app_data.data['input_fields']
+            
+            for input_field in input_fields:
                 slash_command_options.append({
-                    'name': input_field,
-                    'description': properties[input_field]['description'],
-                    'type': get_discord_field_type(properties[input_field]['type']),
-                    'required': input_field in app.input_schema.get('required', []),
+                    'name': input_field['name'],
+                    'description': input_field['description'],
+                    'type': get_discord_field_type(input_field['type']),
+                    'required': input_field['required'],
                 })
             body = {
                 'name': slash_command_name,
@@ -84,6 +85,9 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
                         'Authorization': f'Bot {config.get("bot_token")}',
                     },
                 )
+                if not response.ok:
+                    logger.error(f'Failed to update slash command, Error: {response.text}')
+                    raise Exception('Failed to update slash command')
 
             else:
                 # Create the slash command
@@ -92,6 +96,10 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
                         'Authorization': f'Bot {config.get("bot_token")}',
                     },
                 )
+                if not response.ok:
+                    logger.error(f'Failed to update slash command, Error: {response.text}')
+                    raise Exception('Failed to update slash command')
+                
                 config['slash_command_id'] = response.json()['id']
                 app.discord_config = config
 
