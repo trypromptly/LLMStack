@@ -2,10 +2,13 @@ import logging
 import uuid
 
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField as PGArrayField
+from django.db import connection
 from django.db import models
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
+
+from common.utils.db_models import ArrayField
 
 logger = logging.getLogger(__name__)
 
@@ -266,8 +269,10 @@ class RunEntry(models.Model):
     response_headers = models.JSONField(
         default=dict, blank=True, help_text='Response headers',
     )
-    processor_runs = ArrayField(
+    processor_runs = PGArrayField(
         models.JSONField(default=dict, blank=True), default=list, help_text='Array of processor data for each endpoint including input and output data',
+    ) if connection.vendor == 'postgresql' else ArrayField(
+        default='', help_text='Array of processor data for each endpoint including input and output data',
     )
     platform_data = models.JSONField(
         default=dict, blank=True, help_text='Platform data for the run',

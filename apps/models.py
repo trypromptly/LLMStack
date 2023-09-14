@@ -2,7 +2,8 @@ import logging
 import uuid
 
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField as PGArrayField
+from django.db import connection
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -13,6 +14,7 @@ from apps.integration_configs import SlackIntegrationConfig
 from apps.integration_configs import WebIntegrationConfig
 from processors.models import Endpoint
 from base.models import Profile
+from common.utils.db_models import ArrayField
 
 logger = logging.getLogger(__name__)
 
@@ -184,14 +186,20 @@ class App(models.Model):
     visibility = models.PositiveSmallIntegerField(
         default=AppVisibility.PUBLIC, choices=AppVisibility.choices, help_text='Visibility of the app',
     )
-    accessible_by = ArrayField(
+    accessible_by = PGArrayField(
         models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can access the app', blank=True,
+    ) if connection.vendor == 'postgresql' else ArrayField(
+        default='', help_text='List of user emails or domains who can access the app', blank=True,
     )
-    read_accessible_by = ArrayField(
+    read_accessible_by = PGArrayField(
         models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can access the app', blank=True,
+    ) if connection.vendor == 'postgresql' else ArrayField(
+        default='', help_text='List of user emails or domains who can access the app', blank=True,
     )
-    write_accessible_by = ArrayField(
+    write_accessible_by = PGArrayField(
         models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can modify the app', blank=True,
+    ) if connection.vendor == 'postgresql' else ArrayField(
+        default='', help_text='List of user emails or domains who can modify the app', blank=True,
     )
     access_permission = models.PositiveSmallIntegerField(
         default=AppAccessPermission.READ, choices=AppAccessPermission.choices, help_text='Permission for users who can access the app',

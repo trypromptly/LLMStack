@@ -5,10 +5,13 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField as PGArrayField
+from django.db import connection
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
+from common.utils.db_models import ArrayField
 
 from apps.models import AppVisibility
 
@@ -21,8 +24,10 @@ class Organization(models.Model):
         max_length=100, unique=True,
         help_text='Unique identifier for the organization', default=None, null=True, blank=True,
     )
-    domains = ArrayField(
+    domains = PGArrayField(
         models.CharField(max_length=100), default=list, help_text='List of allowed domains of the organization',
+    ) if connection.vendor == 'postgresql' else ArrayField(
+        default='', help_text='List of allowed domains of the organization',
     )
     admin_email = models.EmailField(
         max_length=100, help_text='Email of the admin of the organization',
