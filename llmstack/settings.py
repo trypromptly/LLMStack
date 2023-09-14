@@ -40,6 +40,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = os.getenv(
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.sites',
@@ -223,25 +224,19 @@ REST_FRAMEWORK = {
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'BACKEND': f"django.core.cache.backends.{os.getenv('CACHE_BACKEND', 'redis.RedisCache')}",
         'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/1",
         'TIMEOUT': 3600,
     },
     'app_session': {
-        'BACKEND': 'django_redis.cache.RedisCache',
+        'BACKEND': f"django.core.cache.backends.{os.getenv('CACHE_BACKEND', 'redis.RedisCache')}",
         'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/2",
         'TIMEOUT': 3600,
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        },
     },
     'app_session_data': {
-        'BACKEND': 'django_redis.cache.RedisCache',
+        'BACKEND': f"django.core.cache.backends.{os.getenv('CACHE_BACKEND', 'redis.RedisCache')}",
         'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/3",
         'TIMEOUT': 3600,
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        },
     },
 }
 
@@ -290,6 +285,8 @@ RQ_QUEUES = {
         'DEFAULT_TIMEOUT': 1500,
     },
 }
+
+USE_REMOTE_JOB_QUEUE = os.getenv('USE_REMOTE_JOB_QUEUE', 'True') == 'True'
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
