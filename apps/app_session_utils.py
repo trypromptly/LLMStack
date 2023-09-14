@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
-from django_redis import get_redis_connection
 from django.conf import settings
+from django.core.cache import caches
 
 import orjson as json
 
@@ -9,8 +9,8 @@ APP_SESSION_TIMEOUT = settings.APP_SESSION_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
-app_session_store = get_redis_connection('app_session')
-app_session_data_store = get_redis_connection('app_session_data')
+app_session_store = caches['app_session']
+app_session_data_store = caches['app_session_data']
 
 
 def create_app_session(app, app_session_uuid):
