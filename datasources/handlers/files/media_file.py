@@ -78,7 +78,8 @@ class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
 
         file_text = extract_text_from_b64_json(
             mime_type=data.data['mime_type'],
-            base64_encoded_data=data.data['file_data'], file_name=data.data['file_name'], extra_params=ExtraParams(
+            base64_encoded_data=data.data['file_data'], 
+            file_name=data.data['file_name'], extra_params=ExtraParams(
                 openai_key=openai_key),
         )
 

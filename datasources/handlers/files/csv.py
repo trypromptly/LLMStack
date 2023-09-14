@@ -6,7 +6,6 @@ from pydantic import Field
 
 from common.blocks.data.store.vectorstore import Document
 from common.utils.splitter import CSVTextSplitter
-from common.utils.text_extract import extract_text_from_b64_json
 from common.utils.utils import validate_parse_data_uri
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
