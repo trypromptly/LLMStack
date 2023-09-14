@@ -18,7 +18,7 @@ class BookKeepingActor(Actor):
         self._output_stream = output_stream
         self._bookkeeping_data_map = {}
 
-    def on_receive(self, message: Message) -> Any:
+    def on_receive(self, message: Message) -> Any:        
         if message.message_type == MessageType.BOOKKEEPING:
             self._bookkeeping_data_map[message.message_from] = message.message
 
@@ -32,16 +32,20 @@ class BookKeepingActor(Actor):
 
             # Persist history
             if len(self._bookkeeping_data_map) == len(self.dependencies):
-                try:
-                    HistoryPersistenceJob.create(
-                        func=persist_history_task, args=[
-                            list(self._processor_configs.keys()
-                                 ), self._bookkeeping_data_map,
-                        ],
-                    ).add_to_queue()
-                except Exception as e:
-                    logger.error(f'Error adding history persistence job: {e}')
                 self._output_stream.bookkeep_done()
+
+    def on_stop(self) -> None:
+        logger.info('Stopping BookKeepingActor')
+        try:
+            HistoryPersistenceJob.create(
+                func=persist_history_task, args=[
+                    list(self._processor_configs.keys()
+                            ), self._bookkeeping_data_map,
+                ],
+            ).add_to_queue()
+        except Exception as e:
+            logger.error(f'Error adding history persistence job: {e}')
+        return super().on_stop()
 
     def get_dependencies(self):
         return list(set([x['template_key'] for x in self._processor_configs.values()]))
