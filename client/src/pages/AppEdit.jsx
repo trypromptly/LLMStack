@@ -273,7 +273,6 @@ export default function AppEditPage(props) {
             resolve(response.data);
           })
           .catch((error) => {
-            enqueueSnackbar("Error in saving app", { variant: "error" });
             reject(error);
           });
       } else {
