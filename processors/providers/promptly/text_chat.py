@@ -259,7 +259,7 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         if len(docs) > 0:
             async_to_sync(output_stream.write)(
                 TextChatOutput(answer='', citations=list(map(lambda d: Citation(
-                    text=d.page_content, source=d.metadata['source'], certainty=d.metadata['certainty'], distance=d.metadata['distance']), docs))))
+                    text=d.page_content, source=d.metadata['source'], distance=d.metadata['distance']), docs))))
 
         output = output_stream.finalize()
 

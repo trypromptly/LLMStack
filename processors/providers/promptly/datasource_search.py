@@ -105,7 +105,7 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
                     content=document.page_content,
                     source=source,
                     metadata=DocumentMetadata(
-                        certainty=document.metadata['certainty'],
+                        certainty=document.metadata['certainty'] if 'certainty' in document.metadata else 0.0,
                         distance=document.metadata['distance'],
                     ),
                 ),
