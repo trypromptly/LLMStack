@@ -110,7 +110,7 @@ class SlackAppRunner(AppRunner):
                     'channel': slack_request_payload['event']['channel'],
                     'text-type': slack_request_payload['event']['type'],
                     'ts': slack_request_payload['event']['ts'],
-                    **dict(zip(self.app.input_schema.get('properties', {}).keys(), [payload] * len(self.app.input_schema.get('properties', {})))),
+                    **dict(zip(list(map(lambda x: x['name'], self.app_data['input_fields'])), [payload] * len(self.app_data['input_fields']))),
                 },
             }
         else:
@@ -118,14 +118,10 @@ class SlackAppRunner(AppRunner):
 
     def _get_slack_processor_actor_configs(self, input_data):
         output_template = convert_template_vars_from_legacy_format(
-            self.app.output_template.get('markdown', ''),
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
         )
         vendor_env = self.app_owner_profile.get_vendor_env()
-        processors = [
-            x.exit_endpoint for x in self.app.run_graph.all().order_by(
-                'id',
-            ) if x is not None and x.exit_endpoint is not None
-        ]
 
         return ActorConfig(
             name='slack_processor',
@@ -189,8 +185,9 @@ class SlackAppRunner(AppRunner):
             processor_configs = {}
         else:
             template = convert_template_vars_from_legacy_format(
-                self.app.output_template.get('markdown', ''),
-            )
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
+        )
             actor_configs = [
                 ActorConfig(
                     name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
