@@ -114,6 +114,8 @@ DATABASES = {
     },
 }
 
+DEFAULT_VECTOR_DATABASE = os.getenv('DEFAULT_VECTOR_DATABASE', 'weaviate')
+DEFAULT_VECTOR_DATABASE_PATH = os.getenv('DEFAULT_VECTOR_DATABASE_PATH')
 
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`

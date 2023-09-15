@@ -1,20 +1,20 @@
 import logging
-from typing import Any
+from typing import Any, Tuple
 from typing import List
 from uuid import uuid4
 
 import chromadb
 from pydantic import BaseModel
+from django.conf import settings
 
 from common.blocks.data.store.vectorstore import Document
 from common.blocks.data.store.vectorstore import DocumentQuery
 from common.blocks.data.store.vectorstore import VectorStoreInterface
 
-logger = logging.getLogger(__name__)
-
 
 class ChromaConfiguration(BaseModel):
     _type = 'Chroma'
+    anonymized_telemetry = False
 
 
 class Chroma(VectorStoreInterface):
@@ -24,7 +24,9 @@ class Chroma(VectorStoreInterface):
 
     def __init__(self, *args, **kwargs) -> None:
         configuration = ChromaConfiguration(**kwargs)
-        self._client = chromadb.Client()
+        db_settings = chromadb.config.Settings(**configuration.dict())
+        self._client = chromadb.PersistentClient(
+            path=settings.DEFAULT_VECTOR_DATABASE_PATH, settings=db_settings) if settings.DEFAULT_VECTOR_DATABASE_PATH else chromadb.Client(settings=db_settings)
 
     def add_text(self, index_name: str, document: Document, **kwargs: Any):
         content_key = document.page_content_key
@@ -39,7 +41,7 @@ class Chroma(VectorStoreInterface):
             collection.add(
                 documents=[
                     properties.pop(
-                    content_key,
+                        content_key,
                     ),
                 ], metadatas=[properties], ids=[id], embeddings=[properties.pop('embeddings')],
             )
@@ -47,7 +49,7 @@ class Chroma(VectorStoreInterface):
             collection.add(
                 documents=[
                     properties.pop(
-                    content_key,
+                        content_key,
                     ),
                 ], metadatas=[properties], ids=[id],
             )
@@ -56,7 +58,7 @@ class Chroma(VectorStoreInterface):
     def add_texts(self, index_name: str, documents: List[Document], **kwargs: Any):
         ids = []
         for document in documents:
-            ids.append(self.add_text(index_name, document, kwargs))
+            ids.append(self.add_text(index_name, document, kwargs=kwargs))
         return ids
 
     def get_or_create_index(self, index_name: str, schema: str, **kwargs: Any):
@@ -72,6 +74,19 @@ class Chroma(VectorStoreInterface):
         collection = self._client.get_collection(kwargs['index_name'])
         collection.delete([document_id])
 
+    def get_document_by_id(self, index_name: str, document_id: str, content_key: str):
+        collection = self._client.get_collection(index_name)
+        result = collection.get(
+            [document_id], include=[
+                'documents', 'metadatas', 'embeddings',
+            ],
+        )
+        return Document(content_key, result['documents'][0] if len(result['documents']) > 0 else None, {
+            **result['metadatas'][0]} if len(result['metadatas']) > 0 else None)
+
+    def hybrid_search(self, index_name: str, document_query: DocumentQuery, **kwargs) -> List[Tuple[int, float]]:
+        return self.similarity_search(index_name, document_query, **kwargs)
+
     def similarity_search(self, index_name: str, document_query: DocumentQuery, **kwargs: Any):
         result = []
         collection = self._client.get_collection(index_name)
@@ -81,30 +96,10 @@ class Chroma(VectorStoreInterface):
         for index in range(len(search_result['documents'])):
             document_content = search_result['documents'][index][0]
             metadata = search_result['metadatas'][index][0]
+            metadata['distance'] = search_result['distances'][index][0] if len(
+                search_result['distances']) > 0 else -1
             result.append(
                 Document('', document_content, metadata),
             )
 
         return result
-
-    def get_document_by_id(self, document_id: str, **kwargs: Any):
-        collection = self._client.get_collection(kwargs['index_name'])
-        document = collection.get(
-            [document_id], include=[
-            'documents', 'metadatas', 'embeddings',
-            ],
-        ).get(ids=[document_id])
-        return Document('', document[0][0], document[1][0])
-
-    def get_document_by_index(self, index_name: str, **kwargs: Any):
-        results = []
-        collection = self._client.get_collection(index_name)
-        document_count = collection.count()
-        result = collection.peek(limit=document_count)
-        for index in range(len(result['ids'])):
-            results.append(
-                Document(
-                'content', result['documents'][index], {**result['metadatas'][index], 'embeddings': result['embeddings'][index], 'id': result['ids'][index]},
-                ),
-            )
-        return results

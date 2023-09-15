@@ -1,15 +1,17 @@
 from enum import Enum
 import json
 import logging
+
+from django.conf import settings
 from string import Template
 from typing import List
 from typing import Optional
 from typing import TypeVar
-
 from pydantic import BaseModel
 
 from common.blocks.base.schema import BaseSchema as _Schema
 from common.blocks.base.processor import ProcessorInterface, BaseInputType
+from common.blocks.data.store.vectorstore.chroma import Chroma
 from common.blocks.embeddings.openai_embedding import EmbeddingAPIProvider
 from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingConfiguration
 from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingInput
@@ -57,20 +59,23 @@ class DataSourceEntryItem(BaseModel):
     metadata: dict = {}
     data: Optional[dict] = None
 
+
 class DataSourceSyncType(str, Enum):
     FULL = 'full'
     INCREMENTAL = 'incremental'
-    
+
+
 class DataSourceSyncConfiguration(_Schema):
     sync_type: DataSourceSyncType = 'full'
-    
+
+
 class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
     @classmethod
     def get_content_key(cls) -> str:
         datasource_type_interface = cls.__orig_bases__[0]
         return datasource_type_interface.__args__[0].get_content_key()
-    
+
     @classmethod
     def get_sync_configuration(cls) -> Optional[dict]:
         return None
@@ -103,50 +108,59 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         promptly_weaviate = None
         embedding_endpoint_configuration = None
 
-        if vectorstore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
-            promptly_weaviate = PromptlyWeaviate(
-                url=self.profile.weaviate_url,
-                openai_key=self.profile.get_vendor_key('openai_key'),
-                weaviate_rw_api_key=self.profile.weaviate_api_key,
-                embeddings_rate_limit=vectorstore_embedding_rate_limit,
-                embeddings_batch_size=vectorstore_embeddings_batch_size,
-            )
-            embedding_endpoint_configuration = OpenAIEmbeddingConfiguration(
-                api_type=EmbeddingAPIProvider.OPENAI,
-                model='text-embedding-ada-002',
-                api_key=self.profile.get_vendor_key('openai_key'),
-            )
-        else:
+        default_vector_database = settings.DEFAULT_VECTOR_DATABASE
+        if default_vector_database == 'weaviate':
+            if vectorstore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
+                promptly_weaviate = PromptlyWeaviate(
+                    url=self.profile.weaviate_url,
+                    openai_key=self.profile.get_vendor_key('openai_key'),
+                    weaviate_rw_api_key=self.profile.weaviate_api_key,
+                    embeddings_rate_limit=vectorstore_embedding_rate_limit,
+                    embeddings_batch_size=vectorstore_embeddings_batch_size,
+                )
+                embedding_endpoint_configuration = OpenAIEmbeddingConfiguration(
+                    api_type=EmbeddingAPIProvider.OPENAI,
+                    model='text-embedding-ada-002',
+                    api_key=self.profile.get_vendor_key('openai_key'),
+                )
+            else:
 
-            promptly_weaviate = PromptlyWeaviate(
-                url=self.profile.weaviate_url,
-                azure_openai_key=self.profile.get_vendor_key(
-                    'azure_openai_api_key',
-                ),
-                weaviate_rw_api_key=self.profile.weaviate_api_key,
-                embeddings_rate_limit=vectorstore_embedding_rate_limit,
-                embeddings_batch_size=vectorstore_embeddings_batch_size,
+                promptly_weaviate = PromptlyWeaviate(
+                    url=self.profile.weaviate_url,
+                    azure_openai_key=self.profile.get_vendor_key(
+                        'azure_openai_api_key',
+                    ),
+                    weaviate_rw_api_key=self.profile.weaviate_api_key,
+                    embeddings_rate_limit=vectorstore_embedding_rate_limit,
+                    embeddings_batch_size=vectorstore_embeddings_batch_size,
+                )
+                embedding_endpoint_configuration = OpenAIEmbeddingConfiguration(
+                    api_type=EmbeddingAPIProvider.AZURE_OPENAI,
+                    endpoint=self.profile.weaviate_text2vec_config['resourceName'],
+                    deploymentId=self.profile.weaviate_text2vec_config['deploymentId'],
+                    apiVersion='2022-12-01',
+                    api_key=self.profile.get_vendor_key(
+                        'azure_openai_api_key'),
+                )
+
+            # Get Weaviate schema
+            weaviate_schema = json.loads(
+                self.get_weaviate_schema(self.datasource_class_name),
             )
-            embedding_endpoint_configuration = OpenAIEmbeddingConfiguration(
-                api_type=EmbeddingAPIProvider.AZURE_OPENAI,
-                endpoint=self.profile.weaviate_text2vec_config['resourceName'],
-                deploymentId=self.profile.weaviate_text2vec_config['deploymentId'],
-                apiVersion='2022-12-01',
-                api_key=self.profile.get_vendor_key('azure_openai_api_key'),
+            weaviate_schema['classes'][0]['moduleConfig']['text2vec-openai'] = self.profile.weaviate_text2vec_config
+            # Create an index for the datasource
+            promptly_weaviate.get_or_create_index(
+                index_name=self.datasource_class_name,
+                schema=json.dumps(weaviate_schema),
             )
 
-        # Get Weaviate schema
-        weaviate_schema = json.loads(
-            self.get_weaviate_schema(self.datasource_class_name),
-        )
-        weaviate_schema['classes'][0]['moduleConfig']['text2vec-openai'] = self.profile.weaviate_text2vec_config
-        # Create an index for the datasource
-        promptly_weaviate.get_or_create_index(
-            index_name=self.datasource_class_name,
-            schema=json.dumps(weaviate_schema),
-        )
-
-        self._vectorstore = promptly_weaviate
+            self._vectorstore = promptly_weaviate
+        elif default_vector_database == 'chroma':
+            self._vectorstore = Chroma()
+            self._vectorstore.get_or_create_index(
+                index_name=self.datasource_class_name,
+                schema='',
+            )
 
         if self.profile.use_custom_embedding:
             self._embeddings_endpoint = OpenAIEmbeddingsProcessor(
@@ -215,36 +229,37 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
                 logger.info(
                     f'Deleting document {document_id} from vectorstore.',
                 )
-                self.vectorstore._client.data_object.delete(
-                    document_id, self.datasource_class_name,
+                self.vectorstore.delete_document(
+                    document_id, index_name=self.datasource_class_name,
                 )
-    
+
     def resync_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
-        # Delete old data 
+        # Delete old data
         self.delete_entry(data)
         # Add new data
-        return self.add_entry(DataSourceEntryItem(**data["input"])) 
-    
+        return self.add_entry(DataSourceEntryItem(**data["input"]))
+
     def delete_all_entries(self) -> None:
-        self.vectorstore._client.schema.delete_class(
-            self.datasource_class_name,
+        self.vectorstore.delete_index(
+            index_name=self.datasource_class_name,
         )
 
     def get_entry_text(self, data: dict) -> str:
-        result = []
-        document = {}
+        documents = []
         if 'document_ids' in data and isinstance(data['document_ids'], list):
             for document_id in data['document_ids'][:20]:
                 content_key = self.get_content_key()
-                document = self.vectorstore._client.data_object.get(
-                    document_id,
-                ).get('properties')
-                result.append(document.get(content_key, ''))
-        metadata = dict(
-            map(
-                lambda x: (x, document.get(x, '')), [
-                    y for y in document.keys() if y != content_key
-                ],
-            ),
-        )
-        return metadata, '\n'.join(result)
+                logger.debug(
+                    f'Fetching document {content_key} {self.datasource_class_name} from vectorstore.',
+                )
+                document = self.vectorstore.get_document_by_id(
+                    index_name=self.datasource_class_name, document_id=document_id, content_key=content_key
+                )
+
+                if documents is not None:
+                    documents.append(document)
+
+        if len(documents) > 0:
+            return documents[0].metadata, '\n'.join(list(map(lambda x: x.page_content, documents)))
+        else:
+            return {}, ''

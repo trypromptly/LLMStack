@@ -53,3 +53,7 @@ class VectorStoreInterface(ABC):
     @abstractmethod
     def hybrid_search(self, index_name: str, document_query: DocumentQuery, **kwargs) -> List[Tuple[int, float]]:
         raise NotImplementedError
+
+    @abstractmethod
+    def get_document_by_id(self, index_name: str, document_id: str, content_key: str) -> Document:
+        raise NotImplementedError

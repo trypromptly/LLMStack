@@ -127,7 +127,7 @@ class Weaviate(VectorStoreInterface):
                     if 'error' in result['result']['errors']:
                         logger.error(
                             'Error in document creation: {}'.format(
-                            json.dumps(result['result']['errors']),
+                                json.dumps(result['result']['errors']),
                             ),
                         )
 
@@ -215,6 +215,18 @@ class Weaviate(VectorStoreInterface):
             document_id, kwargs['index_name'],
         )
 
+    def get_document_by_id(self, index_name: str, document_id: str, content_key: str):
+        try:
+            result = self.client.data_object.get(
+                uuid=document_id, class_name=index_name)
+
+            return Document(content_key, result['properties'].get(content_key, None), {k: v for k, v in result['properties'].items() if k != content_key})
+        except weaviate.exceptions.UnexpectedStatusCodeException as e:
+            if e.status_code == 404:
+                return None
+            else:
+                raise e
+
     def similarity_search(self, index_name: str, document_query: DocumentQuery, **kwargs: Any):
         result = []
         nearText = {'concepts': [document_query.query]}
@@ -270,7 +282,8 @@ class Weaviate(VectorStoreInterface):
 
             result.append(
                 Document(
-                page_content_key=document_query.page_content_key, page_content=text, metadata={**additional_properties, **_document_search_properties},
+                    page_content_key=document_query.page_content_key, page_content=text, metadata={
+                        **additional_properties, **_document_search_properties},
                 ),
             )
 
@@ -327,7 +340,8 @@ class Weaviate(VectorStoreInterface):
 
             result.append(
                 Document(
-                page_content_key=document_query.page_content_key, page_content=text, metadata={**additional_properties, **_document_search_properties},
+                    page_content_key=document_query.page_content_key, page_content=text, metadata={
+                        **additional_properties, **_document_search_properties},
                 ),
             )
 
