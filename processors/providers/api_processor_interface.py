@@ -149,8 +149,8 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
     def input(self, message: Any) -> Any:
         # Hydrate the input and config before processing
         try:
-            self._input = hydrate_input(self._input, message)
-            self._config = hydrate_input(self._config, message)
+            self._input = hydrate_input(self._input, message) if message else self._input
+            self._config = hydrate_input(self._config, message) if self._config else self._config
             output = self.process()
         except Exception as e:
             output = {

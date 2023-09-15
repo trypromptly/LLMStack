@@ -272,7 +272,9 @@ export default function AppEditPage(props) {
             enqueueSnackbar("App updated successfully", { variant: "success" });
             resolve(response.data);
           })
-          .catch((error) => reject(error));
+          .catch((error) => {
+            reject(error);
+          });
       } else {
         createApp(updatedApp)
           .then((response) => resolve(response.data))

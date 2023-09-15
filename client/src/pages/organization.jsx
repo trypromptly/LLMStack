@@ -270,9 +270,6 @@ export default function OrganizationPage() {
       .then((request) => {
         setOrganizationSettings(request.data);
         enqueueSnackbar("Settings saved", { variant: "success" });
-      })
-      .catch(() => {
-        enqueueSnackbar("Error saving settings", { variant: "error" });
       });
   };
 

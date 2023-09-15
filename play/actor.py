@@ -47,7 +47,7 @@ class Actor(ThreadingActor):
 
     def on_receive(self, message: Message) -> Any:
         if message.message_type == MessageType.BEGIN:
-            self.begin()
+            self.input(message.message)
 
         message_and_key = {
             message.template_key: message.message,

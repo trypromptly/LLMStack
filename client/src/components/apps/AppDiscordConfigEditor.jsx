@@ -44,7 +44,9 @@ export function AppDiscordConfigEditor(props) {
               slash_command_description: e.target.value,
             })
           }
-          defaultValue={discordConfig?.slash_command_description || ""}
+          defaultValue={
+            discordConfig?.slash_command_description || "Promptly App"
+          }
           size="small"
         />
         <TextField

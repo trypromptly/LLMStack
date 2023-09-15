@@ -78,11 +78,14 @@ class Coordinator(ThreadingActor):
                             actor_config.name,
                         )
 
-        logger.debug(f'Actor dependencies: {self._actor_dependencies}')
-
         # Set a timer for TIMEOUT seconds to stop the coordinator when there is no activity
-        self._idle_timer = ResettableTimer(TIMEOUT, self.force_stop)
+        self._idle_timer = ResettableTimer(TIMEOUT, self.on_timer_expire)
         self._idle_timer.start()
+        
+        for actor in self._actor_dependencies:
+            if not self._actor_dependencies[actor] and actor not in ['input', 'output', 'bookkeeping']:
+                logger.info(f'Actor {actor} has no dependencies. Sending BEGIN message')
+                self.actors[actor].tell(Message(message_type=MessageType.BEGIN))
 
     def relay(self, message: Message):
         self._idle_timer.reset()
@@ -103,6 +106,13 @@ class Coordinator(ThreadingActor):
 
     def get_actor(self, name):
         return self.actors[name]
+    
+    def on_timer_expire(self) -> None:
+        logger.info(f'Coordinator {self.actor_urn} timed out')
+        output_actor_ref = self.actors.get('output')
+        if output_actor_ref:
+            output_actor_ref.tell(Message(message_type=MessageType.STREAM_ERROR, message={'errors': ['Timed out waiting for response']}))
+            ResettableTimer(TIMEOUT, self.force_stop).start()
 
     def on_stop(self) -> None:
         logger.info(f'Coordinator {self.actor_urn} stopping')

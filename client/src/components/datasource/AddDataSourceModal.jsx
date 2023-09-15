@@ -17,6 +17,7 @@ import ThemedJsonForm from "../ThemedJsonForm";
 import { useReloadDataSourceEntries } from "../../data/init";
 import GdriveFilePicker from "../form/GdriveFilePicker";
 import WebpageURLExtractorWidget from "../form/WebpageURLExtractorWidget";
+import { enqueueSnackbar } from "notistack";
 
 function CustomGdriveFileWidget(props) {
   return <GdriveFilePicker {...props} />;
@@ -117,8 +118,14 @@ export function AddDataSourceModal({
                 })
                 .then(() => {
                   reloadDataSourceEntries();
-                  handleCancelCb();
                 });
+              handleCancelCb();
+              enqueueSnackbar(
+                "Processing Data, please refresh the page in a few minutes",
+                {
+                  variant: "success",
+                },
+              );
             } else {
               if (dataSourceName === "") {
                 setDataSourceNameError(true);
@@ -139,9 +146,15 @@ export function AddDataSourceModal({
                     })
                     .then((response) => {
                       dataSourceAddedCb(dataSource);
-                      handleCancelCb();
                     });
                 });
+              handleCancelCb();
+              enqueueSnackbar(
+                "Processing Data, please refresh the page in a few minutes",
+                {
+                  variant: "success",
+                },
+              );
             }
           }}
         >
