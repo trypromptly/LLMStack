@@ -4,11 +4,14 @@ import {
 } from "@jsonforms/material-renderers";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { JsonForms } from "@jsonforms/react";
-import { Empty, Tabs } from "antd";
+import { Box, Tab } from "@mui/material";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
+
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
 import { useRecoilState } from "recoil";
+import { Empty } from "./form/Empty";
 
 const theme = createTheme({
   typography: {
@@ -56,33 +59,33 @@ export function ThemedJsonEditor(props) {
 }
 
 export default function JsonForm(props) {
+  const [value, setValue] = React.useState("form");
+
   if (Object.keys(props.schema).length === 0) {
-    return (
-      <Empty
-        image={Empty.PRESENTED_IMAGE_DEFAULT}
-        description={
-          props.emptyMessage ? props.emptyMessage : "Schema not found"
-        }
-        style={{ color: "#838383" }}
-      />
-    );
+    return <Empty emptyMessage={props.emptyMessage} />;
   }
 
   return (
-    <Tabs
-      defaultActiveKey="1"
-      items={[
-        {
-          key: "1",
-          label: "Form",
-          children: <ThemedJsonForm {...props} />,
-        },
-        {
-          key: "2",
-          label: "JSON",
-          children: <ThemedJsonEditor {...props} />,
-        },
-      ]}
-    />
+    <Box sx={{ width: "100%" }}>
+      <TabContext value={value}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <TabList
+            onChange={(event, newValue) => {
+              setValue(newValue);
+            }}
+            aria-label="Json form tabs"
+          >
+            <Tab label="Form" value="form" />
+            <Tab label="JSON" value="json" />
+          </TabList>
+        </Box>
+        <TabPanel value="form" sx={{ padding: "4px" }}>
+          <ThemedJsonForm {...props} />
+        </TabPanel>
+        <TabPanel value="json" sx={{ padding: "4px" }}>
+          <ThemedJsonEditor {...props} />
+        </TabPanel>
+      </TabContext>
+    </Box>
   );
 }

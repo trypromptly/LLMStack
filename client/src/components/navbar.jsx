@@ -1,6 +1,13 @@
 import React from "react";
-import { Button, Space, Image, Dropdown } from "antd";
-import { MenuOutlined } from "@ant-design/icons";
+import {
+  AppBar,
+  Toolbar,
+  Menu,
+  MenuItem,
+  IconButton,
+  Link,
+} from "@mui/material";
+import { Menu as MenuIcon } from "@mui/icons-material";
 
 const icon = require(`../assets/${
   process.env.REACT_APP_SITE_NAME
@@ -8,9 +15,6 @@ const icon = require(`../assets/${
     : "llmstack"
 }-icon.png`);
 
-const iconStyle = {
-  width: "32px",
-};
 const navbarStyle = {
   width: "100%",
   color: "#000",
@@ -19,47 +23,54 @@ const navbarStyle = {
 };
 
 export default function NavBar({ menuItems }) {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
-    <div>
-      <nav className="navbar" style={navbarStyle}>
-        <Space
-          direction="horizontal"
-          style={{
-            padding: "5px",
-            width: "100%",
-            alignItems: "center",
-            display: "flex",
-            justifyContent: "space-between",
+    <AppBar
+      position="static"
+      color="transparent"
+      elevation={1}
+      style={navbarStyle}
+    >
+      <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        <IconButton
+          edge="start"
+          color="inherit"
+          href="/"
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = "/";
           }}
         >
-          <a
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              window.location.href = "/";
-            }}
-          >
-            <Image style={iconStyle} src={icon} preview={false} />
-          </a>
-          <Dropdown
-            menu={{
-              items: menuItems.map((item) => {
-                return {
-                  key: item.key,
-                  label: <a href={item.link}>{item.label}</a>,
-                };
-              }),
-            }}
-            trigger={["click"]}
-          >
-            <Button
-              className="nav-menu"
-              icon={<MenuOutlined />}
-              onClick={(e) => e.preventDefault()}
-            ></Button>
-          </Dropdown>
-        </Space>
-      </nav>
-    </div>
+          <img src={icon} alt={icon} width="32px" />
+        </IconButton>
+
+        <IconButton edge="end" color="inherit" onClick={handleMenuClick}>
+          <MenuIcon />
+        </IconButton>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+        >
+          {menuItems.map((item) => (
+            <MenuItem key={item.key} onClick={handleMenuClose}>
+              <Link href={item.link} underline="none">
+                {item.label}
+              </Link>
+            </MenuItem>
+          ))}
+        </Menu>
+      </Toolbar>
+    </AppBar>
   );
 }

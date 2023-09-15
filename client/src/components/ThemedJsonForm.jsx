@@ -1,5 +1,4 @@
 import Form from "@rjsf/mui";
-import { Tag } from "antd";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { getTemplate, getUiOptions } from "@rjsf/utils";
 import {
@@ -11,6 +10,7 @@ import {
   ListItemText,
   ImageList,
   ImageListItem,
+  Chip,
 } from "@mui/material";
 import { useState } from "react";
 import { DataSourceSelector } from "./datasource/DataSourceSelector";
@@ -260,7 +260,7 @@ const ChatWidget = (props) => {
           }}
         >
           <ListItemAvatar>
-            <Tag color="blue">{input.role || "System"}</Tag>
+            <Chip color="primary" label={input.role || "System"}></Chip>
           </ListItemAvatar>
           <ChatWidgetResponse chat_message={input}></ChatWidgetResponse>
         </ListItem>

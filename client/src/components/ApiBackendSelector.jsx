@@ -1,11 +1,20 @@
 import { useEffect } from "react";
-import { Col, Select, Row } from "antd";
+
+import {
+  Grid,
+  Select,
+  MenuItem,
+  Box,
+  FormControl,
+  InputLabel,
+} from "@mui/material";
 import {
   useRecoilValue,
   useRecoilState,
   useSetRecoilState,
   useResetRecoilState,
 } from "recoil";
+
 import {
   apiProviderDropdownListState,
   apiBackendDropdownListState,
@@ -75,49 +84,62 @@ export default function ApiBackendSelector() {
   ]);
 
   return (
-    <Col id="apibackendselector">
-      <Row>
-        <Select
-          style={{ width: "auto" }}
-          options={apiprovidersDropdown}
-          onChange={(x) => {
-            setApiProviderSelected(x);
-            setApiBackendSelected(null);
-            setendpointConfigValueState({});
-            resetInputValueState();
-          }}
-          value={
-            apiProviderSelected ? apiProviderSelected : "Select API Provider"
-          }
-        />
+    <Grid item id="apibackendselector">
+      <Grid container direction="row">
+        <Box sx={{ minWidth: 150 }}>
+          <FormControl fullWidth>
+            <InputLabel id="select-api-provider-label">API Provider</InputLabel>
+            <Select
+              style={{ width: "auto" }}
+              onChange={(e) => {
+                setApiProviderSelected(e.target.value);
+                setApiBackendSelected(null);
+                setendpointConfigValueState({});
+                resetInputValueState();
+              }}
+              value={apiProviderSelected ? apiProviderSelected : ""}
+              label="Select API Provider"
+            >
+              {apiprovidersDropdown.map((option, index) => (
+                <MenuItem key={index} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
         {apiProviderSelected && (
-          <Select
-            style={{ width: 150 }}
-            options={
-              apiProviderSelected
-                ? apibackendsDropdown.filter(
-                    (x) => x.provider === apiProviderSelected,
-                  )
-                : apibackendsDropdown
-            }
-            onChange={(x) => {
-              setApiBackendSelected(
-                apibackends.find((backend) => backend.id === x),
-              );
-              setendpointConfigValueState({});
-              resetEndpointConfigValueState();
-              resetInputValueState();
-            }}
-            value={
-              apiBackendSelected
-                ? apibackendsDropdown.find(
-                    (x) => x.value === apiBackendSelected.id,
-                  )
-                : "Select Backend"
-            }
-          />
+          <Box sx={{ minWidth: 150 }}>
+            <FormControl fullWidth>
+              <InputLabel id="select-api-backend-label">API Backend</InputLabel>
+              <Select
+                style={{ width: 150 }}
+                onChange={(e) => {
+                  setApiBackendSelected(
+                    apibackends.find(
+                      (backend) => backend.id === e.target.value,
+                    ),
+                  );
+                  setendpointConfigValueState({});
+                  resetEndpointConfigValueState();
+                  resetInputValueState();
+                }}
+                value={apiBackendSelected ? apiBackendSelected.id : ""}
+                label="Select API Backend"
+              >
+                {apibackendsDropdown
+                  .filter((x) => x.provider === apiProviderSelected)
+                  .map((option, index) => (
+                    <MenuItem key={index} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </Box>
         )}
-      </Row>
-    </Col>
+      </Grid>
+    </Grid>
   );
 }

@@ -1,14 +1,19 @@
-import { Empty, Input, Space, Spin, Tabs, Tag, Row, Col } from "antd";
-import { List, ListItem } from "@mui/material";
+import * as React from "react";
+// eslint-disable-next-line
 import AceEditor from "react-ace";
+
+import { List, ListItem } from "@mui/material";
+
+import { Box, Tab, CircularProgress, Alert } from "@mui/material";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
+
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-github";
 import { createTheme } from "@mui/material/styles";
 
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "./ThemedJsonForm";
-
-const { TextArea } = Input;
+import { Empty } from "./form/Empty";
 
 const outputTheme = createTheme({
   typography: {
@@ -52,15 +57,6 @@ const outputTheme = createTheme({
   },
 });
 
-const textAreaStyle = {
-  fontFamily: "Source Code Pro, monospace",
-  color: "#000",
-  fontWeight: "500",
-  background: "#fffaec",
-  minHeight: 150,
-  height: "100%",
-};
-
 export function Errors(props) {
   let errors = props.runError?.errors || [];
 
@@ -68,9 +64,7 @@ export function Errors(props) {
     <List>
       {errors.map((error) => (
         <ListItem key={error}>
-          <Tag color="red" style={{ whiteSpace: "break-spaces" }}>
-            {error}
-          </Tag>
+          <Alert severity="error">{error}</Alert>
         </ListItem>
       ))}
     </List>
@@ -85,109 +79,47 @@ export function Result(props) {
   }
 
   return Object.keys(props?.formData || {}).length > 0 ? (
-    <Col span={24}>
-      <Row style={{ width: "100%" }}>
-        <ThemedJsonForm
-          validator={validator}
-          schema={props.schema}
-          uiSchema={props.uiSchema}
-          formData={formData}
-          readonly={true}
-          theme={outputTheme}
-          className="output-form"
-        ></ThemedJsonForm>
-      </Row>
-    </Col>
+    <ThemedJsonForm
+      validator={validator}
+      schema={props.schema}
+      uiSchema={props.uiSchema}
+      formData={formData}
+      readonly={true}
+      theme={outputTheme}
+      className="output-form"
+    ></ThemedJsonForm>
   ) : (
-    <Empty description="No output" />
-  );
-}
-
-function Api(props) {
-  let api = `Save endpoint to see API usage`;
-  if (api && props.endpoint && !props.endpoint.draft) {
-    api = `curl -X POST https://trypromptly.com/api/endpoints/${props.endpoint.parent_uuid} \\
-    -H 'Content-Type: application/json' \\
-    -H 'Authorization: Token <PROMPTLY_TOKEN>' \\
-    -d '{"template_values": <KEY_VALUE_JSON>}'`;
-  }
-  return <TextArea value={api} disabled={true} style={textAreaStyle} />;
-}
-
-function Python(props) {
-  let python = `Save endpoint to see example code`;
-  if (python && props.endpoint && !props.endpoint.draft) {
-    python = `import requests
-
-PROMPTLY_API_KEY = <Your Promptly API Key>
-
-url = 'https://trypromptly.com/api/endpoints/${props.endpoint.parent_uuid}'
-headers = { 'Authorization': 'Token ' + PROMPTLY_API_KEY }
-body = {'template_values': {'key': 'value'}}
-    
-response = requests.post(url, headers=headers, json = body)`;
-  }
-
-  return (
-    <AceEditor
-      style={{
-        width: "100%",
-        fontFamily: "Source Code Pro, monospace",
-        fontSize: "14px",
-      }}
-      mode="python"
-      theme="github"
-      value={python}
-      wrapEnabled={true}
-      editorProps={{ $blockScrolling: true }}
-      readOnly={true}
-      setOptions={{
-        useWorker: false,
-        showGutter: false,
-      }}
-    />
+    <Empty emptyMessage="No output" />
   );
 }
 
 export default function Output(props) {
+  const [value, setValue] = React.useState("form");
+
   return (
-    <Tabs
-      type="card"
-      defaultActiveKey="1"
-      items={[
-        {
-          key: "1",
-          label: "Output",
-          children: props.loading ? (
-            <Spin tip={props.loadingTip} style={{ width: "100%" }} />
+    <Box sx={{ width: "100%" }}>
+      <TabContext value={value}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <TabList
+            onChange={(event, newValue) => {
+              setValue(newValue);
+            }}
+            aria-label="Output form tabs"
+          >
+            <Tab label="Output" value="form" />
+          </TabList>
+        </Box>
+        <TabPanel value="form" sx={{ padding: "4px" }}>
+          {props.loading ? (
+            <CircularProgress />
           ) : (
-            <div>
-              <Space
-                style={{
-                  position: "absolute",
-                  zIndex: 1,
-                  right: "17px",
-                  height: "56px",
-                }}
-              >
-                {props.tokenCount && <Tag>{`${props.tokenCount} Tokens`}</Tag>}
-              </Space>
+            <Box>
               <Result {...props} />
               <Errors {...props} />
-            </div>
-          ),
-        },
-        {
-          key: "2",
-          label: "API",
-          children: <Api result={props.result} endpoint={props.endpoint} />,
-        },
-        {
-          key: "3",
-          label: "Python",
-          children: <Python result={props.result} endpoint={props.endpoint} />,
-        },
-      ]}
-    />
+            </Box>
+          )}
+        </TabPanel>
+      </TabContext>
+    </Box>
   );
 }

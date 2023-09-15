@@ -1,5 +1,15 @@
 import React from "react";
-import { Modal, Button, Select } from "antd";
+
+import {
+  Dialog,
+  Button as MuiButton,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 import { axios } from "../../data/axios";
 
 export default function ShareDataSourceModal(props) {
@@ -43,36 +53,41 @@ export default function ShareDataSourceModal(props) {
       description: "Only you can access this datasource",
     },
   ];
-
+  console.log("visibility", visibility);
   return (
-    <Modal
-      title={title}
+    <Dialog
       open={open}
-      onOk={onOk}
-      onCancel={onCancel}
-      footer={[
-        <Button key="cancel" onClick={() => onCancel(id)}>
-          Cancel
-        </Button>,
-        <Button key="submit" type="primary" onClick={() => onOkClick(id)}>
-          Done
-        </Button>,
-      ]}
+      onClose={() => onCancel(id)}
+      aria-labelledby="share-datasource-dialog-title"
+      aria-describedby="share-datasource-dialog-description"
     >
-      <h5>Choose who can access this datasource</h5>
-      <Select
-        style={{ width: "100%" }}
-        value={visibility}
-        onChange={(value) => setVisibility(value)}
-      >
-        {visibilityOptions.map((option) => (
-          <Select.Option key={option.value} value={option.value}>
-            {option.label}
-            <br />
-            <small>{option.description}</small>
-          </Select.Option>
-        ))}
-      </Select>
-    </Modal>
+      <DialogTitle id="share-datasource-dialog-title">{title}</DialogTitle>
+      <DialogContent style={{ minWidth: "500px" }}>
+        <Stack spacing={2}>
+          <h4>Choose who can access this datasource</h4>
+          <MuiSelect
+            labelId="share-datasource-select-label"
+            size="small"
+            defaultValue={dataSource?.visibility || 1}
+            onChange={(e) => setVisibility(e.target.value)}
+          >
+            {visibilityOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                <Stack direction="row" spacing={1}>
+                  <span>{option.label}</span>
+                  <small>{option.description}</small>
+                </Stack>
+              </MenuItem>
+            ))}
+          </MuiSelect>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <MuiButton onClick={() => onCancel(id)}>Cancel</MuiButton>
+        <MuiButton variant="contained" onClick={() => onOkClick(id)}>
+          Done
+        </MuiButton>
+      </DialogActions>
+    </Dialog>
   );
 }

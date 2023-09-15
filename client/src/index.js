@@ -15,11 +15,9 @@ const LoginPage = lazy(() => import("./pages/login"));
 const SignupPage = lazy(() => import("./pages/signup"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
 const HistoryPage = lazy(() => import("./pages/history"));
-const HistoryPageOld = lazy(() => import("./pages/historyold"));
 const EndpointPage = lazy(() => import("./pages/endpoint"));
 const SettingPage = lazy(() => import("./pages/setting"));
 const OrganizationPage = lazy(() => import("./pages/organization"));
-const TestPage = lazy(() => import("./pages/tests"));
 const AppRenderPage = lazy(() => import("./pages/AppRender"));
 const AppStudioPage = lazy(() => import("./pages/AppStudio"));
 const AppEditPage = lazy(() => import("./pages/AppEdit"));
@@ -258,22 +256,6 @@ if (
       element: (
         <App>
           <HistoryPage />
-        </App>
-      ),
-    },
-    {
-      path: "/historyold",
-      element: (
-        <App>
-          <HistoryPageOld />
-        </App>
-      ),
-    },
-    {
-      path: "/test",
-      element: (
-        <App>
-          <TestPage />
         </App>
       ),
     },

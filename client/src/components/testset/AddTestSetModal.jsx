@@ -1,6 +1,16 @@
 import { useState } from "react";
-import { Modal, Button, Input, Space, Divider } from "antd";
+import {
+  Button as MuiButton,
+  TextField,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+} from "@mui/material";
 import { axios } from "../../data/axios";
+import { getJSONSchemaFromInputFields } from "../../data/utils";
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 
@@ -41,17 +51,72 @@ export function AddTestSetModal({
   const [inputFormData, setInputFormData] = useState({});
   const [testcaseFormData, setTestcaseFormData] = useState({});
   return (
-    <Modal
-      title={modalTitle}
-      open={open}
-      onCancel={handleCancelCb}
-      footer={[
-        <Button key="back" onClick={handleCancelCb}>
-          Cancel
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
+    <Dialog open={open} onClose={handleCancelCb}>
+      <DialogTitle>{modalTitle}</DialogTitle>
+      <DialogContent sx={{ minWidth: "400px" }}>
+        <Stack spacing={2}>
+          <TextField
+            label="Test Set Name"
+            value={testSetName}
+            onChange={(e) => setTestSetName(e.target.value)}
+            disabled={testSet ? true : false}
+            required={true}
+            defaultValue={testSet?.name || "Untitled"}
+            size="small"
+            style={{ width: "100%", marginTop: "6px" }}
+            error={testSetNameError}
+          />
+          <Divider orientation="center" style={{ marginBottom: "-10px" }}>
+            Input
+          </Divider>
+          <ThemedJsonForm
+            schema={
+              getJSONSchemaFromInputFields(app?.data?.input_fields || [])
+                ?.schema
+            }
+            validator={validator}
+            uiSchema={{
+              ...(app?.input_ui_schema || {}),
+              ...{
+                "ui:submitButtonOptions": {
+                  norender: true,
+                },
+                "ui:DescriptionFieldTemplate": () => null,
+                "ui:TitleFieldTemplate": () => null,
+              },
+            }}
+            formData={inputFormData}
+            onChange={({ formData }) => {
+              setInputFormData(formData);
+            }}
+          />
+          <Divider orientation="center" style={{ marginBottom: "-10px" }}>
+            Expected Output
+          </Divider>
+          <ThemedJsonForm
+            schema={TESTCASE_SCHEMA}
+            validator={validator}
+            uiSchema={{
+              ...TESTCASE_UI_SCHEMA,
+              ...{
+                "ui:submitButtonOptions": {
+                  norender: true,
+                },
+                "ui:DescriptionFieldTemplate": () => null,
+                "ui:TitleFieldTemplate": () => null,
+              },
+            }}
+            formData={testcaseFormData}
+            onChange={({ formData }) => {
+              setTestcaseFormData(formData);
+            }}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <MuiButton onClick={handleCancelCb}>Cancel</MuiButton>,
+        <MuiButton
+          variant="contained"
           onClick={() => {
             if (testSet) {
               axios()
@@ -94,62 +159,8 @@ export function AddTestSetModal({
           }}
         >
           Submit
-        </Button>,
-      ]}
-    >
-      <Space direction="vertical" style={{ width: "100%" }}>
-        <Input
-          value={testSetName}
-          onChange={(e) => setTestSetName(e.target.value)}
-          placeholder="Test Set Name"
-          disabled={testSet ? true : false}
-          required={true}
-          defaultValue={testSet?.name || "Untitled"}
-          status={testSetNameError ? "error" : ""}
-        />
-        <Divider orientation="center" style={{ marginBottom: "-10px" }}>
-          Input
-        </Divider>
-        <ThemedJsonForm
-          schema={app?.input_schema || {}}
-          validator={validator}
-          uiSchema={{
-            ...(app?.input_ui_schema || {}),
-            ...{
-              "ui:submitButtonOptions": {
-                norender: true,
-              },
-              "ui:DescriptionFieldTemplate": () => null,
-              "ui:TitleFieldTemplate": () => null,
-            },
-          }}
-          formData={inputFormData}
-          onChange={({ formData }) => {
-            setInputFormData(formData);
-          }}
-        />
-        <Divider orientation="center" style={{ marginBottom: "-10px" }}>
-          Expected Output
-        </Divider>
-        <ThemedJsonForm
-          schema={TESTCASE_SCHEMA}
-          validator={validator}
-          uiSchema={{
-            ...TESTCASE_UI_SCHEMA,
-            ...{
-              "ui:submitButtonOptions": {
-                norender: true,
-              },
-              "ui:DescriptionFieldTemplate": () => null,
-              "ui:TitleFieldTemplate": () => null,
-            },
-          }}
-          formData={testcaseFormData}
-          onChange={({ formData }) => {
-            setTestcaseFormData(formData);
-          }}
-        />
-      </Space>
-    </Modal>
+        </MuiButton>
+      </DialogActions>
+    </Dialog>
   );
 }

@@ -1,4 +1,12 @@
-import { Modal, Button } from "antd";
+import {
+  Dialog,
+  Button,
+  Box,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from "@mui/material";
 
 export function LoggedOutModal({
   visibility,
@@ -14,27 +22,45 @@ export function LoggedOutModal({
   };
 
   return (
-    <Modal
+    <Dialog
       title={title ? title : "Logged Out"}
       open={visibility}
       onCancel={handleCancelCb}
       footer={null}
     >
-      {message ? (
-        message
-      ) : (
-        <p>
-          You are logged out. Please{" "}
-          <Button type="link" onClick={handleLogin} style={{ padding: "0px" }}>
-            login
-          </Button>{" "}
-          or{" "}
-          <Button type="link" onClick={handleLogin} style={{ padding: "0px" }}>
-            signup
-          </Button>{" "}
-          to proceed.
-        </p>
-      )}
-    </Modal>
+      <DialogTitle id="logged-out-modal-title">Logged Out</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          <Box>
+            {message ? (
+              message
+            ) : (
+              <p>
+                You are logged out. Please{" "}
+                <Button
+                  type="link"
+                  onClick={handleLogin}
+                  style={{ padding: "0px" }}
+                >
+                  login
+                </Button>{" "}
+                or{" "}
+                <Button
+                  type="link"
+                  onClick={handleLogin}
+                  style={{ padding: "0px" }}
+                >
+                  signup
+                </Button>{" "}
+                to proceed.
+              </p>
+            )}
+          </Box>
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCancelCb}>Close</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
