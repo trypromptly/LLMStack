@@ -19,6 +19,7 @@ class Coordinator(ThreadingActor):
     def __init__(self, session_id, actor_configs: List[ActorConfig]):
         super().__init__()
         self._session_id = session_id
+        self._stream_errors = {}
 
         # Make sure there are not duplicate names or template_keys in actor_configs
         assert len(set([actor_config.name for actor_config in actor_configs])) == len(
@@ -89,6 +90,10 @@ class Coordinator(ThreadingActor):
 
     def relay(self, message: Message):
         self._idle_timer.reset()
+        
+        # Collect stream errors
+        if message.message_type == MessageType.STREAM_ERROR:
+            self._stream_errors[message.message_from] = message.message
 
         # If bookkeeping is done, we can stop the coordinator
         if message.message_type == MessageType.BOOKKEEPING_DONE:
@@ -111,7 +116,12 @@ class Coordinator(ThreadingActor):
         logger.info(f'Coordinator {self.actor_urn} timed out')
         output_actor_ref = self.actors.get('output')
         if output_actor_ref:
-            output_actor_ref.tell(Message(message_type=MessageType.STREAM_ERROR, message={'errors': ['Timed out waiting for response']}))
+            if len(self._stream_errors.keys()) > 0:
+                # We timed out because some actor in the chain errored out
+                errors = list(map(lambda x: self._stream_errors[x], self._stream_errors))
+                output_actor_ref.tell(Message(message_type=MessageType.STREAM_ERROR, message={'errors': errors})) 
+            else:
+                output_actor_ref.tell(Message(message_type=MessageType.STREAM_ERROR, message={'errors': ['Timed out waiting for response']}))
             ResettableTimer(TIMEOUT, self.force_stop).start()
 
     def on_stop(self) -> None:
