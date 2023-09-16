@@ -32,9 +32,6 @@ class DiscordBotRunner(AppRunner):
     def app_init(self):
         self.discord_bot_token = self.discord_config.get('bot_token')
         self.session_id = self._get_discord_bot_seession_id(self.request.data)
-        self._input_field_name = self.app.input_schema.get(
-            'required', ['question'],
-        )[0]
 
     def _get_discord_bot_seession_id(self, discord_request_payload):
         if 'id' in discord_request_payload:
@@ -73,16 +70,11 @@ class DiscordBotRunner(AppRunner):
 
     def _get_discord_processor_actor_configs(self, input_data):
         output_template = convert_template_vars_from_legacy_format(
-            self.app.output_template.get('markdown', ''),
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
         )
 
         vendor_env = self.app_owner_profile.get_vendor_env()
-
-        processors = [
-            x.exit_endpoint for x in self.app.run_graph.all().order_by(
-            'id',
-            ) if x is not None and x.exit_endpoint is not None
-        ]
 
         return ActorConfig(
             name='discord_processor',
@@ -141,7 +133,8 @@ class DiscordBotRunner(AppRunner):
             processor_configs = {}
         else:
             template = convert_template_vars_from_legacy_format(
-                self.app.output_template.get('markdown', ''),
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
             )
             actor_configs = [
                 ActorConfig(
