@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-from typing import Dict
+from typing import Any, Dict
 from typing import List
 from typing import Optional
 
@@ -176,6 +176,28 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
     def provider_slug() -> str:
         return 'slack'
 
+    def _send_message(self, message: str, channel: str, thread_ts: str, rich_text: Any, token: str) -> None:
+        url = 'https://slack.com/api/chat.postMessage'
+        http_processor = HttpAPIProcessor(configuration={'timeout': 60})
+        response = http_processor.process(
+            HttpAPIProcessorInput(
+                url=url,
+                method=HttpMethod.POST,
+                headers={},
+                authorization=BearerTokenAuth(token=self._input.token),
+                body=JsonBody(
+                    json_body={
+                        'channel': channel,
+                        'thread_ts': thread_ts,
+                        'text': message,
+                        'blocks': rich_text,
+                    },
+                ),
+            ).dict(),
+        )
+        return response
+        
+        
     def process(self) -> dict:
         _env = self._env
         input = self._input.dict()
@@ -190,28 +212,27 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
         except Exception as e:
             logger.exception('Error in processing markdown')
             rich_text = ''
-        http_processor = HttpAPIProcessor(configuration={'timeout': 60})
-        response = http_processor.process(
-            HttpAPIProcessorInput(
-                url=url,
-                method=HttpMethod.POST,
-                headers={},
-                authorization=BearerTokenAuth(token=input['token']),
-                body=JsonBody(
-                    json_body={
-                        'channel': input['channel'],
-                        'thread_ts': input['thread_ts'],
-                        'text': input['text'],
-                        'blocks': rich_text,
-                    },
-                ),
-            ).dict(),
-        )
+            
+        self._send_message(input['text'], input['channel'], input['thread_ts'], rich_text, input['token'])
         async_to_sync(self._output_stream.write)(
             SlackPostMessageOutput(code=200),
         )
 
         return self._output_stream.finalize()
 
+    def on_error(self, error: Any) -> None:
+        input = self._input.dict()
+
+        logger.error(f'Error in SlackPostMessageProcessor: {error}')
+        error_msg = '\n'.join(error.values()) if isinstance(error, dict) else 'Error in processing request'
+        
+        self._send_message(error_msg, input['channel'], input['thread_ts'], None, input['token'])
+        async_to_sync(self._output_stream.write)(
+            SlackPostMessageOutput(code=200),
+        )
+        self._output_stream.finalize()
+        
+        return super().on_error(error)
+    
     def get_bookkeeping_data(self) -> BookKeepingData:
         return BookKeepingData(input=self._input, timestamp=time.time(), run_data={'slack': {'user': self._input.slack_user, 'user_email': self._input.slack_user_email}})
