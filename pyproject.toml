@@ -14,6 +14,7 @@ include = [
   "client/build/static/images/*",
   "client/build/static/js/*",
   "client/build/static/media/*",
+  "fixtures/*",
   "static/*",
 ]
 packages = [
@@ -33,7 +34,7 @@ packages = [
 llmstack = "llmstack.cli:main"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.9"
 aiohttp = {version = "3.8.4", allow-prereleases = true}
 aiosignal = {version = "1.3.1", allow-prereleases = true}
 anyio = {version = "3.6.2", allow-prereleases = true}
