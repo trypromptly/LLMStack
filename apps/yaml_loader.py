@@ -118,12 +118,25 @@ def get_app_templates_from_contrib() -> List[AppTemplate]:
     if not hasattr(settings, 'APP_TEMPLATES_DIR'):
         return app_templates
 
-    for file in os.listdir(settings.APP_TEMPLATES_DIR):
-        if file.endswith('.yml'):
-            app_template = get_app_template_from_yaml(
-                os.path.join(settings.APP_TEMPLATES_DIR, file))
-            if app_template:
-                app_templates.append(app_template)
+    if isinstance(settings.APP_TEMPLATES_DIR, str):
+        for file in os.listdir(settings.APP_TEMPLATES_DIR):
+            if file.endswith('.yml'):
+                app_template = get_app_template_from_yaml(
+                    os.path.join(settings.APP_TEMPLATES_DIR, file))
+                if app_template:
+                    app_templates.append(app_template)
+                    
+    elif isinstance(settings.APP_TEMPLATES_DIR, list):
+        for dir in settings.APP_TEMPLATES_DIR:
+            if not os.path.isdir(dir) or not os.path.exists(dir):
+                continue
+            for file in os.listdir(dir):
+                if file.endswith('.yml'):
+                    app_template = get_app_template_from_yaml(
+                        os.path.join(dir, file))
+                    if app_template:
+                        app_templates.append(app_template)
+                        
     cache.set('app_templates', app_templates)
 
     return app_templates
