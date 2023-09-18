@@ -14,6 +14,7 @@ include = [
   "client/build/static/images/*",
   "client/build/static/js/*",
   "client/build/static/media/*",
+  "static/*",
 ]
 packages = [
     {include = "apps"},
