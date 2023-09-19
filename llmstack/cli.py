@@ -19,7 +19,7 @@ def prepare_env():
 
         # Copy .env.local file from installed package to ~/.llmstack/.env.local
         import shutil
-        shutil.copyfile(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env.local'), os.path.join(
+        shutil.copyfile(os.path.join(os.path.dirname(__file__), '.env.local'), os.path.join(
             os.path.expanduser('~'), '.llmstack', '.env.local'))
 
     # Chdir to .llmstack
@@ -54,7 +54,7 @@ def main():
 
     run_django_command(['manage.py', 'migrate', '--noinput'])
     run_django_command(['manage.py', 'loaddata', os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), 'fixtures/initial_data.json')])
+        os.path.dirname(__file__), 'fixtures/initial_data.json')])
     run_django_command(['manage.py', 'createcachetable'])
     run_django_command(['manage.py', 'clearcache'])
 

@@ -321,5 +321,5 @@ DATASOURCE_TYPE_PROVIDERS = [
 ]
 
 APP_TEMPLATES_DIR = os.getenv('APP_TEMPATES_DIR').split(',') if os.getenv('APP_TEMPATES_DIR') else [
-    os.path.join(BASE_DIR, 'contrib', 'apps', 'templates')
-    ]
+    os.path.join(BASE_DIR, 'llmstack', 'contrib', 'apps', 'templates')
+]

@@ -6,15 +6,13 @@ authors = ["Ajay Chintala"]
 license = "MIT"
 readme = "README.md"
 include = [
-  ".env.local",
-  "contrib/*",
-  "fixtures/*",
   "client/build/*",
   "client/build/static/css/*",
   "client/build/static/images/*",
   "client/build/static/js/*",
   "client/build/static/media/*",
-  "fixtures/*",
+  "llmstack/contrib/apps/templates/*",
+  "llmstack/fixtures/*",
   "static/*",
 ]
 packages = [

@@ -12,7 +12,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('Admin user created.'))
 
             try:
-                call_command('loaddata', 'fixtures/initial_data.json')
+                call_command('loaddata', 'llmstack/fixtures/initial_data.json')
                 self.stdout.write(self.style.SUCCESS('Initial data loaded.'))
             except Exception as e:
                 self.stdout.write(self.style.ERROR(
