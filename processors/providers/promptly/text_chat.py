@@ -75,6 +75,9 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
     use_azure_if_available: bool = Field(
         title='Use Azure if available', default=True, description='Use Azure if available. Will fallback to OpenAI when unchecked', advanced_parameter=True,
     )
+    use_localai_if_available: bool = Field(
+        title='Use LocalAI if available', default=False, description='Use LocalAI if available. Will fallback to OpenAI or Azure OpenAI when unchecked', advanced_parameter=True,
+    )
     chat_history_in_doc_search: int = Field(
         title='Chat history in doc search', default=0, description='Number of messages from chat history to include in doc search', advanced_parameter=True,
     )
@@ -235,7 +238,18 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
                 temperature=self._config.temperature,
                 stream=True,
             )
+        elif self._env['localai_api_key'] and self._env['localai_base_url'] and self._config.use_localai_if_available:
+            openai.api_key = self._env['localai_api_key']
+            openai.api_base = self._env['localai_base_url']
+            model = self._config.dict().get('model', 'gpt-3.5-turbo')
 
+            result = openai.ChatCompletion.create(
+                model=model,
+                messages=[system_message] +
+                [context_message] + self._chat_history,
+                temperature=self._config.temperature,
+                stream=True,
+            )
         elif self._env['openai_api_key'] is not None:
             openai.api_key = self._env['openai_api_key']
             model = self._config.dict().get('model', 'gpt-3.5-turbo')
