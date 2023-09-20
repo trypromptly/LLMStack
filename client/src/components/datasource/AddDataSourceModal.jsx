@@ -136,6 +136,7 @@ export function AddDataSourceModal({
                 .post("/api/datasources", {
                   name: dataSourceName,
                   type: dataSourceType.id,
+                  config: dataSourceType.is_external_datasource ? formData : {},
                 })
                 .then((response) => {
                   // External data sources do not support adding entries
