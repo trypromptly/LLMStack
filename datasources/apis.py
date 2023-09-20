@@ -147,6 +147,9 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource = get_object_or_404(
             DataSource, uuid=uuid.UUID(uid), owner=request.user,
         )
+        if datasource and datasource.type.is_external_datasource:
+            return DRFResponse({'errors': ['Cannot add entry to external data source']}, status=400)
+        
         entry_data = request.data['entry_data']
         entry_metadata = dict(map(lambda x: (f'md_{x}', request.data['entry_metadata'][x]), request.data['entry_metadata'].keys())) if 'entry_metadata' in request.data else {
         }
