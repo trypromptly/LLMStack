@@ -86,6 +86,10 @@ class DataSource(models.Model):
 
     def __str__(self):
         return self.name + ' (' + self.type.name + ')' + ' - ' + str(self.owner)
+    
+    @property
+    def profile(self):
+        return Profile.objects.get(user=self.owner)
 
 
 class DataSourceEntry(models.Model):
