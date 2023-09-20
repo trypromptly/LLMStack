@@ -71,6 +71,9 @@ class DataSource(models.Model):
     visibility = models.PositiveSmallIntegerField(
         default=DataSourceVisibility.PRIVATE, choices=DataSourceVisibility.choices, help_text='Visibility of the data source',
     )
+    config = models.JSONField(
+        default=dict, help_text='Config for the data source',
+    )
     created_at = models.DateTimeField(
         help_text='Time when the data source was created', default=now,
     )
