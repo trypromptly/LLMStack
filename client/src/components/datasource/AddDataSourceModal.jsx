@@ -136,17 +136,21 @@ export function AddDataSourceModal({
                 .post("/api/datasources", {
                   name: dataSourceName,
                   type: dataSourceType.id,
+                  config: dataSourceType.is_external_datasource ? formData : {},
                 })
                 .then((response) => {
-                  const dataSource = response.data;
-                  setDataSources([...dataSources, dataSource]);
-                  axios()
-                    .post(`/api/datasources/${dataSource.uuid}/add_entry`, {
-                      entry_data: formData,
-                    })
-                    .then((response) => {
-                      dataSourceAddedCb(dataSource);
-                    });
+                  // External data sources do not support adding entries
+                  if (!dataSourceType.is_external_datasource) {
+                    const dataSource = response.data;
+                    setDataSources([...dataSources, dataSource]);
+                    axios()
+                      .post(`/api/datasources/${dataSource.uuid}/add_entry`, {
+                        entry_data: formData,
+                      })
+                      .then((response) => {
+                        dataSourceAddedCb(dataSource);
+                      });
+                  }
                 });
               handleCancelCb();
               enqueueSnackbar(

@@ -114,6 +114,8 @@ def resync_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
 
 def delete_data_source_task(datasource):
     datasource_type = datasource.type
+    if datasource_type.is_external_datasource:
+        return
     datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
         datasource_type,
     )

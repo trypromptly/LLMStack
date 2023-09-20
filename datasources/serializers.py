@@ -41,7 +41,7 @@ class DataSourceTypeSerializer(serializers.ModelSerializer):
         model = DataSourceType
         fields = [
             'id', 'name', 'description',
-            'entry_config_schema', 'entry_config_ui_schema', 'sync_config'
+            'entry_config_schema', 'entry_config_ui_schema', 'sync_config', 'is_external_datasource'
         ]
 
 

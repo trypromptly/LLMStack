@@ -32,6 +32,8 @@ class Document(ApiProcessorSchema):
     )
     source: Optional[str] = Field(description='Source of the document')
     metadata: DocumentMetadata = Field(description='Metadata of the document')
+    additional_properties: Optional[dict] = {}
+
 
 
 class DataSourceSearchOutput(ApiProcessorSchema):
@@ -108,6 +110,7 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
                         certainty=document.metadata['certainty'] if 'certainty' in document.metadata else 0.0,
                         distance=document.metadata['distance'],
                     ),
+                    additional_properties=document.metadata
                 ),
             )
             answer_text += f'Content: {document.page_content} \n\nSource: {source} \n\n\n\n'

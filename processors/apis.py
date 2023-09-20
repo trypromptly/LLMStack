@@ -435,7 +435,7 @@ class EndpointViewSet(viewsets.ViewSet):
                         while True:
                             await asyncio.sleep(0.0001)
                             output = next(output_iter)
-                            yield json.dumps({'output': output['processor']}) + '\n'
+                            yield {'output': output['processor']}
                     except StopIteration:
                         coordinator_ref.stop()
                     except Exception as e:

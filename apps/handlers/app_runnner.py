@@ -219,9 +219,9 @@ class AppRunner:
                             await asyncio.sleep(0.0001)
                             if not metadata_sent:
                                 metadata_sent = True
-                                yield json.dumps({'session': {'id': app_session['uuid']}, 'csp': csp, 'template': template}) + '\n'
+                                yield {'session': {'id': app_session['uuid']}, 'csp': csp, 'template': template}
                             output = next(output_iter)
-                            yield json.dumps(output) + '\n'
+                            yield output
                     except StopIteration:
                         pass
                     except Exception as e:

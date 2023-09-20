@@ -44,6 +44,9 @@ class DataSourceType(models.Model):
     description = models.TextField(
         default='', blank=True, help_text='Description of the data source type',
     )
+    is_external_datasource = models.BooleanField(
+        default=False, help_text='Is this an external data source?',
+    )
 
     def __str__(self):
         return self.name
@@ -71,6 +74,9 @@ class DataSource(models.Model):
     visibility = models.PositiveSmallIntegerField(
         default=DataSourceVisibility.PRIVATE, choices=DataSourceVisibility.choices, help_text='Visibility of the data source',
     )
+    config = models.JSONField(
+        default=dict, help_text='Config for the data source',
+    )
     created_at = models.DateTimeField(
         help_text='Time when the data source was created', default=now,
     )
@@ -80,6 +86,10 @@ class DataSource(models.Model):
 
     def __str__(self):
         return self.name + ' (' + self.type.name + ')' + ' - ' + str(self.owner)
+    
+    @property
+    def profile(self):
+        return Profile.objects.get(user=self.owner)
 
 
 class DataSourceEntry(models.Model):
