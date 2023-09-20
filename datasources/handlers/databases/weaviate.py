@@ -74,13 +74,13 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
         if self._configuration.connection.username and self._configuration.connection.password:
             return weaviate.Client(
                 url=self._configuration.connection.weaviate_url,
-                auth_type=weaviate.AuthClientPassword(username=self._configuration.connection.username, password=self._configuration.connection.password), 
+                auth_client_secret=weaviate.AuthClientPassword(username=self._configuration.connection.username, password=self._configuration.connection.password), 
                 additional_headers=json.loads(self._configuration.connection.additional_headers) if self._configuration.connection.additional_headers else {},
             )
         elif self._configuration.connection.api_key:
             return weaviate.Client(
                 url=self._configuration.connection.weaviate_url,
-                auth_type=weaviate.AuthClientCredentials(token=self._configuration.connection.api_key),
+                auth_client_secret=weaviate.AuthApiKey(api_key=self._configuration.connection.api_key),
                 additional_headers=json.loads(self._configuration.connection.additional_headers) if self._configuration.connection.additional_headers else {},
             )
         else:
