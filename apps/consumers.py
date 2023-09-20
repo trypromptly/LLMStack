@@ -66,9 +66,9 @@ class AppConsumer(AsyncWebsocketConsumer):
                 output_stream = await AppViewSet().run_app_internal_async(self.app_id, self._session_id, request_uuid, request, self.preview)
                 async for output in output_stream:
                     if 'errors' in output or 'session' in output:
-                        await self.send(text_data=output)
+                        await self.send(text_data=json.dumps(output))
                     else:
-                        await self.send(text_data="{\"output\":" + output + '}')
+                        await self.send(text_data=json.dumps({'output': output}))
 
                 await self.send(text_data=json.dumps({'event': 'done'}))
             except Exception as e:
