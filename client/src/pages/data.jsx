@@ -9,6 +9,7 @@ import {
   Chip,
   Grid,
   Stack,
+  Tooltip,
 } from "@mui/material";
 
 import { TextareaAutosize } from "@mui/base";
@@ -16,6 +17,7 @@ import { TextareaAutosize } from "@mui/base";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import SyncOutlinedIcon from "@mui/icons-material/SyncOutlined";
+import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
 import PeopleOutlineOutlinedIcon from "@mui/icons-material/PeopleOutlineOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 
@@ -193,7 +195,6 @@ export default function DataPage() {
       title: "Action",
       key: "operation",
       render: (record) => {
-        console.log(record);
         return (
           <Box>
             {!record?.type?.is_external_datasource && (
@@ -207,6 +208,15 @@ export default function DataPage() {
               >
                 <AddOutlinedIcon />
               </IconButton>
+            )}
+            {record?.type?.is_external_datasource && (
+              <Tooltip title="External Connection">
+                <span>
+                  <IconButton disabled={true}>
+                    <SettingsEthernetIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
             )}
             <IconButton
               disabled={!record.isUserOwned}
