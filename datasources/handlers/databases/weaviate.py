@@ -43,7 +43,7 @@ class WeaviateConnection(_Schema):
 class WeaviateDatabaseSchema(DataSourceSchema):
     index_name: str = Field(description='Weaviate index name')
     content_property_name: str = Field(description='Weaviate content property name')
-    additional_properties: Optional[List[str]] = Field(description='Weaviate additional properties', default=['id'])
+    additional_properties: Optional[List[str]] = Field(description='Weaviate additional properties', default=[])
     connection: Optional[WeaviateConnection] = Field(description='Weaviate connection string')
 
 
@@ -108,16 +108,13 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
         index_name = self._configuration.index_name
         additional_properties = self._configuration.additional_properties
         
-        if 'distance' not in additional_properties:
-            additional_properties.append('distance')
-        
         result = self._weviate_client.similarity_search(
             index_name=index_name,
             document_query=DocumentQuery(
                 query=query,
                 page_content_key=self._configuration.content_property_name,
                 limit=kwargs.get('limit', 2),
-                metadata={'additional_properties' : [], 'metadata_properties' : additional_properties},
+                metadata={'additional_properties' : additional_properties, 'metadata_properties' : ['distance']},
                 search_filters=kwargs.get('search_filters', None),
             ),
             **kwargs
