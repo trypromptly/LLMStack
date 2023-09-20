@@ -314,6 +314,7 @@ PROCESSOR_PROVIDERS = [
 
 DATASOURCE_TYPE_PROVIDERS = [
     'datasources.handlers.amazon',
+    'datasources.handlers.databases',
     'datasources.handlers.files',
     'datasources.handlers.google',
     'datasources.handlers.text',
