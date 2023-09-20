@@ -44,6 +44,9 @@ class DataSourceType(models.Model):
     description = models.TextField(
         default='', blank=True, help_text='Description of the data source type',
     )
+    is_external_datasource = models.BooleanField(
+        default=False, help_text='Is this an external data source?',
+    )
 
     def __str__(self):
         return self.name
