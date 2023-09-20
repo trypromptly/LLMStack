@@ -117,11 +117,28 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource_type = get_object_or_404(
             DataSourceType, id=request.data['type'],
         )
-        datasource = DataSource.objects.create(
+        
+        datasource = DataSource(
             name=request.data['name'],
             owner=owner,
             type=datasource_type,
         )
+        # If this is an external data source, then we need to save the config in datasource object
+        if datasource_type.is_external_datasource:
+            datasource_type_cls = DataSourceTypeFactory.get_datasource_type_handler(datasource.type)
+            if not datasource_type_cls:
+                logger.error(
+                    'No handler found for data source type {datasource.type}',
+                )
+                return DRFResponse({'errors': ['No handler found for data source type']}, status=400)
+
+            datasource_handler: DataSourceProcessor = datasource_type_cls(datasource)
+            if not datasource_handler:
+                logger.error(f'Error while creating handler for data source {datasource.name}')
+                return DRFResponse({'errors': ['Error while creating handler for data source type']}, status=400)
+            config = datasource_type_cls.process_validate_config(request.data['config'], datasource)
+            datasource.config = config
+        
         datasource.save()
         return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
 
