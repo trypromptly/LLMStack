@@ -19,6 +19,13 @@ from datasources.models import DataSource
 
 logger = logging.getLogger(__name__)
 
+# This is a Python class to establish a connection with Weaviate.
+# It accepts the following parameters:
+# 1. weaviate_url: URL of the Weaviate instance. It is a mandatory field.
+# 2. username: Your username for the Weaviate instance. This is an optional field.
+# 3. password: Corresponding password for the above username. This is an optional field.
+# 4. api_key: Your Weaviate API key. This is also an optional field.
+# 5. additional_headers: Any additional headers that need to be passed in the request. This is optional, and should be passed as a JSON string. The default value is '{}'.
 class WeaviateConnection(_Schema):
     weaviate_url: str = Field(description='Weaviate URL')
     username: Optional[str] = Field(description='Weaviate username')
@@ -26,6 +33,14 @@ class WeaviateConnection(_Schema):
     api_key: Optional[str] = Field(description='Weaviate API key')
     additional_headers: Optional[str] = Field(description='Weaviate headers. Please enter a JSON string.', widget='textarea', default='{}')
     
+# This class is a definition of the Weaviate database schema. 
+# `index_name`: This is a required string attribute representing the name of the weaviate index.
+# `content_property_name`: This is a required string attribute representing the name of the weaviate content property to search. 
+# `additional_properties`: This is an optional attribute represented as a list of strings.
+#                          It's used to specify any additional properties for the Weaviate document,
+#                          with 'certainty' and 'distance' being the default properties.
+# `connection`: This is optional and specifies the Weaviate connection string. 
+# It inherits structure and behaviour from the `DataSourceSchema` class.
 class WeaviateDatabaseSchema(DataSourceSchema):
     index_name: str = Field(description='Weaviate index name')
     content_property_name: str = Field(description='Weaviate content property name')
@@ -38,25 +53,35 @@ class WeaviateConnectionConfiguration(Config):
     is_encrypted = True
     weaviate_config: Optional[Dict]
     
+# This class helps to manage and interact with a Weaviate Data Source.
+# It inherits from the DataSourceProcessor class and operates on a WeaviateDatabaseSchema.
 class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
+    
+    # Initializer for the class. 
+    # It requires a datasource object as input, checks if it has a 'data' configuration, and sets up Weaviate Database Configuration.
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
         if self.datasource.config and 'data' in self.datasource.config:
             config_dict = WeaviateConnectionConfiguration().from_dict(self.datasource.config, self.datasource.profile.decrypt_value)
             self._configuration = WeaviateDatabaseSchema(**config_dict['weaviate_config'])
-        
+    
+    # This static method returns the name of the datasource class as 'Weaviate'. 
     @staticmethod
     def name() -> str:
         return 'Weaviate'
     
+    # This static method returns the slug for the datasource as 'weaviate'.
     @staticmethod 
     def slug() -> str:
         return 'weaviate'
     
+    # This static method takes a dictionary for configuration and a DataSource object as inputs.
+    # Validation of these inputs is performed and a dictionary containing the Weaviate Connection Configuration is returned.
     @staticmethod
     def process_validate_config(config_data: dict, datasource: DataSource) -> dict:
-        return WeaviateConnectionConfiguration(weaviate_config=config_data).to_dict(encrypt_fn=datasource.profile.encrypt_value)
+        return WeaviateConnectionConfiguration(weaviate_config=config_data).to_dict(encrypt_fn=datasource.profile.encrypt_value)    
     
+    # This static method returns the provider slug for the datasource connector.
     @staticmethod
     def provider_slug() -> str:
         return 'weaviate'
@@ -89,6 +114,9 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
                 additional_headers=json.loads(self._configuration.connection.additional_headers) if self._configuration.connection.additional_headers else {},
             )
         
+    """
+    This function performs similarity search on documents by using 'near text' concept of Weaviate where it tries to fetch documents in which concepts match with the given query.
+    """
     def similarity_search(self, query: str, **kwargs) -> List[dict]:
         result = []
         
