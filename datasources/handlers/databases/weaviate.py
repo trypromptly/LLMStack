@@ -37,7 +37,7 @@ class WeaviateConnection(_Schema):
 # `content_property_name`: This is a required string attribute representing the name of the weaviate content property to search. 
 # `additional_properties`: This is an optional attribute represented as a list of strings.
 #                          It's used to specify any additional properties for the Weaviate document,
-#                          with 'certainty' and 'distance' being the default properties.
+#                          with 'id' being the default properties.
 # `connection`: This is optional and specifies the Weaviate connection string. 
 # It inherits structure and behaviour from the `DataSourceSchema` class.
 class WeaviateDatabaseSchema(DataSourceSchema):
@@ -107,6 +107,10 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
     def similarity_search(self, query: str, **kwargs) -> List[dict]:
         index_name = self._configuration.index_name
         additional_properties = self._configuration.additional_properties
+        
+        if 'distance' not in additional_properties:
+            additional_properties.append('distance')
+        
         result = self._weviate_client.similarity_search(
             index_name=index_name,
             document_query=DocumentQuery(
