@@ -454,7 +454,10 @@ class EndpointViewSet(viewsets.ViewSet):
             logger.exception(e)
             raise Exception(f'Error starting coordinator: {e}')
 
-        return {'output': json.loads(output)} if 'errors' not in output else output
+        if isinstance(output, dict) and 'errors' in output:
+            return output
+        else:
+            return {'output': json.loads(output)}
 
 
 class ApiProviderViewSet(viewsets.ViewSet):

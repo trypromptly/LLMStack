@@ -11,6 +11,7 @@ from scrapy.spiders import CrawlSpider
 from scrapy.spiders import Rule
 from scrapy.spiders import SitemapSpider
 from unstructured.partition.auto import partition_html
+from scrapy.exceptions import CloseSpider
 
 from django.conf import settings
 
@@ -32,13 +33,17 @@ def get_domain(url):
 class SitemapXMLSpider(SitemapSpider):
     name = 'sitemap_spider'
 
-    def __init__(self, url, output, *args, **kwargs):
+    def __init__(self, url, output, max_urls = 20, *args, **kwargs):
         self.sitemap_urls = [url]
         self.output = output
+        self.max_urls = max_urls
         super(SitemapXMLSpider, self).__init__(*args, **kwargs)
 
     def parse(self, response):
         data = {}
+        if len(self.output) > self.max_urls:
+            raise CloseSpider('Reached maximum number of crawled URLs')
+            
         # Extract data from the page using CSS or XPath selectors
         data['title'] = response.css('title::text').get()
         data['url'] = response.url
