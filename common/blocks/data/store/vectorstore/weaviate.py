@@ -80,6 +80,10 @@ class WeaviateConfiguration(BaseModel):
     weaviate_rw_api_key: Optional[str] = None
     embeddings_rate_limit: Optional[int] = 3000
     default_batch_size: Optional[int] = 20
+    username: Optional[str] = None
+    password: Optional[str] = None
+    api_key: Optional[str] = None
+    additional_headers: Optional[dict] = {}
 
 
 class Weaviate(VectorStoreInterface):
@@ -130,8 +134,8 @@ class Weaviate(VectorStoreInterface):
                                 json.dumps(result['result']['errors']),
                             ),
                         )
-
-        headers = {}
+        
+        headers = configuration.additional_headers
         if configuration.openai_key is not None:
             headers['X-OpenAI-Api-Key'] = configuration.openai_key
         if configuration.cohere_api_key is not None:
@@ -144,10 +148,25 @@ class Weaviate(VectorStoreInterface):
             headers['authorization'] = 'Bearer ' + \
                 configuration.weaviate_rw_api_key
 
-        self._client = weaviate.Client(
-            url=configuration.url,
-            additional_headers=headers,
-        )
+        if configuration.username is not None and configuration.password is not None:
+            self._client = weaviate.Client(
+                url=configuration.url,
+                auth_client_secret=weaviate.AuthClientPassword(
+                    username=configuration.username, password=configuration.password),
+                additional_headers=headers,
+            )
+        elif configuration.api_key is not None:
+            self._client = weaviate.Client(
+                url=configuration.url,
+                auth_client_secret=weaviate.AuthApiKey(
+                    api_key=configuration.api_key),
+                additional_headers=headers,
+            )
+        else:
+            self._client = weaviate.Client(
+                url=configuration.url,
+                additional_headers=headers,
+            )
 
         self.client.batch.configure(
             batch_size=DEFAULT_BATCH_SIZE,
@@ -234,6 +253,7 @@ class Weaviate(VectorStoreInterface):
         properties = [document_query.page_content_key]
         for key in document_query.metadata.get('additional_properties', []):
             properties.append(key)
+        additional_metadata_properties = document_query.metadata.get('metadata_properties', ['id', 'certainty', 'distance'])
 
         if kwargs.get('search_distance'):
             nearText['certainty'] = kwargs.get('search_distance')
@@ -254,7 +274,7 @@ class Weaviate(VectorStoreInterface):
                 query_obj = query_obj.with_where(whereFilter)
             query_response = query_obj.with_near_text(nearText).with_limit(
                 document_query.limit,
-            ).with_additional(['id', 'certainty', 'distance']).do()
+            ).with_additional(additional_metadata_properties).do()
         except Exception as e:
             logger.error('Error in similarity search: %s' % e)
             raise e
