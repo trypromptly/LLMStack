@@ -134,7 +134,11 @@ def extract_urls_task(url):
     url_content_type = get_url_content_type(url=url)
     url_content_type_parts = url_content_type.split(';')
     mime_type = url_content_type_parts[0]
-    if mime_type != 'text/html' or is_youtube_video_url(url):
+    
+    if is_youtube_video_url(url):
+        return [url]
+    
+    if mime_type != 'text/html' and not is_sitemap_url(url):
         return [url]
 
     # Get url domain

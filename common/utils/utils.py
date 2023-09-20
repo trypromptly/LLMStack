@@ -143,7 +143,7 @@ def get_url_content_type(url):
 def is_sitemap_url(url):
     try:
         content_type = get_url_content_type(url)
-        if 'application/xml' in content_type or 'text/xml' in content_type or 'text/plain' in content_type:
+        if 'application/xml' in content_type or 'text/xml' in content_type or 'text/plain' in content_type or 'application/rss+xml' in content_type:
             return True
         else:
             return False
