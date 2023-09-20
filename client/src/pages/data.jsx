@@ -192,51 +192,56 @@ export default function DataPage() {
     {
       title: "Action",
       key: "operation",
-      render: (record) => (
-        <Box>
-          <IconButton
-            disabled={!record.isUserOwned}
-            onClick={() => {
-              setModalTitle("Add New Data Entry");
-              setSelectedDataSource(record);
-              setAddDataSourceModalOpen(true);
-            }}
-          >
-            <AddOutlinedIcon />
-          </IconButton>
-          <IconButton
-            disabled={!record.isUserOwned}
-            onClick={() => {
-              setDeleteId(record);
-              setDeleteModalTitle("Delete Data Source");
-              setDeleteModalMessage(
-                <div>
-                  Are you sure you want to delete{" "}
-                  <span style={{ fontWeight: "bold" }}>{record.name}</span> ?
-                </div>,
-              );
-              setDeleteConfirmationModalOpen(true);
-            }}
-          >
-            <DeleteOutlineOutlinedIcon />
-          </IconButton>
-          {profileFlags.IS_ORGANIZATION_MEMBER && record.isUserOwned && (
+      render: (record) => {
+        console.log(record);
+        return (
+          <Box>
+            {!record?.type?.is_external_datasource && (
+              <IconButton
+                disabled={!record.isUserOwned}
+                onClick={() => {
+                  setModalTitle("Add New Data Entry");
+                  setSelectedDataSource(record);
+                  setAddDataSourceModalOpen(true);
+                }}
+              >
+                <AddOutlinedIcon />
+              </IconButton>
+            )}
             <IconButton
+              disabled={!record.isUserOwned}
               onClick={() => {
-                setModalTitle("Share Datasource");
-                setSelectedDataSource(record);
-                setShareDataSourceModalOpen(true);
+                setDeleteId(record);
+                setDeleteModalTitle("Delete Data Source");
+                setDeleteModalMessage(
+                  <div>
+                    Are you sure you want to delete{" "}
+                    <span style={{ fontWeight: "bold" }}>{record.name}</span> ?
+                  </div>,
+                );
+                setDeleteConfirmationModalOpen(true);
               }}
             >
-              {record.visibility === 0 ? (
-                <PersonOutlineOutlinedIcon />
-              ) : (
-                <PeopleOutlineOutlinedIcon />
-              )}
+              <DeleteOutlineOutlinedIcon />
             </IconButton>
-          )}
-        </Box>
-      ),
+            {profileFlags.IS_ORGANIZATION_MEMBER && record.isUserOwned && (
+              <IconButton
+                onClick={() => {
+                  setModalTitle("Share Datasource");
+                  setSelectedDataSource(record);
+                  setShareDataSourceModalOpen(true);
+                }}
+              >
+                {record.visibility === 0 ? (
+                  <PersonOutlineOutlinedIcon />
+                ) : (
+                  <PeopleOutlineOutlinedIcon />
+                )}
+              </IconButton>
+            )}
+          </Box>
+        );
+      },
     },
   ];
 
