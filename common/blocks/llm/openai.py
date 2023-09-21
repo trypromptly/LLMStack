@@ -107,10 +107,12 @@ class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseCon
             url=self._get_api_url(),
             method='POST',
             body=JsonBody(
-                json_body=(self._get_api_request_payload(input, configuration)),
+                json_body=(self._get_api_request_payload(
+                    input, configuration)),
             ),
             headers={},
-            authorization=BearerTokenAuth(token=input.env.openai_api_key) if input.env.openai_api_key else NoAuth(),
+            authorization=BearerTokenAuth(
+                token=input.env.openai_api_key) if input.env.openai_api_key else NoAuth(),
         )
 
         http_status_is_ok = True
@@ -133,7 +135,8 @@ class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseCon
         if not http_status_is_ok:
             raise Exception(
                 process_openai_error_response(
-                http_response.copy(update={'content_json': json.loads(error_message)}),
+                    http_response.copy(
+                        update={'content_json': json.loads(error_message)}),
                 ),
             )
 
@@ -146,10 +149,12 @@ class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseCon
             url=self._get_api_url(),
             method='POST',
             body=JsonBody(
-                json_body=(self._get_api_request_payload(input, configuration)),
+                json_body=(self._get_api_request_payload(
+                    input, configuration)),
             ),
             headers={},
-            authorization=BearerTokenAuth(token=input.env.openai_api_key) if input.env.openai_api_key else NoAuth(),
+            authorization=BearerTokenAuth(
+                token=input.env.openai_api_key) if input.env.openai_api_key else NoAuth(),
         )
 
         http_response = http_api_processor.process(
@@ -294,7 +299,8 @@ class OpenAICompletionsAPIProcessor(OpenAIAPIProcessor[OpenAICompletionsAPIProce
             map(lambda x: x['text'], json_response['choices']),
         )
         return OpenAICompletionsAPIProcessorOutput(
-            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(raw_response=json_response),
+            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(
+                raw_response=json_response),
         )
 
     def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> OpenAICompletionsAPIProcessorOutput:
@@ -302,7 +308,8 @@ class OpenAICompletionsAPIProcessor(OpenAIAPIProcessor[OpenAICompletionsAPIProce
             map(lambda x: x['text'], json.loads(response.text)['choices']),
         )
         return OpenAICompletionsAPIProcessorOutput(
-            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(raw_response=json.loads(response.text)),
+            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(
+                raw_response=json.loads(response.text)),
         )
 
 
@@ -352,7 +359,8 @@ class OpenAIChatCompletionsAPIProcessorInput(OpenAIAPIProcessorInput):
         description='The intial system message to be set.',
     )
     chat_history: List[ChatMessage] = Field(
-        default=[], description='The chat history, in the [chat format](/docs/guides/chat/introduction).',
+        default=[
+        ], description='The chat history, in the [chat format](/docs/guides/chat/introduction).',
     )
     messages: List[ChatMessage] = Field(
         default=[], description='The messages to be sent to the API.',
@@ -373,10 +381,9 @@ class OpenAIChatCompletionsAPIProcessorOutput(OpenAIAPIProcessorOutput):
 
 class ChatCompletionsModel(str, Enum):
     GPT_4 = 'gpt-4'
+    GPT_4_32K = 'gpt-4-32k'
     GPT_3_5 = 'gpt-3.5-turbo'
     GPT_3_5_16K = 'gpt-3.5-turbo-16k'
-    GPT_4_0613 = 'gpt-4-0613'
-    GPT_3_5_0613 = 'gpt-3.5-turbo-0613'
 
     def __str__(self):
         return self.value
@@ -444,7 +451,7 @@ class OpenAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[OpenAIChatCompletions
     def _get_api_request_payload(self, input: OpenAIChatCompletionsAPIProcessorInput, configuration: OpenAIChatCompletionsAPIProcessorConfiguration) -> dict:
         input_json = json.loads(
             input.copy(
-            exclude={'env'},
+                exclude={'env'},
             ).json(),
         )
         configuration_json = json.loads(configuration.json())
@@ -495,16 +502,19 @@ class OpenAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[OpenAIChatCompletions
         )
 
         return OpenAIChatCompletionsAPIProcessorOutput(
-            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(raw_response=json_response),
+            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(
+                raw_response=json_response),
         )
 
     def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> OpenAIChatCompletionsAPIProcessorOutput:
         choices = list(
-            map(lambda x: ChatMessage(**x['message']), json.loads(response.text)['choices']),
+            map(lambda x: ChatMessage(**x['message']),
+                json.loads(response.text)['choices']),
         )
 
         return OpenAIChatCompletionsAPIProcessorOutput(
-            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(raw_response=json.loads(response.text)),
+            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(
+                raw_response=json.loads(response.text)),
         )
 
 
@@ -590,7 +600,8 @@ class OpenAIImageGenerationsProcessor(OpenAIAPIProcessor[OpenAIImageGenerationsP
             map(image_uri, json.loads(response.text)['data']),
         )
         return OpenAIImageGenerationsProcessorOutput(
-            answer=answer, metadata=OpenAIAPIProcessorOutputMetadata(raw_response=json.loads(response.text)),
+            answer=answer, metadata=OpenAIAPIProcessorOutputMetadata(
+                raw_response=json.loads(response.text)),
         )
 
 
@@ -668,7 +679,8 @@ class OpenAIImageEditsProcessor(OpenAIAPIProcessor[OpenAIImageEditsProcessorInpu
             map(image_uri, json.loads(response.text)['data']),
         )
         return OpenAIImageVariationsProcessorOutput(
-            answer=answer, metadata=OpenAIAPIProcessorOutputMetadata(raw_response=json.loads(response.text)),
+            answer=answer, metadata=OpenAIAPIProcessorOutputMetadata(
+                raw_response=json.loads(response.text)),
         )
 
     def _process(self, input: OpenAIImageEditsProcessorInput, configuration: OpenAIImageEditsProcessorConfiguration) -> BaseOutputType:
@@ -763,7 +775,8 @@ class OpenAIImageVariationsProcessor(OpenAIAPIProcessor[OpenAIImageVariationsPro
             map(image_uri, json.loads(response.text)['data']),
         )
         return OpenAIImageVariationsProcessorOutput(
-            answer=answer, metadata=OpenAIAPIProcessorOutputMetadata(raw_response=json.loads(response.text)),
+            answer=answer, metadata=OpenAIAPIProcessorOutputMetadata(
+                raw_response=json.loads(response.text)),
         )
 
     def _process(self, input: OpenAIImageVariationsProcessorInput, configuration: OpenAIImageVariationsProcessorConfiguration) -> BaseOutputType:
@@ -905,7 +918,8 @@ class OpenAIAudioTranscriptionProcessor(OpenAIAPIProcessor[OpenAIAudioTranscript
     def _transform_api_response(self, input: OpenAIAudioTranscriptionsProcessorInput, configuration: OpenAIAudioTranscriptionsProcessorConfiguration, http_response: HttpAPIProcessorOutput) -> OpenAIAudioTranscriptionsProcessorOutput:
         return OpenAIAudioTranscriptionsProcessorOutput(
             text=json.loads(http_response.text)['text'],
-            metadata=OpenAIAPIProcessorOutputMetadata(raw_response=json.loads(http_response.text)),
+            metadata=OpenAIAPIProcessorOutputMetadata(
+                raw_response=json.loads(http_response.text)),
         )
 
     def _process(self, input: OpenAIAudioTranscriptionsProcessorInput, configuration: OpenAIAPIProcessorConfiguration) -> BaseOutputType:
@@ -923,7 +937,8 @@ class OpenAIAudioTranscriptionProcessor(OpenAIAPIProcessor[OpenAIAudioTranscript
             method='POST',
             body=RawRequestBody(
                 files=files,
-                data=self._get_api_request_data(input=input, configuration=configuration),
+                data=self._get_api_request_data(
+                    input=input, configuration=configuration),
             ),
             headers={},
             authorization=BearerTokenAuth(token=input.env.openai_api_key),
@@ -997,7 +1012,8 @@ class OpenAIAudioTranslationsProcessor(OpenAIAPIProcessor[OpenAIAudioTranslation
     def _transform_api_response(self, input: OpenAIAudioTranscriptionsProcessorInput, configuration: OpenAIAudioTranscriptionsProcessorConfiguration, http_response: HttpAPIProcessorOutput) -> OpenAIAudioTranscriptionsProcessorOutput:
         return OpenAIAudioTranslationsProcessorOutput(
             text=json.loads(http_response.text)['text'],
-            metadata=OpenAIAPIProcessorOutputMetadata(raw_response=json.loads(http_response.text)),
+            metadata=OpenAIAPIProcessorOutputMetadata(
+                raw_response=json.loads(http_response.text)),
         )
 
     def _process(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration) -> BaseOutputType:
@@ -1015,7 +1031,8 @@ class OpenAIAudioTranslationsProcessor(OpenAIAPIProcessor[OpenAIAudioTranslation
             method='POST',
             body=RawRequestBody(
                 files=files,
-                data=self._get_api_request_data(input=input, configuration=configuration),
+                data=self._get_api_request_data(
+                    input=input, configuration=configuration),
             ),
             headers={},
             authorization=BearerTokenAuth(token=input.env.openai_api_key),

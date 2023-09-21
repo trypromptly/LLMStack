@@ -18,6 +18,7 @@ from processors.providers.api_processor_interface import CHAT_WIDGET_NAME
 class ChatCompletionsModel(str, Enum):
     GPT_4 = 'gpt-4'
     GPT_3_5 = 'gpt-35-turbo'
+    GPT_3_5_16 = 'gpt-35-turbo-16k'
     GPT_4_32 = 'gpt-4-32k'
 
     def __str__(self):
@@ -121,7 +122,7 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
     Azure Chat Completions processor
     """
 
-    def process_sesssion_data(self, session_data):
+    def process_session_data(self, session_data):
         self._chat_history = session_data['chat_history'] if 'chat_history' in session_data else [
         ]
 
