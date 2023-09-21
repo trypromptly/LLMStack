@@ -238,8 +238,9 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
                 temperature=self._config.temperature,
                 stream=True,
             )
-        elif self._env['localai_api_key'] and self._env['localai_base_url'] and self._config.use_localai_if_available:
-            openai.api_key = self._env['localai_api_key']
+        elif self._env['localai_base_url'] and self._config.use_localai_if_available:
+            if self._env['localai_api_key']:
+                openai.api_key = self._env['localai_api_key']
             openai.api_base = self._env['localai_base_url']
             model = self._config.dict().get('model', 'gpt-3.5-turbo')
 
