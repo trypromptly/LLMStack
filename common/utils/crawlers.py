@@ -77,6 +77,7 @@ async def run_playwright(url):
         browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') else await playwright.chromium.launch()
         page = await browser.new_page()
         await page.goto(url)
+        await page.wait_for_timeout(5000)
         html_content = await page.content()
         await browser.close()
         return html_content
