@@ -198,7 +198,7 @@ class AbstractProfile(models.Model):
             'aws_secret_access_key': self.get_vendor_key('aws_secret_access_key'),
             'aws_default_region': self.get_vendor_key('aws_default_region'),
             'azure_openai_endpoint': self.get_vendor_key('azure_openai_endpoint'),
-            'localai_api_key': self.get_vendor_key('localai_key'),
+            'localai_api_key': self.get_vendor_key('localai_api_key'),
             'localai_base_url': self.get_vendor_key('localai_base_url'),
             'weaviate_url': self.weaviate_url,
             'weaviate_api_key': self.weaviate_api_key,
