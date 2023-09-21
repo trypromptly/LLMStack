@@ -30,6 +30,7 @@ You can set default keys for providers like OpenAI, Cohere etc., for all apps fr
 | `DEFAULT_COHERE_API_KEY`                  | Default Cohere API key to use for all apps.                                             | None          |
 | `DEFAULT_FOREFRONTAI_API_KEY`             | Default ForefrontAI API key to use for all apps.                                        | None          |
 | `DEFAULT_ELEVENLABS_API_KEY`              | Default Eleven Labs API key for text to speech processor.                               | None          |
+| `DEFAULT_ANTHROPIC_API_KEY`               | Default Anthropic API key for models like Claude.                                       | None          |
 | `DEFAULT_LOCALAI_API_KEY`                 | Default LocalAI API to your installation .                                              | None          |
 | `DEFAULT_LOCALAI_BASE_URL`                | Default LocalAI base URL of the installation.                                           | None          |
 | `DEFAULT_AWS_SECRET_ACCESS_KEY`           | Default AWS Secret Access Key to use for all apps.                                      | None          |

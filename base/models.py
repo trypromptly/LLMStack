@@ -85,6 +85,9 @@ class AbstractProfile(models.Model):
     localai_base_url = models.CharField(
         max_length=256, default=None, help_text='LocalAI base URL to use with LocalAI processors', null=True, blank=True,
     )
+    anthropic_api_key = models.CharField(
+        max_length=256, default=None, help_text='Anthropic API key to use with Anthropic models like Claude', null=True, blank=True,
+    )
     logo = models.TextField(
         default='', help_text='Logo to use for the user', null=True, blank=True,
     )
@@ -164,6 +167,8 @@ class AbstractProfile(models.Model):
             return self.decrypt_value(api_key_value) if api_key_value else settings.DEFAULT_LOCALAI_API_KEY
         elif attrname == 'localai_base_url':
             return api_key_value if api_key_value else settings.DEFAULT_LOCALAI_BASE_URL
+        elif attrname == 'anthropic_api_key':
+            return self.decrypt_value(api_key_value) if api_key_value else settings.DEFAULT_ANTHROPIC_API_KEY
         else:
             return None
 
@@ -200,6 +205,7 @@ class AbstractProfile(models.Model):
             'azure_openai_endpoint': self.get_vendor_key('azure_openai_endpoint'),
             'localai_api_key': self.get_vendor_key('localai_api_key'),
             'localai_base_url': self.get_vendor_key('localai_base_url'),
+            'anthropic_api_key': self.get_vendor_key('anthropic_api_key'),
             'weaviate_url': self.weaviate_url,
             'weaviate_api_key': self.weaviate_api_key,
             'weaviate_embedding_endpoint': self.vectostore_embedding_endpoint,

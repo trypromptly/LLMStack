@@ -185,6 +185,11 @@ const settingsSchema = {
       description: "LocalAI base URL",
       title: "LocalAI Base URL",
     },
+    anthropic_api_key: {
+      type: ["string", "null"],
+      description: "Anthropic API key",
+      title: "Anthropic API Key",
+    },
     vectorstore_weaviate_url: {
       type: ["string", "null"],
       description: "Vectorstore Weaviate URL",

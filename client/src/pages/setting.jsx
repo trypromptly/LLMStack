@@ -42,6 +42,9 @@ const SettingPage = () => {
     elevenlabs_key: "",
     localai_api_key: "",
     localai_base_url: "",
+    azure_openai_api_key: "",
+    google_service_account_json_key: "",
+    anthropic_api_key: "",
     logo: "",
   });
   const [loading, setLoading] = useState(true);
@@ -66,6 +69,7 @@ const SettingPage = () => {
           azure_openai_api_key: profile.azure_openai_api_key,
           localai_api_key: profile.localai_api_key,
           localai_base_url: profile.localai_base_url,
+          anthropic_api_key: profile.anthropic_api_key,
           logo: profile.logo,
           user_email: profile.user_email,
         });
@@ -98,6 +102,7 @@ const SettingPage = () => {
           azure_openai_api_key: profile.azure_openai_api_key,
           localai_api_key: profile.localai_api_key,
           localai_base_url: profile.localai_base_url,
+          anthropic_api_key: profile.anthropic_api_key,
           logo: profile.logo,
         });
         setLoading(false);
@@ -265,6 +270,31 @@ const SettingPage = () => {
                           setUpdateKeys(
                             updateKeys.add("google_service_account_json_key"),
                           );
+                        }}
+                      />
+                    </Col>
+                  </Row>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={24} md={14}>
+                <Form.Item
+                  label="Anthropic API Key"
+                  tooltip="Anthropic API Key for models like Claude"
+                >
+                  <Row>
+                    <Col xs={24} md={16}>
+                      {" "}
+                      <Input.Password
+                        value={formData.anthropic_api_key}
+                        disabled={!profileFlags.CAN_ADD_KEYS}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            anthropic_api_key: e.target.value,
+                          });
+                          setUpdateKeys(updateKeys.add("anthropic_api_key"));
                         }}
                       />
                     </Col>

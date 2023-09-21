@@ -131,8 +131,8 @@ class ProfileViewSet(viewsets.ViewSet):
                     localai_api_key,
                 ).decode('utf-8')
             else:
-                profile.localai_api_key = '' 
-        
+                profile.localai_api_key = ''
+
         if 'localai_base_url' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
             should_update = True
             localai_base_url = request.data.get('localai_base_url')
@@ -140,6 +140,16 @@ class ProfileViewSet(viewsets.ViewSet):
                 profile.localai_base_url = localai_base_url
             else:
                 profile.localai_base_url = ''
+
+        if 'anthropic_api_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+            should_update = True
+            anthropic_api_key = request.data.get('anthropic_api_key')
+            if anthropic_api_key and len(anthropic_api_key) > 0:
+                profile.anthropic_api_key = profile.encrypt_value(
+                    anthropic_api_key,
+                ).decode('utf-8')
+            else:
+                profile.anthropic_api_key = ''
 
         if 'logo' in request.data:
             should_update = True

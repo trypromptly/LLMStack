@@ -104,6 +104,9 @@ class OrganizationSettings(models.Model):
     localai_base_url = models.CharField(
         max_length=256, default=None, help_text='LocalAI base URL to use with LocalAI backend', null=True, blank=True,
     )
+    anthropic_api_key = models.CharField(
+        max_length=256, default=None, help_text='Anthropic API key to use with Anthropic models like Claude', null=True, blank=True,
+    )
     vectorstore_weaviate_url = models.CharField(
         max_length=256, default=None, help_text='Vectorstore URL to use with Vectorstore backend', null=True, blank=True,
     )
@@ -141,7 +144,7 @@ class OrganizationSettings(models.Model):
     def get_vendor_key(self, attrname):
         if hasattr(self, attrname):
             encrypted_key = getattr(self, attrname)
-            if encrypted_key and attrname in ['azure_openai_api_key', 'openai_key', 'stabilityai_key', 'cohere_key', 'forefrontai_key', 'elevenlabs_key', 'aws_secret_access_key', 'vectorstore_weaviate_api_key']:
+            if encrypted_key and attrname in ['azure_openai_api_key', 'openai_key', 'stabilityai_key', 'cohere_key', 'forefrontai_key', 'elevenlabs_key', 'anthropic_api_key', 'aws_secret_access_key', 'vectorstore_weaviate_api_key']:
                 return self.decrypt_value(encrypted_key)
             else:
                 return encrypted_key

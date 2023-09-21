@@ -44,6 +44,7 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
     cohere_key = serializers.SerializerMethodField()
     forefrontai_key = serializers.SerializerMethodField()
     elevenlabs_key = serializers.SerializerMethodField()
+    anthropic_api_key = serializers.SerializerMethodField()
     aws_secret_access_key = serializers.SerializerMethodField()
     vectorstore_weaviate_api_key = serializers.SerializerMethodField()
     disabled_api_backends = serializers.SerializerMethodField()
@@ -69,6 +70,9 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
     def get_elevenlabs_key(self, obj):
         return obj.decrypt_value(obj.elevenlabs_key)
 
+    def get_anthropic_api_key(self, obj):
+        return obj.decrypt_value(obj.anthropic_api_key)
+
     def get_aws_secret_access_key(self, obj):
         return obj.decrypt_value(obj.aws_secret_access_key)
 
@@ -82,7 +86,7 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
             'default_app_visibility', 'max_app_visibility', 'allow_user_keys',
             'azure_openai_api_key', 'openai_key', 'stabilityai_key',
             'cohere_key', 'forefrontai_key', 'elevenlabs_key', 'azure_openai_endpoint',
-            'aws_access_key_id', 'aws_secret_access_key', 'aws_default_region',
+            'anthropic_api_key', 'aws_access_key_id', 'aws_secret_access_key', 'aws_default_region',
             'vectorstore_weaviate_url', 'vectorstore_weaviate_api_key',
             'vectorstore_weaviate_text2vec_openai_module_config', 'use_own_vectorstore',
             'use_azure_openai_embeddings', 'embeddings_api_rate_limit', 'default_api_backend',
