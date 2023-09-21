@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.yaml_loader import get_app_template_by_slug
 
-from .models import App, AppData
+from .models import App, AppAccessPermission, AppData
 from .models import AppHub
 from .models import AppRunGraphEntry
 from .models import AppSession
@@ -208,7 +208,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return obj.slack_config if obj.has_write_permission(self._request_user) else None
 
     def get_access_permission(self, obj):
-        return obj.access_permission if obj.has_write_permission(self._request_user) else None
+        return AppAccessPermission.WRITE if obj.has_write_permission(self._request_user) else AppAccessPermission.READ
 
     def get_accessible_by(self, obj):
         return obj.accessible_by if obj.has_write_permission(self._request_user) else None
