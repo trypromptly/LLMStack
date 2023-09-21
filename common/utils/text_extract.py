@@ -47,7 +47,7 @@ class ExtraParams:
         return self._azure_openai_key
 
 def get_url_content_type(url):
-    response = requests.head(url, allow_redirects=True)
+    response = requests.head(url, allow_redirects=True, verify=False)
 
     content_type = response.headers.get('Content-Type', '')
     return content_type

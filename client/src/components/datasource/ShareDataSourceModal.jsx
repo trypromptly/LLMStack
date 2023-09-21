@@ -53,7 +53,6 @@ export default function ShareDataSourceModal(props) {
       description: "Only you can access this datasource",
     },
   ];
-  console.log("visibility", visibility);
   return (
     <Dialog
       open={open}
@@ -68,17 +67,23 @@ export default function ShareDataSourceModal(props) {
           <MuiSelect
             labelId="share-datasource-select-label"
             size="small"
-            defaultValue={dataSource?.visibility || 1}
-            onChange={(e) => setVisibility(e.target.value)}
+            defaultValue={
+              dataSource?.visibility === undefined ? 1 : dataSource?.visibility
+            }
+            onChange={(e) => {
+              setVisibility(e.target.value);
+            }}
           >
-            {visibilityOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                <Stack direction="row" spacing={1}>
-                  <span>{option.label}</span>
-                  <small>{option.description}</small>
-                </Stack>
-              </MenuItem>
-            ))}
+            {visibilityOptions.map((option) => {
+              return (
+                <MenuItem key={option.value} value={option.value}>
+                  <Stack direction="row" spacing={1}>
+                    <span>{option.label}</span>
+                    <small>{option.description}</small>
+                  </Stack>
+                </MenuItem>
+              );
+            })}
           </MuiSelect>
         </Stack>
       </DialogContent>
