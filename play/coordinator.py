@@ -37,6 +37,7 @@ class Coordinator(ThreadingActor):
         # Create output_streams
         self._output_streams = []
 
+        all_dependencies = [actor_config.template_key for actor_config in actor_configs]
         # Spawn actors
         self.actors = {}
         for actor_config in actor_configs:
@@ -44,7 +45,7 @@ class Coordinator(ThreadingActor):
                 OutputStream(stream_id=actor_config.name, coordinator_urn=self.actor_urn, output_cls=actor_config.output_cls),
             )
             actor = actor_config.actor.start(
-                output_stream=self._output_streams[-1], dependencies=actor_config.dependencies, **actor_config.kwargs,
+                output_stream=self._output_streams[-1], dependencies=actor_config.dependencies, all_dependencies=all_dependencies, **actor_config.kwargs,
             )
             self.actors[actor_config.name] = actor
             logger.info(

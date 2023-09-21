@@ -44,8 +44,8 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
     """
     Abstract class for API processors
     """
-    def __init__(self, input, config, env, output_stream=None, dependencies=[], session_data=None):
-        Actor.__init__(self, dependencies=dependencies)
+    def __init__(self, input, config, env, output_stream=None, dependencies=[], all_dependencies=[], session_data=None):
+        Actor.__init__(self, dependencies=dependencies, all_dependencies=all_dependencies)
 
         # TODO: This is for backward compatibility. Remove this once all the processors are updated
         if 'datasource' in config and isinstance(config['datasource'], str):
