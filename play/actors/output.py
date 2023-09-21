@@ -23,8 +23,8 @@ class OutputResponse(NamedTuple):
 
 
 class OutputActor(Actor):
-    def __init__(self, output_stream, dependencies=[], template=None):
-        super().__init__(dependencies=dependencies)
+    def __init__(self, output_stream, dependencies=[], template=None, all_dependencies=[]):
+        super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
         self._output_stream = output_stream
         self._data = None
         self._data_chunk = None

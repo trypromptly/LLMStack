@@ -64,8 +64,8 @@ def extract_jinja2_variables(input_data):
                 variables.update(re.findall(r'\b\w+\b', split_tag[1]))
             elif split_tag[0] == 'for':
                 # In {% for item in items %}, extract 'items' as a variable
-                if len(split_tag) == 5 and split_tag[3] == 'in':
-                    variables.add(split_tag[4])
+                if len(split_tag) == 4 and split_tag[2] == 'in':
+                    variables.add(split_tag[3])
 
         return variables
 

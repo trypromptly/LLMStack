@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class BookKeepingActor(Actor):
-    def __init__(self, output_stream, processor_configs, dependencies=[]):
-        super().__init__(dependencies=dependencies)
+    def __init__(self, output_stream, processor_configs, dependencies=[], all_dependencies=[]):
+        super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
         self._processor_configs = processor_configs
         self._output_stream = output_stream
         self._bookkeeping_data_map = {}

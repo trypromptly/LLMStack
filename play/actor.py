@@ -40,9 +40,10 @@ class ActorConfig(BaseModel):
 
 
 class Actor(ThreadingActor):
-    def __init__(self, dependencies: list = []):
+    def __init__(self, dependencies: list = [], all_dependencies: list = []):
         super().__init__()
         self._dependencies = dependencies
+        self._all_dependencies = all_dependencies
         self._messages = {}  # Holds messages while waiting for dependencies
 
     def on_receive(self, message: Message) -> Any:
@@ -64,7 +65,7 @@ class Actor(ThreadingActor):
             self._messages = {**self._messages, **message_and_key}
 
         # Call input only when all the dependencies are met
-        if message.message_type == MessageType.STREAM_CLOSED and set(self.get_dependencies()) == set(self._messages.keys()):
+        if message.message_type == MessageType.STREAM_CLOSED and set(self.dependencies) == set(self._messages.keys()):
             self.input(self._messages)
 
     def input(self, message: Any) -> Any:
@@ -82,7 +83,7 @@ class Actor(ThreadingActor):
 
     @property
     def dependencies(self):
-        return list(set(self._dependencies + self.get_dependencies()))
+        return list(filter(lambda x: x in self._all_dependencies, list(set(self._dependencies + self.get_dependencies()))))
 
     def on_error(self, error: Any) -> None:
         # Co-ordinator calls this when any actor in the dependency chain has error

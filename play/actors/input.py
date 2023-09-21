@@ -32,8 +32,8 @@ class InputRequest(NamedTuple):
 
 
 class InputActor(Actor):
-    def __init__(self, output_stream, input_request, dependencies=[]):
-        super().__init__()
+    def __init__(self, output_stream, input_request, dependencies=[], all_dependencies=[]):
+        super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
         self.input_request = input_request
         self.data = None
         self.output_stream = output_stream
