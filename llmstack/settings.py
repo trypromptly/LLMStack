@@ -303,6 +303,7 @@ EMAIL_TEMPLATE_FACTORY_CLASS = 'emails.templates.factory.DefaultEmailTemplateFac
 FLAG_SOURCES = ['base.flags.FlagSource']
 
 PROCESSOR_PROVIDERS = [
+    'processors.providers.anthropic',
     'processors.providers.azure',
     'processors.providers.cohere',
     'processors.providers.elevenlabs',

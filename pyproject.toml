@@ -134,6 +134,7 @@ python-pptx = {version = "0.6.21", allow-prereleases = true}
 python-magic = {version = "0.4.27", allow-prereleases = true}
 openai = {version = "0.27.0", allow-prereleases = true}
 stability-sdk = {version = "0.8.4", allow-prereleases = true}
+anthropic = "^0.3.11"
 
 [tool.poetry-dynamic-versioning]
 enable = true

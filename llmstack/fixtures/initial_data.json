@@ -72,6 +72,15 @@
     }
   },
   {
+    "model": "apiabstractor.apiprovider",
+    "pk": 9,
+    "fields": {
+      "name": "Anthropic",
+      "slug": "anthropic",
+      "prefix": "anthropic"
+    }
+  },
+  {
     "model": "apiabstractor.apibackend",
     "pk": 1,
     "fields": {
@@ -654,6 +663,21 @@
     }
   },
   {
+    "model": "apiabstractor.apibackend",
+    "pk": 23,
+    "fields": {
+      "name": "Completions",
+      "slug": "completions",
+      "description": "Claude text completions",
+      "api_provider": 9,
+      "api_endpoint": "claude",
+      "params": {},
+      "input_schema": {},
+      "output_schema": {},
+      "config_schema": {}
+    }
+  },
+  {
     "model": "apps.apptype",
     "pk": 1,
     "fields": {
@@ -713,6 +737,15 @@
     "fields": {
       "name": "File",
       "slug": "file",
+      "description": ""
+    }
+  },
+  {
+    "model": "datasources.datasourcetype",
+    "pk": 5,
+    "fields": {
+      "name": "Weaviate",
+      "slug": "weaviate",
       "description": ""
     }
   }

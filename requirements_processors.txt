@@ -1,2 +1,4 @@
 openai==0.27.0
 stability-sdk==0.8.4
+distro==1.8.0
+anthropic==0.3.11
