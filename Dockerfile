@@ -33,7 +33,7 @@ COPY --from=builder /code/llmstack/client/build/static /code/client/build/static
 COPY --from=builder /code/llmstack/contrib/apps /code/llmstack/contrib/apps
 COPY --from=builder /code/llmstack/fixtures /code/llmstack/fixtures
 COPY --from=builder /code/llmstack /code/llmstack
-COPY --from=builder /code/static /code/static
+COPY --from=builder /code/llmstack/static /code/llmstack/static
 COPY --from=builder /code/manage.py /code/manage.py
 COPY --from=builder /code/docker-entrypoint.sh /code/docker-entrypoint.sh
 

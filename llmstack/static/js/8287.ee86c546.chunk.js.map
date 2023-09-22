@@ -1,0 +1,1 @@
+{"version":3,"file":"static/js/8287.ee86c546.chunk.js","mappings":"iLAAe,SAASA,IACtB,OAAO,gBAAKC,GAAG,cAAa,SAAC,UAC/B,C","sources":["pages/signup.jsx"],"sourcesContent":["export default function SignupPage() {\n  return <div id=\"signup-page\">Signup</div>;\n}\n"],"names":["SignupPage","id"],"sourceRoot":""}
