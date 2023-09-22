@@ -6,7 +6,7 @@ from play.actor import Actor
 from play.output_stream import Message
 from play.output_stream import MessageType
 from processors.tasks import persist_history_task
-from jobs.adhoc import HistoryPersistenceJob
+from llmstack.jobs.adhoc import HistoryPersistenceJob
 
 logger = logging.getLogger(__name__)
 
