@@ -9,20 +9,16 @@ from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.common.blocks.data.source.uri import Uri, UriInput, UriConfiguration
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
-from datasources.handlers.datasource_type_interface import DataSourceEntryItem
-from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceProcessor
-from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
-
+from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
 
 logger = logging.getLogger(__name__)
 
 
-class PptxFileSchema(DataSourceSchema):
+class DocxFileSchema(DataSourceSchema):
     file: str = Field(
         ..., widget='file',
         description='File to be processed', accepts={
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation': [],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [],
         }, maxSize=20000000,
     )
 
@@ -34,30 +30,30 @@ class PptxFileSchema(DataSourceSchema):
     def get_weaviate_schema(class_name: str) -> dict:
         return WEAVIATE_SCHEMA.safe_substitute(
             class_name=class_name,
-            content_key=PptxFileSchema.get_content_key(),
+            content_key=DocxFileSchema.get_content_key(),
         )
 
 
-class PptxFileDataSource(DataSourceProcessor[PptxFileSchema]):
-
+class DocxFileDataSource(DataSourceProcessor[DocxFileSchema]):
     @staticmethod
     def name() -> str:
-        return 'pptx_file'
+        return 'docx_file'
 
     @staticmethod
     def slug() -> str:
-        return 'pptx_file'
+        return 'docx_file'
 
     @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        entry = PptxFileSchema(**data)
+        entry = DocxFileSchema(**data)
         mime_type, file_name, file_data = validate_parse_data_uri(entry.file)
-        if mime_type != 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+
+        if mime_type != 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
             raise ValueError(
-                f'Invalid mime type: {mime_type}, expected: application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                f'Invalid mime type: {mime_type}, expected: application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             )
 
         data_source_entry = DataSourceEntryItem(

@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'processors.apps.ProcessorsConfig',
-    'datasources.apps.DatasourcesConfig',
+    'llmstack.datasources.apps.DatasourcesConfig',
     'llmstack.apps.apps.AppsConfig',
     'llmstack.base.apps.BaseConfig',
     'organizations.apps.OrganizationsConfig',
@@ -315,12 +315,12 @@ PROCESSOR_PROVIDERS = [
 ]
 
 DATASOURCE_TYPE_PROVIDERS = [
-    'datasources.handlers.amazon',
-    'datasources.handlers.databases',
-    'datasources.handlers.files',
-    'datasources.handlers.google',
-    'datasources.handlers.text',
-    'datasources.handlers.website',
+    'llmstack.datasources.handlers.amazon',
+    'llmstack.datasources.handlers.databases',
+    'llmstack.datasources.handlers.files',
+    'llmstack.datasources.handlers.google',
+    'llmstack.datasources.handlers.text',
+    'llmstack.datasources.handlers.website',
 ]
 
 APP_TEMPLATES_DIR = os.getenv('APP_TEMPATES_DIR').split(',') if os.getenv('APP_TEMPATES_DIR') else [

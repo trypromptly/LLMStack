@@ -9,12 +9,9 @@ from rest_framework.response import Response as DRFResponse
 
 from llmstack.apps.models import App, AppVisibility
 from llmstack.apps.serializers import AppSerializer
-from datasources.models import DataSource
-from datasources.models import DataSourceEntry
-from datasources.models import DataSourceVisibility
-from datasources.serializers import DataSourceEntrySerializer
-from datasources.serializers import DataSourceSerializer
-from datasources.types import DataSourceTypeFactory
+from llmstack.datasources.models import DataSource, DataSourceEntry, DataSourceVisibility
+from llmstack.datasources.serializers import DataSourceEntrySerializer, DataSourceSerializer
+from llmstack.datasources.types import DataSourceTypeFactory
 from organizations.models import Organization
 from organizations.models import OrganizationSettings
 from organizations.serializers import OrganizationSerializer

@@ -8,7 +8,7 @@ urlpatterns = [
     path('', include('llmstack.apps.urls')),
     path('', include('processors.urls')),
     path('', include('organizations.urls')),
-    path('', include('datasources.urls')),
+    path('', include('llmstack.datasources.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.ADMIN_ENABLED:

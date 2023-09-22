@@ -2,12 +2,12 @@ import logging
 import uuid
 from typing import List
 
-from datasources.handlers.datasource_type_interface import DataSourceEntryItem
-from datasources.handlers.datasource_type_interface import DataSourceProcessor
-from datasources.models import DataSource
-from datasources.models import DataSourceEntry
-from datasources.models import DataSourceEntryStatus
-from datasources.types import DataSourceTypeFactory
+from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem
+from llmstack.datasources.handlers.datasource_type_interface import DataSourceProcessor
+from llmstack.datasources.models import DataSource
+from llmstack.datasources.models import DataSourceEntry
+from llmstack.datasources.models import DataSourceEntryStatus
+from llmstack.datasources.types import DataSourceTypeFactory
 import weaviate
 
 logger = logging.getLogger(__name__)

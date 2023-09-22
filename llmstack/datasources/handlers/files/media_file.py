@@ -5,23 +5,23 @@ from typing import Optional
 from pydantic import Field
 
 from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.utils.text_extract import extract_text_from_b64_json
+from llmstack.common.utils.text_extract import ExtraParams
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.common.blocks.data.source.uri import Uri, UriInput, UriConfiguration
-from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
-from datasources.handlers.datasource_type_interface import DataSourceEntryItem
-from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceProcessor
-from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
+from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
 
 logger = logging.getLogger(__name__)
 
 
-class DocxFileSchema(DataSourceSchema):
+class MediaFileSchema(DataSourceSchema):
     file: str = Field(
         ..., widget='file',
         description='File to be processed', accepts={
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [],
+            'audio/mpeg': [],
+            'audio/mp3': [],
+            'video/mp4': [],
+            'video/webm': [],
         }, maxSize=20000000,
     )
 
@@ -33,30 +33,30 @@ class DocxFileSchema(DataSourceSchema):
     def get_weaviate_schema(class_name: str) -> dict:
         return WEAVIATE_SCHEMA.safe_substitute(
             class_name=class_name,
-            content_key=DocxFileSchema.get_content_key(),
+            content_key=MediaFileSchema.get_content_key(),
         )
 
 
-class DocxFileDataSource(DataSourceProcessor[DocxFileSchema]):
+class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
     @staticmethod
     def name() -> str:
-        return 'docx_file'
+        return 'media_file'
 
     @staticmethod
     def slug() -> str:
-        return 'docx_file'
+        return 'media_file'
 
     @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        entry = DocxFileSchema(**data)
+        entry = MediaFileSchema(**data)
         mime_type, file_name, file_data = validate_parse_data_uri(entry.file)
 
-        if mime_type != 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        if mime_type not in ['audio/mpeg', 'audio/mp3', 'video/mp4', 'video/webm']:
             raise ValueError(
-                f'Invalid mime type: {mime_type}, expected: application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                f'Invalid mime type: {mime_type}, expected: audio/mpeg or audio/mp3 or video/mp4 or video/webm',
             )
 
         data_source_entry = DataSourceEntryItem(
@@ -67,23 +67,25 @@ class DocxFileDataSource(DataSourceProcessor[DocxFileSchema]):
         return [data_source_entry]
 
     def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
+        openai_key = self.profile.get_vendor_key('openai_key')
+
         logger.info(
             f"Processing file: {data.data['file_name']} mime_type: {data.data['mime_type']}",
         )
-        data_uri = f"data:{data.data['mime_type']};name={data.data['file_name']};base64,{data.data['file_data']}"
 
-        result = Uri().process(
-            input=UriInput(env=DataSourceEnvironmentSchema(openai_key=self.openai_key), uri=data_uri), configuration=UriConfiguration()
+        file_text = extract_text_from_b64_json(
+            mime_type=data.data['mime_type'],
+            base64_encoded_data=data.data['file_data'],
+            file_name=data.data['file_name'], extra_params=ExtraParams(
+                openai_key=openai_key),
         )
 
-        file_text = ''
-        for doc in result.documents:
-            file_text += doc.content.decode() + '\n'
-
         docs = [
-            Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': data.data['file_name']}) for t in SpacyTextSplitter(
-                chunk_size=1500,
-            ).split_text(file_text)
+            Document(
+                page_content_key=self.get_content_key(),
+                page_content=t,
+                metadata={'source': data.data['file_name']},
+            ) for t in SpacyTextSplitter(chunk_size=1500).split_text(file_text)
         ]
 
         return docs

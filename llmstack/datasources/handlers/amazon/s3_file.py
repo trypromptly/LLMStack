@@ -7,18 +7,14 @@ from typing import Optional
 from pydantic import Field
 from pydantic import SecretStr
 
-from llmstack.common.blocks.data.source.s3_bucket import S3Bucket, S3BucketInput, S3BucketConfiguration
+from llmstack.common.blocks.data.source.s3_path import S3Path, S3PathInput, S3PathConfiguration
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter
 from llmstack.common.utils.text_extract import extract_text_from_b64_json
-from llmstack.common.utils.text_extract import ExtraParams
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from datasources.handlers.datasource_type_interface import DataSourceEntryItem
-from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceProcessor
-from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
-from datasources.models import DataSource
+from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
+from llmstack.datasources.models import DataSource
 from llmstack.base.models import Profile
 
 logger = logging.getLogger(__name__)
@@ -41,20 +37,18 @@ class MimeType(str, Enum):
         return self.value
 
 
-class S3BucketSchema(DataSourceSchema):
+class S3FileSchema(DataSourceSchema):
     bucket: str = Field(description='S3 bucket name')
-    regex: Optional[str] = Field(description='Regex to filter files')
+    path: str = Field(description='S3 file path')
     mime_type: Optional[MimeType] = Field(
-        default=MimeType.CSV, description='Mime type of the files',
+        default=MimeType.PLAIN_TEXT, description='Mime type of the files',
     )
     aws_access_key_id: Optional[str] = Field(
         description='AWS access key ID', default=None,
     )
     aws_secret_access_key: Optional[SecretStr] = Field(
+        ...,
         description='AWS secret access key', widget='password',
-    )
-    split_csv: Optional[bool] = Field(
-        default=False, description='Split CSV file',
     )
     region_name: Optional[str] = Field(
         description='AWS region name', default='us-east-1',
@@ -68,36 +62,34 @@ class S3BucketSchema(DataSourceSchema):
     def get_weaviate_schema(class_name: str) -> dict:
         return WEAVIATE_SCHEMA.safe_substitute(
             class_name=class_name,
-            content_key=S3BucketSchema.get_content_key(),
+            content_key=S3FileSchema.get_content_key(),
         )
 
 
-class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
+class S3FileDataSource(DataSourceProcessor[S3FileSchema]):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)
-        self.profile = profile
         self.openai_key = profile.get_vendor_key('openai_key')
-        self.split_csv = None
 
     @staticmethod
     def name() -> str:
-        return 's3 bucket'
+        return 's3 file'
 
     @staticmethod
     def slug() -> str:
-        return 's3_bucket'
+        return 's3_file'
 
     @staticmethod
     def provider_slug() -> str:
         return 'amazon'
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        entry = S3BucketSchema(**data)
+        entry = S3FileSchema(**data)
         mime_type = entry.mime_type
-        self.split_csv = entry.split_csv
 
-        bucket_name = entry.bucket
+        file_name = f'{entry.bucket}/{entry.path}'
+
         if entry.aws_access_key_id:
             aws_access_key_id = entry.aws_access_key_id
         else:
@@ -118,32 +110,38 @@ class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
         else:
             region_name = self.profile.get_vendor_key('aws_default_region')
 
-        result = S3Bucket().process(
-            input=S3BucketInput(bucket=bucket_name, regex=entry.regex),
-            configuration=S3BucketConfiguration(
+        result = S3Path().process(
+            input=S3PathInput(bucket=entry.bucket, path=entry.path),
+            configuration=S3PathConfiguration(
                 aws_access_key_id=aws_access_key_id,
                 aws_secret_access_key=aws_secret_access_key_secret,
                 region_name=region_name,
             ))
+        document = result.documents[0]
 
-        data_source_entries = []
-
-        for document in result.documents:
-            file_name = document.metadata['file_name']
-            base64_encoded_file_content = base64.b64encode(
-                document.content,
-            ).decode()
-            data_url = 'data:{};name={};base64,{}'.format(
-                mime_type, file_name, base64_encoded_file_content,
+        if document.metadata['HTTPHeader']['http_status_code'] != 200:
+            logger.error(
+                f'Error fetching file from S3: {result.result.metadata.http_status}',
             )
-            mime_type, file_name, file_data = validate_parse_data_uri(data_url)
-            data_source_entry = DataSourceEntryItem(
-                name=file_name, data={
-                    'mime_type': mime_type, 'file_name': file_name, 'file_data': file_data},
-            )
-            data_source_entries.append(data_source_entry)
+            raise Exception('Error fetching file from S3')
 
-        return data_source_entries
+        mime_type = document.metadata['HTTPHeader']['content_type']
+        base64_encoded_file_content = base64.b64encode(
+            document.content,
+        ).decode()
+
+        data_url = 'data:{};name={};base64,{}'.format(
+            mime_type, file_name, base64_encoded_file_content,
+        )
+
+        mime_type, file_name, file_data = validate_parse_data_uri(data_url)
+
+        data_source_entry = DataSourceEntryItem(
+            name=file_name, data={'mime_type': mime_type,
+                                  'file_name': file_name, 'file_data': file_data},
+        )
+
+        return [data_source_entry]
 
     def get_data_documents(self, data: dict) -> Optional[DataSourceEntryItem]:
         logger.info(
@@ -152,40 +150,21 @@ class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
 
         file_text = extract_text_from_b64_json(
             data.data['mime_type'],
-            data.data['file_data'], file_name=data.data['file_name'], extra_params=ExtraParams(
-                openai_key=self.openai_key),
+            data.data['file_data'], openai_key=self.openai_key, file_name=data.data['file_name'],
         )
 
         if data.data['mime_type'] == 'text/csv':
-            docs = []
-            for entry in CSVTextSplitter(
+            docs = [
+                Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': data.data['file_name']}) for t in CSVTextSplitter(
                     chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
-            ).split_text(file_text):
-                if self.split_csv:
-                    for entry_chunk in SpacyTextSplitter(
-                            chunk_size=1500,
-                    ).split_text(file_text):
-                        docs.append(
-                            Document(
-                                page_content_key=self.get_content_key(
-                                ), page_content=entry_chunk, metadata={'source': data.data['file_name']},
-                            ),
-                        )
-                else:
-                    docs.append(
-                        Document(
-                            page_content_key=self.get_content_key(
-                            ), page_content=entry, metadata={'source': data.data['file_name']},
-                        ),
-                    )
-
+                ).split_text(file_text)
+            ]
         else:
             docs = [
                 Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': data.data['file_name']}) for t in SpacyTextSplitter(
                     chunk_size=1500,
                 ).split_text(file_text)
             ]
-
         return docs
 
     def similarity_search(self, query: str, *args, **kwargs) -> List[dict]:

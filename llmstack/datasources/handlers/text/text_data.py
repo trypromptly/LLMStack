@@ -3,10 +3,7 @@ from typing import List
 
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from datasources.handlers.datasource_type_interface import DataSourceEntryItem
-from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceProcessor
-from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
+from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
 
 logger = logging.getLogger(__file__)
 

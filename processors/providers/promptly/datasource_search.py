@@ -9,8 +9,8 @@ from django.shortcuts import get_object_or_404
 from pydantic import BaseModel
 from pydantic import Field
 
-from datasources.models import DataSource
-from datasources.types import DataSourceTypeFactory
+from llmstack.datasources.models import DataSource
+from llmstack.datasources.types import DataSourceTypeFactory
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 
@@ -33,7 +33,6 @@ class Document(ApiProcessorSchema):
     source: Optional[str] = Field(description='Source of the document')
     metadata: DocumentMetadata = Field(description='Metadata of the document')
     additional_properties: Optional[dict] = {}
-
 
 
 class DataSourceSearchOutput(ApiProcessorSchema):

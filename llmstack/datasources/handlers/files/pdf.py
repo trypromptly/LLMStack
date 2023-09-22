@@ -12,11 +12,8 @@ from unstructured.partition.pdf import partition_pdf
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from datasources.handlers.datasource_type_interface import DataSourceEntryItem
-from datasources.handlers.datasource_type_interface import DataSourceSchema
-from datasources.handlers.datasource_type_interface import DataSourceProcessor
-from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
-from datasources.models import DataSource
+from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
+from llmstack.datasources.models import DataSource
 from llmstack.base.models import Profile
 
 DATA_URL_REGEX = r'data:application\/(\w+);name=(.*);base64,(.*)'

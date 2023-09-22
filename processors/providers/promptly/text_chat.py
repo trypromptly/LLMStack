@@ -11,8 +11,8 @@ from asgiref.sync import async_to_sync
 from django import db
 from pydantic import Field
 
-from datasources.models import DataSource
-from datasources.types import DataSourceTypeFactory
+from llmstack.datasources.models import DataSource
+from llmstack.datasources.types import DataSourceTypeFactory
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 
