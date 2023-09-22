@@ -16,6 +16,8 @@ services:
       - .env
     cap_add:
       - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
   rqworker:
     image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-api:latest
     build:
@@ -31,6 +33,8 @@ services:
       - postgres:postgres
     env_file:
       - .env
+    security_opt:
+      - seccomp:unconfined
   nginx:
     image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-nginx:latest
     build:
