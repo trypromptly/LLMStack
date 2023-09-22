@@ -1,6 +1,6 @@
 import logging
 import uuid
-import time 
+import time
 
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -13,14 +13,13 @@ from .models import DataSourceType
 from .serializers import DataSourceEntrySerializer
 from .serializers import DataSourceSerializer
 from .serializers import DataSourceTypeSerializer
-from apps.tasks import add_data_entry_task, extract_urls_task, resync_data_entry_task
-from apps.tasks import delete_data_entry_task
-from apps.tasks import delete_data_source_task
+from llmstack.apps.tasks import add_data_entry_task, extract_urls_task, resync_data_entry_task, delete_data_entry_task, delete_data_source_task
 from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.types import DataSourceTypeFactory
 from jobs.adhoc import DataSourceEntryProcessingJob, ExtractURLJob
 
 logger = logging.getLogger(__name__)
+
 
 class DataSourceTypeViewSet(viewsets.ModelViewSet):
     queryset = DataSourceType.objects.all()
@@ -93,6 +92,8 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         )
 
         return DRFResponse(status=202)
+
+
 class DataSourceViewSet(viewsets.ModelViewSet):
     queryset = DataSource.objects.all()
     serializer_class = DataSourceSerializer
@@ -117,7 +118,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource_type = get_object_or_404(
             DataSourceType, id=request.data['type'],
         )
-        
+
         datasource = DataSource(
             name=request.data['name'],
             owner=owner,
@@ -125,20 +126,24 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         )
         # If this is an external data source, then we need to save the config in datasource object
         if datasource_type.is_external_datasource:
-            datasource_type_cls = DataSourceTypeFactory.get_datasource_type_handler(datasource.type)
+            datasource_type_cls = DataSourceTypeFactory.get_datasource_type_handler(
+                datasource.type)
             if not datasource_type_cls:
                 logger.error(
                     'No handler found for data source type {datasource.type}',
                 )
                 return DRFResponse({'errors': ['No handler found for data source type']}, status=400)
 
-            datasource_handler: DataSourceProcessor = datasource_type_cls(datasource)
+            datasource_handler: DataSourceProcessor = datasource_type_cls(
+                datasource)
             if not datasource_handler:
-                logger.error(f'Error while creating handler for data source {datasource.name}')
+                logger.error(
+                    f'Error while creating handler for data source {datasource.name}')
                 return DRFResponse({'errors': ['Error while creating handler for data source type']}, status=400)
-            config = datasource_type_cls.process_validate_config(request.data['config'], datasource)
+            config = datasource_type_cls.process_validate_config(
+                request.data['config'], datasource)
             datasource.config = config
-        
+
         datasource.save()
         return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
 
@@ -153,10 +158,10 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         )
         for entry in datasource_entries:
             DataSourceEntryViewSet().delete(request=request, uid=str(entry.uuid))
-        
+
         # Delete the data from data store
         delete_data_source_task(datasource)
-        
+
         datasource.delete()
         return DRFResponse(status=204)
 
@@ -166,7 +171,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         )
         if datasource and datasource.type.is_external_datasource:
             return DRFResponse({'errors': ['Cannot add entry to external data source']}, status=400)
-        
+
         entry_data = request.data['entry_data']
         entry_metadata = dict(map(lambda x: (f'md_{x}', request.data['entry_metadata'][x]), request.data['entry_metadata'].keys())) if 'entry_metadata' in request.data else {
         }
@@ -232,25 +237,24 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         if not url.startswith('https://') and not url.startswith('http://'):
             url = f'https://{url}'
-    
 
         logger.info("Staring job to extract urls")
 
         job = ExtractURLJob.create(
-                func=extract_urls_task, args=[
-                    url
-                ],
-            ).add_to_queue()
-        
+            func=extract_urls_task, args=[
+                url
+            ],
+        ).add_to_queue()
+
         # Wait for job to finish and return the result
         while True:
             time.sleep(1)
             if job.is_failed or job.is_finished or job.is_stopped or job.is_canceled:
                 break
-        
+
         if job.is_failed or job.is_stopped or job.is_canceled:
             urls = [url]
         else:
             urls = job.result
-        
+
         return DRFResponse({'urls': urls})

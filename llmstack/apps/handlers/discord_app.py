@@ -1,9 +1,9 @@
 import logging
 import uuid
 
-from apps.apis import AppRunnerException
-from apps.handlers.app_runnner import AppRunner
-from apps.models import AppVisibility
+from llmstack.apps.apis import AppRunnerException
+from llmstack.apps.handlers.app_runnner import AppRunner
+from llmstack.apps.models import AppVisibility
 from play.actor import ActorConfig
 from play.actors.bookkeeping import BookKeepingActor
 from play.actors.input import InputActor
@@ -127,14 +127,15 @@ class DiscordBotRunner(AppRunner):
                 ),
                 ActorConfig(
                     name='output', template_key='output',
-                    actor=OutputActor, kwargs={'template': '{"type": "{{_inputs0.type}}"}'},
+                    actor=OutputActor, kwargs={
+                        'template': '{"type": "{{_inputs0.type}}"}'},
                 ),
             ]
             processor_configs = {}
         else:
             template = convert_template_vars_from_legacy_format(
-            self.app_data['output_template'].get(
-                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
+                self.app_data['output_template'].get(
+                    'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
             )
             actor_configs = [
                 ActorConfig(
@@ -142,7 +143,8 @@ class DiscordBotRunner(AppRunner):
                 ),
                 ActorConfig(
                     name='output', template_key='output',
-                    actor=OutputActor, kwargs={'template': '{{_inputs0.channel}}'},
+                    actor=OutputActor, kwargs={
+                        'template': '{{_inputs0.channel}}'},
                 ),
             ]
             processor_actor_configs, processor_configs = self._get_processor_actor_configs()
@@ -154,7 +156,7 @@ class DiscordBotRunner(AppRunner):
 
             actor_configs.append(
                 ActorConfig(
-                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'discord_processor'], kwargs={'processor_configs': processor_configs},
+                    name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'discord_processor'], kwargs={'processor_configs': processor_configs},
                 ),
             )
 

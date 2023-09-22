@@ -7,7 +7,7 @@ from django.template import Context
 from django.template import Template
 from django.conf import settings
 
-from apps.models import App
+from llmstack.apps.models import App
 
 logger = logging.getLogger(__name__)
 

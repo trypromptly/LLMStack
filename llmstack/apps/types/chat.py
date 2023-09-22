@@ -3,8 +3,8 @@ from typing import Optional
 
 from pydantic import Field
 
-from apps.types.app_type_interface import AppTypeInterface
-from apps.types.app_type_interface import BaseSchema
+from llmstack.apps.types.app_type_interface import AppTypeInterface
+from llmstack.apps.types.app_type_interface import BaseSchema
 from processors.providers.api_processor_interface import DataUrl
 
 

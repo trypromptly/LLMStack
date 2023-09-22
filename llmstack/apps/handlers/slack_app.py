@@ -8,7 +8,7 @@ from time import time
 
 import requests
 
-from apps.handlers.app_runnner import AppRunner
+from llmstack.apps.handlers.app_runnner import AppRunner
 from play.actor import ActorConfig
 from play.actors.bookkeeping import BookKeepingActor
 from play.actors.input import InputActor
@@ -66,7 +66,8 @@ class SlackAppRunner(AppRunner):
                     user_object = User.objects.get(email=slack_user_email)
                     return user_object if user_object is not None else AnonymousUser()
             except Exception as e:
-                logger.exception(f"Error in fetching user object from slack payload {slack_request_payload}")
+                logger.exception(
+                    f"Error in fetching user object from slack payload {slack_request_payload}")
 
         return AnonymousUser()
 
@@ -185,9 +186,9 @@ class SlackAppRunner(AppRunner):
             processor_configs = {}
         else:
             template = convert_template_vars_from_legacy_format(
-            self.app_data['output_template'].get(
-                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
-        )
+                self.app_data['output_template'].get(
+                    'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
+            )
             actor_configs = [
                 ActorConfig(
                     name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},

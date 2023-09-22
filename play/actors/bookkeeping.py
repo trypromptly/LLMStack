@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from apps.app_session_utils import save_app_session_data
+from llmstack.apps.app_session_utils import save_app_session_data
 from play.actor import Actor
 from play.output_stream import Message
 from play.output_stream import MessageType
@@ -18,7 +18,7 @@ class BookKeepingActor(Actor):
         self._output_stream = output_stream
         self._bookkeeping_data_map = {}
 
-    def on_receive(self, message: Message) -> Any:        
+    def on_receive(self, message: Message) -> Any:
         if message.message_type == MessageType.BOOKKEEPING:
             self._bookkeeping_data_map[message.message_from] = message.message
 
@@ -40,7 +40,7 @@ class BookKeepingActor(Actor):
             HistoryPersistenceJob.create(
                 func=persist_history_task, args=[
                     list(self._processor_configs.keys()
-                            ), self._bookkeeping_data_map,
+                         ), self._bookkeeping_data_map,
                 ],
             ).add_to_queue()
         except Exception as e:

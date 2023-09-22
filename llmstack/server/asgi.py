@@ -8,7 +8,7 @@ from django.core.asgi import get_asgi_application
 from django.urls import path
 from os.path import dirname, abspath, join
 
-from apps.consumers import AppConsumer
+from llmstack.server.consumers import AppConsumer
 
 
 BASE_DIR = dirname(dirname(abspath(__file__)))

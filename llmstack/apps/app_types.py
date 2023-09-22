@@ -1,12 +1,7 @@
 import uuid
 
 from .types.app_type_interface import AppTypeInterface
-from .types.chat import ChatApp
-from .types.discord import DiscordApp
-from .types.slack import SlackApp
-from .types.web import WebApp
-from apps.models import App
-from apps.models import AppType
+from llmstack.apps.models import App, AppType
 # Import all app types here
 
 

@@ -5,7 +5,7 @@ from django.urls import include
 from django.urls import path
 
 urlpatterns = [
-    path('', include('apps.urls')),
+    path('', include('llmstack.apps.urls')),
     path('', include('processors.urls')),
     path('', include('organizations.urls')),
     path('', include('datasources.urls')),

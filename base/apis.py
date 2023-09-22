@@ -13,7 +13,7 @@ from rest_framework.response import Response as DRFResponse
 
 from .models import Profile
 from .serializers import ProfileSerializer
-from apps.models import App
+from llmstack.apps.models import App
 from django.conf import settings
 
 logger = logging.getLogger(__name__)

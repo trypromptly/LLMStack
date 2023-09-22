@@ -52,7 +52,7 @@ class AppConsumer(AsyncWebsocketConsumer):
         pass
 
     async def _respond_to_event(self, text_data):
-        from apps.apis import AppViewSet
+        from llmstack.apps.apis import AppViewSet
 
         json_data = json.loads(text_data)
         input = json_data.get('input', {})

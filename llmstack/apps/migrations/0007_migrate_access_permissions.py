@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-from apps.models import AppAccessPermission
+from llmstack.apps.models import AppAccessPermission
 
 
 class Migration(migrations.Migration):

@@ -7,9 +7,9 @@ from pydantic import Field
 from pydantic import SecretStr
 from rest_framework.exceptions import PermissionDenied
 
-from apps.models import App
-from apps.types.app_type_interface import AppTypeInterface
-from apps.types.app_type_interface import BaseSchema
+from llmstack.apps.models import App
+from llmstack.apps.types.app_type_interface import AppTypeInterface
+from llmstack.apps.types.app_type_interface import BaseSchema
 
 logger = logging.getLogger(__name__)
 

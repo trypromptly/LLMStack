@@ -41,8 +41,8 @@ from .serializers import EndpointSerializer
 from .serializers import HistorySerializer
 from .serializers import LoginSerializer
 from .serializers import ResponseSerializer
-from apps.app_session_utils import create_app_session
-from apps.app_session_utils import get_app_session_data
+from llmstack.apps.app_session_utils import create_app_session
+from llmstack.apps.app_session_utils import get_app_session_data
 from play.actor import ActorConfig
 from play.actors.bookkeeping import BookKeepingActor
 from play.actors.input import InputActor

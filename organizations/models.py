@@ -13,7 +13,7 @@ from django.dispatch import receiver
 
 from common.utils.db_models import ArrayField
 
-from apps.models import AppVisibility
+from llmstack.apps.models import AppVisibility
 
 
 class Organization(models.Model):

@@ -5,14 +5,14 @@ import uuid
 
 from rest_framework.request import Request
 
-from apps.app_session_utils import create_app_session
-from apps.app_session_utils import create_app_session_data
-from apps.app_session_utils import get_app_session
-from apps.app_session_utils import get_app_session_data
-from apps.integration_configs import DiscordIntegrationConfig
-from apps.integration_configs import SlackIntegrationConfig
-from apps.integration_configs import WebIntegrationConfig
-from apps.models import AppVisibility
+from llmstack.apps.app_session_utils import create_app_session
+from llmstack.apps.app_session_utils import create_app_session_data
+from llmstack.apps.app_session_utils import get_app_session
+from llmstack.apps.app_session_utils import get_app_session_data
+from llmstack.apps.integration_configs import DiscordIntegrationConfig
+from llmstack.apps.integration_configs import SlackIntegrationConfig
+from llmstack.apps.integration_configs import WebIntegrationConfig
+from llmstack.apps.models import AppVisibility
 from common.utils.utils import get_location
 from play.actor import ActorConfig
 from play.actors.bookkeeping import BookKeepingActor

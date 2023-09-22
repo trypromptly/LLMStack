@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.cache import cache
 from typing import List, Type
 from pydantic import BaseModel, Field, create_model
-from apps.schemas import AppTemplate
+from llmstack.apps.schemas import AppTemplate
 
 from common.blocks.base.schema import get_ui_schema_from_json_schema
 
@@ -125,7 +125,7 @@ def get_app_templates_from_contrib() -> List[AppTemplate]:
                     os.path.join(settings.APP_TEMPLATES_DIR, file))
                 if app_template:
                     app_templates.append(app_template)
-                    
+
     elif isinstance(settings.APP_TEMPLATES_DIR, list):
         for dir in settings.APP_TEMPLATES_DIR:
             if not os.path.isdir(dir) or not os.path.exists(dir):
@@ -136,7 +136,7 @@ def get_app_templates_from_contrib() -> List[AppTemplate]:
                         os.path.join(dir, file))
                     if app_template:
                         app_templates.append(app_template)
-                        
+
     cache.set('app_templates', app_templates)
 
     return app_templates

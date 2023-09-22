@@ -4,7 +4,7 @@ import re
 from django.http import HttpResponse
 from rest_framework.exceptions import APIException
 
-from apps.app_types import AppTypeFactory
+from llmstack.apps.app_types import AppTypeFactory
 
 logger = logging.getLogger(__name__)
 

@@ -159,7 +159,7 @@ class Request(models.Model):
     """
     Model representing the request made against a versioned endpoint
     """
-    from apps.models import AppSession
+    from llmstack.apps.models import AppSession
 
     endpoint = models.ForeignKey(
         Endpoint, on_delete=models.DO_NOTHING, help_text='Version of endpoint this request made for',

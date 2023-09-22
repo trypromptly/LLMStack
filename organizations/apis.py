@@ -7,9 +7,8 @@ from rest_framework import viewsets
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response as DRFResponse
 
-from apps.models import App
-from apps.models import AppVisibility
-from apps.serializers import AppSerializer
+from llmstack.apps.models import App, AppVisibility
+from llmstack.apps.serializers import AppSerializer
 from datasources.models import DataSource
 from datasources.models import DataSourceEntry
 from datasources.models import DataSourceVisibility

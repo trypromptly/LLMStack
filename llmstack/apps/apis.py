@@ -36,16 +36,14 @@ from .serializers import AppTypeSerializer
 from .serializers import CloneableAppSerializer
 from .serializers import TestCaseSerializer
 from .serializers import TestSetSerializer
-from apps.handlers.app_runner_factory import AppRunerFactory
-from apps.integration_configs import DiscordIntegrationConfig
-from apps.integration_configs import SlackIntegrationConfig
-from apps.integration_configs import WebIntegrationConfig
+from llmstack.apps.handlers.app_runner_factory import AppRunerFactory
+from llmstack.apps.integration_configs import DiscordIntegrationConfig
+from llmstack.apps.integration_configs import SlackIntegrationConfig
+from llmstack.apps.integration_configs import WebIntegrationConfig
 from emails.sender import EmailSender
 from emails.templates.factory import EmailTemplateFactory
-from processors.models import ApiBackend, ApiProvider
-from processors.models import Endpoint
 from base.models import Profile
-from apps.yaml_loader import get_app_template_by_slug, get_app_templates_from_contrib
+from llmstack.apps.yaml_loader import get_app_template_by_slug, get_app_templates_from_contrib
 
 logger = logging.getLogger(__name__)
 

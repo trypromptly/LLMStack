@@ -9,9 +9,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.timezone import now
 
-from apps.integration_configs import DiscordIntegrationConfig
-from apps.integration_configs import SlackIntegrationConfig
-from apps.integration_configs import WebIntegrationConfig
+from llmstack.apps.integration_configs import DiscordIntegrationConfig, SlackIntegrationConfig, WebIntegrationConfig
 from processors.models import Endpoint
 from base.models import Profile
 from common.utils.db_models import ArrayField
@@ -392,7 +390,7 @@ class TestCase(models.Model):
 
 @ receiver(pre_save, sender=App)
 def update_app_pre_save(sender, instance, **kwargs):
-    from apps.app_types import AppTypeFactory
+    from llmstack.apps.app_types import AppTypeFactory
 
     # Save discord and slack config
     discord_app_type_handler_cls = AppTypeFactory.get_app_type_handler(

@@ -5,14 +5,9 @@ from rest_framework import serializers
 from .models import ApiBackend
 from .models import ApiProvider
 from .models import Endpoint
-from .models import PromptHub
 from .models import Request
 from .models import Response
 from .models import RunEntry
-from .models import Share
-from .models import ShareTag
-from apps.models import App
-from apps.models import AppSession
 from processors.providers.api_processors import ApiProcessorFactory
 
 

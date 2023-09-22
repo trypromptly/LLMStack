@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.yaml_loader import get_app_template_by_slug
+from llmstack.apps.yaml_loader import get_app_template_by_slug
 
 from .models import App, AppAccessPermission, AppData
 from .models import AppHub
@@ -11,8 +11,8 @@ from .models import AppTemplateCategory
 from .models import AppType
 from .models import TestCase
 from .models import TestSet
-from apps.app_templates import AppTemplateFactory
-from apps.app_types import AppTypeFactory
+from llmstack.apps.app_templates import AppTemplateFactory
+from llmstack.apps.app_types import AppTypeFactory
 from play.utils import convert_template_vars_from_legacy_format
 from processors.models import ApiBackend
 from processors.models import Endpoint

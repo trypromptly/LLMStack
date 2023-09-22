@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'processors.apps.ProcessorsConfig',
     'datasources.apps.DatasourcesConfig',
-    'apps.apps.AppsConfig',
+    'llmstack.apps.apps.AppsConfig',
     'base.apps.BaseConfig',
     'organizations.apps.OrganizationsConfig',
     'flags',
@@ -71,7 +71,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.authorization_middleware.AuthorizationMiddleware',
+    'llmstack.apps.authorization_middleware.AuthorizationMiddleware',
 ]
 
 ROOT_URLCONF = 'llmstack.server.urls'
