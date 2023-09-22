@@ -28,20 +28,11 @@ RUN groupadd -r ${APP_USER} && useradd --no-log-init -r -g ${APP_USER} ${APP_USE
 RUN apt-get update && apt-get install -y postgresql-client mime-support ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Copy application code
-COPY --from=builder /code/apps /code/apps
-COPY --from=builder /code/base /code/base
 COPY --from=builder /code/client/build/index.html /code/client/build/index.html
 COPY --from=builder /code/client/build/static /code/client/build/static
-COPY --from=builder /code/common /code/common
-COPY --from=builder /code/datasources /code/datasources
-COPY --from=builder /code/emails /code/emails
 COPY --from=builder /code/llmstack/contrib/apps /code/llmstack/contrib/apps
 COPY --from=builder /code/llmstack/fixtures /code/llmstack/fixtures
-COPY --from=builder /code/jobs /code/jobs
 COPY --from=builder /code/llmstack /code/llmstack
-COPY --from=builder /code/organizations /code/organizations
-COPY --from=builder /code/play /code/play
-COPY --from=builder /code/processors /code/processors
 COPY --from=builder /code/static /code/static
 COPY --from=builder /code/manage.py /code/manage.py
 COPY --from=builder /code/docker-entrypoint.sh /code/docker-entrypoint.sh
