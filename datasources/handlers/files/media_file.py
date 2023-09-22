@@ -4,11 +4,11 @@ from typing import Optional
 
 from pydantic import Field
 
-from common.blocks.data.store.vectorstore import Document
-from common.utils.text_extract import extract_text_from_b64_json
-from common.utils.text_extract import ExtraParams
-from common.utils.splitter import SpacyTextSplitter
-from common.utils.utils import validate_parse_data_uri
+from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.utils.text_extract import extract_text_from_b64_json
+from llmstack.common.utils.text_extract import ExtraParams
+from llmstack.common.utils.splitter import SpacyTextSplitter
+from llmstack.common.utils.utils import validate_parse_data_uri
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
 from datasources.handlers.datasource_type_interface import DataSourceProcessor
@@ -78,7 +78,7 @@ class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
 
         file_text = extract_text_from_b64_json(
             mime_type=data.data['mime_type'],
-            base64_encoded_data=data.data['file_data'], 
+            base64_encoded_data=data.data['file_data'],
             file_name=data.data['file_name'], extra_params=ExtraParams(
                 openai_key=openai_key),
         )

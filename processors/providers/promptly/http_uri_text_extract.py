@@ -7,11 +7,10 @@ from pydantic import conint
 from pydantic import Field
 from pydantic import HttpUrl
 
-from common.blocks.data.store.vectorstore import Document
-from common.blocks.data.store.vectorstore.temp_weaviate import TempWeaviate
-from common.utils.text_extract import extract_text_from_url
-from common.utils.text_extract import ExtraParams
-from common.utils.splitter import SpacyTextSplitter
+from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.blocks.data.store.vectorstore.temp_weaviate import TempWeaviate
+from llmstack.common.utils.text_extract import extract_text_from_url, ExtraParams
+from llmstack.common.utils.splitter import SpacyTextSplitter
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 

@@ -11,12 +11,8 @@ from pydantic import confloat
 from pydantic import conint
 from pydantic import Field
 
-from common.blocks.llm.openai import CompletionsModel
-from common.blocks.llm.openai import OpenAICompletionsAPIProcessor
-from common.blocks.llm.openai import OpenAICompletionsAPIProcessorConfiguration
-from common.blocks.llm.openai import OpenAICompletionsAPIProcessorInput
-from common.blocks.llm.openai import OpenAICompletionsAPIProcessorOutput
-from common.utils.utils import get_key_or_raise
+from llmstack.common.blocks.llm.openai import CompletionsModel, OpenAICompletionsAPIProcessor, OpenAICompletionsAPIProcessorConfiguration, OpenAICompletionsAPIProcessorInput, OpenAICompletionsAPIProcessorOutput
+from llmstack.common.utils.utils import get_key_or_raise
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import TEXT_WIDGET_NAME

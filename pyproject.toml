@@ -14,7 +14,6 @@ include = [
   "static/*",
 ]
 packages = [
-    {include = "common"},
     {include = "datasources"},
     {include = "emails"},
     {include = "jobs"},

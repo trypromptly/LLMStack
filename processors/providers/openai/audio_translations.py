@@ -5,19 +5,10 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from common.blocks.llm.openai import OpenAIAPIInputEnvironment
-from common.blocks.llm.openai import OpenAIAPIProcessorOutputMetadata
-from common.blocks.llm.openai import OpenAIAudioTranslationsProcessor
-from common.blocks.llm.openai import OpenAIAudioTranslationsProcessorConfiguration
-from common.blocks.llm.openai import OpenAIAudioTranslationsProcessorInput
-from common.blocks.llm.openai import OpenAIAudioTranslationsProcessorOutput
-from common.blocks.llm.openai import OpenAIFile
-from common.blocks.http import BaseErrorOutput
-from common.utils.utils import get_key_or_raise
-from common.utils.utils import validate_parse_data_uri
+from llmstack.common.blocks.llm.openai import OpenAIAPIInputEnvironment, OpenAIAPIProcessorOutputMetadata, OpenAIAudioTranslationsProcessor, OpenAIAudioTranslationsProcessorConfiguration, OpenAIAudioTranslationsProcessorInput, OpenAIAudioTranslationsProcessorOutput, OpenAIFile
+from llmstack.common.utils.utils import get_key_or_raise, validate_parse_data_uri
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
-from processors.providers.api_processor_interface import DataUrl
 
 
 logger = logging.getLogger(__name__)

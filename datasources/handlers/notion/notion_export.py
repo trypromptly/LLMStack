@@ -8,7 +8,7 @@ from typing import Optional
 import magic
 from pydantic import Field
 
-from common.utils.utils import validate_parse_data_uri
+from llmstack.common.utils.utils import validate_parse_data_uri
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
 from datasources.handlers.datasource_type_interface import DataSourceProcessor

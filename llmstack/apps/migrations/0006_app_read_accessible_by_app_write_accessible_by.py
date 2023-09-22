@@ -3,7 +3,7 @@
 import django.contrib.postgres.fields
 from django.db import connection, migrations, models
 
-from common.utils.db_models import ArrayField
+from llmstack.common.utils.db_models import ArrayField
 
 
 class Migration(migrations.Migration):

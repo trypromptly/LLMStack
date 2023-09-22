@@ -13,7 +13,7 @@ from llmstack.apps.integration_configs import DiscordIntegrationConfig
 from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from llmstack.apps.models import AppVisibility
-from common.utils.utils import get_location
+from llmstack.common.utils.utils import get_location
 from play.actor import ActorConfig
 from play.actors.bookkeeping import BookKeepingActor
 from play.actors.input import InputActor

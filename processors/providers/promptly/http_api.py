@@ -4,10 +4,7 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from common.blocks.http import HttpAPIProcessor as CoreHttpAPIProcessor
-from common.blocks.http import HttpAPIProcessorConfiguration
-from common.blocks.http import HttpAPIProcessorInput
-from common.blocks.http import HttpAPIProcessorOutput
+from llmstack.common.blocks.http import HttpAPIProcessor as CoreHttpAPIProcessor, HttpAPIProcessorConfiguration, HttpAPIProcessorInput, HttpAPIProcessorOutput
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 

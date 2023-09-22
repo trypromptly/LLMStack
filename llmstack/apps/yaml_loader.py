@@ -7,9 +7,9 @@ from django.conf import settings
 from django.core.cache import cache
 from typing import List, Type
 from pydantic import BaseModel, Field, create_model
-from llmstack.apps.schemas import AppTemplate
 
-from common.blocks.base.schema import get_ui_schema_from_json_schema
+from llmstack.apps.schemas import AppTemplate
+from llmstack.common.blocks.base.schema import get_ui_schema_from_json_schema
 
 
 def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseModel']:

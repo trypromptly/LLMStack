@@ -6,11 +6,7 @@ from typing import Optional
 
 from asgiref.sync import async_to_sync
 
-from common.blocks.http import BearerTokenAuth
-from common.blocks.http import HttpAPIProcessor
-from common.blocks.http import HttpAPIProcessorInput
-from common.blocks.http import HttpMethod
-from common.blocks.http import JsonBody
+from llmstack.common.blocks.http import BearerTokenAuth, HttpAPIProcessor, HttpAPIProcessorInput, HttpMethod, JsonBody
 from play.actor import BookKeepingData
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
@@ -83,30 +79,32 @@ class DiscordSendMessageProcessor(
             ).dict(),
         )
         return response
-        
+
     def process(self) -> dict:
         _env = self._env
         input = self._input.dict()
-        response = self._send_message(input['app_id'], input['text'], input['token'])
+        response = self._send_message(
+            input['app_id'], input['text'], input['token'])
 
         async_to_sync(self._output_stream.write)(
             DiscordSendMessageOutput(code=200),
         )
 
         return self._output_stream.finalize()
-    
+
     def on_error(self, error: Any) -> None:
         input = self._input.dict()
         logger.error(f'Error in DiscordSendMessageProcessor: {error}')
-        error_msg = '\n'.join(error.values()) if isinstance(error, dict) else 'Error in processing request'
-        
+        error_msg = '\n'.join(error.values()) if isinstance(
+            error, dict) else 'Error in processing request'
+
         self._send_message(input['app_id'], error_msg, input['token'])
-        
+
         async_to_sync(self._output_stream.write)(
             DiscordSendMessageOutput(code=200),
         )
         self._output_stream.finalize()
-        
+
         return super().on_error(error)
 
     def get_bookkeeping_data(self) -> BookKeepingData:

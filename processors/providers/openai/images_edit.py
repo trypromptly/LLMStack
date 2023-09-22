@@ -7,18 +7,10 @@ from asgiref.sync import async_to_sync
 from pydantic import conint
 from pydantic import Field
 
-from common.blocks.llm.openai import OpenAIAPIInputEnvironment
-from common.blocks.llm.openai import OpenAIFile
-from common.blocks.llm.openai import OpenAIImageEditsProcessor
-from common.blocks.llm.openai import OpenAIImageEditsProcessorConfiguration
-from common.blocks.llm.openai import OpenAIImageEditsProcessorInput
-from common.blocks.llm.openai import OpenAIImageEditsProcessorOutput
-from common.blocks.llm.openai import Size
-from common.utils.utils import get_key_or_raise
-from common.utils.utils import validate_parse_data_uri
+from llmstack.common.blocks.llm.openai import OpenAIAPIInputEnvironment, OpenAIFile, OpenAIImageEditsProcessor, OpenAIImageEditsProcessorConfiguration, OpenAIImageEditsProcessorInput, OpenAIImageEditsProcessorOutput, Size
+from llmstack.common.utils.utils import get_key_or_raise, validate_parse_data_uri
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
-from processors.providers.api_processor_interface import DataUrl
 from processors.providers.api_processor_interface import IMAGE_WIDGET_NAME
 
 logger = logging.getLogger(__name__)

@@ -4,11 +4,11 @@ from typing import Optional
 
 from pydantic import Field
 
-from common.blocks.data.store.vectorstore import Document
-from common.utils.text_extract import extract_text_from_url
-from common.utils.text_extract import ExtraParams
-from common.utils.splitter import SpacyTextSplitter
-from common.utils.utils import extract_urls_from_sitemap
+from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.utils.text_extract import extract_text_from_url
+from llmstack.common.utils.text_extract import ExtraParams
+from llmstack.common.utils.splitter import SpacyTextSplitter
+from llmstack.common.utils.utils import extract_urls_from_sitemap
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSyncConfiguration, DataSourceSyncType
 from datasources.handlers.datasource_type_interface import DataSourceSchema
 from datasources.handlers.datasource_type_interface import DataSourceProcessor

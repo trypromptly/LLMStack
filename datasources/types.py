@@ -5,7 +5,7 @@ from .handlers.datasource_type_interface import DataSourceProcessor
 from .models import DataSourceType
 # Import all data source types here
 
-from common.utils.module_loader import get_all_sub_classes
+from llmstack.common.utils.module_loader import get_all_sub_classes
 
 
 def get_data_source_type_interface_subclasses():

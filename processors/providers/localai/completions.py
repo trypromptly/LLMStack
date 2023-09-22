@@ -3,8 +3,8 @@ import logging
 from typing import Generator, List
 from typing import Optional
 from pydantic import Field, confloat, conint
-from common.blocks.llm.localai import LocalAICompletionsAPIProcessor, LocalAICompletionsAPIProcessorConfiguration, LocalAICompletionsAPIProcessorInput, LocalAICompletionsAPIProcessorOutput
-from common.blocks.llm.openai import OpenAIAPIInputEnvironment, OpenAIAPIProcessorConfiguration, OpenAIAPIProcessorInput, OpenAIAPIProcessorOutput
+from llmstack.common.blocks.llm.localai import LocalAICompletionsAPIProcessor, LocalAICompletionsAPIProcessorConfiguration, LocalAICompletionsAPIProcessorInput, LocalAICompletionsAPIProcessorOutput
+from llmstack.common.blocks.llm.openai import OpenAIAPIInputEnvironment
 from processors.providers.api_processor_interface import TEXT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema
 
 from asgiref.sync import async_to_sync

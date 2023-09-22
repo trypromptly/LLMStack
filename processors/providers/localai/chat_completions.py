@@ -4,9 +4,9 @@ from enum import Enum
 from typing import Generator, List, Optional
 
 from pydantic import BaseModel, Field, confloat, conint
-from common.blocks.llm.localai import LocalAIChatCompletionsAPIProcessor, LocalAIChatCompletionsAPIProcessorConfiguration, LocalAIChatCompletionsAPIProcessorInput, LocalAIChatCompletionsAPIProcessorOutput
+from llmstack.common.blocks.llm.localai import LocalAIChatCompletionsAPIProcessor, LocalAIChatCompletionsAPIProcessorConfiguration, LocalAIChatCompletionsAPIProcessorInput, LocalAIChatCompletionsAPIProcessorOutput
 from processors.providers.api_processor_interface import CHAT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema
-from common.blocks.llm.openai import FunctionCall as OpenAIFunctionCall, OpenAIAPIInputEnvironment
+from llmstack.common.blocks.llm.openai import FunctionCall as OpenAIFunctionCall, OpenAIAPIInputEnvironment
 
 from asgiref.sync import async_to_sync
 

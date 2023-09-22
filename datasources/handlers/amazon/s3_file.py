@@ -7,12 +7,12 @@ from typing import Optional
 from pydantic import Field
 from pydantic import SecretStr
 
-from common.blocks.data.source.s3_path import S3Path, S3PathInput, S3PathConfiguration
-from common.blocks.data.store.vectorstore import Document
-from common.utils.splitter import CSVTextSplitter
-from common.utils.text_extract import extract_text_from_b64_json
-from common.utils.splitter import SpacyTextSplitter
-from common.utils.utils import validate_parse_data_uri
+from llmstack.common.blocks.data.source.s3_path import S3Path, S3PathInput, S3PathConfiguration
+from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.utils.splitter import CSVTextSplitter
+from llmstack.common.utils.text_extract import extract_text_from_b64_json
+from llmstack.common.utils.splitter import SpacyTextSplitter
+from llmstack.common.utils.utils import validate_parse_data_uri
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
 from datasources.handlers.datasource_type_interface import DataSourceProcessor

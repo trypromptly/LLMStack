@@ -1,11 +1,7 @@
-from typing import Generic
-from typing import List
-from typing import Type
-from typing import TypeVar
-
+from typing import List, Type, TypeVar
 from pydantic import BaseModel
 
-from common.utils.utils import get_ui_schema_from_jsonschema
+from llmstack.common.utils.utils import get_ui_schema_from_jsonschema
 
 AppTemplateSchemaType = TypeVar('AppTemplateSchemaType')
 

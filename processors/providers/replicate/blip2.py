@@ -6,7 +6,7 @@ from pydantic import Field
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.replicate.utils import fetch_data_from_api
-from common.utils.utils import get_key_or_raise
+from llmstack.common.utils.utils import get_key_or_raise
 
 
 class Blip2Input(ApiProcessorSchema):

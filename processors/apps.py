@@ -5,7 +5,7 @@ from django.conf import settings
 
 
 from .providers.api_processor_interface import ApiProcessorInterface
-from common.utils.module_loader import get_all_sub_classes
+from llmstack.common.utils.module_loader import get_all_sub_classes
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,7 @@ from pydantic import Field
 from stability_sdk import client
 
 from .utils import get_guidance_preset_enum
-from common.utils.utils import get_key_or_raise
+from llmstack.common.utils.utils import get_key_or_raise
 from .utils import get_sampler_grpc_enum
 from .utils import GuidancePreset
 from .utils import Sampler

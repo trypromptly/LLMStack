@@ -11,7 +11,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from common.utils.db_models import ArrayField
+from llmstack.common.utils.db_models import ArrayField
 
 from llmstack.apps.models import AppVisibility
 

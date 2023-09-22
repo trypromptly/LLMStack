@@ -11,11 +11,7 @@ from bs4 import BeautifulSoup
 from bs4 import NavigableString
 from pydantic import Field
 
-from common.blocks.http import BearerTokenAuth
-from common.blocks.http import HttpAPIProcessor
-from common.blocks.http import HttpAPIProcessorInput
-from common.blocks.http import HttpMethod
-from common.blocks.http import JsonBody
+from llmstack.common.blocks.http import BearerTokenAuth, HttpAPIProcessor, HttpAPIProcessorInput, HttpMethod, JsonBody
 from play.actor import BookKeepingData
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
@@ -196,8 +192,7 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
             ).dict(),
         )
         return response
-        
-        
+
     def process(self) -> dict:
         _env = self._env
         input = self._input.dict()
@@ -212,8 +207,9 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
         except Exception as e:
             logger.exception('Error in processing markdown')
             rich_text = ''
-            
-        self._send_message(input['text'], input['channel'], input['thread_ts'], rich_text, input['token'])
+
+        self._send_message(input['text'], input['channel'],
+                           input['thread_ts'], rich_text, input['token'])
         async_to_sync(self._output_stream.write)(
             SlackPostMessageOutput(code=200),
         )
@@ -224,15 +220,17 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
         input = self._input.dict()
 
         logger.error(f'Error in SlackPostMessageProcessor: {error}')
-        error_msg = '\n'.join(error.values()) if isinstance(error, dict) else 'Error in processing request'
-        
-        self._send_message(error_msg, input['channel'], input['thread_ts'], None, input['token'])
+        error_msg = '\n'.join(error.values()) if isinstance(
+            error, dict) else 'Error in processing request'
+
+        self._send_message(
+            error_msg, input['channel'], input['thread_ts'], None, input['token'])
         async_to_sync(self._output_stream.write)(
             SlackPostMessageOutput(code=200),
         )
         self._output_stream.finalize()
-        
+
         return super().on_error(error)
-    
+
     def get_bookkeeping_data(self) -> BookKeepingData:
         return BookKeepingData(input=self._input, timestamp=time.time(), run_data={'slack': {'user': self._input.slack_user, 'user_email': self._input.slack_user_email}})

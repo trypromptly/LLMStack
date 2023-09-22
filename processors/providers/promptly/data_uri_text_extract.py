@@ -8,12 +8,11 @@ from asgiref.sync import async_to_sync
 from pydantic import conint
 from pydantic import Field
 
-from common.blocks.data.store.vectorstore import Document
-from common.blocks.data.store.vectorstore.temp_weaviate import TempWeaviate
-from common.utils.text_extract import extract_text_from_b64_json
-from common.utils.text_extract import ExtraParams
-from common.utils.splitter import SpacyTextSplitter
-from common.utils.utils import validate_parse_data_uri
+from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.blocks.data.store.vectorstore.temp_weaviate import TempWeaviate
+from llmstack.common.utils.text_extract import extract_text_from_b64_json, ExtraParams
+from llmstack.common.utils.splitter import SpacyTextSplitter
+from llmstack.common.utils.utils import validate_parse_data_uri
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import DataUrl

@@ -11,12 +11,12 @@ from pydantic import confloat
 from pydantic import conint
 from pydantic import Field
 
-from common.blocks.llm.openai import ChatCompletionsModel
-from common.blocks.llm.openai import FunctionCall as OpenAIFunctionCall
-from common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessor
-from common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessorConfiguration
-from common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessorInput
-from common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessorOutput
+from llmstack.common.blocks.llm.openai import ChatCompletionsModel
+from llmstack.common.blocks.llm.openai import FunctionCall as OpenAIFunctionCall
+from llmstack.common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessor
+from llmstack.common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessorConfiguration
+from llmstack.common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessorInput
+from llmstack.common.blocks.llm.openai import OpenAIChatCompletionsAPIProcessorOutput
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import CHAT_WIDGET_NAME

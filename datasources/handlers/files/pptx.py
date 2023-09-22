@@ -4,15 +4,16 @@ from typing import Optional
 
 from pydantic import Field
 
-from common.blocks.data.store.vectorstore import Document
-from common.utils.splitter import SpacyTextSplitter
-from common.utils.utils import validate_parse_data_uri
+from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.utils.splitter import SpacyTextSplitter
+from llmstack.common.utils.utils import validate_parse_data_uri
+from llmstack.common.blocks.data.source.uri import Uri, UriInput, UriConfiguration
+from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
 from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
-from common.blocks.data.source.uri import Uri, UriInput, UriConfiguration
-from common.blocks.data.source import DataSourceEnvironmentSchema
+
 
 logger = logging.getLogger(__name__)
 

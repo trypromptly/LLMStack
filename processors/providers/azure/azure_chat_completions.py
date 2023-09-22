@@ -6,10 +6,10 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessor
-from common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessorConfiguration
-from common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessorInput
-from common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessorOutput
+from llmstack.common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessor
+from llmstack.common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessorConfiguration
+from llmstack.common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessorInput
+from llmstack.common.blocks.llm.azure_openai import AzureOpenAIChatCompletionsAPIProcessorOutput
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 from processors.providers.api_processor_interface import CHAT_WIDGET_NAME

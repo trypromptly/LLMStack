@@ -8,7 +8,7 @@ from django.db import models
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
 
-from common.utils.db_models import ArrayField
+from llmstack.common.utils.db_models import ArrayField
 
 logger = logging.getLogger(__name__)
 

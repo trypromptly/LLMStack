@@ -31,7 +31,7 @@ def add_data_entry_task(datasource: DataSource, datasource_entry_items: List[Dat
         try:
             result = datasource_entry_handler.add_entry(datasource_entry_item)
             datasource_entry_config = result.config
-            datasource_entry_config["input"] = datasource_entry_item.dict()            
+            datasource_entry_config["input"] = datasource_entry_item.dict()
             datasource_entry_object.config = datasource_entry_config
             datasource_entry_object.size = result.size
             datasource_entry_object.status = DataSourceEntryStatus.READY
@@ -81,15 +81,17 @@ def delete_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
             str(entry_data.name),
         )
         entry_data.status = DataSourceEntryStatus.FAILED
-        entry_data.config = {'errors': {'message':"Error in deleting data source entry"}}
+        entry_data.config = {'errors': {
+            'message': "Error in deleting data source entry"}}
         entry_data.save()
-    
+
     datasource.save()
     return
 
+
 def resync_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
     logger.info(f'Resyncing task for data_source_entry: %s' % str(entry_data))
-    
+
     datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
         datasource.type,
     )
@@ -99,7 +101,7 @@ def resync_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
     entry_data.status = DataSourceEntryStatus.PROCESSING
     entry_data.save()
     old_size = entry_data.size
-    
+
     result = datasource_entry_handler.resync_entry(entry_data.config)
     entry_data.size = result.size
     config_entry = result.config
@@ -107,10 +109,10 @@ def resync_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
     entry_data.config = config_entry
     entry_data.status = DataSourceEntryStatus.READY
     entry_data.save()
-    
+
     datasource.size = datasource.size - old_size + result.size
     datasource.save()
-    
+
 
 def delete_data_source_task(datasource):
     datasource_type = datasource.type
@@ -125,19 +127,19 @@ def delete_data_source_task(datasource):
 
 def extract_urls_task(url):
     from urllib.parse import urlparse
-    from common.utils.utils import extract_urls_from_sitemap
-    from common.utils.utils import get_url_content_type
-    from common.utils.utils import is_sitemap_url
-    from common.utils.utils import is_youtube_video_url
-    from common.utils.utils import scrape_url
-    
+    from llmstack.common.utils.utils import extract_urls_from_sitemap
+    from llmstack.common.utils.utils import get_url_content_type
+    from llmstack.common.utils.utils import is_sitemap_url
+    from llmstack.common.utils.utils import is_youtube_video_url
+    from llmstack.common.utils.utils import scrape_url
+
     url_content_type = get_url_content_type(url=url)
     url_content_type_parts = url_content_type.split(';')
     mime_type = url_content_type_parts[0]
-    
+
     if is_youtube_video_url(url):
         return [url]
-    
+
     if mime_type != 'text/html' and not is_sitemap_url(url):
         return [url]
 

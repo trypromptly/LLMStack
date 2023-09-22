@@ -9,18 +9,18 @@ from typing import Optional
 from typing import TypeVar
 from pydantic import BaseModel
 
-from common.blocks.base.schema import BaseSchema as _Schema
-from common.blocks.base.processor import ProcessorInterface, BaseInputType
-from common.blocks.data.store.vectorstore.chroma import Chroma
-from common.blocks.embeddings.openai_embedding import EmbeddingAPIProvider
-from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingConfiguration
-from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingInput
-from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingOutput
-from common.blocks.embeddings.openai_embedding import OpenAIEmbeddingsProcessor
-from common.blocks.data.store.vectorstore import Document
-from common.blocks.data.store.vectorstore import DocumentQuery
-from common.blocks.data.store.vectorstore import VectorStoreInterface
-from common.blocks.data.store.vectorstore.weaviate import Weaviate as PromptlyWeaviate
+from llmstack.common.blocks.base.schema import BaseSchema as _Schema
+from llmstack.common.blocks.base.processor import ProcessorInterface, BaseInputType
+from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
+from llmstack.common.blocks.embeddings.openai_embedding import EmbeddingAPIProvider
+from llmstack.common.blocks.embeddings.openai_embedding import OpenAIEmbeddingConfiguration
+from llmstack.common.blocks.embeddings.openai_embedding import OpenAIEmbeddingInput
+from llmstack.common.blocks.embeddings.openai_embedding import OpenAIEmbeddingOutput
+from llmstack.common.blocks.embeddings.openai_embedding import OpenAIEmbeddingsProcessor
+from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.blocks.data.store.vectorstore import DocumentQuery
+from llmstack.common.blocks.data.store.vectorstore import VectorStoreInterface
+from llmstack.common.blocks.data.store.vectorstore.weaviate import Weaviate as PromptlyWeaviate
 from datasources.models import DataSource
 from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
 

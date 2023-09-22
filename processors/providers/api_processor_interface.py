@@ -6,9 +6,9 @@ from typing import TypeVar
 import ujson as json
 from pydantic import AnyUrl
 
-from common.blocks.base.schema import BaseSchema as _Schema
-from common.blocks.base.processor import BaseInputType, BaseOutputType, BaseConfigurationType, ProcessorInterface
-from common.utils.utils import hydrate_input
+from llmstack.common.blocks.base.schema import BaseSchema as _Schema
+from llmstack.common.blocks.base.processor import BaseInputType, BaseOutputType, BaseConfigurationType, ProcessorInterface
+from llmstack.common.utils.utils import hydrate_input
 from play.actor import Actor
 from play.actor import BookKeepingData
 from play.utils import extract_jinja2_variables
@@ -37,15 +37,19 @@ class DataUrl(AnyUrl):
             },
         )
 
+
 class ApiProcessorSchema(_Schema):
     pass
+
 
 class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, BaseConfigurationType], Actor):
     """
     Abstract class for API processors
     """
+
     def __init__(self, input, config, env, output_stream=None, dependencies=[], all_dependencies=[], session_data=None):
-        Actor.__init__(self, dependencies=dependencies, all_dependencies=all_dependencies)
+        Actor.__init__(self, dependencies=dependencies,
+                       all_dependencies=all_dependencies)
 
         # TODO: This is for backward compatibility. Remove this once all the processors are updated
         if 'datasource' in config and isinstance(config['datasource'], str):
@@ -58,12 +62,12 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
         self._env = env
         self._output_stream = output_stream
 
-        self.process_session_data(session_data) 
-    
+        self.process_session_data(session_data)
+
     @classmethod
     def get_output_schema(cls) -> dict:
         schema = json.loads(cls._get_output_schema())
-        
+
         if 'description' in schema:
             schema.pop('description')
         if 'title' in schema:
@@ -149,8 +153,10 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
     def input(self, message: Any) -> Any:
         # Hydrate the input and config before processing
         try:
-            self._input = hydrate_input(self._input, message) if message else self._input
-            self._config = hydrate_input(self._config, message) if self._config else self._config
+            self._input = hydrate_input(
+                self._input, message) if message else self._input
+            self._config = hydrate_input(
+                self._config, message) if self._config else self._config
             output = self.process()
         except Exception as e:
             output = {

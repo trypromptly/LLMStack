@@ -1,8 +1,8 @@
 import logging
 from typing import List
 
-from common.blocks.data.store.vectorstore import Document
-from common.utils.splitter import SpacyTextSplitter
+from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.utils.splitter import SpacyTextSplitter
 from datasources.handlers.datasource_type_interface import DataSourceEntryItem
 from datasources.handlers.datasource_type_interface import DataSourceSchema
 from datasources.handlers.datasource_type_interface import DataSourceProcessor
