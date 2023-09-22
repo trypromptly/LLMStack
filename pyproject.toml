@@ -7,6 +7,10 @@ license = "MIT"
 readme = "README.md"
 include = [
   "llmstack/client/build/*",
+  "llmstack/client/build/static/css/*",
+  "llmstack/client/build/static/images/*",
+  "llmstack/client/build/static/js/*",
+  "llmstack/client/build/static/media/*",
 ]
 exclude = [
   "llmstack/client/src/*",
