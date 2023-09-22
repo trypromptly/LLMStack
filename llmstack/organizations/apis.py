@@ -12,10 +12,8 @@ from llmstack.apps.serializers import AppSerializer
 from llmstack.datasources.models import DataSource, DataSourceEntry, DataSourceVisibility
 from llmstack.datasources.serializers import DataSourceEntrySerializer, DataSourceSerializer
 from llmstack.datasources.types import DataSourceTypeFactory
-from organizations.models import Organization
-from organizations.models import OrganizationSettings
-from organizations.serializers import OrganizationSerializer
-from organizations.serializers import OrganizationSettingsSerializer
+from llmstack.organizations.models import Organization, OrganizationSettings
+from llmstack.organizations.serializers import OrganizationSerializer, OrganizationSettingsSerializer
 from llmstack.base.models import Profile
 
 logger = logging.getLogger(__name__)

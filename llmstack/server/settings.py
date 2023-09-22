@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'llmstack.datasources.apps.DatasourcesConfig',
     'llmstack.apps.apps.AppsConfig',
     'llmstack.base.apps.BaseConfig',
-    'organizations.apps.OrganizationsConfig',
+    'llmstack.organizations.apps.OrganizationsConfig',
     'flags',
     'allauth',
     'allauth.account',

@@ -272,7 +272,7 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
         t = Token.objects.create(user=instance)
         # Check if there is an organization that has domains that match the email domain
-        from organizations.models import Organization
+        from llmstack.organizations.models import Organization
         org = Organization.objects.filter(
             domains__contains=[instance.email.split('@')[1]],
         ).first() if instance.email else None

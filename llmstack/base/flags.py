@@ -3,7 +3,7 @@ from flags.sources import Condition
 from flags.state import flag_enabled
 
 from llmstack.apps.models import App, AppVisibility
-from organizations.models import OrganizationSettings
+from llmstack.organizations.models import OrganizationSettings
 from .models import Profile
 
 
