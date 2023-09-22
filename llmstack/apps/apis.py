@@ -18,7 +18,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 
-from processors.apis import EndpointViewSet
+from llmstack.processors.apis import EndpointViewSet
 
 from .models import App, AppData
 from .models import AppAccessPermission

@@ -14,12 +14,9 @@ from .models import TestSet
 from llmstack.apps.app_templates import AppTemplateFactory
 from llmstack.apps.app_types import AppTypeFactory
 from llmstack.play.utils import convert_template_vars_from_legacy_format
-from processors.models import ApiBackend
-from processors.models import Endpoint
+from llmstack.processors.models import ApiBackend, Endpoint
 from llmstack.base.models import Profile
-from processors.serializers import ApiBackendSerializer
-from processors.serializers import ApiProviderSerializer
-from processors.serializers import EndpointSerializer
+from llmstack.processors.serializers import ApiBackendSerializer, ApiProviderSerializer, EndpointSerializer
 
 
 class DynamicFieldsModelSerializer(serializers.ModelSerializer):

@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'processors.apps.ProcessorsConfig',
+    'llmstack.processors.apps.ProcessorsConfig',
     'llmstack.datasources.apps.DatasourcesConfig',
     'llmstack.apps.apps.AppsConfig',
     'llmstack.base.apps.BaseConfig',
@@ -299,19 +299,19 @@ SITE_URL = os.getenv('SITE_URL', 'https://trypromptly.com')
 INDEX_VIEW_MODULE = 'llmstack.base.views'
 EMAIL_SENDER_CLASS = 'llmstack.emails.sender.DefaultEmailSender'
 EMAIL_TEMPLATE_FACTORY_CLASS = 'llmstack.emails.templates.factory.DefaultEmailTemplateFactory'
-HISTORY_STORE_CLASS = 'processors.history.DefaultHistoryStore'
+HISTORY_STORE_CLASS = 'llmstack.processors.history.DefaultHistoryStore'
 FLAG_SOURCES = ['llmstack.base.flags.FlagSource']
 
 PROCESSOR_PROVIDERS = [
-    'processors.providers.anthropic',
-    'processors.providers.azure',
-    'processors.providers.cohere',
-    'processors.providers.elevenlabs',
-    'processors.providers.google',
-    'processors.providers.localai',
-    'processors.providers.openai',
-    'processors.providers.promptly',
-    'processors.providers.stabilityai',
+    'llmstack.processors.providers.anthropic',
+    'llmstack.processors.providers.azure',
+    'llmstack.processors.providers.cohere',
+    'llmstack.processors.providers.elevenlabs',
+    'llmstack.processors.providers.google',
+    'llmstack.processors.providers.localai',
+    'llmstack.processors.providers.openai',
+    'llmstack.processors.providers.promptly',
+    'llmstack.processors.providers.stabilityai',
 ]
 
 DATASOURCE_TYPE_PROVIDERS = [

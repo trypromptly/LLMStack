@@ -15,7 +15,7 @@ from llmstack.play.actors.input import InputActor
 from llmstack.play.actors.output import OutputActor
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.base.models import Profile
-from processors.providers.slack.post_message import SlackPostMessageProcessor
+from llmstack.processors.providers.slack.post_message import SlackPostMessageProcessor
 
 from django.contrib.auth.models import User, AnonymousUser
 

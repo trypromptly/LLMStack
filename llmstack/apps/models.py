@@ -10,7 +10,7 @@ from django.dispatch import receiver
 from django.utils.timezone import now
 
 from llmstack.apps.integration_configs import DiscordIntegrationConfig, SlackIntegrationConfig, WebIntegrationConfig
-from processors.models import Endpoint
+from llmstack.processors.models import Endpoint
 from llmstack.base.models import Profile
 from llmstack.common.utils.db_models import ArrayField
 

@@ -4,7 +4,7 @@ from typing import Any
 from llmstack.apps.app_session_utils import save_app_session_data
 from llmstack.play.actor import Actor
 from llmstack.play.output_stream import Message, MessageType
-from processors.tasks import persist_history_task
+from llmstack.processors.tasks import persist_history_task
 from llmstack.jobs.adhoc import HistoryPersistenceJob
 
 logger = logging.getLogger(__name__)

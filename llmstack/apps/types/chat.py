@@ -5,7 +5,7 @@ from pydantic import Field
 
 from llmstack.apps.types.app_type_interface import AppTypeInterface
 from llmstack.apps.types.app_type_interface import BaseSchema
-from processors.providers.api_processor_interface import DataUrl
+from llmstack.processors.providers.api_processor_interface import DataUrl
 
 
 class ChatAppConfigSchema(BaseSchema):

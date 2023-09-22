@@ -21,7 +21,7 @@ from llmstack.play.actors.output import OutputActor
 from llmstack.play.coordinator import Coordinator
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.base.models import Profile
-from processors.providers.api_processors import ApiProcessorFactory
+from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 logger = logging.getLogger(__name__)
 

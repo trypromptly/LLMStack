@@ -4,8 +4,6 @@ from rest_framework import serializers
 
 from .models import Organization
 from .models import OrganizationSettings
-from processors.models import ApiBackend
-from processors.serializers import ApiBackendSerializer
 
 
 class OrganizationSerializer(serializers.ModelSerializer):

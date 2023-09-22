@@ -15,7 +15,6 @@ include = [
 ]
 packages = [
     {include = "llmstack"},
-    {include = "processors"},
 ]
 
 [tool.poetry.scripts]
