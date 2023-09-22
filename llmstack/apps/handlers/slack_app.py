@@ -14,7 +14,7 @@ from play.actors.bookkeeping import BookKeepingActor
 from play.actors.input import InputActor
 from play.actors.output import OutputActor
 from play.utils import convert_template_vars_from_legacy_format
-from base.models import Profile
+from llmstack.base.models import Profile
 from processors.providers.slack.post_message import SlackPostMessageProcessor
 
 from django.contrib.auth.models import User, AnonymousUser

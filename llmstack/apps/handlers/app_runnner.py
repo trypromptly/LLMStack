@@ -21,7 +21,7 @@ from play.actors.input import InputRequest
 from play.actors.output import OutputActor
 from play.coordinator import Coordinator
 from play.utils import convert_template_vars_from_legacy_format
-from base.models import Profile
+from llmstack.base.models import Profile
 from processors.providers.api_processors import ApiProcessorFactory
 
 logger = logging.getLogger(__name__)

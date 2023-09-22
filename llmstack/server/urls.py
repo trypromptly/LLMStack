@@ -18,4 +18,4 @@ if settings.ADMIN_ENABLED:
     admin.site.site_title = 'LLMStack'
     admin.site.index_title = 'LLMStack Administration'
 
-urlpatterns += [path('', include('base.urls'))]
+urlpatterns += [path('', include('llmstack.base.urls'))]

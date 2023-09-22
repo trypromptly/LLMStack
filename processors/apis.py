@@ -30,7 +30,7 @@ from rest_framework.views import APIView
 from .models import ApiBackend
 from .models import ApiProvider
 from .models import Endpoint
-from base.models import Profile
+from llmstack.base.models import Profile
 from .models import Request
 from .models import Response
 from .models import RunEntry

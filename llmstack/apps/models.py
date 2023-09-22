@@ -11,7 +11,7 @@ from django.utils.timezone import now
 
 from llmstack.apps.integration_configs import DiscordIntegrationConfig, SlackIntegrationConfig, WebIntegrationConfig
 from processors.models import Endpoint
-from base.models import Profile
+from llmstack.base.models import Profile
 from common.utils.db_models import ArrayField
 
 logger = logging.getLogger(__name__)

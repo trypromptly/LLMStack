@@ -13,7 +13,7 @@ from datasources.handlers.datasource_type_interface import DataSourceSchema
 from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 from datasources.models import DataSource
-from base.models import Profile
+from llmstack.base.models import Profile
 from common.blocks.data.source.uri import Uri, UriInput, UriConfiguration
 from common.blocks.data.source import DataSourceEnvironmentSchema
 

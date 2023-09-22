@@ -19,7 +19,7 @@ from organizations.models import Organization
 from organizations.models import OrganizationSettings
 from organizations.serializers import OrganizationSerializer
 from organizations.serializers import OrganizationSettingsSerializer
-from base.models import Profile
+from llmstack.base.models import Profile
 
 logger = logging.getLogger(__name__)
 

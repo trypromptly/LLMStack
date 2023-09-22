@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from base.models import Profile
+from llmstack.base.models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):

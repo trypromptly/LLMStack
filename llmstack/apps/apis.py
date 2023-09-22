@@ -42,7 +42,7 @@ from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from emails.sender import EmailSender
 from emails.templates.factory import EmailTemplateFactory
-from base.models import Profile
+from llmstack.base.models import Profile
 from llmstack.apps.yaml_loader import get_app_template_by_slug, get_app_templates_from_contrib
 
 logger = logging.getLogger(__name__)

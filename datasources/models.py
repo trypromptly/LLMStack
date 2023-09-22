@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.timezone import now
 
-from base.models import Profile
+from llmstack.base.models import Profile
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class DataSource(models.Model):
 
     def __str__(self):
         return self.name + ' (' + self.type.name + ')' + ' - ' + str(self.owner)
-    
+
     @property
     def profile(self):
         return Profile.objects.get(user=self.owner)

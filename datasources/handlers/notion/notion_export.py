@@ -15,7 +15,7 @@ from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 from datasources.handlers.utils import extract_documents
 from datasources.models import DataSource
-from base.models import Profile
+from llmstack.base.models import Profile
 
 
 logger = logging.getLogger(__name__)

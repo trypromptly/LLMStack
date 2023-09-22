@@ -16,7 +16,7 @@ from llmstack.apps.app_types import AppTypeFactory
 from play.utils import convert_template_vars_from_legacy_format
 from processors.models import ApiBackend
 from processors.models import Endpoint
-from base.models import Profile
+from llmstack.base.models import Profile
 from processors.serializers import ApiBackendSerializer
 from processors.serializers import ApiProviderSerializer
 from processors.serializers import EndpointSerializer

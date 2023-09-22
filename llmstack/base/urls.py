@@ -26,7 +26,7 @@ urlpatterns = [
     path('api/me', ProfileViewSet.as_view({'get': 'me'})),
 ]
 
-if settings.INDEX_VIEW_MODULE != 'base.views':
+if settings.INDEX_VIEW_MODULE != 'llmstack.base.views':
     urlpatterns.append(path('login', login, name='login'))
 
 urlpatterns.append(re_path(r'^(?!static\/)', index_view))

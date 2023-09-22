@@ -17,7 +17,7 @@ from datasources.handlers.datasource_type_interface import DataSourceSchema
 from datasources.handlers.datasource_type_interface import DataSourceProcessor
 from datasources.handlers.datasource_type_interface import WEAVIATE_SCHEMA
 from datasources.models import DataSource
-from base.models import Profile
+from llmstack.base.models import Profile
 
 DATA_URL_REGEX = r'data:application\/(\w+);name=(.*);base64,(.*)'
 

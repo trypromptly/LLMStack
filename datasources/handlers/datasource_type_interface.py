@@ -22,8 +22,7 @@ from common.blocks.data.store.vectorstore import DocumentQuery
 from common.blocks.data.store.vectorstore import VectorStoreInterface
 from common.blocks.data.store.vectorstore.weaviate import Weaviate as PromptlyWeaviate
 from datasources.models import DataSource
-from base.models import Profile
-from base.models import VectorstoreEmbeddingEndpoint
+from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
 
 logger = logging.getLogger(__name__)
 

@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'processors.apps.ProcessorsConfig',
     'datasources.apps.DatasourcesConfig',
     'llmstack.apps.apps.AppsConfig',
-    'base.apps.BaseConfig',
+    'llmstack.base.apps.BaseConfig',
     'organizations.apps.OrganizationsConfig',
     'flags',
     'allauth',
@@ -218,7 +218,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_RENDERER_CLASSES': [
-        'base.renderers.renderers.ORJSONRenderer',
+        'llmstack.base.renderers.renderers.ORJSONRenderer',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
@@ -296,11 +296,11 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 SITENAME = os.getenv('SITENAME', 'Promptly')
 SITE_URL = os.getenv('SITE_URL', 'https://trypromptly.com')
 
-INDEX_VIEW_MODULE = 'base.views'
+INDEX_VIEW_MODULE = 'llmstack.base.views'
 EMAIL_SENDER_CLASS = 'emails.sender.DefaultEmailSender'
 HISTORY_STORE_CLASS = 'processors.history.DefaultHistoryStore'
 EMAIL_TEMPLATE_FACTORY_CLASS = 'emails.templates.factory.DefaultEmailTemplateFactory'
-FLAG_SOURCES = ['base.flags.FlagSource']
+FLAG_SOURCES = ['llmstack.base.flags.FlagSource']
 
 PROCESSOR_PROVIDERS = [
     'processors.providers.anthropic',

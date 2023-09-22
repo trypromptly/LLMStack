@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 
 class BaseConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'base'
+    name = 'llmstack.base'
     label = 'base'
 
     def ready(self):

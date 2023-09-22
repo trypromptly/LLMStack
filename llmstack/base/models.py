@@ -264,7 +264,7 @@ class DefaultProfile(AbstractProfile):
 
 def get_profile_model():
     # Look for a custom profile model in settings. If none is available, use the default.
-    return import_string(getattr(settings, 'AUTH_PROFILE_CLASS', 'base.models.DefaultProfile'))
+    return import_string(getattr(settings, 'AUTH_PROFILE_CLASS', 'llmstack.base.models.DefaultProfile'))
 
 
 Profile = get_profile_model()
