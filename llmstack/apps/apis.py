@@ -40,8 +40,8 @@ from llmstack.apps.handlers.app_runner_factory import AppRunerFactory
 from llmstack.apps.integration_configs import DiscordIntegrationConfig
 from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.apps.integration_configs import WebIntegrationConfig
-from emails.sender import EmailSender
-from emails.templates.factory import EmailTemplateFactory
+from llmstack.emails.sender import EmailSender
+from llmstack.emails.templates.factory import EmailTemplateFactory
 from llmstack.base.models import Profile
 from llmstack.apps.yaml_loader import get_app_template_by_slug, get_app_templates_from_contrib
 

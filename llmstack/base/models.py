@@ -11,15 +11,13 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.db import models
 from rest_framework.authtoken.models import Token
 from django.utils.module_loading import import_string
 from rest_framework.authtoken.models import Token
 
-from emails.sender import EmailSender
-from emails.templates.factory import EmailTemplateFactory
+from llmstack.emails.sender import EmailSender
+from llmstack.emails.templates.factory import EmailTemplateFactory
 
 logger = logging.getLogger(__name__)
 

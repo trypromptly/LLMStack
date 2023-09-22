@@ -1,4 +1,4 @@
-from emails.templates.template_interface import TemplateInterface
+from llmstack.emails.templates.template_interface import TemplateInterface
 from django.utils.module_loading import import_string
 from django.conf import settings
 
