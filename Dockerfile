@@ -28,8 +28,8 @@ RUN groupadd -r ${APP_USER} && useradd --no-log-init -r -g ${APP_USER} ${APP_USE
 RUN apt-get update && apt-get install -y postgresql-client mime-support ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Copy application code
-COPY --from=builder /code/client/build/index.html /code/client/build/index.html
-COPY --from=builder /code/client/build/static /code/client/build/static
+COPY --from=builder /code/llmstack/client/build/index.html /code/client/build/index.html
+COPY --from=builder /code/llmstack/client/build/static /code/client/build/static
 COPY --from=builder /code/llmstack/contrib/apps /code/llmstack/contrib/apps
 COPY --from=builder /code/llmstack/fixtures /code/llmstack/fixtures
 COPY --from=builder /code/llmstack /code/llmstack
