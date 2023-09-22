@@ -4,7 +4,7 @@ from pathlib import Path
 from django.utils.log import DEFAULT_LOGGING
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -74,7 +74,7 @@ MIDDLEWARE = [
     'apps.authorization_middleware.AuthorizationMiddleware',
 ]
 
-ROOT_URLCONF = 'llmstack.urls'
+ROOT_URLCONF = 'llmstack.server.urls'
 
 TEMPLATES = [
     {
@@ -92,8 +92,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'llmstack.wsgi.application'
-ASGI_APPLICATION = 'llmstack.asgi.application'
+WSGI_APPLICATION = 'llmstack.server.wsgi.application'
+ASGI_APPLICATION = 'llmstack.server.asgi.application'
 
 
 # Database
@@ -249,8 +249,8 @@ SITE_ID = 1
 LOGIN_REDIRECT_URL = '/'
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_PROVIDERS = {}
-ACCOUNT_ADAPTER = 'llmstack.adapters.CustomAccountAdapter'
-SOCIALACCOUNT_ADAPTER = 'llmstack.adapters.CustomSocialAccountAdapter'
+ACCOUNT_ADAPTER = 'llmstack.server.adapters.CustomAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'llmstack.server.adapters.CustomSocialAccountAdapter'
 
 DEFAULT_AWS_SECRET_ACCESS_KEY = os.getenv('DEFAULT_AWS_SECRET_ACCESS_KEY', '')
 DEFAULT_AWS_DEFAULT_REGION = os.getenv('DEFAULT_AWS_DEFAULT_REGION', '')

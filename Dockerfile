@@ -14,7 +14,7 @@ RUN mkdir /code/
 WORKDIR /code/
 ADD . /code/
 
-ENV DJANGO_SETTINGS_MODULE=llmstack.settings
+ENV DJANGO_SETTINGS_MODULE=llmstack.server.settings
 RUN python manage.py collectstatic --noinput --clear
 
 # Stage 2: Build final image
@@ -52,7 +52,7 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 WORKDIR /code/
 
-ENV DJANGO_SETTINGS_MODULE=llmstack.settings
+ENV DJANGO_SETTINGS_MODULE=llmstack.server.settings
 
 EXPOSE 9000
 

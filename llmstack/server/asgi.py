@@ -14,7 +14,7 @@ from apps.consumers import AppConsumer
 BASE_DIR = dirname(dirname(abspath(__file__)))
 sys.path.append(join(BASE_DIR, 'llmstack'))
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'llmstack.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'llmstack.server.settings')
 
 django_asgi_app = get_asgi_application()
 

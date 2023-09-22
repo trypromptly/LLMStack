@@ -4,7 +4,7 @@ import sys
 
 def run_django_command(command: list[str] = ['manage.py', 'runserver']):
     """Run a Django command"""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "llmstack.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "llmstack.server.settings")
     from django.core.management import execute_from_command_line
     execute_from_command_line(command)
 
