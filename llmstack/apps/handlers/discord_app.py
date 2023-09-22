@@ -4,11 +4,11 @@ import uuid
 from llmstack.apps.apis import AppRunnerException
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.apps.models import AppVisibility
-from play.actor import ActorConfig
-from play.actors.bookkeeping import BookKeepingActor
-from play.actors.input import InputActor
-from play.actors.output import OutputActor
-from play.utils import convert_template_vars_from_legacy_format
+from llmstack.play.actor import ActorConfig
+from llmstack.play.actors.bookkeeping import BookKeepingActor
+from llmstack.play.actors.input import InputActor
+from llmstack.play.actors.output import OutputActor
+from llmstack.play.utils import convert_template_vars_from_legacy_format
 from processors.providers.discord.send_message import DiscordSendMessageProcessor
 
 logger = logging.getLogger(__name__)

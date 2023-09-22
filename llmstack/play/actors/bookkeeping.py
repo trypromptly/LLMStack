@@ -2,9 +2,8 @@ import logging
 from typing import Any
 
 from llmstack.apps.app_session_utils import save_app_session_data
-from play.actor import Actor
-from play.output_stream import Message
-from play.output_stream import MessageType
+from llmstack.play.actor import Actor
+from llmstack.play.output_stream import Message, MessageType
 from processors.tasks import persist_history_task
 from llmstack.jobs.adhoc import HistoryPersistenceJob
 

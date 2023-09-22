@@ -9,9 +9,8 @@ from pydantic import AnyUrl
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.base.processor import BaseInputType, BaseOutputType, BaseConfigurationType, ProcessorInterface
 from llmstack.common.utils.utils import hydrate_input
-from play.actor import Actor
-from play.actor import BookKeepingData
-from play.utils import extract_jinja2_variables
+from llmstack.play.actor import Actor, BookKeepingData
+from llmstack.play.utils import extract_jinja2_variables
 
 
 LOGGER = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 
 from llmstack.common.blocks.http import BearerTokenAuth, HttpAPIProcessor, HttpAPIProcessorInput, HttpMethod, JsonBody
-from play.actor import BookKeepingData
+from llmstack.play.actor import BookKeepingData
 from processors.providers.api_processor_interface import ApiProcessorInterface
 from processors.providers.api_processor_interface import ApiProcessorSchema
 

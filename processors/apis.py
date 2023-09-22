@@ -43,12 +43,11 @@ from .serializers import LoginSerializer
 from .serializers import ResponseSerializer
 from llmstack.apps.app_session_utils import create_app_session
 from llmstack.apps.app_session_utils import get_app_session_data
-from play.actor import ActorConfig
-from play.actors.bookkeeping import BookKeepingActor
-from play.actors.input import InputActor
-from play.actors.input import InputRequest
-from play.actors.output import OutputActor
-from play.coordinator import Coordinator
+from llmstack.play.actor import ActorConfig
+from llmstack.play.actors.bookkeeping import BookKeepingActor
+from llmstack.play.actors.input import InputActor, InputRequest
+from llmstack.play.actors.output import OutputActor
+from llmstack.play.coordinator import Coordinator
 
 Schema = namedtuple('Schema', 'type default is_required')
 

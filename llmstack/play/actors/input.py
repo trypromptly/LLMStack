@@ -8,8 +8,7 @@ from typing import Type
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel
 
-from play.actor import Actor
-from play.actor import BookKeepingData
+from llmstack.play.actor import Actor, BookKeepingData
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class InputActor(Actor):
         self.output_stream.finalize()
         self.output_stream.bookkeep(
             BookKeepingData(
-            input=message, run_data={**self.input_request._asdict()}, timestamp=time.time(),
+                input=message, run_data={**self.input_request._asdict()}, timestamp=time.time(),
             ),
         )
 

@@ -5,9 +5,8 @@ from typing import NamedTuple
 
 from jinja2 import Template
 
-from play.actor import Actor
-from play.actor import BookKeepingData
-from play.utils import extract_jinja2_variables
+from llmstack.play.actor import Actor, BookKeepingData
+from llmstack.play.utils import extract_jinja2_variables
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +58,7 @@ class OutputActor(Actor):
 
         self._output_stream.bookkeep(
             BookKeepingData(
-            run_data={**output_response._asdict()}, timestamp=time.time(),
+                run_data={**output_response._asdict()}, timestamp=time.time(),
             ),
         )
 
@@ -123,7 +122,7 @@ class OutputActor(Actor):
 
         self._output_stream.bookkeep(
             BookKeepingData(
-            run_data={**output_response._asdict()}, timestamp=time.time(),
+                run_data={**output_response._asdict()}, timestamp=time.time(),
             ),
         )
 

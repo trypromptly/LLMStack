@@ -6,8 +6,7 @@ from typing import Type
 from pydantic import BaseModel
 from pykka import ThreadingActor
 
-from play.output_stream import Message
-from play.output_stream import MessageType
+from llmstack.play.output_stream import Message, MessageType
 
 logger = logging.getLogger(__name__)
 

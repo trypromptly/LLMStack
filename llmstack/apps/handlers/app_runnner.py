@@ -14,13 +14,12 @@ from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from llmstack.apps.models import AppVisibility
 from llmstack.common.utils.utils import get_location
-from play.actor import ActorConfig
-from play.actors.bookkeeping import BookKeepingActor
-from play.actors.input import InputActor
-from play.actors.input import InputRequest
-from play.actors.output import OutputActor
-from play.coordinator import Coordinator
-from play.utils import convert_template_vars_from_legacy_format
+from llmstack.play.actor import ActorConfig
+from llmstack.play.actors.bookkeeping import BookKeepingActor
+from llmstack.play.actors.input import InputActor, InputRequest
+from llmstack.play.actors.output import OutputActor
+from llmstack.play.coordinator import Coordinator
+from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.base.models import Profile
 from processors.providers.api_processors import ApiProcessorFactory
 

@@ -9,11 +9,11 @@ from time import time
 import requests
 
 from llmstack.apps.handlers.app_runnner import AppRunner
-from play.actor import ActorConfig
-from play.actors.bookkeeping import BookKeepingActor
-from play.actors.input import InputActor
-from play.actors.output import OutputActor
-from play.utils import convert_template_vars_from_legacy_format
+from llmstack.play.actor import ActorConfig
+from llmstack.play.actors.bookkeeping import BookKeepingActor
+from llmstack.play.actors.input import InputActor
+from llmstack.play.actors.output import OutputActor
+from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.base.models import Profile
 from processors.providers.slack.post_message import SlackPostMessageProcessor
 
