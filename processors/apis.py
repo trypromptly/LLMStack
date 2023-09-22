@@ -391,7 +391,7 @@ class EndpointViewSet(viewsets.ViewSet):
                 output_cls=processor_cls.get_output_cls(),
             ),
             ActorConfig(
-                name='input', template_key='', actor=InputActor, kwargs={
+                name='input', template_key='input', actor=InputActor, kwargs={
                     'input_request': input_request,
                 },
             ),
