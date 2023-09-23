@@ -78,7 +78,7 @@ jobs:
       # Build client
       - name: Build client
         run: |
-          cd client
+          cd llmstack/client
           npm install
           npm run build
 
@@ -101,13 +101,13 @@ jobs:
         id: build-and-push-nginx
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: nginx
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-nginx.outputs.tags }}
           labels: ${{ steps.meta-nginx.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          file: Dockerfile.nginx
+          file: nginx/Dockerfile
           platforms: linux/amd64,linux/arm64
           build-args: |
             REGISTRY=${{ env.REGISTRY }}/${{ env.ORG }}/
