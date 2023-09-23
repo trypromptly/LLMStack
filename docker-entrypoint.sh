@@ -21,11 +21,11 @@ apiserver() {
     fi
     
     if [ "x$AUTORELOAD" = 'xTrue' ] && [ "x$SINGLE_THREAD" = 'xFalse' ]; then
-        uvicorn llmstack.asgi:application --reload --port 9000 --host 0.0.0.0 --reload-dir /code
+        uvicorn llmstack.server.asgi:application --reload --port 9000 --host 0.0.0.0 --reload-dir /code
     elif [ "x$AUTORELOAD" = 'xFalse' ] && [ "x$SINGLE_THREAD" = 'xTrue' ]; then
         python manage.py runserver --nothreading --noreload 0.0.0.0:9000
     else
-        /usr/local/bin/gunicorn llmstack.asgi:application -w 6 -b :9000 --timeout 0 -k uvicorn.workers.UvicornWorker
+        /usr/local/bin/gunicorn llmstack.server.asgi:application -w 6 -b :9000 --timeout 0 -k uvicorn.workers.UvicornWorker
     fi
 }
 
