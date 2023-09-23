@@ -34,8 +34,8 @@ services:
   nginx:
     image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-nginx:latest
     build:
-      context: .
-      dockerfile: Dockerfile.nginx
+      context: nginx
+      dockerfile: Dockerfile
       cache_from:
         - llmstack-nginx:latest
       args:
