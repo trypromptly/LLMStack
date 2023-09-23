@@ -8,4 +8,4 @@ RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d
 
 # Copy static files from Django to nginx
-COPY --from=builder /code/static /usr/share/nginx/html/static
+COPY --from=builder /code/llmstack/static /usr/share/nginx/html/static
