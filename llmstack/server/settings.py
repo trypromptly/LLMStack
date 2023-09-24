@@ -302,26 +302,75 @@ EMAIL_TEMPLATE_FACTORY_CLASS = 'llmstack.emails.templates.factory.DefaultEmailTe
 HISTORY_STORE_CLASS = 'llmstack.processors.history.DefaultHistoryStore'
 FLAG_SOURCES = ['llmstack.base.flags.FlagSource']
 
-PROCESSOR_PROVIDERS = [
-    'llmstack.processors.providers.anthropic',
-    'llmstack.processors.providers.azure',
-    'llmstack.processors.providers.cohere',
-    'llmstack.processors.providers.elevenlabs',
-    'llmstack.processors.providers.google',
-    'llmstack.processors.providers.localai',
-    'llmstack.processors.providers.openai',
-    'llmstack.processors.providers.promptly',
-    'llmstack.processors.providers.stabilityai',
+# Make sure name and slug are unique
+PROVIDERS = [
+        {
+            'name': 'Amazon',
+            'datasource_modules': ['llmstack.datasources.handlers.amazon'],
+            'slug': 'amazon',
+        },
+        {
+            'name': 'Anthropic',
+            'processor_modules': ['llmstack.processors.providers.anthropic'],
+            'slug': 'anthropic',
+        },
+        {
+            'name': 'Azure',
+            'processor_modules': ['llmstack.processors.providers.azure'],
+            'slug': 'azure',
+        },
+        {
+            'name': 'Cohere',
+            'processor_modules': ['llmstack.processors.providers.cohere'],
+            'slug': 'cohere',
+        },
+        {
+            'name': 'ElevenLabs',
+            'processor_modules': ['llmstack.processors.providers.elevenlabs'],
+            'slug': 'elevenlabs',
+        },
+        {
+            'name': 'Google',
+            'processor_modules': ['llmstack.processors.providers.google'],
+            'slug': 'google',
+            'datasource_modules': ['llmstack.datasources.handlers.google'],
+        },
+        {
+            'name': 'LocalAI',
+            'processor_modules': ['llmstack.processors.providers.localai'],
+            'slug': 'localai',
+        },
+        {
+            'name': 'Open AI',
+            'processor_modules': ['llmstack.processors.providers.openai'],
+            'slug': 'openai',
+        },
+        {
+            'name': 'Promptly',
+            'processor_modules': ['llmstack.processors.providers.promptly'],
+            'datasource_modules': ['llmstack.datasources.handlers.databases', 'llmstack.datasources.handlers.files', 'llmstack.datasources.handlers.text', 'llmstack.datasources.handlers.website'],
+            'slug': 'promptly',
+        },
+        {
+            'name': 'Stability AI',
+            'processor_modules': ['llmstack.processors.providers.stabilityai'],
+            'slug': 'stabilityai',
+        },
 ]
 
-DATASOURCE_TYPE_PROVIDERS = [
-    'llmstack.datasources.handlers.amazon',
-    'llmstack.datasources.handlers.databases',
-    'llmstack.datasources.handlers.files',
-    'llmstack.datasources.handlers.google',
-    'llmstack.datasources.handlers.text',
-    'llmstack.datasources.handlers.website',
-]
+PROCESSOR_PROVIDERS = sum(list(
+    map(lambda entry: entry['processor_modules'], filter(
+        lambda provider: 'processor_modules' in provider,
+        PROVIDERS,
+    )),  
+), [])
+
+DATASOURCE_TYPE_PROVIDERS = sum(list(
+    map(lambda entry: entry['datasource_modules'], filter(
+        lambda provider: 'datasource_modules' in provider,
+        PROVIDERS,
+    )),
+), [])
 
 APP_TEMPLATES_DIR = os.getenv('APP_TEMPATES_DIR').split(',') if os.getenv('APP_TEMPATES_DIR') else [
     os.path.join(BASE_DIR, 'contrib', 'apps', 'templates')

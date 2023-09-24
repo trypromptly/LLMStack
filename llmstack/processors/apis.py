@@ -5,6 +5,7 @@ import logging
 import os
 import uuid
 from collections import namedtuple
+from django.conf import settings
 
 from django.contrib.auth import authenticate
 from django.contrib.auth import login
@@ -50,74 +51,6 @@ from llmstack.play.actors.output import OutputActor
 from llmstack.play.coordinator import Coordinator
 
 Schema = namedtuple('Schema', 'type default is_required')
-
-# Generate URL safe random code for sharing
-
-
-def share_code_genrate(code_length=6):
-    return base64.urlsafe_b64encode(os.urandom(code_length)).decode('utf-8')[:code_length]
-
-
-def get_api_schema(api_backend):
-    api_request_schema = {}
-    required = []
-    if api_backend.params and 'required' in api_backend.params:
-        required = api_backend.params['required']
-
-    if not api_backend.params or 'properties' not in api_backend.params:
-        return api_request_schema
-
-    for key, value in api_backend.params['properties'].items():
-        if 'default' not in value:
-            continue
-        value_type = value['type']
-        value_default = value['default']
-        if value_default == 'null':
-            value_default = None
-        value_is_required = True if key in required else False
-        schema = Schema(value_type, value_default, value_is_required)
-        api_request_schema[key] = schema
-
-    return api_request_schema
-
-
-def get_final_api_params(api_schema, endpoint_params, versioned_endpoint_params, request_params):
-
-    request_body = {}
-    # Start with API defaults
-    for key, value in api_schema.items():
-        request_body[key] = value.default
-
-    if endpoint_params:
-        # Override with params in Endpoint
-        for key, value in endpoint_params.items():
-            request_body[key] = value
-
-    if versioned_endpoint_params:
-        # Override with params in Versioned Endpoint
-        for key, value in versioned_endpoint_params.items():
-            request_body[key] = value
-
-    # Override with params provided in request
-    if request_params:
-        # Override with API request params
-        for key, value in request_params.items():
-            request_body[key] = value
-
-    return request_body
-
-
-class ResponseViewSet(viewsets.ViewSet):
-    def list(self, request):
-        requests_queryset = Request.objects.all().filter(
-            endpoint__in=Endpoint.objects.all().filter(owner=request.user),
-        )
-        queryset = Response.objects.all().filter(
-            request__in=requests_queryset,
-        ).order_by('-created_on')[:20]
-        serializer = ResponseSerializer(queryset, many=True)
-        return DRFResponse(serializer.data)
-
 
 logger = logging.getLogger(__name__)
 
@@ -462,11 +395,15 @@ class EndpointViewSet(viewsets.ViewSet):
 class ApiProviderViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
-    @ method_decorator(cache_page(60*60*24))
     def list(self, request):
-        queryset = ApiProvider.objects.all()
-        serializer = ApiProviderSerializer(queryset, many=True)
-        return DRFResponse(serializer.data)
+        processor_providers = list(filter(lambda provider: provider.get('processor_modules'), settings.PROVIDERS))
+        data = list(map(lambda provider: {
+            'name': provider.get('name'),
+            'slug': provider.get('slug'),
+            "prefix": ""
+        }, processor_providers))
+        
+        return DRFResponse(data)
 
 
 class ApiBackendViewSet(viewsets.ViewSet):
@@ -476,14 +413,6 @@ class ApiBackendViewSet(viewsets.ViewSet):
         queryset = ApiBackend.objects.all()
         serializer = ApiBackendSerializer(queryset, many=True)
         return DRFResponse(serializer.data)
-
-    @ method_decorator(cache_page(60*60*24))
-    def filtered(self, request):
-        api_provider_id = request.GET.get('apiprovider')
-        queryset = ApiBackend.objects.all().filter(api_provider=api_provider_id)
-        serializer = ApiBackendSerializer(queryset, many=True)
-        return DRFResponse(serializer.data)
-
 
 class HistoryViewSet(viewsets.ModelViewSet):
     paginate_by = 20
