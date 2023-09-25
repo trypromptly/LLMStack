@@ -1,136 +1,127 @@
-import ast
+from datetime import datetime
+import importlib
 import logging
-import re
 from typing import List
 from typing import Optional
-from typing import Union
+from RestrictedPython import compile_restricted
+from RestrictedPython.Guards import (
+    guarded_iter_unpack_sequence,
+    guarded_unpack_sequence,
+    safe_builtins
+)
+from RestrictedPython.transformer import IOPERATOR_TO_STR
 
 from llmstack.common.blocks.base.processor import BaseConfiguration
-from llmstack.common.blocks.base.processor import BaseConfigurationType
 from llmstack.common.blocks.base.processor import BaseInput
-from llmstack.common.blocks.base.processor import BaseInputType
 from llmstack.common.blocks.base.processor import BaseOutput
-from llmstack.common.blocks.base.processor import BaseOutputType
 from llmstack.common.blocks.base.processor import ProcessorInterface
-
 
 logger = logging.getLogger(__name__)
 
+class CustomPrint(object):
+    def __init__(self):
+        self.enabled = True
+        self.lines = []
 
-class PythonCodeExecutorProcessorInputDict(BaseInput):
-    key: str
-    value: Union[
-        str, int, float, bool, List[str],
-        List[int], List[float], List[bool],
-    ]
+    def write(self, text):
+        if self.enabled:
+            if text and text.strip():
+                log_line = "[{0}] {1}".format(datetime.utcnow().isoformat(), text)
+                self.lines.append(log_line)
+                
+    def enable(self):
+        self.enabled = True
 
+    def disable(self):
+        self.enabled = False
+
+    def __call__(self, *args):
+        return self
+
+    def _call_print(self, *objects, **kwargs):
+        print(*objects, file=self)
 
 class PythonCodeExecutorProcessorInput(BaseInput):
-    inputs: List[PythonCodeExecutorProcessorInputDict]
-    function_name: str
+    code: str
 
 
 class PythonCodeExecutorProcessorOutput(BaseOutput):
-    output: str
+    output: Optional[str]
+    logs: Optional[List[str]]
 
 
 class PythonCodeExecutorProcessorConfiguration(BaseConfiguration):
-    python_function_code: str
-    allowed_functions: Optional[List[str]] = [
-        'len', 'concat', 'join', 'split', 'lower', 'upper', 'strip', 'replace', 'startswith', 'endswith', 'find', 'rfind', 'index', 'rindex', 'count', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace', 'istitle', 'isupper', 'ljust', 'rjust', 'center', 'zfill', 'lstrip', 'rstrip', 'partition', 'rpartition', 'capitalize', 'swapcase', 'title', 'translate', 'casefold', 'encode', 'decode', 'format', 'format_map', 'maketrans', 'expandtabs', 'strip', 'lstrip', 'rstrip', 'split', 'rsplit', 'splitlines', 'join', 'find', 'rfind', 'index', 'rindex', 'count', 'startswith', 'endswith', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace', 'istitle', 'isupper', 'lower', 'upper', 'title', 'capitalize', 'swapcase', 'casefold', 'strip', 'lstrip', 'rstrip', 'split', 'rsplit',
-        'splitlines', 'join', 'find', 'rfind', 'index', 'rindex', 'count', 'startswith', 'endswith', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace', 'istitle', 'isupper', 'lower', 'upper', 'title', 'capitalize', 'swapcase', 'casefold', 'strip', 'lstrip', 'rstrip', 'split', 'rsplit', 'splitlines', 'join', 'find', 'rfind', 'index', 'rindex', 'count', 'startswith', 'endswith', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace', 'istitle', 'isupper', 'lower', 'upper', 'title', 'capitalize', 'swapcase', 'casefold', 'strip', 'lstrip', 'rstrip', 'split', 'rsplit', 'splitlines', 'join', 'find', 'rfind', 'index', 'rindex', 'count', 'startswith', 'endswith', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace', 'istitle', 'isupper', 'lower', 'upper', 'title', 'capitalize',
-    ]
-    allowed_keywords: Optional[List[str]] = ['def', 'return']
-
-
-def is_user_input_safe(user_function, allowed_calls=[], allowed_keywords=[]):
-    # Check the user input against the whitelist
-    tree = ast.parse(user_function)
-    for node in ast.walk(tree):
-        # Check if function calls are allowed
-        if isinstance(node, ast.Call) and not (isinstance(node.func, ast.Name) and node.func.id in allowed_calls):
-            return False
-
-        # Check if keywords are allowed
-        if isinstance(node, ast.keyword) and node.arg not in allowed_keywords:
-            return False
-
-    # Check for disallowed import statements
-    if re.search(r'\bimport\b|\bfrom\b', user_function):
-        return False
-
-    return True
+    allowed_modules: Optional[List[str]]
+    allowed_builtins: Optional[List[str]]
+    result_variable: Optional[str] = "result"
 
 
 class PythonCodeExecutorProcessor(ProcessorInterface[PythonCodeExecutorProcessorInput, PythonCodeExecutorProcessorOutput, PythonCodeExecutorProcessorConfiguration]):
-    """
-    # PythonCodeExecutorProcessor
-
-    The `PythonCodeExecutorProcessor` is a processor that helps to execute Python code safely by limiting the allowed functions and keywords. The processor takes a Python function as input and executes it with the provided input arguments.
-
-    ## Classes
-
-    ### PythonCodeExecutorProcessorInputDict
-
-    This class inherits from `BaseInput` and represents a key-value pair for the input arguments.
-
-    Attributes:
-
-    - `key`: A string representing the key for the input argument.
-    - `value`: A value of different types (str, int, float, bool, List[str], List[int], List[float], List[bool]).
-
-    ### PythonCodeExecutorProcessorInput
-
-    This class inherits from `BaseInput` and represents the input for the PythonCodeExecutorProcessor.
-
-    Attributes:
-
-    - `inputs`: A list of `PythonCodeExecutorProcessorInputDict` objects representing the input arguments.
-    - `function_name`: A string representing the name of the function to execute.
-
-    ### PythonCodeExecutorProcessorOutput
-
-    This class inherits from `BaseOutput` and represents the output of the PythonCodeExecutorProcessor.
-
-    Attributes:
-
-    - `output`: A string representing the result of the executed Python function.
-
-    ### PythonCodeExecutorProcessorConfiguration
-
-    This class inherits from `BaseConfiguration` and represents the configuration for the PythonCodeExecutorProcessor.
-
-    Attributes:
-
-    - `python_function_code`: A string containing the Python function code to execute.
-    - `allowed_functions`: An optional list of allowed function names (default: a list of common string manipulation functions).
-    - `allowed_keywords`: An optional list of allowed Python keywords (default: ['def', 'return']).
-
-    ### PythonCodeExecutorProcessor
-
-    This class inherits from `BaseProcessor` and represents the main class for the PythonCodeExecutorProcessor. It handles the execution of the provided Python function with the given input arguments and configuration.
-
-    Methods:
-
-    - `_process(self, input: PythonCodeExecutorProcessorInput, configuration: PythonCodeExecutorProcessorConfiguration) -> PythonCodeExecutorProcessorOutput`: Executes the provided Python function with the given input arguments and configuration, and returns the result as a `PythonCodeExecutorProcessorOutput` object.
-    """
-
-    def process(self,  input: PythonCodeExecutorProcessorInput, configuration: PythonCodeExecutorProcessorConfiguration) -> PythonCodeExecutorProcessorOutput:
+    
+    @staticmethod
+    def custom_write(obj):
         """
-            Invokes the processor on the input and returns the output
+        Custom hooks which controls the way objects/lists/tuples/dicts behave in
+        RestrictedPython
         """
-        if not is_user_input_safe(configuration.python_function_code, configuration.allowed_functions, configuration.allowed_keywords):
-            raise Exception('User input is not safe')
-        exec(configuration.python_function_code)
-        user_func_name = input.function_name
+        return obj
 
-        if user_func_name == '':
-            raise Exception('User function name is not valid')
+    @staticmethod
+    def custom_get_item(obj, key):
+        return obj[key]
 
-        function_input = {i.key: i.value for i in input.inputs}
-        try:
-            result = locals()[user_func_name](**function_input)
-        except Exception as e:
-            result = f'Exception occurred : {str(e)}'
+    @staticmethod
+    def custom_get_iter(obj):
+        return iter(obj)
 
-        return PythonCodeExecutorProcessorOutput(output=result)
+    @staticmethod
+    def custom_inplacevar(op, x, y):
+        if op not in IOPERATOR_TO_STR.values():
+            raise Exception("'{} is not supported inplace variable'".format(op))
+        glb = {"x": x, "y": y}
+        exec("x" + op + "y", glb)
+        return glb["x"]
+        
+
+    def process(self, input: PythonCodeExecutorProcessorInput, configuration: PythonCodeExecutorProcessorConfiguration) -> PythonCodeExecutorProcessorOutput:
+        allowed_modules = {}
+        for module in configuration.allowed_modules or []:
+            allowed_modules[module] = None
+            
+        allowed_builtins = safe_builtins.copy()        
+        for builtin in configuration.allowed_builtins or []:
+            allowed_builtins += (builtin,)
+        
+        def custom_import(self, name, globals=None, locals=None, fromlist=(), level=0):
+            if name in allowed_modules:
+                m = importlib.import_module(name)
+                return m
+
+            raise Exception("'{0}' is not configured as a supported import module".format(name))
+    
+        custom_print = CustomPrint()
+        code = compile_restricted(input.code, "<string>", "exec")
+        
+        builtins = allowed_builtins.copy()
+        
+        builtins["_write_"] = self.custom_write
+        builtins["_print_"] = custom_print
+        builtins["__import__"] = custom_import
+        builtins["_getitem_"] = self.custom_get_item
+        builtins["_getiter_"] = self.custom_get_iter
+        builtins["_unpack_sequence_"] = guarded_unpack_sequence
+        builtins["_iter_unpack_sequence_"] = guarded_iter_unpack_sequence
+        builtins["_inplacevar_"] = self.custom_inplacevar
+        builtins["_getattr_"] = getattr
+        builtins["getattr"] = getattr
+        builtins["_setattr_"] = setattr
+        builtins["setattr"] = setattr
+
+        restricted_globals = dict(__builtins__=builtins)
+        
+        code_exec_result = {configuration.result_variable: None}
+        exec(code, restricted_globals, code_exec_result)
+        result = code_exec_result.get(configuration.result_variable)
+        logs = custom_print.lines
+
+        return PythonCodeExecutorProcessorOutput(output=result, logs=logs)
