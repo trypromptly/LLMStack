@@ -81,6 +81,3 @@ class SitemapCrawlerDataSource(DataSourceProcessor[SitemapURLSchema]):
             ) for t in SpacyTextSplitter(chunk_size=1500).split_text(text)
         ]
         return docs
-
-    def similarity_search(self, query: str, *args, **kwargs) -> List[dict]:
-        return super().similarity_search(query, *args, **kwargs)

@@ -109,6 +109,3 @@ class PDFDataSource(DataSourceProcessor[PdfSchema]):
                 page_content += str(element)
                 page_number = element.metadata.page_number
         return docs
-
-    def similarity_search(self, query: str, *args, **kwargs) -> List[dict]:
-        return super().similarity_search(query, *args, **kwargs)

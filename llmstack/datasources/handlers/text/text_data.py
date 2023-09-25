@@ -63,6 +63,3 @@ class TextDataSource(DataSourceProcessor[TextSchema]):
         ]
 
         return docs
-
-    def similarity_search(self, query: str, *args, **kwargs) -> List[dict]:
-        return super().similarity_search(query, *args, **kwargs)
