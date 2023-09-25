@@ -202,6 +202,12 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         logger.info(f'Added {len(document_ids)} documents to vectorstore.')
         return data.copy(update={'config': {'document_ids': document_ids}, 'size': 1536 * 4 * len(document_ids)})
 
+    def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
+        if use_hybrid_search:
+            return self.hybrid_search(query, **kwargs)
+        else:
+            return self.similarity_search(query, **kwargs)
+        
     def similarity_search(self, query: str, **kwargs) -> List[dict]:
 
         document_query = DocumentQuery(
