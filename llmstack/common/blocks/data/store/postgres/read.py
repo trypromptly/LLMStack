@@ -1,5 +1,7 @@
 from collections import defaultdict
+from datetime import datetime
 import json
+from uuid import UUID
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
@@ -43,6 +45,10 @@ class PostgreSQLJSONEncoder(json.JSONEncoder):
             items = [o._bounds[0], str(o._lower), ", ", str(o._upper), o._bounds[1]]
 
             return "".join(items)
+        elif isinstance(o, UUID):
+            return str(o.hex)
+        elif isinstance(o, datetime):
+            return o.isoformat()
 
         return super(PostgreSQLJSONEncoder, self).default(o)
     
