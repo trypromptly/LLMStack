@@ -112,6 +112,13 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
     def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         raise NotImplementedError
 
+    
+    def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
+        if use_hybrid_search:
+            return self.hybrid_search(query, **kwargs)
+        else:
+            return self.similarity_search(query, **kwargs)
+        
     """
     This function performs similarity search on documents by using 'near text' concept of Weaviate where it tries to fetch documents in which concepts match with the given query.
     """
