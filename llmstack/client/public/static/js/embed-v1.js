@@ -19,9 +19,9 @@
       iframe.setAttribute("id", `promptly-iframe-embed-${publishedAppId}`);
       iframe.setAttribute(
         "src",
-        `https://trypromptly.com/app/${publishedAppId}/embed${
-          chatBubble ? "/chatBubble" : ""
-        }`,
+        `${
+          this.getAttribute("host") || "https://trypromptly.com"
+        }/app/${publishedAppId}/embed${chatBubble ? "/chatBubble" : ""}`,
       );
       iframe.setAttribute("width", this.getAttribute("width") || "100%");
       iframe.setAttribute("height", this.getAttribute("height") || "700");
@@ -38,7 +38,10 @@
         );
       }
 
-      iframe.setAttribute("style", this.getAttribute("style") || "");
+      // Set the iframe style attribute if it exists
+      if (this.getAttribute("style")) {
+        iframe.setAttribute("style", this.getAttribute("style"));
+      }
 
       // Attach the iframe to the custom element
       this.appendChild(iframe);
