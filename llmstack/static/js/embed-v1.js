@@ -7,6 +7,10 @@
       // Get the attributes from the custom element
       const publishedAppId = this.getAttribute("published-app-id");
       const chatBubble = this.getAttribute("chat-bubble");
+      const minWidth = this.getAttribute("min-width");
+      const minHeight = this.getAttribute("min-height");
+      const maxWidth = this.getAttribute("max-width");
+      const maxHeight = this.getAttribute("max-height");
 
       // Create an iframe element
       const iframe = document.createElement("iframe");
@@ -15,21 +19,28 @@
       iframe.setAttribute("id", `promptly-iframe-embed-${publishedAppId}`);
       iframe.setAttribute(
         "src",
-        `https://trypromptly.com/app/${publishedAppId}/embed${
-          chatBubble ? "/chatBubble" : ""
-        }`,
+        `${
+          this.getAttribute("host") || "https://trypromptly.com"
+        }/app/${publishedAppId}/embed${chatBubble ? "/chatBubble" : ""}`,
       );
       iframe.setAttribute("width", this.getAttribute("width") || "100%");
       iframe.setAttribute("height", this.getAttribute("height") || "700");
       iframe.setAttribute("scrolling", this.getAttribute("scrolling") || "no");
-      iframe.setAttribute("frameborder", this.getAttribute("style") || "0");
-      iframe.setAttribute("style", this.getAttribute("style") || "");
+      iframe.setAttribute(
+        "frameborder",
+        this.getAttribute("frameborder") || "0",
+      );
 
       if (chatBubble) {
         iframe.setAttribute(
           "style",
           "position: fixed; bottom: 0; right: 0; z-index: 1000; height: auto; width: auto;",
         );
+      }
+
+      // Set the iframe style attribute if it exists
+      if (this.getAttribute("style")) {
+        iframe.setAttribute("style", this.getAttribute("style"));
       }
 
       // Attach the iframe to the custom element
@@ -44,6 +55,22 @@
         ) {
           iframe.style.width = event.data.width;
           iframe.style.height = event.data.height;
+
+          if (minWidth) {
+            iframe.style.width = minWidth;
+          }
+
+          if (minHeight) {
+            iframe.style.height = minHeight;
+          }
+
+          if (maxWidth) {
+            iframe.style.maxWidth = maxWidth;
+          }
+
+          if (maxHeight) {
+            iframe.style.maxHeight = maxHeight;
+          }
         } else if (
           event.data.type === "promptly-embed-resize" &&
           event.data.width &&
