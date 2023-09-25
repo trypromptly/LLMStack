@@ -81,21 +81,18 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
 
             try:
                 documents.extend(
-                    datasource_entry_handler.hybrid_search(
-                        alpha=hybrid_semantic_search_ratio,
+                    datasource_entry_handler.search(
                         query=input_data.query,
+                        alpha=hybrid_semantic_search_ratio,
                         limit=self._config.document_limit,
                         search_filters=self._config.search_filters,
+                        use_hybrid_search=True,
                     ),
                 )
             except:
                 logger.exception('Error while searching')
                 raise Exception('Error while searching')
 
-        # Sort based on distance and pick top k documents
-        documents = sorted(documents, key=lambda d: d.metadata['score'])[
-            :self._config.document_limit
-        ]
 
         answers = []
         answer_text = ''
