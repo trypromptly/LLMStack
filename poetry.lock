@@ -3800,21 +3800,21 @@ crt = ["botocore[crt] (>=1.20.29,<2.0a.0)"]
 
 [[package]]
 name = "scrapy"
-version = "2.8.0"
+version = "2.11.0"
 description = "A high-level Web Crawling and Web Scraping framework"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "Scrapy-2.8.0-py2.py3-none-any.whl", hash = "sha256:814b92d71c695628e24e9110273a3bcf34f185c2cfe761662e6cad008b7ba3e5"},
-    {file = "Scrapy-2.8.0.tar.gz", hash = "sha256:8071ac6c65f185ec2c76fe8509f94d99fea080519fdc206f908a920d5e05fe43"},
+    {file = "Scrapy-2.11.0-py2.py3-none-any.whl", hash = "sha256:a7f36544d1f5ceb13cff9b7bc904bd7c0fc43a3af0fbe5aa2034fd937cf092d1"},
+    {file = "Scrapy-2.11.0.tar.gz", hash = "sha256:3cbdedce0c3f0e0482d61be2d7458683be7cd7cf14b0ee6adfbaddb80f5b36a5"},
 ]
 
 [package.dependencies]
-cryptography = ">=3.4.6"
+cryptography = ">=36.0.0"
 cssselect = ">=0.9.1"
 itemadapter = ">=0.1.0"
 itemloaders = ">=1.0.1"
-lxml = ">=4.3.0"
+lxml = ">=4.4.1"
 packaging = "*"
 parsel = ">=1.5.0"
 protego = ">=0.1.15"
@@ -3825,7 +3825,7 @@ queuelib = ">=1.4.2"
 service-identity = ">=18.1.0"
 setuptools = "*"
 tldextract = "*"
-Twisted = ">=18.9.0"
+Twisted = ">=18.9.0,<23.8.0"
 w3lib = ">=1.17.0"
 "zope.interface" = ">=5.1.0"
 
@@ -5259,4 +5259,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "179a842be99d085bfdf5e84fe396e8a039aa159163fb63d735db61ea79e2b39a"
+content-hash = "205912b898d27a583d8ed4759e12870779f3b5799ba492bf4c5a7372f695e756"

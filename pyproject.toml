@@ -108,7 +108,7 @@ geoip2 = {version = "4.7.0", allow-prereleases = true}
 weaviate-client = {version = "3.22.1", allow-prereleases = true}
 google-auth = {version = "2.22.0", allow-prereleases = true}
 pynacl = {version = "1.5.0", allow-prereleases = true}
-scrapy = {version = "2.8.0", allow-prereleases = true}
+scrapy = "2.11.0"
 unstructured = {version = "0.9.0", allow-prereleases = true}
 spacy = {version = "3.6.0", allow-prereleases = true}
 striprtf = {version = "0.0.22", allow-prereleases = true}
