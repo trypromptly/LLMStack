@@ -18,6 +18,7 @@ import { appsState } from "../../data/atoms";
 import { useRecoilValue } from "recoil";
 
 function PromptlyAppStepCard({
+  appId,
   processor,
   apiBackend,
   index,
@@ -29,7 +30,7 @@ function PromptlyAppStepCard({
   outputSchemas,
 }) {
   const apps = (useRecoilValue(appsState) || []).filter(
-    (app) => app.published_uuid,
+    (app) => app.published_uuid && app.uuid !== appId,
   );
   const selectedApp = apps.find(
     (app) => app.published_uuid === processor.config.app_id,
@@ -53,7 +54,7 @@ function PromptlyAppStepCard({
   const appInputDataStr = processor.input;
   let appInputData = {};
   try {
-    appInputData = JSON.parse(appInputDataStr);
+    appInputData = JSON.parse(appInputDataStr["input"]);
   } catch (e) {}
 
   return (
@@ -153,7 +154,7 @@ function PromptlyAppStepCard({
               }}
               formData={appInputData}
               onChange={({ formData }) => {
-                processors[index].input = JSON.stringify(formData);
+                processors[index].input = { input: JSON.stringify(formData) };
                 setProcessors([...processors]);
               }}
               widgets={{
@@ -175,6 +176,7 @@ function PromptlyAppStepCard({
 }
 
 export function ProcessorEditor({
+  appId,
   index,
   processors,
   setProcessors,
@@ -242,6 +244,7 @@ export function ProcessorEditor({
   return processor?.provider_slug === "promptly" &&
     processor?.processor_slug === "app" ? (
     <PromptlyAppStepCard
+      appId={appId}
       apiBackend={apiBackend}
       processor={processor}
       index={index}
