@@ -80,6 +80,9 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
     chat_history_in_doc_search: int = Field(
         title='Chat history in doc search', default=0, description='Number of messages from chat history to include in doc search', advanced_parameter=True,
     )
+    hybrid_semantic_search_ratio: Optional[float] = Field(
+        default=0.75, description='Ratio of semantic search to hybrid search', ge=0.0, le=1.0, multiple_of=0.01, advanced_parameter=True,
+    )
 
 
 class TextChatInput(ApiProcessorSchema):
@@ -151,7 +154,8 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
                             for m in self._chat_history[-self._config.chat_history_in_doc_search:]],
                     )
 
-                output_docs = datasource_entry_handler.similarity_search(
+                output_docs = datasource_entry_handler.search(
+                    alpha=self._config.hybrid_semantic_search_ratio,
                     query=search_query, limit=self._config.k, search_filters=search_filters,
                 )
             except Exception as e:
@@ -183,11 +187,6 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         importlib.reload(openai)
         output_stream = self._output_stream
         docs = self._search_datasources(input)
-
-        # Sort based on distance and pick top k documents
-        docs = sorted(docs, key=lambda d: d.metadata['distance'])[
-            :self._config.k
-        ]
 
         if (len(docs) > 0):
             self._context = ''
@@ -273,7 +272,7 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         if len(docs) > 0:
             async_to_sync(output_stream.write)(
                 TextChatOutput(answer='', citations=list(map(lambda d: Citation(
-                    text=d.page_content, source=d.metadata['source'], distance=d.metadata['distance']), docs))))
+                    text=d.page_content, source=d.metadata['source'], distance=d.metadata['distance'] if 'distance' in d.metadata else 0.0), docs))))
 
         output = output_stream.finalize()
 
