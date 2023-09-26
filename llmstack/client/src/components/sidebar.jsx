@@ -2,65 +2,67 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { isLoggedInState, profileState } from "../data/atoms";
-import { Button, Col, Image, Layout, Row, Space } from "antd";
 import {
   Avatar,
-  Popover,
+  Box,
+  Button,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
+  Popover,
+  Stack,
 } from "@mui/material";
 import {
-  AppstoreAddOutlined,
-  BankOutlined,
+  AppsOutlined,
+  CorporateFareOutlined,
   HistoryOutlined,
   HomeOutlined,
-  PlaySquareOutlined,
-  SettingOutlined,
-  AppstoreOutlined,
-  DatabaseOutlined,
-} from "@ant-design/icons";
+  LightbulbOutlined,
+  PlayArrowOutlined,
+  SettingsOutlined,
+  SourceOutlined,
+} from "@mui/icons-material";
 import { onLogoutClick } from "./logout";
 import { LoggedOutModal } from "./LoggedOutModal";
 
-const icon = require(`../assets/${
+const logo = require(`../assets/${
   process.env.REACT_APP_SITE_NAME
     ? process.env.REACT_APP_SITE_NAME.toLowerCase()
     : "llmstack"
 }-icon.png`);
-
-const { Sider } = Layout;
 
 const siderStyle = {
   textAlign: "center",
   lineHeight: "20px",
   color: "#000",
   backgroundColor: "#ffdfb21c",
-  width: "50px",
+  minWidth: "80px",
   borderRight: "solid 1px #ccc",
 };
 
-const iconStyle = {
+const logoStyle = {
   width: "54px",
   borderRadius: process.env.REACT_APP_SITE_NAME ? "5px" : "inherit",
   border: process.env.REACT_APP_SITE_NAME ? "solid 1px #183a58" : "inherit",
+  // paddingTop: "10px",
 };
 
 const menuItemStyle = {
   color: "#000",
+  textDecoration: "none",
 };
 
 function getNavItemIcon(itemLabel) {
   const iconMap = {
-    Playground: <PlaySquareOutlined />,
+    Playground: <PlayArrowOutlined />,
     Home: <HomeOutlined />,
     History: <HistoryOutlined />,
-    Settings: <SettingOutlined />,
-    Discover: <AppstoreOutlined />,
-    Apps: <AppstoreAddOutlined />,
-    Data: <DatabaseOutlined />,
-    Organization: <BankOutlined />,
+    Settings: <SettingsOutlined />,
+    Discover: <LightbulbOutlined />,
+    Apps: <AppsOutlined />,
+    Data: <SourceOutlined />,
+    Organization: <CorporateFareOutlined />,
   };
   return iconMap[itemLabel];
 }
@@ -77,7 +79,7 @@ function Menu({ menuItems }) {
     (link === "/" && location.pathname.startsWith("/apps"));
 
   return (
-    <Space direction="vertical" style={{ padding: "15px 0", width: "100%" }}>
+    <Stack sx={{ padding: "10px 0", width: "100%" }} spacing={1}>
       {menuItems.map((item) => (
         <div
           style={
@@ -100,14 +102,20 @@ function Menu({ menuItems }) {
           >
             <span
               style={
-                isSelected(item.link)
-                  ? { fontSize: "28px", color: "#385090" }
-                  : { fontSize: "28px" }
+                isSelected(item.link) ? { color: "#385090" } : { color: "#999" }
               }
             >
               {getNavItemIcon(item.label)}
             </span>
-            <p style={{ fontSize: "12px", margin: "4px 0" }}>{item.label}</p>
+            <p
+              style={{
+                fontSize: "12px",
+                fontWeight: "bold",
+                margin: "0px 0 10px 0",
+              }}
+            >
+              {item.label}
+            </p>
           </a>
           <LoggedOutModal
             visibility={!isLoggedIn && loggedOutModalVisibility}
@@ -119,7 +127,7 @@ function Menu({ menuItems }) {
                 <Button
                   type="link"
                   onClick={() => (window.location.href = "/login")}
-                  style={{ padding: "0px" }}
+                  sx={{ padding: "0px" }}
                 >
                   login
                 </Button>{" "}
@@ -129,7 +137,7 @@ function Menu({ menuItems }) {
           />
         </div>
       ))}
-    </Space>
+    </Stack>
   );
 }
 
@@ -141,114 +149,114 @@ export default function Sidebar({ menuItems }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   return (
-    <Sider style={siderStyle} width={80}>
-      <Col style={{ height: "100vh" }}>
-        <Row
-          align={"top"}
-          style={{ justifyContent: "center", lineHeight: "80px" }}
-        >
-          <a
-            href="/apps"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/apps");
-            }}
-          >
-            <Image style={iconStyle} src={icon} preview={false} />
-          </a>
-        </Row>
-        <Row style={{ justifyContent: "center" }}>
-          <Menu menuItems={menuItems} />
-        </Row>
-        <Row
-          style={{
-            position: "absolute",
-            bottom: "5px",
-            padding: "10px 0",
-            justifyContent: "center",
-            width: "100%",
+    <Stack sx={siderStyle}>
+      <Box
+        align={"top"}
+        style={{ justifyContent: "center", margin: "15px auto" }}
+      >
+        <a
+          href="/apps"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate("/apps");
           }}
         >
-          {profile && profile.avatar ? (
-            <Avatar
-              alt={profile.name}
-              src={profile.avatar}
-              sx={{
-                width: 42,
-                height: 42,
-                cursor: "pointer",
-                border: "1px solid #728bd0",
-              }}
-              onClick={(e) => {
-                setAnchorEl(e.currentTarget);
-                setShowPopover(true);
-              }}
-              aria-describedby={"profile-popover"}
-            />
-          ) : (
-            <Avatar
-              sx={{
-                width: 42,
-                height: 42,
-                cursor: "pointer",
-                border: "1px solid #728bd0",
-              }}
-              onClick={(e) => {
-                setAnchorEl(e.currentTarget);
-                setShowPopover(true);
-              }}
-              aria-describedby={"profile-popover"}
-            >{`${
-              profile?.name
-                ?.split(" ")
-                .map((x) => x[0])
-                .join("") || "P"
-            }`}</Avatar>
-          )}
-          <Popover
-            id={"profile-popover"}
-            anchorEl={anchorEl}
-            anchorOrigin={{
-              vertical: "top",
-              horizontal: "right",
+          <img style={logoStyle} src={logo} preview={false} alt="logo" />
+        </a>
+      </Box>
+      <Box style={{ justifyContent: "center" }}>
+        <Menu menuItems={menuItems} />
+      </Box>
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: "5px",
+          padding: "10px 0",
+          justifyContent: "center",
+          width: "80px",
+        }}
+      >
+        {profile && profile.avatar ? (
+          <Avatar
+            alt={profile.name}
+            src={profile.avatar}
+            sx={{
+              width: 42,
+              height: 42,
+              cursor: "pointer",
+              border: "1px solid #728bd0",
+              margin: "0 auto",
             }}
-            transformOrigin={{
-              vertical: "bottom",
-              horizontal: "left",
+            onClick={(e) => {
+              setAnchorEl(e.currentTarget);
+              setShowPopover(true);
             }}
-            open={showPopover}
-            onClose={() => setShowPopover(false)}
-          >
-            <List>
+            aria-describedby={"profile-popover"}
+          />
+        ) : (
+          <Avatar
+            sx={{
+              width: 42,
+              height: 42,
+              cursor: "pointer",
+              border: "1px solid #728bd0",
+              margin: "0 auto",
+            }}
+            onClick={(e) => {
+              setAnchorEl(e.currentTarget);
+              setShowPopover(true);
+            }}
+            aria-describedby={"profile-popover"}
+          >{`${
+            profile?.name
+              ?.split(" ")
+              .map((x) => x[0])
+              .join("") || "P"
+          }`}</Avatar>
+        )}
+        <Popover
+          id={"profile-popover"}
+          anchorEl={anchorEl}
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          transformOrigin={{
+            vertical: "bottom",
+            horizontal: "left",
+          }}
+          open={showPopover}
+          onClose={() => setShowPopover(false)}
+        >
+          <List>
+            <ListItem disablePadding>
+              <ListItemButton
+                component={"a"}
+                href={"https://docs.trypromptly.com"}
+                target="_blank"
+              >
+                <ListItemText primary="Docs" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                component={"a"}
+                href={"https://discord.gg/3JsEzSXspJ"}
+                target="_blank"
+              >
+                <ListItemText primary="Help" />
+              </ListItemButton>
+            </ListItem>
+            {isLoggedIn && (
               <ListItem disablePadding>
-                <ListItemButton
-                  component={"a"}
-                  href={"https://docs.trypromptly.com"}
-                  target="_blank"
-                >
-                  <ListItemText primary="Docs" />
+                <ListItemButton component="a" onClick={onLogoutClick}>
+                  <ListItemText primary="Logout" />
                 </ListItemButton>
               </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton
-                  component={"a"}
-                  href={"https://discord.gg/3JsEzSXspJ"}
-                  target="_blank"
-                >
-                  <ListItemText primary="Help" />
-                </ListItemButton>
-              </ListItem>
-              {isLoggedIn && (
-                <ListItem disablePadding>
-                  <ListItemButton component="a" onClick={onLogoutClick}>
-                    <ListItemText primary="Logout" />
-                  </ListItemButton>
-                </ListItem>
-              )}
-            </List>
-          </Popover>
-        </Row>
-      </Col>
-    </Sider>
+            )}
+          </List>
+        </Popover>
+      </Box>
+    </Stack>
   );
 }
