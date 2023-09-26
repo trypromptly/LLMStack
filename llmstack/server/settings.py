@@ -303,71 +303,72 @@ HISTORY_STORE_CLASS = 'llmstack.processors.history.DefaultHistoryStore'
 FLAG_SOURCES = ['llmstack.base.flags.FlagSource']
 
 # Make sure name and slug are unique
+# Make sure name and slug are unique
 PROVIDERS = [
         {
             'name': 'Amazon',
-            'datasource_modules': ['llmstack.datasources.handlers.amazon'],
+            'datasource_packages': ['llmstack.datasources.handlers.amazon'],
             'slug': 'amazon',
         },
         {
             'name': 'Anthropic',
-            'processor_modules': ['llmstack.processors.providers.anthropic'],
+            'processor_packages': ['llmstack.processors.providers.anthropic'],
             'slug': 'anthropic',
         },
         {
             'name': 'Azure',
-            'processor_modules': ['llmstack.processors.providers.azure'],
+            'processor_packages': ['llmstack.processors.providers.azure'],
             'slug': 'azure',
         },
         {
             'name': 'Cohere',
-            'processor_modules': ['llmstack.processors.providers.cohere'],
+            'processor_packages': ['llmstack.processors.providers.cohere'],
             'slug': 'cohere',
         },
         {
             'name': 'ElevenLabs',
-            'processor_modules': ['llmstack.processors.providers.elevenlabs'],
+            'processor_packages': ['llmstack.processors.providers.elevenlabs'],
             'slug': 'elevenlabs',
         },
         {
             'name': 'Google',
-            'processor_modules': ['llmstack.processors.providers.google'],
+            'processor_packages': ['llmstack.processors.providers.google'],
             'slug': 'google',
-            'datasource_modules': ['llmstack.datasources.handlers.google'],
+            'datasource_packages': ['llmstack.datasources.handlers.google'],
         },
         {
             'name': 'LocalAI',
-            'processor_modules': ['llmstack.processors.providers.localai'],
+            'processor_packages': ['llmstack.processors.providers.localai'],
             'slug': 'localai',
         },
         {
             'name': 'Open AI',
-            'processor_modules': ['llmstack.processors.providers.openai'],
+            'processor_packages': ['llmstack.processors.providers.openai'],
             'slug': 'openai',
         },
         {
             'name': 'Promptly',
-            'processor_modules': ['llmstack.processors.providers.promptly'],
-            'datasource_modules': ['llmstack.datasources.handlers.databases', 'llmstack.datasources.handlers.files', 'llmstack.datasources.handlers.text', 'llmstack.datasources.handlers.website'],
+            'processor_packages': ['llmstack.processors.providers.promptly', 'promptly_processors.providers.promptly'],
+            'datasource_packages': ['llmstack.datasources.handlers.databases', 'llmstack.datasources.handlers.files', 'llmstack.datasources.handlers.text', 'llmstack.datasources.handlers.website'],
             'slug': 'promptly',
         },
         {
             'name': 'Stability AI',
-            'processor_modules': ['llmstack.processors.providers.stabilityai'],
+            'processor_packages': ['llmstack.processors.providers.stabilityai'],
             'slug': 'stabilityai',
         },
 ]
 
 PROCESSOR_PROVIDERS = sum(list(
-    map(lambda entry: entry['processor_modules'], filter(
-        lambda provider: 'processor_modules' in provider,
+    map(lambda entry: entry['processor_packages'], filter(
+        lambda provider: 'processor_packages' in provider,
         PROVIDERS,
     )),  
 ), [])
 
 DATASOURCE_TYPE_PROVIDERS = sum(list(
-    map(lambda entry: entry['datasource_modules'], filter(
-        lambda provider: 'datasource_modules' in provider,
+    map(lambda entry: entry['datasource_packages'], filter(
+        lambda provider: 'datasource_packages' in provider,
         PROVIDERS,
     )),
 ), [])

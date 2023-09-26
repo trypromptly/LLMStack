@@ -298,11 +298,10 @@ class ApiProviderViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
     def list(self, request):
-        processor_providers = list(filter(lambda provider: provider.get('processor_modules'), settings.PROVIDERS))
+        processor_providers = list(filter(lambda provider: provider.get('processor_packages'), settings.PROVIDERS))
         data = list(map(lambda provider: {
             'name': provider.get('name'),
             'slug': provider.get('slug'),
-            "prefix": ""
         }, processor_providers))
         
         return DRFResponse(data)
