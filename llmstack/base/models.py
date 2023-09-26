@@ -208,6 +208,7 @@ class AbstractProfile(models.Model):
             'weaviate_api_key': self.weaviate_api_key,
             'weaviate_embedding_endpoint': self.vectostore_embedding_endpoint,
             'weaviate_text2vec_config': self.weaviate_text2vec_config,
+            'promptly_token': self.token,
         }
 
     def is_basic_subscriber(self):

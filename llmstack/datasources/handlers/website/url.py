@@ -107,6 +107,3 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
     def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         url = data.data['url']
         return self.get_url_data(url)
-
-    def similarity_search(self, query: str, *args, **kwargs) -> List[dict]:
-        return super().similarity_search(query, *args, **kwargs)

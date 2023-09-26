@@ -128,8 +128,13 @@ export default function ApiBackendSelector() {
                 value={apiBackendSelected ? apiBackendSelected.id : ""}
                 label="Select API Backend"
               >
+                {/* TODO: Find a better way to render Promptly App processor in playground */}
                 {apibackendsDropdown
-                  .filter((x) => x.provider === apiProviderSelected)
+                  .filter(
+                    (x) =>
+                      x.provider === apiProviderSelected &&
+                      x.label !== "Promptly App",
+                  )
                   .map((option, index) => (
                     <MenuItem key={index} value={option.value}>
                       {option.label}

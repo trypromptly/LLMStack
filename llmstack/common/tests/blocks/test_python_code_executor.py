@@ -4,18 +4,13 @@ from llmstack.common.blocks.python_code_executor import PythonCodeExecutorProces
 
 class PythonCodeExecutorTestCase(unittest.TestCase):
     def test_valid_python_code_executor(self):
-        code = """def python_code_executor_transform(**kwargs):
-                    return kwargs['data']
-               """
+        code = """result = 2 + 2\nprint(result)"""
         result = PythonCodeExecutorProcessor(
         ).process(
-            input=PythonCodeExecutorProcessorInput(
-                **{'inputs': [{'key': 'data', 'value': 'test'}], 'function_name': 'python_code_executor_transform'}),
-            configuration=PythonCodeExecutorProcessorConfiguration(**{
-                'python_function_code': code,
-            }))
-
-        self.assertEqual(result.output, 'test')
+            input=PythonCodeExecutorProcessorInput(code=code),
+            configuration=PythonCodeExecutorProcessorConfiguration())
+        self.assertEqual(result.output, "4")
+        self.assertTrue(result.logs[0].endswith("4"))
 
 
 if __name__ == '__main__':

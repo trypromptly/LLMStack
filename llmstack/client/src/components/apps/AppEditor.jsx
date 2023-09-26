@@ -67,6 +67,7 @@ export function AppEditor(props) {
         <Stack style={{ justifyContent: "center" }} key={index}>
           <AddProcessorDivider showProcessorSelector={false} />
           <ProcessorEditor
+            appId={app.uuid}
             index={index}
             processors={processors}
             setProcessors={setProcessors}

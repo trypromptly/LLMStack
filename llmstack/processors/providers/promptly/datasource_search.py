@@ -50,6 +50,9 @@ class DataSourceSearchConfigurations(ApiProcessorSchema):
     search_filters: str = Field(
         title='Search filters', default=None, description='Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata', advanced_parameter=True,
     )
+    hybrid_semantic_search_ratio: Optional[float] = Field(
+        default=0.75, description='Ratio of semantic search to hybrid search', ge=0.0, le=1.0, multiple_of=0.01
+    )
 
 
 class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, DataSourceSearchOutput, DataSourceSearchConfigurations]):
@@ -63,6 +66,7 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
 
     def process(self) -> DataSourceSearchOutput:
         input_data = self._input
+        hybrid_semantic_search_ratio = self._config.hybrid_semantic_search_ratio
 
         documents = []
         for datasource_uuid in self._config.datasources:
@@ -77,20 +81,18 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
 
             try:
                 documents.extend(
-                    datasource_entry_handler.similarity_search(
+                    datasource_entry_handler.search(
                         query=input_data.query,
+                        alpha=hybrid_semantic_search_ratio,
                         limit=self._config.document_limit,
                         search_filters=self._config.search_filters,
+                        use_hybrid_search=True,
                     ),
                 )
             except:
                 logger.exception('Error while searching')
                 raise Exception('Error while searching')
 
-        # Sort based on distance and pick top k documents
-        documents = sorted(documents, key=lambda d: d.metadata['distance'])[
-            :self._config.document_limit
-        ]
 
         answers = []
         answer_text = ''
@@ -106,7 +108,7 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
                     source=source,
                     metadata=DocumentMetadata(
                         certainty=document.metadata['certainty'] if 'certainty' in document.metadata else 0.0,
-                        distance=document.metadata['distance'],
+                        distance=document.metadata['distance'] if 'distance' in document.metadata else 0.0,
                     ),
                     additional_properties=document.metadata
                 ),
