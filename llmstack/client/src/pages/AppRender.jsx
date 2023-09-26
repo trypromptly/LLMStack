@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { axios } from "../data/axios";
 import { Ws } from "../data/ws";
-import { Col, Row } from "antd";
 import ReactGA from "react-ga4";
 import {
   AppBar,
   Box,
   Button,
   Container,
+  Stack,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -19,10 +19,9 @@ import { WebChatRender } from "../components/apps/WebChatRender";
 import { WebAppRenderer } from "../components/apps/WebAppRenderer";
 import logo from "../assets/logo.png";
 
-function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
-  const { appId, publishedAppId, embed, chatBubble } = useParams();
+function AppRenderPage({ headless = false }) {
+  const { publishedAppId, embed, chatBubble } = useParams();
   const [app, setApp] = useState({});
-  const [renderMode, setRenderMode] = useState(null);
   const [wsUrl, setWsUrl] = useState(null);
   const [ws, setWs] = useState(null);
   const [error, setError] = useState(null);
@@ -51,34 +50,6 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
         .get(`/api/app/${publishedAppId}`)
         .then((response) => {
           setApp(response.data);
-          setRenderMode("published");
-          setWsUrl(`${wsUrlPrefix}/apps/${response?.data?.uuid}`);
-          document.title = `${response.data.name} | ${
-            process.env.REACT_APP_SITE_NAME || "LLMStack"
-          }`;
-          ReactGA.send({
-            hitType: "pageview",
-            page: window.location.href,
-            title: document.title,
-          });
-        })
-        .catch((error) => {
-          setError(error?.response?.data?.message);
-        });
-    } else if (appId) {
-      setWsUrl(`${wsUrlPrefix}/apps/${appId}`);
-      axios()
-        .get(`/api/apps/${appId}`)
-        .then((response) => {
-          setApp(response.data);
-          setRenderMode("preview");
-        });
-    } else if (publishedAppIdParam) {
-      axios()
-        .get(`/api/app/${publishedAppIdParam}`)
-        .then((response) => {
-          setApp(response.data);
-          setRenderMode("published");
           setWsUrl(`${wsUrlPrefix}/apps/${response?.data?.uuid}`);
           document.title = `${response.data.name} | ${
             process.env.REACT_APP_SITE_NAME || "LLMStack"
@@ -93,7 +64,7 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
           setError(error?.response?.data?.message);
         });
     }
-  }, [appId, publishedAppId, publishedAppIdParam, setApp, wsUrlPrefix]);
+  }, [publishedAppId, setApp, wsUrlPrefix]);
 
   useEffect(() => {
     if (wsUrl && !wsUrl.endsWith("/ws") && !ws) {
@@ -104,8 +75,8 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
   return app?.type?.slug === "text-chat" && embed && chatBubble ? (
     <WebChatRender app={app} isMobile={isMobile} embed={embed} ws={ws} />
   ) : (
-    <Col>
-      {renderMode !== "preview" && !embed && (
+    <Stack container spacing={2}>
+      {!embed && (
         <AppBar
           position="static"
           sx={{
@@ -147,9 +118,9 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
           </Container>
         </AppBar>
       )}
-      <Row style={{ justifyContent: "center" }}>{headless && <p></p>}</Row>
+      <Box sx={{ justifyContent: "center" }}>{headless && <p></p>}</Box>
       {error && (
-        <Row
+        <Box
           style={{
             justifyContent: "center",
             paddingTop: 50,
@@ -171,15 +142,15 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
           >
             {isLoggedIn ? "Go To Hub" : "Login"}
           </Button>
-        </Row>
+        </Box>
       )}
-      <Row>
+      <Box>
         {app?.type?.slug === "web" && <WebAppRenderer app={app} ws={ws} />}
         {app?.type?.slug === "text-chat" && (
           <WebChatRender app={app} isMobile={isMobile} ws={ws} />
         )}
-      </Row>
-      <Row style={{ justifyContent: "center", bottom: "0px", marginTop: 10 }}>
+      </Box>
+      <Box sx={{ justifyContent: "center", bottom: "0px", marginTop: 10 }}>
         {headless && app.has_footer && (
           <Typography sx={{ textAlign: "center" }} variant="caption">
             Powered by{" "}
@@ -188,8 +159,8 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
             </a>
           </Typography>
         )}
-      </Row>
-    </Col>
+      </Box>
+    </Stack>
   );
 }
 
