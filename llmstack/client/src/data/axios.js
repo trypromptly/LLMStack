@@ -16,7 +16,7 @@ export const axios = () => {
         !window.location.pathname.startsWith("/app/") &&
         (error.response.status === 401 || error.response.status === 403)
       ) {
-        window.location.href = "/login";
+        window.location.href = "/login?redirectUrl=" + window.location.pathname;
       }
       enqueueSnackbar("Error Occurred", { variant: "error" });
       return Promise.reject(error);

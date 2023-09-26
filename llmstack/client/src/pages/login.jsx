@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
+
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
@@ -17,7 +19,9 @@ const Logo = styled("img")({
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get("redirectUrl");
   const onSignInClick = async (e) => {
     e.preventDefault();
 
@@ -33,7 +37,12 @@ export default function LoginPage() {
       },
       () => {},
       (result) => {
-        window.location.href = "/";
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          window.location.href = "/";
+        }
+        
       },
     );
   };
