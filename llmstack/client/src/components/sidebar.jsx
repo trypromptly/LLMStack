@@ -161,7 +161,7 @@ export default function Sidebar({ menuItems }) {
             navigate("/apps");
           }}
         >
-          <img style={logoStyle} src={logo} preview={false} alt="logo" />
+          <img style={logoStyle} src={logo} alt="logo" />
         </a>
       </Box>
       <Box style={{ justifyContent: "center" }}>
