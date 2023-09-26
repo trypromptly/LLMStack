@@ -34,7 +34,7 @@ class PromptlyAppProcessor(ApiProcessorInterface[PromptlyAppProcessorInput, Prom
     def process(self) -> dict:
         PROMPTLY_TOKEN = self._env.get('promptly_token')
         
-        url = f'http://localhost:8000/api/apps/{self._config.app_id}/run'
+        url = f'https://trypromptly.com/api/apps/{self._config.app_id}/run'
         
         output_stream = self._output_stream
         payload = {
