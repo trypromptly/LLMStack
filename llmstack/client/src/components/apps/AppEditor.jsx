@@ -19,10 +19,6 @@ export function AppEditor(props) {
     setAppInputFields,
     appOutputTemplate,
     setAppOutputTemplate,
-    tourInputRef,
-    tourChainRef,
-    tourOutputRef,
-    tourSaveRef,
   } = props;
   const [activeStep, setActiveStep] = useState(1);
   const [outputSchemas, setOutputSchemas] = useState([]);
@@ -49,7 +45,7 @@ export function AppEditor(props) {
 
   return (
     <Box>
-      <Stack ref={tourInputRef}>
+      <Stack>
         <AppConfigEditor
           appType={app?.type}
           activeStep={activeStep}
@@ -77,7 +73,7 @@ export function AppEditor(props) {
           />
         </Stack>
       ))}
-      <Stack style={{ justifyContent: "center" }} ref={tourChainRef}>
+      <Stack style={{ justifyContent: "center" }}>
         <AddProcessorDivider
           showProcessorSelector={true}
           setProcessorBackend={(apiBackend) => {
@@ -96,7 +92,7 @@ export function AppEditor(props) {
           }}
         />
       </Stack>
-      <Stack ref={tourOutputRef}>
+      <Stack>
         <AppOutputEditor
           index={processors.length}
           activeStep={activeStep}
@@ -114,7 +110,6 @@ export function AppEditor(props) {
           maxWidth: "900px",
           margin: "auto",
         }}
-        ref={tourSaveRef}
       >
         <AppSaveButtons saveApp={saveApp} />
       </Stack>

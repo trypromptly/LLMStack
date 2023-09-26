@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { axios } from "../data/axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppNameEditor } from "../components/apps/AppNameEditor";
@@ -30,7 +30,6 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import UnpublishedIcon from "@mui/icons-material/Unpublished";
 import { useRecoilValue } from "recoil";
 import { profileState, profileFlagsState } from "../data/atoms";
-import AppBuilderTour from "../components/apps/AppBuilderTour";
 import AppVisibilityIcon from "../components/apps/AppVisibilityIcon";
 import AppEditorMenu from "../components/apps/AppEditorMenu";
 import { AppEditor } from "../components/apps/AppEditor";
@@ -126,12 +125,6 @@ export default function AppEditPage(props) {
   const [selectedMenuItem, setSelectedMenuItem] = useState(page || "editor");
   const profile = useRecoilValue(profileState);
   const profileFlags = useRecoilValue(profileFlagsState);
-  const tourRef1 = useRef(null);
-  const tourRef2 = useRef(null);
-  const tourRef3 = useRef(null);
-  const tourRef4 = useRef(null);
-  const tourRef5 = useRef(null);
-  const tourRef6 = useRef(null);
 
   useEffect(() => {
     if (appId) {
@@ -287,19 +280,9 @@ export default function AppEditPage(props) {
     <CircularProgress />
   ) : (
     <div id="app-edit-page" style={{ margin: 10 }}>
-      <AppBuilderTour
-        tourRef1={tourRef1}
-        tourRef2={tourRef2}
-        tourRef3={tourRef3}
-        tourRef4={tourRef4}
-        tourRef5={tourRef5}
-        tourRef6={tourRef6}
-        page={selectedMenuItem}
-      />
       <AppBar
         position="sticky"
         sx={{ backgroundColor: "inherit", zIndex: 100 }}
-        ref={tourRef1}
       >
         {app?.type && (
           <Paper elevation={1} sx={{ padding: "10px 15px", boxShadow: "none" }}>
@@ -505,7 +488,6 @@ export default function AppEditPage(props) {
                 setSelectedMenuItem(value);
                 navigate(`/apps/${appId}/${value}`);
               }}
-              tourRef={tourRef6}
             />
           </Box>
         </Grid>
@@ -550,10 +532,6 @@ export default function AppEditPage(props) {
                 app={app}
                 setApp={setApp}
                 saveApp={saveApp}
-                tourInputRef={tourRef2}
-                tourChainRef={tourRef3}
-                tourOutputRef={tourRef4}
-                tourSaveRef={tourRef5}
               />
             )}
             {selectedMenuItem === "preview" && <AppPreview app={app} />}

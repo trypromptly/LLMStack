@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Stack, Grid, Divider, Button as MuiButton } from "@mui/material";
 
@@ -17,7 +17,6 @@ import Output from "../components/Output";
 
 import InputForm from "../components/InputForm";
 import ConfigForm from "../components/ConfigForm";
-import HomeTour from "../components/home/HomeTour";
 
 export default function HomePage() {
   const isLoggedIn = useRecoilValue(isLoggedInState);
@@ -38,13 +37,6 @@ export default function HomePage() {
   const [outputLoading, setOutputLoading] = useState(false);
   const [tokenCount, setTokenCount] = useState(null);
   const [processorResult, setProcessorResult] = useState(null);
-
-  const tourRef1 = useRef(null);
-  const tourRef2 = useRef(null);
-  const tourRef3 = useRef(null);
-  const tourRef4 = useRef(null);
-  const tourRef5 = useRef(null);
-  const tourRef6 = useRef(null);
 
   const runEndpoint = (endpoint) => {
     if (!endpoint) {
@@ -155,7 +147,6 @@ export default function HomePage() {
             return testPrompt();
           }
         }}
-        ref={tourRef6}
         variant="contained"
       >
         {"Submit"}
@@ -181,20 +172,12 @@ export default function HomePage() {
       id="home-page"
       style={{ height: "100%", overflow: "scroll", padding: "2px" }}
     >
-      <HomeTour
-        tourRef1={tourRef1}
-        tourRef2={tourRef2}
-        tourRef3={tourRef3}
-        tourRef4={tourRef4}
-        tourRef5={tourRef5}
-        tourRef6={tourRef6}
-      />
       <Stack
         spacing={2}
         divider={<Divider orientation="horizontal" flexItem />}
         sx={{ width: "100%", height: "100%", paddingTop: "5px" }}
       >
-        <ApiBackendSelector innerRef={tourRef2} />
+        <ApiBackendSelector />
         <Grid container spacing={2}>
           <Grid item xs={12} md={4} sx={{ height: "100%" }}>
             <Stack spacing={2}>
