@@ -46,7 +46,8 @@ export default function HomePage() {
         input: input,
         config: paramValues,
         bypass_cache: true,
-        api_backend_id: apiBackendSelected.id,
+        api_backend_slug: apiBackendSelected.slug,
+        api_provider_slug: apiBackendSelected.api_provider.slug,
       })
       .then((response) => {
         if (response?.data?.errors) {

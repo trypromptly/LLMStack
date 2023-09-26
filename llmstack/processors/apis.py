@@ -160,10 +160,9 @@ class EndpointViewSet(viewsets.ViewSet):
         input = request.data['input'] if 'input' in request.data else {}
         stream = False
         
-        api_backend_id = request.data.get('api_backend_id', None)
-        api_backend_json = ApiBackendViewSet().get(request, api_backend_id).data
-        api_backend_slug = api_backend_json['slug']
-        api_provider_slug = api_backend_json['api_provider']['slug']
+        api_backend_slug = request.data.get('api_backend_slug', None)
+        api_provider_slug = request.data.get('api_provider_slug', None)
+        
         
         if api_backend_slug == None or api_provider_slug == None:
             return DRFResponse({'errors': ['Invalid API backend']}, status=500)
