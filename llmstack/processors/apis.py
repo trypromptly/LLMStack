@@ -324,6 +324,9 @@ class ApiBackendViewSet(viewsets.ViewSet):
             providers_map[entry['slug']] = entry
         processors = []
         for subclass in ApiProcessorInterface.__subclasses__():
+            if f'{subclass.__module__}.{subclass.__qualname__}' in settings.PROCESSOR_EXCLUDE_LIST:
+                continue
+
             try:
                 processor_name = subclass.name()
             except NotImplementedError:
