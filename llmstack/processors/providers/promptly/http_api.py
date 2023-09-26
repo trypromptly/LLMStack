@@ -26,6 +26,10 @@ class PromptlyHttpAPIProcessorConfiguration(HttpAPIProcessorConfiguration, ApiPr
 
 class PromptlyHttpAPIProcessor(ApiProcessorInterface[PromptlyHttpAPIProcessorInput, PromptlyHttpAPIProcessorOutput, PromptlyHttpAPIProcessorConfiguration]):
     @staticmethod
+    def name() -> str:
+        return 'HTTP API Processor'
+    
+    @staticmethod
     def slug() -> str:
         return 'http_api_processor'
 
