@@ -131,6 +131,7 @@ const SettingPage = () => {
               width: "100%",
               padding: "20px 10px",
               textAlign: "left",
+              marginBottom: "60px",
             }}
           >
             <Paper sx={{ marginBottom: "30px" }}>
