@@ -67,6 +67,10 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
         self.storage_index_name = session_data['storage_index_name'] if 'storage_index_name' in session_data else ''
 
     @staticmethod
+    def name() -> str:
+        return 'File Extractor'
+    
+    @staticmethod
     def slug() -> str:
         return 'data_uri_text_extract'
 

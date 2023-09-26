@@ -57,7 +57,7 @@ class ImagesEdit(ApiProcessorInterface[ImagesEditInput, ImagesEditOutput, Images
     """
     @staticmethod
     def name() -> str:
-        return 'open ai/images_edit'
+        return 'Image Edit'
 
     @staticmethod
     def slug() -> str:

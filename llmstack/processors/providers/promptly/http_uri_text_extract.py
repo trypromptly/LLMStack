@@ -51,6 +51,10 @@ class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput, HttpUr
         self.storage_index_name = session_data['storage_index_name'] if 'storage_index_name' in session_data else None
 
     @staticmethod
+    def name() -> str:
+        return 'URL Extractor'
+    
+    @staticmethod
     def slug() -> str:
         return 'http_uri_text_extract'
 

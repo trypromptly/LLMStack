@@ -57,6 +57,10 @@ class DataSourceSearchConfigurations(ApiProcessorSchema):
 
 class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, DataSourceSearchOutput, DataSourceSearchConfigurations]):
     @staticmethod
+    def name() -> str:
+        return 'Datasource Search'
+    
+    @staticmethod
     def slug() -> str:
         return 'datasource_search'
 

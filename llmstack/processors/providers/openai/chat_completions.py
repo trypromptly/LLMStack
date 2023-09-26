@@ -188,7 +188,7 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionsInput, ChatCompletion
 
     @staticmethod
     def name() -> str:
-        return 'open ai/chatgpt'
+        return 'ChatGPT'
 
     @staticmethod
     def slug() -> str:

@@ -91,7 +91,7 @@ class TextChatConfiguration(ApiProcessorSchema):
 class TextChatProcessor(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConfiguration]):
     @staticmethod
     def name() -> str:
-        return 'google_text_chat'
+        return 'PaLM 2 For Chat'
 
     @staticmethod
     def slug() -> str:

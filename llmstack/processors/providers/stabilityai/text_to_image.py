@@ -96,7 +96,7 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
     """
     @staticmethod
     def name() -> str:
-        return 'stability ai/text2image'
+        return 'Text2Image'
 
     @staticmethod
     def slug() -> str:

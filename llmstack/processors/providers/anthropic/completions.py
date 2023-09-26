@@ -44,7 +44,7 @@ class CompletionsConfiguration(ApiProcessorSchema):
 class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
     @staticmethod
     def name() -> str:
-        return 'anthropic/completions'
+        return 'Completions'
 
     @staticmethod
     def slug() -> str:

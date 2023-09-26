@@ -50,7 +50,7 @@ class AudioTranslations(ApiProcessorInterface[AudioTranslationsInput, AudioTrans
     """
     @staticmethod
     def name() -> str:
-        return 'open ai/audio_translations'
+        return 'Audio Translation'
 
     @staticmethod
     def slug() -> str:

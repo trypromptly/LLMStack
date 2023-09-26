@@ -117,11 +117,12 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
 
     @staticmethod
     def name() -> str:
-        return 'promptly/text-chat'
+        return 'Text-Chat'
 
     @staticmethod
     def slug() -> str:
         return 'text_chat'
+
 
     @staticmethod
     def provider_slug() -> str:
