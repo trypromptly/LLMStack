@@ -5,8 +5,8 @@ import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RecoilRoot } from "recoil";
-import { ConfigProvider, Layout } from "antd";
 import CircularProgress from "@mui/material/CircularProgress";
+import { Box, createTheme, ThemeProvider } from "@mui/material";
 
 const App = lazy(() => import("./App"));
 const ErrorPage = lazy(() => import("./pages/error"));
@@ -23,6 +23,12 @@ const AppStudioPage = lazy(() => import("./pages/AppStudio"));
 const AppEditPage = lazy(() => import("./pages/AppEdit"));
 const DataPage = lazy(() => import("./pages/data"));
 const Discover = lazy(() => import("./pages/discover"));
+
+const defaultTheme = createTheme({
+  typography: {
+    fontFamily: "Lato, sans-serif",
+  },
+});
 
 let router = null;
 
@@ -296,15 +302,9 @@ if (
 root.render(
   <React.StrictMode>
     <RecoilRoot>
-      <ConfigProvider
-        theme={{
-          token: {
-            fontFamily: "Lato, sans-serif",
-          },
-        }}
-      >
-        <Layout
-          style={{
+      <ThemeProvider theme={defaultTheme}>
+        <Box
+          sx={{
             minHeight: "100vh",
             background:
               window.location.href.endsWith("/embed") ||
@@ -317,8 +317,8 @@ root.render(
             router={router}
             fallbackElement={<CircularProgress />}
           />
-        </Layout>
-      </ConfigProvider>
+        </Box>
+      </ThemeProvider>
     </RecoilRoot>
   </React.StrictMode>,
 );

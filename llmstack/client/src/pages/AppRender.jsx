@@ -4,7 +4,14 @@ import { axios } from "../data/axios";
 import { Ws } from "../data/ws";
 import { Col, Row } from "antd";
 import ReactGA from "react-ga4";
-import { AppBar, Box, Button, Container, Toolbar } from "@mui/material";
+import {
+  AppBar,
+  Box,
+  Button,
+  Container,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useRecoilValue } from "recoil";
 import { isMobileState, isLoggedInState } from "../data/atoms";
@@ -174,12 +181,12 @@ function AppRenderPage({ headless = false, publishedAppIdParam = null }) {
       </Row>
       <Row style={{ justifyContent: "center", bottom: "0px", marginTop: 10 }}>
         {headless && app.has_footer && (
-          <p>
+          <Typography sx={{ textAlign: "center" }} variant="caption">
             Powered by{" "}
             <a href="https://trypromptly.com" target="_blank" rel="noreferrer">
               Promptly
             </a>
-          </p>
+          </Typography>
         )}
       </Row>
     </Col>

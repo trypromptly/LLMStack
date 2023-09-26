@@ -2,17 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { isLoggedInState, profileState } from "../data/atoms";
-import {
-  Alert,
-  Button,
-  Col,
-  Collapse,
-  Image,
-  Layout,
-  Modal,
-  Row,
-  Space,
-} from "antd";
+import { Button, Col, Image, Layout, Row, Space } from "antd";
 import {
   Avatar,
   Popover,
@@ -40,7 +30,6 @@ const icon = require(`../assets/${
     : "llmstack"
 }-icon.png`);
 
-const { Panel } = Collapse;
 const { Sider } = Layout;
 
 const siderStyle = {
@@ -146,96 +135,14 @@ function Menu({ menuItems }) {
 
 export default function Sidebar({ menuItems }) {
   const navigate = useNavigate();
-  const [showHelp, setShowHelp] = useState(false);
   const isLoggedIn = useRecoilValue(isLoggedInState);
   const profile = useRecoilValue(profileState);
   const [showPopover, setShowPopover] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const HelpModal = () => {
-    return (
-      <Modal
-        title="Welcome to Promptly"
-        open={showHelp}
-        onCancel={() => setShowHelp(false)}
-        footer={null}
-        width={900}
-      >
-        <br />
-        <Alert
-          message={
-            <p>
-              You can find the platform documentation at{" "}
-              <a
-                href="https://docs.trypromptly.com"
-                target={"_blank"}
-                rel="noreferrer"
-              >
-                https://docs.trypromptly.com
-              </a>
-            </p>
-          }
-          type="info"
-          showIcon
-        />{" "}
-        <br />
-        <Space
-          style={{
-            textAlign: "center",
-            width: "100%",
-            justifyContent: "center",
-          }}
-        >
-          <video
-            src="https://storage.googleapis.com/trypromptly-static/static/images/promptly-app-builder-demo.mp4"
-            controls
-            autoPlay
-            muted
-            loop
-            style={{ maxWidth: "800px" }}
-          />
-        </Space>
-        <h3>Frequently Asked Questions</h3>
-        <Collapse defaultActiveKey={["1"]} accordion>
-          <Panel
-            header="Where do I add my Open AI and other provider keys"
-            key="1"
-          >
-            <p>
-              Use Settings on the sidebar to add Open AI and other available
-              provider keys
-            </p>
-          </Panel>
-          <Panel header="How do I get my PROMPTLY_API_KEY" key="2">
-            <p>
-              Your Promptly API key is available in your profile. Click on
-              Setting icon on the sidebar and you will find your token
-            </p>
-          </Panel>
-          <Panel header="I need help. Where do I get more information?" key="3">
-            <p>
-              You can reach out to us at{" "}
-              <a href="mailto:contact@trypromptly.com">
-                contact@trypromptly.com
-              </a>
-              . Alternatively, you can also contact us on our Twitter handle{" "}
-              <a
-                href="https://twitter.com/trypromptly"
-                rel="noreferrer"
-                target="_blank"
-              >
-                @trypromptly
-              </a>
-            </p>
-          </Panel>
-        </Collapse>
-      </Modal>
-    );
-  };
-
   return (
     <Sider style={siderStyle} width={80}>
-      <Col style={{ height: "100%" }}>
+      <Col style={{ height: "100vh" }}>
         <Row
           align={"top"}
           style={{ justifyContent: "center", lineHeight: "80px" }}
@@ -341,7 +248,6 @@ export default function Sidebar({ menuItems }) {
             </List>
           </Popover>
         </Row>
-        <HelpModal />
       </Col>
     </Sider>
   );

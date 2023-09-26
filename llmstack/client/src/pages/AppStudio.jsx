@@ -68,7 +68,7 @@ const AppStudioPage = () => {
         </Typography>
         <AppList />
       </Box>
-      <Box style={{ marginBottom: "20px" }}>
+      <Box style={{ marginBottom: "60px" }}>
         <Typography
           variant="h6"
           style={{

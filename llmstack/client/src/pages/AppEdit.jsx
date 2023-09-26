@@ -302,13 +302,7 @@ export default function AppEditPage(props) {
         ref={tourRef1}
       >
         {app?.type && (
-          <Paper
-            elevation={1}
-            style={{
-              width: "100%",
-              padding: "10px 20px",
-            }}
-          >
+          <Paper elevation={1} sx={{ padding: "10px 15px", boxShadow: "none" }}>
             <Stack direction="row" spacing={1}>
               <Stack direction="column">
                 <Stack direction="row" spacing={1.2}>
@@ -449,7 +443,7 @@ export default function AppEditPage(props) {
         )}
       </AppBar>
       <Stack>
-        <p></p>
+        &nbsp;
         {false &&
           missingKeys.length > 0 &&
           !profileFlags.IS_ORGANIZATION_MEMBER && (

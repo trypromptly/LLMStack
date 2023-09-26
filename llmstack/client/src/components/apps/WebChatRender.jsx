@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Avatar, Chip, Fab, Grid, Stack } from "@mui/material";
+import { Avatar, Chip, Fab, Grid, Stack, Typography } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Liquid } from "liquidjs";
 import validator from "@rjsf/validator-ajv8";
@@ -172,8 +172,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
   useEffect(() => {
     if (embed) {
       document.body.style = "background: transparent";
-      document.getElementsByClassName("ant-layout")[0].style =
-        "background: transparent";
+      document.getElementsByClassName("root").style = "background: transparent";
 
       if (showChat) {
         const userAgent =
@@ -480,7 +479,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
             />
           </ThemeProvider>
           {embed && (
-            <p style={{ textAlign: "center" }}>
+            <Typography sx={{ textAlign: "center" }} variant="caption">
               Powered by{" "}
               <a
                 href="https://trypromptly.com"
@@ -489,7 +488,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
               >
                 Promptly
               </a>
-            </p>
+            </Typography>
           )}
         </Stack>
       </div>

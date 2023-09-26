@@ -66,7 +66,7 @@ function AppSaveDialog({ open, setOpen, saveApp, postSave = null }) {
 export function AppSaveButtons({ saveApp, postSave = null }) {
   const [open, setOpen] = useState(false);
   return (
-    <Stack direction="row" gap={1}>
+    <Stack direction="row" gap={1} sx={{ marginBottom: "50px" }}>
       <AppSaveDialog
         open={open}
         setOpen={setOpen}

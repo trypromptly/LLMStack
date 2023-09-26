@@ -202,7 +202,7 @@ export function AppTemplate(props) {
             color="inherit"
             disabled={activeStep === 0}
             onClick={handleBack}
-            sx={{ mr: 1, textTransform: "none", margin: "20px 0" }}
+            sx={{ mr: 1, textTransform: "none", margin: "20px 0 70px 0" }}
             variant="outlined"
           >
             Back

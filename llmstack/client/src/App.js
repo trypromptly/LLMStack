@@ -1,10 +1,8 @@
 import { Suspense } from "react";
-import { Layout } from "antd";
 import ReactGA from "react-ga4";
-import { CircularProgress, Grid } from "@mui/material";
+import { CircularProgress, Grid, Stack } from "@mui/material";
 import Sidebar from "./components/sidebar";
 import NavBar from "./components/navbar";
-import Container from "./components/container";
 import { SnackbarProvider } from "notistack";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
@@ -99,7 +97,7 @@ export default function App({ children }) {
           )}
         />
       )}
-      <Layout style={{ height: "100vh" }}>
+      <Stack direction={"row"}>
         {!isMobile && (
           <Sidebar
             menuItems={menuItems.concat(
@@ -126,9 +124,19 @@ export default function App({ children }) {
             </Grid>
           }
         >
-          <Container>{children}</Container>
+          <Grid
+            sx={{
+              textAlign: "center",
+              height: "100vh",
+              width: "100%",
+              backgroundColor: "#fff",
+              overflow: "auto",
+            }}
+          >
+            {children}
+          </Grid>
         </Suspense>
-      </Layout>
+      </Stack>
       <div
         dangerouslySetInnerHTML={{
           __html:
