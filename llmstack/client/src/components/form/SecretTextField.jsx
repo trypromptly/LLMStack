@@ -19,7 +19,11 @@ const SecretTextField = (props) => {
               onClick={() => setShowPassword(!showPassword)}
               aria-label="toggle password visibility"
             >
-              {showPassword ? <Visibility /> : <VisibilityOff />}
+              {showPassword ? (
+                <Visibility fontSize="small" />
+              ) : (
+                <VisibilityOff fontSize="small" />
+              )}
             </IconButton>
           </InputAdornment>
         ),
