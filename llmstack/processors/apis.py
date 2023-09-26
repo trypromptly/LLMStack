@@ -283,9 +283,7 @@ class EndpointViewSet(viewsets.ViewSet):
             for output in output_iter:
                 # Iterate through output_iter to get the final output
                 pass
-
-            coordinator_ref.stop()
-
+            
         except Exception as e:
             logger.exception(e)
             raise Exception(f'Error starting coordinator: {e}')
