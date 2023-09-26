@@ -24,6 +24,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
 
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
+
 from .models import ApiBackend
 from .models import Endpoint
 from llmstack.base.models import Profile
@@ -268,7 +270,12 @@ class EndpointViewSet(viewsets.ViewSet):
         )
         try:
             invoke_result = self.run_endpoint(
-                endpoint=endpoint, run_as_user=request.user, input_request=input_request, template_values=template_values, bypass_cache=bypass_cache, input=input, config=config, app_session=None, stream=stream,
+                endpoint_uuid=endpoint.uuid, run_as_user=request.user, input_request=input_request, 
+                template_values=template_values, bypass_cache=bypass_cache, 
+                input={**endpoint.input, **input}, 
+                config={**endpoint.config, **config}, 
+                api_backend_slug=endpoint.api_backend.slug, api_provider_slug=endpoint.api_backend.api_provider.slug,
+                app_session=None, stream=stream,
             )
 
             if stream:
@@ -285,30 +292,79 @@ class EndpointViewSet(viewsets.ViewSet):
 
         return DRFResponse(invoke_result)
 
-    def run_endpoint(self, endpoint, run_as_user, input_request, template_values={}, bypass_cache=False, input={}, config={}, app_session=None, output_stream=None, stream=False):
-        profile = get_object_or_404(Profile, user=run_as_user)
+    def run(self, request):
+        if request.user.is_anonymous:
+            return HttpResponseForbidden('Please login to run this endpoint')
+        
+        request_uuid = str(uuid.uuid4())
+        
+        bypass_cache = request.data.get('bypass_cache', False)
+        config = request.data['config'] if 'config' in request.data else {}
+        input = request.data['input'] if 'input' in request.data else {}
+        stream = False
+        
+        api_backend_id = request.data.get('api_backend_id', None)
+        api_backend_json = ApiBackendViewSet().get(request, api_backend_id).data
+        api_backend_slug = api_backend_json['slug']
+        api_provider_slug = api_backend_json['api_provider']['slug']
+        
+        if api_backend_slug == None or api_provider_slug == None:
+            return DRFResponse({'errors': ['Invalid API backend']}, status=500)
 
-        # Merge config and input with endpoint config, input
-        config = {**endpoint.config, **config}
-        input = {**endpoint.input, **input}
+        request_user_agent = request.META.get(
+            'HTTP_USER_AGENT', 'Streaming API Client' if stream else 'API Client',
+        )
+        request_location = request.headers.get('X-Client-Geo-Location', '')
+        request_ip = request_ip = request.headers.get(
+            'X-Forwarded-For', request.META.get(
+                'REMOTE_ADDR', '',
+            ),
+        ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
+        
+        input_request = InputRequest(
+            request_endpoint_uuid=request_uuid, request_app_uuid='',
+            request_app_session_key='', request_owner=request.user,
+            request_uuid=str(uuid.uuid4()), request_user_email=request.user.email,
+            request_ip=request_ip, request_location=request_location,
+            request_user_agent=request_user_agent, request_body=request.data,
+            request_content_type=request.content_type,
+        )
+        
+        try:
+            invoke_result = self.run_endpoint(
+                endpoint_uuid=request_uuid, 
+                run_as_user=request.user, 
+                input_request=input_request, template_values={}, 
+                bypass_cache=bypass_cache, 
+                input={**input}, 
+                config={**config}, 
+                api_backend_slug=api_backend_slug, api_provider_slug=api_provider_slug,
+                app_session=None, stream=False,
+            )
+        except Exception as e:
+            invoke_result = {'id': -1, 'errors': [str(e)]}
+
+        if 'errors' in invoke_result:
+            return DRFResponse({'errors': invoke_result['errors']}, status=500)
+
+        return DRFResponse(invoke_result)
+        
+    def run_endpoint(self, endpoint_uuid, run_as_user, input_request, template_values={}, bypass_cache=False, input={}, config={}, api_backend_slug='', api_provider_slug='', app_session=None, output_stream=None, stream=False):
+        profile = get_object_or_404(Profile, user=run_as_user)
 
         vendor_env = profile.get_vendor_env()
 
         # Pick a processor
-        processor_cls = ApiProcessorFactory.get_api_processor(
-            endpoint.api_backend.slug, endpoint.api_backend.api_provider.slug,
-        )
+        processor_cls = ApiProcessorFactory.get_api_processor(api_backend_slug, api_provider_slug)
 
         if not app_session:
             app_session = create_app_session(None, str(uuid.uuid4()))
 
-        app_session_data = get_app_session_data(
-            app_session, endpoint,
-        )
+        app_session_data = None
 
         actor_configs = [
             ActorConfig(
-                name=str(endpoint.uuid), template_key='processor', actor=processor_cls, dependencies=['input'], kwargs={
+                name=str(endpoint_uuid), template_key='processor', actor=processor_cls, dependencies=['input'], kwargs={
                     'config': config, 'input': input, 'env': vendor_env, 'session_data': app_session_data['data'] if app_session_data and 'data' in app_session_data else {},
                 },
                 output_cls=processor_cls.get_output_cls(),
@@ -325,8 +381,8 @@ class EndpointViewSet(viewsets.ViewSet):
             ActorConfig(
                 name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['input', 'output'], kwargs={
                     'processor_configs': {
-                        str(endpoint.uuid): {
-                            'processor': endpoint,
+                        str(endpoint_uuid): {
+                            'processor': {},
                             'app_session': None,
                             'app_session_data': None,
                             'template_key': 'processor',
@@ -400,10 +456,41 @@ class ApiProviderViewSet(viewsets.ViewSet):
 class ApiBackendViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
+    def get(self, request, id):
+        api_backends = self.list(request).data
+        for api_backend in api_backends:
+            if api_backend['id'] == id:
+                return DRFResponse(api_backend)
+        return DRFResponse(status=404)
+    
     def list(self, request):
-        queryset = ApiBackend.objects.all()
-        serializer = ApiBackendSerializer(queryset, many=True)
-        return DRFResponse(serializer.data)
+        providers = ApiProviderViewSet().list(request).data
+        providers_map = {}
+        for entry in providers:
+            providers_map[entry['slug']] = entry
+        processors = []
+        for subclass in ApiProcessorInterface.__subclasses__():
+            try:
+                processor_name = subclass.name()
+            except NotImplementedError:
+                processor_name = subclass.slug().capitalize()
+            
+            processors.append({
+                'id': f"{subclass.provider_slug()}/{subclass.slug()}",
+                'name': processor_name,
+                'slug': subclass.slug(),
+                'api_provider': providers_map[subclass.provider_slug()],
+                'api_endpoint': {},
+                'params': {},
+                'description': '',
+                'input_schema': json.loads(subclass.get_input_schema()),
+                'output_schema': json.loads(subclass.get_output_schema()),
+                'config_schema': json.loads(subclass.get_configuration_schema()),
+                'input_ui_schema' : subclass.get_input_ui_schema(),
+                'output_ui_schema': subclass.get_output_ui_schema(),
+                'config_ui_schema': subclass.get_configuration_ui_schema(),
+            })
+        return DRFResponse(processors)
 
 class HistoryViewSet(viewsets.ModelViewSet):
     paginate_by = 20

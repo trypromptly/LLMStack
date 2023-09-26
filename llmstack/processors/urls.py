@@ -41,6 +41,8 @@ urlpatterns = [
             {'get': 'list', 'post': 'create', 'patch': 'patch'},
         ),
     ),
+    # Playground
+    path('api/playground/run', apis.EndpointViewSet.as_view({'post': 'run'})),
 
     # History
     path('api/history', apis.HistoryViewSet.as_view({'get': 'list'})),

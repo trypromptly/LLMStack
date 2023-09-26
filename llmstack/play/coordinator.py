@@ -10,7 +10,7 @@ from llmstack.play.utils import ResettableTimer
 
 logger = logging.getLogger(__name__)
 
-TIMEOUT = 120
+TIMEOUT = 10
 
 
 class Coordinator(ThreadingActor):
