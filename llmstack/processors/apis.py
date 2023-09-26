@@ -18,7 +18,6 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
@@ -26,17 +25,13 @@ from rest_framework.views import APIView
 
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 
-from .models import ApiBackend
 from .models import Endpoint
 from llmstack.base.models import Profile
 from .models import RunEntry
 from .providers.api_processors import ApiProcessorFactory
-from .serializers import ApiBackendSerializer
-from .serializers import EndpointSerializer
 from .serializers import HistorySerializer
 from .serializers import LoginSerializer
 from llmstack.apps.app_session_utils import create_app_session
-from llmstack.apps.app_session_utils import get_app_session_data
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor, InputRequest
@@ -67,144 +62,6 @@ def sanitize_json(json_obj):
 
 
 class EndpointViewSet(viewsets.ViewSet):
-    def list(self, request):
-        queryset = Endpoint.objects.all().filter(owner=request.user)
-        serializer = EndpointSerializer(queryset, many=True)
-        return DRFResponse(serializer.data)
-
-    def create(self, request):
-        name = request.data.get('name')
-        api_backend = get_object_or_404(
-            ApiBackend, id=request.data.get('api_backend'),
-        )
-        owner = request.user
-        param_values = request.data.get('param_values', {})
-        is_live = request.data.get('is_live', False)
-        if isinstance(param_values, str):
-            param_values = json.loads(param_values)
-        post_processor = request.data.get('post_processor', '')
-        draft = request.data.get('draft', False)
-        prompt = request.data.get('prompt', '')
-        config = request.data.get('config', {})
-        input = request.data.get('input', {})
-        parent_uuid = None if 'parent_uuid' not in request.data else request.data.get(
-            'parent_uuid',
-        )
-        description = request.data.get(
-            'description',
-        ) if 'description' in request.data else 'Initial version'
-
-        endpoint_object = Endpoint(
-            name=name, api_backend=api_backend, owner=owner, param_values=param_values, post_processor=post_processor,
-            draft=draft, prompt=prompt, parent_uuid=parent_uuid, description=description, is_live=is_live, config=config, input=input,
-        )
-        endpoint_object.save()
-
-        return DRFResponse(EndpointSerializer(instance=endpoint_object).data)
-
-    def delete(self, request, id, force_delete_app=False):
-        endpoint_object = get_object_or_404(Endpoint, uuid=uuid.UUID(id))
-
-        if endpoint_object.owner != request.user:
-            return PermissionDenied()
-
-        if endpoint_object.is_app and not force_delete_app:
-            return DRFResponse({'error': 'Cannot delete an app endpoint.'}, status=400)
-
-        if str(endpoint_object.parent_uuid) == id and endpoint_object.version == 0:
-            # We are asked to delete the parent endpoint. Delete all versions
-            versioned_endpoints = Endpoint.objects.filter(
-                parent_uuid=endpoint_object.parent_uuid)
-            versioned_endpoints.delete()
-        else:
-            endpoint_object.delete()
-
-        return DRFResponse(status=204)
-
-    @ action(detail=True, methods=['patch'])
-    def patch(self, request):
-        should_update = False
-        endpoint = get_object_or_404(
-            Endpoint, parent_uuid=request.data.get(
-                'parent_uuid',
-            ), version=request.data.get('version'),
-        )
-        update_keys = []
-        if 'name' in request.data:
-            endpoint.name = request.data.get('name')
-            update_keys.append('name')
-            should_update = True
-
-        if 'is_live' in request.data:
-            endpoint.is_live = request.data.get('is_live')
-            update_keys.append('is_live')
-            should_update = True
-
-        if 'draft' in request.data:
-            endpoint.draft = request.data.get('draft')
-            update_keys.append('draft')
-            should_update = True
-
-        if 'description' in request.data:
-            endpoint.description = request.data.get('description')
-            update_keys.append('description')
-            should_update = True
-
-        if should_update:
-            endpoint.save(update_fields=update_keys)
-
-        queryset = Endpoint.objects.get(
-            parent_uuid=request.data.get(
-                'parent_uuid',
-            ), version=request.data.get('version'),
-        )
-        serializer = EndpointSerializer(queryset)
-        return DRFResponse(serializer.data)
-
-    def get(self, request, id):
-        endpoint_object = get_object_or_404(Endpoint, uuid=id)
-        if endpoint_object.owner != request.user:
-            return PermissionDenied()
-        return DRFResponse(EndpointSerializer(instance=endpoint_object).data)
-
-    # Update will create a new version of endpoint and save into the db
-    def update(self, request, id):
-        owner = request.user
-        endpoint_object = get_object_or_404(Endpoint, uuid=id)
-
-        if endpoint_object.owner != request.user:
-            return PermissionDenied()
-        param_values = request.data.get(
-            'param_values', endpoint_object.param_values,
-        )
-        if isinstance(param_values, str):
-            param_values = json.loads(param_values)
-        post_processor = request.data.get(
-            'post_processor', endpoint_object.post_processor,
-        )
-        draft = request.data.get('draft', False)
-        prompt = request.data.get('prompt', endpoint_object.prompt)
-        if endpoint_object.parent_uuid:
-            # version > 1
-            parent_uuid = endpoint_object.parent_uuid
-        else:
-            # If this is version 1 update
-            parent_uuid = id
-
-        latest_endpoint_object = Endpoint.objects.filter(
-            uuid=uuid.UUID(parent_uuid),
-        ).order_by('-version').first()
-        version = getattr(latest_endpoint_object, 'version') + 1
-        description = request.data.get(
-            'description', 'Version {}'.format(version),
-        )
-        new_endpoint_object = Endpoint(
-            name=endpoint_object.name, api_backend=endpoint_object.api_backend, owner=owner, param_values=param_values, post_processor=post_processor,
-            draft=draft, prompt=prompt, version=version, parent_uuid=parent_uuid, description=description,
-        )
-        new_endpoint_object.save()
-        return DRFResponse(EndpointSerializer(instance=new_endpoint_object).data)
-
     @ action(detail=True, methods=['post'])
     @ csrf_exempt
     def invoke_api(self, request, id, version=None):
@@ -382,7 +239,7 @@ class EndpointViewSet(viewsets.ViewSet):
                 name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['input', 'output'], kwargs={
                     'processor_configs': {
                         str(endpoint_uuid): {
-                            'processor': {},
+                            'processor': {'uuid': str(endpoint_uuid)},
                             'app_session': None,
                             'app_session_data': None,
                             'template_key': 'processor',
