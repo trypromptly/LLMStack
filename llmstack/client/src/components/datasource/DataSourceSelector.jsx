@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { Button, Select } from "antd";
 import { useRecoilValue } from "recoil";
 import { dataSourcesState, orgDataSourcesState } from "../../data/atoms";
-import { FolderAddOutlined } from "@ant-design/icons";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { AddDataSourceModal } from "./AddDataSourceModal";
+import { Chip } from "@mui/material";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import Input from "@mui/material/Input";
 
 export function DataSourceSelector(props) {
   const dataSources = useRecoilValue(dataSourcesState);
@@ -19,35 +23,44 @@ export function DataSourceSelector(props) {
   );
 
   return (
-    <div style={{ width: "100%", display: "flex" }}>
+    <FormControl fullWidth>
       <Select
-        style={{
-          width: "auto",
-          textAlign: "left",
-          flex: 1,
-          borderColor: "#000",
-        }}
-        value={props.value}
-        mode="multiple"
-        options={uniqueDataSources.map((dataSource) => ({
-          label: dataSource.name,
-          value: dataSource.uuid,
-        }))}
-        placeholder="Select a datasource"
-        status="warning"
-        onChange={(value) => props.onChange(value)}
-      />
-      <Button
+        sx={{ border: "1px solid #ddd", borderRadius: 1 }}
+        labelId="multiple-chip-label"
+        id="multiple-chip"
+        multiple
+        value={props.value ? props.value : []}
+        onChange={(event) => props.onChange(event.target.value)}
+        input={<Input id="select-multiple-chip" />}
+        renderValue={(selected) => (
+          <div>
+            {selected.map((value) => (
+              <Chip
+                key={value}
+                label={uniqueDataSources.find((ds) => ds.uuid === value).name}
+                style={{ margin: 2, borderRadius: 5 }}
+              />
+            ))}
+          </div>
+        )}
+      >
+        {uniqueDataSources.map((dataSource) => (
+          <MenuItem key={dataSource.uuid} value={dataSource.uuid}>
+            {dataSource.name}
+          </MenuItem>
+        ))}
+      </Select>
+      <button
         onClick={() => setShowAddDataSourceModal(true)}
         style={{ backgroundColor: "#6287ac", color: "#fed766" }}
       >
-        <FolderAddOutlined />
-      </Button>
+        <AddCircleOutlineIcon />
+      </button>
       <AddDataSourceModal
         open={showAddDataSourceModal}
         handleCancelCb={() => setShowAddDataSourceModal(false)}
         dataSourceAddedCb={(dataSource) => props.onChange(dataSource.uuid)}
       />
-    </div>
+    </FormControl>
   );
 }
