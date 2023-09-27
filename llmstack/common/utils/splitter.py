@@ -3,7 +3,8 @@ import logging
 from abc import ABC
 from abc import abstractmethod
 from io import StringIO
-from typing import Callable, Iterable
+import re
+from typing import Any, Callable, Iterable
 from typing import List
 from typing import Optional
 
@@ -77,6 +78,32 @@ class TextSplitter(ABC):
         """Returns the number of tokens in a text string. Source: https://platform.openai.com/tokenizer"""
         return max(len(string) // 4, 1)
 
+class CharacterTextSplitter(TextSplitter):
+    """Split text into chunks of specified maximum size and overlap."""
+    
+    def __init__(
+        self, separator: str = "\n", is_regex: bool = False, **kwargs: Any
+    ) -> None:
+        """Create a new TextSplitter."""
+        super().__init__(**kwargs)
+        self._separator = separator
+        self._is_regex = is_regex
+        self._keep_separator = True
+
+    # Split a given text with a given separator using regex, and return a list of chunks
+    def _split_text_with_regex(self, text: str, separator: str, keep_separator: bool) -> List[str]:
+        if keep_separator:
+            chunks = re.split(f'({separator})', text)
+        else:
+            chunks = re.split(separator, text)
+        return chunks 
+    
+    def split_text(self, text: str) -> List[str]:
+        separator = (
+            self._separator if self._is_regex else re.escape(self._separator)
+        )
+        splits = self._split_text_with_regex(text, separator, self._keep_separator)
+        return self._merge_chunks(splits, separator=self._separator)
 
 class CSVTextSplitter(TextSplitter):
     """Split CSV document into chunks of specified maximum size and overlap."""
