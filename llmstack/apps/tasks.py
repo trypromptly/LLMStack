@@ -2,8 +2,8 @@ import logging
 import uuid
 from typing import List
 
-from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem
-from llmstack.datasources.handlers.datasource_type_interface import DataSourceProcessor
+from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem
+from llmstack.datasources.handlers.datasource_processor import DataSourceProcessor
 from llmstack.datasources.models import DataSource
 from llmstack.datasources.models import DataSourceEntry
 from llmstack.datasources.models import DataSourceEntryStatus

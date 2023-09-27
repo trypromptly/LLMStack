@@ -1,7 +1,7 @@
 
 from django.conf import settings
 
-from .handlers.datasource_type_interface import DataSourceProcessor
+from .handlers.datasource_processor import DataSourceProcessor
 from .models import DataSourceType
 # Import all data source types here
 
