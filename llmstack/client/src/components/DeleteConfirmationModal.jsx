@@ -25,7 +25,12 @@ export default function DeleteConfirmationModal(props) {
           Cancel
         </Button>
         ,
-        <Button key="submit" type="primary" onClick={() => onOk(id)}>
+        <Button
+          key="submit"
+          variant="contained"
+          type="primary"
+          onClick={() => onOk(id)}
+        >
           Confirm
         </Button>
         ,
