@@ -14,7 +14,7 @@ from .serializers import DataSourceEntrySerializer
 from .serializers import DataSourceSerializer
 from .serializers import DataSourceTypeSerializer
 from llmstack.apps.tasks import add_data_entry_task, extract_urls_task, resync_data_entry_task, delete_data_entry_task, delete_data_source_task
-from llmstack.datasources.handlers.datasource_type_interface import DataSourceProcessor
+from llmstack.datasources.handlers.datasource_processor import DataSourceProcessor
 from llmstack.datasources.types import DataSourceTypeFactory
 from llmstack.jobs.adhoc import DataSourceEntryProcessingJob, ExtractURLJob
 

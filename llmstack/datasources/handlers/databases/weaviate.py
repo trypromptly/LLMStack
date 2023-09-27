@@ -10,7 +10,7 @@ from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
 from llmstack.common.blocks.data.store.vectorstore.weaviate import Weaviate, WeaviateConfiguration, generate_where_filter
 from llmstack.common.utils.models import Config
-from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor
+from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor
 from llmstack.datasources.models import DataSource
 
 

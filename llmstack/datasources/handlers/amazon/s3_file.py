@@ -13,7 +13,7 @@ from llmstack.common.utils.splitter import CSVTextSplitter
 from llmstack.common.utils.text_extract import extract_text_from_b64_json
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
+from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
 from llmstack.datasources.models import DataSource
 from llmstack.base.models import Profile
 

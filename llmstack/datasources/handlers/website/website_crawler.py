@@ -7,7 +7,7 @@ from pydantic import Field
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.crawlers import run_url_spider_in_process
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
+from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
 
 logger = logging.getLogger(__file__)
 

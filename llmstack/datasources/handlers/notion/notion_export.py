@@ -9,7 +9,7 @@ import magic
 from pydantic import Field
 
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.datasources.handlers.datasource_type_interface import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
+from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
 from llmstack.datasources.handlers.utils import extract_documents
 from llmstack.datasources.models import DataSource
 from llmstack.base.models import Profile
