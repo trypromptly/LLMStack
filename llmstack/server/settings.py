@@ -306,71 +306,106 @@ FLAG_SOURCES = ['llmstack.base.flags.FlagSource']
 PROVIDERS = [
         {
             'name': 'Amazon',
-            'datasource_modules': ['llmstack.datasources.handlers.amazon'],
+            'datasource_packages': ['llmstack.datasources.handlers.amazon'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
             'slug': 'amazon',
         },
         {
             'name': 'Anthropic',
-            'processor_modules': ['llmstack.processors.providers.anthropic'],
+            'processor_packages': ['llmstack.processors.providers.anthropic'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
             'slug': 'anthropic',
         },
         {
             'name': 'Azure',
-            'processor_modules': ['llmstack.processors.providers.azure'],
+            'processor_packages': ['llmstack.processors.providers.azure'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
             'slug': 'azure',
         },
         {
             'name': 'Cohere',
-            'processor_modules': ['llmstack.processors.providers.cohere'],
+            'processor_packages': ['llmstack.processors.providers.cohere'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
             'slug': 'cohere',
         },
         {
             'name': 'ElevenLabs',
-            'processor_modules': ['llmstack.processors.providers.elevenlabs'],
+            'processor_packages': ['llmstack.processors.providers.elevenlabs'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
             'slug': 'elevenlabs',
         },
         {
             'name': 'Google',
-            'processor_modules': ['llmstack.processors.providers.google'],
+            'processor_packages': ['llmstack.processors.providers.google'],
             'slug': 'google',
-            'datasource_modules': ['llmstack.datasources.handlers.google'],
+            'datasource_packages': ['llmstack.datasources.handlers.google'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
         },
         {
             'name': 'LocalAI',
-            'processor_modules': ['llmstack.processors.providers.localai'],
+            'processor_packages': ['llmstack.processors.providers.localai'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
             'slug': 'localai',
         },
         {
             'name': 'Open AI',
-            'processor_modules': ['llmstack.processors.providers.openai'],
+            'processor_packages': ['llmstack.processors.providers.openai'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
             'slug': 'openai',
         },
         {
             'name': 'Promptly',
-            'processor_modules': ['llmstack.processors.providers.promptly'],
-            'datasource_modules': ['llmstack.datasources.handlers.databases', 'llmstack.datasources.handlers.files', 'llmstack.datasources.handlers.text', 'llmstack.datasources.handlers.website'],
+            'processor_packages': ['llmstack.processors.providers.promptly', 'promptly_processors.providers.promptly'],
+            'datasource_packages': ['llmstack.datasources.handlers.databases', 'llmstack.datasources.handlers.files', 'llmstack.datasources.handlers.text', 'llmstack.datasources.handlers.website'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
             'slug': 'promptly',
         },
         {
             'name': 'Stability AI',
-            'processor_modules': ['llmstack.processors.providers.stabilityai'],
+            'processor_packages': ['llmstack.processors.providers.stabilityai'],
+            'processor_exclude': [],
+            'datasource_processors_exclude' : [],
             'slug': 'stabilityai',
         },
 ]
 
 PROCESSOR_PROVIDERS = sum(list(
-    map(lambda entry: entry['processor_modules'], filter(
-        lambda provider: 'processor_modules' in provider,
+    map(lambda entry: entry['processor_packages'], filter(
+        lambda provider: 'processor_packages' in provider,
         PROVIDERS,
     )),  
 ), [])
 
-DATASOURCE_TYPE_PROVIDERS = sum(list(
-    map(lambda entry: entry['datasource_modules'], filter(
-        lambda provider: 'datasource_modules' in provider,
+PROCESSOR_EXCLUDE_LIST = sum(list(
+    map(lambda entry: entry['processor_exclude'], filter(
+        lambda provider: 'processor_exclude' in provider,
         PROVIDERS,
     )),
 ), [])
+
+DATASOURCE_TYPE_PROVIDERS = sum(list(
+    map(lambda entry: entry['datasource_packages'], filter(
+        lambda provider: 'datasource_packages' in provider,
+        PROVIDERS,
+    )),
+), [])
+
+DATASOURCE_PROCESSOR_EXCLUDE_LIST = sum(list(
+    map(lambda entry: entry['datasource_processors_exclude'], filter(
+        lambda provider: 'datasource_processors_exclude' in provider,
+        PROVIDERS,
+    )),
+), [])
+
 
 APP_TEMPLATES_DIR = os.getenv('APP_TEMPATES_DIR').split(',') if os.getenv('APP_TEMPATES_DIR') else [
     os.path.join(BASE_DIR, 'contrib', 'apps', 'templates')

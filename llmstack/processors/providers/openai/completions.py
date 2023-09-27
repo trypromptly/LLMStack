@@ -69,7 +69,7 @@ class Completions(ApiProcessorInterface[CompletionsInput, CompletionsOutput, Com
     """
     @staticmethod
     def name() -> str:
-        return 'open ai/completions'
+        return 'Completions'
 
     @staticmethod
     def slug() -> str:

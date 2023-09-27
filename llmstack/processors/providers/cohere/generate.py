@@ -38,7 +38,7 @@ class Generate(ApiProcessorInterface[GenerateInput, GenerateOutput, GenerateConf
     """
     @staticmethod
     def name() -> str:
-        return 'cohere_generate'
+        return 'Generate'
 
     @staticmethod
     def slug() -> str:

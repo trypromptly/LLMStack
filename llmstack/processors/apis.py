@@ -18,23 +18,20 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
 
-from .models import ApiBackend
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
+
 from .models import Endpoint
 from llmstack.base.models import Profile
 from .models import RunEntry
 from .providers.api_processors import ApiProcessorFactory
-from .serializers import ApiBackendSerializer
-from .serializers import EndpointSerializer
 from .serializers import HistorySerializer
 from .serializers import LoginSerializer
 from llmstack.apps.app_session_utils import create_app_session
-from llmstack.apps.app_session_utils import get_app_session_data
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor, InputRequest
@@ -65,144 +62,6 @@ def sanitize_json(json_obj):
 
 
 class EndpointViewSet(viewsets.ViewSet):
-    def list(self, request):
-        queryset = Endpoint.objects.all().filter(owner=request.user)
-        serializer = EndpointSerializer(queryset, many=True)
-        return DRFResponse(serializer.data)
-
-    def create(self, request):
-        name = request.data.get('name')
-        api_backend = get_object_or_404(
-            ApiBackend, id=request.data.get('api_backend'),
-        )
-        owner = request.user
-        param_values = request.data.get('param_values', {})
-        is_live = request.data.get('is_live', False)
-        if isinstance(param_values, str):
-            param_values = json.loads(param_values)
-        post_processor = request.data.get('post_processor', '')
-        draft = request.data.get('draft', False)
-        prompt = request.data.get('prompt', '')
-        config = request.data.get('config', {})
-        input = request.data.get('input', {})
-        parent_uuid = None if 'parent_uuid' not in request.data else request.data.get(
-            'parent_uuid',
-        )
-        description = request.data.get(
-            'description',
-        ) if 'description' in request.data else 'Initial version'
-
-        endpoint_object = Endpoint(
-            name=name, api_backend=api_backend, owner=owner, param_values=param_values, post_processor=post_processor,
-            draft=draft, prompt=prompt, parent_uuid=parent_uuid, description=description, is_live=is_live, config=config, input=input,
-        )
-        endpoint_object.save()
-
-        return DRFResponse(EndpointSerializer(instance=endpoint_object).data)
-
-    def delete(self, request, id, force_delete_app=False):
-        endpoint_object = get_object_or_404(Endpoint, uuid=uuid.UUID(id))
-
-        if endpoint_object.owner != request.user:
-            return PermissionDenied()
-
-        if endpoint_object.is_app and not force_delete_app:
-            return DRFResponse({'error': 'Cannot delete an app endpoint.'}, status=400)
-
-        if str(endpoint_object.parent_uuid) == id and endpoint_object.version == 0:
-            # We are asked to delete the parent endpoint. Delete all versions
-            versioned_endpoints = Endpoint.objects.filter(
-                parent_uuid=endpoint_object.parent_uuid)
-            versioned_endpoints.delete()
-        else:
-            endpoint_object.delete()
-
-        return DRFResponse(status=204)
-
-    @ action(detail=True, methods=['patch'])
-    def patch(self, request):
-        should_update = False
-        endpoint = get_object_or_404(
-            Endpoint, parent_uuid=request.data.get(
-                'parent_uuid',
-            ), version=request.data.get('version'),
-        )
-        update_keys = []
-        if 'name' in request.data:
-            endpoint.name = request.data.get('name')
-            update_keys.append('name')
-            should_update = True
-
-        if 'is_live' in request.data:
-            endpoint.is_live = request.data.get('is_live')
-            update_keys.append('is_live')
-            should_update = True
-
-        if 'draft' in request.data:
-            endpoint.draft = request.data.get('draft')
-            update_keys.append('draft')
-            should_update = True
-
-        if 'description' in request.data:
-            endpoint.description = request.data.get('description')
-            update_keys.append('description')
-            should_update = True
-
-        if should_update:
-            endpoint.save(update_fields=update_keys)
-
-        queryset = Endpoint.objects.get(
-            parent_uuid=request.data.get(
-                'parent_uuid',
-            ), version=request.data.get('version'),
-        )
-        serializer = EndpointSerializer(queryset)
-        return DRFResponse(serializer.data)
-
-    def get(self, request, id):
-        endpoint_object = get_object_or_404(Endpoint, uuid=id)
-        if endpoint_object.owner != request.user:
-            return PermissionDenied()
-        return DRFResponse(EndpointSerializer(instance=endpoint_object).data)
-
-    # Update will create a new version of endpoint and save into the db
-    def update(self, request, id):
-        owner = request.user
-        endpoint_object = get_object_or_404(Endpoint, uuid=id)
-
-        if endpoint_object.owner != request.user:
-            return PermissionDenied()
-        param_values = request.data.get(
-            'param_values', endpoint_object.param_values,
-        )
-        if isinstance(param_values, str):
-            param_values = json.loads(param_values)
-        post_processor = request.data.get(
-            'post_processor', endpoint_object.post_processor,
-        )
-        draft = request.data.get('draft', False)
-        prompt = request.data.get('prompt', endpoint_object.prompt)
-        if endpoint_object.parent_uuid:
-            # version > 1
-            parent_uuid = endpoint_object.parent_uuid
-        else:
-            # If this is version 1 update
-            parent_uuid = id
-
-        latest_endpoint_object = Endpoint.objects.filter(
-            uuid=uuid.UUID(parent_uuid),
-        ).order_by('-version').first()
-        version = getattr(latest_endpoint_object, 'version') + 1
-        description = request.data.get(
-            'description', 'Version {}'.format(version),
-        )
-        new_endpoint_object = Endpoint(
-            name=endpoint_object.name, api_backend=endpoint_object.api_backend, owner=owner, param_values=param_values, post_processor=post_processor,
-            draft=draft, prompt=prompt, version=version, parent_uuid=parent_uuid, description=description,
-        )
-        new_endpoint_object.save()
-        return DRFResponse(EndpointSerializer(instance=new_endpoint_object).data)
-
     @ action(detail=True, methods=['post'])
     @ csrf_exempt
     def invoke_api(self, request, id, version=None):
@@ -268,7 +127,12 @@ class EndpointViewSet(viewsets.ViewSet):
         )
         try:
             invoke_result = self.run_endpoint(
-                endpoint=endpoint, run_as_user=request.user, input_request=input_request, template_values=template_values, bypass_cache=bypass_cache, input=input, config=config, app_session=None, stream=stream,
+                endpoint_uuid=endpoint.uuid, run_as_user=request.user, input_request=input_request, 
+                template_values=template_values, bypass_cache=bypass_cache, 
+                input={**endpoint.input, **input}, 
+                config={**endpoint.config, **config}, 
+                api_backend_slug=endpoint.api_backend.slug, api_provider_slug=endpoint.api_backend.api_provider.slug,
+                app_session=None, stream=stream,
             )
 
             if stream:
@@ -285,30 +149,78 @@ class EndpointViewSet(viewsets.ViewSet):
 
         return DRFResponse(invoke_result)
 
-    def run_endpoint(self, endpoint, run_as_user, input_request, template_values={}, bypass_cache=False, input={}, config={}, app_session=None, output_stream=None, stream=False):
-        profile = get_object_or_404(Profile, user=run_as_user)
+    def run(self, request):
+        if request.user.is_anonymous:
+            return HttpResponseForbidden('Please login to run this endpoint')
+        
+        request_uuid = str(uuid.uuid4())
+        
+        bypass_cache = request.data.get('bypass_cache', False)
+        config = request.data['config'] if 'config' in request.data else {}
+        input = request.data['input'] if 'input' in request.data else {}
+        stream = False
+        
+        api_backend_slug = request.data.get('api_backend_slug', None)
+        api_provider_slug = request.data.get('api_provider_slug', None)
+        
+        
+        if api_backend_slug == None or api_provider_slug == None:
+            return DRFResponse({'errors': ['Invalid API backend']}, status=500)
 
-        # Merge config and input with endpoint config, input
-        config = {**endpoint.config, **config}
-        input = {**endpoint.input, **input}
+        request_user_agent = request.META.get(
+            'HTTP_USER_AGENT', 'Streaming API Client' if stream else 'API Client',
+        )
+        request_location = request.headers.get('X-Client-Geo-Location', '')
+        request_ip = request_ip = request.headers.get(
+            'X-Forwarded-For', request.META.get(
+                'REMOTE_ADDR', '',
+            ),
+        ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
+        
+        input_request = InputRequest(
+            request_endpoint_uuid=request_uuid, request_app_uuid='',
+            request_app_session_key='', request_owner=request.user,
+            request_uuid=str(uuid.uuid4()), request_user_email=request.user.email,
+            request_ip=request_ip, request_location=request_location,
+            request_user_agent=request_user_agent, request_body=request.data,
+            request_content_type=request.content_type,
+        )
+        
+        try:
+            invoke_result = self.run_endpoint(
+                endpoint_uuid=request_uuid, 
+                run_as_user=request.user, 
+                input_request=input_request, template_values={}, 
+                bypass_cache=bypass_cache, 
+                input={**input}, 
+                config={**config}, 
+                api_backend_slug=api_backend_slug, api_provider_slug=api_provider_slug,
+                app_session=None, stream=False,
+            )
+        except Exception as e:
+            invoke_result = {'id': -1, 'errors': [str(e)]}
+
+        if 'errors' in invoke_result:
+            return DRFResponse({'errors': invoke_result['errors']}, status=500)
+
+        return DRFResponse(invoke_result)
+        
+    def run_endpoint(self, endpoint_uuid, run_as_user, input_request, template_values={}, bypass_cache=False, input={}, config={}, api_backend_slug='', api_provider_slug='', app_session=None, output_stream=None, stream=False):
+        profile = get_object_or_404(Profile, user=run_as_user)
 
         vendor_env = profile.get_vendor_env()
 
         # Pick a processor
-        processor_cls = ApiProcessorFactory.get_api_processor(
-            endpoint.api_backend.slug, endpoint.api_backend.api_provider.slug,
-        )
+        processor_cls = ApiProcessorFactory.get_api_processor(api_backend_slug, api_provider_slug)
 
         if not app_session:
             app_session = create_app_session(None, str(uuid.uuid4()))
 
-        app_session_data = get_app_session_data(
-            app_session, endpoint,
-        )
+        app_session_data = None
 
         actor_configs = [
             ActorConfig(
-                name=str(endpoint.uuid), template_key='processor', actor=processor_cls, dependencies=['input'], kwargs={
+                name=str(endpoint_uuid), template_key='processor', actor=processor_cls, dependencies=['input'], kwargs={
                     'config': config, 'input': input, 'env': vendor_env, 'session_data': app_session_data['data'] if app_session_data and 'data' in app_session_data else {},
                 },
                 output_cls=processor_cls.get_output_cls(),
@@ -325,8 +237,8 @@ class EndpointViewSet(viewsets.ViewSet):
             ActorConfig(
                 name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['input', 'output'], kwargs={
                     'processor_configs': {
-                        str(endpoint.uuid): {
-                            'processor': endpoint,
+                        str(endpoint_uuid): {
+                            'processor': {'uuid': str(endpoint_uuid)},
                             'app_session': None,
                             'app_session_data': None,
                             'template_key': 'processor',
@@ -370,9 +282,7 @@ class EndpointViewSet(viewsets.ViewSet):
             for output in output_iter:
                 # Iterate through output_iter to get the final output
                 pass
-
-            coordinator_ref.stop()
-
+            
         except Exception as e:
             logger.exception(e)
             raise Exception(f'Error starting coordinator: {e}')
@@ -387,11 +297,10 @@ class ApiProviderViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
     def list(self, request):
-        processor_providers = list(filter(lambda provider: provider.get('processor_modules'), settings.PROVIDERS))
+        processor_providers = list(filter(lambda provider: provider.get('processor_packages'), settings.PROVIDERS))
         data = list(map(lambda provider: {
             'name': provider.get('name'),
             'slug': provider.get('slug'),
-            "prefix": ""
         }, processor_providers))
         
         return DRFResponse(data)
@@ -400,10 +309,44 @@ class ApiProviderViewSet(viewsets.ViewSet):
 class ApiBackendViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
+    def get(self, request, id):
+        api_backends = self.list(request).data
+        for api_backend in api_backends:
+            if api_backend['id'] == id:
+                return DRFResponse(api_backend)
+        return DRFResponse(status=404)
+    
     def list(self, request):
-        queryset = ApiBackend.objects.all()
-        serializer = ApiBackendSerializer(queryset, many=True)
-        return DRFResponse(serializer.data)
+        providers = ApiProviderViewSet().list(request).data
+        providers_map = {}
+        for entry in providers:
+            providers_map[entry['slug']] = entry
+        processors = []
+        for subclass in ApiProcessorInterface.__subclasses__():
+            if f'{subclass.__module__}.{subclass.__qualname__}' in settings.PROCESSOR_EXCLUDE_LIST:
+                continue
+
+            try:
+                processor_name = subclass.name()
+            except NotImplementedError:
+                processor_name = subclass.slug().capitalize()
+            
+            processors.append({
+                'id': f"{subclass.provider_slug()}/{subclass.slug()}",
+                'name': processor_name,
+                'slug': subclass.slug(),
+                'api_provider': providers_map[subclass.provider_slug()],
+                'api_endpoint': {},
+                'params': {},
+                'description': '',
+                'input_schema': json.loads(subclass.get_input_schema()),
+                'output_schema': json.loads(subclass.get_output_schema()),
+                'config_schema': json.loads(subclass.get_configuration_schema()),
+                'input_ui_schema' : subclass.get_input_ui_schema(),
+                'output_ui_schema': subclass.get_output_ui_schema(),
+                'config_ui_schema': subclass.get_configuration_ui_schema(),
+            })
+        return DRFResponse(processors)
 
 class HistoryViewSet(viewsets.ModelViewSet):
     paginate_by = 20

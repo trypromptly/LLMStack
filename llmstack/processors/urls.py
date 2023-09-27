@@ -28,19 +28,16 @@ urlpatterns = [
     ),
     path(
         'api/endpoints/<str:id>', apis.EndpointViewSet.as_view(
-            {'put': 'update', 'get': 'get', 'post': 'invoke_api', 'delete': 'delete'},
+            {'post': 'invoke_api'},
         ),
     ),
     path(
         'api/endpoints/<str:id>/<str:version>',
         apis.EndpointViewSet.as_view({'post': 'invoke_api'}),
     ),
-
-    path(
-        'api/endpoints', apis.EndpointViewSet.as_view(
-            {'get': 'list', 'post': 'create', 'patch': 'patch'},
-        ),
-    ),
+    
+    # Playground
+    path('api/playground/run', apis.EndpointViewSet.as_view({'post': 'run'})),
 
     # History
     path('api/history', apis.HistoryViewSet.as_view({'get': 'list'})),

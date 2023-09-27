@@ -50,7 +50,7 @@ class ImagesVariations(ApiProcessorInterface[ImagesVariationsInput, ImagesVariat
     """
     @staticmethod
     def name() -> str:
-        return 'open ai/images_variations'
+        return 'Image Variations'
 
     @staticmethod
     def slug() -> str:

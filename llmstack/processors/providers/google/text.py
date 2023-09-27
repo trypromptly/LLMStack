@@ -66,7 +66,7 @@ class TextConfiguration(ApiProcessorSchema):
 class TextProcessor(ApiProcessorInterface[TextInput, TextOutput, TextConfiguration]):
     @staticmethod
     def name() -> str:
-        return 'google_text'
+        return 'PaLM 2 For Text'
 
     @staticmethod
     def slug() -> str:

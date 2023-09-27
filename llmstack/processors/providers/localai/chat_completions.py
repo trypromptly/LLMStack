@@ -107,7 +107,7 @@ class ChatCompletionsConfiguration(ApiProcessorSchema):
 class ChatCompletions(ApiProcessorInterface[ChatCompletionInput, ChatCompletionsOutput, ChatCompletionsConfiguration]):
     @staticmethod
     def name() -> str:
-        return 'local ai/chatgpt'
+        return 'Chat Completions'
 
     @staticmethod
     def slug() -> str:

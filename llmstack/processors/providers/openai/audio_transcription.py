@@ -48,7 +48,7 @@ class AudioTranscription(ApiProcessorInterface[AudioTranscriptionInput, AudioTra
     """
     @staticmethod
     def name() -> str:
-        return 'open ai/audio_transcriptions'
+        return 'Audio Transcription'
 
     @staticmethod
     def slug() -> str:

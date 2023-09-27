@@ -21,7 +21,7 @@ class PromptlyAppProcessorConfiguration(ApiProcessorSchema):
 class PromptlyAppProcessor(ApiProcessorInterface[PromptlyAppProcessorInput, PromptlyAppProcessorOutput, PromptlyAppProcessorConfiguration]):
     @staticmethod
     def name() -> str:
-        return 'promptly/app'
+        return 'Promptly App'
 
     @staticmethod
     def slug() -> str:

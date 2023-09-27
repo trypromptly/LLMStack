@@ -27,7 +27,7 @@ class EchoProcessor(ApiProcessorInterface[EchoProcessorInput, EchoProcessorOutpu
 
     @staticmethod
     def name() -> str:
-        return 'promptly/echo'
+        return 'Echo'
 
     @staticmethod
     def slug() -> str:

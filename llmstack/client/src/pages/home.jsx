@@ -38,28 +38,17 @@ export default function HomePage() {
   const [tokenCount, setTokenCount] = useState(null);
   const [processorResult, setProcessorResult] = useState(null);
 
-  const runEndpoint = (endpoint) => {
-    if (!endpoint) {
-      setRunError(
-        "No endpoint selected. Please select API Backend or an existing endpoint.",
-      );
-      return;
-    }
-
+  const run = () => {
     setRunError("");
-    setTokenCount(null);
     setOutputLoading(true);
-
     axios()
-      .post(
-        `/api/endpoints/invoke_api/${endpoint.parent_uuid}/${endpoint.version}`,
-        {
-          input: input,
-          template_values: promptValues || {},
-          config: paramValues || {},
-          bypass_cache: true,
-        },
-      )
+      .post(`/api/playground/run`, {
+        input: input,
+        config: paramValues,
+        bypass_cache: true,
+        api_backend_slug: apiBackendSelected.slug,
+        api_provider_slug: apiBackendSelected.api_provider.slug,
+      })
       .then((response) => {
         if (response?.data?.errors) {
           setOutput("");
@@ -107,49 +96,18 @@ export default function HomePage() {
         setOutputLoading(false);
       });
   };
-
-  const testPrompt = () => {
-    // If we do not have an endpoint available, create a temporary one
-    let endpoint = endpointSelected;
-    if (!endpointSelected && apiBackendSelected) {
-      axios()
-        .post(`/api/endpoints`, {
-          name: `Playground - ${new Date().toLocaleString()}`,
-          api_backend: apiBackendSelected.id,
-          draft: true,
-          input: input,
-          param_values: paramValues,
-          config: paramValues,
-          prompt_values: promptValues,
-          post_processor: "",
-        })
-        .then((response) => {
-          endpoint = response.data;
-          setEndpointSelected(response.data);
-        })
-        .catch((error) => {
-          console.error(error);
-        })
-        .then(() => {
-          runEndpoint(endpoint);
-        });
-    } else {
-      runEndpoint(endpoint);
-    }
-  };
-
-  const TestPrompt = () => {
+  const Run = () => {
     return (
       <MuiButton
         type="primary"
         onClick={(e) => {
           if (isLoggedIn) {
-            return testPrompt();
+            return run();
           }
         }}
         variant="contained"
       >
-        {"Submit"}
+        {"Run"}
       </MuiButton>
     );
   };
@@ -192,7 +150,7 @@ export default function HomePage() {
                   emptyMessage="Select your API Backend to see the parameters"
                 />
               </div>
-              <div>{apiBackendSelected && <TestPrompt />}</div>
+              <div>{apiBackendSelected && <Run />}</div>
             </Stack>
           </Grid>
           <Grid item xs={12} md={4}>
