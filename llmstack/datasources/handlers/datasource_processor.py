@@ -176,7 +176,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
     def _get_document_embeddings(self, text: str) -> OpenAIEmbeddingOutput:
         if self.embeddings_endpoint:
-            logger.info(f'Generating embeddings')
             return self.embeddings_endpoint.process(OpenAIEmbeddingInput(text=text).dict()).embeddings
         else:
             return None
