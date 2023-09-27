@@ -1,116 +1,214 @@
-import { Table } from "antd";
+import { useEffect, useState } from "react";
 import {
-  Button,
-  IconButton,
+  Alert,
+  AlertTitle,
   Box,
-  CircularProgress,
-  Drawer,
-  Divider,
+  Button,
   Chip,
+  CircularProgress,
+  Collapse,
+  Container,
+  IconButton,
   Grid,
-  Stack,
+  Pagination,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   Tooltip,
 } from "@mui/material";
-
-import { TextareaAutosize } from "@mui/base";
-
-import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
-import SyncOutlinedIcon from "@mui/icons-material/SyncOutlined";
-import SettingsEthernetIcon from "@mui/icons-material/SettingsEthernet";
-import PeopleOutlineOutlinedIcon from "@mui/icons-material/PeopleOutlineOutlined";
-import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-
-import { Alert, AlertTitle, Link } from "@mui/material";
-import { useEffect, useState } from "react";
+import {
+  AddOutlined,
+  DeleteOutlineOutlined,
+  PeopleOutlineOutlined,
+  PersonOutlineOutlined,
+  SettingsEthernet,
+  SyncOutlined,
+  VisibilityOutlined,
+} from "@mui/icons-material";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
   dataSourceEntriesState,
   orgDataSourceEntriesState,
   dataSourceEntriesTableDataState,
   profileFlagsState,
-  profileState,
 } from "../data/atoms";
 import { AddDataSourceModal } from "../components/datasource/AddDataSourceModal";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 import ShareDataSourceModal from "../components/datasource/ShareDataSourceModal";
-import { axios } from "../data/axios";
+import DataSourceEntryContent from "../components/datasource/DataSourceEntryContent";
 import { LocaleDate, FileSize } from "../components/Utils";
 import { useReloadDataSourceEntries, useReloadDataSources } from "../data/init";
+import { axios } from "../data/axios";
+import moment from "moment";
 
-function DataSourceEntryContent({ onCancel, dataSourceEntryData, open }) {
-  const [data, setData] = useState(null);
-  const [metadata, setMetadata] = useState(null);
-  const [loading, setLoading] = useState(false);
+function DataSourceEntries({ dataSourceEntryData }) {
+  const [dataSourceEntryDrawerOpen, setDataSourceEntryDrawerOpen] =
+    useState(false);
+  const [dataSourceEntry, setDataSourceEntry] = useState(null);
+  const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
+    useState(false);
+  const reloadDataSourceEntries = useReloadDataSourceEntries();
 
-  useEffect(() => {
-    if (dataSourceEntryData?.config?.document_ids) {
-      setLoading(true);
-      axios()
-        .get(`/api/datasource_entries/${dataSourceEntryData.uuid}/text_content`)
-        .then((response) => {
-          setData(
-            <TextareaAutosize
-              value={response.data?.content}
-              disabled={true}
-              autoSize
-              style={{
-                maxHeight: "80vh",
-                width: "100%",
-                overflow: "auto",
-              }}
-            />,
-          );
-          setMetadata(response.data?.metadata);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setData(
-        <TextareaAutosize
-          value={JSON.stringify(dataSourceEntryData?.config?.errors)}
-          disabled={true}
-          autoSize
-          style={{ maxHeight: "80vh", width: "100%", overflow: "auto" }}
-        ></TextareaAutosize>,
-      );
-    }
-  }, [
-    dataSourceEntryData?.config?.document_ids,
-    dataSourceEntryData?.config?.errors,
-    dataSourceEntryData.uuid,
-  ]);
-  return (
-    <Drawer
-      open={open}
-      onClose={onCancel}
-      anchor="right"
-      sx={{ "& .MuiDrawer-paper": { minWidth: "40%" } }}
-    >
-      <Box>
-        <Stack direction={"row"} gap={1} sx={{ mb: "10px", mt: "10px" }}>
-          <Button onClick={() => onCancel()} sx={{ alignSelf: "left" }}>
-            X
-          </Button>
-          {Object.keys(metadata || {}).map((key) => (
-            <Chip
-              label={`${key}: ${metadata[key]}`}
-              size="small"
-              key={key}
-              sx={{ borderRadius: "10px", marginTop: "5px" }}
-            />
+  const columns = [
+    {
+      title: "Name",
+      key: "name",
+    },
+    {
+      title: "Size",
+      key: "size",
+      render: (record) => {
+        return <FileSize value={record} />;
+      },
+    },
+    {
+      title: "Status",
+      key: "status",
+      render: (record, row) => {
+        let color = "success";
+        if (record === "FAILED") {
+          color = "error";
+        } else if (record === "READY") {
+          color = "success";
+        } else {
+          color = "info";
+        }
+        return (
+          <Chip
+            color={color}
+            key={row.uuid}
+            style={{ cursor: "pointer" }}
+            label={row.status.charAt(0) + row.status.slice(1).toLowerCase()}
+            size="small"
+          ></Chip>
+        );
+      },
+    },
+    {
+      title: "Created At",
+      key: "created_at",
+      render: (record) => {
+        return <LocaleDate value={record} />;
+      },
+    },
+    {
+      title: "Last Modified",
+      key: "updated_at",
+      render: (record) => {
+        return moment(record).fromNow();
+      },
+    },
+    {
+      title: "Action",
+      key: "operation",
+      render: (record, row) => {
+        const isAdhocSyncSupported = record?.sync_config;
+        return (
+          <Box>
+            <Tooltip title="View Contents">
+              <IconButton
+                onClick={() => {
+                  setDataSourceEntryDrawerOpen(true);
+                  setDataSourceEntry(row);
+                }}
+              >
+                <VisibilityOutlined />
+              </IconButton>
+            </Tooltip>
+            {isAdhocSyncSupported && (
+              <Tooltip title="Sync Contents">
+                <IconButton>
+                  <SyncOutlined />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip title="Delete Entry">
+              <IconButton
+                onClick={() => {
+                  setDataSourceEntry(row);
+                  setDeleteConfirmationModalOpen(true);
+                }}
+              >
+                <DeleteOutlineOutlined />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        );
+      },
+    },
+  ];
+
+  return dataSourceEntryData.length === 0 ? (
+    <Container>
+      <Alert severity="info" sx={{ maxWidth: "300px", margin: "0 auto" }}>
+        <AlertTitle>No entries found</AlertTitle>
+        Click on the <strong>+</strong> icon to add a new entry.
+      </Alert>
+    </Container>
+  ) : (
+    <Table stickyHeader aria-label="sticky table contents" colSpan={7}>
+      <TableHead>
+        <TableRow>
+          {columns.map((column) => (
+            <TableCell key={column.key} sx={{ padding: "5px 16px" }}>
+              <strong>{column.title}</strong>
+            </TableCell>
           ))}
-        </Stack>
-        <Divider />
-        {loading ? (
-          <CircularProgress />
-        ) : (
-          <div style={{ margin: "0px 10px" }}>{data}</div>
-        )}
-      </Box>
-    </Drawer>
+        </TableRow>
+      </TableHead>
+      <TableBody sx={{ borderBottom: "none" }}>
+        {dataSourceEntryData?.map((row, index) => {
+          return (
+            <TableRow role="checkbox" tabIndex={-1} key={row.uuid}>
+              {columns.map((column) => {
+                const value = row[column.key];
+                return (
+                  <TableCell key={column.key} sx={{ padding: "0 16px" }}>
+                    {column.render ? column.render(value, row) : value}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          );
+        })}
+      </TableBody>
+      <DataSourceEntryContent
+        onCancel={() => setDataSourceEntryDrawerOpen(false)}
+        dataSourceEntry={dataSourceEntry}
+        open={dataSourceEntryDrawerOpen}
+      />
+      <DeleteConfirmationModal
+        id={dataSourceEntry}
+        title="Delete Data Source Entry"
+        text={
+          <div>
+            Are you sure you want to delete{" "}
+            <span style={{ fontWeight: "bold" }}>{dataSourceEntry?.name}</span>{" "}
+            ?
+          </div>
+        }
+        open={deleteConfirmationModalOpen}
+        onOk={(param) => {
+          axios()
+            .delete(`api/datasource_entries/${param.uuid}`)
+            .then((res) => {
+              reloadDataSourceEntries();
+              setDeleteConfirmationModalOpen(false);
+            });
+        }}
+        onCancel={() => {
+          setDeleteConfirmationModalOpen(false);
+        }}
+      />
+    </Table>
   );
 }
+
 export default function DataPage() {
+  const entriesPerPage = 10;
+  const [pageNumber, setPageNumber] = useState(1);
   const [deleteModalTitle, setDeleteModalTitle] = useState("");
   const [deleteModalMessage, setDeleteModalMessage] = useState("");
   const [deleteId, setDeleteId] = useState(null);
@@ -118,10 +216,6 @@ export default function DataPage() {
   const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
     useState(false);
   const [shareDataSourceModalOpen, setShareDataSourceModalOpen] =
-    useState(false);
-
-  const [dataSourceEntryData, setDataSourceEntryData] = useState(null);
-  const [dataSourceEntryDrawerOpen, setDataSourceEntryDrawerOpen] =
     useState(false);
   const dataSourceEntriesTable = useRecoilValue(
     dataSourceEntriesTableDataState,
@@ -134,42 +228,48 @@ export default function DataPage() {
   );
   const [dataSourceEntriesLoading, setDataSourceEntriesLoading] =
     useState(null);
-  const profile = useRecoilValue(profileState);
-  const [table_data, setTableData] = useState([]);
+  const [tableData, setTableData] = useState([]);
   const [modalTitle, setModalTitle] = useState("Add New Data Source");
   const [selectedDataSource, setSelectedDataSource] = useState(null);
+  const [dataSourceBeingLoaded, setDataSourceBeingLoaded] = useState(null); // uuid of the data source being loaded
   const reloadDataSourceEntries = useReloadDataSourceEntries();
   const reloadDataSources = useReloadDataSources();
   const profileFlags = useRecoilValue(profileFlagsState);
 
   useEffect(() => {
     if (dataSourceEntriesTable.length > 0) {
-      setTableData(dataSourceEntriesTable);
+      setTableData((oldTableData) =>
+        dataSourceEntriesTable.map((item) => ({
+          ...item,
+          expand:
+            oldTableData.find((row) => row.uuid === item.uuid)?.expand || false,
+        })),
+      );
     }
   }, [dataSourceEntriesTable]);
 
   const columns = [
     {
       title: "Name",
-      dataIndex: "name",
       key: "name",
     },
     {
       title: "Owner",
-      key: "owner",
-      render: (record) => {
-        return <span>{record.isUserOwned ? "me" : record.owner_email}</span>;
+      key: "owner_email",
+      render: (record, row) => {
+        return <span>{row.isUserOwned ? "me" : row.owner_email}</span>;
       },
     },
     {
       title: "Data Source Type",
-      dataIndex: ["type", "name"],
       key: "type",
+      render: (record) => {
+        return <span>{record["name"]}</span>;
+      },
     },
 
     {
       title: "Size",
-      dataIndex: "size",
       key: "size",
       render: (record) => {
         return <FileSize value={record} />;
@@ -177,7 +277,6 @@ export default function DataPage() {
     },
     {
       title: "Created At",
-      dataIndex: "created_at",
       key: "created_at",
       render: (record) => {
         return <LocaleDate value={record} />;
@@ -185,67 +284,66 @@ export default function DataPage() {
     },
     {
       title: "Last Modified",
-      dataIndex: "updated_at",
       key: "updated_at",
       render: (record) => {
-        return <LocaleDate value={record} />;
+        return moment(record).fromNow();
       },
     },
     {
       title: "Action",
       key: "operation",
-      render: (record) => {
+      render: (record, row) => {
         return (
           <Box>
             {!record?.type?.is_external_datasource && (
               <IconButton
-                disabled={!record.isUserOwned}
+                disabled={!row.isUserOwned}
                 onClick={() => {
                   setModalTitle("Add New Data Entry");
-                  setSelectedDataSource(record);
+                  setSelectedDataSource(row);
                   setAddDataSourceModalOpen(true);
                 }}
               >
-                <AddOutlinedIcon />
+                <AddOutlined />
               </IconButton>
             )}
-            {record?.type?.is_external_datasource && (
+            {row?.type?.is_external_datasource && (
               <Tooltip title="External Connection">
                 <span>
                   <IconButton disabled={true}>
-                    <SettingsEthernetIcon />
+                    <SettingsEthernet />
                   </IconButton>
                 </span>
               </Tooltip>
             )}
             <IconButton
-              disabled={!record.isUserOwned}
+              disabled={!row.isUserOwned}
               onClick={() => {
-                setDeleteId(record);
+                setDeleteId(row);
                 setDeleteModalTitle("Delete Data Source");
                 setDeleteModalMessage(
                   <div>
                     Are you sure you want to delete{" "}
-                    <span style={{ fontWeight: "bold" }}>{record.name}</span> ?
+                    <span style={{ fontWeight: "bold" }}>{row.name}</span> ?
                   </div>,
                 );
                 setDeleteConfirmationModalOpen(true);
               }}
             >
-              <DeleteOutlineOutlinedIcon />
+              <DeleteOutlineOutlined />
             </IconButton>
-            {profileFlags.IS_ORGANIZATION_MEMBER && record.isUserOwned && (
+            {profileFlags.IS_ORGANIZATION_MEMBER && row.isUserOwned && (
               <IconButton
                 onClick={() => {
                   setModalTitle("Share Datasource");
-                  setSelectedDataSource(record);
+                  setSelectedDataSource(row);
                   setShareDataSourceModalOpen(true);
                 }}
               >
-                {record.visibility === 0 ? (
-                  <PersonOutlineOutlinedIcon />
+                {row.visibility === 0 ? (
+                  <PersonOutlineOutlined />
                 ) : (
-                  <PeopleOutlineOutlinedIcon />
+                  <PeopleOutlineOutlined />
                 )}
               </IconButton>
             )}
@@ -255,204 +353,51 @@ export default function DataPage() {
     },
   ];
 
-  const expandedRowRender = (data) => {
-    const data_source_entries = data.data_source_entries;
-
-    if (dataSourceEntriesLoading === data.uuid) {
-      return (
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <CircularProgress />
-        </div>
-      );
-    }
-
-    const columns = [
-      {
-        title: "Name",
-        dataIndex: "name",
-        key: "name",
-      },
-      {
-        title: "Size",
-        key: "size",
-        dataIndex: "size",
-        render: (record) => {
-          return <FileSize value={record} />;
-        },
-      },
-      {
-        title: "Status",
-        key: "status",
-        render: (record) => {
-          let color = "success";
-          if (record.status === "FAILED") {
-            color = "error";
-          } else if (record.status === "READY") {
-            color = "success";
-          } else {
-            color = "info";
-          }
-          return (
-            <Chip
-              color={color}
-              key={record.uuid}
-              style={{ cursor: "pointer" }}
-              onClick={() => {
-                setDataSourceEntryData(record);
-                setDataSourceEntryDrawerOpen(true);
-              }}
-              label={
-                record.status.charAt(0) + record.status.slice(1).toLowerCase()
-              }
-              size="small"
-            ></Chip>
-          );
-        },
-      },
-      {
-        title: "Created At",
-        dataIndex: "created_at",
-        key: "created_at",
-        render: (record) => {
-          return <LocaleDate value={record} />;
-        },
-      },
-      {
-        title: "Last Modified",
-        dataIndex: "updated_at",
-        key: "updated_at",
-        render: (record) => {
-          return <LocaleDate value={record} />;
-        },
-      },
-      {
-        title: "Action",
-        key: "operation",
-        render: (record) => {
-          const isAdhocSyncSupported = record?.sync_config;
-
-          return (
-            <Box>
-              <IconButton
-                disabled={!record.isUserOwned}
-                onClick={() => {
-                  setDeleteId(record);
-                  setDeleteModalTitle("Delete Data Source Entry");
-                  setDeleteModalMessage(
-                    <div>
-                      Are you sure you want to delete{" "}
-                      <span style={{ fontWeight: "bold" }}>{record.name}</span>{" "}
-                      ?
-                    </div>,
-                  );
-                  setDeleteConfirmationModalOpen(true);
-                }}
-              >
-                <DeleteOutlineOutlinedIcon className="delete-dataentry-icon" />
-              </IconButton>
-              {isAdhocSyncSupported && (
-                <IconButton
-                  onClick={() => {
-                    axios()
-                      .post(`/api/datasource_entries/${record.uuid}/resync`)
-                      .then((response) => {
-                        reloadDataSourceEntries();
-                        reloadDataSourceEntries();
-                      });
-                  }}
-                >
-                  <SyncOutlinedIcon className="resync-dataentry-icon" />
-                </IconButton>
-              )}
-            </Box>
-          );
-        },
-      },
-    ];
-
-    return (
-      <Table
-        columns={columns}
-        dataSource={data_source_entries}
-        rowKey={(record) => record.uuid}
-        pagination={false}
-        style={{ cursor: "pointer" }}
-        onRow={(record, rowIndex) => {
-          return {
-            onClick: (event) => {
-              if (event.target.tagName === "TD") {
-                setDataSourceEntryData(record);
-                setDataSourceEntryDrawerOpen(true);
-              }
-            },
-          };
-        }}
-      />
+  // Expand the datasource row on click and load the datasource entries
+  const handleRowClick = (row) => {
+    setTableData(
+      tableData.map((item) => {
+        if (item.uuid === row.uuid) {
+          item.expand = !item.expand;
+        }
+        return item;
+      }),
     );
-  };
 
-  const onDataSourceExpand = (expanded, record) => {
-    if (expanded) {
-      let url = `/api/datasources/${record.uuid}/entries`;
-      if (!record.isUserOwned) {
-        url = `/api/org/datasources/${record.uuid}/entries`;
-      }
-      setDataSourceEntriesLoading(record.uuid);
+    setDataSourceEntriesLoading(true);
+    setDataSourceBeingLoaded(row.uuid);
 
-      axios()
-        .get(url)
-        .then((response) => {
-          if (record.isUserOwned) {
-            setDataSourceEntries([
-              ...dataSourceEntries.filter(
-                (dataSourceEntry) =>
-                  dataSourceEntry.datasource.uuid !== record.uuid,
-              ),
-              ...response.data,
-            ]);
-          } else {
-            setOrgDataSourceEntries([
-              ...orgDataSourceEntries.filter(
-                (dataSourceEntry) =>
-                  dataSourceEntry.datasource.uuid !== record.uuid,
-              ),
-              ...response.data,
-            ]);
-          }
-        })
-        .finally(() => {
-          setDataSourceEntriesLoading(null);
-        });
+    let url = `/api/datasources/${row.uuid}/entries`;
+    if (!row.isUserOwned) {
+      url = `/api/org/datasources/${row.uuid}/entries`;
     }
+
+    axios()
+      .get(url)
+      .then((response) => {
+        if (row.isUserOwned) {
+          setDataSourceEntries([
+            ...dataSourceEntries.filter(
+              (dataSourceEntry) => dataSourceEntry.datasource.uuid !== row.uuid,
+            ),
+            ...response.data,
+          ]);
+        } else {
+          setOrgDataSourceEntries([
+            ...orgDataSourceEntries.filter(
+              (dataSourceEntry) => dataSourceEntry.datasource.uuid !== row.uuid,
+            ),
+            ...response.data,
+          ]);
+        }
+      })
+      .finally(() => {
+        setDataSourceEntriesLoading(null);
+      });
   };
 
   return (
     <div id="data-page">
-      {false &&
-        profile &&
-        !profile.openai_key &&
-        !profileFlags?.IS_ORGANIZATION_MEMBER && (
-          <Alert
-            severity="error"
-            style={{ width: "100%", margin: "10px 0", textAlign: "left" }}
-          >
-            <AlertTitle>Missing API Keys</AlertTitle>
-            <p>
-              You are missing API keys for <strong>Open AI</strong>. Please add
-              them in your <Link href="/settings">profile</Link> before you a
-              add datasource. If you don't have an API key, you can get one by
-              visiting your{" "}
-              <Link
-                href="https://platform.openai.com/account/api-keys"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open AI account
-              </Link>
-              .
-            </p>
-          </Alert>
-        )}
       <Grid span={24} style={{ padding: "10px" }}>
         <Grid item style={{ width: "100%", padding: "15px 0px" }}>
           <Button
@@ -467,14 +412,92 @@ export default function DataPage() {
           </Button>
         </Grid>
         <Grid item style={{ width: "100%" }}>
-          <Table
-            dataSource={table_data}
-            columns={columns}
-            pagination={{ pageSize: 10 }}
-            expandable={{ expandedRowRender, onExpand: onDataSourceExpand }}
-            rowKey={(record) => record.uuid}
-            style={{ width: "100%" }}
-          ></Table>
+          <Table stickyHeader aria-label="sticky table">
+            <TableHead>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableCell key={column.key}>
+                    <strong>{column.title}</strong>
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tableData
+                .slice(
+                  (pageNumber - 1) * entriesPerPage,
+                  pageNumber * entriesPerPage,
+                )
+                .map((row, index) => {
+                  return [
+                    [
+                      <TableRow
+                        hover
+                        key={row.uuid}
+                        sx={{
+                          cursor: "pointer",
+                          backgroundColor: row.expand ? "#f5f5f5" : "inherit",
+                        }}
+                        onClick={() => {
+                          handleRowClick(row);
+                        }}
+                      >
+                        {columns.map((column) => {
+                          const value = row[column.key];
+                          return (
+                            <TableCell
+                              key={column.key}
+                              sx={{
+                                fontWeight: row.expand ? "bold" : "inherit",
+                              }}
+                            >
+                              {column.render
+                                ? column.render(value, row)
+                                : value}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>,
+                      <TableRow key={`${row.uuid}_details`}>
+                        <TableCell
+                          colSpan={7}
+                          sx={{ padding: row.expand ? "0" : "inherit" }}
+                        >
+                          <Collapse
+                            in={row.expand}
+                            timeout="auto"
+                            unmountOnExit
+                          >
+                            <Box sx={{ margin: 1 }}>
+                              {dataSourceEntriesLoading &&
+                              dataSourceBeingLoaded === row.uuid ? (
+                                <CircularProgress />
+                              ) : (
+                                <DataSourceEntries
+                                  dataSourceEntryData={
+                                    row.data_source_entries || []
+                                  }
+                                />
+                              )}
+                            </Box>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>,
+                    ],
+                  ];
+                })}
+            </TableBody>
+          </Table>
+          <Pagination
+            count={Math.ceil(tableData.length / entriesPerPage)}
+            variant="outlined"
+            shape="rounded"
+            page={pageNumber}
+            onChange={(event, value) => {
+              setPageNumber(value);
+            }}
+            sx={{ marginTop: 2, float: "right" }}
+          />
         </Grid>
       </Grid>
       {addDataSourceModalOpen && (
@@ -508,25 +531,11 @@ export default function DataPage() {
                   reloadDataSources();
                   setDeleteConfirmationModalOpen(false);
                 });
-            } else {
-              axios()
-                .delete(`api/datasource_entries/${param.uuid}`)
-                .then((res) => {
-                  reloadDataSourceEntries();
-                  setDeleteConfirmationModalOpen(false);
-                });
             }
           }}
           onCancel={() => {
             setDeleteConfirmationModalOpen(false);
           }}
-        />
-      )}
-      {dataSourceEntryDrawerOpen && (
-        <DataSourceEntryContent
-          onCancel={() => setDataSourceEntryDrawerOpen(false)}
-          dataSourceEntryData={dataSourceEntryData}
-          open={dataSourceEntryDrawerOpen}
         />
       )}
       {shareDataSourceModalOpen && (
