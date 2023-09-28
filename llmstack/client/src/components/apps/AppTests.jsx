@@ -1,9 +1,14 @@
 import { Button, IconButton, Box, Chip, Grid } from "@mui/material";
 import { TextareaAutosize } from "@mui/base";
-
 import { axios } from "../../data/axios";
-
-import { Table } from "antd";
+import {
+  Collapse,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
@@ -12,7 +17,6 @@ import PlayCircleFilledWhiteOutlinedIcon from "@mui/icons-material/PlayCircleFil
 import { LocaleDate } from "../../components/Utils";
 import { AddTestSetModal } from "../testset/AddTestSetModal";
 import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
-// import RunTestSetModal from "../testset/RunTestSetModal";
 
 export function AppTests({ app }) {
   const [deleteModalTitle, setDeleteModalTitle] = useState("");
@@ -21,7 +25,7 @@ export function AppTests({ app }) {
   const [addTestSetModalOpen, setAddTestSetModalOpen] = useState(false);
   const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
     useState(false);
-  const [table_data, setTableData] = useState({});
+  const [tableData, setTableData] = useState({});
   const [modalTitle, setModalTitle] = useState("Create Test Set");
   const [selectTestSet, setSelectTestSet] = useState(null);
   const [testSetStatus, setTestSetStatus] = useState({});
@@ -42,6 +46,7 @@ export function AppTests({ app }) {
             testcases: entry.testcases.map((testcase) => {
               return { ...testcase };
             }),
+            expand: false,
           };
           setTableData(data_map);
         });
@@ -123,43 +128,42 @@ export function AppTests({ app }) {
       });
   }
 
-  const expandedRowRender = (data) => {
+  const TestCases = (data) => {
     const testcases = data.testcases;
 
     const columns = [
       {
         title: "Input Data",
-        width: "20%",
-        render: (record) => {
+        key: "input_data",
+        render: (record, row) => {
           return (
             <TextareaAutosize
               disabled={true}
               minRows={3}
-              value={JSON.stringify(record.input_data, null, 2)}
+              value={JSON.stringify(row.input_data, null, 2)}
             />
           );
         },
       },
-
       {
         title: "Expected Output",
-        width: "20%",
+        key: "expected_output",
         scroll: { x: 400 },
-        render: (record) => {
+        render: (record, row) => {
           return (
             <TextareaAutosize
               disabled={true}
               minRows={3}
-              value={record.expected_output}
+              value={row.expected_output}
             />
           );
         },
       },
       {
         title: "Output Data",
-        width: "20%",
-        render: (record) => {
-          const output_result = testCaseRunOutput[record.uuid];
+        key: "output_data",
+        render: (record, row) => {
+          const output_result = testCaseRunOutput[row.uuid];
 
           return (
             <TextareaAutosize
@@ -176,9 +180,9 @@ export function AppTests({ app }) {
       },
       {
         title: "Status",
-        width: "10%",
-        render: (record) => {
-          const record_status = testCaseStatus[record.uuid];
+        key: "status",
+        render: (record, row) => {
+          const record_status = testCaseStatus[row.uuid];
 
           if (!record_status) {
             return null;
@@ -195,20 +199,18 @@ export function AppTests({ app }) {
       },
       {
         title: "Action",
-        width: "10%",
         key: "operation",
-        render: (record) => {
+        render: (record, row) => {
           return (
             <Box>
               <IconButton
                 onClick={() => {
-                  setDeleteId(record);
+                  setDeleteId(row);
                   setDeleteModalTitle("Delete Test Case");
                   setDeleteModalMessage(
                     <div>
                       Are you sure you want to delete{" "}
-                      <span style={{ fontWeight: "bold" }}>{record.name}</span>{" "}
-                      ?
+                      <span style={{ fontWeight: "bold" }}>{row.name}</span> ?
                     </div>,
                   );
                   setDeleteConfirmationModalOpen(true);
@@ -221,7 +223,7 @@ export function AppTests({ app }) {
                   setTestSetStatus({});
                   setTestCaseStatus({});
                   setTestCaseRunOutput({});
-                  runTestCase(record);
+                  runTestCase(row);
                 }}
               >
                 <PlayCircleFilledWhiteOutlinedIcon />
@@ -233,27 +235,51 @@ export function AppTests({ app }) {
     ];
 
     return (
-      <Table
-        columns={columns}
-        dataSource={testcases}
-        rowKey={(record) => record.uuid}
-        pagination={false}
-      />
+      <Table>
+        <TableHead>
+          <TableRow>
+            {columns.map((column) => (
+              <TableCell key={column.key} align={column.align}>
+                {column.title}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {testcases.map((row) => {
+            return (
+              <TableRow
+                key={row.uuid}
+                hover
+                sx={{ cursor: "pointer" }}
+                onClick={() => {
+                  setSelectTestSet(row);
+                  setAddTestSetModalOpen(true);
+                }}
+              >
+                {columns.map((column) => {
+                  const value = row[column.key];
+                  return (
+                    <TableCell key={column.key} align={column.align}>
+                      {column.render ? column.render(value, row) : value}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     );
   };
 
   const columns = [
     {
       title: "Name",
-      dataIndex: "name",
       key: "name",
-      width: "35%",
     },
     {
       title: "Last Modified",
-      width: "25%",
-      dataIndex: "last_updated_at",
-      ellipsis: true,
       key: "last_updated_at",
       render: (record) => {
         return <LocaleDate value={record} />;
@@ -261,9 +287,9 @@ export function AppTests({ app }) {
     },
     {
       title: "Status",
-      width: "20%",
-      render: (record) => {
-        const record_status = testSetStatus[record.uuid];
+      key: "status",
+      render: (record, row) => {
+        const record_status = testSetStatus[row.uuid];
         if (record_status === undefined) {
           return null;
         }
@@ -279,15 +305,14 @@ export function AppTests({ app }) {
     },
     {
       title: "Action",
-      width: "20%",
       key: "operation",
-      render: (record) => {
+      render: (record, row) => {
         return (
           <Box>
             <IconButton
               onClick={() => {
                 setModalTitle("Add Test Entry");
-                setSelectTestSet(record);
+                setSelectTestSet(row);
                 setAddTestSetModalOpen(true);
               }}
             >
@@ -295,12 +320,12 @@ export function AppTests({ app }) {
             </IconButton>
             <IconButton
               onClick={() => {
-                setDeleteId(record);
+                setDeleteId(row);
                 setDeleteModalTitle("Delete Test Set");
                 setDeleteModalMessage(
                   <div>
                     Are you sure you want to delete{" "}
-                    <span style={{ fontWeight: "bold" }}>{record.name}</span> ?
+                    <span style={{ fontWeight: "bold" }}>{row.name}</span> ?
                   </div>,
                 );
                 setDeleteConfirmationModalOpen(true);
@@ -313,7 +338,7 @@ export function AppTests({ app }) {
                 setTestSetStatus({});
                 setTestCaseStatus({});
                 setTestCaseRunOutput({});
-                runTestSet(record);
+                runTestSet(row);
               }}
             >
               <PlayCircleFilledWhiteOutlinedIcon />
@@ -340,18 +365,54 @@ export function AppTests({ app }) {
           </Button>
         </Grid>
         <Grid item style={{ width: "100%" }}>
-          <Table
-            dataSource={Object.values(table_data)}
-            columns={columns}
-            pagination={false}
-            expandable={{
-              expandedRowRender,
-              expandRowByClick: true,
-              defaultExpandAllRows: true,
-            }}
-            rowKey={(record) => record.uuid}
-            style={{ width: "100%" }}
-          ></Table>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableCell key={column.key} align={column.align}>
+                    {column.title}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.values(tableData).map((row) => {
+                return [
+                  <TableRow
+                    key={row.uuid}
+                    hover
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => {
+                      setTableData((prev) => {
+                        prev[row.uuid].expand = !prev[row.uuid].expand;
+                        return prev;
+                      });
+                      setSelectTestSet(row);
+                    }}
+                  >
+                    {columns.map((column) => {
+                      const value = row[column.key];
+                      return (
+                        <TableCell key={column.key} align={column.align}>
+                          {column.render ? column.render(value, row) : value}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>,
+                  <TableRow key={row.uuid + "-testcases"}>
+                    <TableCell
+                      colSpan={columns.length}
+                      sx={{ padding: row.expand ? "0" : "inherit" }}
+                    >
+                      <Collapse in={row.expand} timeout="auto" unmountOnExit>
+                        <TestCases testcases={row.testcases} />
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>,
+                ];
+              })}
+            </TableBody>
+          </Table>
         </Grid>
       </Grid>
       {addTestSetModalOpen && (
