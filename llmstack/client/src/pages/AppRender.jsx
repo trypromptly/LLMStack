@@ -153,6 +153,7 @@ function AppRenderPage({ headless = false }) {
       <Box
         sx={{
           justifyContent: "center",
+          textAlign: "center",
           bottom: "0px",
           margin: "0 auto",
           paddingTop: "10px",
