@@ -49,7 +49,7 @@ export function AddProcessorDivider({
   const defaultApiBackend =
     profileFlags.IS_ORGANIZATION_MEMBER && organization?.default_api_backend
       ? organization?.default_api_backend
-      : apiBackends?.find((backend) => backend.name === "ChatGPT")?.id;
+      : apiBackends?.find((backend) => backend.id === "openai/chatgpt")?.id;
 
   const [apiProvider, setApiProvider] = useState("");
   const [apiBackend, setApiBackend] = useState("");

@@ -55,14 +55,11 @@ export default function ApiBackendSelector() {
   useEffect(() => {
     if (!apiProviderSelected && apibackends && apibackends.length > 0) {
       setApiProviderSelected(
-        apibackends.find(
-          (backend) => backend.api_endpoint === "chat/completions",
-        )?.api_provider.name,
+        apibackends.find((backend) => backend.id === "openai/chatgpt")
+          ?.api_provider.name,
       );
       setApiBackendSelected(
-        apibackends.find(
-          (backend) => backend.api_endpoint === "chat/completions",
-        ),
+        apibackends.find((backend) => backend.id === "openai/chatgpt"),
       );
     } else if (
       !apiBackendSelected &&
@@ -70,9 +67,7 @@ export default function ApiBackendSelector() {
       apiProviderSelected === "Open AI"
     ) {
       setApiBackendSelected(
-        apibackends.find(
-          (backend) => backend.api_endpoint === "chat/completions",
-        ),
+        apibackends.find((backend) => backend.id === "opennai/chatgpt"),
       );
     }
   }, [
