@@ -109,7 +109,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
   const [errors, setErrors] = useState(null);
   const [showChat, setShowChat] = useState(!embed);
   const [chatBubbleStyle, setChatBubbleStyle] = useState({
-    backgroundColor: app?.data?.config?.window_color,
+    backgroundColor: app?.data?.config?.window_color || "#0f477e",
     color: "white",
     position: "fixed",
     right: 16,
@@ -341,7 +341,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
           <div
             style={{
               display: "flex",
-              backgroundColor: app?.data?.config.window_color,
+              backgroundColor: app?.data?.config.window_color || "#0f477e",
               borderRadius: "8px 8px 0px 0px",
             }}
           >
