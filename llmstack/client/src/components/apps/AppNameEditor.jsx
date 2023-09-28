@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { EditOutlined } from "@ant-design/icons";
+import { EditOutlined } from "@mui/icons-material";
 import { TextField } from "@mui/material";
 
 export function AppNameEditor({ appName, setAppName }) {
@@ -34,7 +34,7 @@ export function AppNameEditor({ appName, setAppName }) {
           onClick={() => setShowInput(true)}
           style={{ fontSize: "20px", margin: "5px 0", textAlign: "left" }}
         >
-          {appName} <EditOutlined style={{ fontSize: "12px", color: "#666" }} />
+          {appName} <EditOutlined style={{ fontSize: "14px", color: "#666" }} />
         </h1>
       )}
     </div>

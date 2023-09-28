@@ -1,5 +1,5 @@
-import { LogoutOutlined } from "@ant-design/icons";
 import { postData } from "../pages/dataUtil";
+import { LogoutOutlined } from "@mui/icons-material";
 
 export const onLogoutClick = async () => {
   postData(
