@@ -81,7 +81,7 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
         title='Chat history in doc search', default=0, description='Number of messages from chat history to include in doc search', advanced_parameter=True,
     )
     hybrid_semantic_search_ratio: Optional[float] = Field(
-        default=0.75, description='Ratio of semantic search to hybrid search', ge=0.0, le=1.0, multiple_of=0.01, advanced_parameter=True,
+        default=1, description='Ratio of semantic search to hybrid search', ge=0.0, le=1.0, multiple_of=0.01, advanced_parameter=True,
     )
 
 
