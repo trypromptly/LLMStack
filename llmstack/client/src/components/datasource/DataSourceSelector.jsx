@@ -34,13 +34,18 @@ export function DataSourceSelector(props) {
         input={<Input id="select-multiple-chip" />}
         renderValue={(selected) => (
           <div>
-            {selected.map((value) => (
-              <Chip
-                key={value}
-                label={uniqueDataSources.find((ds) => ds.uuid === value).name}
-                style={{ margin: 2, borderRadius: 5 }}
-              />
-            ))}
+            {(typeof selected === "string" ? [selected] : selected).map(
+              (value) => (
+                <Chip
+                  key={value}
+                  label={
+                    uniqueDataSources.find((ds) => ds.uuid === value)?.name ||
+                    value
+                  }
+                  style={{ margin: 2, borderRadius: 5 }}
+                />
+              ),
+            )}
           </div>
         )}
       >
