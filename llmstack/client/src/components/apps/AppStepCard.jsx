@@ -5,6 +5,8 @@ import openAiIcon_light from "../../assets/images/openai-icon-light.png";
 import openAiIcon_dark from "../../assets/images/openai-icon-dark.png";
 import stabilityAiIcon_light from "../../assets/images/stabilityai-icon-light.png";
 import stabilityAiIcon_dark from "../../assets/images/stabilityai-icon-dark.png";
+import anthropicIcon_light from "../../assets/images/anthropic-icon-light.png";
+import anthropicIcon_dark from "../../assets/images/anthropic-icon-dark.png";
 import cohereIcon_light from "../../assets/images/cohere-icon-light.png";
 import cohereIcon_dark from "../../assets/images/cohere-icon-dark.png";
 import azureIcon_light from "../../assets/images/azure-icon-light.png";
@@ -20,6 +22,8 @@ const getIconImage = (icon, isActive) => {
   switch (icon?.replaceAll(" ", "").toLowerCase()) {
     case "promptly":
       return promptlyIcon_light;
+    case "anthropic":
+      return isActive ? anthropicIcon_dark : anthropicIcon_light;
     case "openai":
       return isActive ? openAiIcon_dark : openAiIcon_light;
     case "stabilityai":
