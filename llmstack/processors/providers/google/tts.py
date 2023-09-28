@@ -1,8 +1,11 @@
 import logging
+import orjson as json
 from typing import Optional
 
 import requests
 from asgiref.sync import async_to_sync
+from google.auth.transport.requests import Request
+from google.oauth2 import service_account
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -47,7 +50,9 @@ class TextToSpeechOutput(ApiProcessorSchema):
 class TextToSpeechConfiguration(ApiProcessorSchema):
     voice: VoiceConfig = Field(
         default=VoiceConfig(), description='Voice configuration.',
+        advanced_parameter=False,
     )
+    project_id: Optional[str] = Field(description='Google project ID.')
     audio_config: AudioConfig = Field(
         default=AudioConfig(), description='Audio configuration.',
     )
@@ -75,9 +80,36 @@ class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeec
 
     def process(self) -> dict:
         api_url = 'https://texttospeech.googleapis.com/v1/text:synthesize'
-        token = self._config.auth_token if self._config.auth_token else self._env.get(
-            'google_api_key', None,
+        token = None
+        project_id = None
+        google_service_account_json_key = json.loads(
+            self._env.get('google_service_account_json_key', '{}'),
         )
+
+        if self._config.project_id:
+            project_id = self._config.project_id
+        else:
+            project_id = google_service_account_json_key.get(
+                'project_id', None,
+            )
+
+        if self._config.auth_token:
+            token = self._config.auth_token
+        else:
+            credentials = service_account.Credentials.from_service_account_info(
+                google_service_account_json_key,
+            )
+            credentials = credentials.with_scopes(
+                ['https://www.googleapis.com/auth/cloud-platform'],
+            )
+            credentials.refresh(Request())
+            token = credentials.token
+
+        if token is None:
+            raise Exception('No auth token provided.')
+
+        if project_id is None:
+            raise Exception('No project ID provided.')
 
         headers = {
             'Authorization': f'Bearer {token}',
@@ -85,7 +117,7 @@ class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeec
         }
 
         data = {
-            'input': {'text': input.get('input_text')},
+            'input': {'text': self._input.input_text},
             'voice': self._config.voice.dict(),
             'audioConfig': self._config.audio_config.dict(),
         }
