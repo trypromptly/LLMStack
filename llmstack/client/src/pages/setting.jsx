@@ -310,31 +310,41 @@ const SettingPage = () => {
                   style={{ height: 50, margin: 10, display: "block" }}
                 />
               )}
-              <Button
-                component="label"
-                variant="outlined"
-                startIcon={<FileUpload />}
+              <Tooltip
+                title={
+                  !profileFlags.CAN_UPLOAD_APP_LOGO
+                    ? "You need to be a Pro subscriber to upload a custom logo"
+                    : ""
+                }
               >
-                Upload
-                <VisuallyHiddenInput
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const files = e.target.files;
-                    if (files && files.length > 0) {
-                      const reader = new FileReader();
-                      reader.readAsDataURL(files[0]);
-                      reader.onload = (e) => {
-                        setFormData({
-                          ...formData,
-                          logo: e.target?.result,
-                        });
-                        setUpdateKeys(updateKeys.add("logo"));
-                      };
-                    }
-                  }}
-                />
-              </Button>
+                <Button
+                  component="label"
+                  variant="outlined"
+                  startIcon={<FileUpload />}
+                  disabled={!profileFlags.CAN_UPLOAD_APP_LOGO}
+                >
+                  Upload
+                  <VisuallyHiddenInput
+                    type="file"
+                    accept="image/*"
+                    disabled={!profileFlags.CAN_UPLOAD_APP_LOGO}
+                    onChange={(e) => {
+                      const files = e.target.files;
+                      if (files && files.length > 0) {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(files[0]);
+                        reader.onload = (e) => {
+                          setFormData({
+                            ...formData,
+                            logo: e.target?.result,
+                          });
+                          setUpdateKeys(updateKeys.add("logo"));
+                        };
+                      }
+                    }}
+                  />
+                </Button>
+              </Tooltip>
             </Box>
             <Divider />
             {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT ===
