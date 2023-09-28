@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { CircularProgress, Grid } from "@mui/material";
@@ -44,6 +44,7 @@ function CustomVoiceRecorderWidget(props) {
 }
 
 export function WebAppRenderer({ app, ws }) {
+  const outputRef = useRef(null);
   const { schema, uiSchema } = getJSONSchemaFromInputFields(
     app?.data?.input_fields,
   );
@@ -58,6 +59,12 @@ export function WebAppRenderer({ app, ws }) {
   );
   const chunkedOutput = useRef({});
   const streamStarted = useRef(false);
+
+  useEffect(() => {
+    if (outputRef.current) {
+      window.scrollTo(0, outputRef.current.scrollHeight);
+    }
+  }, [output]);
 
   const SubmitButton = (props) => {
     const submitButtonText =
@@ -148,6 +155,7 @@ export function WebAppRenderer({ app, ws }) {
         padding: "0 10px",
         textAlign: "left",
       }}
+      ref={outputRef}
     >
       <LexicalRenderer text={app.data?.config?.input_template} />
       <ThemeProvider theme={defaultTheme}>
