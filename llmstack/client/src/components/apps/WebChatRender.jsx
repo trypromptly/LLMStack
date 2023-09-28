@@ -438,9 +438,10 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
                         label={message}
                         sx={{ margin: "5px 2px" }}
                         onClick={() =>
-                          app?.input_fields?.length > 0 &&
+                          app?.data?.input_fields?.length > 0 &&
                           runApp({
-                            [Object.keys(app?.input_fields)[0].name]: message,
+                            [Object.keys(app?.data?.input_fields)[0].name]:
+                              message,
                           })
                         }
                       />
