@@ -16,7 +16,6 @@ from llmstack.common.utils.db_models import ArrayField
 
 logger = logging.getLogger(__name__)
 
-
 class AppVisibility(models.IntegerChoices):
     PRIVATE = 0, 'Private'  # only the owner of the app and listed emails can access the app
     # only members of the organization can access the app
