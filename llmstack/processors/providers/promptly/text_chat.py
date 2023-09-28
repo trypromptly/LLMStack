@@ -81,7 +81,7 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
         title='Chat history in doc search', default=0, description='Number of messages from chat history to include in doc search', advanced_parameter=True,
     )
     hybrid_semantic_search_ratio: Optional[float] = Field(
-        default=1, description='Ratio of semantic search to hybrid search', ge=0.0, le=1.0, multiple_of=0.01, advanced_parameter=True,
+        default=0.75, description='Ratio of semantic search to hybrid search', ge=0.0, le=1.0, multiple_of=0.01, advanced_parameter=True,
     )
 
 
@@ -191,6 +191,13 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         importlib.reload(openai)
         output_stream = self._output_stream
         docs = self._search_datasources(input)
+
+        if docs and len(docs) > 0:
+            if 'score' in docs[0].metadata:
+                docs = sorted(docs, key=lambda d: d.metadata['score'], reverse=True)[
+                    :self._config.k]
+            else:
+                docs = docs[:self._config.k]
 
         if (len(docs) > 0):
             self._context = ''

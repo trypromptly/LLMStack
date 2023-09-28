@@ -23,6 +23,7 @@ class DataSourceSearchInput(ApiProcessorSchema):
 class DocumentMetadata(BaseModel):
     certainty: float = Field(0.0, description='Certainty of the document')
     distance: float = Field(0.0, description='Distance of the document')
+    score: Optional[float] = Field(None, description='Score of the document')
 
 
 class Document(ApiProcessorSchema):
@@ -101,6 +102,13 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
                 logger.exception('Error while searching')
                 raise Exception('Error while searching')
 
+        if documents and len(documents) > 0:
+            if 'score' in documents[0].metadata:
+                documents = sorted(documents, key=lambda d: d.metadata['score'], reverse=True)[
+                    :self._config.document_limit]
+            else:
+                documents = documents[:self._config.document_limit]
+
         answers = []
         answer_text = ''
         for document in documents:
@@ -116,6 +124,7 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
                     metadata=DocumentMetadata(
                         certainty=document.metadata['certainty'] if 'certainty' in document.metadata else 0.0,
                         distance=document.metadata['distance'] if 'distance' in document.metadata else 0.0,
+                        score=document.metadata['score'] if 'score' in document.metadata else None,
                     ),
                     additional_properties=document.metadata
                 ),
