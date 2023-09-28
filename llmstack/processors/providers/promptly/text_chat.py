@@ -60,7 +60,7 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
         description='Instructions for the chatbot')
 
     k: int = Field(
-        title='Documents Count', default=8,
+        title='Documents Count', default=5,
         description='Number of documents from similarity search to use as context',
     )
     chat_history_limit: int = Field(
