@@ -440,8 +440,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
                         onClick={() =>
                           app?.data?.input_fields?.length > 0 &&
                           runApp({
-                            [Object.keys(app?.data?.input_fields)[0].name]:
-                              message,
+                            [app?.data?.input_fields[0].name]: message,
                           })
                         }
                       />
