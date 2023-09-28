@@ -5,6 +5,14 @@ from .models import DataSourceEntry
 from .models import DataSourceType
 
 
-admin.site.register(DataSourceEntry)
-admin.site.register(DataSourceType)
+class DataSourceEntryAdmin(admin.ModelAdmin):
+    search_fields = ['uuid', 'name', 'datasource__name']
+    
+
+class DataSourceAdmin(admin.ModelAdmin):
+    search_fields = ['uuid', 'owner__email']
+
+
+admin.site.register(DataSourceEntry, DataSourceEntryAdmin)
+admin.site.register(DataSourceType, DataSourceAdmin)
 admin.site.register(DataSource)
