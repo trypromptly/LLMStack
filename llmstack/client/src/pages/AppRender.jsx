@@ -150,7 +150,14 @@ function AppRenderPage({ headless = false }) {
           <WebChatRender app={app} isMobile={isMobile} ws={ws} />
         )}
       </Box>
-      <Box sx={{ justifyContent: "center", bottom: "0px", marginTop: 10 }}>
+      <Box
+        sx={{
+          justifyContent: "center",
+          bottom: "0px",
+          margin: "0 auto",
+          paddingTop: "10px",
+        }}
+      >
         {headless && app.has_footer && (
           <Typography sx={{ textAlign: "center" }} variant="caption">
             Powered by{" "}
