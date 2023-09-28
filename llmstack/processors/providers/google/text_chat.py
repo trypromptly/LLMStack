@@ -51,15 +51,14 @@ class TextChatExample(BaseModel):
 
 
 class TextChatInput(ApiProcessorSchema):
+    messages: List[TextChatContent] = Field(
+        description='Conversation history provided to the model in a structured alternate-author form. Messages appear in chronological order: oldest first, newest last. When the history of messages causes the input to exceed the maximum length, the oldest messages are removed until the entire prompt is within the allowed limit.', default=[TextChatContent(content='', author='user')],
+    )
     context: Optional[str] = Field(
         description='Context shapes how the model responds throughout the conversation. For example, you can use context to specify words the model can or cannot use, topics to focus on or avoid, or the response format or style.',
     )
     examples: Optional[List[TextChatExample]] = Field(
         description='List of structured messages to the model to learn how to respond to the conversation.', default=[TextChatExample(input=TextChatContent(content='Hello', author='user'), output=TextChatContent(content='Hi, how are you?', author='assistant'))],
-    )
-
-    messages: List[TextChatContent] = Field(
-        description='Conversation history provided to the model in a structured alternate-author form. Messages appear in chronological order: oldest first, newest last. When the history of messages causes the input to exceed the maximum length, the oldest messages are removed until the entire prompt is within the allowed limit.', default=[TextChatContent(content='', author='user')],
     )
 
 

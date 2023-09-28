@@ -96,6 +96,7 @@ def num_tokens_from_messages(messages, model='gpt-35-turbo'):
 class AzureChatCompletionsConfiguration(AzureOpenAIChatCompletionsAPIProcessorConfiguration, ApiProcessorSchema):
     base_url: Optional[str] = Field(
         description='This value can be found in the Keys & Endpoint section when examining your resource from the Azure portal. An example endpoint is: https://docs-test-001.openai.azure.com/.',
+        advanced_parameter=False
     )
 
     deployment_name: ChatCompletionsModel = Field(
