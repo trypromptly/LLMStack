@@ -44,7 +44,7 @@ class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGene
     """
     @staticmethod
     def name() -> str:
-        return 'local ai/image generations'
+        return 'Image Generations'
 
     @staticmethod
     def slug() -> str:

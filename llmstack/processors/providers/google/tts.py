@@ -59,7 +59,7 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
 class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeechOutput, TextToSpeechConfiguration]):
     @staticmethod
     def name() -> str:
-        return 'google_text_to_speech'
+        return 'Text to Speech'
 
     @staticmethod
     def slug() -> str:

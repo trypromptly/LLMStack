@@ -83,7 +83,7 @@ class ImageToImage(ApiProcessorInterface[ImageToImageInput, ImageToImageOutput, 
     """
     @staticmethod
     def name() -> str:
-        return 'stability ai/image2image'
+        return 'Image2Image'
 
     @staticmethod
     def slug() -> str:
