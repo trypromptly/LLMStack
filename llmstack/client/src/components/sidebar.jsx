@@ -111,7 +111,7 @@ function Menu({ menuItems }) {
               style={{
                 fontSize: "12px",
                 fontWeight: "bold",
-                margin: "0px 0 10px 0",
+                margin: "0px 0 5px 0",
               }}
             >
               {item.label}
