@@ -12,6 +12,7 @@ import validator from "@rjsf/validator-ajv8";
 import { Liquid } from "liquidjs";
 import "./WebAppRenderer.css";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
+import { ContentCopyOutlined } from "@mui/icons-material";
 
 const defaultTheme = createTheme({
   components: {
@@ -155,7 +156,6 @@ export function WebAppRenderer({ app, ws }) {
         padding: "0 10px",
         textAlign: "left",
       }}
-      ref={outputRef}
     >
       <LexicalRenderer text={app.data?.config?.input_template} />
       <ThemeProvider theme={defaultTheme}>
@@ -190,7 +190,20 @@ export function WebAppRenderer({ app, ws }) {
           }}
         />
       </ThemeProvider>
-      <div style={{ marginTop: 50 }}>
+      <div style={{ marginTop: 10 }} ref={outputRef}>
+        {output && !isRunning && (
+          <Button
+            startIcon={<ContentCopyOutlined />}
+            onClick={() => navigator.clipboard.writeText(output)}
+            sx={{
+              justifyContent: "flex-end",
+              textTransform: "none",
+              width: "100%",
+            }}
+          >
+            Copy
+          </Button>
+        )}
         {isRunning && !streamStarted.current && !errors && (
           <Grid
             sx={{
