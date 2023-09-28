@@ -98,6 +98,10 @@ class TextChatProcessor(ApiProcessorInterface[TextChatInput, TextChatOutput, Tex
         return 'text_chat'
 
     @staticmethod
+    def description() -> str:
+        return 'Chat completions from Google Vertex AI'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'google'
 

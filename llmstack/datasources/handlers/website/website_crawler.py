@@ -44,6 +44,10 @@ class WebsiteCrawlerDataSource(DataSourceProcessor[WebsiteCrawlerSchema]):
         return 'website_crawler'
 
     @staticmethod
+    def description() -> str:
+        return 'Website crawler'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

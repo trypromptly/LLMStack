@@ -59,10 +59,14 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
     @staticmethod
     def name() -> str:
         return 'Datasource Search'
-    
+
     @staticmethod
     def slug() -> str:
         return 'datasource_search'
+
+    @staticmethod
+    def description() -> str:
+        return 'Search across your data sources'
 
     @staticmethod
     def provider_slug() -> str:
@@ -96,7 +100,6 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
             except:
                 logger.exception('Error while searching')
                 raise Exception('Error while searching')
-
 
         answers = []
         answer_text = ''

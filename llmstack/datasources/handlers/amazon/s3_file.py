@@ -81,6 +81,10 @@ class S3FileDataSource(DataSourceProcessor[S3FileSchema]):
         return 's3_file'
 
     @staticmethod
+    def description() -> str:
+        return 'Process a file from S3'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'amazon'
 

@@ -90,6 +90,10 @@ class ImageToImage(ApiProcessorInterface[ImageToImageInput, ImageToImageOutput, 
         return 'image2image'
 
     @staticmethod
+    def description() -> str:
+        return 'Generates images from images'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'stabilityai'
 

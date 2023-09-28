@@ -44,6 +44,10 @@ class DocxFileDataSource(DataSourceProcessor[DocxFileSchema]):
         return 'docx_file'
 
     @staticmethod
+    def description() -> str:
+        return 'DOCX file'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

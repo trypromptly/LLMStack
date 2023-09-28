@@ -47,6 +47,10 @@ class TxtFileDataSource(DataSourceProcessor[TxtFileSchema]):
         return 'txt_file'
 
     @staticmethod
+    def description() -> str:
+        return 'TXT file'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

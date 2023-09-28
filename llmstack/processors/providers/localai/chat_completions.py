@@ -114,6 +114,10 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionInput, ChatCompletions
         return 'chatgpt'
 
     @staticmethod
+    def description() -> str:
+        return 'Chat completions from LocalAI'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'localai'
 

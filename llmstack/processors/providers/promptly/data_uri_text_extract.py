@@ -69,10 +69,14 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
     @staticmethod
     def name() -> str:
         return 'File Extractor'
-    
+
     @staticmethod
     def slug() -> str:
         return 'data_uri_text_extract'
+
+    @staticmethod
+    def description() -> str:
+        return 'Extract text from file represened as data uri'
 
     @staticmethod
     def provider_slug() -> str:

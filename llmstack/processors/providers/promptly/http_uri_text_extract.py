@@ -53,10 +53,14 @@ class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput, HttpUr
     @staticmethod
     def name() -> str:
         return 'URL Extractor'
-    
+
     @staticmethod
     def slug() -> str:
         return 'http_uri_text_extract'
+
+    @staticmethod
+    def description() -> str:
+        return 'Extracts text from a given URL. Links can point to YouTube, PDF, PPTX, DOC, TEXT or XML files'
 
     @staticmethod
     def provider_slug() -> str:

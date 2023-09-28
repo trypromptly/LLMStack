@@ -26,6 +26,10 @@ class TestProcessor(BaseProcessor[TestInputModel, TestOutputModel, TestConfigura
         return 'test_processor'
 
     @staticmethod
+    def description() -> str:
+        return 'Test Processor'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

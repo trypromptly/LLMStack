@@ -39,6 +39,10 @@ class TextDataSource(DataSourceProcessor[TextSchema]):
         return 'text'
 
     @staticmethod
+    def description() -> str:
+        return 'Text'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

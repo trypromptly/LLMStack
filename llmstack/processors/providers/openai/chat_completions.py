@@ -195,6 +195,10 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionsInput, ChatCompletion
         return 'chatgpt'
 
     @staticmethod
+    def description() -> str:
+        return 'Takes a series of messages as input, and return a model-generated message as output'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'openai'
 

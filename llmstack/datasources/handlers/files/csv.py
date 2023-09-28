@@ -45,6 +45,10 @@ class CSVFileDataSource(DataSourceProcessor[CSVFileSchema]):
         return 'csv_file'
 
     @staticmethod
+    def description() -> str:
+        return 'CSV file'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

@@ -51,6 +51,10 @@ class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGene
         return 'image_generations'
 
     @staticmethod
+    def description() -> str:
+        return 'Image generations with LocalAI'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'localai'
 

@@ -45,6 +45,10 @@ class Generate(ApiProcessorInterface[GenerateInput, GenerateOutput, GenerateConf
         return 'generate'
 
     @staticmethod
+    def description() -> str:
+        return 'Generates completions for a given prompt'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'cohere'
 

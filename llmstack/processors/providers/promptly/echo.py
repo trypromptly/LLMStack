@@ -34,6 +34,10 @@ class EchoProcessor(ApiProcessorInterface[EchoProcessorInput, EchoProcessorOutpu
         return 'echo'
 
     @staticmethod
+    def description() -> str:
+        return 'Echoes the input string'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

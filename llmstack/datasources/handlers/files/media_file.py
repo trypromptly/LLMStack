@@ -47,6 +47,10 @@ class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
         return 'media_file'
 
     @staticmethod
+    def description() -> str:
+        return 'Media file'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

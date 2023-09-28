@@ -55,6 +55,10 @@ class AudioTranscription(ApiProcessorInterface[AudioTranscriptionInput, AudioTra
         return 'audio_transcriptions'
 
     @staticmethod
+    def description() -> str:
+        return 'Transcribes the given audio file into text'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'openai'
 

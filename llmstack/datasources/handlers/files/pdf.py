@@ -68,6 +68,10 @@ class PDFDataSource(DataSourceProcessor[PdfSchema]):
         return 'pdf'
 
     @staticmethod
+    def description() -> str:
+        return 'PDF file'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

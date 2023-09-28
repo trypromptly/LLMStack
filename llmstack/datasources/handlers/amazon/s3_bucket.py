@@ -86,6 +86,10 @@ class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
         return 's3_bucket'
 
     @staticmethod
+    def description() -> str:
+        return 'Reads files from an S3 bucket'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'amazon'
 

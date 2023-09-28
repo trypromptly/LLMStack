@@ -127,10 +127,10 @@ class EndpointViewSet(viewsets.ViewSet):
         )
         try:
             invoke_result = self.run_endpoint(
-                endpoint_uuid=endpoint.uuid, run_as_user=request.user, input_request=input_request, 
-                template_values=template_values, bypass_cache=bypass_cache, 
-                input={**endpoint.input, **input}, 
-                config={**endpoint.config, **config}, 
+                endpoint_uuid=endpoint.uuid, run_as_user=request.user, input_request=input_request,
+                template_values=template_values, bypass_cache=bypass_cache,
+                input={**endpoint.input, **input},
+                config={**endpoint.config, **config},
                 api_backend_slug=endpoint.api_backend.slug, api_provider_slug=endpoint.api_backend.api_provider.slug,
                 app_session=None, stream=stream,
             )
@@ -152,18 +152,17 @@ class EndpointViewSet(viewsets.ViewSet):
     def run(self, request):
         if request.user.is_anonymous:
             return HttpResponseForbidden('Please login to run this endpoint')
-        
+
         request_uuid = str(uuid.uuid4())
-        
+
         bypass_cache = request.data.get('bypass_cache', False)
         config = request.data['config'] if 'config' in request.data else {}
         input = request.data['input'] if 'input' in request.data else {}
         stream = False
-        
+
         api_backend_slug = request.data.get('api_backend_slug', None)
         api_provider_slug = request.data.get('api_provider_slug', None)
-        
-        
+
         if api_backend_slug == None or api_provider_slug == None:
             return DRFResponse({'errors': ['Invalid API backend']}, status=500)
 
@@ -176,7 +175,7 @@ class EndpointViewSet(viewsets.ViewSet):
                 'REMOTE_ADDR', '',
             ),
         ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
-        
+
         input_request = InputRequest(
             request_endpoint_uuid=request_uuid, request_app_uuid='',
             request_app_session_key='', request_owner=request.user,
@@ -185,15 +184,15 @@ class EndpointViewSet(viewsets.ViewSet):
             request_user_agent=request_user_agent, request_body=request.data,
             request_content_type=request.content_type,
         )
-        
+
         try:
             invoke_result = self.run_endpoint(
-                endpoint_uuid=request_uuid, 
-                run_as_user=request.user, 
-                input_request=input_request, template_values={}, 
-                bypass_cache=bypass_cache, 
-                input={**input}, 
-                config={**config}, 
+                endpoint_uuid=request_uuid,
+                run_as_user=request.user,
+                input_request=input_request, template_values={},
+                bypass_cache=bypass_cache,
+                input={**input},
+                config={**config},
                 api_backend_slug=api_backend_slug, api_provider_slug=api_provider_slug,
                 app_session=None, stream=False,
             )
@@ -204,14 +203,15 @@ class EndpointViewSet(viewsets.ViewSet):
             return DRFResponse({'errors': invoke_result['errors']}, status=500)
 
         return DRFResponse(invoke_result)
-        
+
     def run_endpoint(self, endpoint_uuid, run_as_user, input_request, template_values={}, bypass_cache=False, input={}, config={}, api_backend_slug='', api_provider_slug='', app_session=None, output_stream=None, stream=False):
         profile = get_object_or_404(Profile, user=run_as_user)
 
         vendor_env = profile.get_vendor_env()
 
         # Pick a processor
-        processor_cls = ApiProcessorFactory.get_api_processor(api_backend_slug, api_provider_slug)
+        processor_cls = ApiProcessorFactory.get_api_processor(
+            api_backend_slug, api_provider_slug)
 
         if not app_session:
             app_session = create_app_session(None, str(uuid.uuid4()))
@@ -282,7 +282,7 @@ class EndpointViewSet(viewsets.ViewSet):
             for output in output_iter:
                 # Iterate through output_iter to get the final output
                 pass
-            
+
         except Exception as e:
             logger.exception(e)
             raise Exception(f'Error starting coordinator: {e}')
@@ -297,12 +297,13 @@ class ApiProviderViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
     def list(self, request):
-        processor_providers = list(filter(lambda provider: provider.get('processor_packages'), settings.PROVIDERS))
+        processor_providers = list(filter(lambda provider: provider.get(
+            'processor_packages'), settings.PROVIDERS))
         data = list(map(lambda provider: {
             'name': provider.get('name'),
             'slug': provider.get('slug'),
         }, processor_providers))
-        
+
         return DRFResponse(data)
 
 
@@ -315,7 +316,7 @@ class ApiBackendViewSet(viewsets.ViewSet):
             if api_backend['id'] == id:
                 return DRFResponse(api_backend)
         return DRFResponse(status=404)
-    
+
     def list(self, request):
         providers = ApiProviderViewSet().list(request).data
         providers_map = {}
@@ -330,7 +331,7 @@ class ApiBackendViewSet(viewsets.ViewSet):
                 processor_name = subclass.name()
             except NotImplementedError:
                 processor_name = subclass.slug().capitalize()
-            
+
             processors.append({
                 'id': f"{subclass.provider_slug()}/{subclass.slug()}",
                 'name': processor_name,
@@ -338,15 +339,16 @@ class ApiBackendViewSet(viewsets.ViewSet):
                 'api_provider': providers_map[subclass.provider_slug()],
                 'api_endpoint': {},
                 'params': {},
-                'description': '',
+                'description': subclass.description(),
                 'input_schema': json.loads(subclass.get_input_schema()),
                 'output_schema': json.loads(subclass.get_output_schema()),
                 'config_schema': json.loads(subclass.get_configuration_schema()),
-                'input_ui_schema' : subclass.get_input_ui_schema(),
+                'input_ui_schema': subclass.get_input_ui_schema(),
                 'output_ui_schema': subclass.get_output_ui_schema(),
                 'config_ui_schema': subclass.get_configuration_ui_schema(),
             })
         return DRFResponse(processors)
+
 
 class HistoryViewSet(viewsets.ModelViewSet):
     paginate_by = 20

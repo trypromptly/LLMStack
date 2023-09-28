@@ -51,6 +51,10 @@ class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOu
         return 'completions'
 
     @staticmethod
+    def description() -> str:
+        return 'Claude text completions'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'anthropic'
 

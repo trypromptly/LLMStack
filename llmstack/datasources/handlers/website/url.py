@@ -53,6 +53,10 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
         return 'url'
 
     @staticmethod
+    def description() -> str:
+        return 'URL'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

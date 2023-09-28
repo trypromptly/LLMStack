@@ -123,6 +123,9 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
     def slug() -> str:
         return 'text_chat'
 
+    @staticmethod
+    def description() -> str:
+        return 'Conversation style question and answering from provided data'
 
     @staticmethod
     def provider_slug() -> str:

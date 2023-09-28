@@ -64,6 +64,10 @@ class ImagesEdit(ApiProcessorInterface[ImagesEditInput, ImagesEditOutput, Images
         return 'images_edit'
 
     @staticmethod
+    def description() -> str:
+        return 'Edit source image with a prompt'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'openai'
 

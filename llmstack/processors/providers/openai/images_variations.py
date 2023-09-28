@@ -57,6 +57,10 @@ class ImagesVariations(ApiProcessorInterface[ImagesVariationsInput, ImagesVariat
         return 'images_variations'
 
     @staticmethod
+    def description() -> str:
+        return 'Create variations of existing image'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'openai'
 

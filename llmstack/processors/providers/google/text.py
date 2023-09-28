@@ -73,6 +73,10 @@ class TextProcessor(ApiProcessorInterface[TextInput, TextOutput, TextConfigurati
         return 'text'
 
     @staticmethod
+    def description() -> str:
+        return 'Text completions from Google Vertex AI'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'google'
 

@@ -54,6 +54,10 @@ class NotionExportDataSource(DataSourceProcessor[NotionExportSchema]):
         return 'notion_export'
 
     @staticmethod
+    def description() -> str:
+        return 'Notion export'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

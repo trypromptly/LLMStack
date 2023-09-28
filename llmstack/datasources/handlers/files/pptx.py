@@ -46,6 +46,10 @@ class PptxFileDataSource(DataSourceProcessor[PptxFileSchema]):
         return 'pptx_file'
 
     @staticmethod
+    def description() -> str:
+        return 'PPTX file'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

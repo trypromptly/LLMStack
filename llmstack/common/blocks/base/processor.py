@@ -63,6 +63,10 @@ class ProcessorInterface(Generic[BaseInputType, BaseOutputType, BaseConfiguratio
         raise NotImplementedError
 
     @staticmethod
+    def description() -> str:
+        raise NotImplementedError
+
+    @staticmethod
     def provider_slug() -> str:
         raise NotImplementedError
 

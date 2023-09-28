@@ -133,6 +133,10 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
         return 'chatgpt'
 
     @staticmethod
+    def description() -> str:
+        return 'Chat completions from Azure Open AI'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'azure'
 

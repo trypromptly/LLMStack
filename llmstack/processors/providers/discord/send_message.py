@@ -58,6 +58,10 @@ class DiscordSendMessageProcessor(
         return 'send_message'
 
     @staticmethod
+    def description() -> str:
+        return 'Send a message to a Discord channel'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'discord'
 

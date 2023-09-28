@@ -103,6 +103,10 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
         return 'text2image'
 
     @staticmethod
+    def description() -> str:
+        return 'Generates images from a series of prompts and negative prompts'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'stabilityai'
 

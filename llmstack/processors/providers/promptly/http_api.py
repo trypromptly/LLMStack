@@ -28,10 +28,14 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[PromptlyHttpAPIProcessorInp
     @staticmethod
     def name() -> str:
         return 'HTTP API Processor'
-    
+
     @staticmethod
     def slug() -> str:
         return 'http_api_processor'
+
+    @staticmethod
+    def description() -> str:
+        return 'Makes a HTTP request to the specified URL'
 
     @staticmethod
     def provider_slug() -> str:

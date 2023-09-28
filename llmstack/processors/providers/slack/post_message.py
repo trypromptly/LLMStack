@@ -168,6 +168,10 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
         return 'post_message'
 
     @staticmethod
+    def description() -> str:
+        return 'Posts a Slack message'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'slack'
 

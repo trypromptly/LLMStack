@@ -92,6 +92,10 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
     def slug() -> str:
         return 'weaviate'
 
+    @staticmethod
+    def description() -> str:
+        return 'Connect to a Weaviate database'
+
     # This static method takes a dictionary for configuration and a DataSource object as inputs.
     # Validation of these inputs is performed and a dictionary containing the Weaviate Connection Configuration is returned.
     @staticmethod
@@ -112,13 +116,12 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
     def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         raise NotImplementedError
 
-    
     def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
         if use_hybrid_search:
             return self.hybrid_search(query, **kwargs)
         else:
             return self.similarity_search(query, **kwargs)
-        
+
     """
     This function performs similarity search on documents by using 'near text' concept of Weaviate where it tries to fetch documents in which concepts match with the given query.
     """
@@ -154,7 +157,7 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
                 metadata={'additional_properties': additional_properties,
                           'metadata_properties': ['score']},
                 search_filters=kwargs.get('search_filters', None),
-        ),
+            ),
             **kwargs
         )
         return result

@@ -65,6 +65,10 @@ class ElevenLabsTextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, T
         return 'text_to_speech'
 
     @staticmethod
+    def description() -> str:
+        return 'Transforms text into speech in a given voice'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'elevenlabs'
 

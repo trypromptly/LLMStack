@@ -76,6 +76,10 @@ class Completions(ApiProcessorInterface[CompletionsInput, CompletionsOutput, Com
         return 'completions'
 
     @staticmethod
+    def description() -> str:
+        return 'Generates completions for the given prompt'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'openai'
 

@@ -66,6 +66,10 @@ class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeec
         return 'text_to_speech'
 
     @staticmethod
+    def description() -> str:
+        return 'Convert text to speech'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'google'
 

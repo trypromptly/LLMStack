@@ -64,6 +64,10 @@ class FileDataSource(DataSourceProcessor[FileSchema]):
         return 'file'
 
     @staticmethod
+    def description() -> str:
+        return 'File'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 
@@ -106,4 +110,3 @@ class FileDataSource(DataSourceProcessor[FileSchema]):
             ]
 
         return docs
-

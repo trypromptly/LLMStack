@@ -67,6 +67,10 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
         return 'gdrive_file'
 
     @staticmethod
+    def description() -> str:
+        return 'Gdrive file'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

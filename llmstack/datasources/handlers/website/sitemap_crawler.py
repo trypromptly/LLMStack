@@ -53,6 +53,10 @@ class SitemapCrawlerDataSource(DataSourceProcessor[SitemapURLSchema]):
         return 'sitemap_url'
 
     @staticmethod
+    def description() -> str:
+        return 'Sitemap URL'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

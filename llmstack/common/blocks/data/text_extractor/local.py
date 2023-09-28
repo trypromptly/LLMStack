@@ -14,6 +14,10 @@ class LocalTextExtractorProcessor(ProcessorInterface[TextExtractorInput, TextExt
         return "text_extractor"
 
     @staticmethod
+    def description() -> str:
+        return "Extracts text from a file"
+
+    @staticmethod
     def provider_slug() -> str:
         return 'promptly'
 

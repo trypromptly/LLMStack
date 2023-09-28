@@ -58,6 +58,10 @@ class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGene
         return 'image_generations'
 
     @staticmethod
+    def description() -> str:
+        return 'Generates images from a given prompt'
+
+    @staticmethod
     def provider_slug() -> str:
         return 'openai'
 
