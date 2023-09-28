@@ -48,18 +48,24 @@ function AppRenderPage({ headless = false }) {
     if (publishedAppId) {
       axios()
         .get(`/api/app/${publishedAppId}`)
-        .then((response) => {
-          setApp(response.data);
-          setWsUrl(`${wsUrlPrefix}/apps/${response?.data?.uuid}`);
-          document.title = `${response.data.name} | ${
-            process.env.REACT_APP_SITE_NAME || "LLMStack"
-          }`;
-          ReactGA.send({
-            hitType: "pageview",
-            page: window.location.href,
-            title: document.title,
-          });
-        })
+        .then(
+          (response) => {
+            setApp(response.data);
+            setWsUrl(`${wsUrlPrefix}/apps/${response?.data?.uuid}`);
+            document.title = `${response.data.name} | ${
+              process.env.REACT_APP_SITE_NAME || "LLMStack"
+            }`;
+            ReactGA.send({
+              hitType: "pageview",
+              page: window.location.href,
+              title: document.title,
+            });
+          },
+          (error) => {
+            console.log(error);
+            setError(error?.response?.data?.message);
+          },
+        )
         .catch((error) => {
           setError(error?.response?.data?.message);
         });
@@ -137,7 +143,9 @@ function AppRenderPage({ headless = false }) {
             variant="contained"
             sx={{ textTransform: "none", margin: "auto" }}
             onClick={() => {
-              window.location.href = isLoggedIn ? "/hub" : "/login";
+              window.location.href = isLoggedIn
+                ? "/hub"
+                : `/login?redirectUrl=${window.location.pathname}`;
             }}
           >
             {isLoggedIn ? "Go To Hub" : "Login"}

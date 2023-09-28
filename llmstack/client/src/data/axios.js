@@ -18,7 +18,13 @@ export const axios = () => {
       ) {
         window.location.href = "/login?redirectUrl=" + window.location.pathname;
       }
-      enqueueSnackbar("Error Occurred", { variant: "error" });
+
+      try {
+        enqueueSnackbar("Error Occurred", { variant: "error" });
+      } catch (e) {
+        // Ignore
+      }
+
       return Promise.reject(error);
     },
   );
