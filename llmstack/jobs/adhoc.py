@@ -1,9 +1,9 @@
 import uuid
 import django_rq
 
+from concurrent.futures import ThreadPoolExecutor
 from django.conf import settings
 from rq.job import Job
-from threading import Thread
 from queue import Queue
 
 
@@ -42,10 +42,8 @@ class ProcessingJob(Job):
             queue = django_rq.get_queue(self.queue_name)
             return queue.enqueue_job(job=self)
         else:
-            thread = Thread(target=self.func, args=self.args,
-                            kwargs=self.kwargs)
-            thread.start()
-            return thread
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                return executor.submit(self.func, *self.args, **self.kwargs)
 
 
 class DataSourceEntryProcessingJob(ProcessingJob):

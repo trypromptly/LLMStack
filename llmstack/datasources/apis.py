@@ -3,8 +3,10 @@ import uuid
 import time
 
 from django.shortcuts import get_object_or_404
+from concurrent.futures import Future
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
+from rq.job import Job
 
 from .models import DataSource
 from .models import DataSourceEntry
@@ -249,10 +251,15 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         # Wait for job to finish and return the result
         while True:
             time.sleep(1)
-            if job.is_failed or job.is_finished or job.is_stopped or job.is_canceled:
+
+            if isinstance(job, Future) and job.done():
+                break
+            elif isinstance(job, Job) and (job.is_failed or job.is_finished or job.is_stopped or job.is_canceled):
                 break
 
-        if job.is_failed or job.is_stopped or job.is_canceled:
+        if isinstance(job, Future):
+            urls = job.result()
+        elif job.is_failed or job.is_stopped or job.is_canceled:
             urls = [url]
         else:
             urls = job.result
