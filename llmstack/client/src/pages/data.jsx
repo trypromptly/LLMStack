@@ -17,10 +17,13 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import {
   AddOutlined,
   DeleteOutlineOutlined,
+  KeyboardArrowDownOutlined,
+  KeyboardArrowRightOutlined,
   PeopleOutlineOutlined,
   PersonOutlineOutlined,
   SettingsEthernet,
@@ -252,6 +255,18 @@ export default function DataPage() {
     {
       title: "Name",
       key: "name",
+      render: (record, row) => {
+        return (
+          <Typography sx={{ display: "flex" }}>
+            {row.expand ? (
+              <KeyboardArrowDownOutlined />
+            ) : (
+              <KeyboardArrowRightOutlined />
+            )}
+            {record}
+          </Typography>
+        );
+      },
     },
     {
       title: "Owner",
@@ -416,7 +431,12 @@ export default function DataPage() {
             <TableHead>
               <TableRow>
                 {columns.map((column) => (
-                  <TableCell key={column.key}>
+                  <TableCell
+                    key={column.key}
+                    sx={{
+                      paddingLeft: column.key === "name" ? "40px" : "inherit",
+                    }}
+                  >
                     <strong>{column.title}</strong>
                   </TableCell>
                 ))}
