@@ -304,85 +304,85 @@ FLAG_SOURCES = ['llmstack.base.flags.FlagSource']
 
 # Make sure name and slug are unique
 PROVIDERS = [
-        {
-            'name': 'Amazon',
-            'datasource_packages': ['llmstack.datasources.handlers.amazon'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-            'slug': 'amazon',
-        },
-        {
-            'name': 'Anthropic',
-            'processor_packages': ['llmstack.processors.providers.anthropic'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-            'slug': 'anthropic',
-        },
-        {
-            'name': 'Azure',
-            'processor_packages': ['llmstack.processors.providers.azure'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-            'slug': 'azure',
-        },
-        {
-            'name': 'Cohere',
-            'processor_packages': ['llmstack.processors.providers.cohere'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-            'slug': 'cohere',
-        },
-        {
-            'name': 'ElevenLabs',
-            'processor_packages': ['llmstack.processors.providers.elevenlabs'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-            'slug': 'elevenlabs',
-        },
-        {
-            'name': 'Google',
-            'processor_packages': ['llmstack.processors.providers.google'],
-            'slug': 'google',
-            'datasource_packages': ['llmstack.datasources.handlers.google'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-        },
-        {
-            'name': 'LocalAI',
-            'processor_packages': ['llmstack.processors.providers.localai'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-            'slug': 'localai',
-        },
-        {
-            'name': 'Open AI',
-            'processor_packages': ['llmstack.processors.providers.openai'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-            'slug': 'openai',
-        },
-        {
-            'name': 'Promptly',
-            'processor_packages': ['llmstack.processors.providers.promptly', 'promptly_processors.providers.promptly'],
-            'datasource_packages': ['llmstack.datasources.handlers.databases', 'llmstack.datasources.handlers.files', 'llmstack.datasources.handlers.text', 'llmstack.datasources.handlers.website'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-            'slug': 'promptly',
-        },
-        {
-            'name': 'Stability AI',
-            'processor_packages': ['llmstack.processors.providers.stabilityai'],
-            'processor_exclude': [],
-            'datasource_processors_exclude' : [],
-            'slug': 'stabilityai',
-        },
+    {
+        'name': 'Amazon',
+        'datasource_packages': ['llmstack.datasources.handlers.amazon'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+        'slug': 'amazon',
+    },
+    {
+        'name': 'Anthropic',
+        'processor_packages': ['llmstack.processors.providers.anthropic'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+        'slug': 'anthropic',
+    },
+    {
+        'name': 'Azure',
+        'processor_packages': ['llmstack.processors.providers.azure'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+        'slug': 'azure',
+    },
+    {
+        'name': 'Cohere',
+        'processor_packages': ['llmstack.processors.providers.cohere'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+        'slug': 'cohere',
+    },
+    {
+        'name': 'ElevenLabs',
+        'processor_packages': ['llmstack.processors.providers.elevenlabs'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+        'slug': 'elevenlabs',
+    },
+    {
+        'name': 'Google',
+        'processor_packages': ['llmstack.processors.providers.google'],
+        'slug': 'google',
+        'datasource_packages': ['llmstack.datasources.handlers.google'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+    },
+    {
+        'name': 'LocalAI',
+        'processor_packages': ['llmstack.processors.providers.localai'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+        'slug': 'localai',
+    },
+    {
+        'name': 'Open AI',
+        'processor_packages': ['llmstack.processors.providers.openai'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+        'slug': 'openai',
+    },
+    {
+        'name': 'Promptly',
+        'processor_packages': ['llmstack.processors.providers.promptly'],
+        'datasource_packages': ['llmstack.datasources.handlers.databases', 'llmstack.datasources.handlers.files', 'llmstack.datasources.handlers.text', 'llmstack.datasources.handlers.website'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+        'slug': 'promptly',
+    },
+    {
+        'name': 'Stability AI',
+        'processor_packages': ['llmstack.processors.providers.stabilityai'],
+        'processor_exclude': [],
+        'datasource_processors_exclude': [],
+        'slug': 'stabilityai',
+    },
 ]
 
 PROCESSOR_PROVIDERS = sum(list(
     map(lambda entry: entry['processor_packages'], filter(
         lambda provider: 'processor_packages' in provider,
         PROVIDERS,
-    )),  
+    )),
 ), [])
 
 PROCESSOR_EXCLUDE_LIST = sum(list(
