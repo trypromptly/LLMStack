@@ -23,5 +23,9 @@ class ProcessorsConfig(AppConfig):
     label = 'apiabstractor'
 
     def ready(self) -> None:
+        from sys import argv
+        # If this is collecstatic command, do not load the processor subclasses
+        if 'collectstatic' in argv:
+            return
         logger.info("Initializing Processor subclasses")
         load_processor_subclasses()

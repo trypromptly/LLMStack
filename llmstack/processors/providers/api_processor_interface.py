@@ -2,13 +2,13 @@ import logging
 import time
 from typing import Any
 from typing import TypeVar
+import jinja2
 
 import ujson as json
-from pydantic import AnyUrl
+from pydantic import AnyUrl, BaseModel
 
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.base.processor import BaseInputType, BaseOutputType, BaseConfigurationType, ProcessorInterface
-from llmstack.common.utils.utils import hydrate_input
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.utils import extract_jinja2_variables
 
@@ -25,6 +25,30 @@ AUDIO_WIDGET_NAME = 'output_audio'
 CHAT_WIDGET_NAME = 'output_chat'
 FILE_WIDGET_NAME = 'file'
 
+def hydrate_input(input, values):
+    env = jinja2.Environment()
+
+    def render(value):
+        if isinstance(value, str):
+            try:
+                template = env.from_string(value)
+                return template.render(values)
+            except jinja2.exceptions.TemplateError as e:
+                LOGGER.exception(e)
+                pass  # not a template, return as is
+        return value
+
+    def traverse(obj):
+        if isinstance(obj, dict):
+            return {key: traverse(render(value)) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [traverse(render(item)) for item in obj]
+        elif isinstance(obj, BaseModel):
+            cls = obj.__class__
+            return cls.parse_obj(traverse(obj.dict()))
+        return obj
+
+    return traverse(input)
 
 class DataUrl(AnyUrl):
     @classmethod

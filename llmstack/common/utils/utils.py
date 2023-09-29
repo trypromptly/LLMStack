@@ -93,33 +93,6 @@ def sanitize_dict_values(value):
     else:
         return str(value)
 
-
-def hydrate_input(input, values):
-    env = jinja2.Environment()
-
-    def render(value):
-        if isinstance(value, str):
-            try:
-                template = env.from_string(value)
-                return template.render(values)
-            except jinja2.exceptions.TemplateError as e:
-                logger.exception(e)
-                pass  # not a template, return as is
-        return value
-
-    def traverse(obj):
-        if isinstance(obj, dict):
-            return {key: traverse(render(value)) for key, value in obj.items()}
-        elif isinstance(obj, list):
-            return [traverse(render(item)) for item in obj]
-        elif isinstance(obj, BaseModel):
-            cls = obj.__class__
-            return cls.parse_obj(traverse(obj.dict()))
-        return obj
-
-    return traverse(input)
-
-
 def get_key_or_raise(dict, key, exception_message):
     try:
         return dict[key]
