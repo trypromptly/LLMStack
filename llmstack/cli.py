@@ -58,8 +58,11 @@ def main():
     run_django_command(['manage.py', 'createcachetable'])
     run_django_command(['manage.py', 'clearcache'])
 
-    # Run llmstack runserver in a separate process
+    # Install default playwright browsers
     import subprocess
+    subprocess.run(['playwright', 'install', 'chromium'])
+
+    # Run llmstack runserver in a separate process
     server_process = subprocess.Popen(['llmstack', 'runserver'])
 
     # Wait for server to be up at LLMSTACK_PORT and open browser

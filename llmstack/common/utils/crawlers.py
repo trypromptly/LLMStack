@@ -33,7 +33,7 @@ def get_domain(url):
 class SitemapXMLSpider(SitemapSpider):
     name = 'sitemap_spider'
 
-    def __init__(self, url, output, max_urls = 20, *args, **kwargs):
+    def __init__(self, url, output, max_urls=20, *args, **kwargs):
         self.sitemap_urls = [url]
         self.output = output
         self.max_urls = max_urls
@@ -43,7 +43,7 @@ class SitemapXMLSpider(SitemapSpider):
         data = {}
         if len(self.output) > self.max_urls:
             raise CloseSpider('Reached maximum number of crawled URLs')
-            
+
         # Extract data from the page using CSS or XPath selectors
         data['title'] = response.css('title::text').get()
         data['url'] = response.url
@@ -74,7 +74,7 @@ def run_sitemap_spider_in_process(sitemap_url):
 
 async def run_playwright(url):
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') else await playwright.chromium.launch()
+        browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await playwright.chromium.launch()
         page = await browser.new_page()
         await page.goto(url)
         await page.wait_for_timeout(5000)
