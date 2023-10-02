@@ -46,6 +46,10 @@ urlpatterns = [
         apis.AppViewSet.as_view({'post': 'run_slack'}),
     ),
     path(
+        'api/apps/<str:uid>/twilio/run',
+        apis.AppViewSet.as_view({'post': 'run_twilio'}),
+    ),
+    path(
         'api/apps/<str:uid>/run/<str:session_id>',
         apis.AppViewSet.as_view({'post': 'run'}),
     ),
