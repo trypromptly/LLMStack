@@ -68,7 +68,7 @@ class AppTypeViewSet(viewsets.ViewSet):
 
 class AppViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord':
+        if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord' or self.action == 'run_twilio':
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -525,6 +525,8 @@ class AppViewSet(viewsets.ViewSet):
             app_runner_class = AppRunerFactory.get_app_runner('discord')
         elif platform == 'slack':
             app_runner_class = AppRunerFactory.get_app_runner('slack')
+        elif platform == 'twilio':
+            app_runner_class = AppRunerFactory.get_app_runner('twilio')
         else:
             app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
 
@@ -541,6 +543,10 @@ class AppViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'])
     def run_slack(self, request, uid):
         return self.run(request, uid, platform='slack')
+    
+    @action(detail=True, methods=['post'])
+    def run_twilio(self, request, uid):
+        return self.run(request, uid, platform='twilio')
 
     def testsets(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
