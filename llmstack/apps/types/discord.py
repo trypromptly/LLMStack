@@ -54,6 +54,14 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
     def slug() -> str:
         return 'discord'
 
+    @staticmethod
+    def name() -> str:
+        return 'Discord App'
+
+    @staticmethod
+    def description() -> str:
+        return 'Provides a Discord app that takes in a user input returns rendered output in the provided template'
+
     @classmethod
     def pre_save(self, app: App):
         if app.is_published and app.discord_config:

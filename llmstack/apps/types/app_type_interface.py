@@ -50,7 +50,7 @@ class BaseSchema(BaseModel):
                         ui_schema[key][prop_key]['ui:widget'] = 'select'
                         ui_schema[key][prop_key]['ui:options'] = {
                             'enumOptions': [
-                            {'value': val, 'label': val} for val in schema[key][prop_key]['enum']
+                                {'value': val, 'label': val} for val in schema[key][prop_key]['enum']
                             ],
                         }
                     if 'widget' in schema[key][prop_key]:
@@ -71,6 +71,14 @@ class AppTypeInterface(Generic[AppConfigurationSchemaType]):
     """
     @staticmethod
     def slug(self) -> str:
+        raise NotImplementedError
+
+    @staticmethod
+    def name(self) -> str:
+        raise NotImplementedError
+
+    @staticmethod
+    def description(self) -> str:
         raise NotImplementedError
 
     @classmethod

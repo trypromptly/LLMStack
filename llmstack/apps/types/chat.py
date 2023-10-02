@@ -46,3 +46,11 @@ class ChatApp(AppTypeInterface[ChatAppConfigSchema]):
     @staticmethod
     def slug() -> str:
         return 'text-chat'
+
+    @staticmethod
+    def name() -> str:
+        return 'Chat Bot'
+
+    @staticmethod
+    def description() -> str:
+        return 'A chat application with an embeddable widget that can be used as a chatbot'

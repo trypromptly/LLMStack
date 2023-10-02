@@ -21,3 +21,11 @@ class WebApp(AppTypeInterface[WebAppConfigSchema]):
     @staticmethod
     def slug() -> str:
         return 'web'
+
+    @staticmethod
+    def name() -> str:
+        return 'Web App'
+
+    @staticmethod
+    def description() -> str:
+        return 'Provides a web app that takes in a user input returns rendered output in the provided template'

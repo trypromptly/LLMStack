@@ -38,6 +38,14 @@ class SlackApp(AppTypeInterface[SlackAppConfigSchema]):
     def slug() -> str:
         return 'slack'
 
+    @staticmethod
+    def name() -> str:
+        return 'Slack App'
+
+    @staticmethod
+    def description() -> str:
+        return 'Slack app that can be used to send messages to Slack'
+
     @classmethod
     def verify_request_signature(cls, app: App, headers: dict, raw_body: bytes):
         signature = headers.get('X-Slack-Signature')
