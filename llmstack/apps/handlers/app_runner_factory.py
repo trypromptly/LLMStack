@@ -7,6 +7,9 @@ class AppRunerFactory:
         elif app_type_slug == 'discord':
             from llmstack.apps.handlers.discord_app import DiscordBotRunner
             return DiscordBotRunner
+        elif app_type_slug == 'twilio':
+            from llmstack.apps.handlers.twilio_app import TwilioAppRunner
+            return TwilioAppRunner
         elif app_type_slug == 'web':
             from llmstack.apps.handlers.web_app import WebAppRunner
             return WebAppRunner
