@@ -64,3 +64,10 @@ class DiscordIntegrationConfig(AppIntegrationConfig):
     bot_token: str = ''
     public_key: str = ''
     slash_command_id: Optional[str] = None
+    
+class TwilioIntegrationConfig(AppIntegrationConfig):
+    config_type = 'twilio'
+    is_encrypted = True
+    account_sid: str = ''
+    auth_token: str = ''
+    
