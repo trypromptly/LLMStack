@@ -9,7 +9,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.timezone import now
 
-from llmstack.apps.integration_configs import DiscordIntegrationConfig, SlackIntegrationConfig, WebIntegrationConfig
+from llmstack.apps.integration_configs import DiscordIntegrationConfig, SlackIntegrationConfig, TwilioIntegrationConfig, WebIntegrationConfig
 from llmstack.processors.models import Endpoint
 from llmstack.base.models import Profile
 from llmstack.common.utils.db_models import ArrayField
@@ -219,6 +219,9 @@ class App(models.Model):
     discord_integration_config = models.JSONField(
         default=dict, blank=True, help_text='Discord config for this app',
     )
+    twilio_integration_config = models.JSONField(
+        default=dict, blank=True, help_text='Twilio config for this app',
+    )
 
     @property
     def web_config(self):
@@ -234,6 +237,11 @@ class App(models.Model):
     def discord_config(self):
         profile = Profile.objects.get(user=self.owner)
         return DiscordIntegrationConfig().from_dict(self.discord_integration_config, profile.decrypt_value) if self.discord_integration_config else None
+    
+    @property
+    def twilio_config(self):
+        profile = Profile.objects.get(user=self.owner)
+        return TwilioIntegrationConfig().from_dict(self.twilio_integration_config, profile.decrypt_value) if self.twilio_integration_config else None
 
     @discord_config.setter
     def discord_config(self, value):
