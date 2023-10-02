@@ -3,6 +3,7 @@ import logging
 from django.apps import AppConfig
 
 from llmstack.apps.types.app_type_interface import AppTypeInterface
+from llmstack.apps.types.agent import Agent
 from llmstack.apps.types.chat import ChatApp
 from llmstack.apps.types.web import WebApp
 

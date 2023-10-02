@@ -35,7 +35,10 @@ export function AppTypeSelector() {
       .then((response) => {
         setAppTypes(
           response.data.filter(
-            (appType) => appType.slug === "web" || appType.slug === "text-chat",
+            (appType) =>
+              appType.slug === "web" ||
+              appType.slug === "text-chat" ||
+              appType.slug === "agent",
           ),
         );
       });
