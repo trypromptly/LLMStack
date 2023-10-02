@@ -62,6 +62,10 @@ function PromptlyAppStepCard({
       icon={apiBackend?.icon || apiBackend?.api_provider?.name}
       title={apiBackend?.name}
       description={apiBackend?.description}
+      setDescription={(description) => {
+        processors[index].description = description;
+        setProcessors([...processors]);
+      }}
       stepNumber={index + 2}
       activeStep={activeStep}
       setActiveStep={setActiveStep}
@@ -259,7 +263,11 @@ export function ProcessorEditor({
     <AppStepCard
       icon={apiBackend?.icon || apiBackend?.api_provider?.name}
       title={apiBackend?.name}
-      description={apiBackend?.description}
+      description={processors[index].description || apiBackend?.description}
+      setDescription={(description) => {
+        processors[index].description = description || apiBackend?.description;
+        setProcessors([...processors]);
+      }}
       stepNumber={index + 2}
       activeStep={activeStep}
       setActiveStep={setActiveStep}

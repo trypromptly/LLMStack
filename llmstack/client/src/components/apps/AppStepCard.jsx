@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { Card, CardHeader, Popover, Typography } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  Popover,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { EditOutlined } from "@mui/icons-material";
 import promptlyIcon_light from "../../assets/images/promptly-icon-light.png";
 import openAiIcon_light from "../../assets/images/openai-icon-light.png";
 import openAiIcon_dark from "../../assets/images/openai-icon-dark.png";
@@ -47,6 +54,7 @@ export function AppStepCard({
   icon,
   title,
   description,
+  setDescription,
   stepNumber,
   activeStep,
   setActiveStep,
@@ -55,7 +63,11 @@ export function AppStepCard({
   children,
 }) {
   const isActive = activeStep === stepNumber;
+  const isDescriptionEditable =
+    stepNumber > 1 && title !== "Application Output";
   const [errorAnchorEl, setErrorAnchorEl] = useState(null);
+  const [showDescriptionEditor, setShowDescriptionEditor] = useState(false);
+  const [descriptionInput, setDescriptionInput] = useState(description);
 
   return (
     <Card
@@ -133,16 +145,49 @@ export function AppStepCard({
           </Typography>
         }
         subheader={
-          <Typography
-            variant="subtitle2"
-            style={{
-              fontSize: "14px",
-              fontFamily: "Lato, sans-serif",
-              color: isActive ? "#ccc" : "#6b6b6b",
-            }}
-          >
-            {description}
-          </Typography>
+          showDescriptionEditor && isDescriptionEditable ? (
+            <TextField
+              id="standard-basic"
+              variant="standard"
+              value={descriptionInput}
+              onChange={(e) => {
+                setDescriptionInput(e.target.value);
+                setDescription(e.target.value);
+              }}
+              sx={{
+                width: "100%",
+                ".MuiInputBase-input": {
+                  fontSize: "14px",
+                  padding: "0 0 2px 0",
+                  fontFamily: "Lato, sans-serif",
+                  color: "#fff",
+                },
+              }}
+              onBlur={() => setShowDescriptionEditor(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setShowDescriptionEditor(false);
+                }
+              }}
+              inputRef={(input) => input && input.focus()}
+              focused={showDescriptionEditor}
+            />
+          ) : (
+            <Typography
+              variant="subtitle2"
+              style={{
+                fontSize: "14px",
+                fontFamily: "Lato, sans-serif",
+                color: isActive ? "#ccc" : "#6b6b6b",
+              }}
+              onClick={() => setShowDescriptionEditor(true)}
+            >
+              {descriptionInput}{" "}
+              {isDescriptionEditable && (
+                <EditOutlined style={{ fontSize: "14px" }} />
+              )}
+            </Typography>
+          )
         }
         avatar={
           typeof icon === "string" ? (

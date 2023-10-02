@@ -250,6 +250,8 @@ export default function AppEditPage(props) {
         discord_config: app?.discord_config || {},
         processors: processors.map((processor, index) => ({
           id: `_inputs${index + 1}`,
+          description:
+            processor.description || processor.api_backend?.description,
           provider_slug: processor.api_backend?.api_provider?.slug,
           processor_slug: processor.api_backend?.slug,
           config: processor.config,
