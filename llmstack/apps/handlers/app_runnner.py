@@ -9,7 +9,7 @@ from llmstack.apps.app_session_utils import create_app_session
 from llmstack.apps.app_session_utils import create_app_session_data
 from llmstack.apps.app_session_utils import get_app_session
 from llmstack.apps.app_session_utils import get_app_session_data
-from llmstack.apps.integration_configs import DiscordIntegrationConfig
+from llmstack.apps.integration_configs import DiscordIntegrationConfig, TwilioIntegrationConfig
 from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from llmstack.apps.models import AppVisibility
@@ -48,6 +48,10 @@ class AppRunner:
             app.discord_integration_config,
             app_owner.decrypt_value,
         ) if app.discord_integration_config else None
+        self.twilio_config = TwilioIntegrationConfig().from_dict(
+            app.twilio_integration_config,
+            app_owner.decrypt_value,
+        ) if app.twilio_integration_config else None
 
         self.app_init()
 
