@@ -215,7 +215,7 @@ export function AppTemplate(props) {
             <Button
               onClick={handleNext}
               variant="contained"
-              sx={{ textTransform: "none", margin: "20px 0" }}
+              sx={{ textTransform: "none", margin: "20px 0 70px 0" }}
             >
               Next
             </Button>
