@@ -549,7 +549,8 @@ class AppViewSet(viewsets.ViewSet):
     
     @action(detail=True, methods=['post'])
     def run_twilio(self, request, uid):
-        return self.run(request, uid, platform='twilio')
+        result = self.run(request, uid, platform='twilio')
+        return DRFResponse(status=204, headers={'Content-Type': 'text/xml'})
 
     def testsets(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
