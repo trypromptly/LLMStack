@@ -556,20 +556,7 @@ class AppViewSet(viewsets.ViewSet):
     
     @action(detail=True, methods=['post'])
     def run_twiliovoice(self, request, uid):
-        if 'RecordingSid' in request.data and 'RecordingUrl' in request.data and 'RecordingDuration' in request.data:
-            # This is a recording
-            result = self.run(request, uid, platform='twilio-voice')
-            return DRFResponse(status=204)
-        else:
-            # This is a call
-            response = f"""
-            <Response>
-                <Pause length="1"/>
-                <Say>Please leave your message after the tone.</Say>
-                <Record action="https://c786-162-231-246-246.ngrok.io/api/apps/{uid}/twiliovoice/run" method="POST" maxLength="120" playBeep="true" />
-            </Response>
-            """
-            return HttpResponse(response, content_type='application/xml')
+        raise NotImplementedError()
         
 
     def testsets(self, request, uid):
