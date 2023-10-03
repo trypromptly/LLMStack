@@ -50,6 +50,10 @@ urlpatterns = [
         apis.AppViewSet.as_view({'post': 'run_twiliosms'}),
     ),
     path(
+        'api/apps/<str:uid>/twiliovoice/run',
+        apis.AppViewSet.as_view({'post': 'run_twiliovoice'}),
+    ),
+    path(
         'api/apps/<str:uid>/run/<str:session_id>',
         apis.AppViewSet.as_view({'post': 'run'}),
     ),

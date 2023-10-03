@@ -5,7 +5,7 @@ from channels.db import database_sync_to_async
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import ValidationError
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -68,7 +68,7 @@ class AppTypeViewSet(viewsets.ViewSet):
 
 class AppViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord' or self.action == 'run_twiliosms':
+        if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord' or self.action == 'run_twiliosms' or self.action == 'run_twiliovoice':
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -528,8 +528,10 @@ class AppViewSet(viewsets.ViewSet):
             app_runner_class = AppRunerFactory.get_app_runner('discord')
         elif platform == 'slack':
             app_runner_class = AppRunerFactory.get_app_runner('slack')
-        elif platform == 'twilio':
-            app_runner_class = AppRunerFactory.get_app_runner('twilio')
+        elif platform == 'twilio-sms':
+            app_runner_class = AppRunerFactory.get_app_runner('twilio-sms')
+        elif platform == 'twilio-voice':
+            app_runner_class = AppRunerFactory.get_app_runner('twilio-voice')
         else:
             app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
 
@@ -549,8 +551,26 @@ class AppViewSet(viewsets.ViewSet):
     
     @action(detail=True, methods=['post'])
     def run_twiliosms(self, request, uid):
-        result = self.run(request, uid, platform='twilio')
+        result = self.run(request, uid, platform='twilio-sms')
         return DRFResponse(status=204, headers={'Content-Type': 'text/xml'})
+    
+    @action(detail=True, methods=['post'])
+    def run_twiliovoice(self, request, uid):
+        if 'RecordingSid' in request.data and 'RecordingUrl' in request.data and 'RecordingDuration' in request.data:
+            # This is a recording
+            result = self.run(request, uid, platform='twilio-voice')
+            return DRFResponse(status=204)
+        else:
+            # This is a call
+            response = f"""
+            <Response>
+                <Pause length="1"/>
+                <Say>Please leave your message after the tone.</Say>
+                <Record action="https://c786-162-231-246-246.ngrok.io/api/apps/{uid}/twiliovoice/run" method="POST" maxLength="120" playBeep="true" />
+            </Response>
+            """
+            return HttpResponse(response, content_type='application/xml')
+        
 
     def testsets(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))

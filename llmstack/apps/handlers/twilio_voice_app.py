@@ -1,8 +1,13 @@
+import base64
 import uuid
 import logging
 
+import requests
+
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.apps.models import AppVisibility
+from llmstack.common.utils.audio_loader import partition_audio
+from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor
@@ -15,7 +20,7 @@ logger = logging.getLogger(__name__)
 def generate_uuid(input_str):
     return str(uuid.uuid5(uuid.NAMESPACE_URL, input_str))
 
-class TwilioAppRunner(AppRunner):
+class TwilioVoiceAppRunner(AppRunner):
     def app_init(self):
         self.twilio_auth_token = self.twilio_config.get('auth_token') if self.twilio_config else ''
         self.twilio_account_sid = self.twilio_config.get('account_sid') if self.twilio_config else ''
@@ -34,35 +39,63 @@ class TwilioAppRunner(AppRunner):
         return super()._is_app_accessible()
     
     def _get_input_data(self, twilio_request_payload):
+        vendor_env = self.app_owner_profile.get_vendor_env()
         
         input_data = {
             '_request': {
+                'CallSid': twilio_request_payload.get('CallSid', ''),
+                'CallStatus': twilio_request_payload.get('CallStatus', ''),
+                'Called': twilio_request_payload.get('Called', ''),
+                'CalledCity': twilio_request_payload.get('CalledCity', ''),
+                'CalledCountry': twilio_request_payload.get('CalledCountry', ''),
+                'CalledState': twilio_request_payload.get('CalledState', ''),
+                'CalledZip': twilio_request_payload.get('CalledZip', ''),
+                'Caller': twilio_request_payload.get('Caller', ''),
+                'CallerCity': twilio_request_payload.get('CallerCity', ''),
+                'CallerCountry': twilio_request_payload.get('CallerCountry', ''),
+                'CallerState': twilio_request_payload.get('CallerState', ''),
+                'CallerZip': twilio_request_payload.get('CallerZip', ''),
+                'Digits': twilio_request_payload.get('Digits', ''),
+                'Direction': twilio_request_payload.get('Direction', ''),
+                'From': twilio_request_payload.get('From', ''),
+                'FromCity': twilio_request_payload.get('FromCity', ''),
+                'FromCountry': twilio_request_payload.get('FromCountry', ''),
+                'FromState': twilio_request_payload.get('FromState', ''),
+                'FromZip': twilio_request_payload.get('FromZip', ''),
+                'RecordingDuration': twilio_request_payload.get('RecordingDuration', ''),
+                'RecordingSid': twilio_request_payload.get('RecordingSid', ''),
+                'RecordingUrl': twilio_request_payload.get('RecordingUrl', ''),
+                'To': twilio_request_payload.get('To', ''),
                 'ToCountry': twilio_request_payload.get('ToCountry', ''),
                 'ToState': twilio_request_payload.get('ToState', ''),
-                'SmsMessageSid': twilio_request_payload.get('SmsMessageSid', ''),
-                'NumMedia': twilio_request_payload.get('NumMedia', ''),
                 'ToCity': twilio_request_payload.get('ToCity', ''),
-                'FromZip': twilio_request_payload.get('FromZip', ''),
-                'SmsSid': twilio_request_payload.get('SmsSid', ''),
-                'FromState': twilio_request_payload.get('FromState', ''),
-                'SmsStatus': twilio_request_payload.get('SmsStatus', ''),
-                'FromCity': twilio_request_payload.get('FromCity', ''),
-                'Body': twilio_request_payload.get('Body', ''),
-                'FromCountry': twilio_request_payload.get('FromCountry', ''),
-                'To': twilio_request_payload.get('To', ''),
-                'ToZip': twilio_request_payload.get('ToZip', ''),
-                'NumSegments': twilio_request_payload.get('NumSegments', ''),
-                'MessageSid': twilio_request_payload.get('MessageSid', ''),
                 'AccountSid': twilio_request_payload.get('AccountSid', ''),
-                'From': twilio_request_payload.get('From', ''),
                 'ApiVersion': twilio_request_payload.get('ApiVersion', ''),
             },
         }
+        recording_url = twilio_request_payload.get('RecordingUrl', None)
+        if recording_url is None:
+            raise Exception('Recording url not found in twilio request payload')
+        if not recording_url.endswith('.mp3'):
+            recording_url = recording_url + '.mp3'
+            recording_filename = recording_url.split('/')[-1]
+        response = requests.get(recording_url, auth=(self.twilio_account_sid, self.twilio_auth_token))
+        if response.status_code == 200:
+            mp3_content = response.content
+            # Encode the MP3 content as a base64 data URI
+            data_uri = f'data:audio/mp3;name={recording_filename};base64,' + base64.b64encode(mp3_content).decode()
+        else:
+            raise Exception('Error while downloading recording from twilio')
+
+        recording_text = '\n\n'.join([str(el) for el in extract_text_elements('audio/mp3', mp3_content, recording_filename, extra_params=ExtraParams(openai_key=vendor_env.get('openai_api_key', None)))])        
+            
         
         return {
              'input': {
-                 **input_data,             
-                 **dict(zip(list(map(lambda x: x['name'], self.app_data['input_fields'])), [twilio_request_payload.get('Body', '')] * len(self.app_data['input_fields']) )),
+                 **input_data,
+                 'recording': data_uri,   
+                 'recording_transcription': recording_text,     
+                 **dict(zip(list(map(lambda x: x['name'], self.app_data['input_fields'])), [recording_text] * len(self.app_data['input_fields']) )),
                  },
         }
     
@@ -102,8 +135,9 @@ class TwilioAppRunner(AppRunner):
             return {}
 
         csp = 'frame-ancestors self'
-        input_data = self._get_input_data(self.request.data)
         
+        input_data = self._get_input_data(self.request.data)
+
         template = convert_template_vars_from_legacy_format(
                 self.app_data['output_template'].get(
                     'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
