@@ -2,7 +2,6 @@ import {
   Box,
   Stack,
   TextField,
-  IconButton
 } from "@mui/material";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
