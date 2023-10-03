@@ -37,7 +37,7 @@ from .serializers import CloneableAppSerializer
 from .serializers import TestCaseSerializer
 from .serializers import TestSetSerializer
 from llmstack.apps.handlers.app_runner_factory import AppRunerFactory
-from llmstack.apps.integration_configs import DiscordIntegrationConfig
+from llmstack.apps.integration_configs import DiscordIntegrationConfig, TwilioIntegrationConfig
 from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from llmstack.emails.sender import EmailSender
@@ -404,6 +404,9 @@ class AppViewSet(viewsets.ViewSet):
         app.discord_integration_config = DiscordIntegrationConfig(**request.data['discord_config']).to_dict(
             app_owner_profile.encrypt_value,
         ) if 'discord_config' in request.data and request.data['discord_config'] else {}
+        app.twilio_integration_config = TwilioIntegrationConfig(**request.data['twilio_config']).to_dict(
+            app_owner_profile.encrypt_value,
+        ) if 'twilio_config' in request.data and request.data['twilio_config'] else {}
         draft = request.data['draft'] if 'draft' in request.data else True
         comment = request.data['comment'] if 'comment' in request.data else ''
 

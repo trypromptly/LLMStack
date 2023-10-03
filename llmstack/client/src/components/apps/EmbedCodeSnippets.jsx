@@ -133,11 +133,41 @@ function WebIntegrationSnippet({ app }) {
   );
 }
 
+function TwilioIntegrationSnippet({ app }) {
+  const inputRef = useRef(null);
+  const url = `${window.location.origin}/api/apps/${app?.uuid}/twilio/run`;
+  return (
+    <Box>
+      <Typography sx={{ textAlign: "left" }}>
+        Copy the following URL in the Messaging Configuration URL Section in your
+        Twilio Phone Number
+      </Typography>
+      <TextField
+        inputRef={inputRef}
+        value={url}
+        variant="outlined"
+        fullWidth
+        InputProps={{
+          readOnly: true,
+          style: { fontFamily: "monospace", color: "#666" },
+        }}
+        onClick={(e) => {
+          e.target.select();
+          navigator.clipboard.writeText(e.target.value);
+          enqueueSnackbar("Code copied successfully", { variant: "success" });
+        }}
+      />
+    </Box>
+  );
+}
+
 export function EmbedCodeSnippet({ app, integration }) {
   if (integration === "slack") {
     return <SlackIntegrationSnippet app={app} />;
   } else if (integration === "discord") {
     return <DiscordIntegrationSnippet app={app} />;
+  } else if (integration === "twilio") {
+    return <TwilioIntegrationSnippet app={app} />;
   } else {
     return <WebIntegrationSnippet app={app} />;
   }
