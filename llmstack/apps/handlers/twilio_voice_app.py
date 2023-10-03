@@ -24,7 +24,7 @@ class TwilioVoiceAppRunner(AppRunner):
     def app_init(self):
         self.twilio_auth_token = self.twilio_config.get('auth_token') if self.twilio_config else ''
         self.twilio_account_sid = self.twilio_config.get('account_sid') if self.twilio_config else ''
-        self.twilio_phone_number = self.twilio_config.get('phone_number') if self.twilio_config else ''
+        self.twilio_phone_numbers = self.twilio_config.get('phone_numbers') if self.twilio_config else ''
             
         self.session_id = self._get_twilio_app_seession_id(self.request.data)
     
@@ -119,7 +119,7 @@ class TwilioVoiceAppRunner(AppRunner):
                 'config': {
                     'account_sid': self.twilio_account_sid,
                     'auth_token': self.twilio_auth_token,
-                    'phone_number': self.twilio_phone_number,
+                    'phone_number': input_data['input']['_request']['To'],
                 },
                 'session_data': {},
             },

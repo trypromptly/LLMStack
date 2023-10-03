@@ -2,6 +2,7 @@ import {
   Box,
   Stack,
   TextField,
+  IconButton
 } from "@mui/material";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
@@ -15,7 +16,7 @@ export function AppTwilioConfigEditor(props) {
         <TextField
           id="account_sid"
           label="Account SID"
-          helperText="Account SID"
+          helperText="Twilio Account SID can be found on the Twilio Console dashboard under Account Info."
           onChange={(e) =>
             setTwilioConfig({ ...twilioConfig, account_sid: e.target.value })
           }
@@ -25,7 +26,7 @@ export function AppTwilioConfigEditor(props) {
         <TextField
           id="auth_token"
           label="Auth Token"
-          helperText="Auth token"
+          helperText="Twilio Auth token Auth Token can be found on the Twilio Console dashboard under Account Info."
           onChange={(e) =>
             setTwilioConfig({ ...twilioConfig, auth_token: e.target.value })
           }
@@ -33,16 +34,17 @@ export function AppTwilioConfigEditor(props) {
           size="small"
         />
         <TextField
-          id="twilio_number"
-          label="Twilio Phone Number"
-          helperText="Twilio Phone Number"
+          id="twilio_numbers"
+          label="Twilio Phone Numbers"
+          helperText="Add comma separated list of Twilio phone numbers"
           onChange={(e) =>
+
             setTwilioConfig({
               ...twilioConfig,
-              phone_number: e.target.value,
+              phone_numbers: e.target.value.split(",").map((n) => n.trim()),
             })
           }
-          defaultValue={twilioConfig?.phone_number || ""}
+          defaultValue={twilioConfig?.phone_numbers?.join(",")}
           size="small"
         />
         <EmbedCodeSnippet app={app} integration="twilio" />
