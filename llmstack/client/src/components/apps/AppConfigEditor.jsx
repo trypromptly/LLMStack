@@ -8,6 +8,7 @@ import {
 import ComputerTwoToneIcon from "@mui/icons-material/ComputerTwoTone";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ForumTwoToneIcon from "@mui/icons-material/ForumTwoTone";
+import SmartButtonIcon from "@mui/icons-material/SmartButton";
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { AppInputSchemaEditor } from "./AppInputSchemaEditor";
@@ -29,6 +30,13 @@ export function AppConfigEditor({
       icon={
         appType?.name?.toLowerCase().includes("chat") ? (
           <ForumTwoToneIcon
+            style={{
+              color: activeStep === 1 ? "white" : "black",
+              fontSize: 40,
+            }}
+          />
+        ) : appType?.name?.toLowerCase().includes("agent") ? (
+          <SmartButtonIcon
             style={{
               color: activeStep === 1 ? "white" : "black",
               fontSize: 40,
