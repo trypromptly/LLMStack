@@ -412,7 +412,7 @@ export default function DataPage() {
   };
 
   return (
-    <div id="data-page">
+    <div id="data-page" style={{ marginBottom: "120px" }}>
       <Grid span={24} style={{ padding: "10px" }}>
         <Grid item style={{ width: "100%", padding: "15px 0px" }}>
           <Button
