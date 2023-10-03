@@ -1,7 +1,9 @@
+from typing import Any
 import uuid
 import logging
 
 from llmstack.apps.handlers.app_runnner import AppRunner
+from llmstack.apps.handlers.twilio_utils import RequestValidator
 from llmstack.apps.models import AppVisibility
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
@@ -14,6 +16,21 @@ logger = logging.getLogger(__name__)
 
 def generate_uuid(input_str):
     return str(uuid.uuid5(uuid.NAMESPACE_URL, input_str))
+
+
+def verify_request_signature(app: Any, base_url: str, headers: dict, raw_body: bytes):
+    signature = headers.get('X-TWILIO-SIGNATURE')
+    if not signature:
+        return False
+    
+    validator = RequestValidator(app.twilio_config.auth_token)
+    request_valid = validator.validate(
+        f'{base_url}/api/apps/{str(app.uuid)}/twiliosms/run',
+        'POST',
+        signature)
+    if not request_valid:
+        return False
+    return True
 
 class TwilioSmsAppRunner(AppRunner):
     def app_init(self):

@@ -1,19 +1,10 @@
+import base64
+from hashlib import sha1, sha256
 import hmac
 import logging
+from urllib.parse import parse_qs, urlparse
 
 from rest_framework.exceptions import PermissionDenied
-
-from llmstack.apps.models import App
-from llmstack.apps.types.app_type_interface import AppTypeInterface
-from llmstack.apps.types.app_type_interface import BaseSchema
-
-logger = logging.getLogger(__name__)
-
-import base64
-import hmac
-from hashlib import sha1, sha256
-
-from urllib.parse import urlparse, parse_qs
 
 
 def compare(string1, string2):
@@ -146,34 +137,3 @@ class RequestValidator(object):
         )
 
         return valid_body_hash and (valid_signature or valid_signature_with_port)
-
-class TwilioConfigSchema(BaseSchema):
-    app_id: str
-    token: str
-
-class TwilioApp(AppTypeInterface[TwilioConfigSchema]):
-    @staticmethod
-    def slug() -> str:
-        return 'twilio'
-
-    @classmethod
-    def pre_save(self, app: App):
-        pass 
-    
-    @classmethod
-    def verify_request_signature(cls, app: App, headers: dict, raw_body: bytes):
-        signature = headers.get('X-TWILIO-SIGNATURE')
-        if not signature:
-            raise PermissionDenied('Missing Twilio signature')
-        
-        validator = RequestValidator(app.twilio_config.auth_token)
-        request_valid = validator.validate(
-            f'https://trypromptly.com/api/apps/{str(app.uuid)}/twilio/run',
-            'POST',
-            signature)
-        if not request_valid:
-            raise PermissionDenied('Invalid Twilio signature')
-        
-        return True 
-
-    
