@@ -327,6 +327,9 @@ class ApiBackendViewSet(viewsets.ViewSet):
             if f'{subclass.__module__}.{subclass.__qualname__}' in settings.PROCESSOR_EXCLUDE_LIST:
                 continue
 
+            if subclass.provider_slug() not in providers_map:
+                continue
+
             try:
                 processor_name = subclass.name()
             except NotImplementedError:
