@@ -70,4 +70,5 @@ class TwilioIntegrationConfig(AppIntegrationConfig):
     is_encrypted = True
     account_sid: str = ''
     auth_token: str = ''
+    phone_number: str = ''
     
