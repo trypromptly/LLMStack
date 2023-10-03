@@ -260,6 +260,7 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
         return BaseErrorOutput(error=HttpAPIError(code=500, message=str(ex)))
 
     def _update_auth_headers(self, headers: Dict[str, str], authorization: Union[APIKeyAuth, BearerTokenAuth, JWTBearerAuth, BasicAuth, OAuth2, NoAuth]) -> Dict[str, str]:
+        auth = None
         if (isinstance(authorization, APIKeyAuth)):
             headers['Authorization'] = f'Apikey {authorization.api_key}'
         elif (isinstance(authorization, BearerTokenAuth)) or (isinstance(authorization, JWTBearerAuth)):
@@ -276,7 +277,7 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
         else:
             raise Exception('Invalid authorization type')
 
-        return headers
+        return headers, auth
 
     def _update_request_params(self, input: HttpAPIProcessorInput, headers: Dict[str, str]) -> Any:
         data = None
@@ -285,7 +286,7 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
         if isinstance(input.body, EmptyBody):
             data = None
         elif isinstance(input.body, FormBody):
-            raise Exception('FormBody not implemented')
+            data = input.body.form_body
         elif isinstance(input.body, RawRequestBody):
             data = input.body.data
             files = input.body.files
@@ -316,7 +317,7 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
         response = None
         headers = input.headers.copy()
 
-        headers = self._update_auth_headers(headers, input.authorization)
+        headers, auth = self._update_auth_headers(headers, input.authorization)
         method = input.method
         url = input.url
         data, json_body, files, headers = self._update_request_params(
@@ -360,7 +361,7 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
         response = None
         headers = input.headers.copy()
 
-        headers = self._update_auth_headers(headers, input.authorization)
+        headers, auth = self._update_auth_headers(headers, input.authorization)
         method = input.method
         url = input.url
         data, json_body, files, headers = self._update_request_params(
@@ -378,6 +379,7 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
             headers=headers,
             timeout=timeout,
             allow_redirects=allow_redirects,
+            auth=auth,
             stream=False,
         )
 

@@ -68,7 +68,7 @@ class AppTypeViewSet(viewsets.ViewSet):
 
 class AppViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord' or self.action == 'run_twilio':
+        if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord' or self.action == 'run_twiliosms':
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -548,7 +548,7 @@ class AppViewSet(viewsets.ViewSet):
         return self.run(request, uid, platform='slack')
     
     @action(detail=True, methods=['post'])
-    def run_twilio(self, request, uid):
+    def run_twiliosms(self, request, uid):
         result = self.run(request, uid, platform='twilio')
         return DRFResponse(status=204, headers={'Content-Type': 'text/xml'})
 

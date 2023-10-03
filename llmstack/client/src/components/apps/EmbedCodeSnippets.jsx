@@ -135,7 +135,7 @@ function WebIntegrationSnippet({ app }) {
 
 function TwilioIntegrationSnippet({ app }) {
   const inputRef = useRef(null);
-  const url = `${window.location.origin}/api/apps/${app?.uuid}/twilio/run`;
+  const url = `${window.location.origin}/api/apps/${app?.uuid}/twiliosms/run`;
   return (
     <Box>
       <Typography sx={{ textAlign: "left" }}>
