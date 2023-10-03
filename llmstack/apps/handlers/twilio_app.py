@@ -17,7 +17,10 @@ def generate_uuid(input_str):
 
 class TwilioAppRunner(AppRunner):
     def app_init(self):
-        self.twilio_auth_token = self.twilio_config.get('auth_token')
+        self.twilio_auth_token = self.twilio_config.get('auth_token') if self.twilio_config else ''
+        self.twilio_account_sid = self.twilio_config.get('account_sid') if self.twilio_config else ''
+        self.twilio_phone_number = self.twilio_config.get('phone_number') if self.twilio_config else ''
+            
         self.session_id = self._get_twilio_app_seession_id(self.request.data)
     
     def _get_twilio_app_seession_id(self, twilio_request_payload):
@@ -31,8 +34,37 @@ class TwilioAppRunner(AppRunner):
         return super()._is_app_accessible()
     
     def _get_input_data(self, twilio_request_payload):
-        logger.info('Twilio request payload: %s', twilio_request_payload)
-        return {}
+        
+        input_data = {
+            '_request': {
+                'ToCountry': twilio_request_payload.get('ToCountry', ''),
+                'ToState': twilio_request_payload.get('ToState', ''),
+                'SmsMessageSid': twilio_request_payload.get('SmsMessageSid', ''),
+                'NumMedia': twilio_request_payload.get('NumMedia', ''),
+                'ToCity': twilio_request_payload.get('ToCity', ''),
+                'FromZip': twilio_request_payload.get('FromZip', ''),
+                'SmsSid': twilio_request_payload.get('SmsSid', ''),
+                'FromState': twilio_request_payload.get('FromState', ''),
+                'SmsStatus': twilio_request_payload.get('SmsStatus', ''),
+                'FromCity': twilio_request_payload.get('FromCity', ''),
+                'Body': twilio_request_payload.get('Body', ''),
+                'FromCountry': twilio_request_payload.get('FromCountry', ''),
+                'To': twilio_request_payload.get('To', ''),
+                'ToZip': twilio_request_payload.get('ToZip', ''),
+                'NumSegments': twilio_request_payload.get('NumSegments', ''),
+                'MessageSid': twilio_request_payload.get('MessageSid', ''),
+                'AccountSid': twilio_request_payload.get('AccountSid', ''),
+                'From': twilio_request_payload.get('From', ''),
+                'ApiVersion': twilio_request_payload.get('ApiVersion', ''),
+            },
+        }
+        
+        return {
+             'input': {
+                 **input_data,             
+                 **dict(zip(list(map(lambda x: x['name'], self.app_data['input_fields'])), [twilio_request_payload.get('Body', '')] * len(self.app_data['input_fields']) )),
+                 },
+        }
     
     def _get_twilio_processor_actor_configs(self, input_data):
         vendor_env = self.app_owner_profile.get_vendor_env()
@@ -47,13 +79,14 @@ class TwilioAppRunner(AppRunner):
             actor=TwilioCreateMessageProcessor, kwargs={
                 'env': vendor_env,
                 'input': {
+                    '_request': input_data['input']['_request'],
                     'body': output_template,
-                    'from_': '',
-                    'to': '',
+                    'to': input_data['input']['_request']['From'],
                 },
                 'config': {
-                    'account_sid': self.twilio_config.get('account_sid'),
-                    'auth_token': self.twilio_config.get('auth_token'),
+                    'account_sid': self.twilio_account_sid,
+                    'auth_token': self.twilio_auth_token,
+                    'phone_number': self.twilio_phone_number,
                 },
                 'session_data': {},
             },
@@ -70,17 +103,19 @@ class TwilioAppRunner(AppRunner):
 
         csp = 'frame-ancestors self'
         input_data = self._get_input_data(self.request.data)
+        
         template = convert_template_vars_from_legacy_format(
                 self.app_data['output_template'].get(
                     'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
             )
+        
         actor_configs = [
             ActorConfig(
                 name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
                 ),
             ActorConfig(
-                name='output', template_key='output',
-                actor=OutputActor, kwargs={'template': '{{_inputs0.channel}}'},
+                name='output', template_key='output',  dependencies=['input'],
+                actor=OutputActor, kwargs={'template': '{{_inputs0._request}}'},
                 ),
             ]
         processor_actor_configs, processor_configs = self._get_processor_actor_configs()
@@ -93,12 +128,11 @@ class TwilioAppRunner(AppRunner):
 
         actor_configs.append(
             ActorConfig(
-                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'discord_processor'], kwargs={'processor_configs': processor_configs})
+                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'twilio_processor'], kwargs={'processor_configs': processor_configs})
             )
 
         self._start(
             input_data, self.app_session,
             actor_configs, csp, template,
         )
-
-        return {'type': 5}
+        return {}
