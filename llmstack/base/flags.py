@@ -43,6 +43,18 @@ class FlagSource(object):
             'CAN_ADD_APP_DOMAIN': [
                 Condition('can_add_app_domain', True),
             ],
+            'HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA': [
+                Condition('has_exceeded_monthly_processor_run_quota', False),
+            ],
+            'HAS_EXCEEDED_STORAGE_QUOTA': [
+                Condition('has_exceeded_storage_quota', False),
+            ],
+            'HAS_EXCEEDED_APP_CREATE_QUOTA': [
+                Condition('has_exceeded_app_create_quota', False),
+            ],
+            'CAN_ADD_TWILIO_INTERGRATION': [
+                Condition('can_add_twilio_integration', True),
+            ],
         }
 
         return flags
@@ -182,3 +194,19 @@ def can_add_keys(value, request=None, **kwargs):
 @conditions.register('can_add_app_domain')
 def can_add_app_domain(value, request=None, **kwargs):
     return False
+
+@conditions.register('has_exceeded_monthly_processor_run_quota')
+def has_exceeded_monthly_processor_run_quota(value, request=None, **kwargs):
+    return False
+
+@conditions.register('has_exceeded_storage_quota')
+def has_exceeded_storage_quota(value, request=None, **kwargs):
+    return False
+
+@conditions.register('has_exceeded_app_create_quota')
+def has_exceeded_app_create_quota(value, request=None, **kwargs):
+    return False
+
+@conditions.register('can_add_twilio_integration')
+def can_add_twilio_integration(value, request=None, **kwargs):
+    return True

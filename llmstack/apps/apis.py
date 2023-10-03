@@ -515,6 +515,10 @@ class AppViewSet(viewsets.ViewSet):
     def run_app_internal(self, uid, session_id, request_uuid, request, platform=None, preview=False):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
+        
+        if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA', request=request, user=app.owner)):
+            raise Exception('You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.')
+         
         app_data_obj = AppData.objects.filter(
             app_uuid=app.uuid, is_draft=preview).order_by('-created_at').first()
 
