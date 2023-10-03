@@ -6,6 +6,7 @@ import {
   Switch,
   TextField,
   Typography,
+  Stack
 } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
 
@@ -133,11 +134,72 @@ function WebIntegrationSnippet({ app }) {
   );
 }
 
+function TwilioIntegrationSnippet({ app }) {
+  const inputRef = useRef(null);
+  const showTwilioVoiceUrl =
+    app?.twilio_config?.use_twilio_transcription ||
+    app?.twilio_config?.voicemail_greeting || 
+    app?.twilio_config?.voicemail_length || false;
+  const smsUrl = `${window.location.origin}/api/apps/${app?.uuid}/twiliosms/run`;
+  const voiceUrl = `${window.location.origin}/api/apps/${app?.uuid}/twiliovoice/run`;
+
+  return (
+    <Stack>
+      <Typography sx={{ textAlign: "left" }}>
+        Copy the following URL in the Messaging Configuration URL Section in
+        your Twilio Phone Number
+      </Typography>
+      <TextField
+        inputRef={inputRef}
+        value={smsUrl}
+        variant="outlined"
+        fullWidth
+        InputProps={{
+          readOnly: true,
+          style: { fontFamily: "monospace", color: "#666" },
+        }}
+        onClick={(e) => {
+          e.target.select();
+          navigator.clipboard.writeText(e.target.value);
+          enqueueSnackbar("Code copied successfully", { variant: "success" });
+        }}
+      />
+      {showTwilioVoiceUrl && (
+        <div>
+          <Typography sx={{ textAlign: "left" }}>
+            Copy the following URL in the Voice Configuration URL Section in
+            your Twilio Phone Number
+          </Typography>
+          <TextField
+            inputRef={inputRef}
+            value={voiceUrl}
+            variant="outlined"
+            fullWidth
+            InputProps={{
+              readOnly: true,
+              style: { fontFamily: "monospace", color: "#666" },
+            }}
+            onClick={(e) => {
+              e.target.select();
+              navigator.clipboard.writeText(e.target.value);
+              enqueueSnackbar("Code copied successfully", {
+                variant: "success",
+              });
+            }}
+          />
+        </div>
+      )}
+    </Stack>
+  );
+}
+
 export function EmbedCodeSnippet({ app, integration }) {
   if (integration === "slack") {
     return <SlackIntegrationSnippet app={app} />;
   } else if (integration === "discord") {
     return <DiscordIntegrationSnippet app={app} />;
+  } else if (integration === "twilio") {
+    return <TwilioIntegrationSnippet app={app} />;
   } else {
     return <WebIntegrationSnippet app={app} />;
   }

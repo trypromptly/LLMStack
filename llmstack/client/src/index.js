@@ -188,6 +188,15 @@ router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
+    path: "/apps/:appId/integrations/twilio",
+    element: (
+      <App>
+        <AppEditPage page="integrations/twilio" />
+      </App>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
     path: "/apps/:appId/preview",
     element: (
       <App>

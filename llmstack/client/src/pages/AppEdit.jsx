@@ -38,10 +38,12 @@ import { AppRunHistory } from "../components/apps/AppRunHistory";
 import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
 import { AppSlackConfigEditor } from "../components/apps/AppSlackConfigEditor";
 import { AppDiscordConfigEditor } from "../components/apps/AppDiscordConfigEditor";
+import {AppTwilioConfigEditor} from "../components/apps/AppTwilioConfigEditor";
 import { ReactComponent as CodeIcon } from "../assets/images/icons/code.svg";
 import { ReactComponent as DiscordIcon } from "../assets/images/icons/discord.svg";
 import { ReactComponent as IntegrationsIcon } from "../assets/images/icons/integrations.svg";
 import { ReactComponent as SlackIcon } from "../assets/images/icons/slack.svg";
+import { ReactComponent as TwilioIcon } from "../assets/images/icons/twilio.svg";
 import { ReactComponent as TemplateIcon } from "../assets/images/icons/template.svg";
 import { ReactComponent as TestsIcon } from "../assets/images/icons/tests.svg";
 import { ReactComponent as WebIcon } from "../assets/images/icons/web.svg";
@@ -100,6 +102,11 @@ const menuItems = [
         name: "Slack",
         value: "integrations/slack",
         icon: <SvgIcon component={SlackIcon} />,
+      },
+      {
+        name: "Twilio",
+        value: "integrations/twilio",
+        icon: <SvgIcon component={TwilioIcon} />,
       },
     ],
   },
@@ -248,6 +255,7 @@ export default function AppEditPage(props) {
         web_config: app?.web_config || {},
         slack_config: app?.slack_config || {},
         discord_config: app?.discord_config || {},
+        twilio_config: app?.twilio_config || {},
         processors: processors.map((processor, index) => ({
           id: `_inputs${index + 1}`,
           description:
@@ -575,6 +583,16 @@ export default function AppEditPage(props) {
             )}
             {selectedMenuItem === "integrations/api" && (
               <AppApiExamples app={app} />
+            )}
+            {selectedMenuItem === "integrations/twilio" && (
+              <AppTwilioConfigEditor
+               app={app}
+               twilioConfig={app?.twilio_config || {}}
+               setTwilioConfig={(twilioConfig) => {
+                 setApp((app) => ({ ...app, twilio_config: twilioConfig }));
+               }}
+               saveApp={saveApp}
+              />
             )}
             {selectedMenuItem === "template" && (
               <AppTemplate

@@ -5,7 +5,7 @@ from channels.db import database_sync_to_async
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import ValidationError
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -37,7 +37,7 @@ from .serializers import CloneableAppSerializer
 from .serializers import TestCaseSerializer
 from .serializers import TestSetSerializer
 from llmstack.apps.handlers.app_runner_factory import AppRunerFactory
-from llmstack.apps.integration_configs import DiscordIntegrationConfig
+from llmstack.apps.integration_configs import DiscordIntegrationConfig, TwilioIntegrationConfig
 from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from llmstack.emails.sender import EmailSender
@@ -68,7 +68,7 @@ class AppTypeViewSet(viewsets.ViewSet):
 
 class AppViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord':
+        if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord' or self.action == 'run_twiliosms' or self.action == 'run_twiliovoice':
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -404,6 +404,9 @@ class AppViewSet(viewsets.ViewSet):
         app.discord_integration_config = DiscordIntegrationConfig(**request.data['discord_config']).to_dict(
             app_owner_profile.encrypt_value,
         ) if 'discord_config' in request.data and request.data['discord_config'] else {}
+        app.twilio_integration_config = TwilioIntegrationConfig(**request.data['twilio_config']).to_dict(
+            app_owner_profile.encrypt_value,
+        ) if 'twilio_config' in request.data and request.data['twilio_config'] else {}
         draft = request.data['draft'] if 'draft' in request.data else True
         comment = request.data['comment'] if 'comment' in request.data else ''
 
@@ -525,6 +528,10 @@ class AppViewSet(viewsets.ViewSet):
             app_runner_class = AppRunerFactory.get_app_runner('discord')
         elif platform == 'slack':
             app_runner_class = AppRunerFactory.get_app_runner('slack')
+        elif platform == 'twilio-sms':
+            app_runner_class = AppRunerFactory.get_app_runner('twilio-sms')
+        elif platform == 'twilio-voice':
+            app_runner_class = AppRunerFactory.get_app_runner('twilio-voice')
         else:
             app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
 
@@ -541,6 +548,16 @@ class AppViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'])
     def run_slack(self, request, uid):
         return self.run(request, uid, platform='slack')
+    
+    @action(detail=True, methods=['post'])
+    def run_twiliosms(self, request, uid):
+        result = self.run(request, uid, platform='twilio-sms')
+        return DRFResponse(status=204, headers={'Content-Type': 'text/xml'})
+    
+    @action(detail=True, methods=['post'])
+    def run_twiliovoice(self, request, uid):
+        raise NotImplementedError()
+        
 
     def testsets(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
