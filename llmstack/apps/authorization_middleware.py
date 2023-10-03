@@ -19,11 +19,10 @@ class AuthorizationMiddleware:
             discord_timestamp = request.headers.get('X-Signature-Timestamp')
             slack_signature = request.headers.get('X-Slack-Signature')
             slack_timestamp = request.headers.get('X-Slack-Request-Timestamp')
-            twilio_signature = request.headers.get('X-TWILIO-SIGNATURE')
             path = request.META['PATH_INFO']
             raw_body = request.body
 
-            if ((discord_signature and discord_timestamp) or (slack_signature and slack_timestamp) or (twilio_signature)) and re.match(r'^/api/apps/.*/run', path):
+            if ((discord_signature and discord_timestamp) or (slack_signature and slack_timestamp) or True) and re.match(r'^/api/apps/.*/run', path):
                 app_id = path.split('/')[3]
                 platform = path.split('/')[4]
                 app, signature_verifier = AppTypeFactory.get_app_type_signature_verifier(
