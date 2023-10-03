@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Button as MuiButton,
+  Button,
   ButtonGroup,
   TextField,
   Stack,
@@ -70,16 +70,18 @@ export function AddDataSourceModal({
             style={{ display: "inline-block" }}
             disabled={datasource ? true : false}
           >
-            {dataSourceTypes.map((dataSourceType) => (
-              <MuiButton
-                key={dataSourceType.id}
-                variant="outlined"
+            {dataSourceTypes.map((dst) => (
+              <Button
+                key={dst.id}
+                variant={
+                  dataSourceType?.id === dst.id ? "contained" : "outlined"
+                }
                 onClick={(e) => {
-                  setDataSourceType(dataSourceType);
+                  setDataSourceType(dst);
                 }}
               >
-                {dataSourceType.name}
-              </MuiButton>
+                {dst.name}
+              </Button>
             ))}
           </ButtonGroup>
           <ThemedJsonForm
@@ -107,8 +109,8 @@ export function AddDataSourceModal({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <MuiButton onClick={handleCancelCb}>Cancel</MuiButton>,
-        <MuiButton
+        <Button onClick={handleCancelCb}>Cancel</Button>,
+        <Button
           variant="contained"
           onClick={() => {
             if (datasource) {
@@ -163,7 +165,7 @@ export function AddDataSourceModal({
           }}
         >
           Submit
-        </MuiButton>
+        </Button>
       </DialogActions>
     </Dialog>
   );
