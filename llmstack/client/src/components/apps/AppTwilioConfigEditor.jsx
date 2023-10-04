@@ -1,15 +1,14 @@
-import {
-  Box,
-  Stack,
-  TextField,
-} from "@mui/material";
+import { Alert, Box, Stack, TextField } from "@mui/material";
+import { useRecoilValue } from "recoil";
+import { profileFlagsState } from "../../data/atoms";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
 
 export function AppTwilioConfigEditor(props) {
   const { app, saveApp, twilioConfig, setTwilioConfig } = props;
+  const profileFlags = useRecoilValue(profileFlagsState);
 
-  return (
+  return profileFlags.CAN_ADD_TWILIO_INTERGRATION ? (
     <Box>
       <Stack direction="column" gap={2}>
         <TextField
@@ -37,7 +36,6 @@ export function AppTwilioConfigEditor(props) {
           label="Twilio Phone Numbers"
           helperText="Add comma separated list of Twilio phone numbers"
           onChange={(e) =>
-
             setTwilioConfig({
               ...twilioConfig,
               phone_numbers: e.target.value.split(",").map((n) => n.trim()),
@@ -60,5 +58,15 @@ export function AppTwilioConfigEditor(props) {
         <AppSaveButtons saveApp={saveApp} />
       </Stack>
     </Box>
+  ) : (
+    <Alert severity="warning" sx={{ margin: "10px" }}>
+      <span>
+        This account is not eligible to use Twilio integration. Please upgrade
+        your account to trigger this app from Twilio.
+        <br />
+        To upgrade your plan, click on <b>Manage Subscription</b> in the{" "}
+        <a href="/settings">Settings</a> page.
+      </span>
+    </Alert>
   );
 }
