@@ -29,7 +29,13 @@ export function DataSourceSelector(props) {
         labelId="multiple-chip-label"
         id="multiple-chip"
         multiple
-        value={props.value ? props.value : []}
+        value={
+          props.value
+            ? typeof props.value === "string"
+              ? [props.value]
+              : props.value
+            : []
+        }
         onChange={(event) => props.onChange(event.target.value)}
         input={<Input id="select-multiple-chip" />}
         renderValue={(selected) => (
