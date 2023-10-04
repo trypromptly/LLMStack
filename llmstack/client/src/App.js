@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import ReactGA from "react-ga4";
 import { CircularProgress, Grid, Stack } from "@mui/material";
+import BannerMessages from "./components/BannerMessages";
 import Sidebar from "./components/sidebar";
 import NavBar from "./components/navbar";
 import { SnackbarProvider } from "notistack";
@@ -133,6 +134,7 @@ export default function App({ children }) {
               overflow: "auto",
             }}
           >
+            <BannerMessages />
             {children}
           </Grid>
         </Suspense>
