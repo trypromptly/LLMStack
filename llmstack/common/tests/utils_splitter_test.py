@@ -31,7 +31,7 @@ class TestCharacterTextSplitter(unittest.TestCase):
         ).split_text(text_data)
         
 
-class TestHtmlTextSplitter(unittest.TestCase):
+class TestHtmlSplitter(unittest.TestCase):
     def test_html_split(self):
         import lxml.html
         html_data = """<!DOCTYPE html>
