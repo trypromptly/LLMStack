@@ -27,7 +27,6 @@ class TwilioCreateMessageConfiguration(ApiProcessorSchema):
     auth_token: Optional[str]
     phone_number: Optional[str]
 
-
 class TwilioCreateMessageProcessor(ApiProcessorInterface[TwilioCreateMessageInput, TwilioCreateMessageOutput, TwilioCreateMessageConfiguration]):
     """
     Twilio Create Message API
@@ -93,4 +92,4 @@ class TwilioCreateMessageProcessor(ApiProcessorInterface[TwilioCreateMessageInpu
         return super().on_error(error)
 
     def get_bookkeeping_data(self) -> BookKeepingData:
-        return BookKeepingData(input=self._input, timestamp=time.time(), run_data={'twilio': {}})
+        return BookKeepingData(input=self._input, timestamp=time.time(), run_data={'twilio': {'requestor' : self._input._request.From}})
