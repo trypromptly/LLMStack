@@ -146,7 +146,8 @@ class SpacyTextSplitter(TextSplitter):
 
 class HtmlTextSplitter(TextSplitter):
     def __init__(self, chunk_size: int = 500, length_function: Any = len, **kwargs):
-        self._keep_script = kwargs.pop('keep_script', True)
+        self._keep_script = kwargs.get('keep_script', True)
+        self._is_html_fragment = kwargs.get('is_html_fragment', False)
         super().__init__(chunk_size, chunk_overlap=0, length_function=length_function)
     
     def _merge_list_elements(self, elements, n):
@@ -165,18 +166,23 @@ class HtmlTextSplitter(TextSplitter):
         return chunks
     
     def _get_html_elements_recursive(self, element, max_length):
-        import lxml.html
-        # If string representation of element is less than max_length, return it
-        element_str = lxml.html.tostring(element).decode('utf-8')
+        import lxml
+        if element.tag == lxml.etree.Comment:
+            return [lxml.html.tostring(element).decode('utf-8')]
         
-        if len(element_str) <= max_length:
-            return [element_str]
-    
-        
-        # Append opening tag with attributes
-        attributes = " ".join([f"{k}=\"{v}\"" for k, v in element.items()])
-        html_elements = [f"<{element.tag} {attributes}>"] if len(attributes) > 0 else [f"<{element.tag}>"]
+        # If string representation of element is less than max_length, return it        
+        attribute_list = []
+        for k,v in element.items():
+            if '\"' in v:
+                attribute_list.append(f"{k}={v}")
+            else:
+                attribute_list.append(f"{k}=\"{v}\"")
             
+        # Append opening tag with attributes
+        attributes = " ".join(attribute_list)
+        
+        html_elements = [f"<{element.tag} {attributes}>"] if len(attributes) > 0 else [f"<{element.tag}>"]
+        
         html_elements.append(element.text or '')
         # Recursively iterate through children
         child_html_elements = []
@@ -191,7 +197,6 @@ class HtmlTextSplitter(TextSplitter):
         else:
             for e in child_html_elements:
                 html_elements.append(e)
-        
         html_elements.append(f"</{element.tag}>")
         html_elements.append(element.tail or '')
         return html_elements
@@ -199,6 +204,12 @@ class HtmlTextSplitter(TextSplitter):
     
     def split_text(self, text: str) -> List[str]:
         import lxml.html
-        
-        return self._get_html_elements_recursive(lxml.html.fromstring(text), self._chunk_size)
-        
+        import lxml.etree
+        if self._is_html_fragment:
+            result = []
+            for fragment in lxml.html.fragments_fromstring(text):
+                result.extend(self._get_html_elements_recursive(fragment, self._chunk_size))
+            
+            return self._merge_list_elements(result, self._chunk_size)
+        else:
+            return self._get_html_elements_recursive(lxml.html.fromstring(text), self._chunk_size)
