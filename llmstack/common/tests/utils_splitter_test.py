@@ -1,6 +1,6 @@
 import unittest
 
-from llmstack.common.utils.splitter import CSVTextSplitter, CharacterTextSplitter
+from llmstack.common.utils.splitter import CSVTextSplitter, CharacterTextSplitter, HtmlTextSplitter
 
 # Unitest for CSVTextSplitter
 
@@ -17,7 +17,6 @@ class TestCSVTextSplitter(unittest.TestCase):
             chunk_size=100, chunk_overlap=1,
             length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
         ).split_text(csv_data)
-        print(len(output))
 
 class TestCharacterTextSplitter(unittest.TestCase):
     def test_character_split(self):
@@ -31,7 +30,67 @@ class TestCharacterTextSplitter(unittest.TestCase):
             chunk_size=100, chunk_overlap=0,
         ).split_text(text_data)
         
-        print(output)
+
+class TestHtmlTextSplitter(unittest.TestCase):
+    def test_html_split(self):
+        import lxml.html
+        html_data = """<!DOCTYPE html>
+<html>
+<head>
+    <title>HTML Unit Test</title>
+    <style>
+        body {font-family: Arial; color: #333;}
+    </style>
+    <script>
+        function onClick() {
+            alert('Button clicked!');
+        }
+    </script>
+</head>
+<body>
+    <h1>Welcome to the HTML Unit Test Page</h1>
+    <p>This is a paragraph.</p>
+    
+    <h2>This is a subheading</h2>
+
+    <a href="#">This is a link</a>
+
+    <img src="sample.jpg" alt="sample">
+
+    <ul>
+        <li>This is a list item</li>
+        <li>Another list item</li>
+    </ul>
+
+    <div style="background-color:#f3f3f3; padding:10px;">This is a div</div>
+
+    <form action="#">
+        <label for="input-name">Name:</label><br>
+        <input type="text" id="input-name" name="name"><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <button onClick="onClick()">Click me!</button>
+
+    <table>
+        <tr>
+            <th>Table header</th>
+        </tr>
+        <tr>
+            <td>Table data</td>
+        </tr>
+    </table>
+
+    <footer>
+        &copy; 2022 HTML Test Page
+    </footer>
+</body>
+</html>"""
+        output = HtmlTextSplitter(chunk_size=100).split_text(html_data)
+        output_str = ''.join(output)
+        # Assert html document is equal
+        self.assertEquals(lxml.etree.tostring(lxml.html.fromstring(output_str)), lxml.etree.tostring(lxml.html.fromstring(html_data)))        
+
     
 if __name__ == '__main__':
     unittest.main()
