@@ -144,7 +144,7 @@ class SpacyTextSplitter(TextSplitter):
         return self._merge_chunks(sentences, self._separator)
     
 
-class HtmlTextSplitter(TextSplitter):
+class HtmlSplitter(TextSplitter):
     def __init__(self, chunk_size: int = 500, length_function: Any = len, **kwargs):
         self._keep_script = kwargs.get('keep_script', True)
         self._is_html_fragment = kwargs.get('is_html_fragment', False)

@@ -1,6 +1,6 @@
 import unittest
 
-from llmstack.common.utils.splitter import CSVTextSplitter, CharacterTextSplitter, HtmlTextSplitter
+from llmstack.common.utils.splitter import CSVTextSplitter, CharacterTextSplitter, HtmlSplitter
 
 # Unitest for CSVTextSplitter
 
@@ -86,7 +86,7 @@ class TestHtmlTextSplitter(unittest.TestCase):
     </footer>
 </body>
 </html>"""
-        output = HtmlTextSplitter(chunk_size=100).split_text(html_data)
+        output = HtmlSplitter(chunk_size=100).split_text(html_data)
         output_str = ''.join(output)
         # Assert html document is equal
         self.assertEquals(lxml.etree.tostring(lxml.html.fromstring(output_str)), lxml.etree.tostring(lxml.html.fromstring(html_data)))        
