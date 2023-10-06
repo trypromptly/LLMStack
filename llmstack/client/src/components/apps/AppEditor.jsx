@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Stack,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-} from "@mui/material";
+import { Box, Button, ButtonGroup, Stack, Tooltip } from "@mui/material";
 import yaml from "js-yaml";
 import AceEditor from "react-ace";
 import { ProcessorEditor } from "./ProcessorEditor";
@@ -81,7 +75,7 @@ export function AppEditor(props) {
                 const data = yaml.load(value);
                 setApp({ ...app, data });
               } catch (e) {
-                console.log(e);
+                console.error(e);
               }
             }}
           />
@@ -158,22 +152,36 @@ export function AppEditor(props) {
         }}
       >
         <Tooltip title="Toggle between UI and YAML editors">
-          <ToggleButtonGroup
+          <ButtonGroup
             variant="outlined"
             color="primary"
+            size="small"
             value={editorType}
             exclusive
             sx={{
               marginBottom: "50px",
-              padding: "14px 0",
-            }}
-            onChange={(e, newEditorType) => {
-              setEditorType(newEditorType);
+              padding: "18px 0",
             }}
           >
-            <ToggleButton value="ui">UI</ToggleButton>
-            <ToggleButton value="yaml">YAML</ToggleButton>
-          </ToggleButtonGroup>
+            <Button
+              value="ui"
+              variant={editorType === "ui" ? "contained" : "outlined"}
+              onClick={() => {
+                setEditorType("ui");
+              }}
+            >
+              UI
+            </Button>
+            <Button
+              value="yaml"
+              variant={editorType === "yaml" ? "contained" : "outlined"}
+              onClick={() => {
+                setEditorType("yaml");
+              }}
+            >
+              YAML
+            </Button>
+          </ButtonGroup>
         </Tooltip>
         <AppSaveButtons saveApp={saveApp} />
       </Stack>
