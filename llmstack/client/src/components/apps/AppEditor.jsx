@@ -70,6 +70,7 @@ export function AppEditor(props) {
             activeStep={activeStep}
             setActiveStep={setActiveStep}
             outputSchemas={outputSchemas}
+            isTool={app.app_type_slug === "agent"}
           />
         </Stack>
       ))}

@@ -38,7 +38,7 @@ import { AppRunHistory } from "../components/apps/AppRunHistory";
 import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
 import { AppSlackConfigEditor } from "../components/apps/AppSlackConfigEditor";
 import { AppDiscordConfigEditor } from "../components/apps/AppDiscordConfigEditor";
-import {AppTwilioConfigEditor} from "../components/apps/AppTwilioConfigEditor";
+import { AppTwilioConfigEditor } from "../components/apps/AppTwilioConfigEditor";
 import { ReactComponent as CodeIcon } from "../assets/images/icons/code.svg";
 import { ReactComponent as DiscordIcon } from "../assets/images/icons/discord.svg";
 import { ReactComponent as IntegrationsIcon } from "../assets/images/icons/integrations.svg";
@@ -258,6 +258,7 @@ export default function AppEditPage(props) {
         twilio_config: app?.twilio_config || {},
         processors: processors.map((processor, index) => ({
           id: `_inputs${index + 1}`,
+          name: processor.name || processor.api_backend?.name,
           description:
             processor.description || processor.api_backend?.description,
           provider_slug:
@@ -267,6 +268,7 @@ export default function AppEditPage(props) {
             processor.api_backend?.slug || processor.processor_slug,
           config: processor.config,
           input: processor.input,
+          output_template: processor.output_template || {},
         })),
       };
 
@@ -586,12 +588,12 @@ export default function AppEditPage(props) {
             )}
             {selectedMenuItem === "integrations/twilio" && (
               <AppTwilioConfigEditor
-               app={app}
-               twilioConfig={app?.twilio_config || {}}
-               setTwilioConfig={(twilioConfig) => {
-                 setApp((app) => ({ ...app, twilio_config: twilioConfig }));
-               }}
-               saveApp={saveApp}
+                app={app}
+                twilioConfig={app?.twilio_config || {}}
+                setTwilioConfig={(twilioConfig) => {
+                  setApp((app) => ({ ...app, twilio_config: twilioConfig }));
+                }}
+                saveApp={saveApp}
               />
             )}
             {selectedMenuItem === "template" && (
