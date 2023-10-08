@@ -143,6 +143,7 @@ class AppRunner:
                 processor_actor_configs.append(
                     ActorConfig(
                         name=processor['id'], template_key=f'_inputs{index}', actor=processor_cls, kwargs={
+                            'id': processor['id'],
                             'env': vendor_env,
                             'input': convert_template_vars_from_legacy_format(processor['input']),
                             'config': convert_template_vars_from_legacy_format(processor['config']),

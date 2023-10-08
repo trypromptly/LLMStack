@@ -19,4 +19,7 @@ class AppRunerFactory:
         elif app_type_slug == 'text-chat':
             from llmstack.apps.handlers.chat_app import ChatAppRunner
             return ChatAppRunner
+        elif app_type_slug == 'agent':
+            from llmstack.apps.handlers.agent_app import AgentRunner
+            return AgentRunner
         raise Exception('App type not found')

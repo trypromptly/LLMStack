@@ -6,15 +6,18 @@ from .history import HistoryStore
 logger = logging.getLogger(__name__)
 
 
-def persist_history_task(processors, bookkeeping_data_map):
-    if not 'input' in bookkeeping_data_map or not 'output' in bookkeeping_data_map:
+def persist_history_task_internal(processors, bookkeeping_data_map):
+    if not 'input' in bookkeeping_data_map or (not 'output' in bookkeeping_data_map and not 'agent' in bookkeeping_data_map):
         logger.error(
             f'Could not persist history {bookkeeping_data_map} for {processors} because input or output is missing',
         )
         return
 
     input = bookkeeping_data_map['input']['run_data']
-    output = bookkeeping_data_map['output']['run_data']
+    output = bookkeeping_data_map['agent']['run_data'] if 'agent' in bookkeeping_data_map else bookkeeping_data_map['output']['run_data']
+
+    output_timestamp = bookkeeping_data_map['agent'][
+        'timestamp'] if 'agent' in bookkeeping_data_map else bookkeeping_data_map['output']['timestamp']
     discord_data = bookkeeping_data_map['discord_processor'] if 'discord_processor' in bookkeeping_data_map else None
     slack_data = bookkeeping_data_map['slack_processor'] if 'slack_processor' in bookkeeping_data_map else None
     platform_data = discord_data['run_data'] if discord_data else (
@@ -26,6 +29,14 @@ def persist_history_task(processors, bookkeeping_data_map):
         if processor not in bookkeeping_data_map:
             continue
         bookkeeping_data = bookkeeping_data_map[processor]
+        if isinstance(bookkeeping_data, list):
+            processor_runs.extend([
+                {
+                    'endpoint_uuid': processor,
+                    'bookkeeping_data': x,
+                } for x in bookkeeping_data
+            ])
+            continue
         processor_runs.append({
             'endpoint_uuid': processor,
             'bookkeeping_data': bookkeeping_data,
@@ -54,7 +65,7 @@ def persist_history_task(processors, bookkeeping_data_map):
         response_body = discord_data['input']['text']
         response_content_type = 'text/markdown'
 
-    response_time = bookkeeping_data_map['output']['timestamp'] - \
+    response_time = output_timestamp - \
         bookkeeping_data_map['input']['timestamp']
     if slack_data:
         response_time = slack_data['timestamp'] - \
@@ -77,4 +88,12 @@ def persist_history_task(processors, bookkeeping_data_map):
     )
 
     # Persist history
-    HistoryStore.persist(run_entry, processor_runs=processor_runs, input=input)
+    HistoryStore.persist(
+        run_entry, processor_runs=processor_runs, input=input)
+
+
+def persist_history_task(processors, bookkeeping_data_map):
+    try:
+        persist_history_task_internal(processors, bookkeeping_data_map)
+    except Exception as e:
+        logger.error(f'Error persisting history: {e}')

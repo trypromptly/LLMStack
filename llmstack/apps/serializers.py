@@ -101,6 +101,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
     owner_email = serializers.SerializerMethodField()
     output_template = serializers.SerializerMethodField()
     app_type_name = serializers.SerializerMethodField()
+    app_type_slug = serializers.SerializerMethodField()
     discord_config = serializers.SerializerMethodField()
     slack_config = serializers.SerializerMethodField()
     twilio_config = serializers.SerializerMethodField()
@@ -151,6 +152,9 @@ class AppSerializer(DynamicFieldsModelSerializer):
 
     def get_app_type_name(self, obj):
         return obj.type.name
+
+    def get_app_type_slug(self, obj):
+        return obj.type.slug
 
     def get_processors(self, obj):
         data = self.get_data(obj)
@@ -207,7 +211,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
 
     def get_twilio_config(self, obj):
         return obj.twilio_config if obj.has_write_permission(self._request_user) else None
-    
+
     def get_access_permission(self, obj):
         return AppAccessPermission.WRITE if obj.has_write_permission(self._request_user) else AppAccessPermission.READ
 
@@ -247,7 +251,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
             'logo', 'is_shareable', 'has_footer', 'domain', 'visibility', 'accessible_by',
             'access_permission', 'last_modified_by_email', 'owner_email', 'web_config',
             'slack_config', 'discord_config', 'twilio_config', 'app_type_name', 'processors', 'template',
-            'read_accessible_by', 'write_accessible_by', 'has_live_version'
+            'app_type_slug', 'read_accessible_by', 'write_accessible_by', 'has_live_version'
         ]
 
 

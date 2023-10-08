@@ -10,10 +10,11 @@ from pydantic import AnyUrl, BaseModel
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.base.processor import BaseInputType, BaseOutputType, BaseConfigurationType, ProcessorInterface
 from llmstack.play.actor import Actor, BookKeepingData
+from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
 
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 ConfigurationSchemaType = TypeVar('ConfigurationSchemaType')
 InputSchemaType = TypeVar('InputSchemaType')
@@ -25,6 +26,7 @@ AUDIO_WIDGET_NAME = 'output_audio'
 CHAT_WIDGET_NAME = 'output_chat'
 FILE_WIDGET_NAME = 'file'
 
+
 def hydrate_input(input, values):
     env = jinja2.Environment()
 
@@ -34,7 +36,7 @@ def hydrate_input(input, values):
                 template = env.from_string(value)
                 return template.render(values)
             except jinja2.exceptions.TemplateError as e:
-                LOGGER.exception(e)
+                logger.exception(e)
                 pass  # not a template, return as is
         return value
 
@@ -49,6 +51,7 @@ def hydrate_input(input, values):
         return obj
 
     return traverse(input)
+
 
 class DataUrl(AnyUrl):
     @classmethod
@@ -70,7 +73,7 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
     Abstract class for API processors
     """
 
-    def __init__(self, input, config, env, output_stream=None, dependencies=[], all_dependencies=[], session_data=None):
+    def __init__(self, input, config, env, output_stream=None, dependencies=[], all_dependencies=[], session_data=None, id=None):
         Actor.__init__(self, dependencies=dependencies,
                        all_dependencies=all_dependencies)
 
@@ -83,6 +86,7 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
         self._config = self._get_configuration_class()(**config)
         self._input = self._get_input_class()(**input)
         self._env = env
+        self._id = id
         self._output_stream = output_stream
 
         self.process_session_data(session_data)
@@ -157,7 +161,7 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
         elif isinstance(result, ApiProcessorSchema):
             return result.dict()
         else:
-            LOGGER.exception('Invalid result type')
+            logger.exception('Invalid result type')
             raise Exception('Invalid result type')
 
     def get_bookkeeping_data(self) -> BookKeepingData:
@@ -182,6 +186,40 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
                 self._config, message) if self._config else self._config
             output = self.process()
         except Exception as e:
+            output = {
+                'errors': [str(e)], 'raw_response': {
+                    'text': str(e),
+                    'status_code': 400,
+                },
+            }
+
+            # Send error to output stream
+            self._output_stream.error(e)
+
+        bookkeeping_data = self.get_bookkeeping_data()
+        if not bookkeeping_data:
+            bookkeeping_data = BookKeepingData(
+                input=self._input, config=self._config, output=output or {}, session_data=self.session_data_to_persist(), timestamp=time.time(),
+            )
+
+        self._output_stream.bookkeep(bookkeeping_data)
+
+    def invoke(self, message: ToolInvokeInput) -> Any:
+        try:
+            self._input = hydrate_input(
+                self._input, message.input) if message else self._input
+            self._config = hydrate_input(
+                self._config, message.input) if self._config else self._config
+
+            # Merge tool args with input
+            self._input = self._get_input_class()(
+                **{**self._input.dict(), **message.tool_args})
+
+            logger.info(
+                f'Invoking tool {message.tool_name} with args {message.tool_args}')
+            output = self.process()
+        except Exception as e:
+            logger.exception(e)
             output = {
                 'errors': [str(e)], 'raw_response': {
                     'text': str(e),

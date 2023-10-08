@@ -3,6 +3,7 @@ import { useRecoilValue } from "recoil";
 import { Box } from "@mui/material";
 import { Ws } from "../../data/ws";
 import { isMobileState } from "../../data/atoms";
+import { AgentRenderer } from "./AgentRenderer";
 import { WebChatRender } from "./WebChatRender";
 import { WebAppRenderer } from "./WebAppRenderer";
 
@@ -29,6 +30,9 @@ export function AppPreview(props) {
       {app?.type?.slug === "web" && <WebAppRenderer app={app} ws={ws} />}
       {app?.type?.slug === "text-chat" && (
         <WebChatRender app={app} isMobile={isMobile} ws={ws} />
+      )}
+      {app?.type?.slug === "agent" && (
+        <AgentRenderer app={app} isMobile={isMobile} ws={ws} />
       )}
     </Box>
   );

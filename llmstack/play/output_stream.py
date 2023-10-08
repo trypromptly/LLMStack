@@ -69,6 +69,8 @@ class MessageType(str, Enum):
     BOOKKEEPING = 'bookkeeping',
     BOOKKEEPING_DONE = 'bookkeeping_done'
     INPUT = 'input'
+    TOOL_INVOKE = 'tool_invoke'
+    AGENT_DONE = 'agent_done'
     STREAM = 'stream'
     STREAM_CLOSED = 'stream_closed'
     STREAM_ERROR = 'stream_error'
@@ -85,8 +87,11 @@ class MessageType(str, Enum):
 
 
 class Message(BaseModel):
+    message_id: str = None
     message_type: MessageType = MessageType.BEGIN
     message_from: str = None
+    message_to: str = None
+    response_to: str = None  # This is used to send a response to a message
     message: Any = None
     template_key: str = None
 
@@ -118,6 +123,8 @@ class OutputStream:
         self._stream_id = stream_id
         self._coordinator_urn = coordinator_urn
         self._coordinator_proxy = None
+        self._message_id = None
+        self._response_to = None
         self._status: OutputStream.Status = OutputStream.Status.OPEN
 
     @property
@@ -135,7 +142,19 @@ class OutputStream:
 
         return self._coordinator_proxy
 
-    async def write(self, data: BaseModel) -> None:
+    def set_message_id(self, message_id: str) -> None:
+        """
+        Sets the current message id.
+        """
+        self._message_id = message_id
+
+    def set_response_to(self, response_to: str) -> None:
+        """
+        Sets the response to.
+        """
+        self._response_to = response_to
+
+    async def write(self, data: BaseModel, message_id=None, message_to=None, response_to=None) -> None:
         """
         Stitches fields from data to _data.
         """
@@ -144,11 +163,14 @@ class OutputStream:
 
         self._coordinator.relay(
             Message(
+                message_id=message_id or self._message_id,
                 message_type=MessageType.STREAM_DATA,
                 message_from=self._stream_id,
                 message=orjson.loads(data.json()) if isinstance(
                     data, BaseModel,
                 ) else data,
+                message_to=message_to,
+                response_to=response_to or self._response_to,
             ),
         )
 
@@ -158,6 +180,17 @@ class OutputStream:
             ) else data
         else:
             self._data = stitch_model_objects(self._data, data)
+        await asyncio.sleep(0.0001)
+
+    async def write_raw(self, message: Message) -> None:
+        """
+        Writes raw message to the output stream.
+        """
+        if self._status == OutputStream.Status.CLOSED:
+            raise StreamClosedException('Output stream is closed.')
+
+        self._coordinator.relay(message)
+
         await asyncio.sleep(0.0001)
 
     def close(self) -> None:
@@ -178,7 +211,7 @@ class OutputStream:
         """
         return self._status
 
-    def finalize(self) -> BaseModel:
+    def finalize(self, message_id=None, message_to=None, response_to=None) -> BaseModel:
         """
         Closes the output stream and returns stitched data.
         """
@@ -187,11 +220,14 @@ class OutputStream:
 
         self._coordinator.relay(
             Message(
+                message_id=message_id or self._message_id,
+                message_to=message_to,
                 message_type=MessageType.STREAM_CLOSED,
                 message_from=self._stream_id,
                 message=orjson.loads(output.json()) if isinstance(
                     output, BaseModel,
                 ) else output,
+                response_to=response_to or self._response_to,
             ),
         )
 
@@ -206,6 +242,7 @@ class OutputStream:
                 message_type=MessageType.BOOKKEEPING,
                 message_from=self._stream_id,
                 message=data.dict(),
+                message_id=self._message_id,
             ),
         )
 

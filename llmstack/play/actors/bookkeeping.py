@@ -11,15 +11,20 @@ logger = logging.getLogger(__name__)
 
 
 class BookKeepingActor(Actor):
-    def __init__(self, output_stream, processor_configs, dependencies=[], all_dependencies=[]):
+    def __init__(self, output_stream, processor_configs, dependencies=[], all_dependencies=[], is_agent=False, **kwargs):
         super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
         self._processor_configs = processor_configs
         self._output_stream = output_stream
         self._bookkeeping_data_map = {}
+        self._is_agent = is_agent
 
     def on_receive(self, message: Message) -> Any:
         if message.message_type == MessageType.BOOKKEEPING:
-            self._bookkeeping_data_map[message.message_from] = message.message
+            if message.message_id:
+                self._bookkeeping_data_map[message.message_from] = self._bookkeeping_data_map[message.message_from] + [
+                    message.message] if message.message_from in self._bookkeeping_data_map else [message.message]
+            else:
+                self._bookkeeping_data_map[message.message_from] = message.message
 
             # Save session data
             processor_config = self._processor_configs[
@@ -30,8 +35,11 @@ class BookKeepingActor(Actor):
                 save_app_session_data(processor_config['app_session_data'])
 
             # Persist history
-            if len(self._bookkeeping_data_map) == len(self.dependencies):
+            if len(self._bookkeeping_data_map) == len(self.dependencies) and not self._is_agent:
                 self._output_stream.bookkeep_done()
+
+        if message.message_type == MessageType.AGENT_DONE:
+            self._output_stream.bookkeep_done()
 
     def on_stop(self) -> None:
         logger.info('Stopping BookKeepingActor')

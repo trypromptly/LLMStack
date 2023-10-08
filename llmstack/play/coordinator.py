@@ -106,6 +106,14 @@ class Coordinator(ThreadingActor):
         logger.debug(
             f'Relaying message {message} to {self._actor_dependents.get(message.message_from)}',
         )
+
+        # If it is a targetted message, send it to the targetted actor
+        if message.message_to and message.message_to in self.actors:
+            logger.info(
+                f'Sending message {message} to {message.message_to} from {message.message_from}')
+            self.actors[message.message_to].tell(message)
+            return
+
         from_actor_config = self._actor_configs.get(message.message_from)
         message.template_key = from_actor_config.template_key
         # Find actors that are dependent on the incoming stream and send the message to them

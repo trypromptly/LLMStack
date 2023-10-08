@@ -2,6 +2,7 @@ import logging
 import time
 from typing import Any
 from typing import Type
+import uuid
 
 from pydantic import BaseModel
 from pykka import ThreadingActor
@@ -21,6 +22,7 @@ class BookKeepingData(BaseModel):
     session_data: dict = {}
     timestamp: float = time.time()
     run_data: dict = {}
+    message_id: str = None
 
 
 class ActorConfig(BaseModel):
@@ -66,6 +68,12 @@ class Actor(ThreadingActor):
         # Call input only when all the dependencies are met
         if message.message_type == MessageType.STREAM_CLOSED and set(self.dependencies) == set(self._messages.keys()):
             self.input(self._messages)
+
+        # If the message is for a tool, call the tool
+        if message.message_type == MessageType.TOOL_INVOKE:
+            self._output_stream.set_message_id(str(uuid.uuid4()))
+            self._output_stream.set_response_to(message.message_id)
+            self.invoke(message.message)
 
     def input(self, message: Any) -> Any:
         # Co-ordinator calls this when all the dependencies are met. This should be called only once whether input_stream is used or not
