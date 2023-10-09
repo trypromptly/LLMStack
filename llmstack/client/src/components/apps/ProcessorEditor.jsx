@@ -272,7 +272,7 @@ export function ProcessorEditor({
       stepNumber={index + 2}
       activeStep={activeStep}
       setActiveStep={setActiveStep}
-      errors={errors}
+      errors={isTool ? [] : errors}
       action={
         index === processors.length - 1 ? (
           <DeleteIcon
