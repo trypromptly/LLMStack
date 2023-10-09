@@ -263,7 +263,7 @@ export function ProcessorEditor({
   ) : (
     <AppStepCard
       icon={apiBackend?.icon || apiBackend?.api_provider?.name}
-      title={apiBackend?.name}
+      title={processors[index].name || apiBackend?.name}
       description={processors[index].description || apiBackend?.description}
       setDescription={(description) => {
         processors[index].description = description || apiBackend?.description;
