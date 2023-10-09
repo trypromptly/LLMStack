@@ -1,6 +1,6 @@
+import importlib
 import logging
 import time
-import openai
 import uuid
 import orjson as json
 from typing import Any
@@ -59,6 +59,8 @@ class AgentActor(Actor):
             Message(message_type=MessageType.BEGIN, message=None, message_to=self._id))
 
     def on_receive(self, message: Message) -> Any:
+        import openai
+        importlib.reload(openai)
         if message.message_type == MessageType.BEGIN and message.message_to == self._id:
             logger.info(f'Agent actor {self.actor_urn} started')
 
