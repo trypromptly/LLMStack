@@ -37,7 +37,6 @@ class AgentRunner(AppRunner):
     def run_app(self):
         # Check if the app access permissions are valid
         self._is_app_accessible()
-        logger.info(f"Running Agent App: {self.app.config}")
 
         csp = 'frame-ancestors self'
         if self.app.is_published:
@@ -53,7 +52,7 @@ class AgentRunner(AppRunner):
                 name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
             ),
             ActorConfig(
-                name='agent', template_key='agent', actor=AgentActor, kwargs={'processor_configs': processor_configs, 'functions': self._get_processors_as_functions(), 'input': self.request.data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env()}
+                name='agent', template_key='agent', actor=AgentActor, kwargs={'processor_configs': processor_configs, 'functions': self._get_processors_as_functions(), 'input': self.request.data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 'config': self.app_data['config']}
             ),
             ActorConfig(
                 name='output', template_key='output',
@@ -99,7 +98,7 @@ class AgentRunner(AppRunner):
                             await asyncio.sleep(0.0001)
                             if not metadata_sent:
                                 metadata_sent = True
-                                yield {'session': {'id': self.app_session['uuid']}, 'csp': csp, 'templates': {**{k: v['processor']['output_template'] for k, v in processor_configs.items()}, **{'agent': self.app_data['output_template']}} if processor_configs else {'agent': template}}
+                                yield {'session': {'id': self.app_session['uuid']}, 'csp': csp, 'templates': {**{k: v['processor']['output_template'] for k, v in processor_configs.items()}, **{'agent': self.app_data['output_template']}} if processor_configs else {'agent': self.app_data['output_template']}}
                             output = next(output_iter)
                             yield output
                     except StopIteration:

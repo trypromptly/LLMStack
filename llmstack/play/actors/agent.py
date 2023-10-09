@@ -43,6 +43,7 @@ class AgentActor(Actor):
         self._id = kwargs.get('id')
         self._env = kwargs.get('env')
         self._input = kwargs.get('input')
+        self._config = kwargs.get('config', {})
 
         self._agent_messages = [{
             'role': 'system',
@@ -61,7 +62,8 @@ class AgentActor(Actor):
         if message.message_type == MessageType.BEGIN and message.message_to == self._id:
             logger.info(f'Agent actor {self.actor_urn} started')
 
-            model = 'gpt-3.5-turbo'
+            model = self._config.get('model', 'gpt-3.5-turbo')
+            max_steps = self._config.get('max_steps', 10)
 
             openai.api_key = self._env['openai_api_key']
 
