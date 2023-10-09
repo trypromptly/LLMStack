@@ -699,9 +699,9 @@
     "model": "apps.apptype",
     "pk": 3,
     "fields": {
-      "name": "Slack App",
-      "description": "Native custom Slack app that can be used from your workspace",
-      "slug": "slack"
+      "name": "Agent",
+      "description": "Agent that can perform actions based on the input from the user",
+      "slug": "agent"
     }
   },
   {
