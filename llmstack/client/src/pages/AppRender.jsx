@@ -171,14 +171,20 @@ function AppRenderPage({ headless = false }) {
           paddingTop: "10px",
         }}
       >
-        {headless && app.has_footer && (
-          <Typography sx={{ textAlign: "center" }} variant="caption">
-            Powered by{" "}
-            <a href="https://trypromptly.com" target="_blank" rel="noreferrer">
-              Promptly
-            </a>
-          </Typography>
-        )}
+        {headless &&
+          (app.has_footer ||
+            !process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT) && (
+            <Typography sx={{ textAlign: "center" }} variant="caption">
+              Powered by{" "}
+              <a
+                href="https://trypromptly.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Promptly
+              </a>
+            </Typography>
+          )}
       </Box>
     </Stack>
   );

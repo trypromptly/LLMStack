@@ -251,7 +251,8 @@ export default function AppEditPage(props) {
         app_type: app?.type?.id,
         type_slug: app?.type?.slug,
         input_fields: appInputFields,
-        output_template: appOutputTemplate,
+        output_template:
+          app?.type?.slug === "agent" ? "{{agent}}" : appOutputTemplate,
         web_config: app?.web_config || {},
         slack_config: app?.slack_config || {},
         discord_config: app?.discord_config || {},

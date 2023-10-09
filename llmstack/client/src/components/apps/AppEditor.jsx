@@ -138,6 +138,7 @@ export function AppEditor(props) {
               outputTemplate={appOutputTemplate}
               setOutputTemplate={setAppOutputTemplate}
               outputSchemas={outputSchemas}
+              isAgent={app.app_type_slug === "agent"}
             />
           </Stack>
         </Box>
