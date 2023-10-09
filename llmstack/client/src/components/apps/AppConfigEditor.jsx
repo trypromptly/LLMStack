@@ -24,6 +24,7 @@ export function AppConfigEditor({
   setInputFields,
   config,
   setConfig,
+  isAgent,
 }) {
   return (
     <AppStepCard
@@ -58,7 +59,7 @@ export function AppConfigEditor({
       setActiveStep={setActiveStep}
     >
       <CardContent style={{ maxHeight: 400, overflow: "auto" }}>
-        <Accordion defaultExpanded={true}>
+        <Accordion defaultExpanded={!isAgent}>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             aria-controls="input-content"
@@ -69,9 +70,21 @@ export function AppConfigEditor({
           </AccordionSummary>
           <AccordionDetails>
             <AppInputSchemaEditor
-              fields={inputFields}
+              fields={
+                isAgent
+                  ? [
+                      {
+                        name: "task",
+                        title: "Task",
+                        description: "What do you want the agent to perform?",
+                        type: "string",
+                        required: true,
+                      },
+                    ]
+                  : inputFields
+              }
               setFields={setInputFields}
-              readOnly={appType?.slug === "slack"}
+              readOnly={isAgent}
             />
           </AccordionDetails>
         </Accordion>

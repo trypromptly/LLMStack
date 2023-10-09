@@ -94,6 +94,7 @@ export function AppEditor(props) {
               processors={processors}
               setProcessors={setProcessors}
               outputSchemas={outputSchemas}
+              isAgent={app.app_type_slug === "agent"}
             />
           </Stack>
           {processors.map((processor, index) => (
