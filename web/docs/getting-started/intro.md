@@ -11,12 +11,33 @@ Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow th
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/engine/install/)
-- [Git](https://git-scm.com/downloads) (optional)
+- [Python](https://www.python.org/downloads/) (version 3.8 or above)
 
 ## Quickstart
 
-Download the latest release from LLMStack's [releases page](https://github.com/trypromptly/LLMStack/releases) and extract it. Navigate to the extracted directory and create your `.env` file and update `SECRET_KEY`, `CIPHER_SALT` and `DATABASE_PASSWORD`:
+You can install LLMStack locally using the following command:
+
+```
+pip install llmstack
+```
+
+:::info
+LLMStack comes with a default admin account whose credentials are `admin` and `promptly`. _Be sure to change the password from admin panel after logging in_.
+:::
+
+Once installed, you can start LLMStack using the following command:
+
+```
+llmstack
+```
+
+LLMStack should automatically open your browser and point it to login page on [http://localhost:3000](http://localhost:3000). You can also alternatively open [http://localhost:3000](http://localhost:3000) to login into the platform.
+
+LLMStack creates a config file in your home directory at `~/.llmstack/config` to store the configuration. You can change the port and other settings from this file. Refer to the [configuration](config.md) section for more information.
+
+### Docker
+
+You can also run LLMStack in docker. Download the latest release from LLMStack's [releases page](https://github.com/trypromptly/LLMStack/releases) and extract it. Navigate to the extracted directory and create your `.env` file and update `SECRET_KEY`, `CIPHER_SALT` and `DATABASE_PASSWORD`:
 
 ```
 cp .env.prod .env
@@ -31,10 +52,6 @@ Run LLMStack using the following command:
 > If you are on Windows, you can use `run-llmstack.bat` instead
 
 Once LLMStack is up and ready, it should automatically open your browser and point it to login page on [http://localhost:3000](http://localhost:3000). You can also alternatively use `docker compose up --pull always` to manually start the containers and open [http://localhost:3000](http://localhost:3000) to login into the platform. Make sure to wait for the API server to be ready before trying to load LLMStack.
-
-:::info
-LLMStack comes with a default admin account whose credentials are `admin` and `promptly`. _Be sure to change the password from admin panel after logging in_.
-:::
 
 <ReactPlayer
   playing
