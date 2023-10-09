@@ -15,12 +15,41 @@ def prepare_env():
     If it doesn't exist, creates it and returns the .env.local file path.
     """
     if not os.path.exists('.llmstack') and not os.path.exists(os.path.join(os.path.expanduser('~'), '.llmstack')):
+        # Create .llmstack dir in user's home dir
         os.mkdir(os.path.join(os.path.expanduser('~'), '.llmstack'))
 
-        # Copy .env.local file from installed package to ~/.llmstack/.env.local
+    if not os.path.exists('.llmstack/config') and not os.path.exists(os.path.join(os.path.expanduser('~'), '.llmstack/config')):
+        # Copy config.toml file from installed package to ~/.llmstack/config
         import shutil
-        shutil.copyfile(os.path.join(os.path.dirname(__file__), '.env.local'), os.path.join(
-            os.path.expanduser('~'), '.llmstack', '.env.local'))
+        shutil.copyfile(os.path.join(os.path.dirname(__file__), 'config.toml'), os.path.join(
+            os.path.expanduser('~'), '.llmstack', 'config'))
+
+        # Given this is the first time the user is running llmstack, we should
+        # ask the user for secret key, cipher_key_salt, database_password and save it in the config file
+        import toml
+        import secrets
+        config_path = os.path.join(
+            os.path.expanduser('~'), '.llmstack', 'config')
+        config = {}
+        with open(config_path) as f:
+            config = toml.load(f)
+            config['llmstack']['secret_key'] = secrets.token_urlsafe(32)
+            config['llmstack']['cipher_key_salt'] = secrets.token_urlsafe(32)
+            config['llmstack']['database_password'] = secrets.token_urlsafe(32)
+            # Ask the user for admin username, email and password
+            sys.stdout.write(
+                'It looks like you are running LLMStack for the first time. Please provide the following information:\n\n')
+
+            config['llmstack']['admin_username'] = input(
+                'Enter admin username: (default: admin)') or 'admin'
+            config['llmstack']['admin_email'] = input(
+                'Enter admin email: ') or ''
+            config['llmstack']['admin_password'] = input(
+                'Enter admin password: (default: promptly) ') or 'promptly'
+            config['llmstack']['default_openai_api_key'] = input(
+                'Enter default OpenAI API key: (Leave empty to configure in settings later) ') or ''
+        with open(config_path, 'w') as f:
+            toml.dump(config, f)
 
     # Chdir to .llmstack
     if not os.path.exists('.llmstack') and os.path.exists(os.path.join(os.path.expanduser('~'), '.llmstack')):
@@ -28,23 +57,26 @@ def prepare_env():
     elif os.path.exists('.llmstack'):
         os.chdir('.llmstack')
 
-    # Throw error if .env.local file doesn't exist
-    if not os.path.exists('.env.local'):
+    # Throw error if config file doesn't exist
+    if not os.path.exists('config'):
         sys.exit(
-            'ERROR: .env.local file not found. Please create one in ~/.llmstack/.env.local')
+            'ERROR: config file not found. Please create one in ~/.llmstack/config')
 
-    return os.path.join('.env.local')
+    return os.path.join('config')
 
 
 def main():
     """Main entry point for the application script"""
 
-    # Get .env.local file path
+    # Get config file path
     env_path = prepare_env()
 
-    # Load environment variables from .env.local file
-    from dotenv import load_dotenv
-    load_dotenv(env_path)
+    # Load environment variables from config under [llmstack] section
+    import toml
+    with open(env_path) as f:
+        config = toml.load(f)
+        for key in config['llmstack']:
+            os.environ[key.upper()] = str(config['llmstack'][key])
 
     if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
         print('Starting LLMStack')
