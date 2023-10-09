@@ -131,6 +131,7 @@ const MemoizedMessage = React.memo(
       </div>
     );
   },
+  (prevProps, curProps) => prevProps.message === curProps.message,
 );
 
 export function AgentRenderer({ app, isMobile, embed = false, ws }) {
