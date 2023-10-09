@@ -47,7 +47,7 @@ class AgentActor(Actor):
 
         self._agent_messages = [{
             'role': 'system',
-            'content': 'You are a helpful assistant that uses provided tools to perform actions.'
+            'content': self._config.get('system_message', 'You are a helpful assistant that uses provided tools to perform actions.')
         }, {
             'role': 'user',
             'content': self._input.get('task', 'Hello')

@@ -20,6 +20,11 @@ class AgentConfigSchema(BaseSchema):
         title='Model',
         default=AgentModel.GPT_3_5, description='The model to use for the agent.',
     )
+    system_message: str = Field(
+        title='System Message',
+        default='You are a helpful assistant that uses provided tools to perform actions.', description='The system message to use with the Agent.',
+        widget='textarea',
+    )
     max_steps: int = Field(
         title='Max Steps',
         default=10, description='The maximum number of steps the agent can take.',
