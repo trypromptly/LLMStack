@@ -37,8 +37,8 @@ class WebSearchInput(ApiProcessorSchema):
 
 
 class WebSearchResult(ApiProcessorSchema):
-    text: str
-    source: str
+    text: str = Field(default='', description='Text of the result')
+    source: str = Field(default='', description='Source URL of the result')
 
 
 class WebSearchOutput(ApiProcessorSchema):
