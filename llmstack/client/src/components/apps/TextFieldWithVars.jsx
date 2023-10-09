@@ -239,7 +239,7 @@ export function TextFieldWithVars(props) {
         .map((schema, index) =>
           generateTreeItemsFromSchema(
             schema.items,
-            `_inputs${index}`,
+            schema.id,
             (e, k, widget) => {
               let templateString = `{{${k}}}`;
               if (widget === "output_image") {

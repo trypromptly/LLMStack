@@ -36,6 +36,7 @@ export function AppEditor(props) {
         label: "1. Input",
         items: schema,
         pillPrefix: "[1] Input / ",
+        id: "_inputs1",
       },
       ...processors.map((p, index) => {
         return {
@@ -44,6 +45,7 @@ export function AppEditor(props) {
             p.api_backend?.name
           } / `,
           items: p.api_backend?.output_schema,
+          id: p.id || `_inputs${index + 1}`,
         };
       }),
     ]);
