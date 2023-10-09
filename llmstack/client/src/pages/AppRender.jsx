@@ -15,6 +15,7 @@ import {
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useRecoilValue } from "recoil";
 import { isMobileState, isLoggedInState } from "../data/atoms";
+import { AgentRenderer } from "../components/apps/AgentRenderer";
 import { WebChatRender } from "../components/apps/WebChatRender";
 import { WebAppRenderer } from "../components/apps/WebAppRenderer";
 import logo from "../assets/logo.png";
@@ -156,6 +157,9 @@ function AppRenderPage({ headless = false }) {
         {app?.type?.slug === "web" && <WebAppRenderer app={app} ws={ws} />}
         {app?.type?.slug === "text-chat" && (
           <WebChatRender app={app} isMobile={isMobile} ws={ws} />
+        )}
+        {app?.type?.slug === "agent" && (
+          <AgentRenderer app={app} isMobile={isMobile} ws={ws} />
         )}
       </Box>
       <Box
