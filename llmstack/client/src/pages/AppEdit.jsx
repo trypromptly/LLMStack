@@ -252,13 +252,15 @@ export default function AppEditPage(props) {
         type_slug: app?.type?.slug,
         input_fields:
           app?.type?.slug === "agent"
-            ? {
-                name: "task",
-                title: "Task",
-                description: "What do you want the agent to perform?",
-                type: "string",
-                required: true,
-              }
+            ? [
+                {
+                  name: "task",
+                  title: "Task",
+                  description: "What do you want the agent to perform?",
+                  type: "string",
+                  required: true,
+                },
+              ]
             : appInputFields,
         output_template:
           app?.type?.slug === "agent" ? "{{agent}}" : appOutputTemplate,
