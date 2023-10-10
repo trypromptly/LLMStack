@@ -36,7 +36,7 @@ export function AppEditor(props) {
         label: "1. Input",
         items: schema,
         pillPrefix: "[1] Input / ",
-        id: "_inputs1",
+        id: "_inputs0",
       },
       ...processors.map((p, index) => {
         return {
