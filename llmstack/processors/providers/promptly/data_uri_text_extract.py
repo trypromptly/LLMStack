@@ -112,8 +112,9 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
             return output
 
         if query and self.storage_index_name:
-            documents: List[Document] = self.temp_store.search_temp_index(
-                self.storage_index_name, query, self._config.document_limit,
+            documents: List[Document] = self.temp_store.hybrid_search(
+                self.storage_index_name, document_query=DocumentQuery(
+                    query=query, limit=self._config.document_limit),
             )
 
             async_to_sync(self._output_stream.write)(
