@@ -212,6 +212,33 @@ class AgentActor(Actor):
             except Exception as e:
                 logger.error(f'Error getting tool output: {e}')
 
+        if message.message_type == MessageType.STREAM_ERROR:
+            # Log the error and quit for now
+            async_to_sync(self._output_stream.write)(
+                AgentOutput(
+                    content=message.message,
+                    from_id=message.message_from,
+                    id=message.message_id or str(uuid.uuid4()),
+                    type='step_error',
+                )
+            )
+            output_response = OutputResponse(
+                response_content_type='text/markdown',
+                response_status=400,
+                response_body=message.message,
+                response_headers={},
+            )
+            bookkeeping_data = BookKeepingData(
+                run_data={**output_response._asdict()}, input=self._input, config={}, output={'agent_messages': self._agent_messages}, timestamp=time.time(),
+            )
+            self._output_stream.bookkeep(bookkeeping_data)
+            async_to_sync(self._output_stream.write_raw)(
+                Message(
+                    message_type=MessageType.AGENT_DONE,
+                    message_from='agent',
+                )
+            )
+
     def on_stop(self) -> None:
         super().on_stop()
 

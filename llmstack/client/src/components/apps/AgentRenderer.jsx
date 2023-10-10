@@ -338,8 +338,11 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
               ...existingMessages,
               {
                 role: "bot",
-                content: response,
-                error: false,
+                content:
+                  message.output.agent.type === "step_error"
+                    ? message.output.agent.content
+                    : response,
+                error: message.output.agent.type === "step_error",
                 type: message.output.agent.type || "output",
                 id: message.output.agent.id,
                 from_id: message.output.agent.from_id,
