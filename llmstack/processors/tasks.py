@@ -20,9 +20,14 @@ def persist_history_task_internal(processors, bookkeeping_data_map):
         'timestamp'] if 'agent' in bookkeeping_data_map else bookkeeping_data_map['output']['timestamp']
     discord_data = bookkeeping_data_map['discord_processor'] if 'discord_processor' in bookkeeping_data_map else None
     slack_data = bookkeeping_data_map['slack_processor'] if 'slack_processor' in bookkeeping_data_map else None
-    platform_data = discord_data['run_data'] if discord_data else (
-        slack_data['run_data'] if slack_data else {}
-    )
+    twilio_data = bookkeeping_data_map['twilio_processor'] if 'twilio_processor' in bookkeeping_data_map else None
+    platform_data = {}
+    if discord_data:
+        platform_data = discord_data['run_data']
+    elif slack_data:
+        platform_data = slack_data['run_data']
+    elif twilio_data:
+        platform_data = twilio_data['run_data']
 
     processor_runs = []
     for processor in processors:
@@ -64,6 +69,9 @@ def persist_history_task_internal(processors, bookkeeping_data_map):
     elif discord_data:
         response_body = discord_data['input']['text']
         response_content_type = 'text/markdown'
+    elif twilio_data:
+        response_body = twilio_data['input']['body']
+        response_content_type = 'text/markdown'
 
     response_time = output_timestamp - \
         bookkeeping_data_map['input']['timestamp']
@@ -72,6 +80,9 @@ def persist_history_task_internal(processors, bookkeeping_data_map):
             bookkeeping_data_map['input']['timestamp']
     elif discord_data:
         response_time = discord_data['timestamp'] - \
+            bookkeeping_data_map['input']['timestamp']
+    elif twilio_data:
+        response_time = twilio_data['timestamp'] - \
             bookkeeping_data_map['input']['timestamp']
 
     run_entry = RunEntry(
