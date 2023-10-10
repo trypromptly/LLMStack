@@ -12,15 +12,12 @@ from llmstack.processors.providers.twilio import TwilioSmsWebhookRequest
 
 logger = logging.getLogger(__name__)
 
-
-
 class TwilioCreateMessageInput(ApiProcessorSchema):
-    _request: Optional[TwilioSmsWebhookRequest]
     body: Optional[str]
     to: Optional[str]
 
 class TwilioCreateMessageOutput(ApiProcessorSchema):
-    response: dict
+    code: int = 200
 
 class TwilioCreateMessageConfiguration(ApiProcessorSchema):
     account_sid: Optional[str]
@@ -68,14 +65,23 @@ class TwilioCreateMessageProcessor(ApiProcessorInterface[TwilioCreateMessageInpu
         
 
     def process(self) -> dict:
+        self._twilio_api_response = None
         input = self._input.dict()
         response = self._send_message(message=input['body'], to_=input['to'], from_=self._config.phone_number, account_sid=self._config.account_sid, auth_token=self._config.auth_token)
+        
+        self._twilio_api_response = {
+            'code': response['code'],
+            'headers': response['headers'],
+            'text': response['text'],
+        }
+                
         async_to_sync(self._output_stream.write)(
-            TwilioCreateMessageOutput(response=response),
+            TwilioCreateMessageOutput(code=response['code']),
         )
         return self._output_stream.finalize()
 
     def on_error(self, error: Any) -> None:
+        self._twilio_api_response = None
         input = self._input.dict()
 
         logger.error(f'Error in TwilioCreateMessageProcessor: {error}')
@@ -85,11 +91,18 @@ class TwilioCreateMessageProcessor(ApiProcessorInterface[TwilioCreateMessageInpu
 
         response = self._send_message(
             error_msg, to_=input['to'], from_=self._config.phone_number, account_sid=self._config.account_sid, auth_token=self._config.auth_token)
+        
+        self._twilio_api_response = {
+            'code': response['code'],
+            'headers': response['headers'],
+            'text': response['text'],
+        }
+                
         async_to_sync(self._output_stream.write)(
-            TwilioCreateMessageOutput(response=response),
+            TwilioCreateMessageOutput(code=response['code']),
         )
         self._output_stream.finalize()
         return super().on_error(error)
 
     def get_bookkeeping_data(self) -> BookKeepingData:
-        return BookKeepingData(input=self._input, timestamp=time.time(), run_data={'twilio': {'requestor' : self._input.to}})
+        return BookKeepingData(input=self._input, timestamp=time.time(), run_data={'twilio': {'requestor' : self._input.to, 'messages_api_response':  self._twilio_api_response}})
