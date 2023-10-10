@@ -3,11 +3,8 @@ import { useRecoilValue } from "recoil";
 import { dataSourcesState, orgDataSourcesState } from "../../data/atoms";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { AddDataSourceModal } from "./AddDataSourceModal";
-import { Chip } from "@mui/material";
+import { Autocomplete, TextField } from "@mui/material";
 import FormControl from "@mui/material/FormControl";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import Input from "@mui/material/Input";
 
 export function DataSourceSelector(props) {
   const dataSources = useRecoilValue(dataSourcesState);
@@ -24,11 +21,21 @@ export function DataSourceSelector(props) {
 
   return (
     <FormControl fullWidth>
-      <Select
-        sx={{ border: "1px solid #ddd", borderRadius: 1 }}
-        labelId="multiple-chip-label"
-        id="multiple-chip"
+      <Autocomplete
         multiple
+        id="datasource-selector"
+        options={[
+          ...uniqueDataSources,
+        ]}
+        getOptionLabel={(option) => {
+          const dataSource = uniqueDataSources.find(
+            (uniqueDataSource) => uniqueDataSource.uuid === option)
+
+          return dataSource ? dataSource.name : option.name ? option.name : option;
+        }}
+        isOptionEqualToValue={(option, value) => {
+          return option.uuid === value.uuid || option.uuid === value;
+        }}
         value={
           props.value
             ? typeof props.value === "string"
@@ -36,31 +43,20 @@ export function DataSourceSelector(props) {
               : props.value
             : []
         }
-        onChange={(event) => props.onChange(event.target.value)}
-        input={<Input id="select-multiple-chip" />}
-        renderValue={(selected) => (
-          <div>
-            {(typeof selected === "string" ? [selected] : selected).map(
-              (value) => (
-                <Chip
-                  key={value}
-                  label={
-                    uniqueDataSources.find((ds) => ds.uuid === value)?.name ||
-                    value
-                  }
-                  style={{ margin: 2, borderRadius: 5 }}
-                />
-              ),
-            )}
-          </div>
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            variant="standard"
+            label="Data Sources"
+            placeholder="Data Sources"
+          />
         )}
-      >
-        {uniqueDataSources.map((dataSource) => (
-          <MenuItem key={dataSource.uuid} value={dataSource.uuid}>
-            {dataSource.name}
-          </MenuItem>
-        ))}
-      </Select>
+        onChange={(event, value) => {
+          props.onChange(
+            value.map((dataSource) => dataSource?.uuid || dataSource),
+          );
+        }}
+      />
       <button
         onClick={() => setShowAddDataSourceModal(true)}
         style={{ backgroundColor: "#6287ac", color: "#fed766" }}

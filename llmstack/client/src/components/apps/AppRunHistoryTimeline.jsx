@@ -33,6 +33,7 @@ import { ReactComponent as DiscordIcon } from "../../assets/images/icons/discord
 import { ReactComponent as SlackIcon } from "../../assets/images/icons/slack.svg";
 import "ace-builds/src-noconflict/mode-sh";
 import "ace-builds/src-noconflict/theme-chrome";
+import { profileFlagsState } from "../../data/atoms";
 
 const browserAndOSFromUACache = {};
 
@@ -300,6 +301,7 @@ const FilterBar = ({ apps, sessions, users, onFilter }) => {
 };
 
 export function AppRunHistoryTimeline(props) {
+  const profileFlags = useRecoilValue(profileFlagsState);
   const { filter, filteredColumns, showFilterBar } = props;
   const apps = useRecoilValue(appsState);
   const [rows, setRows] = useState([]);
@@ -452,6 +454,42 @@ export function AppRunHistoryTimeline(props) {
 
   return (
     <Grid container spacing={1}>
+      <Box sx={{ display: "flex", width: "100%", justifyContent: "end" }}>
+        <Button
+          disabled={profileFlags?.CAN_EXPORT_HISTORY !== true}
+          onClick={() => {
+            axios()
+              .post(
+                `/api/history/download`,
+                {
+                  ...filters,
+                },
+                {
+                  responseType: "blob",
+                },
+              )
+              .then((response) => {
+                const url = window.URL.createObjectURL(
+                  new Blob([response.data]),
+                );
+                const link = document.createElement("a");
+                const pageNumber = filters.page || 1;
+                link.href = url;
+                link.setAttribute(
+                  "download",
+                  `history-${moment().format(
+                    "YYYY-MM-DD HH:MM",
+                  )}-${pageNumber}.csv`,
+                );
+                document.body.appendChild(link);
+                link.click();
+              });
+          }}
+        >
+          Download CSV
+        </Button>
+      </Box>
+
       <TableContainer sx={{ padding: "10px 20px" }}>
         {showFilterBar && (
           <Box>

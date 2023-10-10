@@ -1,9 +1,12 @@
 import asyncio
+from datetime import datetime
 import json
 import logging
 import uuid
 from collections import namedtuple
 from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage
+from flags.state import flag_enabled
 
 from django.contrib.auth import authenticate
 from django.contrib.auth import login
@@ -389,6 +392,52 @@ class HistoryViewSet(viewsets.ModelViewSet):
             )
 
         return DRFResponse(response.data)
+    
+    def get_csv(self, queryset):
+        yield ','.join([
+            'Request UUID', 'App UUID', 'Session Key', 'Request User Email', 'Request IP', 'Request Location', 'Request User Agent', 'Request Content Type', 'Request Body', 'Response Body', 'Created At',
+        ]) + '\n'
+        for entry in queryset:
+            logger.info(entry)
+            yield ','.join([
+                entry.request_uuid, entry.app_uuid, entry.session_key if entry.session_key else '', entry.request_user_email, entry.request_ip, entry.request_location, entry.request_user_agent, entry.request_content_type, json.dumps(entry.request_body), json.dumps(entry.response_body), entry.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            ]) + '\n'
+        
+    def download(self, request):
+        if not flag_enabled('CAN_EXPORT_HISTORY', request=request):
+            return HttpResponseForbidden('You do not have permission to download history')
+        
+        app_uuid = request.data.get('app_uuid', None)
+        session_key = request.data.get('session_key', None)
+        request_user_email = request.data.get('request_user_email', None)
+        endpoint_uuid = request.data.get('endpoint_uuid', None)
+        page_number = request.data.get('page', 1)
+        
+        filters = {
+            'owner': request.user,
+        }
+        if app_uuid and app_uuid != 'null':
+            filters['app_uuid'] = app_uuid
+        if session_key and session_key != 'null':
+            filters['session_key'] = session_key
+        if request_user_email and request_user_email != 'null':
+            filters['request_user_email'] = request_user_email
+        if endpoint_uuid and endpoint_uuid != 'null':
+            filters['endpoint_uuid'] = endpoint_uuid
+        
+        queryset = RunEntry.objects.all().filter(**filters).order_by('-created_at')
+        paginator = Paginator(queryset, self.paginate_by)
+        try:
+            page = paginator.page(page_number)
+        except EmptyPage:
+            page = paginator.page(paginator.num_pages)
+        
+        response = StreamingHttpResponse(
+            streaming_content=self.get_csv(page), content_type='text/csv',
+        )
+        time_now = datetime.now().strftime('%Y-%m-%d')
+        response['Content-Disposition'] = f'attachment; filename="promptly_{time_now}_{page_number}.csv"'
+        return response
 
     def list_sessions(self, request):
         app_uuid = request.GET.get('app_uuid', None)
