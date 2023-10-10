@@ -132,7 +132,7 @@ class TwilioSmsAppRunner(AppRunner):
                 ),
             ActorConfig(
                 name='output', template_key='output',  dependencies=['input'],
-                actor=OutputActor, kwargs={'template': '{{_inputs0._request}}'},
+                actor=OutputActor, kwargs={'template': '{{_inputs0}}'},
                 ),
             ]
         processor_actor_configs, processor_configs = self._get_processor_actor_configs()
