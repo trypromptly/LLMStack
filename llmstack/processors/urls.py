@@ -41,6 +41,9 @@ urlpatterns = [
 
     # History
     path('api/history', apis.HistoryViewSet.as_view({'get': 'list'})),
+    
+    path('api/history/download', apis.HistoryViewSet.as_view({'post': 'download'})),
+    
     path(
         'api/history/sessions',
         apis.HistoryViewSet.as_view({'get': 'list_sessions'}),
