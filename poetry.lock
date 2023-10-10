@@ -5188,13 +5188,13 @@ multidict = ">=4.0"
 
 [[package]]
 name = "yt-dlp"
-version = "2023.3.4"
+version = "2023.9.24"
 description = "A youtube-dl fork with additional features and patches"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "yt-dlp-2023.3.4.tar.gz", hash = "sha256:265d5da97a76c15d7d9a4088a67b78acd5dcf6f8cfd8257c52f581ff996ff515"},
-    {file = "yt_dlp-2023.3.4-py2.py3-none-any.whl", hash = "sha256:40ca421407ce07c8fd700854fd978d58526ec6fff3468caa34ff1c7333b8dc34"},
+    {file = "yt-dlp-2023.9.24.tar.gz", hash = "sha256:cfcfb5ffc12013b6ae4b8c7a283a7e462988f1b49283de291de8bfbe053b8073"},
+    {file = "yt_dlp-2023.9.24-py2.py3-none-any.whl", hash = "sha256:61792482647faac6207b1795b52d73714803414d8c090cd9721dfe8b16b12605"},
 ]
 
 [package.dependencies]
@@ -5270,4 +5270,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "534a2789705ec92f2c87b9043598b15c4920f8cd5f4ec3e218c022b436d8d330"
+content-hash = "2957591c740135f265d79371010c2d4ee98184191d908d17bdc8df317e4c924a"

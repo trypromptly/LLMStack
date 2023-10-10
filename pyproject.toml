@@ -117,7 +117,7 @@ ffmpeg-python = {version = "0.2.0", allow-prereleases = true}
 pydub = {version = "0.25.1", allow-prereleases = true}
 boto3 = {version = "1.26.122", allow-prereleases = true}
 botocore = {version = "1.29.122", allow-prereleases = true}
-yt-dlp = {version = "2023.3.4", allow-prereleases = true}
+yt-dlp = {version = "2023.9.24", allow-prereleases = true}
 python-docx = {version = "0.8.11", allow-prereleases = true}
 pdf2image = {version = "1.16.3", allow-prereleases = true}
 pdfminer-six = {version = "20221105", allow-prereleases = true}
