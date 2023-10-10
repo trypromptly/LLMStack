@@ -61,11 +61,32 @@ class AgentActor(Actor):
     def on_receive(self, message: Message) -> Any:
         import openai
         importlib.reload(openai)
+        max_steps = self._config.get('max_steps', 10) + 2
+
+        if len(self._agent_messages) > max_steps:
+            output_response = OutputResponse(
+                response_content_type='text/markdown',
+                response_status=200,
+                response_body='Exceeded max steps. Terminating.',
+                response_headers={},
+            )
+            bookkeeping_data = BookKeepingData(
+                run_data={**output_response._asdict()}, input=self._input, config={}, output={'agent_messages': self._agent_messages}, timestamp=time.time(),
+            )
+            self._output_stream.bookkeep(bookkeeping_data)
+
+            async_to_sync(self._output_stream.write_raw)(
+                Message(
+                    message_type=MessageType.AGENT_DONE,
+                    message_from='agent',
+                )
+            )
+            return
+
         if message.message_type == MessageType.BEGIN and message.message_to == self._id:
             logger.info(f'Agent actor {self.actor_urn} started')
 
             model = self._config.get('model', 'gpt-3.5-turbo')
-            max_steps = self._config.get('max_steps', 10)
 
             openai.api_key = self._env['openai_api_key']
 
