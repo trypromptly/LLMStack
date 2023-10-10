@@ -31,6 +31,7 @@ import { appsState } from "../../data/atoms";
 import { axios } from "../../data/axios";
 import { ReactComponent as DiscordIcon } from "../../assets/images/icons/discord.svg";
 import { ReactComponent as SlackIcon } from "../../assets/images/icons/slack.svg";
+import { ReactComponent as TwilioIcon } from "../../assets/images/icons/twilio.svg";
 import "ace-builds/src-noconflict/mode-sh";
 import "ace-builds/src-noconflict/theme-chrome";
 import { profileFlagsState } from "../../data/atoms";
@@ -366,6 +367,17 @@ export function AppRunHistoryTimeline(props) {
             {row.platform_data?.discord?.global_name}
           </Box>
         );
+      } else if (row.platform_data?.twilio?.requestor) {
+        return (<Box>
+          <SvgIcon
+            component={TwilioIcon}
+            fontSize="8"
+            sx={{
+              marginRight: "5px",
+              color: "#555",
+              verticalAlign: "middle",
+            }}/>{row.platform_data?.twilio?.requestor}
+        </Box>)
       } else if (
         row.request_user_email === null ||
         row.request_user_email === ""
