@@ -55,6 +55,9 @@ class FlagSource(object):
             'CAN_ADD_TWILIO_INTERGRATION': [
                 Condition('can_add_twilio_integration', True),
             ],
+            'CAN_EXPORT_HISTORY' : [
+                Condition('can_export_history', False),
+            ]
         }
 
         return flags
@@ -210,3 +213,7 @@ def has_exceeded_app_create_quota(value, request=None, **kwargs):
 @conditions.register('can_add_twilio_integration')
 def can_add_twilio_integration(value, request=None, **kwargs):
     return True
+
+@conditions.register('can_export_history')
+def can_export_history(value, request=None, **kwargs):
+    return False
