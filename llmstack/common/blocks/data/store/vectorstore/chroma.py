@@ -2,6 +2,7 @@ import logging
 from typing import Any, Tuple
 from typing import List
 from uuid import uuid4
+import uuid
 
 import chromadb
 from pydantic import BaseModel
@@ -13,6 +14,7 @@ from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuer
 class ChromaConfiguration(BaseModel):
     _type = 'Chroma'
     anonymized_telemetry = False
+    is_persistent = True
 
 
 class Chroma(VectorStoreInterface):
@@ -23,8 +25,12 @@ class Chroma(VectorStoreInterface):
     def __init__(self, *args, **kwargs) -> None:
         configuration = ChromaConfiguration(**kwargs)
         db_settings = chromadb.config.Settings(**configuration.dict())
-        self._client = chromadb.PersistentClient(
-            path=settings.DEFAULT_VECTOR_DATABASE_PATH, settings=db_settings) if settings.DEFAULT_VECTOR_DATABASE_PATH else chromadb.Client(settings=db_settings)
+
+        if db_settings.is_persistent:
+            self._client = chromadb.PersistentClient(
+                path=settings.DEFAULT_VECTOR_DATABASE_PATH, settings=db_settings) if settings.DEFAULT_VECTOR_DATABASE_PATH else chromadb.Client(settings=db_settings)
+        else:
+            self._client = chromadb.EphemeralClient(settings=db_settings)
 
     def add_text(self, index_name: str, document: Document, **kwargs: Any):
         content_key = document.page_content_key
@@ -101,3 +107,9 @@ class Chroma(VectorStoreInterface):
             )
 
         return result
+
+    def create_temp_index(self):
+        index_name = 'Temp_{}'.format(str(uuid.uuid4())).replace('-', '_')
+        self.create_index(schema='', index_name=index_name)
+
+        return index_name

@@ -8,8 +8,8 @@ from asgiref.sync import async_to_sync
 from pydantic import conint
 from pydantic import Field
 
-from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.common.blocks.data.store.vectorstore.temp_weaviate import TempWeaviate
+from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
+from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.utils.text_extract import extract_text_from_b64_json, ExtraParams
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
@@ -93,22 +93,8 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
 
     def process(self) -> str:
         openai_api_key = self._env.get('openai_api_key', None)
-        weaviate_url = self._env['weaviate_url']
-        weaviate_api_key = self._env.get('weaviate_api_key', None)
-        azure_openai_api_key = self._env.get('azure_openai_api_key', None)
-        weaviate_embedding_endpoint = self._env['weaviate_embedding_endpoint']
-        weaviate_text2vec_config = self._env['weaviate_text2vec_config']
-
         query = self._input.query
-
-        self.temp_store = TempWeaviate(
-            url=weaviate_url,
-            openai_key=openai_api_key,
-            azure_openai_key=azure_openai_api_key,
-            weaviate_rw_api_key=weaviate_api_key,
-            weaviate_embedding_endpoint=weaviate_embedding_endpoint,
-            weaviate_text2vec_config=weaviate_text2vec_config,
-        )
+        self.temp_store = Chroma(is_persistent=False)
 
         file = self._input.file or None
         if (file is None or file == '') and self._input.file_data:
@@ -157,13 +143,15 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
                 ).split_text(text)
                 futures = [
                     executor.submit(
-                        self.temp_store.add_content,
-                        index_name, text_chunk, source=file_name,
+                        self.temp_store.add_text,
+                        index_name, Document(page_content_key="content", page_content=text_chunk, metadata={
+                            'source': file_name}),
                     ) for text_chunk in text_chunks
                 ]
                 concurrent.futures.wait(futures)
-            documents: List[Document] = self.temp_store.search_temp_index(
-                self.storage_index_name, query, self._config.document_limit,
+            documents: List[Document] = self.temp_store.hybrid_search(
+                self.storage_index_name, document_query=DocumentQuery(
+                    query=query, limit=self._config.document_limit),
             )
 
             async_to_sync(self._output_stream.write)(
