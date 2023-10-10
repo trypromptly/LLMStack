@@ -392,51 +392,39 @@ class HistoryViewSet(viewsets.ModelViewSet):
             )
 
         return DRFResponse(response.data)
-    
-    def get_csv(self, queryset):
-        yield ','.join([
-            'Request UUID', 'App UUID', 'Session Key', 'Request User Email', 'Request IP', 'Request Location', 'Request User Agent', 'Request Content Type', 'Request Body', 'Response Body', 'Created At',
-        ]) + '\n'
+
+    def get_csv(self, queryset, brief):
+        header = ['Created At', 'Session', 'Request', 'Response']
+        if not brief:
+            header.extend(['Request UUID', 'Request User Email', 'Request IP',
+                          'Request Location', 'Request User Agent', 'Request Content Type'])
+        yield ','.join(header) + '\n'
         for entry in queryset:
-            logger.info(entry)
-            yield ','.join([
-                entry.request_uuid, entry.app_uuid, entry.session_key if entry.session_key else '', entry.request_user_email, entry.request_ip, entry.request_location, entry.request_user_agent, entry.request_content_type, json.dumps(entry.request_body), json.dumps(entry.response_body), entry.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            ]) + '\n'
-        
+            output = [entry.created_at.strftime('%Y-%m-%d %H:%M:%S'), entry.session_key if entry.session_key else '', json.dumps(
+                entry.request_body), json.dumps(entry.response_body)]
+            if not brief:
+                output.extend([entry.request_uuid, entry.request_user_email, entry.request_ip,
+                               entry.request_location, entry.request_user_agent, entry.request_content_type])
+            yield ','.join(output) + '\n'
+
     def download(self, request):
         if not flag_enabled('CAN_EXPORT_HISTORY', request=request):
             return HttpResponseForbidden('You do not have permission to download history')
-        
+
         app_uuid = request.data.get('app_uuid', None)
-        session_key = request.data.get('session_key', None)
-        request_user_email = request.data.get('request_user_email', None)
-        endpoint_uuid = request.data.get('endpoint_uuid', None)
-        page_number = request.data.get('page', 1)
-        
-        filters = {
-            'owner': request.user,
-        }
-        if app_uuid and app_uuid != 'null':
-            filters['app_uuid'] = app_uuid
-        if session_key and session_key != 'null':
-            filters['session_key'] = session_key
-        if request_user_email and request_user_email != 'null':
-            filters['request_user_email'] = request_user_email
-        if endpoint_uuid and endpoint_uuid != 'null':
-            filters['endpoint_uuid'] = endpoint_uuid
-        
-        queryset = RunEntry.objects.all().filter(**filters).order_by('-created_at')
-        paginator = Paginator(queryset, self.paginate_by)
-        try:
-            page = paginator.page(page_number)
-        except EmptyPage:
-            page = paginator.page(paginator.num_pages)
-        
+        before = request.data.get('before', None)
+        count = request.data.get('count', 25)
+        brief = request.data.get('brief', True)
+
+        if count > 100:
+            count = 100
+
+        queryset = RunEntry.objects.all().filter(
+            app_uuid=app_uuid, owner=request.user, created_at__lt=before).order_by('-created_at')[:count]
         response = StreamingHttpResponse(
-            streaming_content=self.get_csv(page), content_type='text/csv',
+            streaming_content=self.get_csv(queryset, brief), content_type='text/csv',
         )
-        time_now = datetime.now().strftime('%Y-%m-%d')
-        response['Content-Disposition'] = f'attachment; filename="promptly_{time_now}_{page_number}.csv"'
+        response['Content-Disposition'] = f'attachment; filename="history_{app_uuid}_{before}_{count}.csv"'
         return response
 
     def list_sessions(self, request):

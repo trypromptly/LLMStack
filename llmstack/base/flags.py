@@ -55,7 +55,7 @@ class FlagSource(object):
             'CAN_ADD_TWILIO_INTERGRATION': [
                 Condition('can_add_twilio_integration', True),
             ],
-            'CAN_EXPORT_HISTORY' : [
+            'CAN_EXPORT_HISTORY': [
                 Condition('can_export_history', False),
             ]
         }
@@ -198,22 +198,27 @@ def can_add_keys(value, request=None, **kwargs):
 def can_add_app_domain(value, request=None, **kwargs):
     return False
 
+
 @conditions.register('has_exceeded_monthly_processor_run_quota')
 def has_exceeded_monthly_processor_run_quota(value, request=None, **kwargs):
     return False
+
 
 @conditions.register('has_exceeded_storage_quota')
 def has_exceeded_storage_quota(value, request=None, **kwargs):
     return False
 
+
 @conditions.register('has_exceeded_app_create_quota')
 def has_exceeded_app_create_quota(value, request=None, **kwargs):
     return False
+
 
 @conditions.register('can_add_twilio_integration')
 def can_add_twilio_integration(value, request=None, **kwargs):
     return True
 
+
 @conditions.register('can_export_history')
 def can_export_history(value, request=None, **kwargs):
-    return False
+    return True
