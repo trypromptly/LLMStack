@@ -288,7 +288,8 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         output = output_stream.finalize()
 
         self._chat_history.append(
-            {'role': 'assistant', 'content': output.answer},
+            {'role': 'assistant', 'content': output['answer'] if type(
+                output) is dict else output.answer},
         )
 
         return output

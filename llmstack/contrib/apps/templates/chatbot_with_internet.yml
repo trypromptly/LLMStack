@@ -1,0 +1,74 @@
+name: "Chatbot with Internet"
+slug: "chatbot-with-internet"
+category_slugs: ["chatbot"]
+description: "A chatbot that can answer user's questions based on your own content. Searches internet if it cannot find answer in your data."
+provider_slug: "promptly"
+pages:
+  - title: "Data"
+    description: "Provide data for your Chatbot"
+    input_fields:
+      - name: "datasource"
+        title: "Datasource"
+        type: "datasource"
+        description: "Select the data for the chatbot to answer from. Click on the icon to the right to add new data"
+        path: "processors[0].config.datasource"
+      - name: "description"
+        title: "Datasource Description"
+        type: "textarea"
+        description: "Describe the datasource"
+        path: "processors[0].description"
+        default: "Responds to questions about Promptly"
+app:
+  name: "Chatbot with Internet"
+  slug: "chatbot-with-internet"
+  description: "A chatbot that can answer user's questions based on your own content. Searches internet if it cannot find answer in your data"
+  type_slug: "agent"
+  input_fields:
+    - name: "task"
+      title: "Question"
+      type: "string"
+      description: "Enter your question here"
+  output_template:
+    markdown: |
+      {{agent}}
+  processors:
+    - id: "_inputs1"
+      name: "Datasource"
+      description: "Datasource to search for answers"
+      provider_slug: "promptly"
+      processor_slug: "text_chat"
+      input: { "question": "" }
+      config:
+        {
+          "k": 8,
+          "model": "gpt-3.5-turbo",
+          "datasource": [],
+          "temperature": 0.7,
+          "instructions": "You are a chatbot that uses the provided context to answer the user's question.\nIf you cannot answer the question based on the provided context, say you don't know the answer.\nNo answer should go out of the provided input. If the provided input is empty, return saying you don't know the answer.\nKeep the answers terse.",
+          "chat_history_limit": 20,
+          "system_message_prefix": "You are a helpful chat assistant",
+          "use_azure_if_available": true,
+          "chat_history_in_doc_search": 0,
+        }
+      output_template:
+        markdown: |
+          {{_inputs1.answer}}
+    - id: _inputs2
+      name: Web Search
+      description: Search the web for answers
+      provider_slug: promptly
+      processor_slug: web_search
+      config:
+        search_engine: Google
+        k: 5
+      input:
+        query: ""
+      output_template:
+        markdown: |
+          {% for result in _inputs2.results %}
+
+          Result: {{ result.text }}
+
+          URL: {{ result.source }}
+
+          {% endfor %}

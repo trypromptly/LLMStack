@@ -23,7 +23,7 @@ export function AppTemplatesList() {
 
       setAppName(template.name);
 
-      if (template.app) {
+      if (template.app && template.app.processors) {
         setAppTemplate(template);
       } else {
         axios()

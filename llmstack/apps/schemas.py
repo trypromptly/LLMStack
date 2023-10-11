@@ -50,12 +50,16 @@ class Processor(BaseModel):
     """
     id: str = Field(
         None, description='Unique identifier for the processor in the app run graph')
+    name: str = Field(None, description='Name of the processor')
+    description: str = Field(None, description='Description of the processor')
     provider_slug: str = Field(
         None, description='Slug of the processor provider')
     processor_slug: str = Field(None, description='Slug of the processor')
     # TODO: Validate input and config against backing processor's schemas
     input: dict = Field(None, description='Input for the processor')
     config: dict = Field(None, description='Configuration for the processor')
+    output_template: dict = Field(
+        None, description='Output template for the processor')
 
 
 class App(BaseModel):

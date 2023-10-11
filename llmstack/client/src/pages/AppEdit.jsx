@@ -274,7 +274,9 @@ export default function AppEditPage(props) {
           id: `_inputs${index + 1}`,
           name: processor.name || processor.api_backend?.name,
           description:
-            processor.description || processor.api_backend?.description,
+            app?.data?.processors[index]?.description ||
+            processor.description ||
+            processor.api_backend?.description,
           provider_slug:
             processor.api_backend?.api_provider?.slug ||
             processor.provider_slug,

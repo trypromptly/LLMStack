@@ -129,9 +129,9 @@ function SavedAppActions(props) {
           <Button
             sx={{ textTransform: "none" }}
             onClick={() => navigate(`/apps/${app.uuid}/integrations/twilio`)}
-            >
+          >
             Twilio
-            </Button>
+          </Button>
         </ButtonGroup>
       </Stack>
     </Box>
@@ -195,6 +195,7 @@ export function AppTemplate(props) {
               key={index}
               appData={app?.data}
               setAppData={(appData) => {
+                console.log({ data: { ...app?.data, ...appData } });
                 setApp({ data: { ...app?.data, ...appData } });
               }}
               page={index === activeStep ? page : null}
