@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Card, CardContent, Stack, Typography } from "@mui/material";
+import { Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axios } from "../../data/axios";
 import { AppFromTemplateDialog } from "./AppFromTemplateDialog";
@@ -122,6 +122,20 @@ export function AppTemplatesList() {
                   >
                     {template.name}
                   </Typography>
+                  {template.app?.type_slug === "agent" && (
+                    <Chip
+                      label="Agent"
+                      size="small"
+                      style={{
+                        margin: "auto",
+                        padding: "5px 0",
+                        borderRadius: "3px",
+                        backgroundColor: "#ffdca4",
+                        fontSize: "12px",
+                        color: "#555",
+                      }}
+                    />
+                  )}
                   <Typography variant="caption" color="text.secondary">
                     {template.description || template.app?.type.description}
                   </Typography>

@@ -258,8 +258,9 @@ class AppViewSet(viewsets.ViewSet):
                     # When listing, do not show pages and app
                     app_template_dict = app_template.dict()
                     app_template_dict.pop('pages')
-                    app_template_dict.pop('app')
-                    json_data.append(app_template_dict)
+                    app = app_template_dict.pop('app')
+                    json_data.append(
+                        {**app_template_dict, **{"app": {"type_slug": app["type_slug"]}}})
 
         return DRFResponse(json_data)
 
@@ -515,10 +516,11 @@ class AppViewSet(viewsets.ViewSet):
     def run_app_internal(self, uid, session_id, request_uuid, request, platform=None, preview=False):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
-        
+
         if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA', request=request, user=app.owner)):
-            raise Exception('You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.')
-         
+            raise Exception(
+                'You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.')
+
         app_data_obj = AppData.objects.filter(
             app_uuid=app.uuid, is_draft=preview).order_by('-created_at').first()
 
@@ -552,16 +554,15 @@ class AppViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'])
     def run_slack(self, request, uid):
         return self.run(request, uid, platform='slack')
-    
+
     @action(detail=True, methods=['post'])
     def run_twiliosms(self, request, uid):
         result = self.run(request, uid, platform='twilio-sms')
         return DRFResponse(status=204, headers={'Content-Type': 'text/xml'})
-    
+
     @action(detail=True, methods=['post'])
     def run_twiliovoice(self, request, uid):
         raise NotImplementedError()
-        
 
     def testsets(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
