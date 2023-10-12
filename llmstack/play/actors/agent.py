@@ -58,6 +58,32 @@ class AgentActor(Actor):
         self.actor_ref.tell(
             Message(message_type=MessageType.BEGIN, message=None, message_to=self._id))
 
+    def _on_error(self, message) -> None:
+        async_to_sync(self._output_stream.write)(
+            AgentOutput(
+                content=message.message,
+                from_id=message.message_from,
+                id=message.message_id or str(uuid.uuid4()),
+                type='step_error',
+            )
+        )
+        output_response = OutputResponse(
+            response_content_type='text/markdown',
+            response_status=400,
+            response_body=message.message,
+            response_headers={},
+        )
+        bookkeeping_data = BookKeepingData(
+            run_data={**output_response._asdict()}, input=self._input, config={}, output={'agent_messages': self._agent_messages}, timestamp=time.time(),
+        )
+        self._output_stream.bookkeep(bookkeeping_data)
+        async_to_sync(self._output_stream.write_raw)(
+            Message(
+                message_type=MessageType.AGENT_DONE,
+                message_from='agent',
+            )
+        )
+
     def on_receive(self, message: Message) -> Any:
         import openai
         importlib.reload(openai)
@@ -138,27 +164,34 @@ class AgentActor(Actor):
                     },
                 })
 
-                tool_invoke_input = ToolInvokeInput(
-                    tool_name=function_name,
-                    tool_args=json.loads(function_args),
-                )
-                async_to_sync(self._output_stream.write)(
-                    AgentOutput(
-                        content=tool_invoke_input.json(),
-                        id=agent_message_id,
-                        from_id='agent',
-                        type='step',
+                try:
+                    tool_invoke_input = ToolInvokeInput(
+                        tool_name=function_name,
+                        tool_args=json.loads(function_args),
                     )
-                )
-                async_to_sync(self._output_stream.write_raw)(
-                    Message(
-                        message_id=str(uuid.uuid4()),
-                        message_type=MessageType.TOOL_INVOKE,
-                        message=tool_invoke_input,
-                        message_to=function_name,
-                        message_from=self._id,
+                    async_to_sync(self._output_stream.write)(
+                        AgentOutput(
+                            content=tool_invoke_input.json(),
+                            id=agent_message_id,
+                            from_id='agent',
+                            type='step',
+                        )
                     )
-                )
+                    async_to_sync(self._output_stream.write_raw)(
+                        Message(
+                            message_id=str(uuid.uuid4()),
+                            message_type=MessageType.TOOL_INVOKE,
+                            message=tool_invoke_input,
+                            message_to=function_name,
+                            message_from=self._id,
+                        )
+                    )
+                except Exception as e:
+                    logger.error(f'Error invoking tool {function_name}: {e}')
+                    self._on_error(Message(
+                        message_from='agent',
+                        message=f'Error invoking tool {function_name}: {e}',
+                    ))
             elif full_content and finish_reason == 'stop':
                 output_response = OutputResponse(
                     response_content_type='text/markdown',
@@ -214,30 +247,7 @@ class AgentActor(Actor):
 
         if message.message_type == MessageType.STREAM_ERROR:
             # Log the error and quit for now
-            async_to_sync(self._output_stream.write)(
-                AgentOutput(
-                    content=message.message,
-                    from_id=message.message_from,
-                    id=message.message_id or str(uuid.uuid4()),
-                    type='step_error',
-                )
-            )
-            output_response = OutputResponse(
-                response_content_type='text/markdown',
-                response_status=400,
-                response_body=message.message,
-                response_headers={},
-            )
-            bookkeeping_data = BookKeepingData(
-                run_data={**output_response._asdict()}, input=self._input, config={}, output={'agent_messages': self._agent_messages}, timestamp=time.time(),
-            )
-            self._output_stream.bookkeep(bookkeeping_data)
-            async_to_sync(self._output_stream.write_raw)(
-                Message(
-                    message_type=MessageType.AGENT_DONE,
-                    message_from='agent',
-                )
-            )
+            self._on_error(message)
 
     def on_stop(self) -> None:
         super().on_stop()
