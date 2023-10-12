@@ -70,6 +70,13 @@ class ProcessorInterface(Generic[BaseInputType, BaseOutputType, BaseConfiguratio
     def provider_slug() -> str:
         raise NotImplementedError
 
+    @staticmethod
+    def tool_only() -> bool:
+        """
+        Should be used exclusively as a tool
+        """
+        return False
+
     @classmethod
     def _get_input_class(cls) -> BaseInputType:
         return cls.__orig_bases__[0].__args__[0]

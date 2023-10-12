@@ -41,13 +41,16 @@ def prepare_env():
                 'It looks like you are running LLMStack for the first time. Please provide the following information:\n\n')
 
             config['llmstack']['admin_username'] = input(
-                'Enter admin username: (default: admin)') or 'admin'
+                'Enter admin username: (default: admin) ') or 'admin'
             config['llmstack']['admin_email'] = input(
                 'Enter admin email: ') or ''
             config['llmstack']['admin_password'] = input(
                 'Enter admin password: (default: promptly) ') or 'promptly'
             config['llmstack']['default_openai_api_key'] = input(
                 'Enter default OpenAI API key: (Leave empty to configure in settings later) ') or ''
+
+            if not 'generatedfiles_root' in config:
+                config['generatedfiles_root'] = './generatedfiles'
         with open(config_path, 'w') as f:
             toml.dump(config, f)
 

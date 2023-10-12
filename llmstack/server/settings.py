@@ -164,8 +164,26 @@ STATIC_URL = os.getenv('STATIC_URL', 'static/')
 STATICFILES_DIRS = [
     os.path.join(REACT_APP_DIR, 'build', 'static'),
 ]
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-DEFAULT_FILE_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+GENERATEDFILES_ROOT = os.getenv(
+    'GENERATEDFILES_ROOT', os.path.join(BASE_DIR, 'generatedfiles'))
+GENERATEDFILES_URL = os.getenv(
+    'GENERATEDFILES_URL', '/generatedfiles/')
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    "generatedfiles": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": GENERATEDFILES_ROOT,
+            "base_url": GENERATEDFILES_URL,
+        }
+    }
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
