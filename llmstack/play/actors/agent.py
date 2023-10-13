@@ -172,7 +172,7 @@ class AgentActor(Actor):
                     async_to_sync(self._output_stream.write)(
                         AgentOutput(
                             content=tool_invoke_input.json(),
-                            id=agent_message_id,
+                            id=str(uuid.uuid4()),
                             from_id='agent',
                             type='step',
                         )
