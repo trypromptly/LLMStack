@@ -3,7 +3,7 @@ id: openai
 title: OpenAI
 ---
 
-The `OpenAI` provider includes processors that correspond to [models from OpenAI:](https://platform.openai.com/docs/models/overview).
+The `OpenAI` provider includes processors that correspond to [models from OpenAI](https://platform.openai.com/docs/models/overview).
 
 ## ChatGPT
 
@@ -37,15 +37,18 @@ The `OpenAI` provider includes processors that correspond to [models from OpenAI
 ### Input
 
 - `prompt`: The prompt to ask the OpenAI Completions model.
-- `search_filters`: The search filters to use to retrieve data from a vector store as a string. It is of the format `key1 == value1 || key2 == value2` or `key1 == value1 && key2 == value2`.
 
 ### Configuration
 
 `datasources`: List of datasource UUIDs to use to retrieve data from the vector store for the asked question. If not provided, it will not provide any context to the OpenAI Completions model.
 
 - `model`: OpenAI Completions model to use.
-- `temperature`: Temperature to use for the OpenAI Completions model.
-- `max_tokens`: Maximum number of tokens to generate.
+- `max_tokens`: Maximum number of tokens to generate in the completion.
+- `temperature`: Sampling temperature to use, between 0 and 2. Higher values will make the output more random, while lower    values will make it more focused and deterministic.
+
+- `n`: How many completions to generate for each prompt.
+- `stream`: Whether to stream the completions back to the client.
+- `logit_bias`: Optional dictionary of logit biases to apply to the language model.
 
 ### Output
 
