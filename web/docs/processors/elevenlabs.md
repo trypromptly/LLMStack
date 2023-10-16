@@ -9,15 +9,15 @@ The `ElevenLabs` provider includes processors for text to speech models from [El
 
 ### Input
 
-- `text`: The text to convert to speech.
+- `input_text`: The text to convert to speech.
 
 ### Configuration
 
-- `model`: Eleven Labs text to speech model to use.
-- `voice`: The voice to use for the generated speech.
-- `rate`: The playback rate of the generated speech.
-- `pitch`: The pitch of the generated speech.
+- `voice_id`: The voice ID to be used. You can find a list of all available voices at <https://api.elevenlabs.io/v1/voices>.
+- `model_id`: The identifier of the model to be used. You can find a list of all available models at <https://api.elevenlabs.io/v1/models>.
+- `optimize_streaming_latency`: Whether to optimize for streaming latency. This can reduce the quality of the generated audio.
+- `voice_settings`: Voice settings.
 
 ### Output
 
-- `audio`: The generated speech as an MP3 audio file.
+- `audio_content`: The generated audio content in base64 format.
