@@ -10,16 +10,14 @@ The `Cohere` provider includes processors for models from [Cohere](https://coher
 ### Input
 
 - `prompt`: The prompt to ask the Cohere Generate model.
-- `search_filters`: The search filters to use to retrieve data from a vector store as a string. It is of the format `key1 == value1 || key2 == value2` or `key1 == value1 && key2 == value2`.
+- `env`: Optional Cohere API input environment.
 
 ### Configuration
 
-`datasources`: List of datasource UUIDs to use to retrieve data from the vector store for the asked question. If not provided, it will not provide any context to the Cohere Generate model.
-
-- `model`: Cohere Generate model to use.
-- `temperature`: Temperature to use for the Cohere Generate model.
-- `max_tokens`: Maximum number of tokens to generate.
+- `model`: The size of the model to generate with. Currently available models are medium and xlarge (default). Smaller models are faster, while larger models will perform better. Custom models can also be supplied with their full ID.
+- `preset`: The ID of a custom playground preset. You can create presets in the playground. If you use a preset, the prompt parameter becomes optional, and any included parameters will override the preset's parameters.
 
 ### Output
 
-- `text`: The generated text from the Cohere Generate model.
+- `choices`: A list of generated completions, with the most likely completion first.
+- `metadata`: Additional information about the generation, such as the model used and the number of tokens generated.
