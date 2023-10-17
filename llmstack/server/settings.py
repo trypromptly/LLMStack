@@ -114,6 +114,14 @@ DATABASES = {
     },
 }
 
+VECTOR_DATABASES = {
+    'default': {
+        'ENGINE': 'weaviate',
+        'URL': os.getenv('WEAVIATE_DATABASE_URL', 'http://weaviate:8080'),
+        'API_KEY': os.getenv('VECTOR_DATABASE_API_KEY', None),
+    }
+}
+
 DEFAULT_VECTOR_DATABASE = os.getenv('DEFAULT_VECTOR_DATABASE', 'weaviate')
 DEFAULT_VECTOR_DATABASE_PATH = os.getenv('DEFAULT_VECTOR_DATABASE_PATH')
 
