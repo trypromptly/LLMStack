@@ -10,3 +10,11 @@ A processor is the smallest building block in LLMStack. It is a function that ta
 Processors are grouped into providers. They act as namespaces for processors. For example, the `OpenAI` provider hosts all processors that interact with the models provided by `Open AI` like `ChatGPT`, `Text completions`, `image generation`, etc.
 
 Let's take a look at the providers and their processors that are available in the default installation of LLMStack.
+
+| Provider | Processors |
+|---|---|
+| OpenAI | ChatGPT, Completions, Image generation, Image variation, Image edit, Audio transcription, Audio translation |
+| Google | PaLM2 for Chat, PaLM2 for Text |
+| Promptly | Text-Chat, Datasource search, URL Extractor, File Extractor |
+| Stability | Text2Image |
+
