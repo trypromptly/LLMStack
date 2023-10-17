@@ -87,6 +87,10 @@ def main():
             ['manage.py', 'runserver', os.environ['LLMSTACK_PORT']])
         sys.exit(0)
 
+    if len(sys.argv) > 1 and sys.argv[1] == 'manage.py':
+        run_django_command(sys.argv[1:])
+        sys.exit(0)
+
     run_django_command(['manage.py', 'migrate', '--noinput'])
     run_django_command(['manage.py', 'loaddata', os.path.join(
         os.path.dirname(__file__), 'fixtures/initial_data.json')])
