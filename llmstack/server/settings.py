@@ -116,8 +116,14 @@ DATABASES = {
 
 VECTOR_DATABASES = {
     'default': {
-        'ENGINE': 'weaviate',
-        'URL': os.getenv('WEAVIATE_DATABASE_URL', 'http://weaviate:8080'),
+        'ENGINE': '{}'.format(
+            os.getenv('VECTOR_DATABASE_ENGINE', 'weaviate'),
+        ),
+        'NAME': os.getenv('VECTOR_DATABASE_NAME', 'llmstack',),
+        'HOST': os.getenv('VECTOR_DATABASE_HOST', 'http://weaviate:8080'),
+        'USER': os.getenv('VECTOR_DATABASE_USERNAME', None),
+        'PASSWORD': os.getenv('VECTOR_DATABASE_PASSWORD', None),
+        'AUTH_TOKEN': os.getenv('VECTOR_DATABASE_AUTH_TOKEN', None),
         'API_KEY': os.getenv('VECTOR_DATABASE_API_KEY', None),
     }
 }

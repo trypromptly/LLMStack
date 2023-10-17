@@ -98,9 +98,8 @@ class AbstractProfile(models.Model):
         if self.organization and self.organization.settings and self.organization.settings.vectorstore_weaviate_url:
             return self.organization.settings.vectorstore_weaviate_url
         
-        if settings.VECTOR_DATABASES.get('default'):
-            if settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'weaviate':
-                return settings.VECTOR_DATABASES.get('default').get('URL')
+        if settings.VECTOR_DATABASES.get('default') and settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'weaviate':
+            return settings.VECTOR_DATABASES.get('default').get('HOST')
         
         return settings.WEAVIATE_URL
 
@@ -111,9 +110,8 @@ class AbstractProfile(models.Model):
             return self.organization.settings.decrypt_value(self.organization.settings.vectorstore_weaviate_api_key)
 
         # Get details from settings
-        if settings.VECTOR_DATABASES.get('default'):
-            if settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'weaviate':
-                return settings.VECTOR_DATABASES.get('default').get('API_KEY')
+        if settings.VECTOR_DATABASES.get('default') and settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'weaviate':
+            return settings.VECTOR_DATABASES.get('default').get('API_KEY')
         
         return None
 
