@@ -107,7 +107,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         promptly_weaviate = None
         embedding_endpoint_configuration = None
 
-        default_vector_database = settings.DEFAULT_VECTOR_DATABASE
         default_vector_database = settings.VECTOR_DATABASES.get('default')['ENGINE']
         
         if default_vector_database == 'weaviate':

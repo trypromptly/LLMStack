@@ -117,9 +117,9 @@ DATABASES = {
 VECTOR_DATABASES = {
     'default': {
         'ENGINE': '{}'.format(
-            os.getenv('VECTOR_DATABASE_ENGINE', 'weaviate'),
+            os.getenv('VECTOR_DATABASE_ENGINE', 'chroma'),
         ),
-        'NAME': os.getenv('VECTOR_DATABASE_NAME', 'llmstack',),
+        'NAME': os.getenv('VECTOR_DATABASE_NAME', './llmstack.chromadb',),
         'HOST': os.getenv('VECTOR_DATABASE_HOST', 'http://weaviate:8080'),
         'USER': os.getenv('VECTOR_DATABASE_USERNAME', None),
         'PASSWORD': os.getenv('VECTOR_DATABASE_PASSWORD', None),
@@ -127,9 +127,6 @@ VECTOR_DATABASES = {
         'API_KEY': os.getenv('VECTOR_DATABASE_API_KEY', None),
     }
 }
-
-DEFAULT_VECTOR_DATABASE = os.getenv('DEFAULT_VECTOR_DATABASE', 'weaviate')
-DEFAULT_VECTOR_DATABASE_PATH = os.getenv('DEFAULT_VECTOR_DATABASE_PATH')
 
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
