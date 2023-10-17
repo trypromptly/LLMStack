@@ -10,8 +10,8 @@ default_forefront_api_key=""
 default_elevenlabs_api_key=""
 
 # Local installation
-default_vector_database_path="./llmstack.chromadb"
-default_vector_database="chroma"
+vector_database_engine="chroma"
+vector_database_name="./llmstack.chromadb"
 use_remote_job_queue="False"
 cache_backend="locmem.LocMemCache"
 database_name="./llmstack.sqlite"

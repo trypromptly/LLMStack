@@ -97,13 +97,22 @@ class AbstractProfile(models.Model):
     def weaviate_url(self):
         if self.organization and self.organization.settings and self.organization.settings.vectorstore_weaviate_url:
             return self.organization.settings.vectorstore_weaviate_url
+        
+        if settings.VECTOR_DATABASES.get('default') and settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'weaviate':
+            return settings.VECTOR_DATABASES.get('default').get('HOST')
+        
         return settings.WEAVIATE_URL
 
     @property
     def weaviate_api_key(self):
+        # If the user is part of an organization, use from organization settings
         if self.organization and self.organization.settings and self.organization.settings.vectorstore_weaviate_api_key:
             return self.organization.settings.decrypt_value(self.organization.settings.vectorstore_weaviate_api_key)
 
+        # Get details from settings
+        if settings.VECTOR_DATABASES.get('default') and settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'weaviate':
+            return settings.VECTOR_DATABASES.get('default').get('API_KEY')
+        
         return None
 
     @property

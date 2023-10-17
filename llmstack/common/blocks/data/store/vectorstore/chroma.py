@@ -26,9 +26,9 @@ class Chroma(VectorStoreInterface):
         configuration = ChromaConfiguration(**kwargs)
         db_settings = chromadb.config.Settings(**configuration.dict())
 
-        if db_settings.is_persistent:
-            self._client = chromadb.PersistentClient(
-                path=settings.DEFAULT_VECTOR_DATABASE_PATH, settings=db_settings) if settings.DEFAULT_VECTOR_DATABASE_PATH else chromadb.Client(settings=db_settings)
+        if db_settings.is_persistent and settings.VECTOR_DATABASES.get('default') and  settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'chroma' and settings.VECTOR_DATABASES.get('default').get('NAME'):
+            path = settings.VECTOR_DATABASES.get('default').get('NAME')
+            self._client = chromadb.PersistentClient(path=path, settings=db_settings)
         else:
             self._client = chromadb.EphemeralClient(settings=db_settings)
 
