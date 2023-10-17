@@ -108,14 +108,16 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         embedding_endpoint_configuration = None
 
         default_vector_database = settings.DEFAULT_VECTOR_DATABASE
+        default_vector_database = settings.VECTOR_DATABASES.get('default')['ENGINE']
+        
         if default_vector_database == 'weaviate':
             if vectorstore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
                 promptly_weaviate = PromptlyWeaviate(
                     url=self.profile.weaviate_url,
                     openai_key=self.profile.get_vendor_key('openai_key'),
-                    weaviate_rw_api_key=self.profile.weaviate_api_key,
                     embeddings_rate_limit=vectorstore_embedding_rate_limit,
                     embeddings_batch_size=vectorstore_embeddings_batch_size,
+                    api_key=self.profile.weaviate_api_key,
                 )
                 embedding_endpoint_configuration = OpenAIEmbeddingConfiguration(
                     api_type=EmbeddingAPIProvider.OPENAI,
