@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import importlib
 from datetime import timedelta
-
+import logging 
 import croniter
 
 from django.conf import settings
@@ -10,6 +10,8 @@ from django.db import models
 from django.templatetags.tz import utc
 
 import django_rq
+
+logger = logging.getLogger(__name__)
 
 class BaseTask(models.Model):
     RQ_QUEUE_NAMES = [(key, key) for key in settings.RQ_QUEUES.keys()]
@@ -73,7 +75,7 @@ class BaseTask(models.Model):
             })
 
     def is_scheduled(self):
-        return self.job_id and self.job_id in self.scheduler()
+        return self.job_id and (self.job_id in self.schedule_job_registry().get_job_ids())
 
     def save(self, **kwargs):
         self.unschedule()
@@ -85,8 +87,12 @@ class BaseTask(models.Model):
         self.unschedule()
         super(BaseTask, self).delete(**kwargs)
 
-    def scheduler(self):
-        return django_rq.get_scheduler(self.queue)
+    def queue_instance(self):
+        return django_rq.get_queue(self.queue)
+    
+    def schedule_job_registry(self):
+        from rq.registry import ScheduledJobRegistry
+        return ScheduledJobRegistry(queue=self.queue_instance())
 
     def is_schedulable(self):
         if self.job_id:
@@ -110,7 +116,8 @@ class BaseTask(models.Model):
 
     def unschedule(self):
         if self.is_scheduled():
-            self.scheduler().cancel(self.job_id)
+            job = self.queue_instance().fetch_job(self.job_id)
+            job.cancel()
         self.job_id = None
         return True
 
@@ -175,7 +182,7 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
             kwargs['timeout'] = self.timeout
         if self.result_ttl is not None:
             kwargs['result_ttl'] = self.result_ttl
-        job = self.scheduler().schedule(**kwargs)
+        job = self.queue_instance().schedule_job(**kwargs)
         self.job_id = job.id
         return True
 
@@ -205,6 +212,7 @@ class CronJob(BaseTask):
             })
 
     def schedule(self):
+        raise NotImplementedError()
         if self.is_schedulable() is False:
             return False
         kwargs = {
