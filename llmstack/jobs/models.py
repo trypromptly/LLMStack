@@ -4,6 +4,7 @@ from datetime import timedelta
 import logging 
 import croniter
 
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -13,7 +14,37 @@ import django_rq
 
 logger = logging.getLogger(__name__)
 
+def failure_callback(job, connection, type, value, traceback):
+    model_name = job.kwargs.get('task_type', None)
+    if model_name is None:
+        return
+    
+    model = apps.get_model('jobs', model_name) 
+    task = model.objects.filter(job_id=job.id).first()
+    if task in None:
+        return 
+    
+    task.job_id = None
+    task.save()
+    
+    
+
+def success_callback(job, connection, result, *args, **kwargs):
+    model_name = job.kwargs.get('task_type', None)
+    if model_name is None:
+        return
+    
+    model = apps.get_model('jobs', model_name) 
+    task = model.objects.filter(job_id=job.id).first()
+    if task in None:
+        return 
+    
+    task.job_id = None
+    task.save() 
+
 class BaseTask(models.Model):
+    TASK_TYPE = 'BaseTask'
+    
     RQ_QUEUE_NAMES = [(key, key) for key in settings.RQ_QUEUES.keys()]
     TASK_STATUSES = [
         ('queued', 'queued'),
@@ -107,7 +138,7 @@ class BaseTask(models.Model):
             kwargs['timeout'] = self.timeout
         if self.result_ttl is not None:
             kwargs['result_ttl'] = self.result_ttl
-        job = self.scheduler().enqueue_at(
+        job = self.queue_instance().enqueue_at(
             self.schedule_time_utc(), self.callable_func(),
             **kwargs
         )
@@ -140,6 +171,7 @@ class ScheduledTimeMixin(models.Model):
 
 
 class ScheduledJob(ScheduledTimeMixin, BaseTask):
+    TASK_TYPE = 'ScheduledJob'
 
     class Meta:
         verbose_name = 'Scheduled Job'
@@ -148,6 +180,7 @@ class ScheduledJob(ScheduledTimeMixin, BaseTask):
 
 
 class RepeatableJob(ScheduledTimeMixin, BaseTask):
+    TASK_TYPE = 'RepeatableJob'
 
     UNITS = [
         ('minutes', 'minutes'),
@@ -193,6 +226,8 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
 
 
 class CronJob(BaseTask):
+    TASK_TYPE = 'CronJob'
+    
     result_ttl = None
 
     cron_string = models.CharField(max_length=64, help_text='Define the schedule in a crontab like syntax.')
