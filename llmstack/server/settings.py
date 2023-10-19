@@ -318,7 +318,6 @@ RQ_QUEUES = {
     },
 }
 
-    
 USE_REMOTE_JOB_QUEUE = os.getenv('USE_REMOTE_JOB_QUEUE', 'True') == 'True'
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
