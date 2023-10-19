@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
 import importlib
 from datetime import timedelta
-import logging 
+import logging
+import math
+import uuid 
 import croniter
 
 from django.apps import apps
@@ -9,10 +11,22 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.templatetags.tz import utc
+from django.utils import timezone
 
 import django_rq
+from rq import Queue
 
 logger = logging.getLogger(__name__)
+
+SCHEDULER_INTERVAL = 60
+
+def get_next_cron_time(cron_string) -> timezone.datetime:
+    """Calculate the next scheduled time by creating a crontab object
+    with a cron string"""
+    now = timezone.now()
+    itr = croniter.croniter(cron_string, now)
+    next_itr = itr.get_next(timezone.datetime)
+    return next_itr
 
 def failure_callback(job, connection, type, value, traceback):
     model_name = job.kwargs.get('task_type', None)
@@ -42,6 +56,21 @@ def success_callback(job, connection, result, *args, **kwargs):
     task.job_id = None
     task.save() 
 
+def get_scheduled_task(task_model: str, task_id: int):
+    model = apps.get_model(app_label='jobs', model_name=task_model)
+    task = model.objects.filter(id=task_id).first()
+    if task is None:
+        raise ValueError(f'Job {task_model}:{task_id} does not exit')
+    return task
+
+def run_task(task_model: str, task_id: int):
+    scheduled_task = get_scheduled_task(task_model, task_id)
+    logger.debug(f'Running task {str(scheduled_task)}')
+    args = scheduled_task.callable_args
+    kwargs = scheduled_task.callable_kwargs
+    res = scheduled_task.callable_func()(*args, **kwargs)
+    return res
+
 class BaseTask(models.Model):
     TASK_TYPE = 'BaseTask'
     
@@ -56,7 +85,11 @@ class BaseTask(models.Model):
     
     name = models.CharField(max_length=512, unique=True)
     callable = models.CharField(max_length=2048)
+    callable_args = models.TextField(blank=True, null=True)
+    callable_kwargs = models.TextField(blank=True, null=True)
     enabled = models.BooleanField(default=True)
+    repeat = models.PositiveIntegerField(blank=True, null=True, help_text=
+                                         'Number of times to repeat the job. Blank repeats forever.')
     queue = models.CharField(choices=RQ_QUEUE_NAMES, max_length=32)
     job_id = models.CharField(max_length=128, editable=False, blank=True, null=True)
     timeout = models.IntegerField(blank=True, null=True, help_text=
@@ -82,75 +115,154 @@ class BaseTask(models.Model):
         if callable(func) is False:
             raise TypeError("'{}' is not callable".format(self.callable))
         return func
+    
+    def is_scheduled(self):
+        if self.job_id is None:
+            return False
+        scheduled_jobs = self.schedule_job_registry().get_job_ids()
+        enqueued_jobs = self.rqueue.get_job_ids()
+        active_jobs = self.active_job_registry().get_job_ids()
+        res = ((self.job_id in scheduled_jobs)
+               or (self.job_id in enqueued_jobs)
+               or (self.job_id in active_jobs))
+        # If the job_id is not scheduled/enqueued/started,
+        # update the job_id to None. (The job_id belongs to a previous run which is completed)
+        if not res:
+            self.job_id = None
+            super(BaseTask, self).save()
+        return res
 
-    def clean(self):
-        self.clean_callable()
-        self.clean_queue()
-
-    def clean_callable(self):
+    def function_string(self):
+        args = self.callable_args or ''
+        kwargs = self.callable_kwargs or ''
+        return '{}({}, {})'.format(self.callable, args, kwargs)
+        
+    def _next_job_id(self):
+        return f"{self.queue}:{self.name.replace('/', '.')}:{uuid.uuid4().hex[-10:]}"
+    
+    def _job_args(self):
+        res = dict(
+            meta=dict(
+                repeat=self.repeat,
+                task_type=self.TASK_TYPE,
+                scheduled_task_id=self.id,
+            ),
+            on_success=success_callback,
+            on_failure=failure_callback,
+            job_id=self._next_job_id(),
+        )
+        if self.timeout:
+            res['job_timeout'] = self.timeout
+        if self.result_ttl is not None:
+            res['result_ttl'] = self.result_ttl
+        return res
+    
+    @property
+    def rqueue(self) -> Queue:
+        return django_rq.get_queue(self.queue)
+    
+    def can_be_scheduled(self):
+        """
+        Is the task ready to be scheduled?
+        If the task is already scheduled or disabled, then it is not
+        ready to be scheduled.
+        """
+        if self.is_scheduled() or not self.enabled:
+            logger.debug('Task is already scheduled or disabled: {}'.format(self))
+            return False
+        return True
+    
+    def schedule(self):
+        """ 
+        Schedule the next execution for the task.
+        """
+        if not self.can_be_scheduled():
+            return False
+        
+        schedule_time = self.schedule_time_utc()
+        kwargs = self._job_args()
+        job = self.rqueue.enqueue_at(schedule_time, run_task, args=(self.TASK_TYPE, self.id), **kwargs)
+        self.job_id = job.id
+        super(BaseTask, self).save()
+        return True
+    
+    def unschedule(self):
+        """ 
+        Remove a job from the queue.
+        """
+        if self.job_id is None:
+            return 
+        self.rqueue.remove(self.job_id)
+        self.schedule_job_registry().remove(self.job_id)
+        self.job_id = None
+        self.save(schedule_job = False)
+        return True
+    
+    def _schedule_time(self):
+        return utc(self.scheduled_time) if settings.USE_TZ else self.scheduled_time       
+    
+    def to_dict(self):
+        res = dict(
+            model=self.TASK_TYPE,
+            name=self.name,
+            callable=self.callable,
+            callable_args=self.callable_args,
+            callable_kwargs=self.callable_kwargs,
+            enabled=self.enabled,
+            queue=self.queue,
+            repeat=self.repeat,
+            timeout=self.timeout,
+            result_ttl=self.result_ttl,
+            cron_string=getattr(self, 'cron_string', None),
+            scheduled_time=self._schedule_time().isoformat(),
+            interval=getattr(self, 'interval', None),
+            interval_unit=getattr(self, 'interval_unit', None),
+        )
+        return res
+    
+    def __str__(self):
+        return f'{self.TASK_TYPE}:{self.name}:func={self.callable}'
+    
+    def save(self, **kwargs):
+        schedule_job = kwargs.pop('schedule_job', True)
+        update_fields = kwargs.get('update_fields', None)
+        if update_fields:
+            kwargs['update_fields'] = set(update_fields).union({'updated_at'})
+        super(BaseTask, self).save(**kwargs)
+        if schedule_job:
+            self.schedule()
+            super(BaseTask, self).save()
+    
+    def delete(self, **kwargs):
+        self.unschedule()
+        super(BaseTask, self).delete(**kwargs)
+        
+    def _clean_callable(self):
         try:
             self.callable_func()
         except:
             raise ValidationError({
-                'callable': ValidationError(
-                    _('Invalid callable, must be importable'), code='invalid')
+                'callable': ValidationError('Invalid callable, must be importable', code='invalid')
             })
-
-    def clean_queue(self):
+    
+    def _clean_queue(self):
         queue_keys = settings.RQ_QUEUES.keys()
         if self.queue not in queue_keys:
             raise ValidationError({
                 'queue': ValidationError(
-                    _('Invalid queue, must be one of: {}'.format(
-                        ', '.join(queue_keys))), code='invalid')
+                    'Invalid queue, must be one of: {}'.format(', '.join(queue_keys)), code='invalid')
             })
+    def clean(self):
+        self._clean_callable()
+        self._clean_queue()
 
-    def is_scheduled(self):
-        return self.job_id and (self.job_id in self.schedule_job_registry().get_job_ids())
-
-    def save(self, **kwargs):
-        self.unschedule()
-        if self.enabled:
-            self.schedule()
-        super(BaseTask, self).save(**kwargs)
-
-    def delete(self, **kwargs):
-        self.unschedule()
-        super(BaseTask, self).delete(**kwargs)
-
-    def queue_instance(self):
-        return django_rq.get_queue(self.queue)
-    
     def schedule_job_registry(self):
         from rq.registry import ScheduledJobRegistry
-        return ScheduledJobRegistry(queue=self.queue_instance())
-
-    def is_schedulable(self):
-        if self.job_id:
-            return False
-        return self.enabled
-
-    def schedule(self):
-        if self.is_schedulable() is False:
-            return False
-        kwargs = {}
-        if self.timeout:
-            kwargs['timeout'] = self.timeout
-        if self.result_ttl is not None:
-            kwargs['result_ttl'] = self.result_ttl
-        job = self.queue_instance().enqueue_at(
-            self.schedule_time_utc(), self.callable_func(),
-            **kwargs
-        )
-        self.job_id = job.id
-        return True
-
-    def unschedule(self):
-        if self.is_scheduled():
-            job = self.queue_instance().fetch_job(self.job_id)
-            job.cancel()
-        self.job_id = None
-        return True
+        return ScheduledJobRegistry(queue=self.rqueue)
+    
+    def active_job_registry(self):
+        from rq.registry import StartedJobRegistry
+        return StartedJobRegistry(queue=self.rqueue)
 
     def schedule_time_utc(self):
         return utc(self.scheduled_time)
@@ -160,11 +272,7 @@ class BaseTask(models.Model):
 
 
 class ScheduledTimeMixin(models.Model):
-
     scheduled_time = models.DateTimeField()
-
-    def schedule_time_utc(self):
-        return utc(self.scheduled_time)
 
     class Meta:
         abstract = True
@@ -172,6 +280,12 @@ class ScheduledTimeMixin(models.Model):
 
 class ScheduledJob(ScheduledTimeMixin, BaseTask):
     TASK_TYPE = 'ScheduledJob'
+    repeat = None
+    
+    def can_be_scheduled(self):
+        return super(ScheduledJob, self).can_be_scheduled() and (
+            self.scheduled_time is None
+                     or self.scheduled_time >= timezone.now())
 
     class Meta:
         verbose_name = 'Scheduled Job'
@@ -191,7 +305,6 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
 
     interval = models.PositiveIntegerField()
     interval_unit = models.CharField(max_length=12, choices=UNITS, default='hours')
-    repeat = models.PositiveIntegerField(blank=True, null=True)
 
     def interval_display(self):
         return '{} {}'.format(self.interval, self.get_interval_unit_display())
@@ -201,24 +314,60 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
             self.interval_unit: self.interval,
         }
         return timedelta(**kwargs).total_seconds()
-
-    def schedule(self):
-        if self.is_schedulable() is False:
+    
+    def clean(self):
+        super(RepeatableJob, self).clean()
+        self.clean_interval_unit()
+        self.clean_result_ttl()
+        
+    def clean_interval_unit(self):
+        if SCHEDULER_INTERVAL > self.interval_seconds():
+            raise ValidationError(
+                "Job interval is set lower than %(queue)r queue's interval. "
+                  "minimum interval is %(interval)",
+                code='invalid',
+                params={'queue': self.queue, 'interval': SCHEDULER_INTERVAL})
+        if self.interval_seconds() % SCHEDULER_INTERVAL:
+            raise ValidationError(
+                "Job interval is not a multiple of rq_scheduler's interval frequency: %(interval)ss",
+                code='invalid',
+                params={'interval': SCHEDULER_INTERVAL})
+    
+    def clean_result_ttl(self) -> None:
+        """
+        Throws an error if there are repeats left to run and the result_ttl won't last until the next scheduled time.
+        :return: None
+        """
+        if self.result_ttl and self.result_ttl != -1 and self.result_ttl < self.interval_seconds() and self.repeat:
+            raise ValidationError(
+                _("Job result_ttl must be either indefinite (-1) or "
+                  "longer than the interval, %(interval)s seconds, to ensure rescheduling."),
+                code='invalid',
+                params={'interval': self.interval_seconds()}, )
+    
+    def _job_args(self):
+        res = super(RepeatableJob, self)._job_args()
+        res['meta']['interval'] = self.interval_seconds()
+        return res
+    
+    def _schedule_time(self):
+        _now = timezone.now()
+        if self.scheduled_time >= _now:
+            return super(RepeatableJob, self)._schedule_time()
+        
+        gap = math.ceil((_now - self.scheduled_time).total_seconds() / self.interval_seconds())
+        if self.repeat is None or self.repeat >= gap:
+            self.scheduled_time += timedelta(seconds=self.interval_seconds() * gap)
+            self.repeat = (self.repeat - gap) if self.repeat is not None else None
+        return super(RepeatableJob, self)._schedule_time()
+    
+    def can_be_scheduled(self):
+        if super(RepeatableJob, self).can_be_scheduled() is False:
             return False
-        kwargs = {
-            'scheduled_time': self.schedule_time_utc(),
-            'func': self.callable_func(),
-            'interval': self.interval_seconds(),
-            'repeat': self.repeat
-        }
-        if self.timeout:
-            kwargs['timeout'] = self.timeout
-        if self.result_ttl is not None:
-            kwargs['result_ttl'] = self.result_ttl
-        job = self.queue_instance().schedule_job(**kwargs)
-        self.job_id = job.id
+        if self._schedule_time < timezone.now():
+            return False
         return True
-
+            
     class Meta:
         verbose_name = 'Repeatable Job'
         verbose_name_plural = 'Repeatable Jobs'
@@ -227,11 +376,8 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
 
 class CronJob(BaseTask):
     TASK_TYPE = 'CronJob'
-    
-    result_ttl = None
 
     cron_string = models.CharField(max_length=64, help_text='Define the schedule in a crontab like syntax.')
-    repeat = models.PositiveIntegerField(blank=True, null=True)
 
     def clean(self):
         super(CronJob, self).clean()
@@ -246,20 +392,9 @@ class CronJob(BaseTask):
                     str(e), code='invalid')
             })
 
-    def schedule(self):
-        raise NotImplementedError()
-        if self.is_schedulable() is False:
-            return False
-        kwargs = {
-            'func': self.callable_func(),
-            'cron_string': self.cron_string,
-            'repeat': self.repeat
-        }
-        if self.timeout:
-            kwargs['timeout'] = self.timeout
-        job = self.scheduler().cron(**kwargs)
-        self.job_id = job.id
-        return True
+    def _schedule_time(self):
+        self.scheduled_time = get_next_cron_time(self.cron_string)
+        return super()._schedule_time()
 
     class Meta:
         verbose_name = 'Cron Job'

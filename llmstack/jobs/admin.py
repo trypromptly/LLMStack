@@ -28,13 +28,13 @@ class QueueMixin(object):
 
 class ScheduledJobAdmin(QueueMixin, admin.ModelAdmin):
     list_display = (
-        'name', 'job_id', 'is_scheduled', 'scheduled_time', 'enabled')
+        'name', 'job_id', 'is_scheduled', 'scheduled_time', 'enabled', 'function_string')
     list_filter = ('enabled', )
     list_editable = ('enabled', )
     readonly_fields = ('job_id', )
     fieldsets = (
         (None, {
-            'fields': ('name', 'callable', 'enabled', ),
+            'fields': ('name', 'callable', 'enabled', 'function_string'),
         }),
         ('RQ Settings', {
             'fields': ('queue', 'job_id', ),
