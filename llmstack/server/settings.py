@@ -318,11 +318,6 @@ RQ_QUEUES = {
     },
 }
 
-# If platform is Windows, specify a different RQ worker class
-RQ = {
-    'WORKER_CLASS': 'llmstack.server.workers.WindowsWorker' if os.name == 'nt' else 'rq.Worker',
-}
-
     
 USE_REMOTE_JOB_QUEUE = os.getenv('USE_REMOTE_JOB_QUEUE', 'True') == 'True'
 
