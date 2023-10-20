@@ -37,6 +37,11 @@ const menuItems = [
     link: "/history",
   },
   {
+    key: "8",
+    label: "Schedule",
+    link: "/schedule",
+  },
+  {
     key: "5",
     label: "Settings",
     link: "/settings",

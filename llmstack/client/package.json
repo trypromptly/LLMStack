@@ -10,6 +10,8 @@
     "@lexical/react": "^0.9.2",
     "@mui/icons-material": "^5.11.16",
     "@mui/lab": "^5.0.0-alpha.124",
+    "@mui/x-data-grid": "^6.16.2",
+    "@mui/x-data-grid-generator": "^6.16.2",
     "@mui/x-date-pickers": "^6.16.1",
     "@rjsf/core": "^5.13.0",
     "@rjsf/mui": "^5.13.0",

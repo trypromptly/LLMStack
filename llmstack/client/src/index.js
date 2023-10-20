@@ -22,6 +22,7 @@ const AppStudioPage = lazy(() => import("./pages/AppStudio"));
 const AppEditPage = lazy(() => import("./pages/AppEdit"));
 const DataPage = lazy(() => import("./pages/data"));
 const Discover = lazy(() => import("./pages/discover"));
+const SchedulePage = lazy(() => import("./pages/schedule"));
 
 const defaultTheme = createTheme({
   typography: {
@@ -241,6 +242,14 @@ router = createBrowserRouter([
     element: (
       <App>
         <HistoryPage />
+      </App>
+    ),
+  },
+  {
+    path: "/schedule",
+    element: (
+      <App>
+        <SchedulePage />
       </App>
     ),
   },
