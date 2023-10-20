@@ -34,7 +34,7 @@ class ScheduledJobAdmin(QueueMixin, admin.ModelAdmin):
     readonly_fields = ('job_id', )
     fieldsets = (
         (None, {
-            'fields': ('name', 'callable', 'enabled', 'function_string'),
+            'fields': ('name', 'callable', 'callable_args', 'callable_kwargs', 'enabled'),
         }),
         ('RQ Settings', {
             'fields': ('queue', 'job_id', ),

@@ -20,14 +20,6 @@ logger = logging.getLogger(__name__)
 
 SCHEDULER_INTERVAL = 60
 
-def get_next_cron_time(cron_string) -> timezone.datetime:
-    """Calculate the next scheduled time by creating a crontab object
-    with a cron string"""
-    now = timezone.now()
-    itr = croniter.croniter(cron_string, now)
-    next_itr = itr.get_next(timezone.datetime)
-    return next_itr
-
 def failure_callback(job, connection, type, value, traceback):
     model_name = job.kwargs.get('task_type', None)
     if model_name is None:
@@ -41,8 +33,6 @@ def failure_callback(job, connection, type, value, traceback):
     task.job_id = None
     task.save()
     
-    
-
 def success_callback(job, connection, result, *args, **kwargs):
     model_name = job.kwargs.get('task_type', None)
     if model_name is None:
@@ -55,6 +45,18 @@ def success_callback(job, connection, result, *args, **kwargs):
     
     task.job_id = None
     task.save() 
+    
+def stopped_callback(job, connection):
+    model_name = job.kwargs.get('task_type', None)
+    if model_name is None:
+        return
+    model = apps.get_model('jobs', model_name)
+    task = model.objects.filter(job_id=job.id).first()
+    if task in None:
+        return
+    
+    task.job_id = None
+    task.save()
 
 def get_scheduled_task(task_model: str, task_id: int):
     model = apps.get_model(app_label='jobs', model_name=task_model)
@@ -68,8 +70,8 @@ def run_task(task_model: str, task_id: int):
     logger.debug(f'Running task {str(scheduled_task)}')
     args = scheduled_task.callable_args
     kwargs = scheduled_task.callable_kwargs
-    res = scheduled_task.callable_func()(*args, **kwargs)
-    return res
+    logger.info(f"Invoking function: {scheduled_task.callable} with args: {args} and kwargs: {kwargs}")
+    return True
 
 class BaseTask(models.Model):
     TASK_TYPE = 'BaseTask'
@@ -238,6 +240,7 @@ class BaseTask(models.Model):
         super(BaseTask, self).delete(**kwargs)
         
     def _clean_callable(self):
+        return
         try:
             self.callable_func()
         except:
@@ -373,6 +376,14 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
         verbose_name_plural = 'Repeatable Jobs'
         ordering = ('name', )
 
+
+def get_next_cron_time(cron_string) -> timezone.datetime:
+    """Calculate the next scheduled time by creating a crontab object
+    with a cron string"""
+    now = timezone.now()
+    itr = croniter.croniter(cron_string, now)
+    next_itr = itr.get_next(timezone.datetime)
+    return next_itr
 
 class CronJob(BaseTask):
     TASK_TYPE = 'CronJob'
