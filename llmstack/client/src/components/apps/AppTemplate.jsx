@@ -195,7 +195,6 @@ export function AppTemplate(props) {
               key={index}
               appData={app?.data}
               setAppData={(appData) => {
-                console.log({ data: { ...app?.data, ...appData } });
                 setApp({ data: { ...app?.data, ...appData } });
               }}
               page={index === activeStep ? page : null}
