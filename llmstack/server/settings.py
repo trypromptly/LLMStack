@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'llmstack.datasources.apps.DatasourcesConfig',
     'llmstack.apps.apps.AppsConfig',
     'llmstack.base.apps.BaseConfig',
+    'llmstack.connections.apps.ConnectionsConfig',
     'llmstack.organizations.apps.OrganizationsConfig',
     'flags',
     'allauth',
@@ -405,6 +406,11 @@ PROVIDERS = [
         'datasource_processors_exclude': [],
         'slug': 'stabilityai',
     },
+    {
+        'name': 'LinkedIn',
+        'processor_packages': ['llmstack.processors.providers.linkedin'],
+        'slug': 'linkedin',
+    }
 ]
 
 PROCESSOR_PROVIDERS = sum(list(
