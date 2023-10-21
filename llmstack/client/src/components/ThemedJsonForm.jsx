@@ -15,7 +15,9 @@ import {
 import { useState } from "react";
 import { DataSourceSelector } from "./datasource/DataSourceSelector";
 import MuiCustomSelect from "./MuiCustomSelect";
+import ConnectionSelector from "./connections/ConnectionSelector";
 import FileUploadWidget from "./form/DropzoneFileWidget";
+import SecretTextField from "./form/SecretTextField";
 
 const defaultTheme = createTheme({
   spacing: 2,
@@ -345,6 +347,8 @@ const ThemedJsonForm = ({
             TextareaWidget: TextAreaWidget,
             FileWidget: CustomFileWidget,
             datasource: (props) => <DataSourceSelector {...props} />,
+            password: (props) => <SecretTextField {...props} />,
+            connectionselect: (props) => <ConnectionSelector {...props} />,
           },
           ...widgets,
         }}

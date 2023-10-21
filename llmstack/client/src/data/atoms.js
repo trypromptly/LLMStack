@@ -443,3 +443,37 @@ export const organizationState = atom({
   key: "organizationState",
   default: organizationFetchSelector,
 });
+
+export const connectionTypesFetchSelector = selector({
+  key: "connectionTypesFetchSelector",
+  get: async () => {
+    try {
+      const connectionTypes = await axios().get("/api/connection_types");
+      return connectionTypes.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
+export const connectionTypesState = atom({
+  key: "connectionTypesState",
+  default: connectionTypesFetchSelector,
+});
+
+export const connectionsFetchSelector = selector({
+  key: "connectionsFetchSelector",
+  get: async () => {
+    try {
+      const connections = await axios().get("/api/connections");
+      return connections.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
+export const connectionsState = atom({
+  key: "connectionsState",
+  default: connectionsFetchSelector,
+});

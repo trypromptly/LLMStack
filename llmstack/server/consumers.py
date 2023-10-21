@@ -8,6 +8,9 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.http import HttpRequest
 from django.http import QueryDict
 
+from llmstack.connections.actors import ConnectionActivationActor
+from llmstack.connections.models import Connection
+
 logger = logging.getLogger(__name__)
 
 
@@ -84,3 +87,48 @@ class AppConsumer(AsyncWebsocketConsumer):
         loop.create_task(
             self._respond_to_event(text_data),
         )
+
+
+class ConnectionConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['user']
+
+        if self.user.is_anonymous:
+            await self.close()
+            return
+
+        self.connection_id = self.scope['url_route']['kwargs']['conn_id']
+        self.connection_activation_actor = ConnectionActivationActor.start(
+            self.user, self.connection_id,
+        ).proxy()
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        self.connection_activation_actor.stop()
+        self.close()
+
+    async def receive(self, text_data=None, bytes_data=None):
+        json_data = json.loads(text_data)
+        input = json_data.get('input', {})
+        event = json_data.get('event', None)
+
+        if event == 'activate':
+            try:
+                output = await self.connection_activation_actor.activate()
+                async for c in output:
+                    if isinstance(c, Connection):
+                        await self.connection_activation_actor.set_connection(c)
+                        await self.send(text_data=json.dumps(
+                            {'event': 'success'}))
+                    elif isinstance(c, dict):
+                        connection = c.get('connection', None)
+                        if connection:
+                            await self.connection_activation_actor.set_connection(connection)
+                        if c.get('error', None):
+                            await self.send(text_data=json.dumps(
+                                {'event': 'error', 'error': c.get('error')}))
+            except Exception as e:
+                logger.exception(e)
+
+        # Disconnect for any other activity
+        self.disconnect(1000)
