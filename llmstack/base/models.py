@@ -89,6 +89,9 @@ class AbstractProfile(models.Model):
     logo = models.TextField(
         default='', help_text='Logo to use for the user', null=True, blank=True,
     )
+    _connections = models.JSONField(
+        default=dict, help_text='Encrypted connections config to use with processors', null=True, blank=True,
+    )
 
     def __str__(self):
         return self.user.__str__()
@@ -97,10 +100,10 @@ class AbstractProfile(models.Model):
     def weaviate_url(self):
         if self.organization and self.organization.settings and self.organization.settings.vectorstore_weaviate_url:
             return self.organization.settings.vectorstore_weaviate_url
-        
+
         if settings.VECTOR_DATABASES.get('default') and settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'weaviate':
             return settings.VECTOR_DATABASES.get('default').get('HOST')
-        
+
         return settings.WEAVIATE_URL
 
     @property
@@ -112,7 +115,7 @@ class AbstractProfile(models.Model):
         # Get details from settings
         if settings.VECTOR_DATABASES.get('default') and settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'weaviate':
             return settings.VECTOR_DATABASES.get('default').get('API_KEY')
-        
+
         return None
 
     @property
@@ -146,6 +149,26 @@ class AbstractProfile(models.Model):
     @property
     def use_custom_embedding(self):
         return settings.USE_CUSTOM_EMBEDDING
+
+    @property
+    def connections(self):
+        return {k: json.loads(self.decrypt_value(v)) for k, v in self._connections.items()}
+
+    def get_connection(self, id):
+        return json.loads(self.decrypt_value(self._connections.get(id))) if self._connections and self._connections.get(id) else None
+
+    def add_connection(self, connection):
+        connection_id = connection['id'] if 'id' in connection else str(
+            uuid.uuid4())
+        connection_json = json.dumps(connection)
+        self._connections[connection_id] = self.encrypt_value(
+            connection_json).decode('utf-8')
+        self.save(update_fields=['_connections'])
+
+    def delete_connection(self, id):
+        if id in self._connections:
+            del self._connections[id]
+            self.save(update_fields=['_connections'])
 
     def _vendor_key_or_promptly_default(self, attrname, api_key_value):
         if attrname == 'azure_openai_api_key':
@@ -218,6 +241,7 @@ class AbstractProfile(models.Model):
             'weaviate_embedding_endpoint': self.vectostore_embedding_endpoint,
             'weaviate_text2vec_config': self.weaviate_text2vec_config,
             'promptly_token': self.token,
+            'connections': self.connections,
         }
 
     def is_basic_subscriber(self):
