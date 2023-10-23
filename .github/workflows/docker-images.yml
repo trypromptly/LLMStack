@@ -1,11 +1,6 @@
 name: Docker Images CI
 
 on:
-  push:
-    branches: ["main"]
-    # Publish semver tags as releases.
-    tags:
-      - "v*"
 
 env:
   REGISTRY: ghcr.io

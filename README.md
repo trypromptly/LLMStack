@@ -24,13 +24,15 @@ Build tailor-made generative AI applications, chatbots and agents that cater to 
 
 LLMStack deployment comes with a default admin account whose credentials are `admin` and `promptly`. _Be sure to change the password from admin panel after logging in_.
 
-### Option 1
+### Installation
 
 Install LLMStack using pip:
 
 ```sh
 pip install llmstack
 ```
+
+> If you are on windows, please use WSL2 (Windows Subsystem for Linux) to install LLMStack. You can follow the instructions [here](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to install WSL2. Once you are in a WSL2 terminal, you can install LLMStack using the above command.
 
 Start LLMStack using the following command:
 
@@ -40,27 +42,7 @@ llmstack
 
 Above commands will install and start LLMStack. It will create `.llmstack` in your home directory and places the database and config files in it when run for the first time. Once LLMStack is up and running, it should automatically open your browser and point it to [localhost:3000](http://localhost:3000).
 
-### Option 2
-
-This method uses docker compose to bring up the application containers. Clone this repository or download the latest release. Install [docker](https://docs.docker.com/engine/install/) if not already installed. Copy `.env.prod` to `.env` and update `SECRET_KEY`, `CIPHER_SALT` and `DATABASE_PASSWORD` in `.env` file:
-
-```
-cp .env.prod .env
-```
-
-Run LLMStack using the following command:
-
-```
-./run-llmstack.sh
-```
-
-> If you are on Windows, you can use `run-llmstack.bat` instead
-
-Once LLMStack is up and ready, it should automatically open your browser and point it to [localhost:3000](http://localhost:3000). You can also alternatively use `docker compose up` to manually start the containers and open [localhost:3000](http://localhost:3000) to login into the platform. Make sure to wait for the API server to be ready before trying to load LLMStack.
-
-> Users of the platform can add their own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `.env` file. Make sure to restart the containers after adding the keys.
-
-> Remember to update `POSTGRES_VOLUME`, `REDIS_VOLUME` and `WEAVIATE_VOLUME` in `.env` file if you want to persist data across container restarts.
+> You can add your own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `~/.llmstack/config` file.
 
 <div>
   <a href="https://www.loom.com/share/1399a39c19394d9cad224e2e62c15285">
@@ -115,21 +97,20 @@ Check out our documentation at [llmstack.ai/docs](https://llmstack.ai/docs/) to 
 
 ## Development
 
-Run the following commands from the root of the repository to bring up the application containers in development mode. Make sure you have [docker](https://docs.docker.com/engine/install/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) installed on your system before running these commands.
-
 ```bash
 cd client
 npm install
 npm run build
 cd ..
-docker compose -f docker-compose.dev.yml --env-file .env.dev up --build
+pip install poetry
+poetry install
+poetry shell
+llmstack
 ```
-
-This will mount the source code into the containers and restart the containers on code changes. Update `.env.dev` as needed. Please note that LLMStack is available at [http://localhost:9000](http://localhost:9000) in development mode.
 
 > You can skip running `npm install` and `npm run build` if you have already built the client before
 
-For frontend development, you can use `npm start` to start the development server in client directory. You can also use `npm run build` to build the frontend and serve it from the backend server.
+For frontend development, you can use `REACT_APP_SERVER=http://localhost:3000 npm start` to start the development server in client directory. You can also use `npm run build` to build the frontend and serve it from the backend server.
 
 To update documentation, make changes to `web/docs` directory and run `npm run build` in web directory to build the documentation. You can use `npm start` in web directory to serve the documentation locally.
 

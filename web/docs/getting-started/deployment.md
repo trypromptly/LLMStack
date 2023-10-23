@@ -5,11 +5,7 @@ title: Deployment
 
 ## On-premise
 
-LLMStack can be deployed on-premise on your infrastructure. You can deploy LLMStack on a single machine or on a cluster of machines. LLMStack is a collection of microservices that can be deployed using docker compose on a single machine or a cluster using docker swarm.
-
-### Docker Compose
-
-Docker Compose is the easiest way to deploy LLMStack on a single machine. You can deploy LLMStack on a single machine by following the instructions in our [Getting Started](intro.md) guide.
+LLMStack can be deployed on-premise on your infrastructure using pip
 
 ## Cloud offering
 

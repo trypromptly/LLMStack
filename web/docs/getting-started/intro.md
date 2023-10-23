@@ -13,7 +13,7 @@ Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow th
 
 - [Python](https://www.python.org/downloads/) (version 3.8 or above)
 
-## Quickstart
+## Installation
 
 You can install LLMStack locally using the following command:
 
@@ -23,6 +23,10 @@ pip install llmstack
 
 :::info
 LLMStack comes with a default admin account whose credentials are `admin` and `promptly`. _Be sure to change the password from admin panel after logging in_.
+:::
+
+:::info
+If you are on Windows, please use WSL2 (Windows Subsystem for Linux) to install LLMStack. You can follow the instructions [here](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to install WSL2. Once you are in a WSL2 terminal, you can install LLMStack using the above command.
 :::
 
 Once installed, you can start LLMStack using the following command:
@@ -35,24 +39,6 @@ LLMStack should automatically open your browser and point it to login page on [h
 
 LLMStack creates a config file in your home directory at `~/.llmstack/config` to store the configuration. You can change the port and other settings from this file. Refer to the [configuration](config.md) section for more information.
 
-### Docker
-
-You can also run LLMStack in docker. Download the latest release from LLMStack's [releases page](https://github.com/trypromptly/LLMStack/releases) and extract it. Navigate to the extracted directory and create your `.env` file and update `SECRET_KEY`, `CIPHER_SALT` and `DATABASE_PASSWORD`:
-
-```
-cp .env.prod .env
-```
-
-Run LLMStack using the following command:
-
-```
-./run-llmstack.sh
-```
-
-> If you are on Windows, you can use `run-llmstack.bat` instead
-
-Once LLMStack is up and ready, it should automatically open your browser and point it to login page on [http://localhost:3000](http://localhost:3000). You can also alternatively use `docker compose up --pull always` to manually start the containers and open [http://localhost:3000](http://localhost:3000) to login into the platform. Make sure to wait for the API server to be ready before trying to load LLMStack.
-
 <ReactPlayer
   playing
   controls
@@ -63,7 +49,7 @@ Once LLMStack is up and ready, it should automatically open your browser and poi
 />
 
 :::note
-If you are deploying LLMStack on a server, make sure to update `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` in `.env` file to include the hostname of your server. Refer to the [configuration](config.md) section for more information.
+If you are deploying LLMStack on a server, make sure to update `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` in `~/.llmstack/config` file to include the hostname of your server. Refer to the [configuration](config.md) section for more information.
 :::
 
 Instead of downloading the release, you can also clone the repository and run the above commands in the cloned repository.
@@ -72,19 +58,15 @@ Instead of downloading the release, you can also clone the repository and run th
 git clone https://github.com/trypromptly/LLMStack.git
 ```
 
-Users of the platform can add their own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `.env` file. Make sure to restart the containers after adding the keys.
+You can add your own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `~/.llmstack/config` file.
 
 ## Updating
 
-To update LLMStack to the new release, download the latest release from LLMStack's [releases page](https://github.com/trypromptly/LLMStack/releases) and extract it. Navigate to the extracted directory, copy the `.env` file from old installation to here and run the following command:
+To update LLMStack to the new release, you can run the following command:
 
 ```
-./run-llmstack.sh
+pip install llmstack --upgrade
 ```
-
-:::caution
-Remember to update `POSTGRES_VOLUME`, `REDIS_VOLUME` and `WEAVIATE_VOLUME` in `.env` file if you want to persist data across container restarts.
-:::
 
 ## Key Concepts
 
