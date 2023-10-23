@@ -171,7 +171,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          openai_key: e.target.value,
+                          openai_key: e,
                         });
                         setUpdateKeys(updateKeys.add("openai_key"));
                       }}
@@ -187,7 +187,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          stabilityai_key: e.target.value,
+                          stabilityai_key: e,
                         });
                         setUpdateKeys(updateKeys.add("stabilityai_key"));
                       }}
@@ -203,7 +203,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          cohere_key: e.target.value,
+                          cohere_key: e,
                         });
                         setUpdateKeys(updateKeys.add("cohere_key"));
                       }}
@@ -219,7 +219,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          elevenlabs_key: e.target.value,
+                          elevenlabs_key: e,
                         });
                         setUpdateKeys(updateKeys.add("elevenlabs_key"));
                       }}
@@ -235,7 +235,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          azure_openai_api_key: e.target.value,
+                          azure_openai_api_key: e,
                         });
                         setUpdateKeys(updateKeys.add("azure_openai_api_key"));
                       }}
@@ -251,7 +251,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          google_service_account_json_key: e.target.value,
+                          google_service_account_json_key: e,
                         });
                         setUpdateKeys(
                           updateKeys.add("google_service_account_json_key"),
@@ -269,7 +269,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          anthropic_api_key: e.target.value,
+                          anthropic_api_key: e,
                         });
                         setUpdateKeys(updateKeys.add("anthropic_api_key"));
                       }}
@@ -287,7 +287,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          localai_base_url: e.target.value,
+                          localai_base_url: e,
                         });
                         setUpdateKeys(updateKeys.add("localai_base_url"));
                       }}
@@ -303,7 +303,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          localai_api_key: e.target.value,
+                          localai_api_key: e,
                         });
                         setUpdateKeys(updateKeys.add("localai_api_key"));
                       }}

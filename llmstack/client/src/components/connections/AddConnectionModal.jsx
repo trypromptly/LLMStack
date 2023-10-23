@@ -259,7 +259,6 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
           }}
           formData={configFormData}
           onChange={({ formData }) => {
-            console.log(connectionType?.config_ui_schema);
             setConfigFormData(formData);
             setLocalConnection({
               ...localConnection,

@@ -1,4 +1,4 @@
-// A wrapper over TextField component to show password field
+// A wrapper over TextField component to show secret field
 
 import React, { useState } from "react";
 
@@ -6,20 +6,21 @@ import { IconButton, InputAdornment, TextField } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const SecretTextField = (props) => {
-  const [showPassword, setShowPassword] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
 
   return (
     <TextField
       {...props}
-      type={showPassword ? "text" : "password"}
+      type={showSecret ? "text" : "password"}
+      onChange={(e) => props.onChange(e.target.value)}
       InputProps={{
         endAdornment: (
           <InputAdornment position="end">
             <IconButton
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label="toggle password visibility"
+              onClick={() => setShowSecret(!showSecret)}
+              aria-label="toggle secret visibility"
             >
-              {showPassword ? (
+              {showSecret ? (
                 <Visibility fontSize="small" />
               ) : (
                 <VisibilityOff fontSize="small" />
