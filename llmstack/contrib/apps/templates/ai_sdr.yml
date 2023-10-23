@@ -1,0 +1,111 @@
+name: "AI SDR"
+slug: "ai-sdr"
+category_slugs: ["chatbot"]
+description: "Create a highly customized email to a potential customer based on their LinkedIn activity"
+provider_slug: "promptly"
+pages:
+  - title: "Settings"
+    description: "Define your product and SDR profile"
+    input_fields:
+      - name: "product_and_profile"
+        title: "Product Infromation"
+        type: "textarea"
+        description: "Describe your product and the SDR profile"
+        path: "config.system_message"
+        default: >-
+          You are an SDR for a Enterprise AI platform that finds LinkedIn profiles of
+          potential customers, go through their LinkedIn activity and generates a
+          personalized email based on their current LinkedIn activity.
+
+          - LinkedIn profile URLs usually are of the form
+          https://www.linkedin.com/in/priyankch where priyankch is the username
+
+          - If linkedin profile url is not available, compose and use the search term
+
+          - Once a profile url is available, you get their activity before generating
+          a highly personalized email
+
+          - In the email, do not directly refer to their linkedin activity
+app:
+  name: "AI SDR"
+  slug: "ai-sdr"
+  description: "SDR that can look up potential customer from LinkedIn and create a highly customized email to them"
+  type_slug: "agent"
+  config:
+    model: gpt-4
+    system_message: >-
+      You are an SDR for a Enterprise AI platform that finds LinkedIn profiles of
+      potential customers, go through their LinkedIn activity and generates a
+      personalized email based on their current LinkedIn activity.
+
+      - LinkedIn profile URLs usually are of the form
+      https://www.linkedin.com/in/priyankch where priyankch is the username
+
+      - If linkedin profile url is not available, compose and use the search term
+
+      - Once a profile url is available, you get their activity before generating
+      a highly personalized email
+
+      - In the email, do not directly refer to their linkedin activity
+    max_steps: 10
+    split_tasks: true
+  input_fields:
+    - name: task
+      title: Task
+      description: What do you want the agent to perform?
+      type: string
+      required: true
+  output_template:
+    markdown: "{{agent}}"
+  processors:
+    - id: _inputs1
+      name: Web Search
+      description: Search the web for answers
+      provider_slug: promptly
+      processor_slug: web_search
+      config:
+        search_engine: Google
+        k: 5
+      input:
+        query: ""
+      output_template:
+        markdown: "{{_inputs1.results[0].text}} "
+    - id: _inputs2
+      name: LinkedIn Activity
+      description: Gets the LinkedIn profile activity of a user
+      provider_slug: linkedin
+      processor_slug: profile_activity
+      config:
+        n_posts: 5
+        n_comments: 5
+        n_reactions: 5
+        connection_id: 302f0aae-819f-46fd-8506-5e46c4b4c353
+      input:
+        profile_url: ""
+        search_term: ""
+      output_template:
+        markdown: |-
+          ## Posts
+
+          {% for post in _inputs2.posts %}
+          {{post}}
+
+          {% endfor %}
+
+          ## Comments
+
+          {% for comment in _inputs2.comments %}
+          {{comment}}
+
+          {% endfor %}
+
+          ## Reactions
+
+          {% for reaction in _inputs2.reactions %}
+          {{reaction}}
+
+          {% endfor %}
+
+          {% if _inputs2.error %}
+          {{_inputs2.error}}
+          {% endif %}
