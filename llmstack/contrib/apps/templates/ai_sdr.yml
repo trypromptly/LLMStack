@@ -18,7 +18,7 @@ pages:
           personalized email based on their current LinkedIn activity.
 
           - LinkedIn profile URLs usually are of the form
-          https://www.linkedin.com/in/priyankch where priyankch is the username
+          https://www.linkedin.com/in/johndoe where johndoe is the username
 
           - If linkedin profile url is not available, compose and use the search term
 
@@ -39,7 +39,7 @@ app:
       personalized email based on their current LinkedIn activity.
 
       - LinkedIn profile URLs usually are of the form
-      https://www.linkedin.com/in/priyankch where priyankch is the username
+      https://www.linkedin.com/in/johndoe where johndoe is the username
 
       - If linkedin profile url is not available, compose and use the search term
 
