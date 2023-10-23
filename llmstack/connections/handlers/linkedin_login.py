@@ -34,7 +34,7 @@ class LinkedInLogin(ConnectionTypeInterface[LinkedInLoginConfiguration]):
 
         async with async_playwright() as p:
             browser = await p.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(
-                settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await p.chromium.launch(headless=False)
+                settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await p.chromium.launch()
             context = await browser.new_context()
             page = await context.new_page()
             await page.goto('https://www.linkedin.com/login')
