@@ -55,7 +55,13 @@ class LinkedInLogin(ConnectionTypeInterface[LinkedInLoginConfiguration]):
                 return
 
             # Wait for login to complete and redirect to /feed/
-            await page.wait_for_url('https://www.linkedin.com/feed/')
+            await page.wait_for_url('https://www.linkedin.com/feed/', timeout=5000)
+
+            if page.url != 'https://www.linkedin.com/feed/':
+                connection.status = ConnectionStatus.FAILED
+                await browser.close()
+                yield {'error': 'Login failed', 'connection': connection}
+                return
 
             # Get storage state
             storage_state = await context.storage_state()

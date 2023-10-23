@@ -34,6 +34,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
   );
   const [localConnection, setLocalConnection] = useState(connection || {});
   const [validationErrors, setValidationErrors] = useState([]);
+  const [connectionActive, setConnectionActive] = useState(false);
 
   const validateForm = () => {
     let errors = [];
@@ -105,6 +106,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
               enqueueSnackbar("Connection test successful", {
                 variant: "success",
               });
+              setConnectionActive(true);
               ws.close();
               onCancelCb();
             }
@@ -268,32 +270,37 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
         />
       </DialogContent>
       <DialogActions>
-        <Button
-          onClick={testConnection({
-            ...localConnection,
-            ...{
-              provider_slug: connectionType?.provider_slug,
-              connection_type_slug: connectionType?.slug,
-            },
-          })}
-        >
-          Test Connection
-        </Button>
         <Button onClick={handleCloseCb}>Cancel</Button>
-        <Button
-          onClick={() =>
-            handleSaveCb({
+        {!connectionActive && (
+          <Button
+            onClick={testConnection({
               ...localConnection,
               ...{
                 provider_slug: connectionType?.provider_slug,
                 connection_type_slug: connectionType?.slug,
               },
-            })
-          }
-          variant="contained"
-        >
-          Save
-        </Button>
+            })}
+            variant="contained"
+          >
+            Test Connection
+          </Button>
+        )}
+        {connectionActive && (
+          <Button
+            onClick={() =>
+              handleSaveCb({
+                ...localConnection,
+                ...{
+                  provider_slug: connectionType?.provider_slug,
+                  connection_type_slug: connectionType?.slug,
+                },
+              })
+            }
+            variant="contained"
+          >
+            Save
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
