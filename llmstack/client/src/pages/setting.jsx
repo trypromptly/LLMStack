@@ -287,7 +287,7 @@ const SettingPage = () => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          localai_base_url: e,
+                          localai_base_url: e.target.value,
                         });
                         setUpdateKeys(updateKeys.add("localai_base_url"));
                       }}
