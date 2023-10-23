@@ -36,17 +36,6 @@ export function AppWebConfigEditor(props) {
             })
           }
         />
-        <TextField
-          helperText="Domain name pointing to the app. Coming soon for Pro users"
-          id="domain"
-          label="Domain"
-          onChange={(e) =>
-            setWebConfig({ ...webConfig, domain: e.target.value })
-          }
-          disabled
-          defaultValue={webConfig?.domain || ""}
-          size="small"
-        />
       </Stack>
       <Stack
         direction="row"
