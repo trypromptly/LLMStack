@@ -8,8 +8,8 @@ pages:
     description: "Define your product and SDR profile"
     input_fields:
       - name: "product_and_profile"
-        title: "Product Infromation"
-        type: "textarea"
+        title: "Product and SDR Profile"
+        type: "text"
         description: "Describe your product and the SDR profile"
         path: "config.system_message"
         default: >-
