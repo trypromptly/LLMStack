@@ -413,6 +413,17 @@ PROVIDERS = [
     }
 ]
 
+# Include networking providers if they are enabled
+try:
+    import jnpr.junos
+    PROVIDERS.append({
+        'name': 'Juniper',
+        'processor_packages': ['llmstack.processors.providers.juniper'],
+        'slug': 'juniper',
+    })
+except ImportError:
+    pass
+
 PROCESSOR_PROVIDERS = sum(list(
     map(lambda entry: entry['processor_packages'], filter(
         lambda provider: 'processor_packages' in provider,

@@ -12,9 +12,20 @@ def get_connection_type_interface_subclasses():
         'llmstack.connections.handlers',
     ]
 
+    excluded_packages = []
+
+    try:
+        import jnpr.junos
+    except:
+        excluded_packages.append('llmstack.connections.handlers.junos_login')
+
     for package in allowed_packages:
-        subclasses.extend(get_all_sub_classes(
-            package, ConnectionTypeInterface))
+        subclasses_in_package = get_all_sub_classes(
+            package, ConnectionTypeInterface)
+
+        for subclass in subclasses_in_package:
+            if subclass.__module__ not in excluded_packages:
+                subclasses.append(subclass)
 
     return subclasses
 
@@ -29,16 +40,16 @@ class BaseSchema(BaseModel):
     """
     This is Base Schema model for all the connection configuration types.
     """
-    @classmethod
+    @ classmethod
     def get_json_schema(cls):
         return super().schema_json(indent=2)
 
-    @classmethod
+    @ classmethod
     def get_schema(cls):
         return super().schema()
 
     # TODO: This is a copy of the same method in DataSourceTypeInterface. Refactor to a common place.
-    @classmethod
+    @ classmethod
     def get_ui_schema(cls):
         schema = cls.get_schema()
         ui_schema = {}

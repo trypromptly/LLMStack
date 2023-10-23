@@ -3,7 +3,7 @@ name = "llmstack"
 version = "0.0.11"
 description = "Low-code platform to build generative AI apps, chatbots and agents with your data"
 authors = ["Ajay Chintala"]
-license = "MIT"
+license = "ELv2"
 readme = "README.md"
 include = [
   "llmstack/client/build/*",
@@ -132,6 +132,10 @@ openai = {version = "0.27.0", allow-prereleases = true}
 stability-sdk = {version = "0.8.4", allow-prereleases = true}
 anthropic = "^0.3.11"
 toml = "^0.10.2"
+junos-eznc = {version="^2.6.8", optional=true}
+
+[tool.poetry.extras]
+networking = ["junos-eznc"]
 
 [tool.poetry-dynamic-versioning]
 enable = true

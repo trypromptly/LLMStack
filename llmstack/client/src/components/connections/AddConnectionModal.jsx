@@ -137,14 +137,6 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
       return;
     }
 
-    setConnectionType(connectionTypes[0] || "");
-  }, [open, connectionTypes]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
     setValidationErrors([]);
   }, [open, connectionName, connectionDescription, configFormData]);
 
@@ -157,13 +149,18 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
     setConnectionName(connection?.name || "");
     setConnectionDescription(connection?.description || "");
     setConfigFormData(connection?.configuration || {});
-    setConnectionType(
-      connectionTypes.find(
-        (t) =>
-          t.provider_slug === connection?.provider_slug &&
-          t.slug === connection?.connection_type_slug,
-      ),
-    );
+
+    if (connection) {
+      setConnectionType(
+        connectionTypes.find(
+          (t) =>
+            t.provider_slug === connection?.provider_slug &&
+            t.slug === connection?.connection_type_slug,
+        ),
+      );
+    } else {
+      setConnectionType(connectionTypes[0] || "");
+    }
   }, [connection, connectionTypes, open]);
 
   return (
@@ -215,7 +212,11 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
           <Select
             label="Connection Type"
             labelId="connection-type-label"
-            value={`${connectionType.provider_slug}:${connectionType.slug}`}
+            value={
+              connectionType
+                ? `${connectionType?.provider_slug}:${connectionType?.slug}`
+                : ""
+            }
             onChange={(e) =>
               setConnectionType(
                 connectionTypes.find(
@@ -240,7 +241,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
         <InputLabel>Configuration</InputLabel>
         <ThemedJsonForm
           schema={
-            connectionType.config_schema || {
+            connectionType?.config_schema || {
               type: "object",
               properties: {},
             }
@@ -258,7 +259,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
           }}
           formData={configFormData}
           onChange={({ formData }) => {
-            console.log(connectionType.config_ui_schema);
+            console.log(connectionType?.config_ui_schema);
             setConfigFormData(formData);
             setLocalConnection({
               ...localConnection,
@@ -272,8 +273,8 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
           onClick={testConnection({
             ...localConnection,
             ...{
-              provider_slug: connectionType.provider_slug,
-              connection_type_slug: connectionType.slug,
+              provider_slug: connectionType?.provider_slug,
+              connection_type_slug: connectionType?.slug,
             },
           })}
         >
@@ -285,8 +286,8 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
             handleSaveCb({
               ...localConnection,
               ...{
-                provider_slug: connectionType.provider_slug,
-                connection_type_slug: connectionType.slug,
+                provider_slug: connectionType?.provider_slug,
+                connection_type_slug: connectionType?.slug,
               },
             })
           }

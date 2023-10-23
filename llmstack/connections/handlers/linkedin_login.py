@@ -67,36 +67,3 @@ class LinkedInLogin(ConnectionTypeInterface[LinkedInLoginConfiguration]):
             await browser.close()
 
             yield connection
-
-    # def activate(self, connection) -> Iterator[Union[Connection, str]]:
-    #     # Start playwright browser
-    #     from playwright.sync_api import sync_playwright
-    #     from django.conf import settings
-
-    #     with sync_playwright() as p:
-    #         browser = p.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(
-    #             settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else p.chromium.launch(headless=False)
-    #         context = browser.new_context()
-    #         page = context.new_page()
-    #         page.goto('https://www.linkedin.com/login')
-
-    #         # Login
-    #         page.fill('input[name="session_key"]',
-    #                   connection.configuration['username'])
-    #         page.fill('input[name="session_password"]',
-    #                   connection.configuration['password'])
-    #         page.click('button[type="submit"]')
-
-    #         # Wait for login to complete and redirect to /feed/
-    #         page.wait_for_url('https://www.linkedin.com/feed/')
-
-    #         # Get storage state
-    #         storage_state = context.storage_state()
-
-    #         connection.status = ConnectionStatus.ACTIVE
-    #         connection.configuration['_storage_state'] = storage_state
-
-    #         # Close browser
-    #         browser.close()
-
-    #         yield connection
