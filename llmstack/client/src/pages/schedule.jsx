@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   AlertTitle,
@@ -43,6 +43,9 @@ import {
   randomId,
   randomArrayItem,
 } from "@mui/x-data-grid-generator";
+import { AppSelector } from "../components/apps/AppSelector";
+import { useRecoilValue } from "recoil";
+import { appsState } from "../data/atoms";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
@@ -67,9 +70,10 @@ function EditToolbar(props) {
   );
 }
 
-function InputTable({}) {
-  const [rows, setRows] = useState([]);
-  const [columns, setColumns] = useState([]);
+function InputTable({ columnData, rowData }) {
+  console.log(columnData);
+  const [rows, setRows] = useState(rowData);
+  const [columns, setColumns] = useState(columnData);
   const [rowModesModel, setRowModesModel] = useState({});
 
   const handleRowEditStop = (params, event) => {
@@ -150,11 +154,36 @@ function AddAppRunScheduleModal({
   scheduleAddedCb,
   modalTitle = "Add New Schedule",
 }) {
+  const [selectedApp, setSelectedApp] = useState(null);
+  const apps = (useRecoilValue(appsState) || []).filter(
+    (app) => app.published_uuid,
+  );
+  const [columns, setColumns] = useState(null);
+
+  useEffect(() => {
+    if (selectedApp && columns === null) {
+      const appDetail = apps.find((app) => app.published_uuid === selectedApp);
+
+      setColumns(
+        appDetail.data.input_fields.map((entry) => {
+          return {
+            field: entry.title,
+            headerName: entry.name,
+            width: entry.type === "text" ? 300 : 200,
+            editable: true,
+            sortable: false,
+            resizable: true,
+          };
+        }),
+      );
+    }
+  }, [selectedApp]);
+
   return (
     <Dialog open={open} onClose={handleCancelCb} fullScreen>
       <DialogTitle>{modalTitle}</DialogTitle>
       <DialogContent>
-        <Accordion>
+        <Accordion defaultExpanded>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             aria-controls="panel1a-content"
@@ -163,23 +192,31 @@ function AddAppRunScheduleModal({
             <Typography>Select Application</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <Typography>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Suspendisse malesuada lacus ex, sit amet blandit leo lobortis
-              eget.
-            </Typography>
+            <Box>
+              <AppSelector
+                apps={apps}
+                value={selectedApp}
+                onChange={(appId) => {
+                  setSelectedApp(appId);
+                }}
+              />
+            </Box>
           </AccordionDetails>
         </Accordion>
-        <Accordion>
+        <Accordion defaultExpanded>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             aria-controls="panel1a-content"
             id="panel1a-header"
           >
-            <Typography>Add Input</Typography>
+            <Typography>Input</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <InputTable />
+            {selectedApp ? (
+              <InputTable columnData={columns || []} rowData={[]} />
+            ) : (
+              <div>Please Select And App</div>
+            )}
           </AccordionDetails>
         </Accordion>
       </DialogContent>
