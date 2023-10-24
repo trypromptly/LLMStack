@@ -1,5 +1,0 @@
-{
-  "port": 30000,
-  "wsPath": "/ws",
-  "chromiumSandbox": true
-}
