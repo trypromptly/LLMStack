@@ -6,6 +6,8 @@ import validator from "@rjsf/validator-ajv8";
 import Form from "@rjsf/mui";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
+import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/mode-json";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { ProviderIcon } from "./ProviderIcon";
@@ -40,15 +42,58 @@ const getProcessorInfoFromId = (app, id) => {
   };
 };
 
-const StepMessageContent = React.memo(({ stepInput, app }) => {
-  const stepInputJson = JSON.parse(stepInput);
-  const processorInfo = getProcessorInfoFromId(app, stepInputJson.tool_name);
+const StepMessageContent = React.memo(({ step, app }) => {
+  if (!step) {
+    return null;
+  }
+
+  const processorInfo = getProcessorInfoFromId(app, step.name);
+
   return (
-    <Box className={"chat_message_from_bot chat_message_type_step"}>
-      Using&nbsp;&nbsp;{processorInfo.icon}&nbsp;
-      <i>{processorInfo.name}</i>
-      &nbsp;&nbsp;with&nbsp;{JSON.stringify(stepInputJson.tool_args)}
-    </Box>
+    <Stack direction={"column"} gap={1}>
+      <Box className={"chat_message_from_bot chat_message_type_step"}>
+        Using&nbsp;&nbsp;{processorInfo.icon}&nbsp;<i>{processorInfo.name}</i>
+        {!step.content && (
+          <div className="chat_message_from_bot typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        )}
+      </Box>
+      <Typography
+        variant="caption"
+        sx={{ textAlign: "left", fontSize: "0.8rem" }}
+      >
+        Input
+      </Typography>
+      {step.arguments && (
+        <AceEditor
+          mode="json"
+          theme="dracula"
+          value={step.arguments}
+          editorProps={{ $blockScrolling: true }}
+          setOptions={{
+            useWorker: false,
+            showGutter: false,
+            maxLines: Infinity,
+          }}
+          style={{
+            marginBottom: 10,
+            borderRadius: "5px",
+          }}
+        />
+      )}
+      <Typography
+        variant="caption"
+        sx={{ textAlign: "left", fontSize: "0.8rem" }}
+      >
+        Output
+      </Typography>
+      <MarkdownRenderer className="chat_message_type_step_output">
+        {step.content}
+      </MarkdownRenderer>
+    </Stack>
   );
 });
 
@@ -116,7 +161,7 @@ const MemoizedMessage = React.memo(
           </div>
         )}
         {message.role === "bot" && message.type === "step" && (
-          <StepMessageContent stepInput={message.content} app={app} />
+          <StepMessageContent step={message.content} app={app} />
         )}
         {message.type !== "step" && (
           <MarkdownRenderer
@@ -315,7 +360,9 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
         templateEngine
           .render(templates.current[message.output.agent.from_id], {
             [message.output.agent.from_id]:
-              chunkedOutput.current[message.output.agent.id],
+              message.output.agent.type === "step"
+                ? chunkedOutput.current[message.output.agent.id].output
+                : chunkedOutput.current[message.output.agent.id],
           })
           .then((response) => {
             if (response.trim() === "" && error === null) {
@@ -341,6 +388,11 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
                 content:
                   message.output.agent.type === "step_error"
                     ? message.output.agent.content
+                    : message.output.agent.type === "step"
+                    ? {
+                        ...chunkedOutput.current[message.output.agent.id],
+                        ...{ content: response },
+                      }
                     : response,
                 error: message.output.agent.type === "step_error",
                 type: message.output.agent.type || "output",

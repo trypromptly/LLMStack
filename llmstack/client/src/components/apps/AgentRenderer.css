@@ -17,6 +17,7 @@
   font-size: 12px !important;
   color: #559 !important;
   font-weight: 600;
+  max-width: fit-content !important;
 }
 
 .chat_message_type_output {
@@ -28,7 +29,6 @@
   background-color: transparent !important;
   color: #999 !important;
   font-size: 14px !important;
-  margin: -15px 0 !important;
 }
 
 .chat_message_from_bot img {

@@ -24,6 +24,15 @@ class ToolInvokeInput(BaseModel):
     tool_args: dict = {}
 
 
+class FunctionCall(BaseModel):
+    """
+    Data for a function call
+    """
+    name: str = ''
+    arguments: str = ''
+    output: Any = ''
+
+
 class AgentOutput(BaseModel):
     """
     Output from the agent
@@ -138,8 +147,28 @@ class AgentActor(Actor):
 
                     if function_call and function_call.get('name'):
                         function_name += function_call['name']
+                        async_to_sync(self._output_stream.write)(
+                            AgentOutput(
+                                content=FunctionCall(
+                                    name=function_call['name'],
+                                ),
+                                id=agent_message_id,
+                                from_id='agent',
+                                type='step',
+                            )
+                        )
                     elif function_call and function_call.get('arguments'):
                         function_args += function_call['arguments']
+                        async_to_sync(self._output_stream.write)(
+                            AgentOutput(
+                                content=FunctionCall(
+                                    arguments=function_call['arguments'],
+                                ),
+                                id=agent_message_id,
+                                from_id='agent',
+                                type='step',
+                            )
+                        )
                     elif content:
                         full_content += content
                         async_to_sync(self._output_stream.write)(
@@ -169,17 +198,9 @@ class AgentActor(Actor):
                         tool_name=function_name,
                         tool_args=json.loads(function_args),
                     )
-                    async_to_sync(self._output_stream.write)(
-                        AgentOutput(
-                            content=tool_invoke_input.json(),
-                            id=str(uuid.uuid4()),
-                            from_id='agent',
-                            type='step',
-                        )
-                    )
                     async_to_sync(self._output_stream.write_raw)(
                         Message(
-                            message_id=str(uuid.uuid4()),
+                            message_id=agent_message_id,
                             message_type=MessageType.TOOL_INVOKE,
                             message=tool_invoke_input,
                             message_to=function_name,
@@ -218,10 +239,12 @@ class AgentActor(Actor):
             if message.message_from in self._processor_configs:
                 async_to_sync(self._output_stream.write)(
                     AgentOutput(
-                        content=message.message,
+                        content=FunctionCall(
+                            output=message.message,
+                        ),
                         from_id=message.message_from,
-                        id=message.message_id,
-                        type='step_output',
+                        id=message.response_to,
+                        type='step',
                     )
                 )
 
