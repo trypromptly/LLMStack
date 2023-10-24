@@ -77,15 +77,13 @@ class ConnectionsViewSet(viewsets.ViewSet):
         profile = get_object_or_404(Profile, user=request.user)
         connection_obj = profile.get_connection(uid)
         if not connection_obj:
-            return Response(status=404, reason='Connection not found')
+            return Response(status=404)
 
         connection = Connection(**connection_obj)
         connection.name = request.data.get('name')
         connection.description = request.data.get('description', '')
         connection.configuration = request.data.get('configuration')
         connection.updated_at = datetime.datetime.now().isoformat()
-
-        logger.info(f'Updated connection: {connection.dict()}')
 
         profile.add_connection(connection.dict())
 
@@ -94,7 +92,7 @@ class ConnectionsViewSet(viewsets.ViewSet):
     def delete(self, request, uid):
         profile = get_object_or_404(Profile, user=request.user)
         if uid not in profile.connections:
-            return Response(status=404, reason='Connection not found')
+            return Response(status=404)
 
         profile.delete_connection(uid)
 

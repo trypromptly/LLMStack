@@ -24,7 +24,7 @@ class JunosLogin(ConnectionTypeInterface[JunosLoginConfiguration]):
 
     @staticmethod
     def slug() -> str:
-        return 'Junos_login'
+        return 'junos_login'
 
     @staticmethod
     def description() -> str:
@@ -34,7 +34,7 @@ class JunosLogin(ConnectionTypeInterface[JunosLoginConfiguration]):
         try:
             from jnpr.junos import Device
 
-            device = Device(host=connection.configuration['device_address'],
+            device = Device(host=connection.configuration['address'],
                             user=connection.configuration['username'], password=connection.configuration['password']).open()
             device.close()
 
