@@ -1,7 +1,6 @@
 from typing import Iterator
 from pykka import ThreadingActor
 
-from llmstack.base.models import Profile
 from llmstack.connections.models import Connection, ConnectionStatus
 
 import logging
@@ -22,10 +21,12 @@ class ConnectionActivationActor(ThreadingActor):
         pass
 
     def set_connection(self, connection):
+        from llmstack.base.models import Profile
         profile = Profile.objects.get(user=self.user)
         profile.add_connection(connection.dict())
 
     def activate(self) -> Iterator[str]:
+        from llmstack.base.models import Profile
         profile = Profile.objects.get(user=self.user)
         connection_obj = profile.get_connection(
             self.connection_id) if profile else None
