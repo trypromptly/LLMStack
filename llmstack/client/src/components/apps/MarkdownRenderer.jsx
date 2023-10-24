@@ -4,8 +4,10 @@ import loadingImage from "../../assets/images/loading.gif";
 import ThemedJsonForm from "../ThemedJsonForm";
 import validator from "@rjsf/validator-ajv8";
 import { useState } from "react";
+import AceEditor from "react-ace";
 
-import { Button } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
+import { ContentCopyOutlined } from "@mui/icons-material";
 
 function FunctionFormComponent(props) {
   // Render a form component with submit button
@@ -175,7 +177,56 @@ export default function MarkdownRenderer(props) {
               />
             );
           }
-          return <code {...codeProps}>{codeProps.children}</code>;
+          return language ? (
+            <Stack sx={{ maxWidth: "90%" }}>
+              <Box
+                sx={{
+                  backgroundColor: "#CCC",
+                  padding: "5px",
+                  color: "#000",
+                  fontWeight: "400",
+                  fontSize: "14px",
+                  borderRadius: "5px 5px 0px 0px",
+                }}
+              >
+                <Typography sx={{ textTransform: "none" }}>
+                  {language?.split("-")[1].charAt(0).toUpperCase() +
+                    language?.split("-")[1].slice(1)}
+                  <Button
+                    startIcon={<ContentCopyOutlined />}
+                    sx={{
+                      textTransform: "none",
+                      padding: "0px 5px",
+                      float: "right",
+                      color: "#000",
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(codeProps.children[0]);
+                    }}
+                  >
+                    Copy code
+                  </Button>
+                </Typography>
+              </Box>
+              <AceEditor
+                mode={language?.split("-")[1] || "text"}
+                theme="dracula"
+                value={codeProps.children[0]}
+                editorProps={{ $blockScrolling: true }}
+                setOptions={{
+                  useWorker: false,
+                  showGutter: false,
+                  maxLines: Infinity,
+                }}
+                style={{
+                  borderRadius: "0px 0px 5px 5px",
+                  width: "100%",
+                }}
+              />
+            </Stack>
+          ) : (
+            <code {...codeProps}>{codeProps.children}</code>
+          );
         },
       }}
     >
