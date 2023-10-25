@@ -9,10 +9,13 @@ from llmstack.apps.apis import AppViewSet
 
 logger = logging.getLogger(__name__)
 
+def run_app(app_id, input_data):
+    logger.info(f"run_app app_id: {app_id}, input_data: {input_data}")
+    return True
+
 class JobsViewSet(viewsets.ViewSet):
     
     def get_permissions(self):
-        return [AllowAny()]
         if self.action == 'submit_job':
             permission_classes = [IsAuthenticated]
         else:
@@ -23,8 +26,6 @@ class JobsViewSet(viewsets.ViewSet):
     def app_run_job(self, request):
         data = request.data
         published_app_id = data.get('published_app_id')
-        app = AppViewSet().getByPublishedUUID(request=request, published_app_id=published_app_id)
-        app_input = data.get('app_input')
-        logger.info(f"submit_app_run_job app: {app}")
+        app = AppViewSet().getByPublishedUUID(request=request, published_uuid=published_app_id)        
         return DRFResponse(status=204)
     
