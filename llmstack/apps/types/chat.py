@@ -33,10 +33,6 @@ class ChatAppConfigSchema(BaseSchema):
         title='App Bubble Style',
         description='CSS style object to apply to the app bubble when embedded in another page', advanced_parameter=True, widget='textarea',
     )
-    allowed_sites: List[str] = Field(
-        title='Allowed Sites to Embed this App',
-        default=[], description='List of domains that are allowed to embed this app. Leave empty to allow all sites.', advanced_parameter=True, hidden=True,
-    )
     suggested_messages: List[str] = Field(
         title='Suggested messages', default=[], description='List of upto 3 suggested messages to show to the user', advanced_parameter=True,
     )
