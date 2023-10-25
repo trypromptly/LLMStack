@@ -46,6 +46,7 @@ import {
 import { AppSelector } from "../components/apps/AppSelector";
 import { useRecoilValue } from "recoil";
 import { appsState } from "../data/atoms";
+import { axios } from "../data/axios";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
@@ -222,6 +223,13 @@ function AddAppRunScheduleModal({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancelCb}>Cancel</Button>
+        <Button
+          onClick={() => {
+            scheduleAddedCb(selectedApp);
+          }}
+        >
+          Submit
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -290,6 +298,19 @@ export default function Schedule() {
           open={modalOpen}
           scheduleType={scheduleJobType}
           handleCancelCb={() => setModalOpen(false)}
+          scheduleAddedCb={(appId) => {
+            axios()
+              .post("/api/jobs/app_run", {
+                app_id: "1",
+              })
+              .then((res) => {
+                console.log(res);
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+            setModalOpen(false);
+          }}
         />
       )}
     </div>
