@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { AppSelector } from "../apps/AppSelector";
@@ -33,6 +33,8 @@ const UI_SCHEMA = {
 
 export default function AddAppRunScheduleConfigForm(props) {
   const [formData, setFormData] = useState({});
+
+  useEffect(() => {}, []);
 
   return (
     <ThemedJsonForm

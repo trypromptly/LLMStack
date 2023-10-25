@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  Box,
   Button,
   Accordion,
   AccordionSummary,
@@ -17,7 +16,7 @@ import {
   DialogTitle,
 } from "@mui/material";
 
-import { AppSelector } from "../components/apps/AppSelector";
+import AddAppRunScheduleConfigForm from "../components/schedule/AddAppRunScheduleConfigForm";
 import InputDataTable from "../components/schedule/InputDataTable";
 import { useRecoilValue } from "recoil";
 import { appsState } from "../data/atoms";
@@ -32,6 +31,7 @@ function AddAppRunScheduleModal({
   modalTitle = "Add New Schedule",
 }) {
   const [selectedApp, setSelectedApp] = useState(null);
+
   const apps = (useRecoilValue(appsState) || []).filter(
     (app) => app.published_uuid,
   );
@@ -62,28 +62,23 @@ function AddAppRunScheduleModal({
         <Accordion defaultExpanded>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1a-content"
-            id="panel1a-header"
+            aria-controls="schedule-configuration"
+            id="schedule-configuration"
+            style={{ backgroundColor: "#dce8fb" }}
           >
-            <Typography>Select Application</Typography>
+            <Typography>Configuration</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <Box>
-              <AppSelector
-                apps={apps}
-                value={selectedApp}
-                onChange={(appId) => {
-                  setSelectedApp(appId);
-                }}
-              />
-            </Box>
+            <AddAppRunScheduleConfigForm />
           </AccordionDetails>
         </Accordion>
+
         <Accordion defaultExpanded>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1a-content"
-            id="panel1a-header"
+            aria-controls="schedule-input"
+            id="schedule-input"
+            style={{ backgroundColor: "#dce8fb" }}
           >
             <Typography>Input</Typography>
           </AccordionSummary>
@@ -176,7 +171,7 @@ export default function Schedule() {
           scheduleAddedCb={(appId) => {
             axios()
               .post("/api/jobs/app_run", {
-                app_id: "1",
+                published_app_id: appId,
               })
               .then((res) => {
                 console.log(res);
