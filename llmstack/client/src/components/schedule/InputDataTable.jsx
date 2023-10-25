@@ -163,6 +163,14 @@ export default function InputDataTable({ columnData, rowData }) {
         onRowModesModelChange={handleRowModesModelChange}
         onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
+        pageSizeOptions={[5, 10]}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 5,
+            },
+          },
+        }}
         slots={{
           toolbar: EditToolbar,
         }}
