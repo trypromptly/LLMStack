@@ -150,7 +150,13 @@ const MemoizedMessage = React.memo(
           <Avatar
             src={app.data?.config?.assistant_image}
             alt="Bot"
-            style={{ margin: "16px 8px 16px 0px" }}
+            style={{
+              margin: `${
+                message?.type === "step"
+                  ? "0px 8px 16px 0px"
+                  : "16px 8px 16px 0px"
+              }`,
+            }}
           />
         )}
         {message.role === "bot" && message.content.length <= 1 && (
