@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.templatetags.tz import utc
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 import django_rq
 from rq import Queue
@@ -104,6 +105,10 @@ class BaseTask(models.Model):
                                      'Result never expires, you should delete jobs manually. '
                                      '0: Result gets deleted immediately. >0: Result expires '
                                      'after n seconds.')
+    owner = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING, help_text='Owner of the task', null=False
+    ) 
+    metadata = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
