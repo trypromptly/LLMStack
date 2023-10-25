@@ -3,6 +3,8 @@ import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { AppSelector } from "../apps/AppSelector";
 import FrequencyPickerWidget from "./FrequencyPickerWidget";
+import { useRecoilValue } from "recoil";
+import { appsState } from "../../data/atoms";
 
 const SCHEMA = {
   properties: {
@@ -34,7 +36,20 @@ const UI_SCHEMA = {
 export default function AddAppRunScheduleConfigForm(props) {
   const [formData, setFormData] = useState({});
 
-  useEffect(() => {}, []);
+  const [selectedApp, setSelectedApp] = useState(null);
+
+  const apps = (useRecoilValue(appsState) || []).filter(
+    (app) => app.published_uuid,
+  );
+
+  useEffect(() => {
+    if (formData?.published_app_id) {
+      const app = apps.find(
+        (app) => app.published_uuid === formData?.published_app_id,
+      );
+      props.onChange({ selectedApp: app, formData });
+    }
+  }, [formData]);
 
   return (
     <ThemedJsonForm
@@ -56,7 +71,7 @@ export default function AddAppRunScheduleConfigForm(props) {
         appselect: (props) => (
           <AppSelector
             {...props}
-            apps={[]}
+            apps={apps}
             value={formData?.published_app_id}
             onChange={(appId) => {
               setFormData({

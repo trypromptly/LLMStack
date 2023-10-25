@@ -18,8 +18,6 @@ import {
 
 import AddAppRunScheduleConfigForm from "../components/schedule/AddAppRunScheduleConfigForm";
 import InputDataTable from "../components/schedule/InputDataTable";
-import { useRecoilValue } from "recoil";
-import { appsState } from "../data/atoms";
 import { axios } from "../data/axios";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -30,17 +28,12 @@ function AddAppRunScheduleModal({
   scheduleAddedCb,
   modalTitle = "Add New Schedule",
 }) {
-  const [selectedApp, setSelectedApp] = useState(null);
-
-  const apps = (useRecoilValue(appsState) || []).filter(
-    (app) => app.published_uuid,
-  );
   const [columns, setColumns] = useState(null);
+  const [selectedApp, setSelectedApp] = useState(null);
 
   useEffect(() => {
     if (selectedApp) {
-      const appDetail = apps.find((app) => app.published_uuid === selectedApp);
-      const columnFields = appDetail.data.input_fields.map((entry) => {
+      const columnFields = selectedApp.data.input_fields.map((entry) => {
         return {
           field: entry.name,
           headerName: entry.title,
@@ -69,7 +62,11 @@ function AddAppRunScheduleModal({
             <Typography>Configuration</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <AddAppRunScheduleConfigForm />
+            <AddAppRunScheduleConfigForm
+              onChange={(formData) => {
+                setSelectedApp(formData.selectedApp);
+              }}
+            />
           </AccordionDetails>
         </Accordion>
 
