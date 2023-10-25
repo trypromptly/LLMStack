@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  Alert,
-  AlertTitle,
   Box,
   Button,
-  Chip,
-  CircularProgress,
-  Collapse,
-  Container,
-  IconButton,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -16,138 +9,21 @@ import {
   Pagination,
   Table,
   TableBody,
-  TableCell,
   TableHead,
-  TableRow,
-  Tooltip,
   Typography,
-  Stack,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
 } from "@mui/material";
 
-import {
-  GridRowModes,
-  DataGrid,
-  GridToolbarContainer,
-  GridActionsCellItem,
-  GridRowEditStopReasons,
-} from "@mui/x-data-grid";
-import AddIcon from "@mui/icons-material/Add";
-
-import {
-  randomCreatedDate,
-  randomTraderName,
-  randomId,
-  randomArrayItem,
-} from "@mui/x-data-grid-generator";
 import { AppSelector } from "../components/apps/AppSelector";
+import InputDataTable from "../components/schedule/InputDataTable";
 import { useRecoilValue } from "recoil";
 import { appsState } from "../data/atoms";
 import { axios } from "../data/axios";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-
-function EditToolbar(props) {
-  const { setRows, setRowModesModel } = props;
-
-  const handleClick = () => {
-    const id = randomId();
-    setRows((oldRows) => [...oldRows, { id, name: "", age: "", isNew: true }]);
-    setRowModesModel((oldModel) => ({
-      ...oldModel,
-      [id]: { mode: GridRowModes.Edit, fieldToFocus: "name" },
-    }));
-  };
-
-  return (
-    <GridToolbarContainer>
-      <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
-        Add record
-      </Button>
-    </GridToolbarContainer>
-  );
-}
-
-function InputTable({ columnData, rowData }) {
-  console.log(columnData);
-  const [rows, setRows] = useState(rowData);
-  const [columns, setColumns] = useState(columnData);
-  const [rowModesModel, setRowModesModel] = useState({});
-
-  const handleRowEditStop = (params, event) => {
-    if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-      event.defaultMuiPrevented = true;
-    }
-  };
-
-  const handleEditClick = (id) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
-  };
-
-  const handleSaveClick = (id) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-  };
-
-  const handleDeleteClick = (id) => () => {
-    setRows(rows.filter((row) => row.id !== id));
-  };
-
-  const handleCancelClick = (id) => () => {
-    setRowModesModel({
-      ...rowModesModel,
-      [id]: { mode: GridRowModes.View, ignoreModifications: true },
-    });
-
-    const editedRow = rows.find((row) => row.id === id);
-    if (editedRow.isNew) {
-      setRows(rows.filter((row) => row.id !== id));
-    }
-  };
-
-  const processRowUpdate = (newRow) => {
-    const updatedRow = { ...newRow, isNew: false };
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
-    return updatedRow;
-  };
-
-  const handleRowModesModelChange = (newRowModesModel) => {
-    setRowModesModel(newRowModesModel);
-  };
-
-  return (
-    <Box
-      sx={{
-        height: 500,
-        width: "100%",
-        "& .actions": {
-          color: "text.secondary",
-        },
-        "& .textPrimary": {
-          color: "text.primary",
-        },
-      }}
-    >
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        editMode="row"
-        rowModesModel={rowModesModel}
-        onRowModesModelChange={handleRowModesModelChange}
-        onRowEditStop={handleRowEditStop}
-        processRowUpdate={processRowUpdate}
-        slots={{
-          toolbar: EditToolbar,
-        }}
-        slotProps={{
-          toolbar: { setRows, setRowModesModel },
-        }}
-      />
-    </Box>
-  );
-}
 
 function AddAppRunScheduleModal({
   open,
@@ -162,21 +38,20 @@ function AddAppRunScheduleModal({
   const [columns, setColumns] = useState(null);
 
   useEffect(() => {
-    if (selectedApp && columns === null) {
+    if (selectedApp) {
       const appDetail = apps.find((app) => app.published_uuid === selectedApp);
+      const columnFields = appDetail.data.input_fields.map((entry) => {
+        return {
+          field: entry.name,
+          headerName: entry.title,
+          width: entry.type === "text" ? 300 : 200,
+          disableColumnMenu: true,
+          sortable: false,
+          editable: true,
+        };
+      });
 
-      setColumns(
-        appDetail.data.input_fields.map((entry) => {
-          return {
-            field: entry.title,
-            headerName: entry.name,
-            width: entry.type === "text" ? 300 : 200,
-            editable: true,
-            sortable: false,
-            resizable: true,
-          };
-        }),
-      );
+      setColumns(columnFields);
     }
   }, [selectedApp]);
 
@@ -214,7 +89,7 @@ function AddAppRunScheduleModal({
           </AccordionSummary>
           <AccordionDetails>
             {selectedApp ? (
-              <InputTable columnData={columns || []} rowData={[]} />
+              <InputDataTable columnData={columns || []} rowData={[]} />
             ) : (
               <div>Please Select And App</div>
             )}
