@@ -135,6 +135,16 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
   };
 
   useEffect(() => {
+    if (
+      localConnection &&
+      localConnection.configuration &&
+      configFormData !== localConnection.configuration
+    ) {
+      setConfigFormData(localConnection?.configuration);
+    }
+  }, [localConnection, configFormData]);
+
+  useEffect(() => {
     if (!open) {
       return;
     }
