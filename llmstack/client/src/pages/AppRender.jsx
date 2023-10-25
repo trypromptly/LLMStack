@@ -81,6 +81,8 @@ function AppRenderPage({ headless = false }) {
 
   return app?.type?.slug === "text-chat" && embed && chatBubble ? (
     <WebChatRender app={app} isMobile={isMobile} embed={embed} ws={ws} />
+  ) : app?.type?.slug === "agent" && embed && chatBubble ? (
+    <AgentRenderer app={app} isMobile={isMobile} embed={embed} ws={ws} />
   ) : (
     <Stack container spacing={2}>
       {!embed && (

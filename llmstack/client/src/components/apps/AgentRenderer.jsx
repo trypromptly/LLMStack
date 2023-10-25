@@ -81,6 +81,8 @@ const StepMessageContent = React.memo(({ step, app }) => {
           style={{
             marginBottom: 10,
             borderRadius: "5px",
+            wordWrap: "break-word",
+            width: "100%",
           }}
         />
       )}
@@ -462,7 +464,7 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
       )}
       <div
         className={`agent-chat-container ${embed ? "embedded" : ""} ${
-          showChat ? "maximized" : "minimized"
+          showChat ? "agent-maximized" : "minimized"
         }`}
         style={{
           width: isMobile ? "90%" : "100%",

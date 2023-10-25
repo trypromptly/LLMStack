@@ -87,8 +87,8 @@
   color: rgb(201, 24, 24);
 }
 
-.maximized {
-  max-height: 100vh;
+.agent-maximized {
+  max-height: 90vh;
 }
 
 .minimized {
