@@ -82,7 +82,7 @@ const StepMessageContent = React.memo(({ step, app }) => {
             marginBottom: 10,
             borderRadius: "5px",
             wordWrap: "break-word",
-            width: "100%",
+            maxWidth: "75%",
           }}
         />
       )}
