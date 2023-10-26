@@ -5,13 +5,18 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import moment from "moment";
+
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 
 export default function FrequencyPickerWidget(props) {
   const { onChange, id, value } = props;
 
   const frequency = value ? JSON.parse(value) : null;
 
-  console.log("frequency", frequency, value);
   const handleChange = (newValue) => {
     onChange(newValue);
   };
@@ -33,56 +38,55 @@ export default function FrequencyPickerWidget(props) {
         </Select>
       </FormControl>
       {frequency?.type === "run_once" && (
-        <div>
-          <TextField
-            value={frequency?.start_date}
-            type="date"
-            onChange={(event) =>
+        <LocalizationProvider dateAdapter={AdapterMoment}>
+          <DatePicker
+            disablePast
+            value={moment(frequency?.start_date, "YYYY-MM-DD")}
+            onChange={(value) => {
               handleChange({
                 ...frequency,
                 type: "run_once",
-                start_date: event.target.value,
-              })
-            }
-            variant="outlined"
+                start_date: value.format("YYYY-MM-DD"),
+              });
+            }}
           />
-
-          <TextField
-            type="time"
-            value={frequency?.start_time}
-            onChange={(event) =>
+          <TimePicker
+            value={moment(frequency?.start_time, "HH:mm:ss")}
+            onChange={(value) => {
               handleChange({
                 ...frequency,
                 type: "run_once",
-                start_time: event.target.value,
-              })
-            }
+                start_time: value.format("HH:mm:ss"),
+              });
+            }}
           />
-        </div>
+        </LocalizationProvider>
       )}
       {frequency?.type === "repeat" && (
         <div>
-          <TextField
-            type="date"
-            value={frequency?.start_date}
-            onChange={(event) =>
-              handleChange({
-                ...frequency,
-                type: "repeat",
-                start_date: event.target.value,
-              })
-            }
-          />
-          <TextField
-            type="time"
-            value={frequency?.start_time}
-            onChange={(event) =>
-              handleChange({
-                ...frequency,
-                start_time: event.target.value,
-              })
-            }
-          />
+          <LocalizationProvider dateAdapter={AdapterMoment}>
+            <DatePicker
+              disablePast
+              value={moment(frequency?.start_date, "YYYY-MM-DD")}
+              onChange={(value) => {
+                handleChange({
+                  ...frequency,
+                  type: "repeat",
+                  start_date: value.format("YYYY-MM-DD"),
+                });
+              }}
+            />
+            <TimePicker
+              value={moment(frequency?.start_time, "HH:mm:ss")}
+              onChange={(value) => {
+                handleChange({
+                  ...frequency,
+                  type: "repeat",
+                  start_time: value.format("HH:mm:ss"),
+                });
+              }}
+            />
+          </LocalizationProvider>
           <TextField
             label="Repeat Interval (in days)"
             value={frequency?.interval}
