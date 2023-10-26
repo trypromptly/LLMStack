@@ -35,6 +35,7 @@
     "react-dropzone": "^14.2.3",
     "react-ga4": "^2.1.0",
     "react-markdown": "^8.0.7",
+    "react-papaparse": "^4.4.0",
     "react-router-dom": "^6.16.0",
     "react-scripts": "5.0.1",
     "react-share": "^4.4.1",
