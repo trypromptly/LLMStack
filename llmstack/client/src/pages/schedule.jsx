@@ -28,8 +28,9 @@ function AddAppRunScheduleModal({
   scheduleAddedCb,
   modalTitle = "Add New Schedule",
 }) {
-  const [columns, setColumns] = useState(null);
+  const [columns, setColumns] = useState([]);
   const [selectedApp, setSelectedApp] = useState(null);
+  const [rowData, setRowData] = useState([]);
 
   useEffect(() => {
     if (selectedApp) {
@@ -45,6 +46,7 @@ function AddAppRunScheduleModal({
       });
 
       setColumns(columnFields);
+      setRowData([]);
     }
   }, [selectedApp]);
 
@@ -81,7 +83,13 @@ function AddAppRunScheduleModal({
           </AccordionSummary>
           <AccordionDetails>
             {selectedApp ? (
-              <InputDataTable columnData={columns || []} rowData={[]} />
+              <InputDataTable
+                columnData={columns}
+                rowData={rowData}
+                onChange={(newRowData) => {
+                  setRowData(newRowData);
+                }}
+              />
             ) : (
               <div>Please Select And App</div>
             )}

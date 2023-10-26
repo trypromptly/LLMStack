@@ -15,8 +15,7 @@ import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/SaveOutlined";
 import CancelIcon from "@mui/icons-material/CloseOutlined";
 
-export default function InputDataTable({ columnData, rowData }) {
-  const [rows, setRows] = useState(rowData);
+export default function InputDataTable({ columnData, rowData, onChange }) {
   const [rowModesModel, setRowModesModel] = useState({});
 
   const handleRowEditStop = (params, event) => {
@@ -34,7 +33,7 @@ export default function InputDataTable({ columnData, rowData }) {
   };
 
   const handleDeleteClick = (id) => () => {
-    setRows(rows.filter((row) => row.id !== id));
+    onChange(rowData.filter((row) => row.id !== id));
   };
 
   const handleCancelClick = (id) => () => {
@@ -43,15 +42,18 @@ export default function InputDataTable({ columnData, rowData }) {
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
     });
 
-    const editedRow = rows.find((row) => row.id === id);
+    const editedRow = rowData.find((row) => row.id === id);
+
     if (editedRow.isNew) {
-      setRows(rows.filter((row) => row.id !== id));
+      onChange(rowData.filter((row) => row.id !== id));
     }
   };
 
   const processRowUpdate = (newRow) => {
     const updatedRow = { ...newRow, isNew: false };
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+
+    onChange(rowData.map((row) => (row.id === newRow.id ? updatedRow : row)));
+
     return updatedRow;
   };
 
@@ -60,7 +62,7 @@ export default function InputDataTable({ columnData, rowData }) {
   };
 
   function EditToolbar(props) {
-    const { setRows, setRowModesModel } = props;
+    const { setRowModesModel } = props;
 
     const handleClick = () => {
       const id = randomId();
@@ -69,7 +71,7 @@ export default function InputDataTable({ columnData, rowData }) {
         emptyRow[column.field] = " ";
       });
 
-      setRows((oldRows) => [...oldRows, emptyRow]);
+      onChange((oldRows) => [...oldRows, emptyRow]);
       setRowModesModel((oldModel) => ({
         ...oldModel,
         [id]: {
@@ -107,7 +109,7 @@ export default function InputDataTable({ columnData, rowData }) {
       }}
     >
       <DataGrid
-        rows={rows}
+        rows={rowData}
         columns={[
           ...columnData,
           {
@@ -175,7 +177,7 @@ export default function InputDataTable({ columnData, rowData }) {
           toolbar: EditToolbar,
         }}
         slotProps={{
-          toolbar: { setRows, setRowModesModel },
+          toolbar: { setRowModesModel },
         }}
       />
     </Box>
