@@ -1,26 +1,24 @@
-import { TextField, MenuItem } from "@mui/material";
+import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 
 export function AppSelector(props) {
   return (
-    <div style={{ width: "100%", display: "flex" }}>
-      <TextField
-        select
-        style={{
-          width: "auto",
-          textAlign: "left",
-          borderColor: "#000",
-        }}
-        value={props.value}
-        label="Select a promptly app"
-        onChange={(event) => props.onChange(event.target.value)}
-        variant="outlined"
-      >
-        {props.apps.map((app) => (
-          <MenuItem key={app.published_uuid} value={app.published_uuid}>
-            {app.name}
-          </MenuItem>
-        ))}
-      </TextField>
+    <div>
+      <FormControl fullWidth>
+        <InputLabel id="app-select-label">Select an app</InputLabel>
+        <Select
+          labelId="app-select-label"
+          id="app-select"
+          value={props.value}
+          label="Select an app"
+          onChange={(event) => props.onChange(event.target.value)}
+        >
+          {props.apps.map((app) => (
+            <MenuItem key={app.published_uuid} value={app.published_uuid}>
+              {app.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     </div>
   );
 }
