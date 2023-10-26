@@ -18,11 +18,12 @@ export default function FrequencyPickerWidget(props) {
 
   return (
     <div>
-      <FormControl>
+      <FormControl fullWidth>
         <InputLabel id={`${id}-label`}>Frequency</InputLabel>
         <Select
           labelId={`${id}-label`}
           id={id}
+          label="Frequency"
           value={frequency?.type || ""}
           onChange={(event) => handleChange({ type: event.target.value })}
         >
