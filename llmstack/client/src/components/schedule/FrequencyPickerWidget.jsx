@@ -23,7 +23,7 @@ export default function FrequencyPickerWidget(props) {
         <Select
           labelId={`${id}-label`}
           id={id}
-          value={frequency?.type || "run_once"}
+          value={frequency?.type || ""}
           onChange={(event) => handleChange({ type: event.target.value })}
         >
           <MenuItem value="run_once">Run Once</MenuItem>
@@ -34,11 +34,13 @@ export default function FrequencyPickerWidget(props) {
       {frequency?.type === "run_once" && (
         <div>
           <TextField
+            value={frequency?.start_date}
             type="date"
             onChange={(event) =>
               handleChange({
+                ...frequency,
                 type: "run_once",
-                run_once: { start_date: event.target.value },
+                start_date: event.target.value,
               })
             }
             variant="outlined"
@@ -46,8 +48,13 @@ export default function FrequencyPickerWidget(props) {
 
           <TextField
             type="time"
+            value={frequency?.start_time}
             onChange={(event) =>
-              handleChange({ run_once: { start_time: event.target.value } })
+              handleChange({
+                ...frequency,
+                type: "run_once",
+                start_time: event.target.value,
+              })
             }
           />
         </div>
@@ -56,40 +63,31 @@ export default function FrequencyPickerWidget(props) {
         <div>
           <TextField
             type="date"
+            value={frequency?.start_date}
             onChange={(event) =>
               handleChange({
+                ...frequency,
                 type: "repeat",
-                repeat: {
-                  start_date: event.target.value,
-                  repeat_interval: value.repeat.repeat_interval,
-                },
+                start_date: event.target.value,
               })
             }
           />
           <TextField
             type="time"
+            value={frequency?.start_time}
             onChange={(event) =>
               handleChange({
-                type: "repeat",
-                repeat: {
-                  start_time: event.target.value,
-                  repeat_interval: value.repeat.repeat_interval,
-                },
+                ...frequency,
+                start_time: event.target.value,
               })
             }
           />
           <TextField
             label="Repeat Interval (in days)"
+            value={frequency?.interval}
             type="number"
             onChange={(event) =>
-              handleChange({
-                type: "repeat",
-                repeat: {
-                  start_date: value.repeat.start_date,
-                  start_time: value.repeat.start_time,
-                  repeat_interval: event.target.value,
-                },
-              })
+              handleChange({ ...frequency, interval: event.target.value })
             }
           />
         </div>
@@ -98,8 +96,13 @@ export default function FrequencyPickerWidget(props) {
         <div>
           <TextField
             label="Cron Job Expression"
+            value={frequency?.cron_job}
             onChange={(event) =>
-              handleChange({ type: "cron_job", cron_job: event.target.value })
+              handleChange({
+                ...frequency,
+                type: "cron_job",
+                cron_job: event.target.value,
+              })
             }
           />
         </div>
