@@ -4,5 +4,5 @@ from . import apis
 
 urlpatterns = [
     # Jobs
-    path('api/jobs/app_run', apis.JobsViewSet.as_view({'post': 'app_run_job'})),
+    path('api/jobs/app_run', apis.JobsViewSet.as_view({'post': 'app_run_submit'})),
 ]
