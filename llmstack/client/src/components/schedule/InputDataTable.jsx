@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Box, Button } from "@mui/material";
 import {
   GridRowModes,
@@ -6,17 +6,81 @@ import {
   GridToolbarContainer,
   GridActionsCellItem,
   GridRowEditStopReasons,
+  GridToolbarExport,
 } from "@mui/x-data-grid";
 import { randomId } from "@mui/x-data-grid-generator";
+import { usePapaParse } from "react-papaparse";
 
-import AddIcon from "@mui/icons-material/AddOutlined";
-import EditIcon from "@mui/icons-material/EditOutlined";
-import DeleteIcon from "@mui/icons-material/DeleteOutlined";
-import SaveIcon from "@mui/icons-material/SaveOutlined";
-import CancelIcon from "@mui/icons-material/CloseOutlined";
+import {
+  UploadFile,
+  AddOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SaveOutlined,
+  CancelOutlined,
+} from "@mui/icons-material";
+
+import { enqueueSnackbar } from "notistack";
 
 export default function InputDataTable({ columnData, rowData, onChange }) {
+  const { readString } = usePapaParse();
+
   const [rowModesModel, setRowModesModel] = useState({});
+  const fileInputRef = useRef(null);
+  const [file, setFile] = useState(null);
+
+  useEffect(() => {
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const fileContent = event.target.result;
+        readString(fileContent, {
+          header: true,
+          worker: true,
+          complete: (results) => {
+            if (results.data.length === 0) {
+              enqueueSnackbar("No data found in file", {
+                variant: "warning",
+              });
+              return;
+            }
+            const headers = Object.keys(results.data[0]);
+
+            if (headers.length !== columnData.length) {
+              enqueueSnackbar("Headers do not match expected headers", {
+                variant: "error",
+              });
+              return;
+            }
+            headers.forEach((header) => {
+              if (!columnData.find((column) => column.headerName === header)) {
+                enqueueSnackbar("Headers do not match expected headers", {
+                  variant: "error",
+                });
+                return;
+              }
+            });
+            const newRows = [];
+            for (let i = 0; i < results.data.length; i++) {
+              const row = results.data[i];
+              if (Object.keys(row).length !== headers.length) {
+                continue;
+              }
+              const newRow = { id: i, isNew: true };
+              columnData.forEach((column) => {
+                newRow[column.field] = row[column.headerName];
+              });
+              newRows.push(newRow);
+            }
+            onChange(newRows);
+          },
+        });
+      };
+
+      reader.readAsText(file);
+    }
+  }, [file]);
 
   const handleRowEditStop = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -47,6 +111,15 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
     if (editedRow.isNew) {
       onChange(rowData.filter((row) => row.id !== id));
     }
+  };
+
+  const handleFileUpload = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = (event) => {
+    const uploadedFile = event.target.files[0];
+    setFile(uploadedFile);
   };
 
   const processRowUpdate = (newRow) => {
@@ -85,12 +158,35 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
       <GridToolbarContainer>
         <Button
           color="primary"
-          startIcon={<AddIcon />}
+          startIcon={<UploadFile />}
+          type="file"
+          variant="contained"
+          onClick={handleFileUpload}
+        >
+          Upload CSV
+        </Button>
+        <input
+          type="file"
+          accept=".csv"
+          onChange={handleFileChange}
+          ref={fileInputRef}
+          style={{ display: "none" }} // Hide the input element
+        />
+        <Button
+          color="secondary"
+          startIcon={<AddOutlined />}
           onClick={handleClick}
           variant="contained"
         >
           Add record
         </Button>
+        <GridToolbarExport
+          csvOptions={{
+            includeColumnGroupsHeaders: false,
+            fileName: "input_data",
+          }}
+          printOptions={{ disableToolbarButton: true }}
+        />
       </GridToolbarContainer>
     );
   }
@@ -125,7 +221,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
               if (isInEditMode) {
                 return [
                   <GridActionsCellItem
-                    icon={<SaveIcon />}
+                    icon={<SaveOutlined />}
                     label="Save"
                     sx={{
                       color: "primary.main",
@@ -133,7 +229,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
                     onClick={handleSaveClick(id)}
                   />,
                   <GridActionsCellItem
-                    icon={<CancelIcon />}
+                    icon={<CancelOutlined />}
                     label="Cancel"
                     className="textPrimary"
                     onClick={handleCancelClick(id)}
@@ -144,14 +240,14 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
 
               return [
                 <GridActionsCellItem
-                  icon={<EditIcon />}
+                  icon={<EditOutlined />}
                   label="Edit"
                   className="textPrimary"
                   onClick={handleEditClick(id)}
                   color="inherit"
                 />,
                 <GridActionsCellItem
-                  icon={<DeleteIcon />}
+                  icon={<DeleteOutlined />}
                   label="Delete"
                   onClick={handleDeleteClick(id)}
                   color="inherit"
