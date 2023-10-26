@@ -74,8 +74,8 @@
     "tabWidth": 2
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "http-proxy-middleware": "^2.0.6",
-    "source-map-explorer": "^2.5.3",
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
+    "source-map-explorer": "^2.5.3"
   }
 }
