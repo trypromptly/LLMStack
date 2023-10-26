@@ -107,7 +107,7 @@ function AddAppRunScheduleModal({
               .post("/api/jobs/app_run", {
                 app_uuid: configuration?.appDetail?.uuid,
                 frequency: configuration?.frequencyObj,
-                input: appRunData,
+                app_run_data: appRunData,
               })
               .then((response) => {
                 console.log(response);
