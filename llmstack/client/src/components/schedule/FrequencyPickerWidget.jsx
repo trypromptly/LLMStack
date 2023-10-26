@@ -4,7 +4,6 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
-import Stack from "@mui/material/Stack";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import moment from "moment";
@@ -18,7 +17,7 @@ export default function FrequencyPickerWidget(props) {
   const frequency = value ? JSON.parse(value) : null;
 
   const handleChange = (newValue) => {
-    onChange(newValue);
+    onChange(JSON.stringify(newValue));
   };
 
   return (

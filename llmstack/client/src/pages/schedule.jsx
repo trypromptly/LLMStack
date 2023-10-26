@@ -25,7 +25,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 function AddAppRunScheduleModal({
   open,
   handleCancelCb,
-  scheduleAddedCb,
+  handleSubmitCb,
   modalTitle = "Schedule an App Run",
 }) {
   const [columns, setColumns] = useState([]);
@@ -69,7 +69,7 @@ function AddAppRunScheduleModal({
               onChange={(formData) => {
                 setConfiguration(formData);
               }}
-              formData={configuration}
+              value={configuration}
             />
           </AccordionDetails>
         </Accordion>
@@ -100,34 +100,47 @@ function AddAppRunScheduleModal({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancelCb}>Cancel</Button>
-        <Button onClick={() => {}}>Submit</Button>
+        <Button
+          onClick={() => {
+            console.log("Submitting");
+            axios()
+              .post("/api/jobs/app_run", {
+                app_uuid: configuration?.appDetail?.uuid,
+                frequency: configuration?.frequencyObj,
+                input: appRunData,
+              })
+              .then((response) => {
+                console.log(response);
+                handleSubmitCb();
+              })
+              .catch((error) => {
+                console.log(error);
+              });
+          }}
+        >
+          Submit
+        </Button>
       </DialogActions>
     </Dialog>
   );
 }
 
-function Modal({
-  scheduleType,
-  open,
-  handleCancelCb,
-  scheduleAddedCb,
-  modalTitle,
-}) {
+function Modal({ scheduleType, open, handleCancelCb, handleSubmitCb }) {
   switch (scheduleType) {
     case "app":
       return (
         <AddAppRunScheduleModal
           open={open}
           handleCancelCb={handleCancelCb}
-          scheduleAddedCb={scheduleAddedCb}
-          modalTitle=""
+          handleSubmitCb={handleSubmitCb}
         />
       );
+    default:
+      return null;
   }
 }
 
 export default function Schedule() {
-  const entriesPerPage = 10;
   const [pageNumber, setPageNumber] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [scheduleJobType, setScheduleJobType] = useState(null);
@@ -169,17 +182,7 @@ export default function Schedule() {
           open={modalOpen}
           scheduleType={scheduleJobType}
           handleCancelCb={() => setModalOpen(false)}
-          scheduleAddedCb={(appId) => {
-            axios()
-              .post("/api/jobs/app_run", {
-                published_app_id: appId,
-              })
-              .then((res) => {
-                console.log(res);
-              })
-              .catch((err) => {
-                console.log(err);
-              });
+          handleSubmitCb={() => {
             setModalOpen(false);
           }}
         />

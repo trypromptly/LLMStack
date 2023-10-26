@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { AppSelector } from "../apps/AppSelector";
@@ -34,20 +33,9 @@ const UI_SCHEMA = {
 };
 
 export default function AddAppRunScheduleConfigForm(props) {
-  const [formData, setFormData] = useState(props.formData);
-
   const publishedApps = (useRecoilValue(appsState) || []).filter(
     (app) => app.published_uuid,
   );
-
-  useEffect(() => {
-    props.onChange({
-      appDetail: publishedApps.find(
-        (app) => app.published_uuid === formData?.published_app_id,
-      ),
-      ...formData,
-    });
-  }, [formData]);
 
   return (
     <ThemedJsonForm
@@ -61,36 +49,33 @@ export default function AddAppRunScheduleConfigForm(props) {
           },
         },
       }}
-      formData={formData}
+      formData={props.value}
       onChange={({ formData }) => {
-        setFormData(formData);
+        props.onChange({
+          ...formData,
+          appDetail: publishedApps.find(
+            (app) => app.published_uuid === formData?.application,
+          ),
+          frequencyObj: formData?.frequency
+            ? JSON.parse(formData?.frequency)
+            : null,
+        });
       }}
       widgets={{
-        appselect: (props) => (
-          <AppSelector
-            {...props}
-            apps={publishedApps}
-            value={formData?.published_app_id}
-            onChange={(appId) => {
-              setFormData({
-                ...formData,
-                published_app_id: appId,
-              });
-            }}
-          />
-        ),
-        frequencyPicker: (props) => (
-          <FrequencyPickerWidget
-            {...props}
-            value={formData?.frequency}
-            onChange={(frequency_obj) => {
-              setFormData({
-                ...formData,
-                ...{ frequency: JSON.stringify(frequency_obj) },
-              });
-            }}
-          />
-        ),
+        appselect: (localProps) => {
+          return (
+            <AppSelector
+              {...localProps}
+              apps={publishedApps}
+              value={localProps.value}
+            />
+          );
+        },
+        frequencyPicker: (localProps) => {
+          return (
+            <FrequencyPickerWidget {...localProps} value={localProps.value} />
+          );
+        },
       }}
     />
   );
