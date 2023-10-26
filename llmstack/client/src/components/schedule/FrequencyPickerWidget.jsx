@@ -33,7 +33,7 @@ export default function FrequencyPickerWidget(props) {
         >
           <MenuItem value="run_once">Run Once</MenuItem>
           <MenuItem value="repeat">Repeat</MenuItem>
-          <MenuItem value="cron_job">Cron Job</MenuItem>
+          <MenuItem value="cron">Cron Job</MenuItem>
         </Select>
       </FormControl>
       {frequency?.type === "run_once" && (
@@ -96,20 +96,18 @@ export default function FrequencyPickerWidget(props) {
           />
         </div>
       )}
-      {frequency?.type === "cron_job" && (
-        <div>
-          <TextField
-            label="Cron Job Expression"
-            value={frequency?.cron_job}
-            onChange={(event) =>
-              handleChange({
-                ...frequency,
-                type: "cron_job",
-                cron_job: event.target.value,
-              })
-            }
-          />
-        </div>
+      {frequency?.type === "cron" && (
+        <TextField
+          label="Cron Job Expression"
+          value={frequency?.cron_expression}
+          onChange={(event) =>
+            handleChange({
+              ...frequency,
+              type: "cron",
+              cron_expression: event.target.value,
+            })
+          }
+        />
       )}
     </div>
   );
