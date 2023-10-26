@@ -26,29 +26,30 @@ function AddAppRunScheduleModal({
   open,
   handleCancelCb,
   scheduleAddedCb,
-  modalTitle = "Add New Schedule",
+  modalTitle = "Schedule an App Run",
 }) {
   const [columns, setColumns] = useState([]);
-  const [selectedApp, setSelectedApp] = useState(null);
-  const [rowData, setRowData] = useState([]);
+  const [configuration, setConfiguration] = useState({});
+  const [appRunData, setAppRunData] = useState([]);
 
   useEffect(() => {
-    if (selectedApp) {
-      const columnFields = selectedApp.data.input_fields.map((entry) => {
-        return {
-          field: entry.name,
-          headerName: entry.title,
-          width: entry.type === "text" ? 300 : 200,
-          disableColumnMenu: true,
-          sortable: false,
-          editable: true,
-        };
-      });
-
+    if (configuration?.appDetail) {
+      const columnFields = configuration?.appDetail.data.input_fields.map(
+        (entry) => {
+          return {
+            field: entry.name,
+            headerName: entry.title,
+            width: entry.type === "text" ? 300 : 200,
+            disableColumnMenu: true,
+            sortable: false,
+            editable: true,
+          };
+        },
+      );
       setColumns(columnFields);
-      setRowData([]);
+      setAppRunData([]);
     }
-  }, [selectedApp]);
+  }, [configuration]);
 
   return (
     <Dialog open={open} onClose={handleCancelCb} fullScreen>
@@ -66,8 +67,9 @@ function AddAppRunScheduleModal({
           <AccordionDetails>
             <AddAppRunScheduleConfigForm
               onChange={(formData) => {
-                setSelectedApp(formData.selectedApp);
+                setConfiguration(formData);
               }}
+              formData={configuration}
             />
           </AccordionDetails>
         </Accordion>
@@ -82,12 +84,12 @@ function AddAppRunScheduleModal({
             <Typography>Input</Typography>
           </AccordionSummary>
           <AccordionDetails>
-            {selectedApp ? (
+            {configuration?.appDetail ? (
               <InputDataTable
                 columnData={columns}
-                rowData={rowData}
+                rowData={appRunData}
                 onChange={(newRowData) => {
-                  setRowData(newRowData);
+                  setAppRunData(newRowData);
                 }}
               />
             ) : (
@@ -98,13 +100,7 @@ function AddAppRunScheduleModal({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancelCb}>Cancel</Button>
-        <Button
-          onClick={() => {
-            scheduleAddedCb(selectedApp);
-          }}
-        >
-          Submit
-        </Button>
+        <Button onClick={() => {}}>Submit</Button>
       </DialogActions>
     </Dialog>
   );

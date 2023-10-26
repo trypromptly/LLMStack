@@ -34,21 +34,19 @@ const UI_SCHEMA = {
 };
 
 export default function AddAppRunScheduleConfigForm(props) {
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState(props.formData);
 
-  const [selectedApp, setSelectedApp] = useState(null);
-
-  const apps = (useRecoilValue(appsState) || []).filter(
+  const publishedApps = (useRecoilValue(appsState) || []).filter(
     (app) => app.published_uuid,
   );
 
   useEffect(() => {
-    if (formData?.published_app_id) {
-      const app = apps.find(
+    props.onChange({
+      appDetail: publishedApps.find(
         (app) => app.published_uuid === formData?.published_app_id,
-      );
-      props.onChange({ selectedApp: app, formData });
-    }
+      ),
+      ...formData,
+    });
   }, [formData]);
 
   return (
@@ -71,7 +69,7 @@ export default function AddAppRunScheduleConfigForm(props) {
         appselect: (props) => (
           <AppSelector
             {...props}
-            apps={apps}
+            apps={publishedApps}
             value={formData?.published_app_id}
             onChange={(appId) => {
               setFormData({
