@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import admin
 
-from .models import ScheduledJob, RepeatableJob, CronJob
+from .models import ScheduledJob, RepeatableJob, CronJob, AppRunJobLog
 
 QUEUES = [(key, key) for key in settings.RQ_QUEUES.keys()]
 
@@ -96,6 +96,21 @@ class CronJobAdmin(QueueMixin, admin.ModelAdmin):
         }),
     )
     
+class AppRunLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'task_name', 'user', 'job_id', 'app_run_request_id', 'created_at', 
+    )
+    readonly_fields = ('task_name', 'user', 'job_id', 'app_run_request_id', 'created_at')
+    fieldsets = (
+        ( None, {
+            'fields' : ('created_at', 'job_id', 'app_run_request_id')
+        }),
+        ('Task Info', {
+            'fields': ('task_name', 'user' )
+        })
+    )
+    
 admin.site.register(ScheduledJob, ScheduledJobAdmin)
 admin.site.register(RepeatableJob, RepeatableJobAdmin)
 admin.site.register(CronJob, CronJobAdmin)
+admin.site.register(AppRunJobLog, AppRunLogAdmin)
