@@ -23,6 +23,8 @@ import {
 import { axios } from "../data/axios";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import PauseCircleOutlinedIcon from "@mui/icons-material/PauseCircleOutlined";
+import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined";
+
 import { enqueueSnackbar } from "notistack";
 
 function ConfirmationModal(props) {
@@ -195,16 +197,31 @@ export default function Schedule() {
       render: (record, row) => {
         return (
           <Box>
-            <IconButton
-              onClick={() => {
-                setJobId(row.uuid);
-                setModalType("pause");
-                setModalOpen(true);
-              }}
-              color="primary"
-            >
-              <PauseCircleOutlinedIcon />
-            </IconButton>
+            {row?.model !== "ScheduledJob" ? (
+              row?.enabled ? (
+                <IconButton
+                  onClick={() => {
+                    setJobId(row.uuid);
+                    setModalType("pause");
+                    setModalOpen(true);
+                  }}
+                  color="primary"
+                >
+                  <PauseCircleOutlinedIcon />
+                </IconButton>
+              ) : (
+                <IconButton
+                  onClick={() => {
+                    setJobId(row.uuid);
+                    setModalType("resume");
+                    setModalOpen(true);
+                  }}
+                  color="primary"
+                >
+                  <PlayCircleOutlinedIcon />
+                </IconButton>
+              )
+            ) : null}
             <IconButton
               onClick={() => {
                 setJobId(row.uuid);
