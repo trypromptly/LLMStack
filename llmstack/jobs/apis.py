@@ -121,34 +121,45 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         return DRFResponse(status=200, data=jobs)
     
     def get(self, request, uid):
-        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user, uuid=uid)
-        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user, uuid=uid)
-        cron_jobs = CronJob.objects.filter(owner=request.user, uuid=uid)
-        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
-        if not jobs:
+        job = ScheduledJob.objects.get(owner=request.user, uuid=uid)
+        if not job:
+            job = RepeatableJob.objects.get(owner=request.user, uuid=uid)
+        
+        if not job:
+            job = CronJob.objects.get(owner=request.user, uuid=uid)
+            
+        if not job:
             return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-        return DRFResponse(status=200, data=jobs[0])
+
+        return DRFResponse(status=200, data=job.to_dict())
     
     def delete(self, request, uid):
-        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user, uuid=uid)
-        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user, uuid=uid)
-        cron_jobs = CronJob.objects.filter(owner=request.user, uuid=uid)
-        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
-        if not jobs:
+        job = ScheduledJob.objects.get(owner=request.user, uuid=uid)
+        if not job:
+            job = RepeatableJob.objects.get(owner=request.user, uuid=uid)
+        
+        if not job:
+            job = CronJob.objects.get(owner=request.user, uuid=uid)
+            
+        if not job:
             return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-        jobs[0].delete()
+
+        job.delete()
         return DRFResponse(status=204)
     
     def pause(self, request, uid):
-        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user, uuid=uid)
-        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user, uuid=uid)
-        cron_jobs = CronJob.objects.filter(owner=request.user, uuid=uid)
-        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
-        if not jobs:
+        # Check if it exists in ScheduledJob table
+        job = ScheduledJob.objects.get(owner=request.user, uuid=uid)
+        if not job:
+            job = RepeatableJob.objects.get(owner=request.user, uuid=uid)
+        
+        if not job:
+            job = CronJob.objects.get(owner=request.user, uuid=uid)
+            
+        if not job:
             return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
         
-        jobs[0].enabled = False
-        jobs[0].save()
+        job.enabled = False
+        job.save()
         return DRFResponse(status=204)
-    
     
