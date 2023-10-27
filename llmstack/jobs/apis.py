@@ -5,8 +5,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime
-
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 from llmstack.apps.apis import AppViewSet
 from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob
@@ -65,15 +65,21 @@ class JobsViewSet(viewsets.ViewSet):
             )
             job.save()
             
-            logger.info(f"run_once app_id: {app_id}, job: {job}") 
         elif frequency.get('type') == 'repeat':
             scheduled_time = datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S")
-            interval = frequency.get('interval')
+            try:
+                interval = int(frequency.get('interval', 0))
+                if not interval:
+                    return DRFResponse(status=400, data={'message': f"repeat frequency requires an interval greater than 0"})
+            except:
+                return DRFResponse(status=400, data={'message': f"repeat frequency requires an interval greater than 0"})
+                
             if not scheduled_time:
                 return DRFResponse(status=400, data={'message': f"repeat frequency requires a scheduled_time"})
+            
             job = RepeatableJob(
                 name=job_name,
-                callable=run_app,
+                callable='llmstack.jobs.apis.run_app',
                 callable_kwargs={
                     'app_id': app_id,
                     'input_data': data
@@ -86,7 +92,7 @@ class JobsViewSet(viewsets.ViewSet):
                 interval=interval,
                 interval_unit='days'
             )
-            logger.info(f"repeat app_id: {app_id}, job: {job}")
+            job.save()
             
         elif frequency.get('type') == 'cron':
             cron_expression = frequency.get('cron_expression')

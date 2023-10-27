@@ -1,3 +1,4 @@
+# A lot of the implementation is adopted from django-rq and django-tasks-scheduler
 from __future__ import unicode_literals
 import importlib
 from datetime import timedelta
@@ -21,50 +22,42 @@ logger = logging.getLogger(__name__)
 
 SCHEDULER_INTERVAL = 60
 
-def failure_callback(job, connection, type, value, traceback):
-    model_name = job.kwargs.get('task_type', None)
-    if model_name is None:
-        return
-    
-    model = apps.get_model('jobs', model_name) 
-    task = model.objects.filter(job_id=job.id).first()
-    if task in None:
-        return 
-    
-    task.job_id = None
-    task.save()
-    
-def success_callback(job, connection, result, *args, **kwargs):
-    model_name = job.kwargs.get('task_type', None)
-    if model_name is None:
-        return
-    
-    model = apps.get_model('jobs', model_name) 
-    task = model.objects.filter(job_id=job.id).first()
-    if task in None:
-        return 
-    
-    task.job_id = None
-    task.save() 
-    
-def stopped_callback(job, connection):
-    model_name = job.kwargs.get('task_type', None)
-    if model_name is None:
-        return
-    model = apps.get_model('jobs', model_name)
-    task = model.objects.filter(job_id=job.id).first()
-    if task in None:
-        return
-    
-    task.job_id = None
-    task.save()
-
 def get_scheduled_task(task_model: str, task_id: int):
+    if not task_model:
+        return None
+    
     model = apps.get_model(app_label='jobs', model_name=task_model)
     task = model.objects.filter(id=task_id).first()
     if task is None:
         raise ValueError(f'Job {task_model}:{task_id} does not exit')
     return task
+
+def failure_callback(job, connection, type, value, traceback):
+    task = get_scheduled_task(job.meta.get('task_type', None), job.meta.get('scheduled_task_id'))
+    
+    if task is None:
+        return 
+    
+    task.job_id = None
+    task.save(schedule_job=True)
+    
+def success_callback(job, connection, result, *args, **kwargs):
+    task = get_scheduled_task(job.meta.get('task_type', None), job.meta.get('scheduled_task_id'))
+    if task is None:
+        return 
+    
+    task.job_id = None
+    # If task is a scehduledJob we have already ran the job no need to schedule it again
+    task.save(schedule_job= False if task.TASK_TYPE == 'ScheduledJob' else True) 
+    
+def stopped_callback(job, connection):
+    task = get_scheduled_task(job.meta.get('task_type', None), job.meta.get('scheduled_task_id'))
+    if task is None:
+        return
+    
+    task.job_id = None
+    task.save(chedule_job= False if task.TASK_TYPE == 'ScheduledJob' else True)
+
 
 def run_task(task_model: str, task_id: int):
     scheduled_task = get_scheduled_task(task_model, task_id)
@@ -147,22 +140,12 @@ class BaseTask(models.Model):
     def _next_job_id(self):
         return f"{str(uuid.uuid4())}"
     
-    def _job_args(self):
-        res = dict(
-            meta=dict(
+    def _get_job_meta(self):
+        return dict(
                 repeat=self.repeat,
                 task_type=self.TASK_TYPE,
-                scheduled_task_id=self.id,
-            ),
-            on_success=success_callback,
-            on_failure=failure_callback,
-            job_id=self._next_job_id(),
-        )
-        if self.timeout:
-            res['job_timeout'] = self.timeout
-        if self.result_ttl is not None:
-            res['result_ttl'] = self.result_ttl
-        return res
+                scheduled_task_id=self.id)
+        
     
     @property
     def rqueue(self) -> Queue:
@@ -186,9 +169,17 @@ class BaseTask(models.Model):
         if not self.can_be_scheduled():
             return False
         
-        schedule_time = self.schedule_time_utc()
-        kwargs = self._job_args()
-        job = self.rqueue.enqueue_at(schedule_time, run_task, args=(self.TASK_TYPE, self.id), **kwargs)
+        schedule_time = self._schedule_time()
+        job = self.rqueue.enqueue_at(schedule_time, 
+                                     run_task, 
+                                     args=(self.TASK_TYPE, self.id),
+                                     on_success=success_callback,
+                                     on_failure=failure_callback,
+                                     job_id=self._next_job_id(),
+                                     meta=self._get_job_meta(),
+                                     job_timeout=self.timeout,
+                                     result_ttl=self.result_ttl,
+                                     )
         self.job_id = job.id
         super(BaseTask, self).save()
         return True
@@ -365,9 +356,9 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
                 code='invalid',
                 params={'interval': self.interval_seconds()}, )
     
-    def _job_args(self):
-        res = super(RepeatableJob, self)._job_args()
-        res['meta']['interval'] = self.interval_seconds()
+    def _get_job_meta(self):
+        res = super(RepeatableJob, self)._get_job_meta()
+        res['interval'] = self.interval_seconds()
         return res
     
     def _schedule_time(self):
@@ -384,7 +375,7 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
     def can_be_scheduled(self):
         if super(RepeatableJob, self).can_be_scheduled() is False:
             return False
-        if self._schedule_time < timezone.now():
+        if self._schedule_time() < timezone.now():
             return False
         return True
             
