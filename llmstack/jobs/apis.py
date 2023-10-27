@@ -41,14 +41,14 @@ class JobsViewSet(viewsets.ViewSet):
         frequency = data.get('frequency')
         
         if frequency.get('type') not in ['run_once', 'repeat', 'cron']:
-            raise Exception(f"Unknown frequency type: {frequency.get('type')}")
+            return DRFResponse(status=400, data={'message': f"Unknown frequency type: {frequency.get('type')}"})
         
         job_name = self._create_job_name(app_name, request.user, frequency.get('type'), datetime.now())
         
         if frequency.get('type') == 'run_once':
             scheduled_time = datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S")
             if not scheduled_time:
-                raise Exception(f"run_once frequency requires a scheduled_time")
+                return DRFResponse(status=400, data={'message': f"run_once frequency requires a scheduled_time"})
             
             job = ScheduledJob(
                 name=job_name,
@@ -68,7 +68,7 @@ class JobsViewSet(viewsets.ViewSet):
             scheduled_time = datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S")
             interval = frequency.get('interval')
             if not scheduled_time:
-                raise Exception(f"repeat frequency requires a scheduled_time")
+                return DRFResponse(status=400, data={'message': f"repeat frequency requires a scheduled_time"})
             job = RepeatableJob(
                 name=job_name,
                 callable=run_app,
@@ -89,10 +89,10 @@ class JobsViewSet(viewsets.ViewSet):
         elif frequency.get('type') == 'cron':
             cron_expression = frequency.get('cron_expression')
             if not cron_expression:
-                raise Exception(f"cron frequency requires a cron_expression")
+                return DRFResponse(status=400, data={'message': f"cron frequency requires a cron_expression"})
             # Validate if cron expression is valid
             if not croniter.croniter.is_valid(cron_expression):
-                raise Exception(f"cron expression is not valid")
+                return DRFResponse(status=400, data={'message': f"cron expression is not valid"})
             
             job = CronJob(
                 name=job_name,

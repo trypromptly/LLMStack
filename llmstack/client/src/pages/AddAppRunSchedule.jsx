@@ -84,7 +84,11 @@ export default function AddAppRunSchedule(props) {
                 window.location.href = "/schedule";
               })
               .catch((error) => {
-                console.log(error);
+                if (error.response?.data?.message) {
+                  enqueueSnackbar(error.response.data.message, {
+                    variant: "error",
+                  });
+                }
               });
           }}
         >
