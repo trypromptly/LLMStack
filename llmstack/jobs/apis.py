@@ -17,20 +17,14 @@ def run_app(app_id, input_data):
     logger.info(f"run_app app_id: {app_id}, input_data: {input_data}")
     return True
 
-class JobsViewSet(viewsets.ViewSet):
-    
+class AppRunJobsViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        if self.action == 'submit_job':
-            permission_classes = [IsAuthenticated]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
+        return [IsAuthenticated()]
     
     def _create_job_name(self, app_name, user, schedule_type, timestamp):
         return f"{app_name}_{user}_{schedule_type}_{timestamp}"
     
-    @csrf_exempt
-    def app_run_submit(self, request):
+    def post(self, request):
         data = request.data
         app_uuid = data.get('app_uuid')
         app_detail = AppViewSet().get(request=request, uid=app_uuid).data
@@ -46,7 +40,7 @@ class JobsViewSet(viewsets.ViewSet):
         job_name = self._create_job_name(app_name, request.user, frequency.get('type'), datetime.now())
         
         if frequency.get('type') == 'run_once':
-            scheduled_time = datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S")
+            scheduled_time = timezone.make_aware(datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S"), timezone.get_current_timezone())
             if not scheduled_time:
                 return DRFResponse(status=400, data={'message': f"run_once frequency requires a scheduled_time"})
             
@@ -66,7 +60,7 @@ class JobsViewSet(viewsets.ViewSet):
             job.save()
             
         elif frequency.get('type') == 'repeat':
-            scheduled_time = datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S")
+            scheduled_time = timezone.make_aware(datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S"), timezone.get_current_timezone())
             try:
                 interval = int(frequency.get('interval', 0))
                 if not interval:
@@ -118,4 +112,13 @@ class JobsViewSet(viewsets.ViewSet):
             logger.info(f"cron app_id: {app_id}, job: {job}")
         
         return DRFResponse(status=204)
+    
+    def list(self, request):
+        pass
+        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user)
+        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user)
+        cron_jobs = CronJob.objects.filter(owner=request.user)
+        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
+        return DRFResponse(status=200, data=jobs)
+    
     
