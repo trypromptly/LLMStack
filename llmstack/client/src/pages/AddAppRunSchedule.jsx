@@ -81,6 +81,7 @@ export default function AddAppRunSchedule(props) {
                 enqueueSnackbar("Successfully Scheduled App Run", {
                   variant: "success",
                 });
+                window.location.href = "/schedule";
               })
               .catch((error) => {
                 console.log(error);
