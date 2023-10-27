@@ -7,6 +7,10 @@ import { appsState } from "../../data/atoms";
 
 const SCHEMA = {
   properties: {
+    job_name: {
+      type: "string",
+      title: "Job Name",
+    },
     application: {
       type: "string",
       title: "Application",
@@ -21,7 +25,10 @@ const SCHEMA = {
 };
 
 const UI_SCHEMA = {
-  "ui:order": ["application", "frequency"],
+  "ui:order": ["job_name", "application", "frequency"],
+  job_name: {
+    "ui:description": "Enter a name for this job.",
+  },
   application: {
     "ui:description": "Select an application to run.",
     "ui:widget": "appselect",

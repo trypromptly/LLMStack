@@ -73,6 +73,7 @@ export default function AddAppRunSchedule(props) {
             console.log("Submitting");
             axios()
               .post("/api/jobs/app_run", {
+                job_name: configuration?.job_name,
                 app_uuid: configuration?.appDetail?.uuid,
                 frequency: configuration?.frequencyObj,
                 app_run_data: appRunData,

@@ -4,7 +4,6 @@ from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
-from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
 from django.utils import timezone
 
@@ -15,6 +14,9 @@ logger = logging.getLogger(__name__)
 
 def run_app(app_id, input_data):
     logger.info(f"run_app app_id: {app_id}, input_data: {input_data}")
+    for entry in input_data:
+        logger.info(f"run_app entry: {entry}")
+        
     return True
 
 class AppRunJobsViewSet(viewsets.ViewSet):
@@ -30,15 +32,15 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         app_detail = AppViewSet().get(request=request, uid=app_uuid).data
         
         app_name = app_detail.get('name')
-        app_id = app_detail.get('uuid')
-        
+        app_id = app_detail.get('uuid')        
         frequency = data.get('frequency')
+        
+        job_name = data.get('job_name', self._create_job_name(app_name, request.user, frequency.get('type'), datetime.now()))
+
         
         if frequency.get('type') not in ['run_once', 'repeat', 'cron']:
             return DRFResponse(status=400, data={'message': f"Unknown frequency type: {frequency.get('type')}"})
-        
-        job_name = self._create_job_name(app_name, request.user, frequency.get('type'), datetime.now())
-        
+                
         if frequency.get('type') == 'run_once':
             scheduled_time = timezone.make_aware(datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S"), timezone.get_current_timezone())
             if not scheduled_time:
