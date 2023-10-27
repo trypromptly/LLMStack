@@ -163,3 +163,19 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         job.save()
         return DRFResponse(status=204)
     
+    def resume(self, request, uid):
+        # Check if it exists in ScheduledJob table
+        job = ScheduledJob.objects.get(owner=request.user, uuid=uid)
+        if not job:
+            job = RepeatableJob.objects.get(owner=request.user, uuid=uid)
+        
+        if not job:
+            job = CronJob.objects.get(owner=request.user, uuid=uid)
+            
+        if not job:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        
+        job.enabled = True
+        job.save()
+        return DRFResponse(status=204)
+    
