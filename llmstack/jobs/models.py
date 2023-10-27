@@ -145,7 +145,7 @@ class BaseTask(models.Model):
         return '{}({}, {})'.format(self.callable, args, kwargs)
         
     def _next_job_id(self):
-        return f"{self.queue}:{self.name.replace('/', '.')}:{uuid.uuid4().hex[-10:]}"
+        return f"{str(uuid.uuid4())}"
     
     def _job_args(self):
         res = dict(
@@ -191,6 +191,18 @@ class BaseTask(models.Model):
         job = self.rqueue.enqueue_at(schedule_time, run_task, args=(self.TASK_TYPE, self.id), **kwargs)
         self.job_id = job.id
         super(BaseTask, self).save()
+        return True
+    
+    def enqueue_to_run(self) -> bool:
+        """Enqueue job to run now."""
+        kwargs = self._enqueue_args()
+        job = self.rqueue.enqueue(
+            run_task,
+            args=(self.TASK_TYPE, self.id),
+            **kwargs,
+        )
+        self.job_id = job.id
+        self.save(schedule_job=False)
         return True
     
     def unschedule(self):
@@ -245,10 +257,10 @@ class BaseTask(models.Model):
         super(BaseTask, self).delete(**kwargs)
         
     def _clean_callable(self):
-        return
         try:
             self.callable_func()
         except:
+            logger.error('Invalid callable: {}'.format(self.callable))
             raise ValidationError({
                 'callable': ValidationError('Invalid callable, must be importable', code='invalid')
             })
