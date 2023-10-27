@@ -420,3 +420,49 @@ class CronJob(BaseTask):
         verbose_name = 'Cron Job'
         verbose_name_plural = 'Cron Jobs'
         ordering = ('name', )
+        
+        
+class TaskLog(models.Model):
+    TASK_TYPES = [
+        ('ScheduledJob', 'ScheduledJob'),
+        ('RepeatableJob', 'RepeatableJob'),
+        ('CronJob', 'CronJob'),
+    ]
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    task_id = models.CharField(max_length=128, editable=False, null=False)
+    task_type = models.CharField(max_length=128, choices=TASK_TYPES, editable=False, null=False)
+    job_id = models.CharField(max_length=128, editable=False, blank=True, null=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def _get_task_table(self):
+        if self.task_type == 'ScheduledJob':
+            return ScheduledJob
+        elif self.task_type == 'RepeatableJob':
+            return RepeatableJob
+        elif self.task_type == 'CronJob':
+            return CronJob
+        else:
+            return None
+        
+    def task_name(self):
+        if self._get_task_table() is None:
+            return None
+        
+        return self._get_task_table().objects.filter(id=self.task_id).first().name
+        
+    
+    def user(self):
+        if self._get_task_table() is None:
+            return None
+        
+        return self._get_task_table().objects.filter(id=self.task_id).first().owner
+        
+    
+    class Meta:
+        abstract = True
+        ordering = ('-created_at', )
+        
+class AppRunJobLog(TaskLog):
+    app_run_request_id = models.CharField(max_length=128, editable=False, null=False)
+    

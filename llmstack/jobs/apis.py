@@ -8,15 +8,25 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 
 from llmstack.apps.apis import AppViewSet
-from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob
+from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob, AppRunJobLog
+from rq import get_current_job
 
 logger = logging.getLogger(__name__)
 
 def run_app(app_id, input_data):
+    job = get_current_job()
     logger.info(f"run_app app_id: {app_id}, input_data: {input_data}")
     for entry in input_data:
         logger.info(f"run_app entry: {entry}")
         
+    app_run_request_id = 'test'
+    AppRunJobLog.objects.create(
+        task_id=job.args[1],
+        task_type=job.args[0],
+        job_id=job.id,
+        app_run_request_id=app_run_request_id,
+    )
+    
     return True
 
 class AppRunJobsViewSet(viewsets.ViewSet):
@@ -100,7 +110,7 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             
             job = CronJob(
                 name=job_name,
-                callable=run_app,
+                callable='llmstack.jobs.apis.run_app',
                 callable_kwargs={
                     'app_id': app_id,
                     'input_data': data
