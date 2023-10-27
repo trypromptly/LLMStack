@@ -28,7 +28,7 @@ class QueueMixin(object):
 
 class ScheduledJobAdmin(QueueMixin, admin.ModelAdmin):
     list_display = (
-        'name', 'job_id', 'is_scheduled', 'scheduled_time', 'enabled', 'function_string')
+        'uuid', 'name', 'job_id', 'is_scheduled', 'scheduled_time', 'enabled', 'function_string')
     list_filter = ('enabled', )
     list_editable = ('enabled', )
     readonly_fields = ('job_id', )

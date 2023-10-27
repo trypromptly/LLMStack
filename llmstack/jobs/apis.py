@@ -114,11 +114,41 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         return DRFResponse(status=204)
     
     def list(self, request):
-        pass
         scheduled_jobs = ScheduledJob.objects.filter(owner=request.user)
         repeatable_jobs = RepeatableJob.objects.filter(owner=request.user)
         cron_jobs = CronJob.objects.filter(owner=request.user)
         jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
         return DRFResponse(status=200, data=jobs)
+    
+    def get(self, request, uid):
+        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user, uuid=uid)
+        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user, uuid=uid)
+        cron_jobs = CronJob.objects.filter(owner=request.user, uuid=uid)
+        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
+        if not jobs:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        return DRFResponse(status=200, data=jobs[0])
+    
+    def delete(self, request, uid):
+        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user, uuid=uid)
+        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user, uuid=uid)
+        cron_jobs = CronJob.objects.filter(owner=request.user, uuid=uid)
+        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
+        if not jobs:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        jobs[0].delete()
+        return DRFResponse(status=204)
+    
+    def pause(self, request, uid):
+        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user, uuid=uid)
+        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user, uuid=uid)
+        cron_jobs = CronJob.objects.filter(owner=request.user, uuid=uid)
+        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
+        if not jobs:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        
+        jobs[0].enabled = False
+        jobs[0].save()
+        return DRFResponse(status=204)
     
     

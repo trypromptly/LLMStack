@@ -78,7 +78,7 @@ class BaseTask(models.Model):
         ('failed', 'failed'),
         ('deferred', 'deferred'),
     ]
-    
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name = models.CharField(max_length=512, unique=True)
     callable = models.CharField(max_length=2048)
     callable_args = models.TextField(blank=True, null=True)
@@ -213,6 +213,7 @@ class BaseTask(models.Model):
     
     def to_dict(self):
         res = dict(
+            uuid=self.uuid,
             model=self.TASK_TYPE,
             name=self.name,
             callable=self.callable,
