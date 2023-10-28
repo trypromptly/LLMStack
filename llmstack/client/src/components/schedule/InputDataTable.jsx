@@ -67,7 +67,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
               if (Object.keys(row).length !== headers.length) {
                 continue;
               }
-              const newRow = { id: i, isNew: true };
+              const newRow = { _id: i, _isNew: true };
               columnData.forEach((column) => {
                 newRow[column.field] = row[column.headerName];
               });
@@ -88,28 +88,28 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
     }
   };
 
-  const handleEditClick = (id) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  const handleEditClick = (_id) => () => {
+    setRowModesModel({ ...rowModesModel, [_id]: { mode: GridRowModes.Edit } });
   };
 
-  const handleSaveClick = (id) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  const handleSaveClick = (_id) => () => {
+    setRowModesModel({ ...rowModesModel, [_id]: { mode: GridRowModes.View } });
   };
 
-  const handleDeleteClick = (id) => () => {
-    onChange(rowData.filter((row) => row.id !== id));
+  const handleDeleteClick = (_id) => () => {
+    onChange(rowData.filter((row) => row._id !== _id));
   };
 
-  const handleCancelClick = (id) => () => {
+  const handleCancelClick = (_id) => () => {
     setRowModesModel({
       ...rowModesModel,
-      [id]: { mode: GridRowModes.View, ignoreModifications: true },
+      [_id]: { mode: GridRowModes.View, ignoreModifications: true },
     });
 
-    const editedRow = rowData.find((row) => row.id === id);
+    const editedRow = rowData.find((row) => row._id === _id);
 
-    if (editedRow.isNew) {
-      onChange(rowData.filter((row) => row.id !== id));
+    if (editedRow._isNew) {
+      onChange(rowData.filter((row) => row._id !== _id));
     }
   };
 
@@ -123,9 +123,9 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
   };
 
   const processRowUpdate = (newRow) => {
-    const updatedRow = { ...newRow, isNew: false };
+    const updatedRow = { ...newRow, _isNew: false };
 
-    onChange(rowData.map((row) => (row.id === newRow.id ? updatedRow : row)));
+    onChange(rowData.map((row) => (row._id === newRow._id ? updatedRow : row)));
 
     return updatedRow;
   };
@@ -138,8 +138,8 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
     const { setRowModesModel } = props;
 
     const handleClick = () => {
-      const id = randomId();
-      const emptyRow = { id, isNew: true };
+      const _id = randomId();
+      const emptyRow = { _id, _isNew: true };
       columnData.forEach((column) => {
         emptyRow[column.field] = " ";
       });
@@ -147,7 +147,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
       onChange((oldRows) => [...oldRows, emptyRow]);
       setRowModesModel((oldModel) => ({
         ...oldModel,
-        [id]: {
+        [_id]: {
           mode: GridRowModes.Edit,
           fieldToFocus: columnData[0]["field"],
         },
@@ -206,6 +206,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
     >
       <DataGrid
         rows={rowData}
+        getRowId={(row) => row._id}
         columns={[
           ...columnData,
           {
@@ -214,9 +215,9 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
             headerName: "Actions",
             width: 100,
             cellClassName: "actions",
-            getActions: ({ id }) => {
+            getActions: ({ _id }) => {
               const isInEditMode =
-                rowModesModel[id]?.mode === GridRowModes.Edit;
+                rowModesModel[_id]?.mode === GridRowModes.Edit;
 
               if (isInEditMode) {
                 return [
@@ -226,13 +227,13 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
                     sx={{
                       color: "primary.main",
                     }}
-                    onClick={handleSaveClick(id)}
+                    onClick={handleSaveClick(_id)}
                   />,
                   <GridActionsCellItem
                     icon={<CancelOutlined />}
                     label="Cancel"
                     className="textPrimary"
-                    onClick={handleCancelClick(id)}
+                    onClick={handleCancelClick(_id)}
                     color="inherit"
                   />,
                 ];
@@ -243,13 +244,13 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
                   icon={<EditOutlined />}
                   label="Edit"
                   className="textPrimary"
-                  onClick={handleEditClick(id)}
+                  onClick={handleEditClick(_id)}
                   color="inherit"
                 />,
                 <GridActionsCellItem
                   icon={<DeleteOutlined />}
                   label="Delete"
-                  onClick={handleDeleteClick(id)}
+                  onClick={handleDeleteClick(_id)}
                   color="inherit"
                 />,
               ];
