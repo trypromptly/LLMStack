@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { enqueueSnackbar } from "notistack";
 
-import { Grid, Divider, Typography, Button } from "@mui/material";
+import { Grid, Divider, Typography, Button, Stack } from "@mui/material";
 import AddAppRunScheduleConfigForm from "../components/schedule/AddAppRunScheduleConfigForm";
 import InputDataTable from "../components/schedule/InputDataTable";
 import { axios } from "../data/axios";
@@ -33,29 +33,37 @@ export default function AddAppRunSchedule(props) {
   return (
     <Grid container sx={{ height: "100vh" }}>
       <Grid item xs={12} sx={{ height: "45%" }}>
-        <Typography>Configuration</Typography>
-        <Divider />
-        <AddAppRunScheduleConfigForm
-          onChange={(formData) => {
-            setConfiguration(formData);
-          }}
-          value={configuration}
-        />
+        <Stack sx={{ alignItems: "start", margin: "5px" }}>
+          <Typography variant="h6" sx={{ marginLeft: "2px" }}>
+            Configuration
+          </Typography>
+          <Divider />
+          <AddAppRunScheduleConfigForm
+            onChange={(formData) => {
+              setConfiguration(formData);
+            }}
+            value={configuration}
+          />
+        </Stack>
       </Grid>
       <Grid item xs={12} sx={{ height: "45%" }}>
-        <Typography>Input</Typography>
-        <Divider />
-        {configuration?.appDetail ? (
-          <InputDataTable
-            columnData={columns}
-            rowData={appRunData}
-            onChange={(newRowData) => {
-              setAppRunData(newRowData);
-            }}
-          />
-        ) : (
-          <div>Please Select And App</div>
-        )}
+        <Stack sx={{ alignItems: "start", margin: "5px" }}>
+          <Typography variant="h6" sx={{ marginLeft: "2px" }}>
+            Input
+          </Typography>
+          <Divider />
+          {configuration?.appDetail ? (
+            <InputDataTable
+              columnData={columns}
+              rowData={appRunData}
+              onChange={(newRowData) => {
+                setAppRunData(newRowData);
+              }}
+            />
+          ) : (
+            <strong>Please Select And Application</strong>
+          )}
+        </Stack>
       </Grid>
       <Grid item xs={12} sx={{ height: "10%" }}>
         <Button

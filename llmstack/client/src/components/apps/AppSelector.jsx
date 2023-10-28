@@ -4,12 +4,12 @@ export function AppSelector(props) {
   return (
     <div>
       <FormControl fullWidth>
-        <InputLabel id="app-select-label">Select an app</InputLabel>
+        <InputLabel id="app-select-label">Select an application</InputLabel>
         <Select
           labelId="app-select-label"
           id="app-select"
           value={props.value}
-          label="Select an app"
+          label="Select an application"
           onChange={(event) => props.onChange(event.target.value)}
         >
           {props.apps.map((app) => (

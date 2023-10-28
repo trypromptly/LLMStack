@@ -4,6 +4,7 @@ import { AppSelector } from "../apps/AppSelector";
 import FrequencyPickerWidget from "./FrequencyPickerWidget";
 import { useRecoilValue } from "recoil";
 import { appsState } from "../../data/atoms";
+import { Box } from "@mui/material";
 
 const SCHEMA = {
   properties: {
@@ -45,45 +46,51 @@ export default function AddAppRunScheduleConfigForm(props) {
   );
 
   return (
-    <ThemedJsonForm
-      schema={SCHEMA}
-      validator={validator}
-      uiSchema={{
-        ...UI_SCHEMA,
-        ...{
-          "ui:submitButtonOptions": {
-            norender: true,
+    <Box sx={{ width: "95%", margin: "5px" }}>
+      <ThemedJsonForm
+        schema={SCHEMA}
+        validator={validator}
+        uiSchema={{
+          ...UI_SCHEMA,
+          ...{
+            "ui:submitButtonOptions": {
+              norender: true,
+            },
           },
-        },
-      }}
-      formData={props.value}
-      onChange={({ formData }) => {
-        props.onChange({
-          ...formData,
-          appDetail: publishedApps.find(
-            (app) => app.published_uuid === formData?.application,
-          ),
-          frequencyObj: formData?.frequency
-            ? JSON.parse(formData?.frequency)
-            : null,
-        });
-      }}
-      widgets={{
-        appselect: (localProps) => {
-          return (
-            <AppSelector
-              {...localProps}
-              apps={publishedApps}
-              value={localProps.value}
-            />
-          );
-        },
-        frequencyPicker: (localProps) => {
-          return (
-            <FrequencyPickerWidget {...localProps} value={localProps.value} />
-          );
-        },
-      }}
-    />
+        }}
+        formData={props.value}
+        onChange={({ formData }) => {
+          props.onChange({
+            ...formData,
+            appDetail: publishedApps.find(
+              (app) => app.published_uuid === formData?.application,
+            ),
+            frequencyObj: formData?.frequency
+              ? JSON.parse(formData?.frequency)
+              : null,
+          });
+        }}
+        widgets={{
+          appselect: (localProps) => {
+            return (
+              <AppSelector
+                {...localProps}
+                apps={publishedApps}
+                value={localProps.value}
+              />
+            );
+          },
+          frequencyPicker: (localProps) => {
+            return (
+              <FrequencyPickerWidget
+                {...localProps}
+                value={localProps.value}
+                id="frequency-picker"
+              />
+            );
+          },
+        }}
+      />
+    </Box>
   );
 }

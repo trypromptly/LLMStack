@@ -1,9 +1,12 @@
 import React from "react";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import TextField from "@mui/material/TextField";
+import {
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+} from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import moment from "moment";
@@ -21,8 +24,8 @@ export default function FrequencyPickerWidget(props) {
   };
 
   return (
-    <div>
-      <FormControl fullWidth>
+    <Box sx={{ display: "flex" }}>
+      <FormControl sx={{ width: "120px" }}>
         <InputLabel id={`${id}-label`}>Frequency</InputLabel>
         <Select
           labelId={`${id}-label`}
@@ -30,6 +33,7 @@ export default function FrequencyPickerWidget(props) {
           label="Frequency"
           value={frequency?.type || ""}
           onChange={(event) => handleChange({ type: event.target.value })}
+          placeholder="Select a frequency"
         >
           <MenuItem value="run_once">Run Once</MenuItem>
           <MenuItem value="repeat">Repeat</MenuItem>
@@ -109,7 +113,7 @@ export default function FrequencyPickerWidget(props) {
           }
         />
       )}
-    </div>
+    </Box>
   );
 }
 
