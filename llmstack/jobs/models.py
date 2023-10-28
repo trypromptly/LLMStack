@@ -136,8 +136,13 @@ def run_task(task_model: str, task_id: int):
     args = scheduled_task.parse_args()
     kwargs = scheduled_task.parse_kwargs()
     logger.info(f"Invoking function: {scheduled_task.callable} with args: {args} and kwargs: {kwargs}")
-    res = scheduled_task.callable_func()(*args, **kwargs)
-    return res
+    results, errors = scheduled_task.callable_func()(*args, **kwargs)
+    
+    task_run_log.result = results
+    task_run_log.errors = errors
+    task_run_log.save()
+    
+    return True
 
 class BaseTask(models.Model):
     TASK_TYPE = 'BaseTask'
