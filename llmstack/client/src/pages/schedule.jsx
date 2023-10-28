@@ -148,7 +148,7 @@ export default function Schedule() {
     setModalOpen(false);
   };
 
-  const AppRunJobsColumn = [
+  const columnData = [
     {
       title: "Name",
       key: "name",
@@ -248,7 +248,7 @@ export default function Schedule() {
 
   return (
     <div id="schedule-page" style={{ marginBottom: "120px" }}>
-      <Grid style={{ padding: "10px", width: "100%" }}>
+      <Grid span={24} style={{ padding: "10px" }}>
         <Grid item style={{ width: "100%", padding: "15px 0px" }}>
           <Button
             onClick={() => {
@@ -256,31 +256,44 @@ export default function Schedule() {
             }}
             type="primary"
             variant="contained"
+            sx={{ float: "left", marginBottom: "10px", textTransform: "none" }}
           >
             Schedule App Run
           </Button>
         </Grid>
-        <Grid item>
-          <Divider />
-        </Grid>
         <Grid item style={{ width: "100%" }}>
-          <Typography variant="h6">Scheduled App Runs</Typography>
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
               <TableRow>
-                {AppRunJobsColumn.map((column) => {
-                  return <TableCell>{column.title}</TableCell>;
+                {columnData.map((column) => {
+                  return (
+                    <TableCell
+                      key={column.key}
+                      sx={{
+                        paddingLeft: column.key === "name" ? "40px" : "inherit",
+                      }}
+                    >
+                      <strong>{column.title}</strong>
+                    </TableCell>
+                  );
                 })}
               </TableRow>
             </TableHead>
             <TableBody>
               {scheduledAppRuns.map((row) => {
                 return (
-                  <TableRow key={row.uuid} sx={{ cursor: "pointer" }}>
-                    {AppRunJobsColumn.map((column) => {
+                  <TableRow
+                    key={row.uuid}
+                    sx={{ cursor: "pointer", backgroundColor: "inherit" }}
+                  >
+                    {columnData.map((column) => {
                       const value = row[column.key];
                       return (
-                        <TableCell key={column.key} align={column.align}>
+                        <TableCell
+                          key={column.key}
+                          align={column.align}
+                          sx={{ fontWeight: "inherit" }}
+                        >
                           {column.render ? column.render(value, row) : value}
                         </TableCell>
                       );
