@@ -70,13 +70,19 @@ export default function AddAppRunSchedule(props) {
             )
           }
           onClick={() => {
-            console.log("Submitting");
+            const appFormData = appRunData.map((entry) => {
+              const newEntry = { ...entry };
+              delete newEntry._id;
+              delete newEntry._isNew;
+              return newEntry;
+            });
+
             axios()
               .post("/api/jobs/app_run", {
                 job_name: configuration?.job_name,
                 app_uuid: configuration?.appDetail?.uuid,
                 frequency: configuration?.frequencyObj,
-                app_run_data: appRunData,
+                app_run_data: appFormData,
               })
               .then((response) => {
                 enqueueSnackbar("Successfully Scheduled App Run", {
