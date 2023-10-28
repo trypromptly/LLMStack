@@ -1,4 +1,5 @@
 import logging
+import json
 import croniter 
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
@@ -8,26 +9,14 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 
 from llmstack.apps.apis import AppViewSet
-from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob, AppRunJobLog
+from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob
 from rq import get_current_job
 
 logger = logging.getLogger(__name__)
 
-def run_app(app_id, input_data):
+def run_app(app_id=None, input_data=None, *args, **kwargs):
     job = get_current_job()
-    logger.info(f"run_app app_id: {app_id}, input_data: {input_data}")
-    for entry in input_data:
-        logger.info(f"run_app entry: {entry}")
-        
-    app_run_request_id = 'test'
-    AppRunJobLog.objects.create(
-        task_id=job.args[1],
-        task_type=job.args[0],
-        job_id=job.id,
-        app_run_request_id=app_run_request_id,
-    )
-    
-    return True
+    return ['1']
 
 class AppRunJobsViewSet(viewsets.ViewSet):
     def get_permissions(self):
@@ -46,7 +35,8 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         frequency = data.get('frequency')
         
         job_name = data.get('job_name', self._create_job_name(app_name, request.user, frequency.get('type'), datetime.now()))
-
+        callable_args = json.dumps([app_id, data['app_run_data']])
+        callable_kwargs = json.dumps({})
         
         if frequency.get('type') not in ['run_once', 'repeat', 'cron']:
             return DRFResponse(status=400, data={'message': f"Unknown frequency type: {frequency.get('type')}"})
@@ -59,10 +49,8 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             job = ScheduledJob(
                 name=job_name,
                 callable='llmstack.jobs.apis.run_app',
-                callable_kwargs={
-                    'app_id': app_id,
-                    'input_data': data
-                },
+                callable_args=callable_args,
+                callable_kwargs=callable_kwargs,
                 enabled=True,
                 queue='default',
                 result_ttl=-1,
@@ -86,10 +74,8 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             job = RepeatableJob(
                 name=job_name,
                 callable='llmstack.jobs.apis.run_app',
-                callable_kwargs={
-                    'app_id': app_id,
-                    'input_data': data
-                },
+                callable_args=callable_args,
+                callable_kwargs=callable_kwargs,
                 enabled=True,
                 queue='default',
                 result_ttl=-1,
@@ -111,10 +97,8 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             job = CronJob(
                 name=job_name,
                 callable='llmstack.jobs.apis.run_app',
-                callable_kwargs={
-                    'app_id': app_id,
-                    'input_data': data
-                },
+                callable_args=callable_args,
+                callable_kwargs=callable_kwargs,
                 enabled=True,
                 queue='default',
                 result_ttl=-1,

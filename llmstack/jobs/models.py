@@ -6,6 +6,7 @@ import logging
 import math
 import uuid 
 import croniter
+import json
 
 from django.apps import apps
 from django.conf import settings
@@ -16,11 +17,49 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 
 import django_rq
-from rq import Queue
+from rq import Queue, get_current_job
 
 logger = logging.getLogger(__name__)
 
 SCHEDULER_INTERVAL = 60
+
+class TaskRunLog(models.Model):
+    TASK_TYPES = [
+        ('ScheduledJob', 'ScheduledJob'),
+        ('RepeatableJob', 'RepeatableJob'),
+        ('CronJob', 'CronJob'),
+    ]
+    STATUS = [
+        ('started', 'started'),
+        ('running', 'running'),
+        ('succeeded', 'succeeded'),
+        ('failed', 'failed'),
+        ('stopped', 'stopped'),
+    ]
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    task_id = models.CharField(max_length=128, editable=False, null=False)
+    task_type = models.CharField(max_length=128, choices=TASK_TYPES, editable=False, null=False)
+    job_id = models.CharField(max_length=128, editable=False, blank=True, null=False)
+    result = models.JSONField(blank=True, null=True)
+    status = models.CharField(max_length=50, null = False)
+    errors = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+        
+    def task_name(self):
+        entry = apps.get_model(app_label='jobs', model_name=self.task_type).objects.filter(id=self.task_id).first()
+        return entry.name if entry else ''
+        
+    
+    def user(self):
+        entry = apps.get_model(app_label='jobs', model_name=self.task_type).objects.filter(id=self.task_id).first()
+        return entry.owner if entry else ''
+    
+    def __str__(self) -> str:
+        return self.job_id
+    
+    class Meta:
+        ordering = ('-created_at', )
+        
 
 def get_scheduled_task(task_model: str, task_id: int):
     if not task_model:
@@ -34,9 +73,20 @@ def get_scheduled_task(task_model: str, task_id: int):
 
 def failure_callback(job, connection, type, value, traceback):
     task = get_scheduled_task(job.meta.get('task_type', None), job.meta.get('scheduled_task_id'))
-    
     if task is None:
         return 
+    
+    task_log = TaskRunLog.objects.filter(job_id=job.id, task_id=task.id).first()
+    if task_log is None:
+        logger.error(f'Could not find task log for job {job.id}')
+    else:
+        task_log.status = 'failed'
+        task_log.errors = {
+            'type': type,
+            'value': value,
+            'traceback': traceback,
+        }
+        task_log.save()
     
     task.job_id = None
     task.save(schedule_job=True)
@@ -45,6 +95,14 @@ def success_callback(job, connection, result, *args, **kwargs):
     task = get_scheduled_task(job.meta.get('task_type', None), job.meta.get('scheduled_task_id'))
     if task is None:
         return 
+    
+    task_log = TaskRunLog.objects.filter(job_id=job.id, task_id=task.id).first()
+    if task_log is None:
+        logger.error(f'Could not find task log for job {job.id}')
+    else:
+        task_log.status = 'succeeded'
+        task_log.result = {'result': result}
+        task_log.save()
     
     task.job_id = None
     # If task is a scehduledJob we have already ran the job no need to schedule it again
@@ -55,17 +113,31 @@ def stopped_callback(job, connection):
     if task is None:
         return
     
+    task_log = TaskRunLog.objects.filter(job_id=job.id, task_id=task.id).first()
+    if task_log is None:
+        logger.error(f'Could not find task log for job {job.id}')
+    else:
+        task_log.status = 'stopped'
+        task_log.save()
+    
     task.job_id = None
     task.save(chedule_job= False if task.TASK_TYPE == 'ScheduledJob' else True)
 
-
 def run_task(task_model: str, task_id: int):
+    job = get_current_job()
+    task_run_log = TaskRunLog.objects.create(
+        task_id=task_id,
+        task_type=task_model,
+        job_id=job.id,
+        status='started',
+    )
     scheduled_task = get_scheduled_task(task_model, task_id)
     logger.debug(f'Running task {str(scheduled_task)}')
-    args = scheduled_task.callable_args
-    kwargs = scheduled_task.callable_kwargs
+    args = scheduled_task.parse_args()
+    kwargs = scheduled_task.parse_kwargs()
     logger.info(f"Invoking function: {scheduled_task.callable} with args: {args} and kwargs: {kwargs}")
-    return True
+    res = scheduled_task.callable_func()(*args, **kwargs)
+    return res
 
 class BaseTask(models.Model):
     TASK_TYPE = 'BaseTask'
@@ -115,6 +187,22 @@ class BaseTask(models.Model):
         if callable(func) is False:
             raise TypeError("'{}' is not callable".format(self.callable))
         return func
+    
+    def parse_args(self):
+        args = {}
+        try:
+            args = json.loads(self.callable_args) if self.callable_args else {}
+        except:
+            pass
+        return args
+    
+    def parse_kwargs(self):
+        kwargs = {}
+        try:
+            kwargs = json.loads(self.callable_kwargs) if self.callable_kwargs else {}
+        except:
+            pass
+        return kwargs
     
     def is_scheduled(self):
         if self.job_id is None:
@@ -420,49 +508,3 @@ class CronJob(BaseTask):
         verbose_name = 'Cron Job'
         verbose_name_plural = 'Cron Jobs'
         ordering = ('name', )
-        
-        
-class TaskLog(models.Model):
-    TASK_TYPES = [
-        ('ScheduledJob', 'ScheduledJob'),
-        ('RepeatableJob', 'RepeatableJob'),
-        ('CronJob', 'CronJob'),
-    ]
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    task_id = models.CharField(max_length=128, editable=False, null=False)
-    task_type = models.CharField(max_length=128, choices=TASK_TYPES, editable=False, null=False)
-    job_id = models.CharField(max_length=128, editable=False, blank=True, null=False)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def _get_task_table(self):
-        if self.task_type == 'ScheduledJob':
-            return ScheduledJob
-        elif self.task_type == 'RepeatableJob':
-            return RepeatableJob
-        elif self.task_type == 'CronJob':
-            return CronJob
-        else:
-            return None
-        
-    def task_name(self):
-        if self._get_task_table() is None:
-            return None
-        
-        return self._get_task_table().objects.filter(id=self.task_id).first().name
-        
-    
-    def user(self):
-        if self._get_task_table() is None:
-            return None
-        
-        return self._get_task_table().objects.filter(id=self.task_id).first().owner
-        
-    
-    class Meta:
-        abstract = True
-        ordering = ('-created_at', )
-        
-class AppRunJobLog(TaskLog):
-    app_run_request_id = models.CharField(max_length=128, editable=False, null=False)
-    
