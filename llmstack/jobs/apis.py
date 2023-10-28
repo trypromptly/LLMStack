@@ -1,22 +1,42 @@
 import logging
 import json
-import croniter 
+import croniter
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.test import RequestFactory
 
 from llmstack.apps.apis import AppViewSet
 from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob
-from rq import get_current_job
+from llmstack.apps.models import App
 
 logger = logging.getLogger(__name__)
 
 def run_app(app_id=None, input_data=None, *args, **kwargs):
-    job = get_current_job()
-    return ['1']
+    app = App.objects.get(uuid=app_id)
+    user = app.owner
+    results = []
+    errors = []
+    for entry in input_data:
+        request_input_data = {'input' : entry, 'stream': False}
+        request = RequestFactory().post(f'/api/apps/{app_id}/run', data=request_input_data, format='json')
+        request.user = user
+        request.data = request_input_data
+        response = AppViewSet().run(request=request, uid=app_id)
+        if response.status_code == 200:
+            results.append(response.data)
+            errors.append(None)
+        else:
+            results.append(None)
+            errors.append({
+                'code' : response.status_code,
+                'detail': response.status_text,
+            })
+    
+    return results, errors
 
 class AppRunJobsViewSet(viewsets.ViewSet):
     def get_permissions(self):
