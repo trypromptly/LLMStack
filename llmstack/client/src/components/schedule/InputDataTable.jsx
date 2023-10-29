@@ -215,7 +215,8 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
             headerName: "Actions",
             width: 100,
             cellClassName: "actions",
-            getActions: ({ _id }) => {
+            getActions: (actionProps) => {
+              const { id: _id } = actionProps;
               const isInEditMode =
                 rowModesModel[_id]?.mode === GridRowModes.Edit;
 
