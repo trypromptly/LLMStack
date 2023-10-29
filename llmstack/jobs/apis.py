@@ -86,45 +86,41 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         cron_jobs = CronJob.objects.filter(owner=request.user)
         jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
         return DRFResponse(status=200, data=jobs)
+
+    def _get_job_by_uuid(self, uid):
+        job = ScheduledJob.objects.filter(owner=self.request.user, uuid=uid).first()
+        if not job:
+            job = RepeatableJob.objects.filter(owner=self.request.user, uuid=uid).first()
+        if not job:
+            job = CronJob.objects.filter(owner=self.request.user, uuid=uid).first()
+        return job
     
-    class AppRunJobsViewSet(viewsets.ViewSet):
-        def get_permissions(self):
-            # TODO: Implement permission checks
-            pass
+    def get(self, request, uid):
+        job = self._get_job_by_uuid(uid)
+        if not job:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        return DRFResponse(status=200, data=job.to_dict())
         
-        def _get_job_by_uuid(self, uid):
-            job = ScheduledJob.objects.filter(owner=self.request.user, uuid=uid).first()
-            if not job:
-                job = RepeatableJob.objects.filter(owner=self.request.user, uuid=uid).first()
-            if not job:
-                job = CronJob.objects.filter(owner=self.request.user, uuid=uid).first()
-            return job
+    def delete(self, request, uid):
+        logger.info(f"Deleting job with uuid: {uid}")
+        job = self._get_job_by_uuid(uid)
+        if not job:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        job.delete()
+        return DRFResponse(status=204)
         
-        def get(self, request, uid):
-            job = self._get_job_by_uuid(uid)
-            if not job:
-                return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-            return DRFResponse(status=200, data=job.to_dict())
-        
-        def delete(self, request, uid):
-            job = self._get_job_by_uuid(uid)
-            if not job:
-                return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-            job.delete()
-            return DRFResponse(status=204)
-        
-        def pause(self, request, uid):
-            job = self._get_job_by_uuid(uid)
-            if not job:
-                return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-            job.enabled = False
-            job.save()
-            return DRFResponse(status=204)
-        
-        def resume(self, request, uid):
-            job = self._get_job_by_uuid(uid)
-            if not job:
-                return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-            job.enabled = True
-            job.save()
-            return DRFResponse(status=204)
+    def pause(self, request, uid):
+        job = self._get_job_by_uuid(uid)
+        if not job:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        job.enabled = False
+        job.save()
+        return DRFResponse(status=204)
+    
+    def resume(self, request, uid):
+        job = self._get_job_by_uuid(uid)
+        if not job:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        job.enabled = True
+        job.save()
+        return DRFResponse(status=204)
