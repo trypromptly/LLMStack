@@ -87,30 +87,30 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
         return DRFResponse(status=200, data=jobs)
 
-    def _get_job_by_uuid(self, uid):
-        job = ScheduledJob.objects.filter(owner=self.request.user, uuid=uid).first()
+    def _get_job_by_uuid(self, uid, request):
+        job = ScheduledJob.objects.filter(owner=request.user, uuid=uid).first()
         if not job:
-            job = RepeatableJob.objects.filter(owner=self.request.user, uuid=uid).first()
+            job = RepeatableJob.objects.filter(owner=request.user, uuid=uid).first()
         if not job:
-            job = CronJob.objects.filter(owner=self.request.user, uuid=uid).first()
+            job = CronJob.objects.filter(owner=request.user, uuid=uid).first()
         return job
     
     def get(self, request, uid):
-        job = self._get_job_by_uuid(uid)
+        job = self._get_job_by_uuid(uid, request=request)
         if not job:
             return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
         return DRFResponse(status=200, data=job.to_dict())
         
     def delete(self, request, uid):
         logger.info(f"Deleting job with uuid: {uid}")
-        job = self._get_job_by_uuid(uid)
+        job = self._get_job_by_uuid(uid, request=request)
         if not job:
             return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
         job.delete()
         return DRFResponse(status=204)
         
     def pause(self, request, uid):
-        job = self._get_job_by_uuid(uid)
+        job = self._get_job_by_uuid(uid, request=request)
         if not job:
             return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
         job.enabled = False
@@ -118,7 +118,7 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         return DRFResponse(status=204)
     
     def resume(self, request, uid):
-        job = self._get_job_by_uuid(uid)
+        job = self._get_job_by_uuid(uid, request=request)
         if not job:
             return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
         job.enabled = True

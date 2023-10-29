@@ -124,7 +124,7 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
         <ConfirmationModal
           id="resume-job"
           open={open}
-          onOk={onOk}
+          onOk={resumeAppRunJob}
           onCancel={onCancel}
           title="Resume Job"
           text="Are you sure you want to resume this job?"
