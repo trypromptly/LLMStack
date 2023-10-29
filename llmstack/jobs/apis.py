@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 
 from llmstack.apps.apis import AppViewSet
-from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob
+from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob, TaskRunLog
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +106,12 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         job = self._get_job_by_uuid(uid, request=request)
         if not job:
             return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        # Delete all logs associated with this job
+        task_logs = TaskRunLog.objects.filter(task_id=job.id)
+        try:
+            task_logs.delete()
+        except Exception as e:
+            logger.error(f"Error deleting task logs: {e}")
         job.delete()
         return DRFResponse(status=204)
         
