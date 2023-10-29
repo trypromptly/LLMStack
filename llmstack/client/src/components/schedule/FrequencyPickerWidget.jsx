@@ -44,7 +44,11 @@ export default function FrequencyPickerWidget(props) {
         <LocalizationProvider dateAdapter={AdapterMoment}>
           <DatePicker
             disablePast
-            value={moment(frequency?.start_date, "YYYY-MM-DD")}
+            value={
+              frequency?.start_date
+                ? moment(frequency?.start_date, "YYYY-MM-DD")
+                : moment()
+            }
             onChange={(value) => {
               handleChange({
                 ...frequency,
@@ -54,6 +58,10 @@ export default function FrequencyPickerWidget(props) {
             }}
           />
           <TimePicker
+            ampm={false}
+            disablePast
+            timeSteps={{ hours: 1, minutes: 10 }}
+            skipDisabled
             value={moment(frequency?.start_time, "HH:mm:ss")}
             onChange={(value) => {
               handleChange({
@@ -70,21 +78,29 @@ export default function FrequencyPickerWidget(props) {
           <LocalizationProvider dateAdapter={AdapterMoment}>
             <DatePicker
               disablePast
-              value={moment(frequency?.start_date, "YYYY-MM-DD")}
+              value={
+                frequency?.start_date
+                  ? moment(frequency?.start_date, "YYYY-MM-DD")
+                  : moment()
+              }
               onChange={(value) => {
                 handleChange({
                   ...frequency,
-                  type: "repeat",
+                  type: "run_once",
                   start_date: value.format("YYYY-MM-DD"),
                 });
               }}
             />
             <TimePicker
+              ampm={false}
+              disablePast
+              timeSteps={{ hours: 1, minutes: 10 }}
+              skipDisabled
               value={moment(frequency?.start_time, "HH:mm:ss")}
               onChange={(value) => {
                 handleChange({
                   ...frequency,
-                  type: "repeat",
+                  type: "run_once",
                   start_time: value.format("HH:mm:ss"),
                 });
               }}

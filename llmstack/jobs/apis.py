@@ -46,7 +46,7 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             'callable_kwargs': json.dumps({}),
             'enabled': True,
             'queue': 'default',
-            'result_ttl': -1,
+            'result_ttl': 86400,
             'owner': request.user,
             'scheduled_time': scheduled_time,
         }

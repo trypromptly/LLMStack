@@ -170,13 +170,6 @@ export default function Schedule() {
       },
     },
     {
-      title: "Input",
-      key: "input",
-      render: (record, row) => {
-        return <Button>View</Button>;
-      },
-    },
-    {
       title: "Status",
       key: "enabled",
       render: (record, row) => {
@@ -186,10 +179,6 @@ export default function Schedule() {
           <Chip label="Disabled" color="error" />
         );
       },
-    },
-    {
-      title: "Last Run",
-      key: "last_run",
     },
     {
       title: "Action",
