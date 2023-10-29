@@ -2,41 +2,15 @@ import logging
 import json
 import croniter
 from rest_framework import viewsets
-from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from datetime import datetime, timedelta
 from django.utils import timezone
-from django.test import RequestFactory
 
 from llmstack.apps.apis import AppViewSet
 from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob
-from llmstack.apps.models import App
 
 logger = logging.getLogger(__name__)
-
-def run_app(app_id=None, input_data=None, *args, **kwargs):
-    app = App.objects.get(uuid=app_id)
-    user = app.owner
-    results = []
-    errors = []
-    for entry in input_data:
-        request_input_data = {'input' : entry, 'stream': False}
-        request = RequestFactory().post(f'/api/apps/{app_id}/run', data=request_input_data, format='json')
-        request.user = user
-        request.data = request_input_data
-        response = AppViewSet().run(request=request, uid=app_id)
-        if response.status_code == 200:
-            results.append(response.data)
-            errors.append(None)
-        else:
-            results.append(None)
-            errors.append({
-                'code' : response.status_code,
-                'detail': response.status_text,
-            })
-    
-    return results, errors
 
 class AppRunJobsViewSet(viewsets.ViewSet):
     def get_permissions(self):
@@ -53,60 +27,46 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         app_name = app_detail.get('name')
         app_id = app_detail.get('uuid')        
         frequency = data.get('frequency')
+        frequency_type = frequency.get('type')
         
-        job_name = data.get('job_name', self._create_job_name(app_name, request.user, frequency.get('type'), datetime.now()))
-        callable_args = json.dumps([app_id, data['app_run_data']])
-        callable_kwargs = json.dumps({})
-        
-        if frequency.get('type') not in ['run_once', 'repeat', 'cron']:
+        if frequency_type not in ['run_once', 'repeat', 'cron']:
             return DRFResponse(status=400, data={'message': f"Unknown frequency type: {frequency.get('type')}"})
-                
-        if frequency.get('type') == 'run_once':
+        
+        scheduled_time = None 
+        if frequency_type == 'run_once' or frequency_type == 'repeat':
+            if not frequency.get('start_date') or not frequency.get('start_time'):
+                return DRFResponse(status=400, data={'message': f"run_once and repeat frequency requires a start_date and start_time"})
             scheduled_time = timezone.make_aware(datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S"), timezone.get_current_timezone())
-            if not scheduled_time:
-                return DRFResponse(status=400, data={'message': f"run_once frequency requires a scheduled_time"})
-            
-            job = ScheduledJob(
-                name=job_name,
-                callable='llmstack.jobs.apis.run_app',
-                callable_args=callable_args,
-                callable_kwargs=callable_kwargs,
-                enabled=True,
-                queue='default',
-                result_ttl=-1,
-                owner=request.user,
-                scheduled_time=scheduled_time,
-            )
+
+        job_args = {
+            'name': data.get('job_name', 
+                             self._create_job_name(app_name, request.user, frequency.get('type'), datetime.now())),
+            'callable': 'llmstack.jobs.jobs.run_app',
+            'callable_args': json.dumps([app_id, data['app_run_data']]),
+            'callable_kwargs': json.dumps({}),
+            'enabled': True,
+            'queue': 'default',
+            'result_ttl': -1,
+            'owner': request.user,
+            'scheduled_time': scheduled_time,
+        }
+                
+        if frequency_type == 'run_once':
+            job = ScheduledJob(**job_args)
             job.save()
             
-        elif frequency.get('type') == 'repeat':
-            scheduled_time = timezone.make_aware(datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S"), timezone.get_current_timezone())
+        elif frequency_type == 'repeat':
             try:
                 interval = int(frequency.get('interval', 0))
                 if not interval:
                     return DRFResponse(status=400, data={'message': f"repeat frequency requires an interval greater than 0"})
             except:
                 return DRFResponse(status=400, data={'message': f"repeat frequency requires an interval greater than 0"})
-                
-            if not scheduled_time:
-                return DRFResponse(status=400, data={'message': f"repeat frequency requires a scheduled_time"})
-            
-            job = RepeatableJob(
-                name=job_name,
-                callable='llmstack.jobs.apis.run_app',
-                callable_args=callable_args,
-                callable_kwargs=callable_kwargs,
-                enabled=True,
-                queue='default',
-                result_ttl=-1,
-                owner=request.user,
-                scheduled_time=scheduled_time,
-                interval=interval,
-                interval_unit='days'
-            )
+                        
+            job = RepeatableJob(interval=interval, interval_unit='days', **job_args)
             job.save()
             
-        elif frequency.get('type') == 'cron':
+        elif frequency_type == 'cron':
             cron_expression = frequency.get('cron_expression')
             if not cron_expression:
                 return DRFResponse(status=400, data={'message': f"cron frequency requires a cron_expression"})
@@ -114,18 +74,9 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             if not croniter.croniter.is_valid(cron_expression):
                 return DRFResponse(status=400, data={'message': f"cron expression is not valid"})
             
-            job = CronJob(
-                name=job_name,
-                callable='llmstack.jobs.apis.run_app',
-                callable_args=callable_args,
-                callable_kwargs=callable_kwargs,
-                enabled=True,
-                queue='default',
-                result_ttl=-1,
-                owner=request.user,
-                cron_string=cron_expression
-            )
-            logger.info(f"cron app_id: {app_id}, job: {job}")
+            job = CronJob(cron_string=cron_expression, **job_args)
+            job.save()
+        
         
         return DRFResponse(status=204)
     
@@ -136,62 +87,44 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
         return DRFResponse(status=200, data=jobs)
     
-    def get(self, request, uid):
-        job = ScheduledJob.objects.get(owner=request.user, uuid=uid)
-        if not job:
-            job = RepeatableJob.objects.get(owner=request.user, uuid=uid)
+    class AppRunJobsViewSet(viewsets.ViewSet):
+        def get_permissions(self):
+            # TODO: Implement permission checks
+            pass
         
-        if not job:
-            job = CronJob.objects.get(owner=request.user, uuid=uid)
-            
-        if not job:
-            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-
-        return DRFResponse(status=200, data=job.to_dict())
-    
-    def delete(self, request, uid):
-        job = ScheduledJob.objects.get(owner=request.user, uuid=uid)
-        if not job:
-            job = RepeatableJob.objects.get(owner=request.user, uuid=uid)
+        def _get_job_by_uuid(self, uid):
+            job = ScheduledJob.objects.filter(owner=self.request.user, uuid=uid).first()
+            if not job:
+                job = RepeatableJob.objects.filter(owner=self.request.user, uuid=uid).first()
+            if not job:
+                job = CronJob.objects.filter(owner=self.request.user, uuid=uid).first()
+            return job
         
-        if not job:
-            job = CronJob.objects.get(owner=request.user, uuid=uid)
-            
-        if not job:
-            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-
-        job.delete()
-        return DRFResponse(status=204)
-    
-    def pause(self, request, uid):
-        # Check if it exists in ScheduledJob table
-        job = ScheduledJob.objects.get(owner=request.user, uuid=uid)
-        if not job:
-            job = RepeatableJob.objects.get(owner=request.user, uuid=uid)
+        def get(self, request, uid):
+            job = self._get_job_by_uuid(uid)
+            if not job:
+                return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+            return DRFResponse(status=200, data=job.to_dict())
         
-        if not job:
-            job = CronJob.objects.get(owner=request.user, uuid=uid)
-            
-        if not job:
-            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        def delete(self, request, uid):
+            job = self._get_job_by_uuid(uid)
+            if not job:
+                return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+            job.delete()
+            return DRFResponse(status=204)
         
-        job.enabled = False
-        job.save()
-        return DRFResponse(status=204)
-    
-    def resume(self, request, uid):
-        # Check if it exists in ScheduledJob table
-        job = ScheduledJob.objects.get(owner=request.user, uuid=uid)
-        if not job:
-            job = RepeatableJob.objects.get(owner=request.user, uuid=uid)
+        def pause(self, request, uid):
+            job = self._get_job_by_uuid(uid)
+            if not job:
+                return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+            job.enabled = False
+            job.save()
+            return DRFResponse(status=204)
         
-        if not job:
-            job = CronJob.objects.get(owner=request.user, uuid=uid)
-            
-        if not job:
-            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-        
-        job.enabled = True
-        job.save()
-        return DRFResponse(status=204)
-    
+        def resume(self, request, uid):
+            job = self._get_job_by_uuid(uid)
+            if not job:
+                return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+            job.enabled = True
+            job.save()
+            return DRFResponse(status=204)

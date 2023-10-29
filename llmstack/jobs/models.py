@@ -132,10 +132,8 @@ def run_task(task_model: str, task_id: int):
         status='started',
     )
     scheduled_task = get_scheduled_task(task_model, task_id)
-    logger.debug(f'Running task {str(scheduled_task)}')
     args = scheduled_task.parse_args()
     kwargs = scheduled_task.parse_kwargs()
-    logger.info(f"Invoking function: {scheduled_task.callable} with args: {args} and kwargs: {kwargs}")
     results, errors = scheduled_task.callable_func()(*args, **kwargs)
     
     task_run_log.result = results

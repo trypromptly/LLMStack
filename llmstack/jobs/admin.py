@@ -100,13 +100,13 @@ class TaskRunLogAdmin(admin.ModelAdmin):
     list_display = (
          'task_name', 'user', 'job_id', 'status', 'created_at', 
     )
-    readonly_fields = ('uuid', 'task_name', 'task_type', 'user', 'job_id', 'result', 'status', 'created_at')
+    readonly_fields = ('uuid', 'task_name', 'task_type', 'user', 'job_id', 'result', 'errors', 'status', 'created_at')
     fieldsets = (
         ( None, {
             'fields' : ('uuid', 'created_at', 'job_id')
         }),
         ('Task Info', {
-            'fields': ('task_name', 'task_type', 'result', 'status', 'user' )
+            'fields': ('task_name', 'task_type', 'result', 'errors', 'status', 'user' )
         })
     )
     
