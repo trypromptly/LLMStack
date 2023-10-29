@@ -36,6 +36,11 @@ class TaskRunLog(models.Model):
         ('failed', 'failed'),
         ('stopped', 'stopped'),
     ]
+    TASK_CATEGORY = [
+        ('generic', 'generic'),
+        ('app_run', 'app_run'),
+        ('data_refresh', 'data_refresh'),
+    ]
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     task_id = models.CharField(max_length=128, editable=False, null=False)
     task_type = models.CharField(max_length=128, choices=TASK_TYPES, editable=False, null=False)
@@ -43,7 +48,12 @@ class TaskRunLog(models.Model):
     result = models.JSONField(blank=True, null=True)
     status = models.CharField(max_length=50, null = False)
     errors = models.JSONField(blank=True, null=True)
+    task_category = models.CharField(max_length=128, choices=TASK_CATEGORY, editable=False, null=False, default='generic')
+    ends_at = models.DateTimeField(null=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    def _get_ends_at(self):
+        raise NotImplementedError
         
     def task_name(self):
         entry = apps.get_model(app_label='jobs', model_name=self.task_type).objects.filter(id=self.task_id).first()
@@ -131,10 +141,20 @@ def run_task(task_model: str, task_id: int):
         job_id=job.id,
         status='started',
     )
-    scheduled_task = get_scheduled_task(task_model, task_id)
-    args = scheduled_task.parse_args()
-    kwargs = scheduled_task.parse_kwargs()
-    results, errors = scheduled_task.callable_func()(*args, **kwargs)
+    task = get_scheduled_task(task_model, task_id)
+    
+    if task is None:
+        logger.error(f'Could not find task {task_model}:{task_id}')
+        return False
+    
+    if timezone.now() > task.end_time and task.TASK_TYPE == 'ScheduledJob':
+        # Task got scheduled post the end time
+         results = {}
+         errors = {'detail': 'Task got scheduled post the end time'}
+    else:    
+        args = task.parse_args()
+        kwargs = task.parse_kwargs()
+        results, errors = task.callable_func()(*args, **kwargs)
     
     task_run_log.result = results
     task_run_log.errors = errors
@@ -443,8 +463,8 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
         """
         if self.result_ttl and self.result_ttl != -1 and self.result_ttl < self.interval_seconds() and self.repeat:
             raise ValidationError(
-                _("Job result_ttl must be either indefinite (-1) or "
-                  "longer than the interval, %(interval)s seconds, to ensure rescheduling."),
+                "Job result_ttl must be either indefinite (-1) or "
+                  "longer than the interval, %(interval)s seconds, to ensure rescheduling.",
                 code='invalid',
                 params={'interval': self.interval_seconds()}, )
     
