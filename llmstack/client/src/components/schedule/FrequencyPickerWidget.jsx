@@ -56,6 +56,7 @@ export default function FrequencyPickerWidget(props) {
                 start_date: value.format("YYYY-MM-DD"),
               });
             }}
+            label="Start Date"
           />
           <TimePicker
             ampm={false}
@@ -70,6 +71,7 @@ export default function FrequencyPickerWidget(props) {
                 start_time: value.format("HH:mm:ss"),
               });
             }}
+            label="Start Time"
           />
         </LocalizationProvider>
       )}
@@ -90,6 +92,7 @@ export default function FrequencyPickerWidget(props) {
                   start_date: value.format("YYYY-MM-DD"),
                 });
               }}
+              label="Start Date"
             />
             <TimePicker
               ampm={false}
@@ -104,30 +107,65 @@ export default function FrequencyPickerWidget(props) {
                   start_time: value.format("HH:mm:ss"),
                 });
               }}
+              label="Start Time"
+            />
+            <TextField
+              label="Repeat Interval (in days)"
+              value={frequency?.interval}
+              type="number"
+              onChange={(event) =>
+                handleChange({ ...frequency, interval: event.target.value })
+              }
+            />
+            <DatePicker
+              disablePast
+              value={
+                frequency?.end_date
+                  ? moment(frequency?.end_date, "YYYY-MM-DD")
+                  : moment().add(6, "months")
+              }
+              onChange={(value) => {
+                handleChange({
+                  ...frequency,
+                  type: "run_once",
+                  end_date: value.format("YYYY-MM-DD"),
+                });
+              }}
+              label="End Date"
             />
           </LocalizationProvider>
-          <TextField
-            label="Repeat Interval (in days)"
-            value={frequency?.interval}
-            type="number"
-            onChange={(event) =>
-              handleChange({ ...frequency, interval: event.target.value })
-            }
-          />
         </div>
       )}
       {frequency?.type === "cron" && (
-        <TextField
-          label="Cron Job Expression"
-          value={frequency?.cron_expression}
-          onChange={(event) =>
-            handleChange({
-              ...frequency,
-              type: "cron",
-              cron_expression: event.target.value,
-            })
-          }
-        />
+        <LocalizationProvider dateAdapter={AdapterMoment}>
+          <TextField
+            label="Cron Job Expression"
+            value={frequency?.cron_expression}
+            onChange={(event) =>
+              handleChange({
+                ...frequency,
+                type: "cron",
+                cron_expression: event.target.value,
+              })
+            }
+          />
+          <DatePicker
+            disablePast
+            value={
+              frequency?.end_date
+                ? moment(frequency?.end_date, "YYYY-MM-DD")
+                : moment().add(6, "months")
+            }
+            onChange={(value) => {
+              handleChange({
+                ...frequency,
+                type: "run_once",
+                end_date: value.format("YYYY-MM-DD"),
+              });
+            }}
+            label="End Date"
+          />
+        </LocalizationProvider>
       )}
     </Box>
   );
