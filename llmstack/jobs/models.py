@@ -36,11 +36,7 @@ class TaskRunLog(models.Model):
         ('failed', 'failed'),
         ('stopped', 'stopped'),
     ]
-    TASK_CATEGORY = [
-        ('generic', 'generic'),
-        ('app_run', 'app_run'),
-        ('data_refresh', 'data_refresh'),
-    ]
+    
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     task_id = models.CharField(max_length=128, editable=False, null=False)
     task_type = models.CharField(max_length=128, choices=TASK_TYPES, editable=False, null=False)
@@ -48,7 +44,6 @@ class TaskRunLog(models.Model):
     result = models.JSONField(blank=True, null=True)
     status = models.CharField(max_length=50, null = False)
     errors = models.JSONField(blank=True, null=True)
-    task_category = models.CharField(max_length=128, choices=TASK_CATEGORY, editable=False, null=False, default='generic')
     ends_at = models.DateTimeField(null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -173,6 +168,11 @@ class BaseTask(models.Model):
         ('failed', 'failed'),
         ('deferred', 'deferred'),
     ]
+    TASK_CATEGORY = [
+        ('generic', 'generic'),
+        ('app_run', 'app_run'),
+        ('data_refresh', 'data_refresh'),
+    ]
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name = models.CharField(max_length=512, unique=True)
     callable = models.CharField(max_length=2048)
@@ -195,7 +195,8 @@ class BaseTask(models.Model):
                                      'after n seconds.')
     owner = models.ForeignKey(
         User, on_delete=models.DO_NOTHING, help_text='Owner of the task', null=False
-    ) 
+    )
+    task_category = models.CharField(max_length=128, choices=TASK_CATEGORY, editable=False, null=False, default='generic') 
     metadata = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
