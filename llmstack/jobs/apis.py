@@ -8,12 +8,12 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 
 from llmstack.apps.apis import AppViewSet
-from llmstack.datasources.apis import DataSourceViewSet
+from llmstack.datasources.apis import DataSourceEntryViewSet, DataSourceViewSet
 from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob, TaskRunLog
 
 logger = logging.getLogger(__name__)
 
-class GenericJobsViewSet(viewsets.ViewSet):
+class JobsViewSet(viewsets.ViewSet):
     def _get_job_by_uuid(self, uid, request):
         job = ScheduledJob.objects.filter(owner=request.user, uuid=uid).first()
         if not job:
@@ -21,6 +21,13 @@ class GenericJobsViewSet(viewsets.ViewSet):
         if not job:
             job = CronJob.objects.filter(owner=request.user, uuid=uid).first()
         return job
+    
+    def list(self, request):
+        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user)
+        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user)
+        cron_jobs = CronJob.objects.filter(owner=request.user)
+        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
+        return DRFResponse(status=200, data=jobs)
     
     def get(self, request, uid):
         job = self._get_job_by_uuid(uid, request=request)
@@ -58,7 +65,7 @@ class GenericJobsViewSet(viewsets.ViewSet):
         job.save()
         return DRFResponse(status=204)
     
-class AppRunJobsViewSet(GenericJobsViewSet):
+class AppRunJobsViewSet(JobsViewSet):
     def get_permissions(self):
         return [IsAuthenticated()]
     
@@ -142,7 +149,7 @@ class AppRunJobsViewSet(GenericJobsViewSet):
             job = CronJob.objects.filter(owner=request.user, uuid=uid).first()
         return job
     
-class DataSourceRefreshJobsViewSet(GenericJobsViewSet):
+class DataSourceRefreshJobsViewSet(JobsViewSet):
     def get_permissions(self):
         return [IsAuthenticated()]
     
@@ -151,10 +158,25 @@ class DataSourceRefreshJobsViewSet(GenericJobsViewSet):
     
     def post(self, request):
         data = request.data
-        datasource_uuid = data.get('datasource_uuid')
-        datasource_detail = DataSourceViewSet().get(request=request, uid=datasource_uuid).data
-        datasource_name = datasource_detail.get('name')
-        datasource_id = datasource_detail.get('uuid')
+        datasource_entries = data.get('datasource_entries')
+        if not datasource_entries or not isinstance(datasource_entries, list) or len(datasource_entries) == 0:
+            return DRFResponse(status=400, data={'message': f"datasource_entries is empty"})
+        
+        job_name = request.data.get('job_name')
+        if not job_name:
+            return DRFResponse(status=400, data={'message': f"job_name is required"})
+        
+        entries = DataSourceEntryViewSet().multiGet(request=request, uids=datasource_entries).data
+        if len(entries) != len(datasource_entries):
+            return DRFResponse(status=400, data={'message': f"Invalid datasource_entries"})
+        
+        datasources = list(map(lambda entry: entry.get('datasource'), entries))
+        # make sure request user has access to the datasource
+
+        for source in datasources:
+            if DataSourceViewSet().get(request=request, uid=source['uuid']).status_code != 200:
+                return DRFResponse(status=400, data={'message': f"Invalid datasource_entries"})
+        
         frequency = data.get('frequency')
         frequency_type = frequency.get('type')
         if frequency_type not in ['run_once', 'repeat', 'cron']:
@@ -168,10 +190,9 @@ class DataSourceRefreshJobsViewSet(GenericJobsViewSet):
             scheduled_time = timezone.make_aware(datetime.strptime(f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S"), timezone.get_current_timezone())
 
         job_args = {
-            'name': data.get('job_name', 
-                             self._create_job_name(datasource_name, request.user, frequency.get('type'), datetime.now())),
+            'name': job_name,
             'callable': 'llmstack.jobs.jobs.refresh_datasource',
-            'callable_args': json.dumps([datasource_id]),
+            'callable_args': json.dumps(datasource_entries),
             'callable_kwargs': json.dumps({}),
             'enabled': True,
             'queue': 'default',
@@ -208,3 +229,10 @@ class DataSourceRefreshJobsViewSet(GenericJobsViewSet):
             job.save()
         
         return DRFResponse(status=204)
+    
+    def list(self, request):
+        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user, task_category='datasource_refresh')
+        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user, task_category='datasource_refresh')
+        cron_jobs = CronJob.objects.filter(owner=request.user, task_category='datasource_refresh')
+        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
+        return DRFResponse(status=200, data=jobs)
