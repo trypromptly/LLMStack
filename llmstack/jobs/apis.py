@@ -2,7 +2,7 @@ import logging
 import json
 import croniter
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response as DRFResponse
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -14,6 +14,9 @@ from llmstack.jobs.models import ScheduledJob, RepeatableJob, CronJob, TaskRunLo
 logger = logging.getLogger(__name__)
 
 class JobsViewSet(viewsets.ViewSet):
+    def get_permissions(self):
+        return [IsAuthenticated()]
+    
     def _get_job_by_uuid(self, uid, request):
         job = ScheduledJob.objects.filter(owner=request.user, uuid=uid).first()
         if not job:
@@ -65,14 +68,14 @@ class JobsViewSet(viewsets.ViewSet):
         job.save()
         return DRFResponse(status=204)
     
-class AppRunJobsViewSet(JobsViewSet):
+class AppRunJobsViewSet(viewsets.ViewSet):
     def get_permissions(self):
         return [IsAuthenticated()]
     
     def _create_job_name(self, app_name, user, schedule_type, timestamp):
         return f"{app_name}_{user}_{schedule_type}_{timestamp}"
     
-    def post(self, request):
+    def create(self, request):
         data = request.data
         app_uuid = data.get('app_uuid')
         app_detail = AppViewSet().get(request=request, uid=app_uuid).data
@@ -136,14 +139,12 @@ class AppRunJobsViewSet(JobsViewSet):
     
 
     
-class DataSourceRefreshJobsViewSet(JobsViewSet):
+class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
     def get_permissions(self):
         return [IsAuthenticated()]
     
-    def _create_job_name(self, datasource_name, user, schedule_type, timestamp):
-        return f"{datasource_name}_{user}_{schedule_type}_{timestamp}"
     
-    def post(self, request):
+    def create(self, request):
         data = request.data
         datasource_entries = data.get('datasource_entries')
         if not datasource_entries or not isinstance(datasource_entries, list) or len(datasource_entries) == 0:

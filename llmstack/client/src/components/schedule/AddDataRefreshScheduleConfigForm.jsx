@@ -5,6 +5,7 @@ import { useRecoilValue } from "recoil";
 import { dataSourcesState } from "../../data/atoms";
 import { Box } from "@mui/material";
 import { DataSourceSelector } from "../datasource/DataSourceSelector";
+import moment from "moment";
 
 const SCHEMA = {
   properties: {
@@ -76,6 +77,8 @@ export default function AddDataRefreshScheduleConfigForm(props) {
             <FrequencyPickerWidget
               {...props}
               value={props.value}
+              minStartTime={moment().add(1, "hours")}
+              maxStartTime={moment().add(1, "years")}
               id="frequency-picker"
             />
           ),

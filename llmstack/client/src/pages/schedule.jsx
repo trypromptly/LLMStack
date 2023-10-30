@@ -57,7 +57,7 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
     axios()
       .delete(`/api/jobs/${jobId}`)
       .then((res) => {
-        console.log(res);
+        window.location.reload();
       })
       .catch((err) => {
         enqueueSnackbar(err.message, { variant: "error" });
@@ -70,7 +70,7 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
     axios()
       .post(`/api/jobs/${jobId}/pause`)
       .then((res) => {
-        console.log(res);
+        window.location.reload();
       })
       .catch((err) => {
         enqueueSnackbar(err.message, { variant: "error" });
@@ -84,7 +84,7 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
     axios()
       .post(`/api/jobs/${jobId}/resume`)
       .then((res) => {
-        console.log(res);
+        window.location.reload();
       })
       .catch((err) => {
         enqueueSnackbar(err.message, { variant: "error" });

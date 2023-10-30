@@ -11,11 +11,10 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import moment from "moment";
 
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { DateTimePicker, DatePicker } from "@mui/x-date-pickers";
 
 export default function FrequencyPickerWidget(props) {
-  const { onChange, id, value } = props;
+  const { onChange, id, value, minStartTime, maxStartTime } = props;
 
   const frequency = value ? JSON.parse(value) : null;
 
@@ -42,64 +41,48 @@ export default function FrequencyPickerWidget(props) {
       </FormControl>
       {frequency?.type === "run_once" && (
         <LocalizationProvider dateAdapter={AdapterMoment}>
-          <DatePicker
+          <DateTimePicker
+            minDateTime={minStartTime}
+            maxDateTime={maxStartTime}
+            timeSteps={{ minutes: 15 }}
             disablePast
-            value={moment(frequency?.start_date, "YYYY-MM-DD")}
+            value={moment(
+              `${frequency?.start_date} ${frequency?.start_time}`,
+              "YYYY-MM-DD HH:mm:ss",
+            )}
             onChange={(value) => {
               handleChange({
                 ...frequency,
                 type: "run_once",
                 start_date: value.format("YYYY-MM-DD"),
-              });
-            }}
-            label="Start Date"
-          />
-          <TimePicker
-            ampm={false}
-            disablePast
-            timeSteps={{ hours: 1, minutes: 10 }}
-            skipDisabled
-            value={moment(frequency?.start_time, "HH:mm:ss")}
-            onChange={(value) => {
-              handleChange({
-                ...frequency,
-                type: "run_once",
                 start_time: value.format("HH:mm:ss"),
               });
             }}
-            label="Start Time"
+            label="Schedule Time"
           />
         </LocalizationProvider>
       )}
       {frequency?.type === "repeat" && (
         <div>
           <LocalizationProvider dateAdapter={AdapterMoment}>
-            <DatePicker
+            <DateTimePicker
+              minDateTime={minStartTime}
+              maxDateTime={maxStartTime}
+              timeSteps={{ minutes: 15 }}
               disablePast
-              value={moment(frequency?.start_date, "YYYY-MM-DD")}
+              value={moment(
+                `${frequency?.start_date} ${frequency?.start_time}`,
+                "YYYY-MM-DD HH:mm:ss",
+              )}
               onChange={(value) => {
                 handleChange({
                   ...frequency,
-                  type: "run_once",
+                  type: "repeat",
                   start_date: value.format("YYYY-MM-DD"),
-                });
-              }}
-              label="Start Date"
-            />
-            <TimePicker
-              ampm={false}
-              disablePast
-              timeSteps={{ hours: 1, minutes: 10 }}
-              skipDisabled
-              value={moment(frequency?.start_time, "HH:mm:ss")}
-              onChange={(value) => {
-                handleChange({
-                  ...frequency,
-                  type: "run_once",
                   start_time: value.format("HH:mm:ss"),
                 });
               }}
-              label="Start Time"
+              label="Schedule Start Time"
             />
             <TextField
               label="Repeat Interval (in days)"
@@ -111,11 +94,7 @@ export default function FrequencyPickerWidget(props) {
             />
             <DatePicker
               disablePast
-              value={
-                frequency?.end_date
-                  ? moment(frequency?.end_date, "YYYY-MM-DD")
-                  : moment().add(6, "months")
-              }
+              value={moment(frequency?.end_date, "YYYY-MM-DD")}
               onChange={(value) => {
                 handleChange({
                   ...frequency,
@@ -123,7 +102,7 @@ export default function FrequencyPickerWidget(props) {
                   end_date: value.format("YYYY-MM-DD"),
                 });
               }}
-              label="End Date"
+              label="Schedule End Date"
             />
           </LocalizationProvider>
         </div>
@@ -143,11 +122,7 @@ export default function FrequencyPickerWidget(props) {
           />
           <DatePicker
             disablePast
-            value={
-              frequency?.end_date
-                ? moment(frequency?.end_date, "YYYY-MM-DD")
-                : moment().add(6, "months")
-            }
+            value={moment(frequency?.end_date, "YYYY-MM-DD")}
             onChange={(value) => {
               handleChange({
                 ...frequency,
@@ -155,7 +130,7 @@ export default function FrequencyPickerWidget(props) {
                 end_date: value.format("YYYY-MM-DD"),
               });
             }}
-            label="End Date"
+            label="Schedule End Date"
           />
         </LocalizationProvider>
       )}
