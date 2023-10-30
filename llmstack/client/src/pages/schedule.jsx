@@ -136,7 +136,7 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
 
 export default function Schedule() {
   const [pageNumber, setPageNumber] = useState(1);
-  const [scheduledAppRuns, setScheduledAppRuns] = useState([]);
+  const [scheduledJobs, setScheduledJobs] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [jobId, setJobId] = useState(null);
@@ -228,9 +228,9 @@ export default function Schedule() {
 
   useEffect(() => {
     axios()
-      .get("/api/jobs/app_run")
+      .get("/api/jobs")
       .then((res) => {
-        setScheduledAppRuns(res.data);
+        setScheduledJobs(res.data);
       });
   }, []);
 
@@ -277,7 +277,7 @@ export default function Schedule() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {scheduledAppRuns.map((row) => {
+              {scheduledJobs.map((row) => {
                 return (
                   <TableRow
                     key={row.uuid}
@@ -300,7 +300,7 @@ export default function Schedule() {
               })}
             </TableBody>
           </Table>
-          {scheduledAppRuns.length > 0 && (
+          {scheduledJobs.length > 0 && (
             <Pagination
               variant="outlined"
               shape="rounded"
