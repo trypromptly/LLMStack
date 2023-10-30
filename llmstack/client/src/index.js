@@ -24,6 +24,9 @@ const DataPage = lazy(() => import("./pages/data"));
 const Discover = lazy(() => import("./pages/discover"));
 const SchedulePage = lazy(() => import("./pages/schedule"));
 const AddAppRunSchedulePage = lazy(() => import("./pages/AddAppRunSchedule"));
+const AddDatasourceRefreshSchedulePage = lazy(() =>
+  import("./pages/AddDatasourceRefreshSchedule"),
+);
 
 const defaultTheme = createTheme({
   typography: {
@@ -259,6 +262,14 @@ router = createBrowserRouter([
     element: (
       <App>
         <AddAppRunSchedulePage />
+      </App>
+    ),
+  },
+  {
+    path: "/schedule/add_datasource_refresh",
+    element: (
+      <App>
+        <AddDatasourceRefreshSchedulePage />
       </App>
     ),
   },
