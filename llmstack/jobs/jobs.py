@@ -27,7 +27,7 @@ def run_app(app_id=None, input_data=None, *args, **kwargs):
     
     return results, errors
 
-def refresh_datasource(datasource_id=None, datasource_entries=[], *args, **kwargs):
+def refresh_datasource(datasource_entries=[], *args, **kwargs):
     from llmstack.datasources.apis import DataSourceViewSet
     
     return None, None
