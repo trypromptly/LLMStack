@@ -323,7 +323,7 @@ const ThemedJsonForm = ({
   validator,
   templates = {},
   widgets = {
-    datasource: (props) => <DataSourceSelector {...props} />,
+    datasource: (props) => <DataSourceSelector multiple={true} {...props} />,
     output_chat: ChatWidget,
     output_text: TextWidget,
     output_image: ImageWidget,
@@ -346,7 +346,9 @@ const ThemedJsonForm = ({
             customselect: CustomselectWidget,
             TextareaWidget: TextAreaWidget,
             FileWidget: CustomFileWidget,
-            datasource: (props) => <DataSourceSelector {...props} />,
+            datasource: (props) => (
+              <DataSourceSelector multiple={true} {...props} />
+            ),
             password: (props) => <SecretTextField {...props} />,
             connectionselect: (props) => <ConnectionSelector {...props} />,
           },

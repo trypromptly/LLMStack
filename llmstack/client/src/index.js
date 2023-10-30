@@ -22,6 +22,11 @@ const AppStudioPage = lazy(() => import("./pages/AppStudio"));
 const AppEditPage = lazy(() => import("./pages/AppEdit"));
 const DataPage = lazy(() => import("./pages/data"));
 const Discover = lazy(() => import("./pages/discover"));
+const SchedulePage = lazy(() => import("./pages/schedule"));
+const AddAppRunSchedulePage = lazy(() => import("./pages/AddAppRunSchedule"));
+const AddDatasourceRefreshSchedulePage = lazy(() =>
+  import("./pages/AddDatasourceRefreshSchedule"),
+);
 
 const defaultTheme = createTheme({
   typography: {
@@ -241,6 +246,30 @@ router = createBrowserRouter([
     element: (
       <App>
         <HistoryPage />
+      </App>
+    ),
+  },
+  {
+    path: "/jobs",
+    element: (
+      <App>
+        <SchedulePage />
+      </App>
+    ),
+  },
+  {
+    path: "/jobs/add_app_run",
+    element: (
+      <App>
+        <AddAppRunSchedulePage />
+      </App>
+    ),
+  },
+  {
+    path: "/jobs/add_datasource_refresh",
+    element: (
+      <App>
+        <AddDatasourceRefreshSchedulePage />
       </App>
     ),
   },

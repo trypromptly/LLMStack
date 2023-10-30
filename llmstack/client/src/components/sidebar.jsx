@@ -22,6 +22,7 @@ import {
   PlayArrowOutlined,
   SettingsOutlined,
   SourceOutlined,
+  ScheduleOutlined,
 } from "@mui/icons-material";
 import { onLogoutClick } from "./logout";
 import { LoggedOutModal } from "./LoggedOutModal";
@@ -62,6 +63,7 @@ function getNavItemIcon(itemLabel) {
     Discover: <LightbulbOutlined />,
     Apps: <AppsOutlined />,
     Data: <SourceOutlined />,
+    Schedule: <ScheduleOutlined />,
     Organization: <CorporateFareOutlined />,
   };
   return iconMap[itemLabel];
