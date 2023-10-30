@@ -24,14 +24,17 @@ export function DataSourceSelector(props) {
       <Autocomplete
         multiple
         id="datasource-selector"
-        options={[
-          ...uniqueDataSources,
-        ]}
+        options={[...uniqueDataSources]}
         getOptionLabel={(option) => {
           const dataSource = uniqueDataSources.find(
-            (uniqueDataSource) => uniqueDataSource.uuid === option)
+            (uniqueDataSource) => uniqueDataSource.uuid === option,
+          );
 
-          return dataSource ? dataSource.name : option.name ? option.name : option;
+          return dataSource
+            ? dataSource.name
+            : option.name
+            ? option.name
+            : option;
         }}
         isOptionEqualToValue={(option, value) => {
           return option.uuid === value.uuid || option.uuid === value;
