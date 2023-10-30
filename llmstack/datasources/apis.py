@@ -49,6 +49,10 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
             datasource__in=datasources,
         )
         return DRFResponse(DataSourceEntrySerializer(instance=datasource_entries, many=True).data)
+    
+    def multiGet(self, request, uids):
+        datasource_entries = DataSourceEntry.objects.filter(uuid__in=uids)
+        return DRFResponse(DataSourceEntrySerializer(instance=datasource_entries, many=True).data)
 
     def delete(self, request, uid):
         datasource_entry_object = get_object_or_404(
