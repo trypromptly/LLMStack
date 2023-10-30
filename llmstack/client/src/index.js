@@ -250,7 +250,7 @@ router = createBrowserRouter([
     ),
   },
   {
-    path: "/schedule",
+    path: "/jobs",
     element: (
       <App>
         <SchedulePage />
@@ -258,7 +258,7 @@ router = createBrowserRouter([
     ),
   },
   {
-    path: "/schedule/add_app_run",
+    path: "/jobs/add_app_run",
     element: (
       <App>
         <AddAppRunSchedulePage />
@@ -266,7 +266,7 @@ router = createBrowserRouter([
     ),
   },
   {
-    path: "/schedule/add_datasource_refresh",
+    path: "/jobs/add_datasource_refresh",
     element: (
       <App>
         <AddDatasourceRefreshSchedulePage />
