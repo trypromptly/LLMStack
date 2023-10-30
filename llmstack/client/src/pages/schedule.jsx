@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Button,
   Grid,
-  Divider,
   Pagination,
   IconButton,
   Table,
@@ -10,7 +9,6 @@ import {
   TableHead,
   TableRow,
   TableCell,
-  Typography,
   Box,
   Chip,
   Dialog,
@@ -24,8 +22,9 @@ import { axios } from "../data/axios";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import PauseCircleOutlinedIcon from "@mui/icons-material/PauseCircleOutlined";
 import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined";
-
 import { enqueueSnackbar } from "notistack";
+
+import SplitButton from "../components/SplitButton";
 
 function ConfirmationModal(props) {
   const { id, open, onOk, onCancel, title, text } = props;
@@ -239,16 +238,25 @@ export default function Schedule() {
     <div id="schedule-page" style={{ marginBottom: "120px" }}>
       <Grid span={24} style={{ padding: "10px" }}>
         <Grid item style={{ width: "100%", padding: "15px 0px" }}>
-          <Button
-            onClick={() => {
-              window.location.href = "/schedule/add_app_run";
-            }}
-            type="primary"
-            variant="contained"
+          <SplitButton
+            options={[
+              {
+                key: 1,
+                title: "Application Run",
+                onClick: () => {
+                  window.location.href = "/schedule/add_app_run";
+                },
+              },
+              {
+                key: 2,
+                title: "Datasource Refresh",
+                onClick: () => {
+                  window.location.href = "/schedule/add_datasource_refresh";
+                },
+              },
+            ]}
             sx={{ float: "left", marginBottom: "10px", textTransform: "none" }}
-          >
-            Schedule App Run
-          </Button>
+          />
         </Grid>
         <Grid item style={{ width: "100%" }}>
           <Table stickyHeader aria-label="sticky table">
