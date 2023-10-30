@@ -22,7 +22,7 @@ export function DataSourceSelector(props) {
   return (
     <FormControl fullWidth>
       <Autocomplete
-        multiple
+        multiple={props.multiple === undefined ? true : props.multiple}
         id="datasource-selector"
         options={[...uniqueDataSources]}
         getOptionLabel={(option) => {
@@ -41,7 +41,7 @@ export function DataSourceSelector(props) {
         }}
         value={
           props.value
-            ? typeof props.value === "string"
+            ? typeof props.value === "string" && props.multiple
               ? [props.value]
               : props.value
             : []
@@ -55,9 +55,17 @@ export function DataSourceSelector(props) {
           />
         )}
         onChange={(event, value) => {
-          props.onChange(
-            value.map((dataSource) => dataSource?.uuid || dataSource),
-          );
+          if (!Array.isArray(value)) {
+            if (props.multiple) {
+              props.onChange([value?.uuid || value]);
+            } else {
+              props.onChange(value?.uuid || value);
+            }
+          } else {
+            props.onChange(
+              value.map((dataSource) => dataSource?.uuid || dataSource),
+            );
+          }
         }}
       />
       <button
