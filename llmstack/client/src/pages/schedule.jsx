@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Grid,
@@ -55,7 +55,7 @@ function ConfirmationModal(props) {
 function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
   function deleteAppRunJob() {
     axios()
-      .delete(`/api/jobs/app_run/${jobId}`)
+      .delete(`/api/jobs/${jobId}`)
       .then((res) => {
         console.log(res);
       })
@@ -68,7 +68,7 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
   }
   function pauseAppRunJob() {
     axios()
-      .post(`/api/jobs/app_run/${jobId}/pause`)
+      .post(`/api/jobs/${jobId}/pause`)
       .then((res) => {
         console.log(res);
       })
@@ -82,7 +82,7 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
 
   const resumeAppRunJob = () => {
     axios()
-      .post(`/api/jobs/app_run/${jobId}/resume`)
+      .post(`/api/jobs/${jobId}/resume`)
       .then((res) => {
         console.log(res);
       })
@@ -156,16 +156,34 @@ export default function Schedule() {
       title: "Type",
       key: "model",
       render: (record, row) => {
-        switch (record) {
-          case "ScheduledJob":
-            return <Chip label="Scheduled Job" color="primary" />;
-          case "RepeatableJob":
-            return <Chip label="Repeatable Job" color="primary" />;
-          case "CronJob":
-            return <Chip label="Cron Job" color="primary" />;
-          default:
-            return null;
-        }
+        const getJobTypeTitle = () => {
+          switch (record) {
+            case "ScheduledJob":
+              return "Scheduled Job";
+            case "RepeatableJob":
+              return "Repeatable Job";
+            case "CronJob":
+              return "Cron Job";
+            default:
+              return null;
+          }
+        };
+        const getJobCategoryTitle = () => {
+          switch (row?.task_category) {
+            case "app_run":
+              return "Application Run";
+            case "datasource_refresh":
+              return "Datasource Refresh";
+            default:
+              return null;
+          }
+        };
+        return (
+          <div>
+            <Chip label={getJobCategoryTitle()} color="primary" />
+            <Chip label={getJobTypeTitle()} color="secondary" />
+          </div>
+        );
       },
     },
     {

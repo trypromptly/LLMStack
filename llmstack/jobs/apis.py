@@ -134,20 +134,7 @@ class AppRunJobsViewSet(JobsViewSet):
         
         return DRFResponse(status=204)
     
-    def list(self, request):
-        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user, task_category='app_run')
-        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user, task_category='app_run')
-        cron_jobs = CronJob.objects.filter(owner=request.user, task_category='app_run')
-        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
-        return DRFResponse(status=200, data=jobs)
 
-    def _get_job_by_uuid(self, uid, request):
-        job = ScheduledJob.objects.filter(owner=request.user, uuid=uid).first()
-        if not job:
-            job = RepeatableJob.objects.filter(owner=request.user, uuid=uid).first()
-        if not job:
-            job = CronJob.objects.filter(owner=request.user, uuid=uid).first()
-        return job
     
 class DataSourceRefreshJobsViewSet(JobsViewSet):
     def get_permissions(self):
@@ -230,9 +217,3 @@ class DataSourceRefreshJobsViewSet(JobsViewSet):
         
         return DRFResponse(status=204)
     
-    def list(self, request):
-        scheduled_jobs = ScheduledJob.objects.filter(owner=request.user, task_category='datasource_refresh')
-        repeatable_jobs = RepeatableJob.objects.filter(owner=request.user, task_category='datasource_refresh')
-        cron_jobs = CronJob.objects.filter(owner=request.user, task_category='datasource_refresh')
-        jobs = list(map(lambda entry: entry.to_dict(),scheduled_jobs)) + list(map(lambda entry: entry.to_dict(),repeatable_jobs)) + list(map(lambda entry: entry.to_dict(),cron_jobs))
-        return DRFResponse(status=200, data=jobs)

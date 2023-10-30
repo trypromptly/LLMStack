@@ -327,6 +327,7 @@ class BaseTask(models.Model):
         res = dict(
             uuid=self.uuid,
             model=self.TASK_TYPE,
+            task_category=self.task_category,
             name=self.name,
             callable=self.callable,
             callable_args=self.callable_args,

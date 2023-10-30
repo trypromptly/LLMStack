@@ -44,11 +44,7 @@ export default function FrequencyPickerWidget(props) {
         <LocalizationProvider dateAdapter={AdapterMoment}>
           <DatePicker
             disablePast
-            value={
-              frequency?.start_date
-                ? moment(frequency?.start_date, "YYYY-MM-DD")
-                : moment()
-            }
+            value={moment(frequency?.start_date, "YYYY-MM-DD")}
             onChange={(value) => {
               handleChange({
                 ...frequency,
@@ -80,11 +76,7 @@ export default function FrequencyPickerWidget(props) {
           <LocalizationProvider dateAdapter={AdapterMoment}>
             <DatePicker
               disablePast
-              value={
-                frequency?.start_date
-                  ? moment(frequency?.start_date, "YYYY-MM-DD")
-                  : moment()
-              }
+              value={moment(frequency?.start_date, "YYYY-MM-DD")}
               onChange={(value) => {
                 handleChange({
                   ...frequency,
