@@ -133,6 +133,7 @@ stability-sdk = {version = "0.8.4", allow-prereleases = true}
 anthropic = "^0.3.11"
 toml = "^0.10.2"
 junos-eznc = {version="^2.6.8", optional=true}
+fakeredis = "^2.20.0"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]

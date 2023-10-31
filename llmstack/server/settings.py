@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
 
+
 from django.utils.log import DEFAULT_LOGGING
+from fakeredis import FakeConnection
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -259,16 +261,25 @@ CACHES = {
         'BACKEND': f"django.core.cache.backends.{os.getenv('CACHE_BACKEND', 'redis.RedisCache')}",
         'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/1",
         'TIMEOUT': 3600,
+        'OPTIONS': {
+            'connection_class': FakeConnection,
+        }
     },
     'app_session': {
         'BACKEND': f"django.core.cache.backends.{os.getenv('CACHE_BACKEND', 'redis.RedisCache')}",
         'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/2",
         'TIMEOUT': 3600,
+        'OPTIONS': {
+            'connection_class': FakeConnection,
+        }
     },
     'app_session_data': {
         'BACKEND': f"django.core.cache.backends.{os.getenv('CACHE_BACKEND', 'redis.RedisCache')}",
         'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/3",
         'TIMEOUT': 3600,
+        'OPTIONS': {
+            'connection_class': FakeConnection,
+        }
     },
 }
 
