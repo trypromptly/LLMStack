@@ -80,7 +80,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
 
       reader.readAsText(file);
     }
-  }, [file]);
+  }, [file, columnData, onChange, readString]);
 
   const handleRowEditStop = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
