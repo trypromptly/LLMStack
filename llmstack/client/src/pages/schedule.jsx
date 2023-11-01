@@ -27,7 +27,7 @@ import { enqueueSnackbar } from "notistack";
 import SplitButton from "../components/SplitButton";
 
 function ConfirmationModal(props) {
-  const { id, open, onOk, onCancel, title, text } = props;
+  const { open, onOk, onCancel, title, text } = props;
   return (
     <Dialog
       title={title ? title : "Logged Out"}
