@@ -154,6 +154,7 @@ class Weaviate(VectorStoreInterface):
                 auth_client_secret=weaviate.AuthClientPassword(
                     username=configuration.username, password=configuration.password),
                 additional_headers=headers,
+                timeout_config=(2, 20),
             )
         elif configuration.api_key is not None:
             self._client = weaviate.Client(
@@ -161,11 +162,13 @@ class Weaviate(VectorStoreInterface):
                 auth_client_secret=weaviate.AuthApiKey(
                     api_key=configuration.api_key),
                 additional_headers=headers,
+                timeout_config=(2, 20),
             )
         else:
             self._client = weaviate.Client(
                 url=configuration.url,
                 additional_headers=headers,
+                timeout_config=(2, 20),
             )
 
         self.client.batch.configure(
