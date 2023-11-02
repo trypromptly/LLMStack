@@ -54,81 +54,66 @@ class ProfileActivityProcessor(ApiProcessorInterface[ProfileActivityInput, Profi
     def provider_slug() -> str:
         return 'linkedin'
 
-    def process(self) -> dict:
-        output_stream = self._output_stream
-
-        from playwright.sync_api import sync_playwright
+    async def _get_profile_activity(self):
+        from playwright.async_api import async_playwright
         from django.conf import settings
-
-        posts = []
-        comments = []
-        reactions = []
-        error = None
-
         try:
-            with sync_playwright() as p:
+            
+            async with async_playwright() as playwright:
                 storage_state = self._env['connections'][self._config.connection_id]['configuration']['_storage_state']
-                browser = p.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(
-                    settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else p.chromium.launch()
-                context = browser.new_context(storage_state=storage_state)
 
-                page = context.new_page()
-
+                browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await playwright.chromium.launch()
+                context = await browser.new_context(storage_state=storage_state)
+                page = await context.new_page()
                 if self._input.search_term:
-                    page.goto(
-                        f'https://www.linkedin.com/search/results/people/?keywords={self._input.search_term}')
-                    page.wait_for_selector(
-                        'div.search-results-container', timeout=5000)
-                    results = page.query_selector_all(
-                        'span.entity-result__title-text')
+                    await page.goto(f'https://www.linkedin.com/search/results/people/?keywords={self._input.search_term}')
+                    await page.wait_for_selector('div.search-results-container', timeout=5000)
+                    results = await page.query_selector_all('span.entity-result__title-text')
 
                     # Click on the first link, wait for the page to load and get the URL
                     if len(results) > 0:
-                        results[0].click()
+                        await results[0].click()
                     else:
-                        raise Exception(
-                            f'No results found for search term {self._input.search_term}')
+                        raise Exception(f'No results found for search term {self._input.search_term}')
 
-                    page.wait_for_selector('div.body', timeout=5000)
+                    await page.wait_for_selector('div.body', timeout=5000)
                     self._input.profile_url = page.url
-
+                    
                 # Get posts
-                page.goto(f'{self._input.profile_url}/recent-activity/all/')
-                page.wait_for_selector(
-                    'div.feed-shared-update-v2', timeout=5000)
-                results = page.query_selector_all(
-                    'div.feed-shared-update-v2')
-                posts = [result.inner_text() for result in results]
-
+                await page.goto(f'{self._input.profile_url}/recent-activity/all/')
+                await page.wait_for_selector('div.feed-shared-update-v2', timeout=5000)
+                results = await page.query_selector_all('div.feed-shared-update-v2')
+                posts = [await result.inner_text() for result in results]
+                
                 # Get comments
-                page.goto(
-                    f'{self._input.profile_url}/recent-activity/comments/')
-                page.wait_for_selector(
-                    'div.feed-shared-update-v2', timeout=5000)
-                results = page.query_selector_all(
-                    'div.feed-shared-update-v2')
-                comments = [result.inner_text() for result in results]
-
+                await page.goto(f'{self._input.profile_url}/recent-activity/comments/')
+                await page.wait_for_selector('div.feed-shared-update-v2', timeout=5000)
+                results = await page.query_selector_all('div.feed-shared-update-v2')
+                comments = [await result.inner_text() for result in results]
+                
                 # Get reactions
-                page.goto(
-                    f'{self._input.profile_url}/recent-activity/reactions/')
-                page.wait_for_selector(
-                    'div.feed-shared-update-v2', timeout=5000)
-                results = page.query_selector_all(
-                    'div.feed-shared-update-v2')
-                reactions = [result.inner_text() for result in results]
+                await page.goto(f'{self._input.profile_url}/recent-activity/reactions/')
+                await page.wait_for_selector('div.feed-shared-update-v2', timeout=5000)
+                results = await page.query_selector_all('div.feed-shared-update-v2')
+                reactions = [await result.inner_text() for result in results]
+                
+                await browser.close()
+                return ProfileActivityOutput(
+                    posts=posts[:self._config.n_posts],
+                    comments=comments[:self._config.n_comments],
+                    reactions=reactions[:self._config.n_reactions],
+                    profile_url=self._input.profile_url,
+                )
         except Exception as e:
             logger.exception(e)
-            error = f'Error getting profile activity: {e}'
+            return ProfileActivityOutput(error=f'Error getting profile activity: {e}')
 
-        async_to_sync(output_stream.write)(
-            ProfileActivityOutput(
-                posts=posts[:self._config.n_posts],
-                comments=comments[:self._config.n_comments],
-                reactions=reactions[:self._config.n_reactions],
-                profile_url=self._input.profile_url,
-                error=error,
-            ),
-        )
+        
+    def process(self) -> dict:
+        output_stream = self._output_stream
+
+        result = async_to_sync(self._get_profile_activity)()
+
+        async_to_sync(output_stream.write)(result)
 
         return output_stream.finalize()

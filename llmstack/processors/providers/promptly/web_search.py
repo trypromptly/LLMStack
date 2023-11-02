@@ -7,8 +7,6 @@ from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
 
-logger = logging.getLogger(__name__)
-
 
 class SearchEngine(str, Enum):
     GOOGLE = 'Google'
@@ -71,6 +69,30 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
     @staticmethod
     def provider_slug() -> str:
         return 'promptly'
+    
+    
+    async def _get_results(self, search_url, k):
+        from playwright.async_api import async_playwright
+        from django.conf import settings
+        
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await playwright.chromium.launch()
+            page = await browser.new_page()
+            await page.goto(search_url)
+            await page.wait_for_selector('div#main')
+            results = await page.query_selector_all('div#main div.g')
+            results = results[:k]
+            output = []
+            for result in results:
+                a = await result.query_selector('a')
+                href = await a.get_attribute('href')
+                text = await result.text_content()
+                output.append(WebSearchResult(text=text, source=href))
+                
+
+            await browser.close()
+            return output
+        
 
     def process(self) -> dict:
         output_stream = self._output_stream
@@ -80,21 +102,8 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
 
         search_url = f'https://www.google.com/search?q={query}'
 
-        # Open playwright browser and search
-        from playwright.sync_api import sync_playwright
-        from django.conf import settings
-        with sync_playwright() as p:
-            browser = p.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(
-                settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else p.chromium.launch()
-            page = browser.new_page()
-            page.goto(search_url)
-            page.wait_for_selector('div#main')
-            results = page.query_selector_all('div#main div.g')
-            results = results[:k]
-            results = list(map(lambda x: WebSearchResult(
-                text=x.text_content(), source=x.query_selector('a').get_attribute('href')), results))
-            browser.close()
-
+        results = async_to_sync(self._get_results)(search_url, k)
+        
         async_to_sync(output_stream.write)(WebSearchOutput(
             results=results
         ))
