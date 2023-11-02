@@ -7,8 +7,6 @@ from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
 
-logger = logging.getLogger(__name__)
-
 
 class SearchEngine(str, Enum):
     GOOGLE = 'Google'
@@ -104,12 +102,6 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
 
         search_url = f'https://www.google.com/search?q={query}'
 
-        # Open playwright browser and search
-        from playwright.sync_api import sync_playwright
-        from django.conf import settings
-        logger.info(hasattr(
-                settings, 'PLAYWRIGHT_URL'))
-        
         results = async_to_sync(self._get_results)(search_url, k)
         
         async_to_sync(output_stream.write)(WebSearchOutput(
