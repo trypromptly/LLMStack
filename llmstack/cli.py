@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 
 
@@ -83,8 +84,11 @@ def main():
 
     if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
         print('Starting LLMStack')
+        run_server_command = ['manage.py', 'runserver', os.environ['LLMSTACK_PORT']]
+        if 'windows' in platform.platform().lower():
+            run_server_command.append('--noreload')
         run_django_command(
-            ['manage.py', 'runserver', os.environ['LLMSTACK_PORT']])
+            run_server_command)
         sys.exit(0)
 
     if len(sys.argv) > 1 and sys.argv[1] == 'manage.py':
