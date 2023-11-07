@@ -7,7 +7,6 @@ from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
 
-
 class SearchEngine(str, Enum):
     GOOGLE = 'Google'
 
@@ -101,11 +100,7 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
 
         query = self._input.query
         k = self._config.k
-        if api_key is None or cx is None:
-            # Fallback to playwright
-            search_url = f'https://www.google.com/search?q={query}'
-            results = async_to_sync(self._get_results_with_playwright)(search_url, k)
-        else:
+        if api_key and cx:
             # Use Google Custom Search API
             url = 'https://www.googleapis.com/customsearch/v1'
             params = {
@@ -122,6 +117,11 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
                     results.append(WebSearchResult(text=item['title'], source=item['link']))
             else:
                 results = []
+        else:
+            # Fallback to playwright
+            search_url = f'https://www.google.com/search?q={query}'
+            results = async_to_sync(self._get_results_with_playwright)(search_url, k)
+            
         
         async_to_sync(output_stream.write)(WebSearchOutput(
             results=results

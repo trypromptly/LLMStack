@@ -199,6 +199,10 @@ class AbstractProfile(models.Model):
             return api_key_value if api_key_value else settings.DEFAULT_LOCALAI_BASE_URL
         elif attrname == 'anthropic_api_key':
             return self.decrypt_value(api_key_value) if api_key_value else settings.DEFAULT_ANTHROPIC_API_KEY
+        elif attrname == 'google_custom_search_api_key':
+            return api_key_value if api_key_value else settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY
+        elif attrname == 'google_custom_search_cx':
+            return api_key_value if api_key_value else settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_CX
         else:
             return None
 
@@ -242,6 +246,8 @@ class AbstractProfile(models.Model):
             'weaviate_text2vec_config': self.weaviate_text2vec_config,
             'promptly_token': self.token,
             'connections': self.connections,
+            'google_custom_search_api_key': self.get_vendor_key('google_custom_search_api_key'),
+            'google_custom_search_cx': self.get_vendor_key('google_custom_search_cx'),
         }
 
     def is_basic_subscriber(self):
