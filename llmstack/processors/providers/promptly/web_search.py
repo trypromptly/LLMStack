@@ -114,7 +114,7 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
                 items = response_data.get('items', [])
                 results = []
                 for item in items:
-                    results.append(WebSearchResult(text=item['title'], source=item['link']))
+                    results.append(WebSearchResult(text=f"{item['title']}. {item['snippet']}", source=item['link']))
             else:
                 results = []
         else:
