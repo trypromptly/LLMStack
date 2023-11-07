@@ -1,9 +1,11 @@
 import copy
-from llmstack.connections.models import ConnectionStatus
-from pydantic import BaseModel
-from typing import Generic, Iterator, TypeVar
+from typing import Any, Generic, Iterator, TypeVar
+
 from django.conf import settings
+from pydantic import BaseModel
+
 from llmstack.common.utils.module_loader import get_all_sub_classes
+from llmstack.connections.models import Connection, ConnectionActivationInput
 
 
 def get_connection_type_interface_subclasses():
@@ -114,9 +116,13 @@ class ConnectionTypeInterface(Generic[ConnectionConfigurationSchemaType]):
         connection_type_interface = cls.__orig_bases__[0]
         return connection_type_interface.__args__[0].parse_obj(config)
 
-    def activate(self, connection) -> Iterator[str]:
+    async def activate(self, connection: Connection) -> Iterator[str]:
         # Establish connection and persist any connection artifacts
         raise NotImplementedError
+
+    def input(self, activation_input: ConnectionActivationInput) -> None:
+        # Input data from the user
+        pass
 
     @classmethod
     def get_config_schema(cls) -> ConnectionConfigurationSchemaType:

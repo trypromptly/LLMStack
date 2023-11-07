@@ -19,6 +19,10 @@ import { Ws } from "../../data/ws";
 import { connectionTypesState } from "../../data/atoms";
 import { enqueueSnackbar } from "notistack";
 import ThemedJsonForm from "../ThemedJsonForm";
+import RemoteBrowser from "./RemoteBrowser";
+import { useRecoilCallback } from "recoil";
+import { axios } from "../../data/axios";
+import { connectionsState } from "../../data/atoms";
 
 function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
   const connectionTypes = useRecoilValue(connectionTypesState);
@@ -35,6 +39,23 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
   const [localConnection, setLocalConnection] = useState(connection || {});
   const [validationErrors, setValidationErrors] = useState([]);
   const [connectionActive, setConnectionActive] = useState(false);
+  const [isRemoteBrowser, setIsRemoteBrowser] = useState(false);
+  const [remoteBrowserWsUrl, setRemoteBrowserWsUrl] = useState("");
+  const [remoteBrowserTimeout, setRemoteBrowserTimeout] = useState(10);
+  const [connectionWs, setConnectionWs] = useState(null);
+
+  const reloadConnections = useRecoilCallback(({ set }) => () => {
+    axios()
+      .get("/api/connections")
+      .then((res) => {
+        set(connectionsState, res.data);
+      })
+      .catch((err) => {
+        enqueueSnackbar("Error loading connections", {
+          variant: "error",
+        });
+      });
+  });
 
   const validateForm = () => {
     let errors = [];
@@ -99,6 +120,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
         );
 
         if (ws) {
+          setConnectionWs(ws);
           ws.setOnMessage((evt) => {
             const message = JSON.parse(evt.data);
 
@@ -109,6 +131,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
               setConnectionActive(true);
               ws.close();
               onCancelCb();
+              reloadConnections();
             }
 
             if (message.event === "error") {
@@ -121,6 +144,17 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
                 },
               );
               ws.close();
+            }
+
+            if (
+              message.event === "output" &&
+              message.output &&
+              message.output.ws_url
+            ) {
+              console.log(message);
+              setRemoteBrowserWsUrl(message.output.ws_url);
+              setRemoteBrowserTimeout(message.output.timeout);
+              setIsRemoteBrowser(true);
             }
           });
 
@@ -135,14 +169,8 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
   };
 
   useEffect(() => {
-    if (
-      localConnection &&
-      localConnection.configuration &&
-      configFormData !== localConnection.configuration
-    ) {
-      setConfigFormData(localConnection?.configuration);
-    }
-  }, [localConnection, configFormData]);
+    setTimeout(() => setConfigFormData(connection?.configuration || {}), 500);
+  }, [connection]);
 
   useEffect(() => {
     if (!open) {
@@ -271,6 +299,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
           }}
           formData={configFormData}
           onChange={({ formData }) => {
+            setConnectionActive(false);
             setConfigFormData(formData);
             setLocalConnection({
               ...localConnection,
@@ -278,12 +307,30 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
             });
           }}
         />
+        {isRemoteBrowser && (
+          <RemoteBrowser
+            wsUrl={remoteBrowserWsUrl}
+            timeout={remoteBrowserTimeout}
+            onClose={() => {
+              console.log("Closing remote browser");
+              setIsRemoteBrowser(false);
+              setRemoteBrowserWsUrl(null);
+              connectionWs.send(
+                JSON.stringify({
+                  event: "input",
+                  input: "terminate",
+                }),
+              );
+            }}
+          />
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCloseCb}>Cancel</Button>
         {!connectionActive && (
           <Button
             onClick={testConnection({
+              ...connection,
               ...localConnection,
               ...{
                 provider_slug: connectionType?.provider_slug,
@@ -299,6 +346,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
           <Button
             onClick={() =>
               handleSaveCb({
+                ...connection,
                 ...localConnection,
                 ...{
                   provider_slug: connectionType?.provider_slug,

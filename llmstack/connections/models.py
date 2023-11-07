@@ -1,6 +1,8 @@
 import datetime
 import uuid
 from enum import Enum
+from typing import Optional
+
 from pydantic import BaseModel, validator
 
 """
@@ -45,3 +47,11 @@ class Connection(BaseModel):
 
     def __str__(self):
         return f'{self.name} ({self.id})'
+
+
+class ConnectionActivationOutput(BaseModel):
+    data: dict
+
+
+class ConnectionActivationInput(BaseModel):
+    data: Optional[str]

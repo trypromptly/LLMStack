@@ -5,11 +5,15 @@ import uuid
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.http import HttpRequest
-from django.http import QueryDict
+from django.http import HttpRequest, QueryDict
 
 from llmstack.connections.actors import ConnectionActivationActor
-from llmstack.connections.models import Connection
+from llmstack.connections.models import (
+    Connection,
+    ConnectionActivationInput,
+    ConnectionActivationOutput,
+    ConnectionStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -105,30 +109,57 @@ class ConnectionConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         self.connection_activation_actor.stop()
-        self.close()
+        if self._activation_task and not self._activation_task.done():
+            self._activation_task.cancel()
+        self.close(code=close_code)
+
+    async def _activate_connection(self):
+        try:
+            output = await self.connection_activation_actor.activate()
+            async for c in output:
+                if isinstance(c, Connection):
+                    if c.status == ConnectionStatus.ACTIVE:
+                        await self.connection_activation_actor.set_connection(c)
+                    await self.send(text_data=json.dumps(
+                        {'event': 'success' if c.status == ConnectionStatus.ACTIVE else 'error'}))
+                    self.connection_activation_actor.stop()
+                elif isinstance(c, ConnectionActivationOutput):
+                    await self.send(text_data=json.dumps(
+                        {'event': 'output', 'output': c.data}))
+                elif isinstance(c, dict):
+                    connection = c.get('connection', None)
+                    if connection:
+                        await self.connection_activation_actor.set_connection(connection)
+                    if c.get('error', None):
+                        await self.send(text_data=json.dumps(
+                            {'event': 'error', 'error': c.get('error')}))
+                await asyncio.sleep(0.01)
+        except Exception as e:
+            logger.exception(e)
+            self.connection_activation_actor.stop()
+
+    async def _handle_input(self, text_data=None, bytes_data=None):
+        try:
+            await self.connection_activation_actor.input(ConnectionActivationInput(data=text_data)).get()
+        except Exception as e:
+            logger.exception(e)
 
     async def receive(self, text_data=None, bytes_data=None):
-        json_data = json.loads(text_data)
+        json_data = json.loads(text_data or '{}')
         input = json_data.get('input', {})
         event = json_data.get('event', None)
 
         if event == 'activate':
-            try:
-                output = await self.connection_activation_actor.activate()
-                async for c in output:
-                    if isinstance(c, Connection):
-                        await self.connection_activation_actor.set_connection(c)
-                        await self.send(text_data=json.dumps(
-                            {'event': 'success'}))
-                    elif isinstance(c, dict):
-                        connection = c.get('connection', None)
-                        if connection:
-                            await self.connection_activation_actor.set_connection(connection)
-                        if c.get('error', None):
-                            await self.send(text_data=json.dumps(
-                                {'event': 'error', 'error': c.get('error')}))
-            except Exception as e:
-                logger.exception(e)
+            loop = asyncio.get_running_loop()
+            self._activation_task = loop.create_task(
+                self._activate_connection(),
+            )
 
-        # Disconnect for any other activity
-        self.disconnect(1000)
+        if event == 'input' and input == 'terminate':
+            try:
+                self.connection_activation_actor.input(
+                    ConnectionActivationInput(data=input))
+            except Exception:
+                pass
+            finally:
+                self.disconnect(1000)

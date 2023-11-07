@@ -22,6 +22,7 @@ packages = [
 
 [tool.poetry.scripts]
 llmstack = "llmstack.cli:main"
+llmstack-runner = "llmstack.common.runner.server:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -107,7 +108,7 @@ ujson = {version = "5.7.0", allow-prereleases = true}
 orjson = {version = "3.8.14", allow-prereleases = true}
 beautifulsoup4 = {version = "4.12.2", allow-prereleases = true}
 django-jsonform = {version = "2.17.4", allow-prereleases = true}
-playwright = {version = "1.35.0", allow-prereleases = true}
+playwright = "^1.39.0"
 geoip2 = {version = "4.7.0", allow-prereleases = true}
 weaviate-client = {version = "3.22.1", allow-prereleases = true}
 google-auth = {version = "2.22.0", allow-prereleases = true}
@@ -133,6 +134,8 @@ stability-sdk = {version = "0.8.4", allow-prereleases = true}
 anthropic = "^0.3.11"
 toml = "^0.10.2"
 junos-eznc = {version="^2.6.8", optional=true}
+simplejson = "^3.19.2"
+websockify = "^0.11.0"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]

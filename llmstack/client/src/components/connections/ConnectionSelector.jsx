@@ -6,8 +6,6 @@ import FormControl from "@mui/material/FormControl";
 function ConnectionSelector(props) {
   const connections = useRecoilValue(connectionsState);
 
-  console.log(props);
-
   return (
     <FormControl fullWidth>
       <Autocomplete

@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+enum BrowserCommandType {
+  GOTO = 0; // go to url
+  TERMINATE = 1; // terminate session
+}
+
+message BrowserInput {
+  BrowserCommandType type = 1; // command type
+  string data = 2; // command data
+}
+
+message BrowserInitData {
+  string url = 1; // url to open
+  string terminate_url_pattern = 2; // url pattern to terminate session
+  int32 timeout = 3; // timeout in seconds
+  bool persist_session = 4; // persist session after done
+  string session_data = 5; // session data to restore
+}
+
+message RemoteBrowserRequest {
+  BrowserInitData init_data = 1; // init data
+  BrowserInput input = 5; // input to send to browser
+}
+
+enum RemoteBrowserState {
+  RUNNING = 0; // browser is running
+  TERMINATED = 1; // browser is terminated
+  TIMEOUT = 2; // browser is timed out
+}
+
+message RemoteBrowserSession {
+  string ws_url = 1; // websocket url to connect to for remote display
+  string session_data = 2; // session data to persist
+}
+
+message RemoteBrowserResponse {
+  RemoteBrowserSession session = 1; // session data
+  RemoteBrowserState state = 2; // state of browser
+}
+
+// Generic runner service
+service Runner {
+
+  rpc GetRemoteBrowser (stream RemoteBrowserRequest) returns (stream RemoteBrowserResponse) {}
+
+}
