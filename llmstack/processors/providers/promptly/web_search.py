@@ -4,9 +4,6 @@ from typing import List
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
-from google.auth.transport.requests import Request
-from google.oauth2 import service_account
-from urllib.parse import urlencode
 
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
 
