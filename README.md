@@ -110,7 +110,7 @@ llmstack
 
 > You can skip running `npm install` and `npm run build` if you have already built the client before
 
-For frontend development, you can use `REACT_APP_SERVER=http://localhost:3000 npm start` to start the development server in client directory. You can also use `npm run build` to build the frontend and serve it from the backend server.
+For frontend development, you can use `REACT_APP_API_SERVER=localhost:3000 npm start` to start the development server in client directory. You can also use `npm run build` to build the frontend and serve it from the backend server.
 
 To update documentation, make changes to `web/docs` directory and run `npm run build` in web directory to build the documentation. You can use `npm start` in web directory to serve the documentation locally.
 
