@@ -1,9 +1,12 @@
-import logging
+import requests
 from enum import Enum
 from typing import List
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
+from google.auth.transport.requests import Request
+from google.oauth2 import service_account
+from urllib.parse import urlencode
 
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
 
@@ -71,7 +74,7 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
         return 'promptly'
     
     
-    async def _get_results(self, search_url, k):
+    async def _get_results_with_playwright(self, search_url, k):
         from playwright.async_api import async_playwright
         from django.conf import settings
         
@@ -96,13 +99,32 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
 
     def process(self) -> dict:
         output_stream = self._output_stream
+        api_key = self._env.get('google_custom_search_api_key', None)
+        cx = self._env.get('google_custom_search_cx', None)
 
         query = self._input.query
         k = self._config.k
-
-        search_url = f'https://www.google.com/search?q={query}'
-
-        results = async_to_sync(self._get_results)(search_url, k)
+        if api_key is None or cx is None:
+            # Fallback to playwright
+            search_url = f'https://www.google.com/search?q={query}'
+            results = async_to_sync(self._get_results_with_playwright)(search_url, k)
+        else:
+            # Use Google Custom Search API
+            url = 'https://www.googleapis.com/customsearch/v1'
+            params = {
+                'key': api_key,
+                'cx': cx,
+                'q': query,
+            }
+            response = requests.get(url, params=params)
+            if response.ok:
+                response_data = response.json()
+                items = response_data.get('items', [])
+                results = []
+                for item in items:
+                    results.append(WebSearchResult(text=item['title'], source=item['link']))
+            else:
+                results = []
         
         async_to_sync(output_stream.write)(WebSearchOutput(
             results=results
