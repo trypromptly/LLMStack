@@ -1,6 +1,11 @@
 import os
 import platform
+import secrets
+import subprocess
 import sys
+
+import docker
+import toml
 
 
 def run_django_command(command: list[str] = ['manage.py', 'runserver']):
@@ -27,9 +32,6 @@ def prepare_env():
 
         # Given this is the first time the user is running llmstack, we should
         # ask the user for secret key, cipher_key_salt, database_password and save it in the config file
-        import secrets
-
-        import toml
         config_path = os.path.join(
             os.path.expanduser('~'), '.llmstack', 'config')
         config = {}
@@ -51,8 +53,6 @@ def prepare_env():
             config['llmstack']['default_openai_api_key'] = input(
                 'Enter default OpenAI API key: (Leave empty to configure in settings later) ') or ''
 
-            if not 'generatedfiles_root' in config:
-                config['generatedfiles_root'] = './generatedfiles'
         with open(config_path, 'w') as f:
             toml.dump(config, f)
 
@@ -67,21 +67,99 @@ def prepare_env():
         sys.exit(
             'ERROR: config file not found. Please create one in ~/.llmstack/config')
 
-    return os.path.join('config')
+    # Updates to config.toml
+    config_path = os.path.join('config')
+    config = {}
+    with open(config_path) as f:
+        config = toml.load(f)
+
+        if not 'generatedfiles_root' in config:
+            config['generatedfiles_root'] = './generatedfiles'
+
+        if not 'llmstack-runner' in config:
+            config['llmstack-runner'] = {}
+
+        if not 'host' in config['llmstack-runner']:
+            config['llmstack-runner']['host'] = 'localhost'
+
+        if not 'port' in config['llmstack-runner']:
+            config['llmstack-runner']['port'] = 50051
+
+        if not 'wss_port' in config['llmstack-runner']:
+            config['llmstack-runner']['wss_port'] = 50052
+
+    with open(config_path, 'w') as f:
+        toml.dump(config, f)
+
+    return config_path
+
+
+def start_runner(environment):
+    """Start llmstack-runner container"""
+    print('Starting LLMStack Runner')
+    client = docker.from_env()
+    runner_container = None
+    try:
+        runner_container = client.containers.get('llmstack-runner')
+    except docker.errors.NotFound:
+        runner_container = client.containers.run('llmstack-runner', name='llmstack-runner',
+                                                 ports={
+                                                     '50051/tcp': os.environ['RUNNER_PORT'], '50052/tcp': os.environ['RUNNER_WSS_PORT']},
+                                                 detach=True, remove=True, environment=environment,)
+
+    # Start runner container if not already running
+    if runner_container.status != 'running':
+        runner_container.start()
+
+    # Stream logs starting from the end to stdout
+    for line in runner_container.logs(stream=True, follow=True):
+        print(f'[llmstack-runner] {line.decode("utf-8").strip()}')
+
+
+def stop_runner():
+    """Stop llmstack-runner container"""
+    print('Stopping LLMStack Runner')
+    client = docker.from_env()
+    runner_container = None
+    try:
+        runner_container = client.containers.get('llmstack-runner')
+    except docker.errors.NotFound:
+        pass
+
+    if runner_container:
+        runner_container.stop()
+
+    client.close()
 
 
 def main():
     """Main entry point for the application script"""
 
+    def signal_handler(sig, frame):
+        stop_runner()
+        if runner_thread.is_alive():
+            runner_thread.join()
+        if server_process.poll() is None:  # Check if the process is still running
+            server_process.terminate()
+            server_process.wait()
+        sys.exit(0)
+
     # Get config file path
     env_path = prepare_env()
 
     # Load environment variables from config under [llmstack] section
-    import toml
+    llmstack_environment = {}
+    runner_environment = {}
     with open(env_path) as f:
         config = toml.load(f)
         for key in config['llmstack']:
             os.environ[key.upper()] = str(config['llmstack'][key])
+            llmstack_environment[key.upper()] = str(config['llmstack'][key])
+        for key in config['llmstack-runner']:
+            os.environ[f'RUNNER_{key.upper()}'] = str(
+                config['llmstack-runner'][key])
+            runner_environment[f'RUNNER_{key.upper()}'] = str(
+                config['llmstack-runner'][key])
 
     if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
         print('Starting LLMStack')
@@ -104,8 +182,13 @@ def main():
     run_django_command(['manage.py', 'clearcache'])
 
     # Install default playwright browsers
-    import subprocess
     subprocess.run(['playwright', 'install', 'chromium'])
+
+    # Start llmstack-runner container in a separate thread
+    import threading
+    runner_thread = threading.Thread(
+        target=start_runner, args=([runner_environment]))
+    runner_thread.start()
 
     # Run llmstack runserver in a separate process
     server_process = subprocess.Popen(['llmstack', 'runserver'])
@@ -127,7 +210,21 @@ def main():
 
     webbrowser.open(f'http://localhost:{os.environ["LLMSTACK_PORT"]}')
 
-    # Wait for server process to exit
+    # Wait for signal to stop
+    import signal
+
+    # Register the signal handler for SIGINT
+    signal.signal(signal.SIGINT, signal_handler)
+
+    # Block the main thread until a signal is received
+    signal.pause()
+
+    # Stop runner container
+    stop_runner()
+    runner_thread.join()
+
+    # Stop server process
+    server_process.terminate()
     server_process.wait()
 
 

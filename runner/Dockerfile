@@ -27,6 +27,8 @@ COPY runner/docker-entrypoint.sh /code/docker-entrypoint.sh
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi
 
+RUN chmod +x /code/docker-entrypoint.sh
+
 ENTRYPOINT [ "/code/docker-entrypoint.sh" ]
 
 CMD [ "llmstack-runner" ]

@@ -324,10 +324,10 @@ def main():
     runner.wss_secure = args.wss_secure
 
     add_RunnerServicer_to_server(runner, server)
-    server.add_insecure_port(f'{args.host}:{args.port}')
+    server.add_insecure_port(f'[::]:{args.port}')
     server.start()
 
-    logger.info(f"Server running at http://{args.host}:{args.port}")
+    logger.info(f"Server running at http://[::]:{args.port}")
     server.wait_for_termination()
 
     # Stop websockify server

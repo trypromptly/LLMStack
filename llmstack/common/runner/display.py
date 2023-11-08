@@ -162,7 +162,8 @@ class VirtualDisplayPool():
                 return display
             else:
                 display['xvfb_process'].kill()
-                self._create_display(display['id'], self.display_res)
+                self._create_display(
+                    display['id'], self.display_res, display['rfb_port'])
                 logger.info(f"Recreated display: {display['id']}")
 
             if time.time() - start_time > timeout:
