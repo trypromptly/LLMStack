@@ -1,18 +1,21 @@
 import logging
 import time
-from typing import Any
-from typing import TypeVar
-import jinja2
+from typing import Any, TypeVar
 
+import jinja2
 import ujson as json
 from pydantic import AnyUrl, BaseModel
 
+from llmstack.common.blocks.base.processor import (
+    BaseConfigurationType,
+    BaseInputType,
+    BaseOutputType,
+    ProcessorInterface,
+)
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
-from llmstack.common.blocks.base.processor import BaseInputType, BaseOutputType, BaseConfigurationType, ProcessorInterface
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
-
 
 logger = logging.getLogger(__name__)
 
@@ -183,7 +186,7 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
             self._input = hydrate_input(
                 self._input, message) if message else self._input
             self._config = hydrate_input(
-                self._config, message) if self._config else self._config
+                self._config, message) if self._config and message else self._config
             output = self.process()
         except Exception as e:
             output = {
