@@ -114,7 +114,7 @@ weaviate-client = {version = "3.22.1", allow-prereleases = true}
 google-auth = {version = "2.22.0", allow-prereleases = true}
 pynacl = {version = "1.5.0", allow-prereleases = true}
 scrapy = "2.11.0"
-unstructured = {version = "0.9.0", allow-prereleases = true}
+unstructured = "0.10.29"
 spacy = {version = "3.6.0", allow-prereleases = true}
 striprtf = {version = "0.0.22", allow-prereleases = true}
 tiktoken = {version = "0.4.0", allow-prereleases = true}
@@ -129,9 +129,9 @@ pdfminer-six = {version = "20221105", allow-prereleases = true}
 markdown = {version = "3.4.4", allow-prereleases = true}
 python-pptx = {version = "0.6.21", allow-prereleases = true}
 python-magic = {version = "0.4.27", allow-prereleases = true}
-openai = {version = "0.27.0", allow-prereleases = true}
+openai = "1.1.1"
 stability-sdk = {version = "0.8.4", allow-prereleases = true}
-anthropic = "^0.3.11"
+anthropic = "0.5.0"
 toml = "^0.10.2"
 junos-eznc = {version="^2.6.8", optional=true}
 simplejson = "^3.19.2"

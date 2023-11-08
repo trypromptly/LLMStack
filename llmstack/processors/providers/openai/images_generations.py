@@ -1,16 +1,47 @@
+from enum import Enum
 import logging
 from typing import List
 from typing import Optional
 
 from asgiref.sync import async_to_sync
+import openai
 from pydantic import conint
 from pydantic import Field
 
-from llmstack.common.blocks.llm.openai import OpenAIAPIProcessorOutput, OpenAIAPIProcessorOutputMetadata, OpenAIImageGenerationsProcessor, OpenAIImageGenerationsProcessorConfiguration, OpenAIImageGenerationsProcessorInput, OpenAIImageGenerationsProcessorOutput, Size
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema, IMAGE_WIDGET_NAME
 
 logger = logging.getLogger(__name__)
 
+class ResponseFormat(str, Enum):
+    url = 'url'
+    b64_json = 'b64_json'
+
+    def __str__(self):
+        return self.value
+
+class ImageModel(str, Enum):
+    DALL_E_3 = 'dall-e-3'
+    DALL_E_2 = 'dall-e-2'
+    
+    def __str__(self):
+        return self.value
+    
+class Size(str, Enum):
+    field_256x256 = '256x256'
+    field_512x512 = '512x512'
+    field_1024x1024 = '1024x1024'
+    field_1024x1792 = '1024x1792'
+    field_1792x1024 = '1792x1024'
+
+    def __str__(self):
+        return self.value
+
+class Quality(str, Enum):
+    standard = 'standard'
+    hd = 'hd'
+    
+    def __str__(self):
+        return self.value
 
 class ImagesGenerationsInput(ApiProcessorSchema):
     prompt: str = Field(
@@ -20,16 +51,18 @@ class ImagesGenerationsInput(ApiProcessorSchema):
     )
 
 
-class ImagesGenerationsOutput(OpenAIAPIProcessorOutput, ApiProcessorSchema):
-    metadata: Optional[OpenAIAPIProcessorOutputMetadata] = Field(
-        widget='hidden',
-    )
+class ImagesGenerationsOutput(ApiProcessorSchema):
     data: List[str] = Field(
         default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
     )
 
 
-class ImagesGenerationsConfiguration(OpenAIImageGenerationsProcessorConfiguration, ApiProcessorSchema):
+class ImagesGenerationsConfiguration(ApiProcessorSchema):
+    model: Optional[ImageModel] = Field(
+        default=ImageModel.DALL_E_2,
+        description='Select the model to use',
+        advanced_parameter=False,
+    )
     size: Optional[Size] = Field(
         '1024x1024',
         description='The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.',
@@ -41,6 +74,15 @@ class ImagesGenerationsConfiguration(OpenAIImageGenerationsProcessorConfiguratio
         description='The number of images to generate. Must be between 1 and 10.',
         example=1,
         advanced_parameter=False,
+    )
+    response_format: Optional[ResponseFormat] = Field(
+        'url',
+        description='The format in which the generated images are returned. Must be one of `url` or `b64_json`.',
+        example='url',
+    )
+    quality: Optional[Quality] = Field(
+        default=Quality.standard,
+        description='The quality of the generated images. Must be one of `standard` or `hd`.',
     )
 
 
@@ -71,18 +113,21 @@ class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGene
 
         if not prompt:
             raise Exception('No prompt found in input')
-
-        image_generations_api_processor_input = OpenAIImageGenerationsProcessorInput(
-            env=_env, prompt=prompt,
+        
+        client = openai.OpenAI(api_key=_env['openai_api_key'])
+        result = client.images.generate(
+            prompt=prompt,
+            model=self._config.model,
+            size=self._config.size,
+            n=self._config.n,
+            quality=self._config.quality,
+            response_format=self._config.response_format,
+            
         )
-
-        response: OpenAIImageGenerationsProcessorOutput = OpenAIImageGenerationsProcessor(
-            configuration=self._config.dict(),
-        ).process(image_generations_api_processor_input.dict())
-
+        
         async_to_sync(self._output_stream.write)(
             ImagesGenerationsOutput(
-                data=response.answer, metadata=response.metadata,
+                data=[image.b64_json or image.url for image in result.data],
             ),
         )
 

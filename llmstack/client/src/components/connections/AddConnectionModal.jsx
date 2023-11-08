@@ -305,6 +305,20 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
               configuration: formData,
             });
           }}
+          widgets={{
+            oauthBtn: (props) => {
+              return (
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    window.open(props.schema.loginUrl, "_blank");
+                  }}
+                >
+                  {props.schema.btnText}
+                </Button>
+              );
+            },
+          }}
         />
         {isRemoteBrowser && (
           <RemoteBrowser

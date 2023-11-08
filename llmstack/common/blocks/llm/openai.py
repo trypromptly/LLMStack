@@ -159,148 +159,6 @@ class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseCon
             raise Exception(process_openai_error_response(http_response))
 
 
-class OpenAICompletionsAPIProcessorInput(OpenAIAPIProcessorInput):
-    prompt: str = Field(default='', description='The prompt(s) to generate completions for, encoded as a string, array of strings, array of tokens, or array of token arrays.\n\nNote that <|endoftext|> is the document separator that the model sees during training, so if a prompt is not specified the model will generate as if from the beginning of a new document.')
-
-
-class OpenAICompletionsAPIProcessorOutput(OpenAIAPIProcessorOutput):
-    choices: List[str] = Field(
-        default=[], description='The list of generated completions.',
-    )
-
-
-class CompletionsModel(str, Enum):
-    TEXT_DAVINCI_003 = 'text-davinci-003'
-    TEXT_DAVINCI_002 = 'text-davinci-002'
-    TEXT_CURIE_001 = 'text-curie-001'
-    TEXT_BABBAGE_001 = 'text-babbage-001'
-    TEXT_ADA_001 = 'text-ada-001'
-
-    def __str__(self):
-        return self.value
-
-
-class OpenAICompletionsAPIProcessorConfiguration(OpenAIAPIProcessorConfiguration):
-    model: CompletionsModel = Field(
-        default=CompletionsModel.TEXT_DAVINCI_003,
-        description='ID of the model to use. You can use the [List models](/docs/api-reference/models/list) API to see all of your available models, or see our [Model overview](/docs/models/overview) for descriptions of them.',
-    )
-    suffix: Optional[str] = Field(
-        None,
-        description='The suffix that comes after a completion of inserted text.',
-        example='test.',
-    )
-    max_tokens: Optional[conint(ge=1, le=4096)] = Field(
-        1024,
-        description="The maximum number of [tokens](/tokenizer) to generate in the completion.\n\nThe token count of your prompt plus `max_tokens` cannot exceed the model's context length. Most models have a context length of 2048 tokens (except for the newest models, which support 4096).\n",
-        example=1024,
-    )
-    temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
-        default=0.7,
-        description='What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n',
-        example=1,
-    )
-    top_p: Optional[confloat(ge=0.0, le=1.0, multiple_of=0.1)] = Field(
-        default=1,
-        description='An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n',
-        example=1,
-    )
-    n: Optional[conint(ge=1, le=128)] = Field(
-        1,
-        description='How many completions to generate for each prompt.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n',
-        example=1,
-    )
-    stream: Optional[bool] = Field(
-        False,
-        description='Whether to stream back partial progress. If set, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format) as they become available, with the stream terminated by a `data: [DONE]` message.\n',
-    )
-    logprobs: Optional[conint(ge=0, le=5)] = Field(
-        None,
-        description='Include the log probabilities on the `logprobs` most likely tokens, as well the chosen tokens. For example, if `logprobs` is 5, the API will return a list of the 5 most likely tokens. The API will always return the `logprob` of the sampled token, so there may be up to `logprobs+1` elements in the response.\n\nThe maximum value for `logprobs` is 5. If you need more than this, please contact us through our [Help center](https://help.openai.com) and describe your use case.\n',
-    )
-    echo: Optional[bool] = Field(
-        False, description='Echo back the prompt in addition to the completion\n',
-    )
-    stop: Optional[Union[str, List[str]]] = Field(
-        None,
-        description='Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.\n',
-    )
-    presence_penalty: Optional[confloat(ge=-2.0, le=2.0)] = Field(
-        0,
-        description="Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.\n\n[See more information about frequency and presence penalties.](/docs/api-reference/parameter-details)\n",
-    )
-    frequency_penalty: Optional[confloat(ge=-2.0, le=2.0)] = Field(
-        0,
-        description="Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.\n\n[See more information about frequency and presence penalties.](/docs/api-reference/parameter-details)\n",
-    )
-    best_of: Optional[conint(ge=0, le=20)] = Field(
-        1,
-        description='Generates `best_of` completions server-side and returns the "best" (the one with the highest log probability per token). Results cannot be streamed.\n\nWhen used with `n`, `best_of` controls the number of candidate completions and `n` specifies how many to return – `best_of` must be greater than `n`.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n',
-    )
-    logit_bias: Optional[Dict[str, Any]] = Field(
-        {},
-        description='Modify the likelihood of specified tokens appearing in the completion.\n\nAccepts a json object that maps tokens (specified by their token ID in the GPT tokenizer) to an associated bias value from -100 to 100. You can use this [tokenizer tool](/tokenizer?view=bpe) (which works for both GPT-2 and GPT-3) to convert text to token IDs. Mathematically, the bias is added to the logits generated by the model prior to sampling. The exact effect will vary per model, but values between -1 and 1 should decrease or increase likelihood of selection; values like -100 or 100 should result in a ban or exclusive selection of the relevant token.\n\nAs an example, you can pass `{"50256": -100}` to prevent the <|endoftext|> token from being generated.\n',
-    )
-
-
-"""
-    OpenAICompletionsAPIProcessor processor class for OpenAI Completions API
-"""
-
-
-class OpenAICompletionsAPIProcessor(OpenAIAPIProcessor[OpenAICompletionsAPIProcessorInput, OpenAICompletionsAPIProcessorOutput, OpenAICompletionsAPIProcessorConfiguration]):
-
-    @staticmethod
-    def name() -> str:
-        return 'openai_completions_api_processor'
-
-    def _get_api_url(self) -> dict:
-        return '{}/completions'.format(OpenAIAPIProcessor.BASE_URL)
-
-    def api_url(self) -> str:
-        return self._get_api_url()
-
-    def _get_api_request_payload(self, input: OpenAICompletionsAPIProcessorInput, configuration: OpenAICompletionsAPIProcessorConfiguration) -> dict:
-        return {
-            'model': configuration.model,
-            'prompt': input.prompt,
-            'suffix': configuration.suffix,
-            'max_tokens': configuration.max_tokens,
-            'temperature': configuration.temperature,
-            'top_p': configuration.top_p,
-            'n': configuration.n,
-            'stream': configuration.stream,
-            'logprobs': configuration.logprobs,
-            'echo': configuration.echo,
-            'stop': configuration.stop,
-            'presence_penalty': configuration.presence_penalty,
-            'frequency_penalty': configuration.frequency_penalty,
-            'best_of': configuration.best_of,
-            'logit_bias': configuration.logit_bias,
-            'user': input.env.user,
-        }
-
-    def _transform_streaming_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> OpenAICompletionsAPIProcessorOutput:
-        text = response.content.decode('utf-8')
-        json_response = json.loads(text.split('data: ')[1])
-        choices = list(
-            map(lambda x: x['text'], json_response['choices']),
-        )
-        return OpenAICompletionsAPIProcessorOutput(
-            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(
-                raw_response=json_response),
-        )
-
-    def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> OpenAICompletionsAPIProcessorOutput:
-        choices = list(
-            map(lambda x: x['text'], json.loads(response.text)['choices']),
-        )
-        return OpenAICompletionsAPIProcessorOutput(
-            choices=choices, metadata=OpenAIAPIProcessorOutputMetadata(
-                raw_response=json.loads(response.text)),
-        )
-
-
 class Role(str, Enum):
     system = 'system'
     user = 'user'
@@ -482,7 +340,7 @@ class OpenAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[OpenAIChatCompletions
 
         return request_payload
 
-    def _transform_streaming_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> OpenAICompletionsAPIProcessorOutput:
+    def _transform_streaming_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput):
         text = response.content.decode('utf-8')
         json_response = json.loads(text.split('data: ')[1])
         choices = list(
@@ -510,6 +368,8 @@ class Size(str, Enum):
     field_256x256 = '256x256'
     field_512x512 = '512x512'
     field_1024x1024 = '1024x1024'
+    field_1024x1792 = '1024x1792'
+    field_1792x1024 = '1792x1024'
 
     def __str__(self):
         return self.value
@@ -522,77 +382,12 @@ class ResponseFormat(str, Enum):
     def __str__(self):
         return self.value
 
-
-class OpenAIImageGenerationsProcessorInput(OpenAIAPIProcessorInput):
-    prompt: str = Field(
-        ...,
-        description='A text description of the desired image(s). The maximum length is 1000 characters.',
-        example='A cute baby sea otter',
-    )
-
-
-class OpenAIImageGenerationsProcessorOutput(OpenAIAPIProcessorOutput):
-    answer: List[str] = Field(
-        default=[], description='The generated images.',
-    )
-
-
-class OpenAIImageGenerationsProcessorConfiguration(OpenAIAPIProcessorConfiguration):
-    n: Optional[conint(ge=1, le=4)] = Field(
-        1,
-        description='The number of images to generate. Must be between 1 and 10.',
-        example=1,
-    )
-    size: Optional[Size] = Field(
-        '1024x1024',
-        description='The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.',
-        example='1024x1024',
-    )
-    response_format: Optional[ResponseFormat] = Field(
-        'url',
-        description='The format in which the generated images are returned. Must be one of `url` or `b64_json`.',
-        example='url',
-    )
-
-
-class OpenAIImageGenerationsProcessor(OpenAIAPIProcessor[OpenAIImageGenerationsProcessorInput, OpenAIImageGenerationsProcessorOutput, OpenAIImageGenerationsProcessorConfiguration]):
-    @staticmethod
-    def name() -> str:
-        return 'openai_image_generations_processor'
-
-    def _get_api_url(self) -> str:
-        return '{}/images/generations'.format(OpenAIAPIProcessor.BASE_URL)
-
-    def api_url(self) -> str:
-        return self._get_api_url()
-
-    def _get_api_request_payload(self, input: OpenAIImageGenerationsProcessorInput, configuration: OpenAIImageGenerationsProcessorConfiguration) -> dict:
-        return {
-            'prompt': input.prompt,
-            'n': configuration.n,
-            'size': configuration.size,
-            'response_format': configuration.response_format,
-            'user': input.env.user,
-        }
-
-    def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> OpenAIImageGenerationsProcessorOutput:
-        def image_uri(data):
-            if 'url' in data:
-                return data['url']
-            elif 'b64_json' in data:
-                return 'data:image/png;base64,{}'.format(data['b64_json'])
-            else:
-                raise Exception('Invalid response format')
-
-        answer = list(
-            map(image_uri, json.loads(response.text)['data']),
-        )
-        return OpenAIImageGenerationsProcessorOutput(
-            answer=answer, metadata=OpenAIAPIProcessorOutputMetadata(
-                raw_response=json.loads(response.text)),
-        )
-
-
+class ImageModel(str, Enum):
+    DALL_E_3 = 'dall-e-3'
+    DALL_E_2 = 'dall-e-2'
+    
+    def __str__(self):
+        return self.value
 class OpenAIFile(Schema):
     name: str = Field(description='The name of the file.')
     content: bytes = Field(description='The content of the file.')
@@ -750,7 +545,7 @@ class OpenAIImageVariationsProcessor(OpenAIAPIProcessor[OpenAIImageVariationsPro
             **configuration_json,
         }
 
-    def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> OpenAIImageGenerationsProcessorOutput:
+    def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput):
         def image_uri(data):
             if 'url' in data:
                 return data['url']
@@ -845,193 +640,3 @@ class OpenAIEmbeddingsProcessor(OpenAIAPIProcessor[OpenAIEmbeddingsProcessorInpu
             'examples': input.examples,
             'user': input.env.user,
         }
-
-
-class OpenAIAudioTranscriptionsProcessorInput(OpenAIAPIProcessorInput):
-    file: OpenAIFile = Field(
-        ...,
-        description='The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.\n',
-    )
-
-    prompt: Optional[str] = Field(
-        None,
-        description="An optional text to guide the model's style or continue a previous audio segment. The [prompt](/docs/guides/speech-to-text/prompting) should match the audio language.\n",
-    )
-    language: Optional[str] = Field(
-        None,
-        description='The language of the input audio. Supplying the input language in [ISO-639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) format will improve accuracy and latency.\n',
-    )
-
-
-class OpenAIAudioTranscriptionsProcessorOutput(OpenAIAPIProcessorOutput):
-    text: str = Field(description='The transcript of the audio file.\n')
-
-
-class OpenAIAudioTranscriptionsProcessorConfiguration(OpenAIAPIProcessorConfiguration):
-    model: str = Field(
-        default='whisper-1',
-        description='ID of the model to use. Only `whisper-1` is currently available.\n',
-    )
-    response_format: Optional[str] = Field(
-        'json',
-        description='The format of the transcript output, in one of these options: json, text, srt, verbose_json, or vtt.\n',
-    )
-    temperature: Optional[float] = Field(
-        0,
-        description='The sampling temperature, between 0 and 1. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. If set to 0, the model will use [log probability](https://en.wikipedia.org/wiki/Log_probability) to automatically increase the temperature until certain thresholds are hit.\n',
-    )
-
-
-class OpenAIAudioTranscriptionProcessor(OpenAIAPIProcessor[OpenAIAudioTranscriptionsProcessorInput, OpenAIAudioTranscriptionsProcessorOutput, OpenAIAudioTranscriptionsProcessorConfiguration]):
-    @staticmethod
-    def name() -> str:
-        return 'openai_audio_transcription_processor'
-
-    def _get_api_url(self) -> str:
-        return '{}/audio/transcriptions'.format(OpenAIAPIProcessor.BASE_URL)
-
-    def api_url(self) -> str:
-        return self._get_api_url()
-
-    def _get_api_request_data(self, input: OpenAIAudioTranscriptionsProcessorInput, configuration: OpenAIAudioTranscriptionsProcessorConfiguration) -> dict:
-        return {
-            'file': input.file.name,
-            'model': configuration.model,
-            'prompt': input.prompt,
-            'response_format': configuration.response_format,
-            'temperature': configuration.temperature,
-            'language': input.language,
-        }
-
-    def _transform_api_response(self, input: OpenAIAudioTranscriptionsProcessorInput, configuration: OpenAIAudioTranscriptionsProcessorConfiguration, http_response: HttpAPIProcessorOutput) -> OpenAIAudioTranscriptionsProcessorOutput:
-        return OpenAIAudioTranscriptionsProcessorOutput(
-            text=json.loads(http_response.text)['text'],
-            metadata=OpenAIAPIProcessorOutputMetadata(
-                raw_response=json.loads(http_response.text)),
-        )
-
-    def _process(self, input: OpenAIAudioTranscriptionsProcessorInput, configuration: OpenAIAPIProcessorConfiguration) -> BaseOutputType:
-        """
-            Invokes the API processor on the input and returns the output
-        """
-        http_api_processor = HttpAPIProcessor({'timeout': DEFAULT_TIMEOUT})
-
-        files = []
-        files.append(
-            ('file', (input.file.name, input.file.content, 'application/octet-stream')),
-        )
-        input = HttpAPIProcessorInput(
-            url=self._get_api_url(),
-            method='POST',
-            body=RawRequestBody(
-                files=files,
-                data=self._get_api_request_data(
-                    input=input, configuration=configuration),
-            ),
-            headers={},
-            authorization=BearerTokenAuth(token=input.env.openai_api_key),
-        )
-        http_response = http_api_processor.process(input.dict())
-
-        # If the response is ok, return the choices
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
-            response = self._transform_api_response(
-                input, configuration, http_response,
-            )
-            return response
-        else:
-            raise Exception(process_openai_error_response(http_response))
-
-
-class OpenAIAudioTranslationsProcessorInput(OpenAIAPIProcessorInput):
-    class Config:
-        extra = Extra.forbid
-
-    file: OpenAIFile = Field(
-        ...,
-        description='The audio file to translate, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.\n',
-    )
-
-    prompt: Optional[str] = Field(
-        None,
-        description="An optional text to guide the model's style or continue a previous audio segment. The [prompt](/docs/guides/speech-to-text/prompting) should be in English.\n",
-    )
-
-
-class OpenAIAudioTranslationsProcessorOutput(OpenAIAPIProcessorOutput):
-    text: str
-
-
-class OpenAIAudioTranslationsProcessorConfiguration(OpenAIAPIProcessorConfiguration):
-    model: str = Field(
-        default='whisper-1',
-        description='ID of the model to use. Only `whisper-1` is currently available.\n',
-    )
-    response_format: Optional[str] = Field(
-        'json',
-        description='The format of the transcript output, in one of these options: json, text, srt, verbose_json, or vtt.\n',
-    )
-    temperature: Optional[float] = Field(
-        0,
-        description='The sampling temperature, between 0 and 1. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. If set to 0, the model will use [log probability](https://en.wikipedia.org/wiki/Log_probability) to automatically increase the temperature until certain thresholds are hit.\n',
-    )
-
-
-class OpenAIAudioTranslationsProcessor(OpenAIAPIProcessor[OpenAIAudioTranslationsProcessorInput, OpenAIAudioTranslationsProcessorOutput, OpenAIAudioTranslationsProcessorConfiguration]):
-    @ staticmethod
-    def name() -> str:
-        return 'openai_audio_translation_processor'
-
-    def _get_api_url(self) -> str:
-        return '{}/audio/translations'.format(OpenAIAPIProcessor.BASE_URL)
-
-    def api_url(self) -> str:
-        return self._get_api_url()
-
-    def _get_api_request_data(self, input: OpenAIAudioTranslationsProcessorInput, configuration: OpenAIAudioTranslationsProcessorConfiguration) -> dict:
-        return {
-            'model': configuration.model,
-            'file': input.file.name,
-            'prompt': input.prompt,
-            'response_format': configuration.response_format,
-            'user': input.env.user,
-        }
-
-    def _transform_api_response(self, input: OpenAIAudioTranscriptionsProcessorInput, configuration: OpenAIAudioTranscriptionsProcessorConfiguration, http_response: HttpAPIProcessorOutput) -> OpenAIAudioTranscriptionsProcessorOutput:
-        return OpenAIAudioTranslationsProcessorOutput(
-            text=json.loads(http_response.text)['text'],
-            metadata=OpenAIAPIProcessorOutputMetadata(
-                raw_response=json.loads(http_response.text)),
-        )
-
-    def _process(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration) -> BaseOutputType:
-        """
-            Invokes the API processor on the input and returns the output
-        """
-        http_api_processor = HttpAPIProcessor({'timeout': DEFAULT_TIMEOUT})
-
-        files = []
-        files.append(
-            ('file', (input.file.name, input.file.content, 'application/octet-stream')),
-        )
-        input = HttpAPIProcessorInput(
-            url=self._get_api_url(),
-            method='POST',
-            body=RawRequestBody(
-                files=files,
-                data=self._get_api_request_data(
-                    input=input, configuration=configuration),
-            ),
-            headers={},
-            authorization=BearerTokenAuth(token=input.env.openai_api_key),
-        )
-        http_response = http_api_processor.process(input.dict())
-
-        # If the response is ok, return the choices
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
-            response = self._transform_api_response(
-                input, configuration, http_response,
-            )
-            return response
-        else:
-            raise Exception(process_openai_error_response(http_response))
