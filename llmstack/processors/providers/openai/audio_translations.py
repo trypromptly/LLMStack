@@ -1,12 +1,12 @@
 import base64
 import logging
+import openai
 from typing import Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from llmstack.common.blocks.llm.openai import OpenAIAPIInputEnvironment, OpenAIAPIProcessorOutputMetadata, OpenAIAudioTranslationsProcessor, OpenAIAudioTranslationsProcessorConfiguration, OpenAIAudioTranslationsProcessorInput, OpenAIAudioTranslationsProcessorOutput, OpenAIFile
-from llmstack.common.utils.utils import get_key_or_raise, validate_parse_data_uri
+from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
 
 
@@ -26,20 +26,25 @@ class AudioTranslationsInput(ApiProcessorSchema):
     )
 
 
-class AudioTranslationsOutput(OpenAIAudioTranslationsProcessorOutput, ApiProcessorSchema):
+class AudioTranslationsOutput(ApiProcessorSchema):
     text: str = Field(
         default='', description='The translated text', widget='textarea',
     )
-    metadata: Optional[OpenAIAPIProcessorOutputMetadata] = Field(
-        default=None, description='Metadata about the API call', widget='hidden',
-    )
 
 
-class AudioTranslationsConfiguration(OpenAIAudioTranslationsProcessorConfiguration, ApiProcessorSchema):
+class AudioTranslationsConfiguration(ApiProcessorSchema):
     model: str = Field(
         default='whisper-1',
         description='ID of the model to use. Only `whisper-1` is currently available.\n',
         advanced_parameter=False,
+    )
+    response_format: Optional[str] = Field(
+        'json',
+        description='The format of the transcript output, in one of these options: json, text, srt, verbose_json, or vtt.\n',
+    )
+    temperature: Optional[float] = Field(
+        0,
+        description='The sampling temperature, between 0 and 1. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. If set to 0, the model will use [log probability](https://en.wikipedia.org/wiki/Log_probability) to automatically increase the temperature until certain thresholds are hit.\n',
     )
 
 
@@ -65,14 +70,11 @@ class AudioTranslations(ApiProcessorInterface[AudioTranslationsInput, AudioTrans
         return 'openai'
 
     def process(self) -> dict:
-        _env = self._env
-        input = self._input.dict()
-
-        if 'file' in input and len(input['file']) > 0:
+        if self._input.file and len(self._input.file) > 0:
             mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
                 self._input.file,
             )
-        elif 'file_data' in input and len(input['file_data']) > 0:
+        elif self._input.file_data and len(self._input.file_data) > 0:
             mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
                 self._input.file_data,
             )
@@ -80,23 +82,18 @@ class AudioTranslations(ApiProcessorInterface[AudioTranslationsInput, AudioTrans
             raise Exception('No file or file_data found in input')
 
         file_data = base64.b64decode(base64_encoded_data)
-        audio_translation_api_processor_input = OpenAIAudioTranslationsProcessorInput(
-            env=OpenAIAPIInputEnvironment(
-                openai_api_key=get_key_or_raise(
-                    _env, 'openai_api_key', 'No openai_api_key found in _env',
-                ),
-            ),
-            prompt=self._input.prompt, file=OpenAIFile(
-                name=file_name, content=file_data, mime_type=mime_type,
-            ),
+        client = openai.OpenAI(api_key=self._env['openai_api_key'])
+        
+        translation = client.audio.translations.create(
+            file=(file_name, file_data),
+            model=self._config.model,
+            prompt=self._input.prompt,
+            response_format=self._config.response_format,
+            temperature=self._config.temperature
         )
-        response: OpenAIAudioTranslationsProcessorOutput = OpenAIAudioTranslationsProcessor(
-            configuration=self._config.dict(),
-        ).process(
-            input=audio_translation_api_processor_input.dict(),
-        )
+        
         async_to_sync(self._output_stream.write)(
-            AudioTranslationsOutput(text=response.text),
+            AudioTranslationsOutput(text=translation.text),
         )
 
         output = self._output_stream.finalize()
