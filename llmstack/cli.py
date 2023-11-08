@@ -27,8 +27,9 @@ def prepare_env():
 
         # Given this is the first time the user is running llmstack, we should
         # ask the user for secret key, cipher_key_salt, database_password and save it in the config file
-        import toml
         import secrets
+
+        import toml
         config_path = os.path.join(
             os.path.expanduser('~'), '.llmstack', 'config')
         config = {}
@@ -84,7 +85,8 @@ def main():
 
     if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
         print('Starting LLMStack')
-        run_server_command = ['manage.py', 'runserver', os.environ['LLMSTACK_PORT']]
+        run_server_command = ['manage.py',
+                              'runserver', os.environ['LLMSTACK_PORT']]
         if 'windows' in platform.platform().lower():
             run_server_command.append('--noreload')
         run_django_command(
@@ -127,3 +129,7 @@ def main():
 
     # Wait for server process to exit
     server_process.wait()
+
+
+if __name__ == '__main__':
+    main()
