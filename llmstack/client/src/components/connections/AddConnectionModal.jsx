@@ -151,7 +151,6 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
               message.output &&
               message.output.ws_url
             ) {
-              console.log(message);
               setRemoteBrowserWsUrl(message.output.ws_url);
               setRemoteBrowserTimeout(message.output.timeout);
               setIsRemoteBrowser(true);
@@ -312,7 +311,6 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
             wsUrl={remoteBrowserWsUrl}
             timeout={remoteBrowserTimeout}
             onClose={() => {
-              console.log("Closing remote browser");
               setIsRemoteBrowser(false);
               setRemoteBrowserWsUrl(null);
               connectionWs.send(

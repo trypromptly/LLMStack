@@ -18,7 +18,6 @@ function RemoteBrowser({ wsUrl, timeout, onClose }) {
   const setupRFB = useCallback(() => {
     if (screenRef.current && !rfbRef.current) {
       const credentials = wsUrl.split("@")[0].split("://")[1];
-      console.log(credentials);
 
       rfbRef.current = new RFB(screenRef.current, wsUrl, {
         credentials: {
