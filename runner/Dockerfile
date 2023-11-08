@@ -22,13 +22,12 @@ COPY poetry.lock /code/poetry.lock
 COPY pyproject.toml /code/pyproject.toml
 COPY README.md /code/README.md
 COPY llmstack /code/llmstack
+COPY runner/docker-entrypoint.sh /code/docker-entrypoint.sh
 
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi
 
-RUN redis-server --daemonize yes
-
-ENTRYPOINT [ "/code/llmstack/runner/docker-entrypoint.sh" ]
+ENTRYPOINT [ "/code/docker-entrypoint.sh" ]
 
 CMD [ "llmstack-runner" ]
 

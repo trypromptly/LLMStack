@@ -283,6 +283,25 @@ def main():
                         help='Log level', default='INFO')
     args = parser.parse_args()
 
+    # Read environment variables and override arguments
+    args.port = int(os.getenv('RUNNER_PORT', args.port))
+    args.host = os.getenv('RUNNER_HOST', args.host)
+    args.max_displays = int(
+        os.getenv('RUNNER_MAX_DISPLAYS', args.max_displays))
+    args.start_display = int(
+        os.getenv('RUNNER_START_DISPLAY', args.start_display))
+    args.display_res = os.getenv('RUNNER_DISPLAY_RES', args.display_res)
+    args.rfb_start_port = int(
+        os.getenv('RUNNER_RFB_START_PORT', args.rfb_start_port))
+    args.redis_host = os.getenv('RUNNER_REDIS_HOST', args.redis_host)
+    args.redis_port = int(os.getenv('RUNNER_REDIS_PORT', args.redis_port))
+    args.redis_db = int(os.getenv('RUNNER_REDIS_DB', args.redis_db))
+    args.hostname = os.getenv('RUNNER_HOSTNAME', args.hostname)
+    args.wss_hostname = os.getenv('RUNNER_WSS_HOSTNAME', args.wss_hostname)
+    args.wss_port = int(os.getenv('RUNNER_WSS_PORT', args.wss_port))
+    args.wss_secure = os.getenv('RUNNER_WSS_SECURE', args.wss_secure)
+    args.log_level = os.getenv('RUNNER_LOG_LEVEL', args.log_level)
+
     # Configure logger
     logging.basicConfig(level=args.log_level)
 
