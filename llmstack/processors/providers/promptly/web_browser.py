@@ -5,6 +5,7 @@ from typing import List, Optional
 
 import grpc
 from asgiref.sync import async_to_sync
+from django.conf import settings
 from pydantic import BaseModel, Field
 
 from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
@@ -79,7 +80,8 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
         output_stream = self._output_stream
         output_text = ''
 
-        channel = grpc.insecure_channel('localhost:50051')
+        channel = grpc.insecure_channel(
+            f'{settings.RUNNER_HOST}:{settings.RUNNER_PORT}')
         stub = runner_pb2_grpc.RunnerStub(channel)
 
         try:

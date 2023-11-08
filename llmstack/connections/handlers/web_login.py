@@ -3,6 +3,7 @@ import logging
 from typing import Iterator, Union
 
 import grpc
+from django.conf import settings
 from pydantic import Field
 
 from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
@@ -97,7 +98,8 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
         return connection
 
     async def activate(self, connection) -> Iterator[Union[Connection, dict]]:
-        self.channel = grpc.aio.insecure_channel('localhost:50051')
+        self.channel = grpc.aio.insecure_channel(
+            f'{settings.RUNNER_HOST}:{settings.RUNNER_PORT}')
         stub = runner_pb2_grpc.RunnerStub(self.channel)
         self._input_index = 0
         self._input_instructions = []
