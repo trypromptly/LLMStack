@@ -4,6 +4,9 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Liquid } from "liquidjs";
 import validator from "@rjsf/validator-ajv8";
 import Form from "@rjsf/mui";
+import { useSetRecoilState } from "recoil";
+import { get } from "lodash";
+import { streamChunksState } from "../../data/atoms";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
@@ -97,6 +100,9 @@ const MemoizedMessage = React.memo(
       </div>
     );
   },
+  (prevProps, curProps) => {
+    return prevProps.message?.content === curProps.message?.content;
+  },
 );
 
 export function WebChatRender({ app, isMobile, embed = false, ws }) {
@@ -115,6 +121,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
     right: 16,
     bottom: 16,
   });
+  const setStreamChunks = useSetRecoilState(streamChunksState);
   const templateEngine = new Liquid();
   const outputTemplate = templateEngine.parse(
     app?.data?.output_template?.markdown || "",
@@ -236,10 +243,25 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
       const message = JSON.parse(evt.data);
       // Merge the new output with the existing output
       if (message.output) {
-        chunkedOutput.current = stitchObjects(
+        const [newChunkedOutput, streamPaths] = stitchObjects(
           chunkedOutput.current,
           message.output,
         );
+        chunkedOutput.current = newChunkedOutput;
+
+        // Update streamChunks recoil state
+        for (const path of streamPaths) {
+          setStreamChunks((prevChunks) => {
+            return {
+              ...prevChunks,
+              [path.replace(/_base64_chunks$/g, "")]: get(
+                chunkedOutput.current,
+                path,
+                null,
+              ),
+            };
+          });
+        }
       }
 
       if (message.event && message.event === "done") {

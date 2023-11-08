@@ -8,6 +8,9 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-json";
+import { useSetRecoilState } from "recoil";
+import { get } from "lodash";
+import { streamChunksState } from "../../data/atoms";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { ProviderIcon } from "./ProviderIcon";
@@ -203,6 +206,7 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
     right: 16,
     bottom: 16,
   });
+  const setStreamChunks = useSetRecoilState(streamChunksState);
   const templateEngine = new Liquid();
   const templates = useRef({});
   const chunkedOutput = useRef({});
@@ -334,14 +338,30 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
       // Merge chunks of output
       if (message.output) {
         if (message.output.agent) {
-          chunkedOutput.current = stitchObjects(chunkedOutput.current, {
-            [message.output.agent.id]: message.output.agent.content,
-          });
+          const [newChunkedOutput, streamPaths] = (chunkedOutput.current =
+            stitchObjects(chunkedOutput.current, {
+              [message.output.agent.id]: message.output.agent.content,
+            }));
+          chunkedOutput.current = newChunkedOutput;
+
+          // Update streamChunks recoil state
+          for (const path of streamPaths) {
+            setStreamChunks((prevChunks) => {
+              return {
+                ...prevChunks,
+                [path.replace(/_base64_chunks$/g, "")]: get(
+                  chunkedOutput.current,
+                  path,
+                  null,
+                ),
+              };
+            });
+          }
         } else {
           chunkedOutput.current = stitchObjects(
             chunkedOutput.current,
             message.output,
-          );
+          )[0];
         }
       }
 

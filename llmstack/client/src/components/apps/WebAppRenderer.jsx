@@ -8,6 +8,9 @@ import { Errors } from "../Output";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { LexicalRenderer } from "./lexical/LexicalRenderer";
 import Form from "@rjsf/mui";
+import { useSetRecoilState } from "recoil";
+import { get } from "lodash";
+import { streamChunksState } from "../../data/atoms";
 import validator from "@rjsf/validator-ajv8";
 import { Liquid } from "liquidjs";
 import "./WebAppRenderer.css";
@@ -58,6 +61,7 @@ export function WebAppRenderer({ app, ws }) {
   const outputTemplate = templateEngine.parse(
     app?.data?.output_template?.markdown || "",
   );
+  const setStreamChunks = useSetRecoilState(streamChunksState);
   const chunkedOutput = useRef({});
   const streamStarted = useRef(false);
 
@@ -98,10 +102,25 @@ export function WebAppRenderer({ app, ws }) {
       // Merge the new output with the existing output
       if (message.output) {
         // Set the streamStarted flag if the output has more than input data
-        chunkedOutput.current = stitchObjects(
+        const [newChunkedOutput, streamPaths] = stitchObjects(
           chunkedOutput.current,
           message.output,
         );
+        chunkedOutput.current = newChunkedOutput;
+
+        // Update streamChunks recoil state
+        for (const path of streamPaths) {
+          setStreamChunks((prevChunks) => {
+            return {
+              ...prevChunks,
+              [path.replace(/_base64_chunks$/g, "")]: get(
+                chunkedOutput.current,
+                path,
+                null,
+              ),
+            };
+          });
+        }
       }
 
       // If we get session info, that means the stream has started

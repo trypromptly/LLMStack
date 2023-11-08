@@ -477,3 +477,8 @@ export const connectionsState = atom({
   key: "connectionsState",
   default: connectionsFetchSelector,
 });
+
+export const streamChunksState = atom({
+  key: "streamChunksState",
+  default: {},
+});
