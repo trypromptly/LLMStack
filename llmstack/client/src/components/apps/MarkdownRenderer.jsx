@@ -8,6 +8,7 @@ import AceEditor from "react-ace";
 
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { ContentCopyOutlined } from "@mui/icons-material";
+import StreamingVideoPlayer from "./StreamingVideoPlayer";
 
 function FunctionFormComponent(props) {
   // Render a form component with submit button
@@ -93,6 +94,14 @@ export default function MarkdownRenderer(props) {
               >
                 Unable to load video
               </video>
+            );
+          }
+
+          if (src.startsWith("data:videostream/")) {
+            return (
+              <StreamingVideoPlayer
+                streamKey={src.replace("data:videostream/", "")}
+              />
             );
           }
 
