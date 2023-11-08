@@ -36,7 +36,7 @@ class SampleOutput(ApiProcessorSchema):
 ```
 
 :::note
-Use <processor-name>Input, <processor-name>Configuration, and <processor-name>Output as the class names for input, configuration, and output schemas respectively.
+Use `<processor-name>Input`, `<processor-name>Configuration`, and `<processor-name>Output` as the class names for input, configuration, and output schemas respectively.
 
 Fields that you expect to change for each input request should be defined in the input schema.
 :::
