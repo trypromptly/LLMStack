@@ -1,11 +1,10 @@
+import argparse
 import asyncio
 import json
 import logging
 import os
 import re
 import subprocess
-import threading
-import time
 from concurrent import futures
 from typing import Iterator
 
@@ -31,16 +30,6 @@ from llmstack.common.runner.proto.runner_pb2_grpc import (
     RunnerServicer,
     add_RunnerServicer_to_server,
 )
-
-MAX_DISPLAYS = 5
-START_DISPLAY = 99
-RFB_START_PORT = 12000
-WS_START_PORT = 23000
-WSS_PORT = '23100'
-HOSTNAME = 'localhost'
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
-REDIS_DB = 0
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +107,7 @@ class Runner(RunnerServicer):
         # Return the display info to the client
         yield RemoteBrowserResponse(
             session=RemoteBrowserSession(
-                ws_url=f"ws://{display['username']}:{display['password']}@localhost:{WSS_PORT}?token={display['token']}",
+                ws_url=f"{'wss' if self.wss_secure else 'ws'}://{display['username']}:{display['password']}@{self.wss_hostname}:{self.wss_port}?token={display['token']}",
             ),
             state=RemoteBrowserState.RUNNING,
         )
@@ -262,27 +251,64 @@ class Runner(RunnerServicer):
 
 
 def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser(description='LLMStack runner service')
+    parser.add_argument('--port', type=int,
+                        help='Port to run the server on', default=50051)
+    parser.add_argument('--host', type=str,
+                        help='Host to run the server on', default='0.0.0.0')
+    parser.add_argument('--max-displays', type=int,
+                        help='Maximum number of virtual displays to use', default=5)
+    parser.add_argument('--start-display', type=int,
+                        help='Start display number number', default=99)
+    parser.add_argument('--display-res', type=str,
+                        help='Display resolution', default='1024x720x24')
+    parser.add_argument('--rfb-start-port', type=int,
+                        help='RFB start port', default=12000)
+    parser.add_argument('--redis-host', type=str,
+                        help='Redis host', default='localhost')
+    parser.add_argument('--redis-port', type=int,
+                        help='Redis port', default=6379)
+    parser.add_argument('--redis-db', type=int,
+                        help='Redis DB', default=0)
+    parser.add_argument('--hostname', type=str,
+                        help='Hostname for mapping remote browser', default='localhost')
+    parser.add_argument('--wss-hostname', type=str,
+                        help='Hostname for remote browser websocket', default='localhost')
+    parser.add_argument('--wss-port', type=int,
+                        help='Port for remote browser websocket', default=23100)
+    parser.add_argument('--wss-secure', type=bool, default=False,
+                        help='Secure remote browser websocket', action=argparse.BooleanOptionalAction)
+    parser.add_argument('--log-level', type=str,
+                        help='Log level', default='INFO')
+    args = parser.parse_args()
+
     # Configure logger
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=args.log_level)
 
     # Connect and verify redis
-    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+    redis_client = redis.Redis(
+        host=args.redis_host, port=args.redis_port, db=args.redis_db)
     redis_client.ping()
 
     display_pool = VirtualDisplayPool(
-        redis_client, hostname=HOSTNAME, max_displays=MAX_DISPLAYS, start_display=START_DISPLAY, display_res='1024x720x24', rfb_start_port=RFB_START_PORT)
+        redis_client, hostname=args.hostname, max_displays=args.max_displays, start_display=args.start_display, display_res=args.display_res, rfb_start_port=args.rfb_start_port)
 
     # Start websockify server
-    websockify_process = subprocess.Popen(['websockify', WSS_PORT, '--token-plugin=TokenRedis', f'--token-source={REDIS_HOST}:{REDIS_PORT}',
-                                          '-v', '--auth-plugin=llmstack.common.runner.auth.BasicHTTPAuthWithRedis', f'--auth-source={REDIS_HOST}:{REDIS_PORT}'], close_fds=True)
+    websockify_process = subprocess.Popen(['websockify', f'{args.wss_port}', '--token-plugin=TokenRedis', f'--token-source={args.redis_host}:{args.redis_port}',
+                                           '-v', '--auth-plugin=llmstack.common.runner.auth.BasicHTTPAuthWithRedis', f'--auth-source={args.redis_host}:{args.redis_port}'], close_fds=True)
 
     server = grpc_server(futures.ThreadPoolExecutor(max_workers=10))
     runner = Runner(display_pool=display_pool)
+    runner.wss_hostname = args.wss_hostname
+    runner.wss_port = args.wss_port
+    runner.wss_secure = args.wss_secure
 
     add_RunnerServicer_to_server(runner, server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port(f'{args.host}:{args.port}')
     server.start()
-    logger.info("Server running at http://0.0.0.0:50051")
+
+    logger.info(f"Server running at http://{args.host}:{args.port}")
     server.wait_for_termination()
 
     # Stop websockify server
