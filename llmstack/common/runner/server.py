@@ -1,11 +1,15 @@
 import asyncio
+import json
 import logging
 import os
 import re
 import subprocess
+import threading
+import time
 from concurrent import futures
 from typing import Iterator
 
+import ffmpeg
 import redis
 from grpc import ServicerContext
 from grpc import server as grpc_server
@@ -13,8 +17,11 @@ from playwright._impl._api_types import TimeoutError
 from playwright.async_api import async_playwright
 
 from llmstack.common.runner.display import VirtualDisplayPool
+from llmstack.common.runner.proto import runner_pb2
 from llmstack.common.runner.proto.runner_pb2 import (
     TERMINATE,
+    PlaywrightBrowserRequest,
+    PlaywrightBrowserResponse,
     RemoteBrowserRequest,
     RemoteBrowserResponse,
     RemoteBrowserSession,
@@ -49,8 +56,10 @@ class Runner(RunnerServicer):
         session_data = None
         async with async_playwright() as playwright:
             try:
+                session_data = json.loads(
+                    request.init_data.session_data) if request.init_data.session_data else None
                 browser = await playwright.chromium.launch(headless=False)
-                context = await browser.new_context(no_viewport=True, storage_state=request.init_data.session_data or None)
+                context = await browser.new_context(no_viewport=True, storage_state=session_data)
                 page = await context.new_page()
 
                 # Create an async task for waiting for the URL pattern
@@ -141,9 +150,115 @@ class Runner(RunnerServicer):
         yield RemoteBrowserResponse(
             state=RemoteBrowserState.TERMINATED,
             session=RemoteBrowserSession(
-                session_data=str(session_state) if session_state else '',
+                session_data=json.dumps(
+                    session_state) if session_state else '',
             ),
         )
+
+    async def _process_playwright_steps(self, url, steps, display, ffmpeg_process, session_data):
+        os.environ['DISPLAY'] = f'{display["DISPLAY"]}.0'
+        logger.info(f"Using {os.environ['DISPLAY']}")
+        outputs = []
+        async with async_playwright() as playwright:
+            try:
+                session_data = json.loads(
+                    session_data) if session_data else None
+                browser = await playwright.chromium.launch(headless=False)
+                context = await browser.new_context(no_viewport=True, storage_state=session_data)
+                page = await context.new_page()
+
+                if not url.startswith('http'):
+                    url = f'https://{url}'
+
+                await page.goto(url)
+
+                for step in steps:
+                    if step.type == TERMINATE:
+                        raise Exception(
+                            'Terminating browser because of timeout')
+                    elif step.type == runner_pb2.GOTO:
+                        await page.goto(step.data)
+                    elif step.type == runner_pb2.CLICK:
+                        await page.click(step.selector)
+                    elif step.type == runner_pb2.WAIT:
+                        await page.wait_for_selector(step.selector, timeout=1000)
+                    elif step.type == runner_pb2.COPY:
+                        results = await page.query_selector_all(step.selector)
+                        outputs.append({
+                            'url': page.url,
+                            'text': "".join([await result.inner_text() for result in results]),
+                        })
+
+                if ffmpeg_process:
+                    await asyncio.sleep(10)
+            except Exception as e:
+                logger.exception(e)
+            finally:
+                # Clean up
+                await context.close()
+                await browser.close()
+
+                if ffmpeg_process:
+                    ffmpeg_process.kill()
+
+                return outputs
+
+    def GetPlaywrightBrowser(self, request: PlaywrightBrowserRequest, context: ServicerContext) -> Iterator[PlaywrightBrowserResponse]:
+        steps = list(request.steps)
+        display = self.display_pool.get_display(remote_control=False)
+
+        if not display:
+            yield PlaywrightBrowserResponse(state=RemoteBrowserState.TERMINATED)
+            return
+
+        # Start ffmpeg in a separate process to stream the display
+        ffmpeg_process = (
+            ffmpeg
+            .input(f"{display['DISPLAY']}.0", format='x11grab', framerate=10, video_size=(1024, 720))
+            .output('pipe:', format='mp4', vcodec='h264', movflags='faststart+frag_keyframe+empty_moov+default_base_moof', g=25, y=None)
+            .run_async(pipe_stdout=True, pipe_stderr=True)
+        ) if request.stream_video else None
+
+        # Use ThreadPoolExecutor to run the async function in a separate thread
+        with futures.ThreadPoolExecutor() as executor:
+            # Wrap the coroutine in a function that gets the current event loop or creates a new one
+            def run_async_code(loop):
+                asyncio.set_event_loop(loop)
+                return loop.run_until_complete(
+                    self._process_playwright_steps(
+                        request.url, steps, display, ffmpeg_process, request.session_data)
+                )
+
+            # Create a new event loop that will be run in a separate thread
+            new_loop = asyncio.new_event_loop()
+
+            # Submit the function to the executor and get a Future object
+            future = executor.submit(run_async_code, new_loop)
+
+            # Wait for the future to complete and get the return value
+            try:
+                yield PlaywrightBrowserResponse(state=RemoteBrowserState.RUNNING)
+
+                chunk_size = 1024 * 3  # 3KB
+                while True and ffmpeg_process:
+                    chunk = ffmpeg_process.stdout.read(chunk_size)
+                    if len(chunk) == 0:
+                        break
+                    yield PlaywrightBrowserResponse(video=chunk)
+
+                output_texts = future.result()
+                response = PlaywrightBrowserResponse(
+                    state=RemoteBrowserState.TERMINATED)
+
+                for output_text in output_texts:
+                    response.outputs.append(runner_pb2.BrowserOutput(
+                        text=output_text['text'], url=output_text['url']))
+
+                yield response
+            except Exception as e:
+                logger.error(e)
+
+        self.display_pool.put_display(display)
 
 
 def main():
