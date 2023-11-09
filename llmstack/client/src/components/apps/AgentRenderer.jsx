@@ -393,7 +393,31 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
       }
 
       if (message.errors && message.errors.length > 0) {
-        setErrors(message.errors);
+        const totalMessages = chunkedMessages.current.length;
+        const lastMessage = chunkedMessages.current[totalMessages - 1];
+        let existingMessages = null;
+        if (
+          totalMessages > 0 &&
+          (lastMessage.type === "ui_placeholder" ||
+            lastMessage["id"] === message.output.agent.id)
+        ) {
+          existingMessages = [...chunkedMessages.current.slice(0, -1)];
+        } else {
+          existingMessages = [...chunkedMessages.current];
+        }
+        chunkedMessages.current = [
+          ...existingMessages,
+          {
+            role: "bot",
+            content: message.errors.join("\n\n"),
+            type: "error",
+            error: true,
+            id: message.output?.agent?.id,
+          },
+        ];
+
+        setMessages(chunkedMessages.current);
+
         return;
       }
 
