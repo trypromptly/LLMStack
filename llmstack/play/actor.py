@@ -1,8 +1,8 @@
 import logging
 import time
-from typing import Any
-from typing import Type
 import uuid
+from types import TracebackType
+from typing import Any, Type
 
 from pydantic import BaseModel
 from pykka import ThreadingActor
@@ -98,3 +98,10 @@ class Actor(ThreadingActor):
 
     def on_stop(self) -> None:
         return super().on_stop()
+
+    def on_failure(self, exception_type: type[BaseException], exception_value: BaseException, traceback: TracebackType) -> None:
+        logger.error(
+            f'Encountered {exception_type} in {type(self)}({self.actor_urn}): {exception_value}')
+
+        # Send error to output stream
+        self._output_stream.error(exception_value)
