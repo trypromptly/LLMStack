@@ -58,7 +58,7 @@ const outputTheme = createTheme({
 });
 
 export function Errors(props) {
-  let errors = props.runError?.errors || [];
+  let errors = props.runError?.errors || props.runError || [];
 
   return (
     <List>

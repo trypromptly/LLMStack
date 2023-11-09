@@ -393,7 +393,7 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
       }
 
       if (message.errors && message.errors.length > 0) {
-        error = message.errors.join("\n\n");
+        setErrors(message.errors);
         return;
       }
 
