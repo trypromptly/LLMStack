@@ -1,4 +1,6 @@
 import React, { lazy } from "react";
+import { CookiesProvider } from "react-cookie";
+
 import ReactDOM from "react-dom/client";
 import "./index.css";
 
@@ -311,21 +313,23 @@ root.render(
   <React.StrictMode>
     <RecoilRoot>
       <ThemeProvider theme={defaultTheme}>
-        <Box
-          sx={{
-            minHeight: "100vh",
-            background:
-              window.location.href.endsWith("/embed") ||
-              window.location.href.endsWith("/embed/chatBubble")
-                ? "transparent"
-                : "#f5f5f5",
-          }}
-        >
-          <RouterProvider
-            router={router}
-            fallbackElement={<CircularProgress />}
-          />
-        </Box>
+        <CookiesProvider>
+          <Box
+            sx={{
+              minHeight: "100vh",
+              background:
+                window.location.href.endsWith("/embed") ||
+                window.location.href.endsWith("/embed/chatBubble")
+                  ? "transparent"
+                  : "#f5f5f5",
+            }}
+          >
+            <RouterProvider
+              router={router}
+              fallbackElement={<CircularProgress />}
+            />
+          </Box>
+        </CookiesProvider>
       </ThemeProvider>
     </RecoilRoot>
   </React.StrictMode>,

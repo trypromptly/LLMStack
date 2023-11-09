@@ -23,6 +23,8 @@ class ConnectionsViewSet(viewsets.ViewSet):
             'description': x.description(),
             'config_schema': x.get_config_schema(),
             'config_ui_schema': x.get_config_ui_schema(),
+            'connection_type': x.connection_type().value,
+            'metadata': x.metadata(),
         }, connection_type_subclasses))
 
         return Response(data)
