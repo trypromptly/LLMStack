@@ -1,12 +1,13 @@
-import copy
-from typing import Any, Generic, Iterator, TypeVar
-
-from django.conf import settings
-from pydantic import BaseModel
+from enum import Enum
+from typing import Generic, Iterator, TypeVar
 
 from llmstack.common.utils.module_loader import get_all_sub_classes
 from llmstack.connections.models import Connection, ConnectionActivationInput
 
+class ConnectionType(str, Enum):
+    BROWSER_LOGIN = 'browser_login'
+    OAUTH2 = 'oauth2'
+    CREDENTIALS = 'credentials'
 
 def get_connection_type_interface_subclasses():
     subclasses = []
@@ -34,65 +35,6 @@ def get_connection_type_interface_subclasses():
 
 ConnectionConfigurationSchemaType = TypeVar(
     'ConnectionConfigurationSchemaType')
-
-
-class BaseSchema(BaseModel):
-    pass
-
-    """
-    This is Base Schema model for all the connection configuration types.
-    """
-    @ classmethod
-    def get_json_schema(cls):
-        return super().schema_json(indent=2)
-
-    @ classmethod
-    def get_schema(cls):
-        return super().schema()
-
-    # TODO: This is a copy of the same method in DataSourceTypeInterface. Refactor to a common place.
-    @ classmethod
-    def get_ui_schema(cls):
-        schema = cls.get_schema()
-        ui_schema = {}
-        for key in schema.keys():
-            if key == 'properties':
-                ui_schema['ui:order'] = list(schema[key].keys())
-                ui_schema[key] = {}
-                for prop_key in schema[key].keys():
-                    ui_schema[key][prop_key] = {}
-                    if 'title' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:label'] = schema[key][prop_key]['title']
-                    if 'description' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:description'] = schema[key][prop_key]['description']
-                    if 'type' in schema[key][prop_key]:
-                        if schema[key][prop_key]['type'] == 'string' and prop_key in ('data', 'text', 'content'):
-                            ui_schema[key][prop_key]['ui:widget'] = 'textarea'
-                        elif schema[key][prop_key]['type'] == 'string':
-                            ui_schema[key][prop_key]['ui:widget'] = 'text'
-                        elif schema[key][prop_key]['type'] == 'integer' or schema[key][prop_key]['type'] == 'number':
-                            ui_schema[key][prop_key]['ui:widget'] = 'updown'
-                        elif schema[key][prop_key]['type'] == 'boolean':
-                            ui_schema[key][prop_key]['ui:widget'] = 'checkbox'
-                    if 'enum' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:widget'] = 'select'
-                        ui_schema[key][prop_key]['ui:options'] = {
-                            'enumOptions': [
-                                {'value': val, 'label': val} for val in schema[key][prop_key]['enum']
-                            ],
-                        }
-                    if 'widget' in schema[key][prop_key]:
-                        ui_schema[key][prop_key]['ui:widget'] = schema[key][prop_key]['widget']
-                    if 'format' in schema[key][prop_key] and schema[key][prop_key]['format'] == 'date-time':
-                        ui_schema[key][prop_key]['ui:widget'] = 'datetime'
-                    ui_schema[key][prop_key]['ui:advanced'] = schema[key][prop_key].get(
-                        'advanced_parameter', False,
-                    )
-            else:
-                ui_schema[key] = copy.deepcopy(schema[key])
-        return ui_schema['properties']
-
-
 class ConnectionTypeInterface(Generic[ConnectionConfigurationSchemaType]):
     """Interface for connection types."""
     @staticmethod
@@ -110,6 +52,14 @@ class ConnectionTypeInterface(Generic[ConnectionConfigurationSchemaType]):
     @staticmethod
     def description() -> str:
         raise NotImplementedError
+    
+    @staticmethod
+    def connection_type() -> ConnectionType:
+        raise NotImplementedError
+    
+    @staticmethod
+    def metadata() -> dict:
+        return {}
 
     @classmethod
     def parse_config(cls, config: dict) -> ConnectionConfigurationSchemaType:
