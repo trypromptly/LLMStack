@@ -271,6 +271,8 @@ def main():
                         help='Redis port', default=6379)
     parser.add_argument('--redis-db', type=int,
                         help='Redis DB', default=0)
+    parser.add_argument('--redis-password', type=str,
+                        help='Redis password', default=None)
     parser.add_argument('--hostname', type=str,
                         help='Hostname for mapping remote browser', default='localhost')
     parser.add_argument('--wss-hostname', type=str,
@@ -295,6 +297,8 @@ def main():
         os.getenv('RUNNER_RFB_START_PORT', args.rfb_start_port))
     args.redis_host = os.getenv('RUNNER_REDIS_HOST', args.redis_host)
     args.redis_port = int(os.getenv('RUNNER_REDIS_PORT', args.redis_port))
+    args.redis_password = os.getenv(
+        'RUNNER_REDIS_PASSWORD', args.redis_password)
     args.redis_db = int(os.getenv('RUNNER_REDIS_DB', args.redis_db))
     args.hostname = os.getenv('RUNNER_HOSTNAME', args.hostname)
     args.wss_hostname = os.getenv('RUNNER_WSS_HOSTNAME', args.wss_hostname)
@@ -307,7 +311,7 @@ def main():
 
     # Connect and verify redis
     redis_client = redis.Redis(
-        host=args.redis_host, port=args.redis_port, db=args.redis_db)
+        host=args.redis_host, port=args.redis_port, db=args.redis_db, password=args.redis_password)
     redis_client.ping()
 
     display_pool = VirtualDisplayPool(
@@ -315,7 +319,7 @@ def main():
 
     # Start websockify server
     websockify_process = subprocess.Popen(['websockify', f'{args.wss_port}', '--token-plugin=TokenRedis', f'--token-source={args.redis_host}:{args.redis_port}',
-                                           '-v', '--auth-plugin=llmstack.common.runner.auth.BasicHTTPAuthWithRedis', f'--auth-source={args.redis_host}:{args.redis_port}'], close_fds=True)
+                                           '-v', '--auth-plugin=llmstack.common.runner.auth.BasicHTTPAuthWithRedis', f'--auth-source={args.redis_host}:{args.redis_port}{f":{args.redis_password}" if args.redis_password else ""}'], close_fds=True)
 
     server = grpc_server(futures.ThreadPoolExecutor(max_workers=10))
     runner = Runner(display_pool=display_pool)
