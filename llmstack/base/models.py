@@ -254,6 +254,7 @@ class AbstractProfile(models.Model):
             'connections': self.connections,
             'google_custom_search_api_key': self.get_vendor_key('google_custom_search_api_key'),
             'google_custom_search_cx': self.get_vendor_key('google_custom_search_cx'),
+            'connections': self.get_all_connections(),
         }
 
     def is_basic_subscriber(self):
