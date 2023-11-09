@@ -4,10 +4,10 @@ import requests
 from pydantic import BaseModel, Field
 from llmstack.base.models import Profile
 from llmstack.connections.models import Connection, ConnectionStatus
-from llmstack.connections.types import ConnectionTypeInterface
+from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
 from .web_login import WebLoginBaseConfiguration
 from allauth.socialaccount.providers.hubspot.views import HubspotOAuth2Adapter
-
+from llmstack.common.blocks.base.schema import BaseSchema
 logger = logging.getLogger(__name__)
 class HubspotAdapter(HubspotOAuth2Adapter):
     def get_callback_url(self, request, app):
@@ -48,7 +48,15 @@ class HubspotConnection(BaseModel):
     
 
 class HubspotLoginConfiguration(WebLoginBaseConfiguration):
-    token: str = Field(description='Token', widget='oauthBtn', id='hubspot', btnText='Login with Hubspot', loginUrl='connections/hubspot/login/')
+    token: Optional[str]
+    user: Optional[str]
+    hub_domain: Optional[str]
+    scopes: Optional[List[str]]
+    hub_id: Optional[str]
+    app_id: Optional[str]
+    expires_in: Optional[int]
+    user_id: Optional[int]
+    token_type: Optional[str]
 
 
 class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration]):
@@ -67,3 +75,15 @@ class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration]):
     @staticmethod
     def description() -> str:
         return 'Login to Hubspot'
+    
+    @staticmethod
+    def connection_type() -> ConnectionType:
+        return ConnectionType.OAUTH2
+    
+    @staticmethod
+    def metadata() -> dict:
+        return {
+            'BtnText': 'Login with Hubspot',
+            'BtnLink': 'connections/hubspot/login/',
+            'RedirectUrl': 'connections/hubspot/callback/',
+        }
