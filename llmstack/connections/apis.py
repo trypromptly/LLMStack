@@ -86,6 +86,8 @@ class ConnectionsViewSet(viewsets.ViewSet):
         connection.description = request.data.get('description', '')
         connection.configuration = request.data.get('configuration')
         connection.updated_at = datetime.datetime.now().isoformat()
+        if 'status' in request.data:
+            connection.status = request.data.get('status')
 
         profile.add_connection(connection.dict())
 

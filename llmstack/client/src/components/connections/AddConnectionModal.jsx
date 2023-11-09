@@ -296,6 +296,35 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
             )}
           </div>
         );
+      case "credentials":
+        return (
+          <Button
+            onClick={() => {
+              if (!validateForm()) {
+                return;
+              }
+              onSaveCb({
+                ...connection,
+                ...localConnection,
+                ...{
+                  provider_slug: connectionType?.provider_slug,
+                  connection_type_slug: connectionType?.slug,
+                  configuration: configFormData,
+                },
+              }).then((conn) => {
+                setLocalConnection(conn);
+                if (conn.id) {
+                  onSaveCb({ ...conn, ...{ status: "Active" } }).then(() => {
+                    onCancelCb();
+                  });
+                }
+              });
+            }}
+            variant="contained"
+          >
+            Save
+          </Button>
+        );
       default:
         return null;
     }
