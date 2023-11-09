@@ -1,8 +1,7 @@
 import logging
 from typing import List
 
-from pykka import ActorDeadError
-from pykka import ThreadingActor
+from pykka import ActorDeadError, ThreadingActor
 
 from llmstack.play.actor import ActorConfig
 from llmstack.play.output_stream import Message, MessageType, OutputStream
@@ -136,7 +135,7 @@ class Coordinator(ThreadingActor):
             else:
                 output_actor_ref.tell(Message(message_type=MessageType.STREAM_ERROR, message={
                                       'errors': ['Timed out waiting for response']}))
-            ResettableTimer(TIMEOUT, self.force_stop).start()
+            ResettableTimer(10, self.force_stop).start()
 
     def on_stop(self) -> None:
         logger.info(f'Coordinator {self.actor_urn} stopping')
