@@ -45,7 +45,7 @@ const getProcessorInfoFromId = (app, id) => {
   };
 };
 
-const StepMessageContent = React.memo(({ step, app }) => {
+const StepMessageContent = React.memo(({ messageId, step, app }) => {
   if (!step) {
     return null;
   }
@@ -95,7 +95,10 @@ const StepMessageContent = React.memo(({ step, app }) => {
       >
         Output
       </Typography>
-      <MarkdownRenderer className="chat_message_type_step_output">
+      <MarkdownRenderer
+        className="chat_message_type_step_output"
+        messageId={messageId}
+      >
         {step.content}
       </MarkdownRenderer>
     </Stack>
@@ -172,7 +175,11 @@ const MemoizedMessage = React.memo(
           </div>
         )}
         {message.role === "bot" && message.type === "step" && (
-          <StepMessageContent step={message.content} app={app} />
+          <StepMessageContent
+            messageId={message.id}
+            step={message.content}
+            app={app}
+          />
         )}
         {message.type !== "step" && (
           <MarkdownRenderer
@@ -187,7 +194,8 @@ const MemoizedMessage = React.memo(
       </div>
     );
   },
-  (prevProps, curProps) => prevProps.message === curProps.message,
+  (prevProps, curProps) =>
+    prevProps.message?.content === curProps.message?.content,
 );
 
 export function AgentRenderer({ app, isMobile, embed = false, ws }) {
@@ -337,31 +345,41 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
 
       // Merge chunks of output
       if (message.output) {
+        let newChunkedOutput = {};
+        let streamPaths = [];
         if (message.output.agent) {
-          const [newChunkedOutput, streamPaths] = (chunkedOutput.current =
-            stitchObjects(chunkedOutput.current, {
+          [newChunkedOutput, streamPaths] = stitchObjects(
+            chunkedOutput.current,
+            {
               [message.output.agent.id]: message.output.agent.content,
-            }));
-          chunkedOutput.current = newChunkedOutput;
+            },
+          );
 
-          // Update streamChunks recoil state
-          for (const path of streamPaths) {
-            setStreamChunks((prevChunks) => {
-              return {
-                ...prevChunks,
-                [path.replace(/_base64_chunks$/g, "")]: get(
-                  chunkedOutput.current,
-                  path,
-                  null,
-                ),
-              };
-            });
-          }
+          // Update streamPaths with message.output.agent.id prefix
+          streamPaths = streamPaths.map((path) => {
+            return `${message.output.agent.id}.${path}`;
+          });
         } else {
-          chunkedOutput.current = stitchObjects(
+          [newChunkedOutput, streamPaths] = stitchObjects(
             chunkedOutput.current,
             message.output,
-          )[0];
+          );
+        }
+
+        chunkedOutput.current = newChunkedOutput;
+
+        // Update streamChunks recoil state
+        for (const path of streamPaths) {
+          setStreamChunks((prevChunks) => {
+            return {
+              ...prevChunks,
+              [path.replace(/_base64_chunks$/g, "")]: get(
+                chunkedOutput.current,
+                path,
+                null,
+              ),
+            };
+          });
         }
       }
 

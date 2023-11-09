@@ -3,14 +3,18 @@ import { useRecoilValue } from "recoil";
 import { get } from "lodash";
 import { streamChunksState } from "../../data/atoms";
 
-function StreamingVideoPlayer({ streamKey }) {
+function StreamingVideoPlayer({ streamKey, messageId }) {
   const videoRef = useRef(null);
   const sourceBufferRef = useRef(null);
   const mediaSource = useRef(new MediaSource());
   const [isSourceBufferReady, setIsSourceBufferReady] = useState(false);
   const isVideoSrcSet = useRef(false); // New ref to track if video's src is set
   const streamChunks = useRecoilValue(streamChunksState);
-  const chunks = get(streamChunks, streamKey, []);
+  const chunks = get(
+    streamChunks,
+    messageId ? `${messageId}.${streamKey}` : streamKey,
+    [],
+  );
   const [chunksProcessed, setChunksProcessed] = useState(0);
 
   useEffect(() => {
@@ -104,19 +108,9 @@ function StreamingVideoPlayer({ streamKey }) {
     return bytes.buffer;
   }
 
-  return (
-    <video
-      ref={videoRef}
-      autoPlay
-      width={"100%"}
-      onClick={(e) => {
-        console.log(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-        console.log(e.target.offsetWidth, e.target.offsetHeight);
-        e.preventDefault();
-      }}
-      controls
-    />
-  );
+  return chunks ? (
+    <video ref={videoRef} autoPlay width={"100%"} controls />
+  ) : null;
 }
 
 export default StreamingVideoPlayer;

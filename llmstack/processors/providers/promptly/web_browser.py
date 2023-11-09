@@ -6,7 +6,7 @@ from typing import List, Optional
 import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
 from llmstack.processors.providers.api_processor_interface import (
@@ -42,12 +42,16 @@ class BrowserInstruction(BaseModel):
     selector: Optional[str] = None
     data: Optional[str] = None
 
+    @validator('type', pre=True, always=True)
+    def validate_type(cls, v):
+        return v.lower().capitalize()
+
 
 class WebBrowserInput(ApiProcessorSchema):
     url: str = Field(
-        description='URL to visit', required=True)
+        description='URL to visit')
     instructions: List[BrowserInstruction] = Field(
-        ..., description='Instructions to execute', required=True)
+        ..., description='Instructions to execute')
 
 
 class WebBrowserOutput(ApiProcessorSchema):

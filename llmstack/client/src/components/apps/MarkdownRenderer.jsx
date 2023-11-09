@@ -45,6 +45,7 @@ function FunctionFormComponent(props) {
 }
 
 export default function MarkdownRenderer(props) {
+  const messageId = props.messageId;
   return (
     <ReactMarkdown
       {...props}
@@ -101,6 +102,7 @@ export default function MarkdownRenderer(props) {
             return (
               <StreamingVideoPlayer
                 streamKey={src.replace("data:videostream/", "")}
+                messageId={messageId}
               />
             );
           }
