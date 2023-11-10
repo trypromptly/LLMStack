@@ -81,6 +81,8 @@ class VirtualDisplayPool():
         self.display_res = display_res
         self.rfb_start_port = rfb_start_port
         self.hostname = hostname
+        self.ip_address = subprocess.check_output(
+            ['hostname', '-i']).decode('utf-8').strip()
         self._create_displays(max_displays, start_display,
                               display_res, rfb_start_port)
 
@@ -96,7 +98,7 @@ class VirtualDisplayPool():
 
             # Add display to redis with a TTL of 1 minute
             self.redis_client.set(
-                display['token'], '{"host": "' + f'{self.hostname}:{display["rfb_port"]}' + '"}', ex=60)
+                display['token'], '{"host": "' + f'{self.ip_address}:{display["rfb_port"]}' + '"}', ex=60)
 
             # Generate and add temp credentials to redis with a TTL of 1 minute
             username = str(uuid.uuid4())
