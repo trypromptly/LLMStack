@@ -3,6 +3,7 @@ import platform
 import secrets
 import subprocess
 import sys
+from collections import defaultdict
 
 import docker
 import toml
@@ -104,10 +105,28 @@ def start_runner(environment):
     image_tag = environment.get('RUNNER_IMAGE_TAG', 'main')
 
     # Pull image if not already pulled
-    for line in client.api.pull(image_name, tag=image_tag, stream=True, decode=True):
-        if 'progress' in line and 'id' in line:
-            print(
-                f'[llmstack-runner] Pulling {line["id"][:12]} {line["progress"]}', end='\r')
+    layers_status = defaultdict(dict)
+    response = client.api.pull(
+        image_name, tag=image_tag, stream=True, decode=True)
+    for line in response:
+        if 'id' in line:
+            layer_id = line['id']
+            # Update the status of this layer
+            layers_status[layer_id].update(line)
+
+            # Print the current status of all layers
+            for layer, status in layers_status.items():
+                print(
+                    f"[llmstack-runner] Layer {layer}: {status.get('status', '')} {status.get('progress', '')}")
+            print()  # Add a blank line for better readability
+
+        elif 'status' in line and 'id' not in line:
+            # Global status messages without a specific layer ID
+            print(line['status'])
+
+        elif 'error' in line:
+            print(f"Error: {line['error']}")
+            break
 
     try:
         runner_container = client.containers.get('llmstack-runner')
