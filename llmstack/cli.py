@@ -140,6 +140,7 @@ def start_runner(environment):
                                                  detach=True, remove=True, environment=environment,)
 
     # Start runner container if not already running
+    print('[llmstack-runner] Started LLMStack Runner')
     if runner_container.status != 'running':
         runner_container.start()
 
@@ -150,7 +151,7 @@ def start_runner(environment):
 
 def stop_runner():
     """Stop llmstack-runner container"""
-    print('Stopping LLMStack Runner')
+    print('\nStopping LLMStack Runner\n')
     client = docker.from_env()
     runner_container = None
     try:

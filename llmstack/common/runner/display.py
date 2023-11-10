@@ -92,7 +92,7 @@ class VirtualDisplayPool():
         # We start noVNC if remote_control is True
         if remote_control:
             x11vnc_process = subprocess.Popen(['x11vnc', '-display', display['DISPLAY'], '-nopw', '-listen',
-                                              'localhost', '-xkb', '-q', '-rfbport', str(display['rfb_port'])], close_fds=True)
+                                              f'{self.ip_address}', '-xkb', '-q', '-rfbport', str(display['rfb_port'])], close_fds=True)
             display['x11vnc_process'] = x11vnc_process
             display['token'] = str(uuid.uuid4())
 
