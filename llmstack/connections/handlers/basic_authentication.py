@@ -23,5 +23,5 @@ class BasicAuthenticationBasedAPILogin(ConnectionTypeInterface[BasicAuthenticati
         return 'Username Password based API Login'
     
     @staticmethod
-    def connection_type() -> ConnectionType:
+    def type() -> ConnectionType:
         return ConnectionType.CREDENTIALS

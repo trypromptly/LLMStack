@@ -31,7 +31,7 @@ class JunosLogin(ConnectionTypeInterface[JunosLoginConfiguration]):
         return 'Login to a Junos Device'
     
     @staticmethod
-    def connection_type() -> ConnectionType:
+    def type() -> ConnectionType:
         return ConnectionType.CREDENTIALS
 
     async def activate(self, connection) -> Iterator[Union[Connection, dict]]:

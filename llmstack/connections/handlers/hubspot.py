@@ -63,7 +63,7 @@ class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration]):
         return 'Login to Hubspot'
     
     @staticmethod
-    def connection_type() -> ConnectionType:
+    def type() -> ConnectionType:
         return ConnectionType.OAUTH2
     
     @staticmethod

@@ -47,7 +47,7 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
         return 'Login to a website'
     
     @staticmethod
-    def connection_type() -> ConnectionType:
+    def type() -> ConnectionType:
         return ConnectionType.BROWSER_LOGIN
 
     def input(self, activation_input: ConnectionActivationInput) -> None:

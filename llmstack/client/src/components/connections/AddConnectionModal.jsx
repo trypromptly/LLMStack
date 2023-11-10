@@ -69,7 +69,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
 
     if (
       Object.keys(configFormData).length === 0 &&
-      connectionType.connection_type !== "oauth2"
+      connectionType.type !== "oauth2"
     ) {
       errors.push("Configuration is required");
     }
@@ -206,7 +206,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
   }, [connection, connectionTypes, open]);
 
   const actionButton = () => {
-    switch (connectionType?.connection_type) {
+    switch (connectionType?.type) {
       case "oauth2":
         if (connection?.status === "Active") {
           return (
@@ -405,7 +405,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
           </Select>
         </FormControl>
         <InputLabel>Configuration</InputLabel>
-        {connectionType?.connection_type === "oauth2" ? (
+        {connectionType?.type === "oauth2" ? (
           <div>
             <TextField
               fullWidth

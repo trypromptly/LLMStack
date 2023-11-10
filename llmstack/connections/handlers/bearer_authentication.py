@@ -24,5 +24,5 @@ class BearerAuthenticationBasedAPILogin(ConnectionTypeInterface[BearerAuthentica
         return 'Bearer Token based API authentication'
     
     @staticmethod
-    def connection_type() -> ConnectionType:
+    def type() -> ConnectionType:
         return ConnectionType.CREDENTIALS
