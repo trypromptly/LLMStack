@@ -1,10 +1,9 @@
-from django.db import models
 import base64
 import json
 import logging
 import uuid
-
 from enum import Enum
+
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -12,7 +11,6 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
-from rest_framework.authtoken.models import Token
 from django.utils.module_loading import import_string
 from rest_framework.authtoken.models import Token
 
@@ -152,7 +150,7 @@ class AbstractProfile(models.Model):
 
     @property
     def connections(self):
-        return {k: json.loads(self.decrypt_value(v)) for k, v in self._connections.items()}
+        return {k: json.loads(self.decrypt_value(v)) for k, v in self._connections.items()} if self._connections else {}
 
     def get_connection(self, id):
         return json.loads(self.decrypt_value(self._connections.get(id))) if self._connections and self._connections.get(id) else None
@@ -161,18 +159,17 @@ class AbstractProfile(models.Model):
         connection_id = connection['id'] if 'id' in connection else str(
             uuid.uuid4())
         connection_json = json.dumps(connection)
+        if not self._connections:
+            self._connections = {}
         self._connections[connection_id] = self.encrypt_value(
             connection_json).decode('utf-8')
         self.save(update_fields=['_connections'])
 
     def delete_connection(self, id):
-        if id in self._connections:
+        if self._connections and id in self._connections:
             del self._connections[id]
             self.save(update_fields=['_connections'])
-            
-    def get_all_connections(self):
-        return [json.loads(self.decrypt_value(v)) for v in self._connections.values()]
-    
+
     def get_connection_by_type(self, connection_type_slug):
         return [json.loads(self.decrypt_value(v)) for v in self._connections.values() if json.loads(self.decrypt_value(v))['connection_type_slug'] == connection_type_slug]
 
