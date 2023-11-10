@@ -20,7 +20,7 @@ class BasicAuthenticationBasedAPILogin(ConnectionTypeInterface[BasicAuthenticati
 
     @staticmethod
     def description() -> str:
-        return 'Basic Authentication     based API Login'
+        return 'Basic Authentication based API Login'
     
     @staticmethod
     def type() -> ConnectionType:
