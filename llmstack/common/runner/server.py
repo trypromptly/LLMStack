@@ -12,6 +12,7 @@ import ffmpeg
 import redis
 from grpc import ServicerContext
 from grpc import server as grpc_server
+from grpc_health.v1 import health, health_pb2, health_pb2_grpc
 from playwright._impl._api_types import TimeoutError
 from playwright.async_api import async_playwright
 
@@ -328,6 +329,14 @@ def main():
     runner.wss_secure = args.wss_secure
 
     add_RunnerServicer_to_server(runner, server)
+
+    # Add health checking service
+    health_servicer = health.HealthServicer()
+    health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
+
+    # Set the health status to SERVING
+    health_servicer.set('', health_pb2.HealthCheckResponse.SERVING)
+
     server.add_insecure_port(f'[::]:{args.port}')
     server.start()
 
