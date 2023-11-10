@@ -13,7 +13,8 @@ from llmstack.connections.models import (
     ConnectionActivationOutput,
     ConnectionStatus,
 )
-from llmstack.connections.types import BaseSchema, ConnectionTypeInterface
+from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
+from llmstack.common.blocks.base.schema import BaseSchema
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,10 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
     @staticmethod
     def description() -> str:
         return 'Login to a website'
+    
+    @staticmethod
+    def type() -> ConnectionType:
+        return ConnectionType.BROWSER_LOGIN
 
     def input(self, activation_input: ConnectionActivationInput) -> None:
         if activation_input.data == 'terminate':

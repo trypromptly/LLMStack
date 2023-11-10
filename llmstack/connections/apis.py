@@ -23,6 +23,8 @@ class ConnectionsViewSet(viewsets.ViewSet):
             'description': x.description(),
             'config_schema': x.get_config_schema(),
             'config_ui_schema': x.get_config_ui_schema(),
+            'type': x.type().value,
+            'metadata': x.metadata(),
         }, connection_type_subclasses))
 
         return Response(data)
@@ -84,6 +86,8 @@ class ConnectionsViewSet(viewsets.ViewSet):
         connection.description = request.data.get('description', '')
         connection.configuration = request.data.get('configuration')
         connection.updated_at = datetime.datetime.now().isoformat()
+        if 'status' in request.data:
+            connection.status = request.data.get('status')
 
         profile.add_connection(connection.dict())
 

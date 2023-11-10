@@ -1,7 +1,7 @@
 from typing import Iterator, Union
 from pydantic import Field
 from llmstack.connections.models import Connection, ConnectionStatus
-from llmstack.connections.types import ConnectionTypeInterface
+from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
 from .web_login import WebLoginBaseConfiguration
 
 
@@ -29,6 +29,10 @@ class JunosLogin(ConnectionTypeInterface[JunosLoginConfiguration]):
     @staticmethod
     def description() -> str:
         return 'Login to a Junos Device'
+    
+    @staticmethod
+    def type() -> ConnectionType:
+        return ConnectionType.CREDENTIALS
 
     async def activate(self, connection) -> Iterator[Union[Connection, dict]]:
         try:

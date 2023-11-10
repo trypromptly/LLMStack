@@ -1,15 +1,15 @@
 import logging
 from typing import List, Optional 
 import requests
-from pydantic import BaseModel, Field
-from llmstack.base.models import Profile
-from llmstack.connections.models import Connection, ConnectionStatus
-from llmstack.connections.types import ConnectionTypeInterface
-from .web_login import WebLoginBaseConfiguration
+from llmstack.connections.handlers import Oauth2BaseConfiguration
+from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
 from allauth.socialaccount.providers.hubspot.views import HubspotOAuth2Adapter
 
 logger = logging.getLogger(__name__)
 class HubspotAdapter(HubspotOAuth2Adapter):
+    def get_connection_type_slug(self):
+        return 'hubspot_oauth2'
+    
     def get_callback_url(self, request, app):
         from django.urls import reverse
         from allauth.utils import build_absolute_uri
@@ -20,7 +20,6 @@ class HubspotAdapter(HubspotOAuth2Adapter):
         return redirect_uri
     
     def complete_login(self, request, app, token, **kwargs):
-        from allauth.socialaccount.models import SocialAccount, SocialLogin
         headers = {"Content-Type": "application/json"}
         response = requests.get(
             "{0}/{1}".format(self.profile_url, token.token), headers=headers
@@ -29,13 +28,12 @@ class HubspotAdapter(HubspotOAuth2Adapter):
         extra_data = response.json()
         provider = self.get_provider()
         uid = provider.extract_uid(extra_data)
+                                
         extra_data = provider.extract_extra_data(extra_data)
-        connection_obj = HubspotConnection(id=f'hubspot_oauth2~{extra_data["hub_id"]}',**extra_data)
-        return connection_obj
+        return HubspotLoginConfiguration(**extra_data)
 
-
-class HubspotConnection(BaseModel):
-    connection_type_slug: str = 'hubspot_oauth2'
+class HubspotLoginConfiguration(Oauth2BaseConfiguration):
+    connection_type_slug = 'hubspot_oauth2'
     token: Optional[str]
     user: Optional[str]
     hub_domain: Optional[str]
@@ -45,10 +43,6 @@ class HubspotConnection(BaseModel):
     expires_in: Optional[int]
     user_id: Optional[int]
     token_type: Optional[str]
-    
-
-class HubspotLoginConfiguration(WebLoginBaseConfiguration):
-    token: str = Field(description='Token', widget='oauthBtn', id='hubspot', btnText='Login with Hubspot', loginUrl='connections/hubspot/login/')
 
 
 class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration]):
@@ -62,8 +56,20 @@ class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration]):
 
     @staticmethod
     def slug() -> str:
-        return 'hubspot_login'
+        return 'hubspot_oauth2'
 
     @staticmethod
     def description() -> str:
         return 'Login to Hubspot'
+    
+    @staticmethod
+    def type() -> ConnectionType:
+        return ConnectionType.OAUTH2
+    
+    @staticmethod
+    def metadata() -> dict:
+        return {
+            'BtnText': 'Login with Hubspot',
+            'BtnLink': 'connections/hubspot/login/',
+            'RedirectUrl': 'connections/hubspot/callback/',
+        }

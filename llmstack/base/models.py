@@ -169,6 +169,12 @@ class AbstractProfile(models.Model):
         if id in self._connections:
             del self._connections[id]
             self.save(update_fields=['_connections'])
+            
+    def get_all_connections(self):
+        return [json.loads(self.decrypt_value(v)) for v in self._connections.values()]
+    
+    def get_connection_by_type(self, connection_type_slug):
+        return [json.loads(self.decrypt_value(v)) for v in self._connections.values() if json.loads(self.decrypt_value(v))['connection_type_slug'] == connection_type_slug]
 
     def _vendor_key_or_promptly_default(self, attrname, api_key_value):
         if attrname == 'azure_openai_api_key':

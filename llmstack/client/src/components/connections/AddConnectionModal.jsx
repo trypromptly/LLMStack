@@ -67,7 +67,10 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
       errors.push("Connection type is required");
     }
 
-    if (Object.keys(configFormData).length === 0) {
+    if (
+      Object.keys(configFormData).length === 0 &&
+      connectionType.type !== "oauth2"
+    ) {
       errors.push("Configuration is required");
     }
 
@@ -202,6 +205,130 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
     }
   }, [connection, connectionTypes, open]);
 
+  const actionButton = () => {
+    switch (connectionType?.type) {
+      case "oauth2":
+        if (connection?.status === "Active") {
+          return (
+            <Button
+              variant="contained"
+              onClick={() => {
+                if (!validateForm()) {
+                  return;
+                }
+                onSaveCb({
+                  ...connection,
+                  ...localConnection,
+                  ...{
+                    provider_slug: connectionType?.provider_slug,
+                    connection_type_slug: connectionType?.slug,
+                    configuration: configFormData,
+                  },
+                }).then((res) => {
+                  setLocalConnection(res);
+                  onCancelCb();
+                });
+              }}
+            >
+              Save
+            </Button>
+          );
+        } else {
+          return (
+            <Button
+              variant="contained"
+              onClick={() => {
+                if (!validateForm()) {
+                  return;
+                }
+                onSaveCb({
+                  ...connection,
+                  ...localConnection,
+                  ...{
+                    provider_slug: connectionType?.provider_slug,
+                    connection_type_slug: connectionType?.slug,
+                    configuration: configFormData,
+                  },
+                }).then((res) => {
+                  setLocalConnection(res);
+                  window.open(connectionType?.metadata?.BtnLink);
+                });
+              }}
+            >
+              {connectionType?.metadata?.BtnText}
+            </Button>
+          );
+        }
+      case "browser_login":
+        return (
+          <div>
+            {!connectionActive && (
+              <Button
+                onClick={testConnection({
+                  ...connection,
+                  ...localConnection,
+                  ...{
+                    provider_slug: connectionType?.provider_slug,
+                    connection_type_slug: connectionType?.slug,
+                  },
+                })}
+                variant="contained"
+              >
+                Test Connection
+              </Button>
+            )}
+            {connectionActive && (
+              <Button
+                onClick={() =>
+                  handleSaveCb({
+                    ...connection,
+                    ...localConnection,
+                    ...{
+                      provider_slug: connectionType?.provider_slug,
+                      connection_type_slug: connectionType?.slug,
+                    },
+                  })
+                }
+                variant="contained"
+              >
+                Save
+              </Button>
+            )}
+          </div>
+        );
+      case "credentials":
+        return (
+          <Button
+            onClick={() => {
+              if (!validateForm()) {
+                return;
+              }
+              onSaveCb({
+                ...connection,
+                ...localConnection,
+                ...{
+                  provider_slug: connectionType?.provider_slug,
+                  connection_type_slug: connectionType?.slug,
+                  configuration: configFormData,
+                },
+              }).then((conn) => {
+                setLocalConnection(conn);
+                if (conn.id) {
+                  onSaveCb({ ...conn, ...{ status: "Active" } }).then(() => {
+                    onCancelCb();
+                  });
+                }
+              });
+            }}
+            variant="contained"
+          >
+            Save
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
   return (
     <Dialog open={open} onClose={handleCloseCb} fullWidth>
       <DialogTitle>{`${connection ? "Edit" : "Add"} Connection`}</DialogTitle>
@@ -278,48 +405,47 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
           </Select>
         </FormControl>
         <InputLabel>Configuration</InputLabel>
-        <ThemedJsonForm
-          schema={
-            connectionType?.config_schema || {
-              type: "object",
-              properties: {},
+        {connectionType?.type === "oauth2" ? (
+          <div>
+            <TextField
+              fullWidth
+              disabled
+              value={JSON.stringify(configFormData)}
+              minRows={3}
+              maxRows={3}
+              multiline
+            />
+          </div>
+        ) : (
+          <ThemedJsonForm
+            schema={
+              connectionType?.config_schema || {
+                type: "object",
+                properties: {},
+              }
             }
-          }
-          validator={validator}
-          uiSchema={{
-            ...(connectionType?.config_ui_schema || {}),
-            ...{
-              "ui:submitButtonOptions": {
-                norender: true,
+            validator={validator}
+            uiSchema={{
+              ...(connectionType?.config_ui_schema || {}),
+              ...{
+                "ui:submitButtonOptions": {
+                  norender: true,
+                },
+                "ui:DescriptionFieldTemplate": () => null,
+                "ui:TitleFieldTemplate": () => null,
               },
-              "ui:DescriptionFieldTemplate": () => null,
-              "ui:TitleFieldTemplate": () => null,
-            },
-          }}
-          formData={configFormData}
-          onChange={({ formData }) => {
-            setConnectionActive(false);
-            setConfigFormData(formData);
-            setLocalConnection({
-              ...localConnection,
-              configuration: formData,
-            });
-          }}
-          widgets={{
-            oauthBtn: (props) => {
-              return (
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    window.open(props.schema.loginUrl, "_blank");
-                  }}
-                >
-                  {props.schema.btnText}
-                </Button>
-              );
-            },
-          }}
-        />
+            }}
+            formData={configFormData}
+            onChange={({ formData }) => {
+              setConnectionActive(false);
+              setConfigFormData(formData);
+              setLocalConnection({
+                ...localConnection,
+                configuration: formData,
+              });
+            }}
+          />
+        )}
         {isRemoteBrowser && (
           <RemoteBrowser
             wsUrl={remoteBrowserWsUrl}
@@ -339,38 +465,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCloseCb}>Cancel</Button>
-        {!connectionActive && (
-          <Button
-            onClick={testConnection({
-              ...connection,
-              ...localConnection,
-              ...{
-                provider_slug: connectionType?.provider_slug,
-                connection_type_slug: connectionType?.slug,
-              },
-            })}
-            variant="contained"
-          >
-            Test Connection
-          </Button>
-        )}
-        {connectionActive && (
-          <Button
-            onClick={() =>
-              handleSaveCb({
-                ...connection,
-                ...localConnection,
-                ...{
-                  provider_slug: connectionType?.provider_slug,
-                  connection_type_slug: connectionType?.slug,
-                },
-              })
-            }
-            variant="contained"
-          >
-            Save
-          </Button>
-        )}
+        {actionButton()}
       </DialogActions>
     </Dialog>
   );
