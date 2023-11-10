@@ -1,5 +1,6 @@
 import datetime
 import logging
+import uuid
 import orjson as json
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -23,7 +24,7 @@ class ConnectionsViewSet(viewsets.ViewSet):
             'description': x.description(),
             'config_schema': x.get_config_schema(),
             'config_ui_schema': x.get_config_ui_schema(),
-            'type': x.type().value,
+            'base_connection_type': x.type().value,
             'metadata': x.metadata(),
         }, connection_type_subclasses))
 
@@ -62,15 +63,16 @@ class ConnectionsViewSet(viewsets.ViewSet):
     def post(self, request):
         profile = get_object_or_404(Profile, user=request.user)
         connection = Connection(
+            id=str(uuid.uuid4()),
             name=request.data.get('name'),
             description=request.data.get('description', ''),
             connection_type_slug=request.data.get('connection_type_slug'),
             provider_slug=request.data.get('provider_slug'),
             configuration=request.data.get('configuration'),
+            base_connection_type=request.data.get('base_connection_type'),
             created_at=datetime.datetime.now(),
             updated_at=datetime.datetime.now(),
         )
-
         profile.add_connection(connection.dict())
 
         return Response(connection.dict())

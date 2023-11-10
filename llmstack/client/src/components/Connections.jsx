@@ -116,7 +116,10 @@ function Connections() {
         startIcon={<AddOutlined />}
         variant="contained"
         sx={{ textTransform: "none", margin: "10px", marginLeft: "auto" }}
-        onClick={() => setOpenConnectionModal(true)}
+        onClick={() => {
+          setConnection(null);
+          setOpenConnectionModal(true);
+        }}
       >
         Connection
       </Button>

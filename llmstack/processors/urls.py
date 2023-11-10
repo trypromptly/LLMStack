@@ -52,4 +52,10 @@ urlpatterns = [
         'api/history/<str:request_uuid>',
         apis.HistoryViewSet.as_view({'get': 'get'}),
     ),
+    
+    # Processor Utils
+    path(
+        'api/apibackends/http_api/validate_openapi_spec',
+        apis.UtilsAPIViewSet.as_view({'post': 'validate_openapi_spec'}),
+    ),
 ]

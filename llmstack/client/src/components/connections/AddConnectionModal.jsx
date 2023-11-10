@@ -69,7 +69,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
 
     if (
       Object.keys(configFormData).length === 0 &&
-      connectionType.type !== "oauth2"
+      connectionType.base_connection_type !== "oauth2"
     ) {
       errors.push("Configuration is required");
     }
@@ -206,7 +206,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
   }, [connection, connectionTypes, open]);
 
   const actionButton = () => {
-    switch (connectionType?.type) {
+    switch (connectionType?.base_connection_type) {
       case "oauth2":
         if (connection?.status === "Active") {
           return (
@@ -223,6 +223,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
                     provider_slug: connectionType?.provider_slug,
                     connection_type_slug: connectionType?.slug,
                     configuration: configFormData,
+                    base_connection_type: connectionType?.base_connection_type,
                   },
                 }).then((res) => {
                   setLocalConnection(res);
@@ -248,6 +249,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
                     provider_slug: connectionType?.provider_slug,
                     connection_type_slug: connectionType?.slug,
                     configuration: configFormData,
+                    base_connection_type: connectionType?.base_connection_type,
                   },
                 }).then((res) => {
                   setLocalConnection(res);
@@ -310,6 +312,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
                   provider_slug: connectionType?.provider_slug,
                   connection_type_slug: connectionType?.slug,
                   configuration: configFormData,
+                  base_connection_type: connectionType?.base_connection_type,
                 },
               }).then((conn) => {
                 setLocalConnection(conn);
@@ -405,7 +408,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
           </Select>
         </FormControl>
         <InputLabel>Configuration</InputLabel>
-        {connectionType?.type === "oauth2" ? (
+        {connectionType?.base_connection_type === "oauth2" ? (
           <div>
             <TextField
               fullWidth

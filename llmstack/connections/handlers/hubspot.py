@@ -33,7 +33,6 @@ class HubspotAdapter(HubspotOAuth2Adapter):
         return HubspotLoginConfiguration(**extra_data)
 
 class HubspotLoginConfiguration(Oauth2BaseConfiguration):
-    connection_type_slug = 'hubspot_oauth2'
     token: Optional[str]
     user: Optional[str]
     hub_domain: Optional[str]

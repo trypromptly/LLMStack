@@ -3,6 +3,7 @@ from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
 
 class BearerAuthenticationConfiguration(BaseSchema):
+    connection_type_slug: str = Field(default='bearer_authentication', widget='hidden')
     token: str = Field(widget='textarea')
     token_prefix: str = 'Bearer'
     
