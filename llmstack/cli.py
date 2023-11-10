@@ -97,36 +97,39 @@ def prepare_env():
 
 def start_runner(environment):
     """Start llmstack-runner container"""
-    print('Starting LLMStack Runner')
+    print('[llmstack-runner] Starting LLMStack Runner')
     client = docker.from_env()
     runner_container = None
     image_name = environment.get(
         'RUNNER_IMAGE_NAME', 'ghcr.io/trypromptly/llmstack-runner')
     image_tag = environment.get('RUNNER_IMAGE_TAG', 'main')
 
-    # Pull image if not already pulled
-    layers_status = defaultdict(dict)
-    response = client.api.pull(
-        image_name, tag=image_tag, stream=True, decode=True)
-    for line in response:
-        if 'id' in line:
-            layer_id = line['id']
-            # Update the status of this layer
-            layers_status[layer_id].update(line)
+    # Pull image if it is not locally available
+    if not any(f'{image_name}:{image_tag}' in image.tags for image in client.images.list()):
+        print(f'[llmstack-runner] Pulling {image_name}:{image_tag}')
 
-            # Print the current status of all layers
-            for layer, status in layers_status.items():
-                print(
-                    f"[llmstack-runner] Layer {layer}: {status.get('status', '')} {status.get('progress', '')}")
-            print()  # Add a blank line for better readability
+        layers_status = defaultdict(dict)
+        response = client.api.pull(
+            image_name, tag=image_tag, stream=True, decode=True)
+        for line in response:
+            if 'id' in line:
+                layer_id = line['id']
+                # Update the status of this layer
+                layers_status[layer_id].update(line)
 
-        elif 'status' in line and 'id' not in line:
-            # Global status messages without a specific layer ID
-            print(line['status'])
+                # Print the current status of all layers
+                for layer, status in layers_status.items():
+                    print(
+                        f"[llmstack-runner] Layer {layer}: {status.get('status', '')} {status.get('progress', '')}")
+                print()  # Add a blank line for better readability
 
-        elif 'error' in line:
-            print(f"Error: {line['error']}")
-            break
+            elif 'status' in line and 'id' not in line:
+                # Global status messages without a specific layer ID
+                print(line['status'])
+
+            elif 'error' in line:
+                print(f"Error: {line['error']}")
+                break
 
     try:
         runner_container = client.containers.get('llmstack-runner')
