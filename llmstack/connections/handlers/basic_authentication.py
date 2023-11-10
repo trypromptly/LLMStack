@@ -16,11 +16,11 @@ class BasicAuthenticationBasedAPILogin(ConnectionTypeInterface[BasicAuthenticati
 
     @staticmethod
     def slug() -> str:
-        return 'username_password_api'
+        return 'basic_authentication'
 
     @staticmethod
     def description() -> str:
-        return 'Username Password based API Login'
+        return 'Basic Authentication based API Login'
     
     @staticmethod
     def type() -> ConnectionType:
