@@ -99,10 +99,20 @@ def start_runner(environment):
     print('Starting LLMStack Runner')
     client = docker.from_env()
     runner_container = None
+    image_name = environment.get(
+        'RUNNER_IMAGE_NAME', 'ghcr.io/trypromptly/llmstack-runner')
+    image_tag = environment.get('RUNNER_IMAGE_TAG', 'main')
+
+    # Pull image if not already pulled
+    for line in client.api.pull(image_name, tag=image_tag, stream=True, decode=True):
+        if 'progress' in line and 'id' in line:
+            print(
+                f'[llmstack-runner] Pulling {line["id"][:12]} {line["progress"]}', end='\r')
+
     try:
         runner_container = client.containers.get('llmstack-runner')
     except docker.errors.NotFound:
-        runner_container = client.containers.run('llmstack-runner', name='llmstack-runner',
+        runner_container = client.containers.run(f'{image_name}:{image_tag}', name='llmstack-runner',
                                                  ports={
                                                      '50051/tcp': os.environ['RUNNER_PORT'], '50052/tcp': os.environ['RUNNER_WSS_PORT']},
                                                  detach=True, remove=True, environment=environment,)
