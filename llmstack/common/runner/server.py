@@ -104,11 +104,12 @@ class Runner(RunnerServicer):
 
         # Get a display from the pool and send its info to the client
         display = self.display_pool.get_display(remote_control=True)
+        wss_server_path = f'{self.wss_hostname}:{self.wss_port}' if '/' not in self.wss_hostname else self.wss_hostname
 
         # Return the display info to the client
         yield RemoteBrowserResponse(
             session=RemoteBrowserSession(
-                ws_url=f"{'wss' if self.wss_secure else 'ws'}://{display['username']}:{display['password']}@{self.wss_hostname}:{self.wss_port}?token={display['token']}",
+                ws_url=f"{'wss' if self.wss_secure else 'ws'}://{display['username']}:{display['password']}@{wss_server_path}?token={display['token']}",
             ),
             state=RemoteBrowserState.RUNNING,
         )
