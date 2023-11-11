@@ -319,7 +319,7 @@ def main():
         redis_client, hostname=args.hostname, max_displays=args.max_displays, start_display=args.start_display, display_res=args.display_res, rfb_start_port=args.rfb_start_port)
 
     # Start websockify server
-    websockify_process = subprocess.Popen(['websockify', f'{args.wss_port}', '--token-plugin=TokenRedis', f'--token-source={args.redis_host}:{args.redis_port}',
+    websockify_process = subprocess.Popen(['websockify', f'{args.wss_port}', '--web', '/usr/share/www/html', '--token-plugin=TokenRedis', f'--token-source={args.redis_host}:{args.redis_port}',
                                            '-v', '--auth-plugin=llmstack.common.runner.auth.BasicHTTPAuthWithRedis', f'--auth-source={args.redis_host}:{args.redis_port}{f":{args.redis_password}" if args.redis_password else ""}'], close_fds=True)
 
     server = grpc_server(futures.ThreadPoolExecutor(max_workers=10))
