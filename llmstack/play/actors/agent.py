@@ -145,7 +145,6 @@ class AgentActor(Actor):
             agent_message_id = str(uuid.uuid4())
 
             for data in result:
-                logger.info(data)
                 if data.object == 'chat.completion.chunk' and len(data.choices) > 0 and data.choices[0].delta:
                     finish_reason = data.choices[0].finish_reason
                     delta = data.choices[0].delta
