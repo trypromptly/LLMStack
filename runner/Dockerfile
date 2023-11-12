@@ -6,9 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
-    xdotool \
     x11vnc \
-    websockify \
     novnc \
     redis-server \
     && rm -rf /var/lib/apt/lists/*
