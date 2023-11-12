@@ -1,13 +1,14 @@
-import importlib
 import logging
 import time
 import uuid
-import orjson as json
 from typing import Any
-from jinja2 import Template
 
+import orjson as json
 from asgiref.sync import async_to_sync
+from jinja2 import Template
+from openai import OpenAI
 from pydantic import BaseModel
+
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.output import OutputResponse
 from llmstack.play.output_stream import Message, MessageType
@@ -54,6 +55,10 @@ class AgentActor(Actor):
         self._input = kwargs.get('input')
         self._config = kwargs.get('config', {})
 
+        self._openai_client = OpenAI(
+            api_key=self._env['openai_api_key']
+        )
+
         self._agent_messages = [{
             'role': 'system',
             'content': self._config.get('system_message', 'You are a helpful assistant that uses provided tools to perform actions.')
@@ -94,8 +99,6 @@ class AgentActor(Actor):
         )
 
     def on_receive(self, message: Message) -> Any:
-        import openai
-        importlib.reload(openai)
         max_steps = self._config.get('max_steps', 10) + 2
 
         if len(self._agent_messages) > max_steps:
@@ -123,14 +126,12 @@ class AgentActor(Actor):
 
             model = self._config.get('model', 'gpt-3.5-turbo')
 
-            openai.api_key = self._env['openai_api_key']
-
             # Make one call to the model
             full_content = ''
             function_name = ''
             function_args = ''
             finish_reason = None
-            result = openai.ChatCompletion.create(
+            result = self._openai_client.chat.completions.create(
                 model=model,
                 messages=self._agent_messages,
                 stream=True,
@@ -139,30 +140,31 @@ class AgentActor(Actor):
             agent_message_id = str(uuid.uuid4())
 
             for data in result:
-                if data.get('object') and data.get('object') == 'chat.completion.chunk' and data.get('choices') and len(data.get('choices')) > 0:
-                    finish_reason = data['choices'][0]['finish_reason']
-                    delta = data['choices'][0]['delta']
-                    function_call = delta.get('function_call')
-                    content = delta.get('content')
+                logger.info(data)
+                if data.object == 'chat.completion.chunk' and len(data.choices) > 0 and data.choices[0].delta:
+                    finish_reason = data.choices[0].finish_reason
+                    delta = data.choices[0].delta
+                    function_call = delta.function_call
+                    content = delta.content
 
-                    if function_call and function_call.get('name'):
-                        function_name += function_call['name']
+                    if function_call and function_call.name:
+                        function_name += function_call.name
                         async_to_sync(self._output_stream.write)(
                             AgentOutput(
                                 content=FunctionCall(
-                                    name=function_call['name'],
+                                    name=function_call.name,
                                 ),
                                 id=agent_message_id,
                                 from_id='agent',
                                 type='step',
                             )
                         )
-                    elif function_call and function_call.get('arguments'):
-                        function_args += function_call['arguments']
+                    elif function_call and function_call.arguments:
+                        function_args += function_call.arguments
                         async_to_sync(self._output_stream.write)(
                             AgentOutput(
                                 content=FunctionCall(
-                                    arguments=function_call['arguments'],
+                                    arguments=function_call.arguments,
                                 ),
                                 id=agent_message_id,
                                 from_id='agent',

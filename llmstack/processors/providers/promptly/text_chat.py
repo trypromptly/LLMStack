@@ -3,17 +3,19 @@ import importlib
 import logging
 import uuid
 from enum import Enum
-from typing import Optional
-from typing import List
+from typing import List, Optional
 
-import openai
 from asgiref.sync import async_to_sync
 from django import db
+from openai import AzureOpenAI, OpenAI
 from pydantic import Field
 
 from llmstack.datasources.models import DataSource
 from llmstack.datasources.types import DataSourceTypeFactory
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
+from llmstack.processors.providers.api_processor_interface import (
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +190,6 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
 
     def process(self) -> dict:
         input = self._input.dict()
-        importlib.reload(openai)
         output_stream = self._output_stream
         docs = self._search_datasources(input)
 
@@ -227,10 +228,12 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         )
 
         if self._env['azure_openai_api_key'] and self._config.use_azure_if_available:
-            openai.api_type = 'azure'
-            openai.api_key = self._env['azure_openai_api_key']
-            openai.api_base = f"https://{self._env['azure_openai_endpoint']}.openai.azure.com"
-            openai.api_version = '2023-03-15-preview'
+            openai_client = AzureOpenAI(
+                api_key=self._env['azure_openai_api_key'],
+                api_version='2023-03-15-preview',
+                azure_endpoint=self._env['azure_openai_endpoint'],
+            )
+
             model = self._config.dict().get('model', 'gpt-3.5-turbo')
             engine = 'gpt-4'
             if model == 'gpt-3.5-turbo':
@@ -240,7 +243,7 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
             elif model == 'gpt-4-32k':
                 engine = 'gpt-4-32k'
 
-            result = openai.ChatCompletion.create(
+            result = openai_client.chat.completions.create(
                 engine=engine,
                 messages=[system_message] +
                 [context_message] + self._chat_history,
@@ -248,12 +251,15 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
                 stream=True,
             )
         elif self._env['localai_base_url'] and self._config.use_localai_if_available:
-            if self._env['localai_api_key']:
-                openai.api_key = self._env['localai_api_key']
-            openai.api_base = self._env['localai_base_url']
+            openai_client = OpenAI(
+                api_key=self._env['localai_api_key'],
+                base_url=self._env['localai_base_url'],
+            ) if self._env['localai_api_key'] else OpenAI(
+                base_url=self._env['localai_base_url'],
+            )
             model = self._config.dict().get('model', 'gpt-3.5-turbo')
 
-            result = openai.ChatCompletion.create(
+            result = openai_client.chat.completions.create(
                 model=model,
                 messages=[system_message] +
                 [context_message] + self._chat_history,
@@ -261,9 +267,11 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
                 stream=True,
             )
         elif self._env['openai_api_key'] is not None:
-            openai.api_key = self._env['openai_api_key']
+            openai_client = OpenAI(
+                api_key=self._env['openai_api_key'],
+            )
             model = self._config.dict().get('model', 'gpt-3.5-turbo')
-            result = openai.ChatCompletion.create(
+            result = openai_client.chat.completions.create(
                 model=model,
                 messages=[system_message] +
                 [context_message] + self._chat_history,
@@ -274,10 +282,10 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
             raise Exception('No OpenAI API key provided')
 
         for data in result:
-            if data.get('object') and data.get('object') == 'chat.completion.chunk' and data.get('choices') and len(data.get('choices')) > 0 and data['choices'][0].get('delta') and data['choices'][0]['delta'].get('content'):
+            if data.object == 'chat.completion.chunk' and len(data.choices) > 0 and data.choices[0].delta and data.choices[0].delta.content:
                 async_to_sync(output_stream.write)(
                     TextChatOutput(
-                        answer=data['choices'][0]['delta']['content']
+                        answer=data.choices[0].delta.content
                     ))
 
         if len(docs) > 0:
