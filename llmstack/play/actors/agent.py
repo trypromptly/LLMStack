@@ -126,6 +126,11 @@ class AgentActor(Actor):
 
             model = self._config.get('model', 'gpt-3.5-turbo')
 
+            if model == 'gpt-3.5-turbo-latest':
+                model = 'gpt-3.5-turbo-1106'
+            elif model == 'gpt-4-turbo-latest':
+                model = 'gpt-4-1106-preview'
+
             # Make one call to the model
             full_content = ''
             function_name = ''

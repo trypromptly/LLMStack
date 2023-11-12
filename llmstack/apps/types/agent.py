@@ -1,17 +1,19 @@
 from enum import Enum
 from typing import List, Optional
+
 from pydantic import Field
 
-from llmstack.apps.types.app_type_interface import AppTypeInterface
-from llmstack.apps.types.app_type_interface import BaseSchema
+from llmstack.apps.types.app_type_interface import AppTypeInterface, BaseSchema
 from llmstack.processors.providers.api_processor_interface import DataUrl
 
 
 class AgentModel(str, Enum):
+    GPT_3_5_LATEST = 'gpt-3.5-turbo-latest'
     GPT_3_5 = 'gpt-3.5-turbo'
     GPT_3_5_16K = 'gpt-3.5-turbo-16k'
     GPT_4 = 'gpt-4'
     GPT_4_32K = 'gpt-4-32k'
+    GPT_4_LATEST = 'gpt-4-turbo-latest'
 
     def __str__(self):
         return self.value
@@ -24,10 +26,11 @@ class RendererType(str, Enum):
     def __str__(self):
         return self.value
 
+
 class AgentConfigSchema(BaseSchema):
     model: AgentModel = Field(
         title='Model',
-        default=AgentModel.GPT_3_5, description='The model to use for the agent.',
+        default=AgentModel.GPT_3_5_LATEST, description='The model to use for the agent.',
     )
     system_message: str = Field(
         title='System Message',
