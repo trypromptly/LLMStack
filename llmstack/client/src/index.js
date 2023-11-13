@@ -9,6 +9,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RecoilRoot } from "recoil";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Box, createTheme, ThemeProvider } from "@mui/material";
+import { TourProvider } from "@reactour/tour";
 
 const App = lazy(() => import("./App"));
 const ErrorPage = lazy(() => import("./pages/error"));
@@ -313,23 +314,25 @@ root.render(
   <React.StrictMode>
     <RecoilRoot>
       <ThemeProvider theme={defaultTheme}>
-        <CookiesProvider>
-          <Box
-            sx={{
-              minHeight: "100vh",
-              background:
-                window.location.href.endsWith("/embed") ||
-                window.location.href.endsWith("/embed/chatBubble")
-                  ? "transparent"
-                  : "#f5f5f5",
-            }}
-          >
-            <RouterProvider
-              router={router}
-              fallbackElement={<CircularProgress />}
-            />
-          </Box>
-        </CookiesProvider>
+        <TourProvider>
+          <CookiesProvider>
+            <Box
+              sx={{
+                minHeight: "100vh",
+                background:
+                  window.location.href.endsWith("/embed") ||
+                  window.location.href.endsWith("/embed/chatBubble")
+                    ? "transparent"
+                    : "#f5f5f5",
+              }}
+            >
+              <RouterProvider
+                router={router}
+                fallbackElement={<CircularProgress />}
+              />
+            </Box>
+          </CookiesProvider>
+        </TourProvider>
       </ThemeProvider>
     </RecoilRoot>
   </React.StrictMode>,

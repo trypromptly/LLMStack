@@ -14,6 +14,7 @@
     "@mui/x-data-grid-generator": "^6.16.2",
     "@mui/x-date-pickers": "^6.16.1",
     "@novnc/novnc": "^1.4.0",
+    "@reactour/tour": "^3.6.1",
     "@rjsf/core": "^5.13.0",
     "@rjsf/mui": "^5.13.0",
     "@rjsf/utils": "^5.13.0",

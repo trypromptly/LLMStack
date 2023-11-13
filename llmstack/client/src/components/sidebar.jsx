@@ -151,7 +151,7 @@ export default function Sidebar({ menuItems }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   return (
-    <Stack sx={siderStyle}>
+    <Stack sx={siderStyle} className="sidebar">
       <Box
         align={"top"}
         style={{ justifyContent: "center", margin: "15px auto" }}
