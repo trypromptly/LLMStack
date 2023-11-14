@@ -4,10 +4,6 @@ from typing import Generic, Iterator, TypeVar
 from llmstack.common.utils.module_loader import get_all_sub_classes
 from llmstack.connections.models import Connection, ConnectionActivationInput
 
-class ConnectionType(str, Enum):
-    BROWSER_LOGIN = 'browser_login'
-    OAUTH2 = 'oauth2'
-    CREDENTIALS = 'credentials'
 
 def get_connection_type_interface_subclasses():
     subclasses = []
@@ -54,7 +50,7 @@ class ConnectionTypeInterface(Generic[ConnectionConfigurationSchemaType]):
         raise NotImplementedError
     
     @staticmethod
-    def connection_type() -> ConnectionType:
+    def connection_type():
         raise NotImplementedError
     
     @staticmethod

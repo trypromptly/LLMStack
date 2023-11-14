@@ -2,8 +2,9 @@ import logging
 from typing import List, Optional 
 import requests
 from llmstack.connections.handlers import Oauth2BaseConfiguration
-from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
+from llmstack.connections.types import ConnectionTypeInterface
 from allauth.socialaccount.providers.hubspot.views import HubspotOAuth2Adapter
+from llmstack.connections.models import ConnectionType
 
 logger = logging.getLogger(__name__)
 class HubspotAdapter(HubspotOAuth2Adapter):
@@ -33,8 +34,6 @@ class HubspotAdapter(HubspotOAuth2Adapter):
         return HubspotLoginConfiguration(**extra_data)
 
 class HubspotLoginConfiguration(Oauth2BaseConfiguration):
-    connection_type_slug = 'hubspot_oauth2'
-    token: Optional[str]
     user: Optional[str]
     hub_domain: Optional[str]
     scopes: Optional[List[str]]

@@ -1,7 +1,7 @@
 from typing import Iterator, Union
 from pydantic import Field
-from llmstack.connections.models import Connection, ConnectionStatus
-from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
+from llmstack.connections.models import Connection, ConnectionStatus, ConnectionType
+from llmstack.connections.types import ConnectionTypeInterface
 from .web_login import WebLoginBaseConfiguration
 
 

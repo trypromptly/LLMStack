@@ -23,6 +23,10 @@ class ConnectionStatus(str, Enum):
         return self.value
 
 
+class ConnectionType(str, Enum):
+    BROWSER_LOGIN = 'browser_login'
+    OAUTH2 = 'oauth2'
+    CREDENTIALS = 'credentials'    
 class Connection(BaseModel):
     """
     Connection model
@@ -30,6 +34,7 @@ class Connection(BaseModel):
     name: str
     id: str = str(uuid.uuid4())
     description: str = ''
+    base_connection_type: ConnectionType = ConnectionType.BROWSER_LOGIN
     connection_type_slug: str
     provider_slug: str
     status: ConnectionStatus = 'Created'
