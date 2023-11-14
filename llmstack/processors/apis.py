@@ -3,42 +3,37 @@ import json
 import logging
 import uuid
 from collections import namedtuple
-from django.conf import settings
-from flags.state import flag_enabled
 
-from django.contrib.auth import authenticate
-from django.contrib.auth import login
-from django.contrib.auth import logout
+from django.conf import settings
+from django.contrib.auth import authenticate, login, logout
 from django.db.models import Max
-from django.http import Http404
-from django.http import HttpResponseForbidden
-from django.http import HttpResponseNotFound
-from django.http import StreamingHttpResponse
+from django.http import (
+    Http404,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    StreamingHttpResponse,
+)
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from jsonschema_spec.handlers import all_urls_handler
-from rest_framework import status
-from rest_framework import viewsets
+from flags.state import flag_enabled
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
 
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
-
-from .models import Endpoint
-from llmstack.base.models import Profile
-from .models import RunEntry
-from .providers.api_processors import ApiProcessorFactory
-from .serializers import HistorySerializer
-from .serializers import LoginSerializer
 from llmstack.apps.app_session_utils import create_app_session
+from llmstack.base.models import Profile
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor, InputRequest
 from llmstack.play.actors.output import OutputActor
 from llmstack.play.coordinator import Coordinator
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
+
+from .models import Endpoint, RunEntry
+from .providers.api_processors import ApiProcessorFactory
+from .serializers import HistorySerializer, LoginSerializer
 
 Schema = namedtuple('Schema', 'type default is_required')
 
