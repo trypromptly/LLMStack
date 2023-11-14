@@ -27,22 +27,10 @@ class AgentRunner(AppRunner):
         for processor in self.app_data['processors'] if self.app_data and 'processors' in self.app_data else []:
             if (processor['provider_slug'], processor['processor_slug']) not in processor_classes:
                 continue
-            if processor['provider_slug'] == PromptlyHttpAPIProcessor.provider_slug() and processor['processor_slug'] == PromptlyHttpAPIProcessor.slug():
-                parameters = json.loads(processor_classes[(processor['provider_slug'], processor['processor_slug'])].get_input_schema())
-                if 'config' in processor and '_schema' in processor['config']:
-                    try:
-                        parameters = json.loads(processor['config']['_schema'])
-                    except:
-                        pass
-                functions.append({
-                    'name': processor['id'],
-                    'description': processor['description'],
-                    'parameters': parameters,
-                })
             functions.append({
                 'name': processor['id'],
                 'description': processor['description'],
-                'parameters': json.loads(processor_classes[(processor['provider_slug'], processor['processor_slug'])].get_input_schema()),
+                'parameters': processor_classes[(processor['provider_slug'], processor['processor_slug'])].get_tool_input_schema(processor),
             })
         return functions
 

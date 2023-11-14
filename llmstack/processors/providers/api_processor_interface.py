@@ -124,6 +124,10 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
 
         return ui_schema
 
+    @classmethod
+    def get_tool_input_schema(cls, processor_data) -> dict:
+        return json.loads(cls.get_input_schema())
+    
     def process(self) -> dict:
         raise NotImplementedError
 

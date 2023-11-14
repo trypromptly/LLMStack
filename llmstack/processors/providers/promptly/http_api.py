@@ -137,6 +137,13 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
     def session_data_to_persist(self) -> dict:
         return {}
     
+    @classmethod
+    def get_tool_input_schema(cls, processor_data) -> dict:
+        if 'config' in processor_data and '_schema' in processor_data['config']:
+            return json.loads(processor_data['config']['_schema'])
+            
+        return json.loads(cls.get_input_schema())
+    
     def tool_invoke_input(self, tool_args: dict):
         return HttpAPIProcessorInput(input_data=json.dumps(tool_args))
 
