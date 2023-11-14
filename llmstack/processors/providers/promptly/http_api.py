@@ -185,7 +185,6 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
                  headers["Authorization"] = f"Bearer {connection['configuration']['token']}"
                 
         if method == HttpMethod.GET:
-            logger.info(f"Making GET request to {url}")
             response = requests.get(url=url, 
                                     headers=headers,
                                     params=params,
