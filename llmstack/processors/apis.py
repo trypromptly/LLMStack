@@ -481,22 +481,3 @@ class LogoutAPIView(APIView):
     def post(self, request):
         logout(request)
         return DRFResponse({'message': 'Logout successful'})
-
-class UtilsAPIViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-
-    def validate_openapi_spec(self, request):
-        from llmstack.processors.providers.promptly.http_api import parse_openapi_spec
-        openapi_spec_url = request.data.get('openapi_spec_url', None)
-        
-        if openapi_spec_url:
-            spec_dict = all_urls_handler(openapi_spec_url)
-        else:
-            spec_dict = request.data.get('openapi_spec', None)
-        
-        if not spec_dict:
-            return DRFResponse(status=400, data={'message': 'Invalid OpenAPI Spec'})
-        
-        processed_spec = parse_openapi_spec(spec_dict, request.data.get('path', None), request.data.get('method', None))
-        
-        return DRFResponse(processed_spec)
