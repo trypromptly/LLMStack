@@ -124,6 +124,10 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
 
         return ui_schema
 
+    @classmethod
+    def get_tool_input_schema(cls, processor_data) -> dict:
+        return json.loads(cls.get_input_schema())
+    
     def process(self) -> dict:
         raise NotImplementedError
 
@@ -206,6 +210,10 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
             )
 
         self._output_stream.bookkeep(bookkeeping_data)
+    
+    def tool_invoke_input(self, tool_args: dict) -> ToolInvokeInput:
+        return self._get_input_class()(
+                **{**self._input.dict(), **tool_args})
 
     def invoke(self, message: ToolInvokeInput) -> Any:
         try:
@@ -215,8 +223,7 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
                 self._config, message.input) if self._config else self._config
 
             # Merge tool args with input
-            self._input = self._get_input_class()(
-                **{**self._input.dict(), **message.tool_args})
+            self._input = self.tool_invoke_input(message.tool_args)
 
             logger.info(
                 f'Invoking tool {message.tool_name} with args {message.tool_args}')
