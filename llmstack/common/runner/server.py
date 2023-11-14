@@ -283,6 +283,9 @@ def main():
                         help='Port for remote browser websocket', default=23100)
     parser.add_argument('--wss-secure', type=bool, default=False,
                         help='Secure remote browser websocket', action=argparse.BooleanOptionalAction)
+    parser.add_argument('--playwright-port', type=int,
+                        help='Port for playwright server. Disabled by default', default=-1)
+    parser.add_argument
     parser.add_argument('--log-level', type=str,
                         help='Log level', default='INFO')
     args = parser.parse_args()
@@ -307,6 +310,8 @@ def main():
     args.wss_port = int(os.getenv('RUNNER_WSS_PORT', args.wss_port))
     args.wss_secure = os.getenv('RUNNER_WSS_SECURE', args.wss_secure)
     args.log_level = os.getenv('RUNNER_LOG_LEVEL', args.log_level)
+    args.playwright_port = int(
+        os.getenv('RUNNER_PLAYWRIGHT_PORT', args.playwright_port))
 
     # Configure logger
     logging.basicConfig(level=args.log_level)
@@ -315,6 +320,12 @@ def main():
     redis_client = redis.Redis(
         host=args.redis_host, port=args.redis_port, db=args.redis_db, password=args.redis_password)
     redis_client.ping()
+
+    # Start playwright server if port is specified
+    playwright_process = None
+    if args.playwright_port > 0:
+        playwright_process = subprocess.Popen(['playwright', 'run-server',
+                                               '--port', str(args.playwright_port)])
 
     display_pool = VirtualDisplayPool(
         redis_client, hostname=args.hostname, max_displays=args.max_displays,
@@ -351,8 +362,9 @@ def main():
     logger.info(f"Server running at http://[::]:{args.port}")
     server.wait_for_termination()
 
-    # Stop websockify server
+    # Stop websockify and playwright servers
     websockify_process.kill()
+    playwright_process.kill()
 
 
 if __name__ == '__main__':

@@ -89,6 +89,9 @@ def prepare_env():
         if not 'wss_port' in config['llmstack-runner']:
             config['llmstack-runner']['wss_port'] = 50052
 
+        if not 'playwright_port' in config['llmstack-runner']:
+            config['llmstack-runner']['playwright_port'] = 50053
+
     with open(config_path, 'w') as f:
         toml.dump(config, f)
 
@@ -136,7 +139,7 @@ def start_runner(environment):
     except docker.errors.NotFound:
         runner_container = client.containers.run(f'{image_name}:{image_tag}', name='llmstack-runner',
                                                  ports={
-                                                     '50051/tcp': os.environ['RUNNER_PORT'], '50052/tcp': os.environ['RUNNER_WSS_PORT']},
+                                                     '50051/tcp': os.environ['RUNNER_PORT'], '50052/tcp': os.environ['RUNNER_WSS_PORT'], '50053/tcp': os.environ['RUNNER_PLAYWRIGHT_PORT']},
                                                  detach=True, remove=True, environment=environment,)
 
     # Start runner container if not already running
