@@ -399,7 +399,7 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
         if (
           totalMessages > 0 &&
           (lastMessage.type === "ui_placeholder" ||
-            lastMessage["id"] === message.output.agent.id)
+            lastMessage["id"] === message.output?.agent?.id)
         ) {
           existingMessages = [...chunkedMessages.current.slice(0, -1)];
         } else {
