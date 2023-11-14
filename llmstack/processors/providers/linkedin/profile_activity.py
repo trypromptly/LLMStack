@@ -1,8 +1,14 @@
 import logging
+from typing import List, Optional
+
+import orjson as json
 from asgiref.sync import async_to_sync
 from pydantic import Field
-from typing import List, Optional
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
+
+from llmstack.processors.providers.api_processor_interface import (
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -55,12 +61,17 @@ class ProfileActivityProcessor(ApiProcessorInterface[ProfileActivityInput, Profi
         return 'linkedin'
 
     async def _get_profile_activity(self):
-        from playwright.async_api import async_playwright
         from django.conf import settings
+        from playwright.async_api import async_playwright
         try:
-            
+
             async with async_playwright() as playwright:
                 storage_state = self._env['connections'][self._config.connection_id]['configuration']['_storage_state']
+
+                try:
+                    storage_state = json.loads(storage_state)
+                except:
+                    pass
 
                 browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await playwright.chromium.launch()
                 context = await browser.new_context(storage_state=storage_state)
@@ -74,29 +85,30 @@ class ProfileActivityProcessor(ApiProcessorInterface[ProfileActivityInput, Profi
                     if len(results) > 0:
                         await results[0].click()
                     else:
-                        raise Exception(f'No results found for search term {self._input.search_term}')
+                        raise Exception(
+                            f'No results found for search term {self._input.search_term}')
 
                     await page.wait_for_selector('div.body', timeout=5000)
                     self._input.profile_url = page.url
-                    
+
                 # Get posts
                 await page.goto(f'{self._input.profile_url}/recent-activity/all/')
                 await page.wait_for_selector('div.feed-shared-update-v2', timeout=5000)
                 results = await page.query_selector_all('div.feed-shared-update-v2')
                 posts = [await result.inner_text() for result in results]
-                
+
                 # Get comments
                 await page.goto(f'{self._input.profile_url}/recent-activity/comments/')
                 await page.wait_for_selector('div.feed-shared-update-v2', timeout=5000)
                 results = await page.query_selector_all('div.feed-shared-update-v2')
                 comments = [await result.inner_text() for result in results]
-                
+
                 # Get reactions
                 await page.goto(f'{self._input.profile_url}/recent-activity/reactions/')
                 await page.wait_for_selector('div.feed-shared-update-v2', timeout=5000)
                 results = await page.query_selector_all('div.feed-shared-update-v2')
                 reactions = [await result.inner_text() for result in results]
-                
+
                 await browser.close()
                 return ProfileActivityOutput(
                     posts=posts[:self._config.n_posts],
@@ -108,7 +120,6 @@ class ProfileActivityProcessor(ApiProcessorInterface[ProfileActivityInput, Profi
             logger.exception(e)
             return ProfileActivityOutput(error=f'Error getting profile activity: {e}')
 
-        
     def process(self) -> dict:
         output_stream = self._output_stream
 
