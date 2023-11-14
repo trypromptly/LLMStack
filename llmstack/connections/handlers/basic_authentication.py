@@ -4,7 +4,6 @@ from llmstack.connections.types import ConnectionTypeInterface
 from llmstack.connections.models import ConnectionType
 
 class BasicAuthenticationConfiguration(BaseSchema):
-    connection_type_slug: str = Field(default='basic_authentication', widget='hidden')
     username: str
     password: str
     

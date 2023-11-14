@@ -175,11 +175,12 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
         auth = None
         if self._config.connection_id:
             connection = self._env['connections'][self._config.connection_id]
-            if connection['base_connection_type'] == 'credentials' and connection['connection_type_slug'] == 'basic_authentication':                
-                auth = HTTPBasicAuth(connection['configuration']['username'], 
-                                     connection['configuration']['password'])
-            elif connection['base_connection_type'] == 'credentials' and connection['connection_type_slug'] == 'bearer_authentication':
-                headers["Authorization"] = f"{connection['configuration']['token_prefix']} {connection['configuration']['token']}"
+            if connection['base_connection_type'] == 'credentials':
+                if connection['connection_type_slug'] == 'basic_authentication':
+                    auth = HTTPBasicAuth(connection['configuration']['username'], 
+                                         connection['configuration']['password'])
+                elif connection['connection_type_slug'] == 'bearer_authentication':
+                    headers["Authorization"] = f"{connection['configuration']['token_prefix']} {connection['configuration']['token']}"
             elif connection['base_connection_type'] == 'oauth2':
                  headers["Authorization"] = f"Bearer {connection['configuration']['token']}"
                 
