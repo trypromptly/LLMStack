@@ -1,6 +1,7 @@
 from pydantic import Field
 from llmstack.common.blocks.base.schema import BaseSchema
-from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
+from llmstack.connections.types import ConnectionTypeInterface
+from llmstack.connections.models import ConnectionType
 
 class BearerAuthenticationConfiguration(BaseSchema):
     connection_type_slug: str = Field(default='bearer_authentication', widget='hidden')

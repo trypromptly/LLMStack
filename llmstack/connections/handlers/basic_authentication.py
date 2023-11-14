@@ -1,6 +1,7 @@
 from pydantic import Field
 from llmstack.common.blocks.base.schema import BaseSchema
-from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
+from llmstack.connections.types import ConnectionTypeInterface
+from llmstack.connections.models import ConnectionType
 
 class BasicAuthenticationConfiguration(BaseSchema):
     connection_type_slug: str = Field(default='basic_authentication', widget='hidden')
