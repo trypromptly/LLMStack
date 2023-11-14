@@ -13,8 +13,9 @@ from llmstack.connections.models import (
     ConnectionActivationOutput,
     ConnectionStatus,
 )
-from llmstack.connections.types import ConnectionType, ConnectionTypeInterface
+from llmstack.connections.types import  ConnectionTypeInterface
 from llmstack.common.blocks.base.schema import BaseSchema
+from llmstack.connections.models import ConnectionType
 
 logger = logging.getLogger(__name__)
 
