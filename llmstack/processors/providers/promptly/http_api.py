@@ -136,6 +136,9 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
 
     def session_data_to_persist(self) -> dict:
         return {}
+    
+    def tool_invoke_input(self, tool_args: dict):
+        return HttpAPIProcessorInput(input_data=json.dumps(tool_args))
 
     def process(self):
         url = f"{self._config.url}{self._config.path}"

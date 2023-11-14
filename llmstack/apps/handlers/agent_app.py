@@ -10,6 +10,7 @@ from llmstack.play.actors.output import OutputActor
 from llmstack.play.actors.agent import AgentActor
 from llmstack.play.coordinator import Coordinator
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
+from llmstack.processors.providers.promptly.http_api import PromptlyHttpAPIProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,18 @@ class AgentRunner(AppRunner):
         for processor in self.app_data['processors'] if self.app_data and 'processors' in self.app_data else []:
             if (processor['provider_slug'], processor['processor_slug']) not in processor_classes:
                 continue
-
+            if processor['provider_slug'] == PromptlyHttpAPIProcessor.provider_slug() and processor['processor_slug'] == PromptlyHttpAPIProcessor.slug():
+                parameters = json.loads(processor_classes[(processor['provider_slug'], processor['processor_slug'])].get_input_schema())
+                if 'config' in processor and '_schema' in processor['config']:
+                    try:
+                        parameters = json.loads(processor['config']['_schema'])
+                    except:
+                        pass
+                functions.append({
+                    'name': processor['id'],
+                    'description': processor['description'],
+                    'parameters': parameters,
+                })
             functions.append({
                 'name': processor['id'],
                 'description': processor['description'],

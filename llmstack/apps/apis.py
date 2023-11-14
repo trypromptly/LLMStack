@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 
@@ -19,6 +20,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 
 from llmstack.processors.apis import EndpointViewSet
+from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 from .models import App, AppData
 from .models import AppAccessPermission
@@ -410,6 +412,17 @@ class AppViewSet(viewsets.ViewSet):
         ) if 'twilio_config' in request.data and request.data['twilio_config'] else {}
         draft = request.data['draft'] if 'draft' in request.data else True
         comment = request.data['comment'] if 'comment' in request.data else ''
+        
+        processors_data = request.data['processors'] if 'processors' in request.data else []
+        processed_processors_data = []
+        try:
+            for processor in processors_data:
+                processor_cls = ApiProcessorFactory.get_api_processor(processor['processor_slug'], processor['provider_slug'])
+                configuration_cls = processor_cls.get_configuration_cls()
+                config_dict = json.loads(configuration_cls(**processor['config']).json())
+                processed_processors_data.append({**processor, **{'config' : config_dict}})
+        except Exception as e:
+            processed_processors_data = processors_data
 
         # Find the versioned app data and update it
         app_data = {
@@ -418,7 +431,7 @@ class AppViewSet(viewsets.ViewSet):
             'config': request.data['config'] if 'config' in request.data else {},
             'input_fields': request.data['input_fields'] if 'input_fields' in request.data else [],
             'output_template': request.data['output_template'] if 'output_template' in request.data else {},
-            'processors': request.data['processors'] if 'processors' in request.data else []
+            'processors': processed_processors_data
         }
         versioned_app_data = AppData.objects.filter(
             app_uuid=app.uuid, is_draft=True).first()
