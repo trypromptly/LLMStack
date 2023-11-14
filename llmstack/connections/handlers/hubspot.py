@@ -34,7 +34,6 @@ class HubspotAdapter(HubspotOAuth2Adapter):
         return HubspotLoginConfiguration(**extra_data)
 
 class HubspotLoginConfiguration(Oauth2BaseConfiguration):
-    token: Optional[str]
     user: Optional[str]
     hub_domain: Optional[str]
     scopes: Optional[List[str]]
