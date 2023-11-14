@@ -253,7 +253,10 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     # Block the main thread until a signal is received
-    signal.pause()
+    if 'windows' in platform.platform().lower():
+        os.system('pause')
+    else:
+        signal.pause()
 
     # Stop runner container
     stop_runner()
