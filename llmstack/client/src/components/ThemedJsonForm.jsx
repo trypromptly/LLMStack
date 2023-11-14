@@ -18,7 +18,6 @@ import MuiCustomSelect from "./MuiCustomSelect";
 import ConnectionSelector from "./connections/ConnectionSelector";
 import FileUploadWidget from "./form/DropzoneFileWidget";
 import SecretTextField from "./form/SecretTextField";
-import APISpecConfiguration from "./form/APISpecConfiguration";
 
 const defaultTheme = createTheme({
   spacing: 2,

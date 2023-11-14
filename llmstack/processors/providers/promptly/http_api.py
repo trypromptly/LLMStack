@@ -8,10 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from asgiref.sync import async_to_sync
 from pydantic import Field, HttpUrl, root_validator
-from llmstack.connections.handlers.basic_authentication import BasicAuthenticationBasedAPILogin
-from llmstack.connections.handlers.bearer_authentication import BearerAuthenticationBasedAPILogin
-
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 from llmstack.common.blocks.base.processor import Schema
 
 logger = logging.getLogger(__name__)
@@ -37,11 +34,22 @@ class FieldType(str, Enum):
     def __str__(self):
         return self.value
 
+class ParameterLocation(str, Enum):
+    PATH = 'path'
+    QUERY = 'query'
+    HEADER = 'header'
+    COOKIE = 'cookie'
+    
+    def __str__(self):
+        return self.value
 class ParameterType(Schema):
     name: str
-    type: FieldType = Field(default=FieldType.STRING)
-    description: str = None
+    location: ParameterLocation = Field(default=ParameterLocation.PATH)
     required: bool = True
+    description: Optional[str] = None
+    
+class RequestBodyParameterType(ParameterType):
+    type: FieldType = Field(default=FieldType.STRING)
     
 class HttpAPIProcessorInput(Schema):
     input_data: Optional[str] = Field(description='Input', advanced_parameter=False, widget='textarea')
@@ -58,20 +66,21 @@ class HttpAPIProcessorOutput(Schema):
     elapsed: Optional[int] = None
 
 
-class APIConfiguration(Schema):
-    url: Optional[HttpUrl]  = Field(description='URL to make the request to', advanced_parameter=False)
-    path: Optional[str] = Field(description='Path to append to the URL. You can add a prameter by encolosing it in single brackets {param}', advanced_parameter=False)
-    method: Optional[HttpMethod] = Field(default=HttpMethod.GET, advanced_parameter=False)
+class RequestBody(Schema):
+    parameters: List[RequestBodyParameterType] = Field(title='Request body parameters', default=[], advanced_parameter=False)
     
-    path_parameters: List[ParameterType] = Field(default=[], advanced_parameter=False)
-    query_parameters: List[ParameterType] = Field(default=[], advanced_parameter=False)
-    header_parameters: List[ParameterType] = Field(default=[], advanced_parameter=False)
-    cookie_parameters: List[ParameterType] = Field(default=[], advanced_parameter=False)
-    body_parameters: List[ParameterType] = Field(default=[], advanced_parameter=False)
-
-
 class HttpAPIProcessorConfiguration(Schema):
-    api_configuration: str = Field(description='API Configuration', advanced_parameter=False, widget='api_configuration')
+    path: str = Field(description='Path to append to the URL. You can add a prameter by encolosing it in single brackets {param}', advanced_parameter=False)
+    method: HttpMethod = Field(default=HttpMethod.GET, advanced_parameter=False)
+    
+    openapi_spec: Optional[str] = Field(description='OpenAPI spec', widget='textarea')
+    openapi_spec_url: Optional[HttpUrl] = Field(description='URL to the OpenAPI spec')
+    parse_openapi_spec: bool = Field(default=True)
+    _openapi_spec_parsed: bool = Field(default=False, widget='hidden')
+
+    url: Optional[HttpUrl]  = Field(description='URL to make the request to', advanced_parameter=False)
+    parameters: List[ParameterType] = Field(title='Parameters to pass', default=[], advanced_parameter=False)
+    request_body: Optional[RequestBody] = Field(default=None, advanced_parameter=False)
     
     connection_id: Optional[str] = Field(widget='connectionselect',  advanced_parameter=False)
 
@@ -79,25 +88,34 @@ class HttpAPIProcessorConfiguration(Schema):
     timeout: Optional[float] = Field(default=5, advanced_parameter=True)
     
     _schema: Optional[str] = None
-    _api_configuration: Optional[APIConfiguration]
-
     
     @root_validator
     def validate_input(cls, values):
-        api_configuration_json = json.loads(values.get('api_configuration'))
-        values['_api_configuration'] = APIConfiguration(**api_configuration_json)
-        parameters = (api_configuration_json.get('path_parameters') or []) + (api_configuration_json.get('body_parameters') or []) + (api_configuration_json.get('query_parameters') or []) 
-        if parameters:
-            schema = {'type' : 'object', 'properties': {}}
-            properties = {}
-            for param in parameters:
-                properties[param.name] = {'type': param.type, 'description': param.description}
-            schema['properties'] = properties
-            values['_schema'] = json.dumps(schema)
-                
+        openapi_spec = values.get('openapi_spec', None)
+        openapi_spec_url = values.get('openapi_spec_url', None)
+        if values.get('parse_openapi_spec', False) == True and not values.get('_openapi_spec_parsed', False):
+            if openapi_spec_url:
+                response = requests.get(openapi_spec_url)
+                openapi_spec = response.text
+            if openapi_spec:
+                parsed_spec = parse_openapi_spec(json.loads(openapi_spec), values['path'], values['method'])
+                values.update(parsed_spec)
+                values['_openapi_spec_parsed'] = True
+        
+        schema = {'type' : 'object', 'properties': {}}
+        required_fields = []
+        for parameter in values['parameters']:
+            schema['properties'][parameter.name] = {'type': 'string', 'description': parameter.description}
+            if parameter.required:
+                required_fields.append(parameter.name)
+        if values['request_body']:
+            for parameter in values['request_body'].parameters:
+                schema['properties'][parameter.name] = {'type': parameter.type, 'description': parameter.description}
+                if parameter.required:
+                    required_fields.append(parameter.name)
+        schema['required'] = required_fields
+        values['_schema'] = json.dumps(schema)
         return values
-
-
 
 class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, HttpAPIProcessorOutput, HttpAPIProcessorConfiguration]):
     @staticmethod
@@ -120,38 +138,53 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
         return {}
 
     def process(self):
-        url = f'{self._config._api_configuration.url}{self._config._api_configuration.path}'
-        input_data = json.loads(self._input.input_data or '{}')
-        logger.info(f'Input schema: {self._config._schema}')
-        # Extract all parameters from the url and replace them with the values from the input
-        for param in self._config._api_configuration.path_parameters:
-            url = url.replace(f'{{{param.name}}}', str(input_data.get(param.name, '')))
-            
-        params = {}
-        for field in self._config._api_configuration.query_parameters:
-            if field.name in self._input.input_data:
-                params[field.name] = input_data.get(field.name)
+        url = f"{self._config.url}{self._config.path}"
+        method = self._config.method
         
-        body_data = {}
-        for field in self._config._api_configuration.body_parameters:
-            if field.name in self._input.input_data:
-                body_data[field.name] = input_data.get(field.name)
+        input_data = json.loads(self._input.input_data or '{}')
+        params = {}
+        headers = {}
+        body_data = {}        
+        
+        requred_parameters = [parameter.name for parameter in self._config.parameters if parameter.required]
+        for required_parameter in requred_parameters:
+            if required_parameter not in input_data:
+                raise Exception(f'Required parameter {required_parameter} not found in input')
+        
+        # Extract all parameters from the url and replace them with the values from the input
+        for param in self._config.parameters:
+            if param.location == ParameterLocation.PATH:
+                url = url.replace(f'{{{param.name}}}', str(input_data.get(param.name, '')))
+            elif param.location == ParameterLocation.QUERY:
+                if param.name in input_data:
+                    params[param.name] = input_data[param.name]
+            elif param.location == ParameterLocation.HEADER:
+                if param.name in input_data:
+                    headers[param.name] = input_data[param.name]
+                    
+        if self._config.request_body:
+            required_body_parameters = [parameter.name for parameter in self._config.request_body.parameters if parameter.required]
+            for required_body_parameter in required_body_parameters:
+                if required_body_parameter not in input_data:
+                    raise Exception(f'Required parameter {required_body_parameter} not found in input')
+        
+            for param in self._config.request_body.parameters:
+                if param.name in input_data:
+                    body_data[param.name] = input_data.get(param.name)
         
         auth = None
-        headers = {}
         if self._config.connection_id:
             connection = self._env['connections'][self._config.connection_id]
-            if connection['configuration']['connection_type_slug'] == 'basic_authentication':
+            if connection['base_connection_type'] == 'credentials' and connection['connection_type_slug'] == 'basic_authentication':                
                 auth = HTTPBasicAuth(connection['configuration']['username'], 
                                      connection['configuration']['password'])
-            elif connection['configuration']['connection_type_slug'] == 'bearer_authentication':
+            elif connection['base_connection_type'] == 'credentials' and connection['connection_type_slug'] == 'bearer_authentication':
                 headers["Authorization"] = f"{connection['configuration']['token_prefix']} {connection['configuration']['token']}"
-            elif connection['configuration']['connection_type_slug'] == 'oauth2':
-                headers["Authorization"] = f"Bearer {connection['configuration']['token']}"
-            
-
-        if self._config._api_configuration.method == HttpMethod.GET:
-
+            elif connection['base_connection_type'] == 'oauth2':
+                 headers["Authorization"] = f"Bearer {connection['configuration']['token']}"
+                
+        if method == HttpMethod.GET:
+            logger.info(f"Making GET request to {url}")
             response = requests.get(url=url, 
                                     headers=headers,
                                     params=params,
@@ -175,8 +208,9 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
                 elapsed=response.elapsed.total_seconds(),
                 url=response.url,
                 headers=dict(response.headers),
-            )) 
-        elif self._config._api_configuration.method == HttpMethod.POST:
+            ))
+            
+        elif method == HttpMethod.POST:
             response = requests.post(url=url,
                                      headers=headers,
                                      params=params,
@@ -201,7 +235,7 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
                 url=response.url,
                 headers=dict(response.headers),
             ))
-        elif self._config._api_configuration.method == HttpMethod.PUT:
+        elif method == HttpMethod.PUT:
             response = requests.put(url=url,
                                     params=params,
                                     data=body_data,
@@ -216,77 +250,68 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
         return output
     
 def parse_openapi_spec(spec_dict, path, method) -> dict:
-    
-    def openapi_parameter_to_parameter_type(parameter_dict: dict):
+    def openapi_parameters_to_ParameterType(parameter) -> ParameterType:
         return ParameterType(
-            name=parameter_dict['name'], 
-            type=parameter_dict['type'], 
-            description=parameter_dict.get('description', ''), 
-            required=parameter_dict.get('required', True)).dict()
-    
-    method = method.upper()
+            name=parameter['name'],
+            location=ParameterLocation(parameter['in']),
+            required=parameter['required'],
+            description=parameter.get('description')
+        )
+        
+    url = None
     path_info = None
+    version = None
+    method_info = None
+    parameters = []
+    request_body = None
+    protocol = None
+    
     for path_key, path_data in spec_dict["paths"].items():
         if path_key == path:
             path_info = path_data
             break
-    if not path_info:
-        return {}
-    
-    version = None
-    if 'swagger' in spec_dict:
-        version = spec_dict['swagger']
-    elif 'openapi' in spec_dict:
-        version = spec_dict['openapi']
-    else:
-        raise Exception("Invalid OpenAPI spec")
-    
-    logger.info(f'Version: {version}')
-    if version.startswith('2'):
-        url = f"{spec_dict['schemes'][0]}://{spec_dict['host']}"
-    elif version.startswith('3'):
-        url = f"{spec_dict['schemes'][0]}://spec_dict['servers'][0]['url']"
-    
-    logger.info(f'URL: {url}')
-    
-    result = {
-        'url': url,
-        'path': path,
-        'method': method.upper(),
-    }
-   
-    for http_method, method_data in path_info.items():
-        http_method = http_method.upper()
-        
-        if http_method == method:
-            parameters = method_data.get("parameters", [])
-            for parameter in parameters:
-                paramenter_type = parameter['in']
-                if paramenter_type == 'path':
-                    if 'path_parameters' not in result:
-                        result['path_parameters'] = []
-                    result['path_parameters'].append(openapi_parameter_to_parameter_type(parameter))
-                elif paramenter_type == 'query':
-                    if 'query_parameters' not in result:
-                        result['query_parameters'] = []
-                    result['query_parameters'].append(openapi_parameter_to_parameter_type(parameter))
-                elif paramenter_type == 'header':
-                    if 'header_parameters' not in result:
-                        result['header_parameters'] = []
-                    result['header_parameters'].append(openapi_parameter_to_parameter_type(parameter))
-                elif paramenter_type == 'cookie':
-                    if 'cookie_parameters' not in result:
-                        result['cookie_parameters'] = []
-                    result['cookie_parameters'].append(openapi_parameter_to_parameter_type(parameter))
                     
-            request_body = method_data.get("requestBody", {})
-            if request_body:
-                content = request_body['content']
-                for content_type, content_data in content.items():
-                    if content_type == 'application/json':
-                        schema = content_data['schema']
-                        properties = schema['properties']
-                        for property_name, property_data in properties.items():
-                            result.body_parameters.append(ParameterType(name=property_name, type=property_data['type'], description=property_data.get('description', ''), required=property_data.get('required', True)))
-    return APIConfiguration(**result).dict()
-                
+    if not path_info:
+        raise Exception(f'Path {path} not found in OpenAPI spec')
+    
+    # Get spec version
+    version = spec_dict.get('openapi')
+    if not version:
+        version = spec_dict.get('swagger')
+        if not version:
+            raise Exception('OpenAPI spec version not found')
+    
+    protocol = spec_dict.get('schemes', ['https'])[0]
+    # Get server url
+    if 'servers' in spec_dict:
+        url = f"{protocol}://{spec_dict['servers'][0]['url']}"
+    if 'host' in spec_dict:
+        url = f"{protocol}://{spec_dict['host']}"
+    
+    
+    # Get method info
+    for method_key, method_data in path_info.items():
+        if method_key == method.lower():
+            method_info = method_data
+            break
+    
+    if not method_info:
+        raise Exception(f'Method {method} not found in OpenAPI spec')
+    
+    # Get parameters
+    for parameter in method_info.get('parameters', []):
+        parameters.append(openapi_parameters_to_ParameterType(parameter))
+    
+    # Get request body
+    if method_info.get('requestBody'):
+        request_body = RequestBody(
+            parameters=[openapi_parameters_to_ParameterType(parameter) for parameter in method_info['requestBody']['content']['application/json']['schema']['properties'].values()]
+        )
+    
+    return HttpAPIProcessorConfiguration(
+        path=path,
+        method=HttpMethod(method.upper()),
+        url=url,
+        parameters=parameters,
+        request_body=request_body
+    ).dict()
