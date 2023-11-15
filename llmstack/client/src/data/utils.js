@@ -277,5 +277,9 @@ export function getJSONSchemaFromInputFields(inputFields) {
       },
     },
   };
+  uiSchema["ui:order"].push("_metadata");
+  uiSchema["_metadata"] = {
+    "ui:widget": "hidden",
+  };
   return { schema, uiSchema };
 }
