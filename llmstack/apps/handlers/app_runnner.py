@@ -29,19 +29,14 @@ class AppMetadata(BaseModel):
     name: str = ''
 
 class DiscordAppMetadata(BaseModel):
-    channel: str = ''
-    username: str = '' 
+    pass
 
 class TwilioSmsAppMetadata(BaseModel):
     From: str = ''
     To: str = ''
 
 class SlackAppMetadata(BaseModel):
-    channel: str = ''
-    slack_user_email: str = ''
-    team_id: str = ''
-    team: str = ''
-    user: str = ''
+    pass
 
 class AppRunMetadata(BaseModel):
     app: AppMetadata = AppMetadata()
@@ -218,6 +213,9 @@ class AppRunner:
         return processor_actor_configs, processor_configs
 
     def _start(self, input_data, app_session, actor_configs, csp, template):
+        app_metadata = self.get_app_metadata()
+        input_with_metadata = {**input_data.get('input', {}), '_metadata': app_metadata}
+        
         try:
             coordinator_ref = Coordinator.start(
                 session_id=app_session['uuid'], actor_configs=actor_configs,
@@ -229,7 +227,7 @@ class AppRunner:
             output_actor = coordinator.get_actor('output').get().proxy()
             output_iter = None
             if input_actor and output_actor:
-                input_actor.write(input_data.get('input', {})).get()
+                input_actor.write(input_with_metadata).get()
                 output_iter = output_actor.get_output().get(
                 ) if not self.stream else output_actor.get_output_stream().get()
 
@@ -305,12 +303,8 @@ class AppRunner:
                 name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output'], kwargs={'processor_configs': processor_configs},
             ),
         )
-
-        app_metadata = self.get_app_metadata()
-        input_with_metadata = {**self.request_input_data.get('input', {}), '_metadata': app_metadata}
-        input_request = {**self.request_input_data, 'input': input_with_metadata}
         
         return self._start(
-            input_request, self.app_session,
+            self.request_input_data, self.app_session,
             actor_configs, csp, template,
         )
