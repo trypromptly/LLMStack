@@ -208,5 +208,74 @@ export function getJSONSchemaFromInputFields(inputFields) {
   uiSchema["ui:order"] = order;
   uiSchema["ui:required"] = required;
 
+  schema["properties"]["_metadata"] = {
+    type: "object",
+    properties: {
+      _app: {
+        type: "object",
+        description: "App metadata",
+        properties: {
+          name: {
+            type: "string",
+            description: "App name",
+          },
+        },
+      },
+      _discord: {
+        type: "object",
+        description: "Discord metadata",
+        properties: {
+          channel: {
+            type: "string",
+            description: "Discord channel",
+          },
+          username: {
+            type: "string",
+            description: "Discord username",
+          },
+        },
+      },
+      _slack: {
+        type: "object",
+        description: "Slack metadata",
+        properties: {
+          channel: {
+            type: "string",
+            description: "Slack channel",
+          },
+          slack_user_email: {
+            type: "string",
+            description: "Slack user email",
+          },
+          team_id: {
+            type: "string",
+            description: "Slack team id",
+          },
+          team: {
+            type: "string",
+            description: "Slack team name",
+          },
+          user: {
+            type: "string",
+            description: "Slack user id",
+          },
+        },
+      },
+      _twilio: {
+        type: "object",
+        description: "Twilio metadata",
+        properties: {
+          From: {
+            type: "string",
+            description: "Twilio from phone number",
+          },
+          To: {
+            type: "string",
+            description: "Twilio to phone number",
+          },
+        },
+      },
+    },
+  };
   return { schema, uiSchema };
 }
