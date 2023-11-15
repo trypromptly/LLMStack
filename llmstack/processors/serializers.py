@@ -2,13 +2,9 @@ import json
 
 from rest_framework import serializers
 
-from .models import ApiBackend
-from .models import ApiProvider
-from .models import Endpoint
-from .models import Request
-from .models import Response
-from .models import RunEntry
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
+
+from .models import ApiBackend, ApiProvider, Endpoint, Request, Response, RunEntry
 
 
 class ApiProviderSerializer(serializers.ModelSerializer):
@@ -25,6 +21,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
     config_ui_schema = serializers.SerializerMethodField()
     input_ui_schema = serializers.SerializerMethodField()
     output_ui_schema = serializers.SerializerMethodField()
+    output_template = serializers.SerializerMethodField()
 
     def get_config_schema(self, obj):
         processor_cls = ApiProcessorFactory.get_api_processor(
@@ -68,11 +65,19 @@ class ApiBackendSerializer(serializers.ModelSerializer):
             return {}
         return processor_cls.get_output_ui_schema()
 
+    def get_output_template(self, obj):
+        processor_cls = ApiProcessorFactory.get_api_processor(
+            obj.slug, obj.api_provider.slug)
+        if processor_cls is None:
+            return None
+        return processor_cls.get_output_template()
+
     class Meta:
         model = ApiBackend
         fields = [
             'id', 'name', 'slug', 'api_provider', 'api_endpoint', 'params', 'description', 'input_schema',
             'output_schema', 'config_schema', 'config_ui_schema', 'input_ui_schema', 'output_ui_schema',
+            'output_template'
         ]
 
 

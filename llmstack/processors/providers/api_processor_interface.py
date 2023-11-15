@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any, TypeVar
+from typing import Any, Optional, TypeVar
 
 import jinja2
 import ujson as json
@@ -127,7 +127,12 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
     @classmethod
     def get_tool_input_schema(cls, processor_data) -> dict:
         return json.loads(cls.get_input_schema())
-    
+
+    @classmethod
+    def get_output_template(cls) -> Optional[str]:
+        # Default output_template to use in tools and playground
+        return None
+
     def process(self) -> dict:
         raise NotImplementedError
 
@@ -210,10 +215,10 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
             )
 
         self._output_stream.bookkeep(bookkeeping_data)
-    
+
     def tool_invoke_input(self, tool_args: dict) -> ToolInvokeInput:
         return self._get_input_class()(
-                **{**self._input.dict(), **tool_args})
+            **{**self._input.dict(), **tool_args})
 
     def invoke(self, message: ToolInvokeInput) -> Any:
         try:
