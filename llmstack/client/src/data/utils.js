@@ -211,7 +211,7 @@ export function getJSONSchemaFromInputFields(inputFields) {
   schema["properties"]["_metadata"] = {
     type: "object",
     properties: {
-      _app: {
+      app: {
         type: "object",
         description: "App metadata",
         properties: {
@@ -221,7 +221,7 @@ export function getJSONSchemaFromInputFields(inputFields) {
           },
         },
       },
-      _discord: {
+      discord: {
         type: "object",
         description: "Discord metadata",
         properties: {
@@ -235,7 +235,7 @@ export function getJSONSchemaFromInputFields(inputFields) {
           },
         },
       },
-      _slack: {
+      slack: {
         type: "object",
         description: "Slack metadata",
         properties: {
@@ -261,7 +261,7 @@ export function getJSONSchemaFromInputFields(inputFields) {
           },
         },
       },
-      _twilio: {
+      twilio_sms: {
         type: "object",
         description: "Twilio metadata",
         properties: {

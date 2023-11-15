@@ -1,6 +1,9 @@
 import asyncio
+import json
 import logging
 import uuid
+
+from pydantic import BaseModel
 
 from llmstack.apps.app_session_utils import create_app_session
 from llmstack.apps.app_session_utils import create_app_session_data
@@ -22,7 +25,31 @@ from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 logger = logging.getLogger(__name__)
 
+class AppMetadata(BaseModel):
+    name: str = ''
 
+class DiscordAppMetadata(BaseModel):
+    channel: str = ''
+    username: str = '' 
+
+class TwilioSmsAppMetadata(BaseModel):
+    From: str = ''
+    To: str = ''
+
+class SlackAppMetadata(BaseModel):
+    channel: str = ''
+    slack_user_email: str = ''
+    team_id: str = ''
+    team: str = ''
+    user: str = ''
+
+class AppRunMetadata(BaseModel):
+    app: AppMetadata = AppMetadata()
+    discord: DiscordAppMetadata = DiscordAppMetadata()
+    twilio_sms: TwilioSmsAppMetadata = TwilioSmsAppMetadata()
+    slack: SlackAppMetadata = SlackAppMetadata()
+    
+    
 class AppRunner:
     def __init__(self, app, app_data, request_uuid, app_owner, 
                  session_id=None, stream=False, app_run_request_user=None, input_data=None,
@@ -239,6 +266,10 @@ class AppRunner:
             'output': output, 'csp': csp,
         }
 
+    def get_app_metadata(self):
+        return json.loads(AppRunMetadata(app=AppMetadata(
+            name=self.app.name)).json())
+    
     def run_app(self):
         # Check if the app access permissions are valid
         self._is_app_accessible()
@@ -275,7 +306,11 @@ class AppRunner:
             ),
         )
 
+        app_metadata = self.get_app_metadata()
+        input_with_metadata = {**self.request_input_data.get('input', {}), '_metadata': app_metadata}
+        input_request = {**self.request_input_data, 'input': input_with_metadata}
+        
         return self._start(
-            self.request_input_data, self.app_session,
+            input_request, self.app_session,
             actor_configs, csp, template,
         )
