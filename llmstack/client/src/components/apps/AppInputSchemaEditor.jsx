@@ -92,6 +92,11 @@ export function AppInputSchemaEditor({ fields, setFields, readOnly = false }) {
                 <TextField
                   value={field.title}
                   onChange={(e) => {
+                    let name = e.target.value;
+                    if (name.startsWith("_")) {
+                      alert("Field names cannot start with an underscore");
+                      return;
+                    }
                     updateField(index, { ...field, title: e.target.value });
                   }}
                 />
