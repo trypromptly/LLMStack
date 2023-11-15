@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Typography,
 } from "@mui/material";
 import RFB from "@novnc/novnc/core/rfb";
 
@@ -130,7 +131,13 @@ function RemoteBrowser({ wsUrl, timeout, onClose }) {
         },
       }}
     >
-      <DialogTitle>Remote Browser - {timeLeft}s left</DialogTitle>
+      <DialogTitle>
+        Remote Browser - {timeLeft}s left
+        <br />
+        <Typography variant="caption">
+          Login to your account and press DONE when you are finished.
+        </Typography>
+      </DialogTitle>
       <DialogContent>
         <div ref={screenRef}></div>
         {!connected && "Connecting..."}

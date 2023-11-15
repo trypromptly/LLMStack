@@ -1,15 +1,19 @@
 import datetime
 import logging
 import uuid
+
 import orjson as json
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.response import Response
 
 from llmstack.base.models import Profile
-from llmstack.connections.types import ConnectionTypeFactory, get_connection_type_interface_subclasses
+from llmstack.connections.types import (
+    ConnectionTypeFactory,
+    get_connection_type_interface_subclasses,
+)
 
-from .models import Connection
+from .models import Connection, ConnectionType
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +73,8 @@ class ConnectionsViewSet(viewsets.ViewSet):
             connection_type_slug=request.data.get('connection_type_slug'),
             provider_slug=request.data.get('provider_slug'),
             configuration=request.data.get('configuration'),
-            base_connection_type=request.data.get('base_connection_type'),
+            base_connection_type=request.data.get(
+                'base_connection_type', ConnectionType.BROWSER_LOGIN.value),
             created_at=datetime.datetime.now(),
             updated_at=datetime.datetime.now(),
         )
