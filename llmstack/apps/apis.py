@@ -553,17 +553,29 @@ class AppViewSet(viewsets.ViewSet):
             app_runner_class = AppRunerFactory.get_app_runner('twilio-voice')
         else:
             app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
-
+            
+        request_ip = request.headers.get(
+            'X-Forwarded-For', request.META.get(
+                'REMOTE_ADDR', '',
+            ),
+        ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
+        request_location = request.headers.get('X-Client-Geo-Location', '')
+        request_user_agent = request.META.get('HTTP_USER_AGENT', '')
+        request_content_type = request.META.get('CONTENT_TYPE', '')
+        
         app_runner = app_runner_class(
             app=app, 
             app_data=app_data_obj.data if app_data_obj else None, 
             request_uuid=request_uuid, 
-            request=request, 
-            session_id=session_id, 
             app_owner=app_owner,
+            session_id=session_id, 
             stream=request.data.get('stream', False),
             app_run_request_user=request.user,
-            input_data=request.data
+            input_data=request.data,
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=request_user_agent,
+            request_content_type=request_content_type,
         )
 
         return app_runner.run_app()
