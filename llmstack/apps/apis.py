@@ -582,12 +582,20 @@ class AppViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['post'])
     def run_discord(self, request, uid):
+        request_type = request.data.get('type', None)
+        
+        if request_type == 1:
+            return DRFResponse(status=200, data={'type': 1})
+            
         return self.run(request, uid, platform='discord')
 
     @action(detail=True, methods=['post'])
     def run_slack(self, request, uid):
         if request.headers.get('X-Slack-Request-Timestamp') is None or request.headers.get('X-Slack-Signature') is None:
             return DRFResponse(status=403)
+        
+        if request.data.get('type') == 'url_verification':
+            return DRFResponse(status=200, data={'challenge': request.data.get('challenge')})
         
         return self.run(request, uid, platform='slack')
 
