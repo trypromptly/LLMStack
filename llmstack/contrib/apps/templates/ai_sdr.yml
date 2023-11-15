@@ -26,6 +26,11 @@ pages:
           a highly personalized email
 
           - In the email, do not directly refer to their linkedin activity
+      - name: "linkedin_connection"
+        title: "LinkedIn Connection"
+        type: "connection"
+        description: "Select the LinkedIn connection to use when accessing LinkedIn profiles. Go to Settings to add a new connection."
+        path: "processors[1].config.connection_id"
 app:
   name: "AI SDR"
   slug: "ai-sdr"
@@ -69,7 +74,14 @@ app:
       input:
         query: ""
       output_template:
-        markdown: "{{_inputs1.results[0].text}} "
+        markdown: |
+          {% for result in _inputs1.results %}
+
+          Result: {{ result.text }}
+
+          URL: {{ result.source }}
+
+          {% endfor %}
     - id: _inputs2
       name: LinkedIn Activity
       description: Gets the LinkedIn profile activity of a user
@@ -79,7 +91,7 @@ app:
         n_posts: 5
         n_comments: 5
         n_reactions: 5
-        connection_id: 302f0aae-819f-46fd-8506-5e46c4b4c353
+        connection_id: ""
       input:
         profile_url: ""
         search_term: ""
