@@ -1,11 +1,12 @@
 """
 Utils to convert yaml to App and AppTemplate schema models and vice versa
 """
-import yaml
 import os
+from typing import List, Type
+
+import yaml
 from django.conf import settings
 from django.core.cache import cache
-from typing import List, Type
 from pydantic import BaseModel, Field, create_model
 
 from llmstack.apps.schemas import AppTemplate
@@ -60,6 +61,8 @@ def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseMode
             field['widget'] = 'datasource'
             if 'default' not in field:
                 field['default'] = []
+        elif field_type == 'connection':
+            field['widget'] = 'connection'
         elif field_type == 'color':
             field['widget'] = 'color'
         elif field_type == 'voice':

@@ -108,7 +108,7 @@ class HttpAPIProcessorConfiguration(Schema):
         default=None, advanced_parameter=False)
 
     connection_id: Optional[str] = Field(
-        widget='connectionselect',  advanced_parameter=False)
+        widget='connection',  advanced_parameter=False)
 
     allow_redirects: Optional[bool] = True
     timeout: Optional[float] = Field(default=5, advanced_parameter=True)

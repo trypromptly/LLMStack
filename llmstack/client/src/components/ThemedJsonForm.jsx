@@ -350,7 +350,7 @@ const ThemedJsonForm = ({
               <DataSourceSelector multiple={true} {...props} />
             ),
             password: (props) => <SecretTextField {...props} />,
-            connectionselect: (props) => <ConnectionSelector {...props} />,
+            connection: (props) => <ConnectionSelector {...props} />,
           },
           ...widgets,
         }}

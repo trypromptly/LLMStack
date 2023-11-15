@@ -1,10 +1,15 @@
 from enum import Enum
 from typing import List, Optional
+
 from asgiref.sync import async_to_sync
-from pydantic import Field
 from jnpr.junos import Device
 from jnpr.junos.utils.config import Config
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
+from pydantic import Field
+
+from llmstack.processors.providers.api_processor_interface import (
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 
 class JunosCommandType(str, Enum):
@@ -17,7 +22,7 @@ class JunosCommandType(str, Enum):
 
 class JunosDeviceConfiguration(ApiProcessorSchema):
     connection_id: str = Field(
-        description='Junos login connection to use', required=True, advanced_parameter=False, widget='connectionselect')
+        description='Junos login connection to use', required=True, advanced_parameter=False, widget='connection')
 
 
 class JunosDeviceInput(ApiProcessorSchema):

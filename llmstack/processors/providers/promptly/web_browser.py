@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class WebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
-        description='Connection to use', widget='connectionselect', advanced_parameter=False)
+        description='Connection to use', widget='connection', advanced_parameter=False)
     stream_video: bool = Field(
         description='Stream video of the browser', default=False)
     timeout: int = Field(

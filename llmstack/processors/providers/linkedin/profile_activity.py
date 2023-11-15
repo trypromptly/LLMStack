@@ -34,7 +34,7 @@ class ProfileActivityOutput(ApiProcessorSchema):
 
 class ProfileActivityConfiguration(ApiProcessorSchema):
     connection_id: str = Field(description='LinkedIn login session connection to use',
-                               required=True, advanced_parameter=False, widget='connectionselect')
+                               required=True, advanced_parameter=False, widget='connection')
     n_posts: int = Field(description='Number of posts to get',
                          default=5, ge=1, le=100)
     n_comments: int = Field(description='Number of comments to get',
