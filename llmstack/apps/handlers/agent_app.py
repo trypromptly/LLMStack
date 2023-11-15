@@ -52,7 +52,7 @@ class AgentRunner(AppRunner):
                 name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
             ),
             ActorConfig(
-                name='agent', template_key='agent', actor=AgentActor, kwargs={'processor_configs': processor_configs, 'functions': self._get_processors_as_functions(), 'input': self.request.data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 'config': self.app_data['config']}
+                name='agent', template_key='agent', actor=AgentActor, kwargs={'processor_configs': processor_configs, 'functions': self._get_processors_as_functions(), 'input': self.request_input_data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 'config': self.app_data['config']}
             ),
             ActorConfig(
                 name='output', template_key='output',
@@ -85,7 +85,7 @@ class AgentRunner(AppRunner):
             output_actor = coordinator.get_actor('output').get().proxy()
             output_iter = None
             if input_actor and output_actor:
-                input_actor.write(self.request.data.get('input', {})).get()
+                input_actor.write(self.request_input_data.get('input', {})).get()
                 output_iter = output_actor.get_output().get(
                 ) if not self.stream else output_actor.get_output_stream().get()
 

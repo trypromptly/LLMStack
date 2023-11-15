@@ -27,13 +27,13 @@ logger = logging.getLogger(__name__)
 
 
 class AppRunner:
-    def __init__(self, app, app_data, request_uuid, request: Request, app_owner, session_id=None):
+    def __init__(self, app, app_data, request_uuid, request: Request, app_owner, session_id=None, stream=False, app_run_request_user=None, input_data=None):
         self.app = app
         self.app_data = app_data
-        self.stream = request.data.get('stream', False)
+        self.stream = stream
         self.app_owner_profile = app_owner
-        self.request = request
-        self.app_run_request_user = request.user
+        self.request_input_data = input_data
+        self.app_run_request_user = app_run_request_user
         self.session_id = session_id
         self.app_session = self._get_or_create_app_session()
         self.web_config = WebIntegrationConfig().from_dict(
@@ -283,8 +283,7 @@ class AppRunner:
             ),
         )
 
-        input_data = self.request.data
         return self._start(
-            input_data, self.app_session,
+            self.request_input_data, self.app_session,
             actor_configs, csp, template,
         )

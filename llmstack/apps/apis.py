@@ -555,7 +555,15 @@ class AppViewSet(viewsets.ViewSet):
             app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
 
         app_runner = app_runner_class(
-            app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid, request=request, session_id=session_id, app_owner=app_owner,
+            app=app, 
+            app_data=app_data_obj.data if app_data_obj else None, 
+            request_uuid=request_uuid, 
+            request=request, 
+            session_id=session_id, 
+            app_owner=app_owner,
+            stream=request.data.get('stream', False),
+            app_run_request_user=request.user,
+            input_data=request.data
         )
 
         return app_runner.run_app()
@@ -566,6 +574,9 @@ class AppViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['post'])
     def run_slack(self, request, uid):
+        if request.headers.get('X-Slack-Request-Timestamp') is None or request.headers.get('X-Slack-Signature') is None:
+            return DRFResponse(status=403)
+        
         return self.run(request, uid, platform='slack')
 
     @action(detail=True, methods=['post'])

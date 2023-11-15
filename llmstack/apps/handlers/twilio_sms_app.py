@@ -38,7 +38,7 @@ class TwilioSmsAppRunner(AppRunner):
         self.twilio_account_sid = self.twilio_config.get('account_sid') if self.twilio_config else ''
         self.twilio_phone_numbers = self.twilio_config.get('phone_numbers') if self.twilio_config else ''
             
-        self.session_id = self._get_twilio_app_seession_id(self.request.data)
+        self.session_id = self._get_twilio_app_seession_id(self.request_input_data)
     
     def _get_twilio_app_seession_id(self, twilio_request_payload):
         if 'From' in twilio_request_payload:
@@ -119,7 +119,7 @@ class TwilioSmsAppRunner(AppRunner):
             return {}
 
         csp = 'frame-ancestors self'
-        input_data = self._get_input_data(self.request.data)
+        input_data = self._get_input_data(self.request_input_data)
         
         template = convert_template_vars_from_legacy_format(
                 self.app_data['output_template'].get(

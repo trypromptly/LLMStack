@@ -43,9 +43,9 @@ class SlackAppRunner(AppRunner):
         self.slack_bot_token = self.slack_config.get('bot_token')
         self.stream = False
         self.app_run_request_user = self._get_app_request_user(
-            self.request.data,
+           self.request_input_data,
         )
-        self.session_id = self._get_slack_app_seession_id(self.request.data)
+        self.session_id = self._get_slack_app_seession_id(self.request_input_data)
         self.app_session = self._get_or_create_app_session()
 
     def _get_app_request_user(self, slack_request_payload):
@@ -84,7 +84,7 @@ class SlackAppRunner(AppRunner):
         return None
 
     def _is_slack_url_verification_request(self):
-        return self.request.data.get('type') == 'url_verification'
+        return self.request_input_data.get('type') == 'url_verification'
 
     def _get_input_data(self, slack_request_payload):
         slack_message_type = slack_request_payload['type']
@@ -140,21 +140,16 @@ class SlackAppRunner(AppRunner):
         )
 
     def _is_app_accessible(self):
-        if self.request.headers.get(
-                'X-Slack-Request-Timestamp',
-        ) is None or self.request.headers.get('X-Slack-Signature') is None:
-            raise Exception('Invalid Slack request')
-
         # Verify the request type is either url_verification or event_callback
-        if self.request.data.get('type') not in ['event_callback', 'url_verification']:
+        if self.request_input_data.get('type') not in ['event_callback', 'url_verification']:
             raise Exception('Invalid Slack request')
 
         # Verify the request is coming from the app we expect and the event type is app_mention
-        if self.request.data.get('type') == 'event_callback' and (self.request.data.get('api_app_id') != self.slack_config.get('app_id') or self.request.data.get('event').get('type') != 'app_mention'):
+        if self.request_input_data.get('type') == 'event_callback' and (self.request_input_data.get('api_app_id') != self.slack_config.get('app_id') or self.request_input_data.get('event').get('type') != 'app_mention'):
             raise Exception('Invalid Slack request')
 
         # URL verification is allowed without any further checks
-        if self.request.data.get('type') == 'url_verification':
+        if self.request_input_data.get('type') == 'url_verification':
             return True
 
         return super()._is_app_accessible()
@@ -165,7 +160,7 @@ class SlackAppRunner(AppRunner):
         debug_data = []
 
         csp = 'frame-ancestors self'
-        input_data = self._get_input_data(self.request.data)
+        input_data = self._get_input_data(self.request_input_data)
         # Actor configs
         if self._is_slack_url_verification_request():
             template = '{"challenge": "{{_inputs0.challenge}}"}'

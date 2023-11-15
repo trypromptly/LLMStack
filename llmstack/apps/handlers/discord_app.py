@@ -31,7 +31,7 @@ class DiscordBotRunner(AppRunner):
 
     def app_init(self):
         self.discord_bot_token = self.discord_config.get('bot_token')
-        self.session_id = self._get_discord_bot_seession_id(self.request.data)
+        self.session_id = self._get_discord_bot_seession_id(self.request_input_data)
 
     def _get_discord_bot_seession_id(self, discord_request_payload):
         if 'id' in discord_request_payload:
@@ -104,7 +104,7 @@ class DiscordBotRunner(AppRunner):
         return super()._is_app_accessible()
 
     def _is_discord_url_verification_request(self):
-        return self.request.data.get('type') == 1
+        return self.request_input_data.get('type') == 1
 
     def run_app(self):
         # Check if the app access permissions are valid
@@ -118,7 +118,7 @@ class DiscordBotRunner(AppRunner):
             return {'type': 4, 'data': {'content': str(e)}}
 
         csp = 'frame-ancestors self'
-        input_data = self._get_input_data(self.request.data)
+        input_data = self._get_input_data(self.request_input_data)
         if self._is_discord_url_verification_request():
             template = '{"type": "{{_inputs0.type}}"}'
             actor_configs = [
