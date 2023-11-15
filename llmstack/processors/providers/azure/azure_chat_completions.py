@@ -1,12 +1,14 @@
-from enum import Enum
 import json
-from typing import List
-from typing import Optional
+from enum import Enum
+from typing import List, Optional
+
 import openai
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema, CHAT_WIDGET_NAME
+from llmstack.processors.providers.api_processor_interface import (
+    CHAT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+
 
 class ChatCompletionsModel(str, Enum):
     GPT_4 = 'gpt-4'
