@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import uuid
+from pydantic import BaseModel
 
 from rest_framework.request import Request
 
@@ -25,6 +26,19 @@ from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 logger = logging.getLogger(__name__)
 
+class AppMetadata(BaseModel):
+    name: str = ''
+    class Config:
+        title = 'app'
+
+class TwilioSmsAppMetadata(BaseModel):
+    from_number: str = ''
+    to_number: str = ''
+class AppRunMetadata(BaseModel):
+    app: AppMetadata = AppMetadata()
+    twilio_sms: TwilioSmsAppMetadata = TwilioSmsAppMetadata()
+    
+    
 
 class AppRunner:
     def __init__(self, app, app_data, request_uuid, request: Request, app_owner, session_id=None):
@@ -197,8 +211,17 @@ class AppRunner:
                     'template_key': f'_inputs{index}',
                 }
         return processor_actor_configs, processor_configs
+    
+    def get_app_run_metadata(self):
+        return json.loads(AppRunMetadata(app=AppMetadata(
+            name=self.app.name)).json())
 
     def _start(self, input_data, app_session, actor_configs, csp, template):
+        metadata = self.get_app_run_metadata()
+        input_with_metadata = {
+            **input_data.get('input', {}), 
+            '_metadata': metadata
+        }
         try:
             coordinator_ref = Coordinator.start(
                 session_id=app_session['uuid'], actor_configs=actor_configs,
@@ -210,7 +233,7 @@ class AppRunner:
             output_actor = coordinator.get_actor('output').get().proxy()
             output_iter = None
             if input_actor and output_actor:
-                input_actor.write(input_data.get('input', {})).get()
+                input_actor.write(input_with_metadata).get()
                 output_iter = output_actor.get_output().get(
                 ) if not self.stream else output_actor.get_output_stream().get()
 
