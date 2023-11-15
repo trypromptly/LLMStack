@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 
 class TextChatCompletionsModel(str, Enum):
     GPT_4 = 'gpt-4'
+    GPT_4_LATEST = 'gpt-4-turbo-latest'
     GPT_3_5 = 'gpt-3.5-turbo'
+    GPT_3_5_LATEST = 'gpt-3.5-turbo-latest'
     GPT_32_K = 'gpt-4-32k'
     GPT_3_5_16K = 'gpt-3.5-turbo-16k'
 
@@ -227,6 +229,12 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
             {'role': 'user', 'content': input['question']},
         )
 
+        model = self._config.dict().get('model', 'gpt-3.5-turbo')
+        if model == 'gpt-3.5-turbo-latest':
+            model = 'gpt-3.5-turbo-1106'
+        elif model == 'gpt-4-turbo-latest':
+            model = 'gpt-4-1106-preview'
+
         if self._env['azure_openai_api_key'] and self._config.use_azure_if_available:
             openai_client = AzureOpenAI(
                 api_key=self._env['azure_openai_api_key'],
@@ -234,17 +242,8 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
                 azure_endpoint=self._env['azure_openai_endpoint'],
             )
 
-            model = self._config.dict().get('model', 'gpt-3.5-turbo')
-            engine = 'gpt-4'
-            if model == 'gpt-3.5-turbo':
-                engine = 'gpt-35-turbo'
-            elif model == 'gpt-4':
-                engine = 'gpt-4'
-            elif model == 'gpt-4-32k':
-                engine = 'gpt-4-32k'
-
             result = openai_client.chat.completions.create(
-                engine=engine,
+                model=model,
                 messages=[system_message] +
                 [context_message] + self._chat_history,
                 temperature=self._config.temperature,
@@ -257,7 +256,6 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
             ) if self._env['localai_api_key'] else OpenAI(
                 base_url=self._env['localai_base_url'],
             )
-            model = self._config.dict().get('model', 'gpt-3.5-turbo')
 
             result = openai_client.chat.completions.create(
                 model=model,
@@ -270,7 +268,7 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
             openai_client = OpenAI(
                 api_key=self._env['openai_api_key'],
             )
-            model = self._config.dict().get('model', 'gpt-3.5-turbo')
+
             result = openai_client.chat.completions.create(
                 model=model,
                 messages=[system_message] +
