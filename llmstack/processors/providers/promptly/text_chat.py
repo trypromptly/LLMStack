@@ -235,7 +235,14 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         elif model == 'gpt-4-turbo-latest':
             model = 'gpt-4-1106-preview'
 
-        if self._env['azure_openai_api_key'] and self._config.use_azure_if_available:
+        if self._config.use_azure_if_available:
+            if model == 'gpt-3.5-turbo':
+                model = 'gpt-35-turbo'
+            elif model == 'gpt-3.5-turbo-16k':
+                model = 'gpt-35-turbo-16k'
+            elif model == 'gpt-3.5-turbo-latest':
+                model = 'gpt-35-turbo-1106'
+
             openai_client = AzureOpenAI(
                 api_key=self._env['azure_openai_api_key'],
                 api_version='2023-03-15-preview',
