@@ -57,7 +57,7 @@ def partition_audio(data, mime_type, openai_key, file_name='audio_file.mp3'):
     for chunk in file_chunks:
         file_p = chunk
         file_p.name = file_name
-        response = openai_client.audio.transcriptions(
+        response = openai_client.audio.transcriptions.create(
             model=WHISPER_MODEL, file=file_p,
         )
         result.append(response.text)
