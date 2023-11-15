@@ -239,7 +239,7 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
             openai_client = AzureOpenAI(
                 api_key=self._env['azure_openai_api_key'],
                 api_version='2023-03-15-preview',
-                azure_endpoint=self._env['azure_openai_endpoint'],
+                azure_endpoint=f'https://{self._env["azure_openai_endpoint"]}.openai.azure.com',
             )
 
             result = openai_client.chat.completions.create(

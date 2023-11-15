@@ -7,7 +7,10 @@ from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import (
-    CHAT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    CHAT_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 
 class ChatCompletionsModel(str, Enum):
@@ -55,6 +58,7 @@ class AzureChatCompletionsOutput(ApiProcessorSchema):
     _api_response: Optional[dict] = Field(
         default={}, description='Raw processor output.',
     )
+
 
 def num_tokens_from_messages(messages, model='gpt-35-turbo'):
     import tiktoken
@@ -153,10 +157,10 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
                 self._chat_history.pop(0)
 
             return {'chat_history': self._chat_history}
-        
+
         if self._config.retain_history:
             return {'chat_history': self._chat_history}
-        
+
         return {'chat_history': []}
 
     def process(self) -> dict:
@@ -166,26 +170,27 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
             raise Exception(
                 'Azure Chat Completions processor requires stream to be enabled.',
             )
-            
+
         chat_history = self._chat_history if self._config.retain_history else []
         azure_openai_api_key = self._env.get('azure_openai_api_key', None)
         endpoint = self._config.base_url if self._config.base_url else self._env.get(
             'azure_openai_endpoint', None,
         )
-        client = openai.AzureOpenAI(azure_endpoint = endpoint,
-                                    api_key = azure_openai_api_key,
-                                    api_version = self._config.api_version,)
-        
+        client = openai.AzureOpenAI(azure_endpoint=endpoint if endpoint.startswith('https://') else f'https://{endpoint}.openai.azure.com',
+                                    api_key=azure_openai_api_key,
+                                    api_version=self._config.api_version,)
+
         messages = []
-        messages.append({'role': 'system', 'content': self._input.system_message})
-        
+        messages.append(
+            {'role': 'system', 'content': self._input.system_message})
+
         if len(chat_history) > 0:
             for message in chat_history:
                 messages.append(message)
-        
+
         for message in self._input.messages:
             messages.append(json.loads(message.json()))
-        
+
         result_iter = client.chat.completions.create(messages=messages,
                                                      model=self._config.deployment_name.value,
                                                      temperature=self._config.temperature,
@@ -195,14 +200,15 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
         for data in result_iter:
             if data.object == 'chat.completion.chunk' and len(data.choices) > 0 and data.choices[0].delta and data.choices[0].delta.content:
                 async_to_sync(output_stream.write)(AzureChatCompletionsOutput(
-                        choices=list(
-                            map(lambda entry: ChatMessage(role= entry.delta.role, content=entry.delta.content), data.choices)),
-                    ))
+                    choices=list(
+                        map(lambda entry: ChatMessage(role=entry.delta.role, content=entry.delta.content), data.choices)),
+                ))
         output = self._output_stream.finalize()
 
         # Update chat history
         for message in messages:
             self._chat_history.append(message)
-            
-        self._chat_history.append({'role': 'assistant', 'content': output.choices[0].content})
+
+        self._chat_history.append(
+            {'role': 'assistant', 'content': output.choices[0].content})
         return output
