@@ -21,6 +21,10 @@ urlpatterns = [
         apis.AppViewSet.as_view({'get': 'getTemplates'}),
     ),
     path(
+        'api/apps/metadata_schema',
+        apis.AppViewSet.as_view({'get': 'getMetadataSchema'}),
+    ),
+    path(
         'api/apps/templates/<str:slug>',
         apis.AppViewSet.as_view({'get': 'getTemplates'}),
     ),

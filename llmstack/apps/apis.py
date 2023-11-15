@@ -18,6 +18,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
+from llmstack.apps.handlers.app_runnner import AppMetadata, AppRunMetadata, DiscordAppMetadata, SlackAppMetadata, TwilioSmsAppMetadata
 
 from llmstack.processors.apis import EndpointViewSet
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
@@ -607,6 +608,18 @@ class AppViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'])
     def run_twiliovoice(self, request, uid):
         raise NotImplementedError()
+    
+    def getMetadataSchema(self, request):
+        schema = {
+            'type': 'object',
+            'properties': {
+                'app' : AppMetadata.schema(),
+                'discord': DiscordAppMetadata.schema(),
+                'slack': SlackAppMetadata.schema(),
+                'twilio_sms': TwilioSmsAppMetadata.schema(),
+            }
+        }
+        return DRFResponse(status=200, data=schema)
 
     def testsets(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))

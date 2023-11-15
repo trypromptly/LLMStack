@@ -13,6 +13,7 @@ from llmstack.apps.integration_configs import DiscordIntegrationConfig, TwilioIn
 from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from llmstack.apps.models import AppVisibility
+from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.utils.utils import get_location
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
@@ -27,18 +28,27 @@ logger = logging.getLogger(__name__)
 
 class AppMetadata(BaseModel):
     name: str = ''
+    class Config:
+        title = 'app'
 
 class DiscordAppMetadata(BaseModel):
     pass
+    class Config:
+        title = 'discord'
 
 class TwilioSmsAppMetadata(BaseModel):
     From: str = ''
     To: str = ''
+    
+    class Config:
+        title = 'twilio_sms'
 
 class SlackAppMetadata(BaseModel):
     pass
+    class Config:
+        title = 'slack'
 
-class AppRunMetadata(BaseModel):
+class AppRunMetadata(BaseSchema):
     app: AppMetadata = AppMetadata()
     discord: DiscordAppMetadata = DiscordAppMetadata()
     twilio_sms: TwilioSmsAppMetadata = TwilioSmsAppMetadata()
