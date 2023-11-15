@@ -37,7 +37,6 @@ def partition_audio(data, mime_type, openai_key, file_name='audio_file.mp3'):
             'OpenAI API key is missing, it is required for audio partitioning.',
         )
 
-    openai.api_key = openai_key
     extension = 'mp3'
     if mime_type.endswith('mp3'):
         extension = 'mp3'
@@ -48,13 +47,17 @@ def partition_audio(data, mime_type, openai_key, file_name='audio_file.mp3'):
     elif mime_type.endswith('webm'):
         extension = 'webm'
 
+    openai_client = openai.OpenAI(
+        api_key=openai_key,
+    )
+
     # Whisper only accpets max 25 MBs of audio file break a file into chunks
     file_chunks = split_audio_by_size(data, file_name, extension, 20)
     result = []
     for chunk in file_chunks:
         file_p = chunk
         file_p.name = file_name
-        response = openai.Audio.transcribe(
+        response = openai_client.audio.transcriptions(
             model=WHISPER_MODEL, file=file_p,
         )
         result.append(response.text)
