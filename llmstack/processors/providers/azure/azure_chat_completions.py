@@ -38,6 +38,9 @@ class AzureChatCompletionsInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default='', description='A message from the system, which will be prepended to the chat history.', widget='textarea',
     )
+    chat_history: List[ChatMessage] = Field(
+        default=[], description='A list of messages, each with a role and message text.', widget='hidden',
+    )
     messages: List[ChatMessage] = Field(
         default=[ChatMessage()], description='A list of messages, each with a role and message text.',
     )
@@ -46,6 +49,9 @@ class AzureChatCompletionsInput(ApiProcessorSchema):
 class AzureChatCompletionsOutput(ApiProcessorSchema):
     choices: List[ChatMessage] = Field(
         default=[], description='Messages', widget=CHAT_WIDGET_NAME,
+    )
+    _api_response: Optional[dict] = Field(
+        default={}, description='Raw processor output.',
     )
 
 def num_tokens_from_messages(messages, model='gpt-35-turbo'):
@@ -89,9 +95,6 @@ class AzureChatCompletionsConfiguration(ApiProcessorSchema):
     top_p: Optional[float] = Field(
         description='An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.', default=1.0, ge=0.0, le=1.0,
     )
-    stream: Optional[bool] = Field(
-        default=False, description='Whether to stream back partial progress.',
-    )
     max_tokens: Optional[int] = Field(
         description='The maximum number of tokens to generate.', ge=1, default=1024, le=32000,
     )
@@ -113,7 +116,6 @@ class AzureChatCompletionsConfiguration(ApiProcessorSchema):
         default=False, description="Automatically prune chat history. This is only applicable if 'retain_history' is set to 'true'.",
         hidden=True,
     )
-
     stream: Optional[bool] = Field(widget='hidden', default=True)
 
 
