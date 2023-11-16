@@ -67,11 +67,11 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
     """
     @staticmethod
     def name() -> str:
-        return 'Web Browser'
+        return 'Static Web Browser'
 
     @staticmethod
     def slug() -> str:
-        return 'web_browser'
+        return 'static_web_browser'
 
     @staticmethod
     def description() -> str:
