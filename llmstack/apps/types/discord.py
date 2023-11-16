@@ -76,7 +76,7 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
             for input_field in input_fields:
                 slash_command_options.append({
                     'name': input_field['name'],
-                    'description': input_field['description'],
+                    'description': input_field['description'] or input_field['name'],
                     'type': get_discord_field_type(input_field['type']),
                     'required': input_field['required'],
                 })
