@@ -75,7 +75,7 @@ app:
         query: ""
       output_template:
         markdown: |
-          {% for result in _inputs1.results %}
+          {% for result in results %}
 
           Result: {{ result.text }}
 
@@ -99,25 +99,25 @@ app:
         markdown: |-
           ## Posts
 
-          {% for post in _inputs2.posts %}
+          {% for post in posts %}
           {{post}}
 
           {% endfor %}
 
           ## Comments
 
-          {% for comment in _inputs2.comments %}
+          {% for comment in comments %}
           {{comment}}
 
           {% endfor %}
 
           ## Reactions
 
-          {% for reaction in _inputs2.reactions %}
+          {% for reaction in reactions %}
           {{reaction}}
 
           {% endfor %}
 
-          {% if _inputs2.error %}
-          {{_inputs2.error}}
+          {% if error %}
+          {{error}}
           {% endif %}

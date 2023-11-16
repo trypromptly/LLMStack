@@ -65,7 +65,7 @@ app:
         query: ""
       output_template:
         markdown: |
-          {% for result in _inputs2.results %}
+          {% for result in results %}
 
           Result: {{ result.text }}
 
