@@ -168,11 +168,11 @@ class Runner(RunnerServicer):
                         raise Exception(
                             'Terminating browser because of timeout')
                     elif step.type == runner_pb2.GOTO:
-                        await page.goto(step.data)
+                        await page.goto(step.data or page.url)
                     elif step.type == runner_pb2.CLICK:
                         await page.click(step.selector)
                     elif step.type == runner_pb2.WAIT:
-                        await page.wait_for_selector(step.selector, timeout=3000)
+                        await page.wait_for_selector(step.selector or 'body', timeout=3000)
                     elif step.type == runner_pb2.COPY:
                         results = await page.query_selector_all(step.selector or 'body')
                         outputs.append({
