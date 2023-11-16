@@ -10,6 +10,7 @@ from django import db
 from openai import AzureOpenAI, OpenAI
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.datasources.models import DataSource
 from llmstack.datasources.types import DataSourceTypeFactory
 from llmstack.processors.providers.api_processor_interface import (
@@ -134,6 +135,20 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
     @staticmethod
     def provider_slug() -> str:
         return 'promptly'
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate | None:
+        return OutputTemplate(
+            markdown='''{{answer}}
+{% if citations %}
+
+Citations:
+{% for citation in citations %}
+
+{{citation.text}}
+{{citation.source}}
+{% endfor %}
+{% endif %}''')
 
     def session_data_to_persist(self) -> dict:
         return {'chat_history': self._chat_history[-self._config.chat_history_limit:] if self._config.chat_history_limit > 0 else [], 'context': self._context}

@@ -52,7 +52,7 @@ app:
         }
       output_template:
         markdown: |
-          {{_inputs1.answer}}
+          {{answer}}
     - id: _inputs2
       name: Web Search
       description: Search the web for answers
