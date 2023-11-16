@@ -75,7 +75,7 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
 
     @staticmethod
     def description() -> str:
-        return 'Visit a URL and perform actions'
+        return 'Visit a URL and perform actions. Copy, Wait, Goto and Click are the valid instruction types'
 
     @staticmethod
     def provider_slug() -> str:
