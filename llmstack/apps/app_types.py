@@ -5,6 +5,8 @@ from llmstack.apps.models import App, AppType
 # Import all app types here
 from .types.chat import ChatApp
 from .types.web import WebApp
+from .types.discord import DiscordApp
+from .types.slack import SlackApp
 
 
 class AppTypeFactory:
