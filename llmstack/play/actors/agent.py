@@ -159,7 +159,7 @@ class AgentActor(Actor):
                                     name=function_call.name,
                                 ),
                                 id=agent_message_id,
-                                from_id='agent',
+                                from_id=function_name,
                                 type='step',
                             )
                         )
@@ -171,7 +171,7 @@ class AgentActor(Actor):
                                     arguments=function_call.arguments,
                                 ),
                                 id=agent_message_id,
-                                from_id='agent',
+                                from_id=function_name,
                                 type='step',
                             )
                         )
@@ -239,9 +239,6 @@ class AgentActor(Actor):
                 )
 
         if message.message_type == MessageType.STREAM_DATA:
-            processor_template = self._processor_configs[
-                message.message_from]['processor']['output_template']
-
             if message.message_from in self._processor_configs:
                 async_to_sync(self._output_stream.write)(
                     AgentOutput(
@@ -261,7 +258,7 @@ class AgentActor(Actor):
                     message.message_from]['processor']['output_template']
 
                 processor_output = Template(processor_template['markdown']).render(
-                    **{message.message_from: message.message})
+                    message.message)
 
                 self._agent_messages.append({
                     'role': 'function',

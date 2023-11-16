@@ -195,7 +195,14 @@ const MemoizedMessage = React.memo(
     );
   },
   (prevProps, curProps) =>
-    prevProps.message?.content === curProps.message?.content,
+    prevProps.message?.type === "step" &&
+    typeof prevProps.message?.content === "object"
+      ? prevProps.message?.rendered_content ===
+          curProps.message?.rendered_content &&
+        prevProps.message?.content?.name === curProps.message?.content?.name &&
+        prevProps.message?.content?.arguments ===
+          curProps.message?.content?.arguments
+      : prevProps.message.content === curProps.message.content,
 );
 
 export function AgentRenderer({ app, isMobile, embed = false, ws }) {
@@ -428,12 +435,18 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
         templates.current[message.output.agent.from_id]
       ) {
         templateEngine
-          .render(templates.current[message.output.agent.from_id], {
-            [message.output.agent.from_id]:
-              message.output.agent.type === "step"
-                ? chunkedOutput.current[message.output.agent.id].output
-                : chunkedOutput.current[message.output.agent.id],
-          })
+          .render(
+            templates.current[message.output.agent.from_id],
+            message.output.agent.from_id === "agent"
+              ? {
+                  [message.output.agent.from_id]:
+                    chunkedOutput.current[message.output.agent.id],
+                }
+              : typeof chunkedOutput.current[message.output.agent.id]
+                  ?.output === "string"
+              ? chunkedOutput.current[message.output.agent.id]
+              : chunkedOutput.current[message.output.agent.id]?.output,
+          )
           .then((response) => {
             if (response.trim() === "" && error === null) {
               error = "No response from AI. Please try again.";
@@ -468,6 +481,7 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
                 type: message.output.agent.type || "output",
                 id: message.output.agent.id,
                 from_id: message.output.agent.from_id,
+                rendered_content: response,
               },
             ];
             setMessages(chunkedMessages.current);
