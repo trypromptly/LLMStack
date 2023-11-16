@@ -3,7 +3,7 @@ from typing import Any
 import uuid
 import logging
 
-from llmstack.apps.handlers.app_runnner import AppMetadata, AppRunMetadata, AppRunner, TwilioSmsAppMetadata
+from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.apps.handlers.twilio_utils import RequestValidator
 from llmstack.apps.models import AppVisibility
 from llmstack.play.actor import ActorConfig
@@ -117,7 +117,7 @@ class TwilioSmsAppRunner(AppRunner):
         to_phone_number = input_data['input']['_request']['To']
         return json.loads(AppRunMetadata(
             app=AppMetadata(name=self.app.name), 
-            twilio_sms=TwilioSmsAppMetadata(from_number=from_phone_number, to_number=to_phone_number)).json())
+            twilio=TwilioAppMetadata(from_number=from_phone_number, to_number=to_phone_number)).json())
     
     def run_app(self):
         # Check if the app access permissions are valid

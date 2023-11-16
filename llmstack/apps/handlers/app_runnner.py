@@ -25,21 +25,7 @@ from llmstack.base.models import Profile
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 logger = logging.getLogger(__name__)
-
-class AppMetadata(BaseModel):
-    name: str = ''
-    class Config:
-        title = 'app'
-
-class TwilioSmsAppMetadata(BaseModel):
-    from_number: str = ''
-    to_number: str = ''
-class AppRunMetadata(BaseModel):
-    app: AppMetadata = AppMetadata()
-    twilio_sms: TwilioSmsAppMetadata = TwilioSmsAppMetadata()
     
-    
-
 class AppRunner:
     def __init__(self, app, app_data, request_uuid, request: Request, app_owner, session_id=None):
         self.app = app
