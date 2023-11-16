@@ -137,7 +137,7 @@ class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConf
         return 'promptly'
 
     @classmethod
-    def get_output_template(cls) -> OutputTemplate | None:
+    def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown='''{{answer}}
 {% if citations %}
