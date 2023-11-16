@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Button, ButtonGroup, Stack, Tooltip } from "@mui/material";
 import yaml from "js-yaml";
 import AceEditor from "react-ace";
@@ -28,6 +28,7 @@ export function AppEditor(props) {
   const [activeStep, setActiveStep] = useState(1);
   const [outputSchemas, setOutputSchemas] = useState([]);
   const [editorType, setEditorType] = useState("ui");
+  const yamlContent = useRef("");
 
   useEffect(() => {
     const { schema } = getJSONSchemaFromInputFields(appInputFields);
@@ -73,9 +74,16 @@ export function AppEditor(props) {
               editor.renderer.setPadding(10);
             }}
             onChange={(value) => {
+              yamlContent.current = value;
+            }}
+            onBlur={(value) => {
               try {
-                const data = yaml.load(value);
+                const data = yaml.load(yamlContent.current);
                 setApp({ ...app, data });
+                setProcessors(data.processors);
+                setAppConfig(data.config);
+                setAppInputFields(data.input_fields);
+                setAppOutputTemplate(data.output_template);
               } catch (e) {
                 console.error(e);
               }
