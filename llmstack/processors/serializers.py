@@ -70,7 +70,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
             obj.slug, obj.api_provider.slug)
         if processor_cls is None:
             return None
-        return processor_cls.get_output_template()
+        return processor_cls.get_output_template().dict() if processor_cls.get_output_template() else None
 
     class Meta:
         model = ApiBackend

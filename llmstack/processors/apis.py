@@ -346,7 +346,7 @@ class ApiBackendViewSet(viewsets.ViewSet):
                 'input_ui_schema': subclass.get_input_ui_schema(),
                 'output_ui_schema': subclass.get_output_ui_schema(),
                 'config_ui_schema': subclass.get_configuration_ui_schema(),
-                'output_template': subclass.get_output_template(),
+                'output_template': subclass.get_output_template().dict() if subclass.get_output_template() else None,
             })
         return DRFResponse(processors)
 

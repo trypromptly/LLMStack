@@ -6,6 +6,7 @@ import jinja2
 import ujson as json
 from pydantic import AnyUrl, BaseModel
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.base.processor import (
     BaseConfigurationType,
     BaseInputType,
@@ -129,7 +130,7 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
         return json.loads(cls.get_input_schema())
 
     @classmethod
-    def get_output_template(cls) -> Optional[str]:
+    def get_output_template(cls) -> Optional[OutputTemplate]:
         # Default output_template to use in tools and playground
         return None
 
