@@ -161,7 +161,7 @@ class Runner(RunnerServicer):
                 if not url.startswith('http'):
                     url = f'https://{url}'
 
-                await page.goto(url)
+                await page.goto(url, wait_until='domcontentloaded')
 
                 for step in steps:
                     if step.type == TERMINATE:
@@ -172,13 +172,20 @@ class Runner(RunnerServicer):
                     elif step.type == runner_pb2.CLICK:
                         await page.click(step.selector)
                     elif step.type == runner_pb2.WAIT:
-                        await page.wait_for_selector(step.selector, timeout=1000)
+                        await page.wait_for_selector(step.selector, timeout=3000)
                     elif step.type == runner_pb2.COPY:
-                        results = await page.query_selector_all(step.selector)
+                        results = await page.query_selector_all(step.selector or 'body')
                         outputs.append({
                             'url': page.url,
                             'text': "".join([await result.inner_text() for result in results]),
                         })
+
+                # If outputs is empty, add the current page URL and text
+                if len(outputs) == 0:
+                    outputs.append({
+                        'url': page.url,
+                        'text': await page.inner_html(),
+                    })
 
                 if ffmpeg_process:
                     await asyncio.sleep(10)
