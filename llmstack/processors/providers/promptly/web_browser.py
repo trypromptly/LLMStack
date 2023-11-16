@@ -8,6 +8,7 @@ from asgiref.sync import async_to_sync
 from django.conf import settings
 from pydantic import BaseModel, Field, validator
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -79,6 +80,14 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
     @staticmethod
     def provider_slug() -> str:
         return 'promptly'
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown='''![video](data:videostream/output._video)
+
+{{text}}
+''')
 
     def process(self) -> dict:
         output_stream = self._output_stream

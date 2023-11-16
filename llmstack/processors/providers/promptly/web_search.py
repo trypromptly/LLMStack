@@ -1,11 +1,16 @@
-import requests
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
+import requests
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
+from llmstack.apps.schemas import OutputTemplate
+from llmstack.processors.providers.api_processor_interface import (
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
+
 
 class SearchEngine(str, Enum):
     GOOGLE = 'Google'
@@ -68,12 +73,20 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
     @staticmethod
     def provider_slug() -> str:
         return 'promptly'
-    
-    
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown='''{% for result in results %}
+{{result.text}}
+{{result.source}}
+
+{% endfor %}''')
+
     async def _get_results_with_playwright(self, search_url, k):
-        from playwright.async_api import async_playwright
         from django.conf import settings
-        
+        from playwright.async_api import async_playwright
+
         async with async_playwright() as playwright:
             browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await playwright.chromium.launch()
             page = await browser.new_page()
@@ -87,11 +100,9 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
                 href = await a.get_attribute('href')
                 text = await result.text_content()
                 output.append(WebSearchResult(text=text, source=href))
-                
 
             await browser.close()
             return output
-        
 
     def process(self) -> dict:
         output_stream = self._output_stream
@@ -114,15 +125,16 @@ class WebSearch(ApiProcessorInterface[WebSearchInput, WebSearchOutput, WebSearch
                 items = response_data.get('items', [])
                 results = []
                 for item in items:
-                    results.append(WebSearchResult(text=f"{item['title']}. {item['snippet']}", source=item['link']))
+                    results.append(WebSearchResult(
+                        text=f"{item['title']}. {item['snippet']}", source=item['link']))
             else:
                 results = []
         else:
             # Fallback to playwright
             search_url = f'https://www.google.com/search?q={query}'
-            results = async_to_sync(self._get_results_with_playwright)(search_url, k)
-            
-        
+            results = async_to_sync(
+                self._get_results_with_playwright)(search_url, k)
+
         async_to_sync(output_stream.write)(WebSearchOutput(
             results=results
         ))

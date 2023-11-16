@@ -5,6 +5,7 @@ import orjson as json
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -59,6 +60,34 @@ class ProfileActivityProcessor(ApiProcessorInterface[ProfileActivityInput, Profi
     @staticmethod
     def provider_slug() -> str:
         return 'linkedin'
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown='''## Posts
+
+{% for post in posts %}
+{{post}}
+
+{% endfor %}
+
+## Comments
+
+{% for comment in comments %}
+{{comment}}
+
+{% endfor %}
+
+## Reactions
+
+{% for reaction in reactions %}
+{{reaction}}
+
+{% endfor %}
+
+{% if error %}
+{{error}}
+{% endif %}''')
 
     async def _get_profile_activity(self):
         from django.conf import settings

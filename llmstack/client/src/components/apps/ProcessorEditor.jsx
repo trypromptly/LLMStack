@@ -381,7 +381,14 @@ export function ProcessorEditor({
                 }}
                 sx={{ width: "100%" }}
                 placeholder="Use the {{ }} syntax to reference data from the processor's own output."
-                schemas={outputSchemas.slice(index + 1, index + 2)}
+                schemas={outputSchemas.slice(index + 1, index + 2).map((s) => {
+                  return {
+                    label: s.label,
+                    pillPrefix: s.pillPrefix,
+                    items: s.items,
+                    id: null,
+                  };
+                })}
               />
             </AccordionDetails>
           </Accordion>

@@ -127,6 +127,7 @@ export function AppEditor(props) {
                   endpoint: null,
                   input: null,
                   config: null,
+                  output_template: apiBackend?.output_template,
                 });
                 setProcessors(newProcessors);
                 setActiveStep(newProcessors.length + 1);
