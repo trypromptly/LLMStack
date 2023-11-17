@@ -31,6 +31,10 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
     Returns:
       The stitched object.
     """
+    from llmstack.play.actors.agent import AgentOutput
+    if isinstance(obj1, dict) and isinstance(obj2, AgentOutput):
+        return {**obj1, **obj2.dict(), **{'content' : stitch_model_objects(obj1.get('content', {}), obj2.dict().get('content', {}))}}
+    
     if isinstance(obj1, BaseModel):
         obj1 = obj1.dict()
     if isinstance(obj2, BaseModel):
