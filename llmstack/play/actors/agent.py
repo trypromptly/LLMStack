@@ -230,6 +230,7 @@ class AgentActor(Actor):
                     run_data={**output_response._asdict()}, input=self._input, config={}, output={'agent_messages': self._agent_messages}, timestamp=time.time(),
                 )
                 self._output_stream.bookkeep(bookkeeping_data)
+                self._output_stream.finalize()
 
                 async_to_sync(self._output_stream.write_raw)(
                     Message(
