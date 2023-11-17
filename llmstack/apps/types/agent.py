@@ -83,6 +83,11 @@ class AgentConfigSchema(BaseSchema):
     suggested_messages: List[str] = Field(
         title='Suggested messages', default=[], description='List of upto 3 suggested messages to show to the user', advanced_parameter=True,
     )
+    chat_history_limit: Optional[int] = Field(
+        title='Chat History Limit',
+        default=0, description='Number of messages to keep in chat history', advanced_parameter=True,
+        le=1000, ge=0,
+    )
 
 
 class Agent(AppTypeInterface[AgentConfigSchema]):
