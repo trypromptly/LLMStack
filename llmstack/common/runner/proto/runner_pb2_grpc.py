@@ -20,7 +20,7 @@ class RunnerStub(object):
             request_serializer=runner__pb2.RemoteBrowserRequest.SerializeToString,
             response_deserializer=runner__pb2.RemoteBrowserResponse.FromString,
         )
-        self.GetPlaywrightBrowser = channel.unary_stream(
+        self.GetPlaywrightBrowser = channel.stream_stream(
             '/Runner/GetPlaywrightBrowser',
             request_serializer=runner__pb2.PlaywrightBrowserRequest.SerializeToString,
             response_deserializer=runner__pb2.PlaywrightBrowserResponse.FromString,
@@ -37,7 +37,7 @@ class RunnerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetPlaywrightBrowser(self, request, context):
+    def GetPlaywrightBrowser(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -51,7 +51,7 @@ def add_RunnerServicer_to_server(servicer, server):
             request_deserializer=runner__pb2.RemoteBrowserRequest.FromString,
             response_serializer=runner__pb2.RemoteBrowserResponse.SerializeToString,
         ),
-        'GetPlaywrightBrowser': grpc.unary_stream_rpc_method_handler(
+        'GetPlaywrightBrowser': grpc.stream_stream_rpc_method_handler(
             servicer.GetPlaywrightBrowser,
             request_deserializer=runner__pb2.PlaywrightBrowserRequest.FromString,
             response_serializer=runner__pb2.PlaywrightBrowserResponse.SerializeToString,
@@ -86,7 +86,7 @@ class Runner(object):
                                                insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def GetPlaywrightBrowser(request,
+    def GetPlaywrightBrowser(request_iterator,
                              target,
                              options=(),
                              channel_credentials=None,
@@ -96,8 +96,8 @@ class Runner(object):
                              wait_for_ready=None,
                              timeout=None,
                              metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/Runner/GetPlaywrightBrowser',
-                                              runner__pb2.PlaywrightBrowserRequest.SerializeToString,
-                                              runner__pb2.PlaywrightBrowserResponse.FromString,
-                                              options, channel_credentials,
-                                              insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+        return grpc.experimental.stream_stream(request_iterator, target, '/Runner/GetPlaywrightBrowser',
+                                               runner__pb2.PlaywrightBrowserRequest.SerializeToString,
+                                               runner__pb2.PlaywrightBrowserResponse.FromString,
+                                               options, channel_credentials,
+                                               insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -69,6 +69,6 @@ service Runner {
 
   rpc GetRemoteBrowser (stream RemoteBrowserRequest) returns (stream RemoteBrowserResponse) {}
 
-  rpc GetPlaywrightBrowser (PlaywrightBrowserRequest) returns (stream PlaywrightBrowserResponse) {}
+  rpc GetPlaywrightBrowser (stream PlaywrightBrowserRequest) returns (stream PlaywrightBrowserResponse) {}
 
 }

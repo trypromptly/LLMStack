@@ -146,10 +146,41 @@ class Runner(RunnerServicer):
             ),
         )
 
-    async def _process_playwright_steps(self, url, steps, display, ffmpeg_process, session_data):
+    async def _process_playwright_request(self, page, request):
+        url = request.url
+        steps = list(request.steps)
+        outputs = []
+
+        if not url.startswith('http'):
+            url = f'https://{url}'
+
+        await page.goto(url, wait_until='domcontentloaded')
+
+        for step in steps:
+            if step.type == TERMINATE:
+                raise Exception(
+                    'Terminating browser because of timeout')
+            elif step.type == runner_pb2.GOTO:
+                await page.goto(step.data or page.url)
+            elif step.type == runner_pb2.CLICK:
+                await page.click(step.selector)
+            elif step.type == runner_pb2.WAIT:
+                await page.wait_for_selector(step.selector or 'body', timeout=3000)
+            elif step.type == runner_pb2.COPY:
+                results = await page.query_selector_all(step.selector or 'body')
+                outputs.append({
+                    'url': page.url,
+                    'text': "".join([await result.inner_text() for result in results]),
+                })
+
+        return outputs
+
+    async def _process_playwright_input_stream(self, initial_request, request_iterator, display, ffmpeg_process):
         os.environ['DISPLAY'] = f'{display["DISPLAY"]}.0'
         logger.info(f"Using {os.environ['DISPLAY']}")
         outputs = []
+        session_data = initial_request.session_data
+
         async with async_playwright() as playwright:
             try:
                 session_data = json.loads(
@@ -158,27 +189,20 @@ class Runner(RunnerServicer):
                 context = await browser.new_context(no_viewport=True, storage_state=session_data)
                 page = await context.new_page()
 
-                if not url.startswith('http'):
-                    url = f'https://{url}'
+                outputs = await self._process_playwright_request(
+                    page, initial_request)
 
-                await page.goto(url, wait_until='domcontentloaded')
+                for next_request in request_iterator:
+                    if next_request is not None:
+                        if next_request.input.type == TERMINATE:
+                            raise Exception(
+                                'Terminating browser because of timeout')
+                    else:
+                        # Sleep a bit to prevent a busy loop that consumes too much CPU
+                        await asyncio.sleep(0.1)
 
-                for step in steps:
-                    if step.type == TERMINATE:
-                        raise Exception(
-                            'Terminating browser because of timeout')
-                    elif step.type == runner_pb2.GOTO:
-                        await page.goto(step.data or page.url)
-                    elif step.type == runner_pb2.CLICK:
-                        await page.click(step.selector)
-                    elif step.type == runner_pb2.WAIT:
-                        await page.wait_for_selector(step.selector or 'body', timeout=3000)
-                    elif step.type == runner_pb2.COPY:
-                        results = await page.query_selector_all(step.selector or 'body')
-                        outputs.append({
-                            'url': page.url,
-                            'text': "".join([await result.inner_text() for result in results]),
-                        })
+                    outputs += await self._process_playwright_request(
+                        page, next_request)
 
                 # If outputs is empty, add the current page URL and text
                 if len(outputs) == 0:
@@ -201,8 +225,9 @@ class Runner(RunnerServicer):
 
                 return outputs
 
-    def GetPlaywrightBrowser(self, request: PlaywrightBrowserRequest, context: ServicerContext) -> Iterator[PlaywrightBrowserResponse]:
-        steps = list(request.steps)
+    def GetPlaywrightBrowser(self, request_iterator: Iterator[PlaywrightBrowserRequest], context: ServicerContext) -> Iterator[PlaywrightBrowserResponse]:
+        # Get the first request from the client
+        initial_request = next(request_iterator)
         display = self.display_pool.get_display(remote_control=False)
 
         if not display:
@@ -215,7 +240,7 @@ class Runner(RunnerServicer):
             .input(f"{display['DISPLAY']}.0", format='x11grab', framerate=10, video_size=(1024, 720))
             .output('pipe:', format='mp4', vcodec='h264', movflags='faststart+frag_keyframe+empty_moov+default_base_moof', g=25, y=None)
             .run_async(pipe_stdout=True, pipe_stderr=True)
-        ) if request.stream_video else None
+        ) if initial_request.stream_video else None
 
         # Use ThreadPoolExecutor to run the async function in a separate thread
         with futures.ThreadPoolExecutor() as executor:
@@ -223,8 +248,8 @@ class Runner(RunnerServicer):
             def run_async_code(loop):
                 asyncio.set_event_loop(loop)
                 return loop.run_until_complete(
-                    self._process_playwright_steps(
-                        request.url, steps, display, ffmpeg_process, request.session_data)
+                    self._process_playwright_input_stream(
+                        initial_request, request_iterator, display, ffmpeg_process)
                 )
 
             # Create a new event loop that will be run in a separate thread
