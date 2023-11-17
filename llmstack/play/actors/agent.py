@@ -8,6 +8,7 @@ from asgiref.sync import async_to_sync
 from jinja2 import Template
 from openai import OpenAI
 from pydantic import BaseModel
+from llmstack.apps.app_session_utils import save_agent_app_session_data
 
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.output import OutputResponse
@@ -54,19 +55,30 @@ class AgentActor(Actor):
         self._env = kwargs.get('env')
         self._input = kwargs.get('input')
         self._config = kwargs.get('config', {})
-
-        self._openai_client = OpenAI(
-            api_key=self._env['openai_api_key']
-        )
-
-        self._agent_messages = [{
+        self._agent_app_session_data = kwargs.get('agent_app_session_data')
+        self._system_message = [{
             'role': 'system',
             'content': self._config.get('system_message', 'You are a helpful assistant that uses provided tools to perform actions.')
-        }, {
+        }]
+                
+        if 'data' in self._agent_app_session_data and 'chat_history' in self._agent_app_session_data['data']:
+            self._chat_history = self._agent_app_session_data['data']['chat_history']
+        else:
+            self._chat_history = []
+        
+        self._openai_client = OpenAI(
+            api_key=self._env['openai_api_key']
+        )  
+        
+        self._agent_messages = []
+        
+        if 'chat_history_limit' in self._config and self._config['chat_history_limit'] > 0:
+            self._agent_messages += self._chat_history[-self._config['chat_history_limit']:]
+        
+        self._agent_messages.append({
             'role': 'user',
             'content': self._input.get('task', 'Hello')
-        }]
-
+        })
     # This will send a message to itself to start the loop
     def run(self) -> None:
         self.actor_ref.tell(
@@ -138,7 +150,7 @@ class AgentActor(Actor):
             finish_reason = None
             result = self._openai_client.chat.completions.create(
                 model=model,
-                messages=self._agent_messages,
+                messages=self._system_message + self._agent_messages,
                 stream=True,
                 functions=self._functions,
             )
@@ -229,6 +241,10 @@ class AgentActor(Actor):
                 bookkeeping_data = BookKeepingData(
                     run_data={**output_response._asdict()}, input=self._input, config={}, output={'agent_messages': self._agent_messages}, timestamp=time.time(),
                 )
+                # Persist session data
+                self._agent_app_session_data['data'] = {'chat_history': self._chat_history + self._agent_messages}
+                save_agent_app_session_data(self._agent_app_session_data)
+                
                 self._output_stream.bookkeep(bookkeeping_data)
                 self._output_stream.finalize()
 

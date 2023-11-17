@@ -74,3 +74,40 @@ def get_app_session_data(app_session, endpoint):
     if app_session_data is None:
         return None
     return json.loads(app_session_data)
+
+
+def create_agent_app_session_data(app_session, data):
+    if not app_session:
+        return None
+
+    app_session_data = {
+        'app_session': app_session,
+        'data': data,
+        'created_at': str(datetime.now()),
+        'last_updated_at': str(datetime.now()),
+    }
+    app_session_data_store.set(
+        f'app_session_data_{app_session["uuid"]}_agent', json.dumps(
+            app_session_data), APP_SESSION_TIMEOUT,
+    )
+    return app_session_data
+
+
+def save_agent_app_session_data(app_session_data):
+    app_session_data_store.set(
+        f'app_session_data_{app_session_data["app_session"]["uuid"]}_agent', json.dumps(
+            app_session_data), APP_SESSION_TIMEOUT,
+    )
+    return app_session_data
+
+
+def get_agent_app_session_data(app_session):
+    if not app_session:
+        return None
+
+    app_session_data = app_session_data_store.get(
+        f'app_session_data_{app_session["uuid"]}_agent',
+    )
+    if app_session_data is None:
+        return None
+    return json.loads(app_session_data)

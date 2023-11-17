@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import orjson as json
+from llmstack.apps.app_session_utils import create_agent_app_session_data, get_agent_app_session_data
 
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.play.actor import ActorConfig
@@ -46,13 +47,26 @@ class AgentRunner(AppRunner):
                     ' '.join(self.web_config['allowed_sites'])
 
         processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        
+        agent_app_session_data = get_agent_app_session_data(self.app_session)
+        if not agent_app_session_data:
+            agent_app_session_data = create_agent_app_session_data(self.app_session, {})
+            
         # Actor configs
         actor_configs = [
             ActorConfig(
                 name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
             ),
             ActorConfig(
-                name='agent', template_key='agent', actor=AgentActor, kwargs={'processor_configs': processor_configs, 'functions': self._get_processors_as_functions(), 'input': self.request.data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 'config': self.app_data['config']}
+                name='agent', template_key='agent', 
+                actor=AgentActor, 
+                kwargs={
+                        'processor_configs': processor_configs, 
+                        'functions': self._get_processors_as_functions(), 
+                        'input': self.request.data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 
+                        'config': self.app_data['config'],
+                        'agent_app_session_data': agent_app_session_data,
+                        }
             ),
             ActorConfig(
                 name='output', template_key='output',
