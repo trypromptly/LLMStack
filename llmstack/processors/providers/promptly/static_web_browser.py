@@ -16,11 +16,19 @@ from llmstack.processors.providers.api_processor_interface import (
 from llmstack.processors.providers.promptly.web_browser import (
     BrowserInstruction,
     BrowserInstructionType,
-    WebBrowserConfiguration,
     WebBrowserOutput,
 )
 
 logger = logging.getLogger(__name__)
+
+
+class StaticWebBrowserConfiguration(ApiProcessorSchema):
+    connection_id: Optional[str] = Field(
+        description='Connection to use', widget='connection', advanced_parameter=False)
+    stream_video: bool = Field(
+        description='Stream video of the browser', default=False)
+    timeout: int = Field(
+        description='Timeout in seconds', default=10, ge=1, le=100)
 
 
 class StaticWebBrowserInput(ApiProcessorSchema):
@@ -30,7 +38,7 @@ class StaticWebBrowserInput(ApiProcessorSchema):
         ..., description='Instructions to execute')
 
 
-class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOutput, WebBrowserConfiguration]):
+class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOutput, StaticWebBrowserConfiguration]):
     """
     Browse a given URL
     """
@@ -96,6 +104,8 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
             for response in playwright_response_iter:
                 if response.state == runner_pb2.TERMINATED:
                     output_text = "".join([x.text for x in response.outputs])
+                    if not output_text:
+                        output_text = response.content.text
                     break
 
                 if response.video:
