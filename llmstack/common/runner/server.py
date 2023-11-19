@@ -14,12 +14,18 @@ from grpc import ServicerContext
 from grpc import server as grpc_server
 from grpc_health.v1 import health, health_pb2, health_pb2_grpc
 from playwright._impl._api_types import TimeoutError
-from playwright.async_api import async_playwright
+from playwright.async_api import ElementHandle, async_playwright
 
 from llmstack.common.runner.display import VirtualDisplayPool
 from llmstack.common.runner.proto import runner_pb2
 from llmstack.common.runner.proto.runner_pb2 import (
     TERMINATE,
+    BrowserButton,
+    BrowserContent,
+    BrowserInputField,
+    BrowserLink,
+    BrowserSelectField,
+    BrowserTextAreaField,
     PlaywrightBrowserRequest,
     PlaywrightBrowserResponse,
     RemoteBrowserRequest,
@@ -33,6 +39,103 @@ from llmstack.common.runner.proto.runner_pb2_grpc import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+async def get_selector_from_element(element: ElementHandle) -> str:
+    """
+    Generates a complex CSS selector for a given Playwright ElementHandle, using various attributes and fallbacks.
+
+    Args:
+    element (ElementHandle): The Playwright ElementHandle for which to generate the selector.
+
+    Returns:
+    str: A complex CSS selector for the element.
+    """
+    selector_parts = []
+
+    # Add ID if available
+    element_id = await element.get_attribute('id')
+    if element_id:
+        selector_parts.append(f'#{element_id}')
+
+    # Add class names if available
+    class_name = await element.get_attribute('class')
+    if class_name:
+        classes = '.'.join(class_name.split())
+        selector_parts.append(f'.{classes}')
+
+    # Add aria-label if available
+    aria_label = await element.get_attribute('aria-label')
+    if aria_label:
+        selector_parts.append(f'[aria-label="{aria_label}"]')
+
+    # Fallback to tag name and nth-child
+    tag_name = await element.evaluate('element => element.tagName.toLowerCase()')
+    parent = await element.query_selector('xpath=..')
+    siblings = await parent.query_selector_all(tag_name)
+    for index, sibling in enumerate(siblings):
+        if sibling == element:
+            nth_child = f'{tag_name}:nth-child({index + 1})'
+            selector_parts.append(nth_child)
+            break
+
+    # Combine all parts to form the selector
+    combined_selector = ' > '.join(
+        selector_parts) if selector_parts else tag_name
+    return combined_selector
+
+
+async def get_browser_content_from_page(page) -> BrowserContent:
+    content = BrowserContent()
+    content.url = page.url
+    content.title = await page.title()
+    content.text = await page.inner_text('body')
+
+    buttons = await page.query_selector_all('button')
+    for button in buttons:
+        content.buttons.append(BrowserButton(
+            text=await button.text_content(),
+            selector=await get_selector_from_element(button),
+        ))
+
+    inputs = await page.query_selector_all('input')
+    for input in inputs:
+        # If input is of type submit, add it to buttons
+        input_type = await input.get_attribute('type')
+        if input_type == 'submit':
+            content.buttons.append(BrowserButton(
+                text=await input.text_content(),
+                selector=await get_selector_from_element(input),
+            ))
+        else:
+            content.inputs.append(BrowserInputField(
+                text=await input.text_content(),
+                selector=await get_selector_from_element(input),
+            ))
+
+    selects = await page.query_selector_all('select')
+    for select in selects:
+        content.selects.append(BrowserSelectField(
+            text=await select.text_content(),
+            selector=await get_selector_from_element(select),
+        ))
+
+    textareas = await page.query_selector_all('textarea')
+    for textarea in textareas:
+        content.textareas.append(BrowserTextAreaField(
+            text=await textarea.text_content(),
+            selector=await get_selector_from_element(textarea),
+        ))
+
+    links = await page.query_selector_all('a')
+    for link in links:
+        content.links.append(BrowserLink(
+            text=await link.text_content(),
+            selector=await get_selector_from_element(link),
+            url=await link.get_attribute('href'),
+        ))
+
+    return content
 
 
 class Runner(RunnerServicer):
@@ -147,14 +250,8 @@ class Runner(RunnerServicer):
         )
 
     async def _process_playwright_request(self, page, request):
-        url = request.url
         steps = list(request.steps)
         outputs = []
-
-        if not url.startswith('http'):
-            url = f'https://{url}'
-
-        await page.goto(url, wait_until='domcontentloaded')
 
         for step in steps:
             if step.type == TERMINATE:
@@ -179,6 +276,7 @@ class Runner(RunnerServicer):
         os.environ['DISPLAY'] = f'{display["DISPLAY"]}.0'
         logger.info(f"Using {os.environ['DISPLAY']}")
         outputs = []
+        content = BrowserContent()
         session_data = initial_request.session_data
 
         async with async_playwright() as playwright:
@@ -189,27 +287,23 @@ class Runner(RunnerServicer):
                 context = await browser.new_context(no_viewport=True, storage_state=session_data)
                 page = await context.new_page()
 
+                url = initial_request.url
+                if not url.startswith('http'):
+                    url = f'https://{url}'
+
+                # Load the start_url before processing the steps
+                await page.goto(url, wait_until='domcontentloaded')
+
                 outputs = await self._process_playwright_request(
                     page, initial_request)
 
                 for next_request in request_iterator:
-                    if next_request is not None:
-                        if next_request.input.type == TERMINATE:
-                            raise Exception(
-                                'Terminating browser because of timeout')
-                    else:
-                        # Sleep a bit to prevent a busy loop that consumes too much CPU
-                        await asyncio.sleep(0.1)
-
                     outputs += await self._process_playwright_request(
                         page, next_request)
+                    await asyncio.sleep(0.1)
 
-                # If outputs is empty, add the current page URL and text
-                if len(outputs) == 0:
-                    outputs.append({
-                        'url': page.url,
-                        'text': await page.inner_html(),
-                    })
+                # Populate content from the last page
+                content = await get_browser_content_from_page(page)
 
                 if ffmpeg_process:
                     await asyncio.sleep(10)
@@ -223,7 +317,7 @@ class Runner(RunnerServicer):
                 if ffmpeg_process:
                     ffmpeg_process.kill()
 
-                return outputs
+                return (outputs, content)
 
     def GetPlaywrightBrowser(self, request_iterator: Iterator[PlaywrightBrowserRequest], context: ServicerContext) -> Iterator[PlaywrightBrowserResponse]:
         # Get the first request from the client
@@ -269,13 +363,15 @@ class Runner(RunnerServicer):
                         break
                     yield PlaywrightBrowserResponse(video=chunk)
 
-                output_texts = future.result()
+                (output_texts, content) = future.result()
                 response = PlaywrightBrowserResponse(
                     state=RemoteBrowserState.TERMINATED)
 
                 for output_text in output_texts:
                     response.outputs.append(runner_pb2.BrowserOutput(
                         text=output_text['text'], url=output_text['url']))
+
+                response.content.CopyFrom(content)
 
                 yield response
             except Exception as e:

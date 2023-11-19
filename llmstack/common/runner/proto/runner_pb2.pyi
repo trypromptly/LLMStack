@@ -9,11 +9,45 @@ COPY: BrowserCommandType
 DESCRIPTOR: _descriptor.FileDescriptor
 GOTO: BrowserCommandType
 RUNNING: RemoteBrowserState
+SCROLL_X: BrowserCommandType
+SCROLL_Y: BrowserCommandType
 TERMINATE: BrowserCommandType
 TERMINATED: RemoteBrowserState
 TIMEOUT: RemoteBrowserState
 TYPE: BrowserCommandType
 WAIT: BrowserCommandType
+
+class BrowserButton(_message.Message):
+    __slots__ = ["selector", "text"]
+    SELECTOR_FIELD_NUMBER: _ClassVar[int]
+    TEXT_FIELD_NUMBER: _ClassVar[int]
+    selector: str
+    text: str
+    def __init__(self, selector: _Optional[str] = ..., text: _Optional[str] = ...) -> None: ...
+
+class BrowserContent(_message.Message):
+    __slots__ = ["buttons", "html", "inputs", "links", "screenshot", "selects", "text", "textareas", "title", "url"]
+    BUTTONS_FIELD_NUMBER: _ClassVar[int]
+    HTML_FIELD_NUMBER: _ClassVar[int]
+    INPUTS_FIELD_NUMBER: _ClassVar[int]
+    LINKS_FIELD_NUMBER: _ClassVar[int]
+    SCREENSHOT_FIELD_NUMBER: _ClassVar[int]
+    SELECTS_FIELD_NUMBER: _ClassVar[int]
+    TEXTAREAS_FIELD_NUMBER: _ClassVar[int]
+    TEXT_FIELD_NUMBER: _ClassVar[int]
+    TITLE_FIELD_NUMBER: _ClassVar[int]
+    URL_FIELD_NUMBER: _ClassVar[int]
+    buttons: _containers.RepeatedCompositeFieldContainer[BrowserButton]
+    html: str
+    inputs: _containers.RepeatedCompositeFieldContainer[BrowserInputField]
+    links: _containers.RepeatedCompositeFieldContainer[BrowserLink]
+    screenshot: bytes
+    selects: _containers.RepeatedCompositeFieldContainer[BrowserSelectField]
+    text: str
+    textareas: _containers.RepeatedCompositeFieldContainer[BrowserTextAreaField]
+    title: str
+    url: str
+    def __init__(self, url: _Optional[str] = ..., title: _Optional[str] = ..., html: _Optional[str] = ..., text: _Optional[str] = ..., screenshot: _Optional[bytes] = ..., buttons: _Optional[_Iterable[_Union[BrowserButton, _Mapping]]] = ..., inputs: _Optional[_Iterable[_Union[BrowserInputField, _Mapping]]] = ..., selects: _Optional[_Iterable[_Union[BrowserSelectField, _Mapping]]] = ..., textareas: _Optional[_Iterable[_Union[BrowserTextAreaField, _Mapping]]] = ..., links: _Optional[_Iterable[_Union[BrowserLink, _Mapping]]] = ...) -> None: ...
 
 class BrowserInitData(_message.Message):
     __slots__ = ["persist_session", "session_data", "terminate_url_pattern", "timeout", "url"]
@@ -39,6 +73,24 @@ class BrowserInput(_message.Message):
     type: BrowserCommandType
     def __init__(self, type: _Optional[_Union[BrowserCommandType, str]] = ..., selector: _Optional[str] = ..., data: _Optional[str] = ...) -> None: ...
 
+class BrowserInputField(_message.Message):
+    __slots__ = ["selector", "text"]
+    SELECTOR_FIELD_NUMBER: _ClassVar[int]
+    TEXT_FIELD_NUMBER: _ClassVar[int]
+    selector: str
+    text: str
+    def __init__(self, selector: _Optional[str] = ..., text: _Optional[str] = ...) -> None: ...
+
+class BrowserLink(_message.Message):
+    __slots__ = ["selector", "text", "url"]
+    SELECTOR_FIELD_NUMBER: _ClassVar[int]
+    TEXT_FIELD_NUMBER: _ClassVar[int]
+    URL_FIELD_NUMBER: _ClassVar[int]
+    selector: str
+    text: str
+    url: str
+    def __init__(self, selector: _Optional[str] = ..., text: _Optional[str] = ..., url: _Optional[str] = ...) -> None: ...
+
 class BrowserOutput(_message.Message):
     __slots__ = ["text", "url"]
     TEXT_FIELD_NUMBER: _ClassVar[int]
@@ -46,6 +98,22 @@ class BrowserOutput(_message.Message):
     text: str
     url: str
     def __init__(self, url: _Optional[str] = ..., text: _Optional[str] = ...) -> None: ...
+
+class BrowserSelectField(_message.Message):
+    __slots__ = ["selector", "text"]
+    SELECTOR_FIELD_NUMBER: _ClassVar[int]
+    TEXT_FIELD_NUMBER: _ClassVar[int]
+    selector: str
+    text: str
+    def __init__(self, selector: _Optional[str] = ..., text: _Optional[str] = ...) -> None: ...
+
+class BrowserTextAreaField(_message.Message):
+    __slots__ = ["selector", "text"]
+    SELECTOR_FIELD_NUMBER: _ClassVar[int]
+    TEXT_FIELD_NUMBER: _ClassVar[int]
+    selector: str
+    text: str
+    def __init__(self, selector: _Optional[str] = ..., text: _Optional[str] = ...) -> None: ...
 
 class PlaywrightBrowserRequest(_message.Message):
     __slots__ = ["session_data", "steps", "stream_video", "timeout", "url"]
@@ -62,16 +130,18 @@ class PlaywrightBrowserRequest(_message.Message):
     def __init__(self, url: _Optional[str] = ..., steps: _Optional[_Iterable[_Union[BrowserInput, _Mapping]]] = ..., timeout: _Optional[int] = ..., session_data: _Optional[str] = ..., stream_video: bool = ...) -> None: ...
 
 class PlaywrightBrowserResponse(_message.Message):
-    __slots__ = ["outputs", "session", "state", "video"]
+    __slots__ = ["content", "outputs", "session", "state", "video"]
+    CONTENT_FIELD_NUMBER: _ClassVar[int]
     OUTPUTS_FIELD_NUMBER: _ClassVar[int]
     SESSION_FIELD_NUMBER: _ClassVar[int]
     STATE_FIELD_NUMBER: _ClassVar[int]
     VIDEO_FIELD_NUMBER: _ClassVar[int]
+    content: BrowserContent
     outputs: _containers.RepeatedCompositeFieldContainer[BrowserOutput]
     session: RemoteBrowserSession
     state: RemoteBrowserState
     video: bytes
-    def __init__(self, session: _Optional[_Union[RemoteBrowserSession, _Mapping]] = ..., video: _Optional[bytes] = ..., state: _Optional[_Union[RemoteBrowserState, str]] = ..., outputs: _Optional[_Iterable[_Union[BrowserOutput, _Mapping]]] = ...) -> None: ...
+    def __init__(self, session: _Optional[_Union[RemoteBrowserSession, _Mapping]] = ..., video: _Optional[bytes] = ..., state: _Optional[_Union[RemoteBrowserState, str]] = ..., outputs: _Optional[_Iterable[_Union[BrowserOutput, _Mapping]]] = ..., content: _Optional[_Union[BrowserContent, _Mapping]] = ...) -> None: ...
 
 class RemoteBrowserRequest(_message.Message):
     __slots__ = ["init_data", "input"]

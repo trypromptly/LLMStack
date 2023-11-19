@@ -7,6 +7,8 @@ enum BrowserCommandType {
   CLICK = 3; // click selector
   COPY = 4; // copy selector
   TYPE = 5; // type selector
+  SCROLL_X = 6; // scroll horizontal
+  SCROLL_Y = 7; // scroll vertical
 }
 
 message BrowserInput {
@@ -26,6 +28,45 @@ message BrowserInitData {
 message BrowserOutput {
   string url = 1; // url of page
   string text = 2; // copied text
+}
+
+message BrowserButton {
+  string selector = 1; // selector of button
+  string text = 2; // text of button
+}
+
+message BrowserInputField {
+  string selector = 1; // selector of input
+  string text = 2; // text of input
+}
+
+message BrowserSelectField {
+  string selector = 1; // selector of select
+  string text = 2; // text of select
+}
+
+message BrowserTextAreaField {
+  string selector = 1; // selector of textarea
+  string text = 2; // text of textarea
+}
+
+message BrowserLink {
+  string selector = 1; // selector of link
+  string text = 2; // text of link
+  string url = 3; // url of link
+}
+
+message BrowserContent {
+  string url = 1; // url of page
+  string title = 2; // title of page
+  string html = 3; // html of page
+  string text = 4; // text of page
+  bytes screenshot = 5; // screenshot of page if available
+  repeated BrowserButton buttons = 6; // buttons on page
+  repeated BrowserInputField inputs = 7; // inputs on page
+  repeated BrowserSelectField selects = 8; // selects on page
+  repeated BrowserTextAreaField textareas = 9; // textareas on page
+  repeated BrowserLink links = 10; // links on page
 }
 
 message RemoteBrowserRequest {
@@ -62,6 +103,7 @@ message PlaywrightBrowserResponse {
   bytes video = 2; // video data
   RemoteBrowserState state = 3; // state of browser
   repeated BrowserOutput outputs = 4; // List of outputs from browser
+  BrowserContent content = 5; // content of page
 }
 
 // Generic runner service
