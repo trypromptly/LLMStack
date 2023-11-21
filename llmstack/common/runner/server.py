@@ -14,7 +14,7 @@ from grpc import ServicerContext
 from grpc import server as grpc_server
 from grpc_health.v1 import health, health_pb2, health_pb2_grpc
 from playwright._impl._api_types import TimeoutError
-from playwright.async_api import ElementHandle, async_playwright
+from playwright.async_api import ElementHandle, Page, async_playwright
 
 from llmstack.common.runner.display import VirtualDisplayPool
 from llmstack.common.runner.proto import runner_pb2
@@ -41,99 +41,84 @@ from llmstack.common.runner.proto.runner_pb2_grpc import (
 logger = logging.getLogger(__name__)
 
 
-async def get_selector_from_element(element: ElementHandle) -> str:
-    """
-    Generates a complex CSS selector for a given Playwright ElementHandle, using various attributes and fallbacks.
-
-    Args:
-    element (ElementHandle): The Playwright ElementHandle for which to generate the selector.
-
-    Returns:
-    str: A complex CSS selector for the element.
-    """
-    selector_parts = []
-
-    # Add ID if available
-    element_id = await element.get_attribute('id')
-    if element_id:
-        selector_parts.append(f'#{element_id}')
-
-    # Add class names if available
-    class_name = await element.get_attribute('class')
-    if class_name:
-        classes = '.'.join(class_name.split())
-        selector_parts.append(f'.{classes}')
-
-    # Add aria-label if available
-    aria_label = await element.get_attribute('aria-label')
-    if aria_label:
-        selector_parts.append(f'[aria-label="{aria_label}"]')
-
-    # Fallback to tag name and nth-child
-    tag_name = await element.evaluate('element => element.tagName.toLowerCase()')
-    parent = await element.query_selector('xpath=..')
-    siblings = await parent.query_selector_all(tag_name)
-    for index, sibling in enumerate(siblings):
-        if sibling == element:
-            nth_child = f'{tag_name}:nth-child({index + 1})'
-            selector_parts.append(nth_child)
-            break
-
-    # Combine all parts to form the selector
-    combined_selector = ' > '.join(
-        selector_parts) if selector_parts else tag_name
-    return combined_selector
-
-
 async def get_browser_content_from_page(page) -> BrowserContent:
     content = BrowserContent()
     content.url = page.url
     content.title = await page.title()
     content.text = await page.inner_text('body')
 
-    buttons = await page.query_selector_all('button')
-    for button in buttons:
-        content.buttons.append(BrowserButton(
-            text=await button.text_content(),
-            selector=await get_selector_from_element(button),
-        ))
-
-    inputs = await page.query_selector_all('input')
-    for input in inputs:
-        # If input is of type submit, add it to buttons
-        input_type = await input.get_attribute('type')
-        if input_type == 'submit':
+    try:
+        buttons = await page.locator('button').all()
+        nth = 0
+        for button in buttons[:50]:
             content.buttons.append(BrowserButton(
-                text=await input.text_content(),
-                selector=await get_selector_from_element(input),
+                text=await button.text_content(),
+                selector=f'button >> nth={nth}',
             ))
-        else:
-            content.inputs.append(BrowserInputField(
-                text=await input.text_content(),
-                selector=await get_selector_from_element(input),
+            nth += 1
+    except Exception as e:
+        logger.exception(e)
+        pass
+
+    try:
+        inputs = await page.locator('input').all()
+        for input in inputs[:50]:
+            nth = 0
+            input_type = await input.get_attribute('type')
+            if input_type == 'submit':
+                content.buttons.append(BrowserButton(
+                    text=await input.text_content(),
+                    selector=f'input >> nth={nth}',
+                ))
+            else:
+                content.inputs.append(BrowserInputField(
+                    text=await input.text_content(),
+                    selector=f'input >> nth={nth}',
+                ))
+            nth += 1
+    except Exception as e:
+        logger.exception(e)
+        pass
+
+    try:
+        selects = await page.locator('select').all()
+        nth = 0
+        for select in selects[:50]:
+            content.selects.append(BrowserSelectField(
+                text=await select.text_content(),
+                selector=f'select >> nth={nth}',
             ))
+            nth += 1
+    except Exception as e:
+        logger.exception(e)
+        pass
 
-    selects = await page.query_selector_all('select')
-    for select in selects:
-        content.selects.append(BrowserSelectField(
-            text=await select.text_content(),
-            selector=await get_selector_from_element(select),
-        ))
+    try:
+        textareas = await page.locator('textarea').all()
+        nth = 0
+        for textarea in textareas[:50]:
+            content.textareas.append(BrowserTextAreaField(
+                text=await textarea.text_content(),
+                selector=f'textarea >> nth={nth}',
+            ))
+            nth += 1
+    except Exception as e:
+        logger.exception(e)
+        pass
 
-    textareas = await page.query_selector_all('textarea')
-    for textarea in textareas:
-        content.textareas.append(BrowserTextAreaField(
-            text=await textarea.text_content(),
-            selector=await get_selector_from_element(textarea),
-        ))
-
-    links = await page.query_selector_all('a')
-    for link in links:
-        content.links.append(BrowserLink(
-            text=await link.text_content(),
-            selector=await get_selector_from_element(link),
-            url=await link.get_attribute('href'),
-        ))
+    try:
+        links = await page.locator('a').all()
+        nth = 0
+        for link in links[:50]:
+            content.links.append(BrowserLink(
+                text=await link.text_content(),
+                selector=f'a >> nth={nth}',
+                url=await link.get_attribute('href'),
+            ))
+            nth += 1
+    except Exception as e:
+        logger.exception(e)
+        pass
 
     return content
 
@@ -147,6 +132,7 @@ class Runner(RunnerServicer):
         os.environ['DISPLAY'] = f'{display["DISPLAY"]}.0'
         logger.info(f"Using {os.environ['DISPLAY']}")
         session_data = None
+        terminate = False
         async with async_playwright() as playwright:
             try:
                 session_data = json.loads(
@@ -187,6 +173,7 @@ class Runner(RunnerServicer):
                 pass
             except Exception as e:
                 logger.exception(e)
+                terminate = True
             finally:
                 # Stop page load task if still running
                 if not page_load_task.done():
@@ -198,6 +185,9 @@ class Runner(RunnerServicer):
                 # Clean up
                 await context.close()
                 await browser.close()
+
+                if terminate:
+                    raise Exception('Terminating browser')
 
         return session_data
 
@@ -249,9 +239,10 @@ class Runner(RunnerServicer):
             ),
         )
 
-    async def _process_playwright_request(self, page, request):
+    async def _process_playwright_request(self, page: Page, request):
         steps = list(request.steps)
         outputs = []
+        logger.info(request)
 
         for step in steps:
             if step.type == TERMINATE:
@@ -260,15 +251,22 @@ class Runner(RunnerServicer):
             elif step.type == runner_pb2.GOTO:
                 await page.goto(step.data or page.url)
             elif step.type == runner_pb2.CLICK:
-                await page.click(step.selector)
+                locator = page.locator(step.selector)
+                await locator.click()
             elif step.type == runner_pb2.WAIT:
-                await page.wait_for_selector(step.selector or 'body', timeout=3000)
+                await page.wait_for_selector(step.selector or 'body', timeout=int(step.data)*1000 if step.data else 5000)
             elif step.type == runner_pb2.COPY:
                 results = await page.query_selector_all(step.selector or 'body')
                 outputs.append({
                     'url': page.url,
                     'text': "".join([await result.inner_text() for result in results]),
                 })
+            elif step.type == runner_pb2.TYPE:
+                await page.type(step.selector, step.data)
+            elif step.type == runner_pb2.SCROLL_X:
+                await page.mouse.wheel(delta_x=int(step.data))
+            elif step.type == runner_pb2.SCROLL_Y:
+                await page.mouse.wheel(delta_y=int(step.data))
 
         return outputs
 
@@ -296,14 +294,19 @@ class Runner(RunnerServicer):
 
                 outputs = await self._process_playwright_request(
                     page, initial_request)
+                content = await get_browser_content_from_page(page)
+
+                yield (outputs, content)
 
                 for next_request in request_iterator:
                     outputs += await self._process_playwright_request(
                         page, next_request)
-                    await asyncio.sleep(0.1)
+                    # Populate content from the last page
+                    content = await get_browser_content_from_page(page)
 
-                # Populate content from the last page
-                content = await get_browser_content_from_page(page)
+                    yield (outputs, content)
+
+                    await asyncio.sleep(0.1)
 
                 if ffmpeg_process:
                     await asyncio.sleep(10)
@@ -317,12 +320,13 @@ class Runner(RunnerServicer):
                 if ffmpeg_process:
                     ffmpeg_process.kill()
 
-                return (outputs, content)
+                yield (outputs, content)
 
     def GetPlaywrightBrowser(self, request_iterator: Iterator[PlaywrightBrowserRequest], context: ServicerContext) -> Iterator[PlaywrightBrowserResponse]:
         # Get the first request from the client
         initial_request = next(request_iterator)
         display = self.display_pool.get_display(remote_control=False)
+        SENTINAL = object()
 
         if not display:
             yield PlaywrightBrowserResponse(state=RemoteBrowserState.TERMINATED)
@@ -338,42 +342,89 @@ class Runner(RunnerServicer):
 
         # Use ThreadPoolExecutor to run the async function in a separate thread
         with futures.ThreadPoolExecutor() as executor:
+            browser_done = False
+            video_done = False
             # Wrap the coroutine in a function that gets the current event loop or creates a new one
-            def run_async_code(loop):
-                asyncio.set_event_loop(loop)
-                return loop.run_until_complete(
-                    self._process_playwright_input_stream(
-                        initial_request, request_iterator, display, ffmpeg_process)
-                )
 
-            # Create a new event loop that will be run in a separate thread
-            new_loop = asyncio.new_event_loop()
+            def run_async_code(loop, fn):
+                asyncio.set_event_loop(loop)
+
+                return loop.run_until_complete(fn())
+
+            # Create a queue to store the browser output
+            content_queue = asyncio.Queue()
+
+            # Create a queue to store browser video output
+            video_queue = asyncio.Queue()
+
+            async def collect_browser_content():
+                async for (outputs, content) in self._process_playwright_input_stream(
+                        initial_request, request_iterator, display, ffmpeg_process):
+                    await content_queue.put((outputs, content))
+                await content_queue.put(SENTINAL)
+
+            async def read_video_output():
+                while True and ffmpeg_process:
+                    try:
+                        chunk = ffmpeg_process.stdout.read(1024 * 3)
+                        if len(chunk) == 0:
+                            break
+                        await video_queue.put(chunk)
+                    except Exception as e:
+                        logger.error(e)
+                        break
+                await video_queue.put(SENTINAL)
+
+            # Start a task to read the video output from ffmpeg
+            video_future = executor.submit(
+                run_async_code, asyncio.new_event_loop(), read_video_output)
 
             # Submit the function to the executor and get a Future object
-            future = executor.submit(run_async_code, new_loop)
+            content_future = executor.submit(
+                run_async_code, asyncio.new_event_loop(), collect_browser_content)
 
             # Wait for the future to complete and get the return value
             try:
                 yield PlaywrightBrowserResponse(state=RemoteBrowserState.RUNNING)
 
-                chunk_size = 1024 * 3  # 3KB
-                while True and ffmpeg_process:
-                    chunk = ffmpeg_process.stdout.read(chunk_size)
-                    if len(chunk) == 0:
-                        break
-                    yield PlaywrightBrowserResponse(video=chunk)
+                while not browser_done and not video_done:
+                    try:
+                        item = content_queue.get_nowait()
+                        if item is SENTINAL:
+                            browser_done = True
+                            break
 
-                (output_texts, content) = future.result()
-                response = PlaywrightBrowserResponse(
+                        (output_texts, content) = item
+                        response = PlaywrightBrowserResponse(
+                            state=RemoteBrowserState.RUNNING)
+
+                        for output_text in output_texts:
+                            response.outputs.append(runner_pb2.BrowserOutput(
+                                text=output_text['text'], url=output_text['url']))
+                        response.content.CopyFrom(content)
+
+                        yield response
+                    except asyncio.QueueEmpty:
+                        pass
+
+                    try:
+                        chunk = video_queue.get_nowait()
+                        if chunk is SENTINAL:
+                            video_done = True
+                            break
+                        yield PlaywrightBrowserResponse(video=chunk)
+                    except asyncio.QueueEmpty:
+                        pass
+
+                    if content_future.done() or video_future.done() or browser_done or video_done:
+                        break
+
+                content_future.result()
+                video_future.result()
+
+                yield PlaywrightBrowserResponse(
                     state=RemoteBrowserState.TERMINATED)
 
-                for output_text in output_texts:
-                    response.outputs.append(runner_pb2.BrowserOutput(
-                        text=output_text['text'], url=output_text['url']))
-
-                response.content.CopyFrom(content)
-
-                yield response
             except Exception as e:
                 logger.error(e)
 
