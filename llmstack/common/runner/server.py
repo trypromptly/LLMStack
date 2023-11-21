@@ -308,13 +308,10 @@ class Runner(RunnerServicer):
 
                     await asyncio.sleep(0.1)
 
-                if ffmpeg_process:
-                    await asyncio.sleep(10)
             except Exception as e:
                 logger.exception(e)
             finally:
                 # Clean up
-                await context.close()
                 await browser.close()
 
                 if ffmpeg_process:
@@ -341,7 +338,7 @@ class Runner(RunnerServicer):
         ) if initial_request.stream_video else None
 
         # Use ThreadPoolExecutor to run the async function in a separate thread
-        with futures.ThreadPoolExecutor() as executor:
+        with futures.ThreadPoolExecutor(thread_name_prefix='async_tasks') as executor:
             browser_done = False
             video_done = False
             # Wrap the coroutine in a function that gets the current event loop or creates a new one
@@ -419,16 +416,14 @@ class Runner(RunnerServicer):
                     if content_future.done() or video_future.done() or browser_done or video_done:
                         break
 
-                content_future.result()
-                video_future.result()
-
                 yield PlaywrightBrowserResponse(
                     state=RemoteBrowserState.TERMINATED)
-
             except Exception as e:
                 logger.error(e)
-
-        self.display_pool.put_display(display)
+                yield PlaywrightBrowserResponse(
+                    state=RemoteBrowserState.TERMINATED)
+            finally:
+                self.display_pool.put_display(display)
 
 
 def main():
@@ -520,7 +515,8 @@ def main():
          f'--auth-source={args.redis_host}:{args.redis_port}:{args.redis_db}{f":{args.redis_password}" if args.redis_password else ""}'],
         close_fds=True)
 
-    server = grpc_server(futures.ThreadPoolExecutor(max_workers=10))
+    server = grpc_server(futures.ThreadPoolExecutor(
+        max_workers=10, thread_name_prefix='grpc_workers'))
     runner = Runner(display_pool=display_pool)
     runner.wss_hostname = args.wss_hostname
     runner.wss_port = args.wss_port
