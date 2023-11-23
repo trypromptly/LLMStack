@@ -37,6 +37,11 @@
   margin: 6px 0;
 }
 
+.chat_message_from_user a {
+  color: #fff;
+  text-decoration: none;
+}
+
 .chat-container {
   display: flex;
   overflow: hidden;
