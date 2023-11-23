@@ -150,6 +150,7 @@ class ChatCompletionsVision(ApiProcessorInterface[ChatCompletionsVisionInput, Ch
             messages=messages,
             temperature=self._config.temperature,
             stream=True,
+            max_tokens=self._config.max_tokens,
         )
 
         for data in result:
