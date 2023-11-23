@@ -102,7 +102,7 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
             playwright_response_iter = stub.GetPlaywrightBrowser(
                 self._request_iterator())
             for response in playwright_response_iter:
-                if response.state == runner_pb2.TERMINATED:
+                if response.state == runner_pb2.TERMINATED or response.content.text:
                     output_text = "".join([x.text for x in response.outputs])
                     if not output_text:
                         output_text = response.content.text
@@ -114,7 +114,6 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
                         text='',
                         video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}"
                     ))
-
         except Exception as e:
             logger.exception(e)
 
