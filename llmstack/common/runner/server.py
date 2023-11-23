@@ -52,7 +52,7 @@ async def get_browser_content_from_page(page) -> BrowserContent:
         nth = 0
         for button in buttons[:50]:
             content.buttons.append(BrowserButton(
-                text=await button.text_content(),
+                text=(await button.text_content()).strip(),
                 selector=f'button >> nth={nth}',
             ))
             nth += 1
@@ -67,12 +67,12 @@ async def get_browser_content_from_page(page) -> BrowserContent:
             input_type = await input.get_attribute('type')
             if input_type == 'submit':
                 content.buttons.append(BrowserButton(
-                    text=await input.text_content(),
+                    text=(await input.text_content()).strip(),
                     selector=f'input >> nth={nth}',
                 ))
             else:
                 content.inputs.append(BrowserInputField(
-                    text=await input.text_content(),
+                    text=(await input.text_content()).strip(),
                     selector=f'input >> nth={nth}',
                 ))
             nth += 1
@@ -85,7 +85,7 @@ async def get_browser_content_from_page(page) -> BrowserContent:
         nth = 0
         for select in selects[:50]:
             content.selects.append(BrowserSelectField(
-                text=await select.text_content(),
+                text=(await select.text_content()).strip(),
                 selector=f'select >> nth={nth}',
             ))
             nth += 1
@@ -98,7 +98,7 @@ async def get_browser_content_from_page(page) -> BrowserContent:
         nth = 0
         for textarea in textareas[:50]:
             content.textareas.append(BrowserTextAreaField(
-                text=await textarea.text_content(),
+                text=(await textarea.text_content()).strip(),
                 selector=f'textarea >> nth={nth}',
             ))
             nth += 1
@@ -109,9 +109,9 @@ async def get_browser_content_from_page(page) -> BrowserContent:
     try:
         links = await page.locator('a').all()
         nth = 0
-        for link in links[:50]:
+        for link in links[:100]:
             content.links.append(BrowserLink(
-                text=await link.text_content(),
+                text=(await link.text_content()).strip(),
                 selector=f'a >> nth={nth}',
                 url=await link.get_attribute('href'),
             ))
@@ -242,14 +242,14 @@ class Runner(RunnerServicer):
     async def _process_playwright_request(self, page: Page, request):
         steps = list(request.steps)
         outputs = []
-        logger.info(request)
+        logger.info(steps)
 
         for step in steps:
             if step.type == TERMINATE:
                 raise Exception(
                     'Terminating browser because of timeout')
             elif step.type == runner_pb2.GOTO:
-                await page.goto(step.data or page.url)
+                await page.goto((page.url + step.data if step.data and step.data.startswith('/') else step.data) or page.url)
             elif step.type == runner_pb2.CLICK:
                 locator = page.locator(step.selector)
                 await locator.click()
