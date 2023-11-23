@@ -34,7 +34,7 @@ class WebSearchConfiguration(ApiProcessorSchema):
 
 
 class WebSearchInput(ApiProcessorSchema):
-    query: str = Field(..., description='Query to search for',
+    query: str = Field(default='', description='Query to search for',
                        widget='textarea')
 
 
