@@ -12,6 +12,7 @@ from allauth.socialaccount.providers.oauth2.views import (
 )
 
 from .handlers.hubspot import HubspotAdapter
+from .handlers.google import GoogleAdapter
 
 from requests import RequestException
 
@@ -113,4 +114,7 @@ urlpatterns = [
     ),
     path('connections/hubspot/login/', CustomOAuth2LoginView.adapter_view(HubspotAdapter), name='hubspot_connection_login'),
     path('connections/hubspot/login/callback/', CustomOAuth2CallbackView.adapter_view(HubspotAdapter), name='hubspot_connection_callback'),
+    
+    path('connections/google/login/', CustomOAuth2LoginView.adapter_view(GoogleAdapter), name='google_connection_login'),
+    path('connections/google/login/callback/', CustomOAuth2CallbackView.adapter_view(GoogleAdapter), name='google_connection_callback'),
 ]
