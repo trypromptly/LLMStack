@@ -108,10 +108,16 @@ urlpatterns = [
     path('api/connections', ConnectionsViewSet.as_view({'get': 'list'})),
 
     path(
+        'api/connections/<str:uid>/get_access_token', ConnectionsViewSet.as_view(
+            {'get': 'get_access_token'}),
+    ),
+    
+    path(
         'api/connections/<str:uid>',
         ConnectionsViewSet.as_view(
             {'get': 'get', 'post': 'post', 'patch': 'patch', 'delete': 'delete'}),
     ),
+
     path('connections/hubspot/login/', CustomOAuth2LoginView.adapter_view(HubspotAdapter), name='hubspot_connection_login'),
     path('connections/hubspot/login/callback/', CustomOAuth2CallbackView.adapter_view(HubspotAdapter), name='hubspot_connection_callback'),
     
