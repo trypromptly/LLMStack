@@ -1,15 +1,16 @@
+import json
 import logging
 from typing import List
 from typing import Optional
 
 from pydantic import Field
+import requests
 
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter
-from llmstack.common.utils.text_extract import extract_text_from_b64_json
+from llmstack.common.utils.text_extract import extract_text_elements
 from llmstack.common.utils.text_extract import ExtraParams
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
 from llmstack.datasources.models import DataSource
 from llmstack.base.models import Profile
@@ -17,6 +18,19 @@ from llmstack.base.models import Profile
 
 logger = logging.getLogger(__name__)
 
+class GoogleDocument(DataSourceSchema):
+    description: Optional[str] = None
+    embedUrl: Optional[str] = None
+    iconUrl: Optional[str] = None
+    id: str 
+    isShared: Optional[bool] = None
+    lastEditedUtc: int
+    mimeType: Optional[str] = None
+    name: Optional[str] = None
+    organizationDisplayName: Optional[str] = None
+    serviceId: Optional[str] = None
+    sizeBytes: Optional[int] = None
+    url: Optional[str] = None
 
 class GdriveFileSchema(DataSourceSchema):
     file: str = Field(
@@ -76,26 +90,46 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = GdriveFileSchema(**data)
-        mime_type, file_name, file_data = validate_parse_data_uri(entry.file)
-
-        data_source_entry = DataSourceEntryItem(
-            name=file_name, data={'mime_type': mime_type,
-                                  'file_name': file_name, 'file_data': file_data},
-        )
-
-        return [data_source_entry]
+        file_json_data = json.loads(entry.file)
+        gdrive_files = list(map(lambda x: GoogleDocument(**x), file_json_data['files']))
+        
+        return list(map(lambda x: 
+            DataSourceEntryItem(name=x.name, data={'mime_type': x.mimeType, 
+                                                   'file_name': x.name, 
+                                                   'file_data': {**x.dict(), 'connection_id' : file_json_data['connection_id'] }}), gdrive_files))
+    
+    def export_gdrive_file(self, data: DataSourceEntryItem):
+        supportedExportDocsMimeTypes = {
+            "application/vnd.google-apps.document":
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.google-apps.spreadsheet":
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.google-apps.presentation":
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          }
+        
+        connection = self._env['connections'][data.data['file_data']['connection_id']]
+        if data.data['mime_type'] in supportedExportDocsMimeTypes:
+            exportMimeType = supportedExportDocsMimeTypes[data.data['mime_type']]
+            exportUrl = f"https://www.googleapis.com/drive/v3/files/{data.data['file_data']['id']}/export?mimeType={exportMimeType}"
+            response = requests.get(exportUrl, headers={"Authorization": f"Bearer {connection['configuration']['token']}"})  
+            if response.status_code == 200:
+                logger.info(f"Exported file {data.data['file_name']} to {exportMimeType}")
+                return exportMimeType, response.content
+            else:
+                raise Exception(f"Error exporting file {data.data['file_name']}")
 
     def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         logger.info(
             f"Processing file: {data.data['file_name']} mime_type: {data.data['mime_type']}",
         )
-
-        file_text = extract_text_from_b64_json(
-            mime_type=data.data['mime_type'],
-            base64_encoded_data=data.data['file_data'],
+        mime_type, file_data = self.export_gdrive_file(data)
+        file_text = '\n\n'.join([str(el) for el in extract_text_elements(
+            mime_type=mime_type,
+            data=file_data,
             file_name=data.data['file_name'],
             extra_params=ExtraParams(openai_key=self.openai_key),
-        )
+        )])
 
         if data.data['mime_type'] == 'text/csv':
             docs = [
