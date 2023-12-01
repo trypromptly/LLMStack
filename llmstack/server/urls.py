@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include
-from django.urls import path
+from django.urls import include, path
 
 urlpatterns = [
     path('', include('llmstack.apps.urls')),
@@ -10,6 +9,7 @@ urlpatterns = [
     path('', include('llmstack.organizations.urls')),
     path('', include('llmstack.datasources.urls')),
     path('', include('llmstack.connections.urls')),
+    path('', include('llmstack.jobs.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.GENERATEDFILES_ROOT and settings.GENERATEDFILES_URL:
