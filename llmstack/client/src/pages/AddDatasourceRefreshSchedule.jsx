@@ -116,7 +116,7 @@ export default function AddDatasourceRefreshSchedule(props) {
                 enqueueSnackbar("Successfully Scheduled Datasource refresh", {
                   variant: "success",
                 });
-                window.location.href = "/schedule";
+                window.location.href = "/jobs";
               })
               .catch((error) => {
                 if (error.response?.data?.message) {

@@ -262,14 +262,14 @@ export default function Schedule() {
                 key: 1,
                 title: "Application Run",
                 onClick: () => {
-                  window.location.href = "/schedule/add_app_run";
+                  window.location.href = "/jobs/add_app_run";
                 },
               },
               {
                 key: 2,
                 title: "Datasource Refresh",
                 onClick: () => {
-                  window.location.href = "/schedule/add_datasource_refresh";
+                  window.location.href = "/jobs/add_datasource_refresh";
                 },
               },
             ]}

@@ -63,8 +63,8 @@ function getNavItemIcon(itemLabel) {
     Discover: <LightbulbOutlined />,
     Apps: <AppsOutlined />,
     Data: <SourceOutlined />,
-    Schedule: <ScheduleOutlined />,
     Organization: <CorporateFareOutlined />,
+    Jobs: <ScheduleOutlined />,
   };
   return iconMap[itemLabel];
 }
