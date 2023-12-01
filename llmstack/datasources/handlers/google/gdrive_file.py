@@ -118,6 +118,13 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
                 return exportMimeType, response.content
             else:
                 raise Exception(f"Error exporting file {data.data['file_name']}")
+        else:
+            response = requests.get(f"https://www.googleapis.com/drive/v3/files/{data.data['file_data']['id']}?alt=media", headers={"Authorization": f"Bearer {connection['configuration']['token']}"})
+            if response.status_code == 200:
+                logger.info(f"Downloaded file {data.data['file_name']}")
+                return data.data['mime_type'], response.content
+            else:
+                raise Exception(f"Error downloading file {data.data['file_name']}")
 
     def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         logger.info(

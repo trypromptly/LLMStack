@@ -22,6 +22,11 @@ function GdriveFilePicker(props) {
                 const view = new window.google.picker.View(
                   window.google.picker.ViewId.DOCS,
                 );
+                if (props.schema?.accepts) {
+                  view.setMimeTypes(
+                    Object.keys(props.schema.accepts).join(","),
+                  );
+                }
                 const picker = new window.google.picker.PickerBuilder()
                   .enableFeature(window.google.picker.Feature.NAV_HIDDEN)
                   .addView(view)
@@ -63,6 +68,7 @@ export default function GdriveFileSelector(props) {
         }}
       />
       <GdriveFilePicker
+        schema={props.schema}
         connection={
           connections.find(
             (c) =>
