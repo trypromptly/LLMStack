@@ -1,6 +1,7 @@
 import logging
 from typing import List, Optional 
 from llmstack.connections.handlers import Oauth2BaseConfiguration
+from llmstack.connections.handlers.custom_google_provider.provider import CustomGoogleProvider
 from llmstack.connections.types import ConnectionTypeInterface
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from llmstack.connections.models import ConnectionType
@@ -9,6 +10,8 @@ import jwt
 logger = logging.getLogger(__name__)
 
 class GoogleAdapter(GoogleOAuth2Adapter):
+    provider_id = CustomGoogleProvider.id 
+    
     def get_connection_type_slug(self):
         return 'google_oauth2'
     
@@ -48,14 +51,16 @@ class GoogleAdapter(GoogleOAuth2Adapter):
             'token': token,
             'scope': response['scope'],
             'token_type': response['token_type'],
+            'refresh_token': response['refresh_token'] if 'refresh_token' in response else '',
         }
         return GoogleLoginConfiguration(**extra_data)
         
 class GoogleLoginConfiguration(Oauth2BaseConfiguration):
+    refresh_token: Optional[str]
     scope: Optional[str]
     token_type: Optional[str]
 
-class HubspotLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
+class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
     @staticmethod
     def name() -> str:
         return 'Google Login'
