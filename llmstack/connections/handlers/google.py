@@ -1,5 +1,10 @@
+import datetime
 import logging
-from typing import List, Optional 
+from typing import Optional
+from django.utils import timezone
+from datetime import timedelta
+
+import requests
 from llmstack.connections.handlers import Oauth2BaseConfiguration
 from llmstack.connections.handlers.custom_google_provider.provider import CustomGoogleProvider
 from llmstack.connections.types import ConnectionTypeInterface
@@ -21,13 +26,13 @@ class GoogleAdapter(GoogleOAuth2Adapter):
 
         callback_url = reverse('google_connection_callback')
         protocol = self.redirect_uri_protocol
+        protocol = 'http'
         redirect_uri = build_absolute_uri(request, callback_url, protocol)
         return redirect_uri
     
     def complete_login(self, request, app, token, **kwargs):
         response = kwargs.get("response")
         try:
-            token = response["access_token"]
             jwt.decode(
                 response["id_token"],
                 # Since the token was received by direct communication
@@ -47,11 +52,13 @@ class GoogleAdapter(GoogleOAuth2Adapter):
             )
         except jwt.PyJWTError as e:
             raise Exception("Invalid id_token") from e
+        parsed_token_data = self.parse_token(response)
         extra_data = {
-            'token': token,
-            'scope': response['scope'],
-            'token_type': response['token_type'],
-            'refresh_token': response['refresh_token'] if 'refresh_token' in response else '',
+            'token': parsed_token_data.token,
+            'refresh_token': parsed_token_data.token_secret,
+            'expires_at': parsed_token_data.expires_at.timestamp(),
+            'client_id': app.client_id,
+            'client_secret': app.secret,
         }
         return GoogleLoginConfiguration(**extra_data)
         
@@ -59,6 +66,9 @@ class GoogleLoginConfiguration(Oauth2BaseConfiguration):
     refresh_token: Optional[str]
     scope: Optional[str]
     token_type: Optional[str]
+    expires_at: Optional[float]
+    client_id: Optional[str]
+    client_secret: Optional[str]
 
 class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
     @staticmethod
@@ -88,3 +98,33 @@ class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
             'BtnLink': 'connections/google/login/',
             'RedirectUrl': 'connections/google/callback/',
         }
+    
+    def refresh_access_token(self, connection) -> str:
+        refresh_token = connection.configuration['refresh_token']
+        client_id = connection.configuration['client_id']
+        client_secret = connection.configuration['client_secret']
+        token_url = "https://oauth2.googleapis.com/token"
+        payload = {
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'refresh_token': refresh_token,
+            'grant_type': 'refresh_token'
+            }
+        response = requests.post(token_url, data=payload)
+        if response.status_code == 200:
+            new_token = response.json().get('access_token')
+            expires_in = response.json().get('expires_in')
+            expires_at = timezone.now() + timedelta(seconds=int(expires_in))
+            return new_token, expires_at.timestamp()
+        else:
+            return None
+        
+    
+    def get_access_token(self, connection) -> str:
+        expires_at = connection.configuration['expires_at']
+        if expires_at < datetime.datetime.now().timestamp():
+            token, expires_at = self.refresh_access_token(connection)
+            connection.configuration['token'] = token
+            connection.configuration['expires_at'] = expires_at
+            
+        return connection

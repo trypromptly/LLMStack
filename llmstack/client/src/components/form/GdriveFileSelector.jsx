@@ -3,6 +3,7 @@ import ConnectionSelector from "../connections/ConnectionSelector";
 import { connectionsState } from "../../data/atoms";
 import { useRecoilValue } from "recoil";
 import { Button, Box, TextField } from "@mui/material";
+import { axios } from "../../data/axios";
 
 function GdriveFilePicker(props) {
   useEffect(() => {
@@ -27,17 +28,26 @@ function GdriveFilePicker(props) {
                     Object.keys(props.schema.accepts).join(","),
                   );
                 }
-                const picker = new window.google.picker.PickerBuilder()
-                  .enableFeature(window.google.picker.Feature.NAV_HIDDEN)
-                  .addView(view)
-                  .setOAuthToken(props.connection.configuration.token)
-                  .setCallback((data) => {
-                    if (data.action === window.google.picker.Action.PICKED) {
-                      props.onChange(data.docs);
-                    }
-                  })
-                  .build();
-                picker.setVisible(true);
+                axios()
+                  .get(
+                    `/api/connections/${props.connection.id}/get_access_token`,
+                  )
+                  .then((response) => {
+                    const oauthToken = response.data.access_token;
+                    const picker = new window.google.picker.PickerBuilder()
+                      .enableFeature(window.google.picker.Feature.NAV_HIDDEN)
+                      .addView(view)
+                      .setOAuthToken(oauthToken)
+                      .setCallback((data) => {
+                        if (
+                          data.action === window.google.picker.Action.PICKED
+                        ) {
+                          props.onChange(data.docs);
+                        }
+                      })
+                      .build();
+                    picker.setVisible(true);
+                  });
               }}
             >
               Choose a file
