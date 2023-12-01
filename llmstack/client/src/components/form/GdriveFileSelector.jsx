@@ -17,6 +17,7 @@ function GdriveFilePicker(props) {
         props?.connection?.connection_type_slug === "google_oauth2" && (
           <Box>
             <Button
+              variant="contained"
               onClick={() => {
                 const view = new window.google.picker.View(
                   window.google.picker.ViewId.DOCS,
@@ -27,17 +28,14 @@ function GdriveFilePicker(props) {
                   .setOAuthToken(props.connection.configuration.token)
                   .setCallback((data) => {
                     if (data.action === window.google.picker.Action.PICKED) {
-                      console.log(data.docs);
                       props.onChange(data.docs);
                     }
                   })
                   .build();
                 picker.setVisible(true);
-                console.log(props.connection.configuration.token);
-                console.log(picker);
               }}
             >
-              Select
+              Choose a file
             </Button>
             <TextField
               disabled
