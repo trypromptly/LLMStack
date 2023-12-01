@@ -15,12 +15,12 @@ import { axios } from "../../data/axios";
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { useReloadDataSourceEntries } from "../../data/init";
-import GdriveFilePicker from "../form/GdriveFilePicker";
+import GdriveFileSelector from "../form/GdriveFileSelector";
 import WebpageURLExtractorWidget from "../form/WebpageURLExtractorWidget";
 import { enqueueSnackbar } from "notistack";
 
 function CustomGdriveFileWidget(props) {
-  return <GdriveFilePicker {...props} />;
+  return <GdriveFileSelector {...props} />;
 }
 
 function CustomWebpageURLExtractorWidget(props) {
@@ -48,7 +48,7 @@ export function AddDataSourceModal({
   const reloadDataSourceEntries = useReloadDataSourceEntries();
 
   return (
-    <Dialog open={open} onClose={handleCancelCb}>
+    <Dialog open={open} onClose={handleCancelCb} sx={{ zIndex: 900 }}>
       <DialogTitle>{modalTitle}</DialogTitle>
       <DialogContent>
         <Stack spacing={2}>
