@@ -123,8 +123,9 @@ class ConnectionsViewSet(viewsets.ViewSet):
             connection.connection_type_slug, connection.provider_slug)()
         connection.configuration = connection_type_handler.parse_config(
             connection.configuration).dict()
-        profile.add_connection(connection.dict())
-        access_token = connection_type_handler.get_access_token(connection)
         
-        return Response({'access_token': access_token.configuration['token']})
+        new_connection = connection_type_handler.get_access_token(connection)
+        profile.add_connection(new_connection.dict())
+        
+        return Response({'access_token': new_connection.configuration['token']})
                         

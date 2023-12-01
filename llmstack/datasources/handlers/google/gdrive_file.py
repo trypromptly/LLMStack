@@ -11,9 +11,11 @@ from llmstack.common.utils.splitter import CSVTextSplitter
 from llmstack.common.utils.text_extract import extract_text_elements
 from llmstack.common.utils.text_extract import ExtraParams
 from llmstack.common.utils.splitter import SpacyTextSplitter
+from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor, WEAVIATE_SCHEMA
 from llmstack.datasources.models import DataSource
 from llmstack.base.models import Profile
+from django.test import RequestFactory
 
 
 logger = logging.getLogger(__name__)
@@ -109,17 +111,22 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
           }
         
         connection = self._env['connections'][data.data['file_data']['connection_id']]
+        # Have some better way to get the access token
+        request = RequestFactory().get(f'/api/connections/{data.data["file_data"]["connection_id"]}/access_token')
+        request.user = self.datasource.owner
+        access_token = ConnectionsViewSet().get_access_token(request=request, uid=data.data['file_data']['connection_id']).data['access_token']
+        
         if data.data['mime_type'] in supportedExportDocsMimeTypes:
             exportMimeType = supportedExportDocsMimeTypes[data.data['mime_type']]
             exportUrl = f"https://www.googleapis.com/drive/v3/files/{data.data['file_data']['id']}/export?mimeType={exportMimeType}"
-            response = requests.get(exportUrl, headers={"Authorization": f"Bearer {connection['configuration']['token']}"})  
+            response = requests.get(exportUrl, headers={"Authorization": f"Bearer {access_token}"})  
             if response.status_code == 200:
                 logger.info(f"Exported file {data.data['file_name']} to {exportMimeType}")
                 return exportMimeType, response.content
             else:
                 raise Exception(f"Error exporting file {data.data['file_name']}")
         else:
-            response = requests.get(f"https://www.googleapis.com/drive/v3/files/{data.data['file_data']['id']}?alt=media", headers={"Authorization": f"Bearer {connection['configuration']['token']}"})
+            response = requests.get(f"https://www.googleapis.com/drive/v3/files/{data.data['file_data']['id']}?alt=media", headers={"Authorization": f"Bearer {access_token}"})
             if response.status_code == 200:
                 logger.info(f"Downloaded file {data.data['file_name']}")
                 return data.data['mime_type'], response.content

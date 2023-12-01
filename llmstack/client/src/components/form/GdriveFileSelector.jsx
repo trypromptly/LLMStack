@@ -29,9 +29,7 @@ function GdriveFilePicker(props) {
                   );
                 }
                 axios()
-                  .get(
-                    `/api/connections/${props.connection.id}/get_access_token`,
-                  )
+                  .get(`/api/connections/${props.connection.id}/access_token`)
                   .then((response) => {
                     const oauthToken = response.data.access_token;
                     const picker = new window.google.picker.PickerBuilder()

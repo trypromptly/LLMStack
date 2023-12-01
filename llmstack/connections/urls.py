@@ -108,7 +108,7 @@ urlpatterns = [
     path('api/connections', ConnectionsViewSet.as_view({'get': 'list'})),
 
     path(
-        'api/connections/<str:uid>/get_access_token', ConnectionsViewSet.as_view(
+        'api/connections/<str:uid>/access_token', ConnectionsViewSet.as_view(
             {'get': 'get_access_token'}),
     ),
     
