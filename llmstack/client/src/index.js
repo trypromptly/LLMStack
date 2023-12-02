@@ -124,15 +124,6 @@ router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
   {
-    path: "/apps/:appId/editor",
-    element: (
-      <App>
-        <AppEditPage page="editor" />
-      </App>
-    ),
-    errorElement: <ErrorPage />,
-  },
-  {
     path: "/apps/:appId/history",
     element: (
       <App>
