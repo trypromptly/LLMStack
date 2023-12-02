@@ -77,7 +77,7 @@ class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
 
     @staticmethod
     def provider_slug() -> str:
-        return 'Google'
+        return 'google'
 
     @staticmethod
     def slug() -> str:
