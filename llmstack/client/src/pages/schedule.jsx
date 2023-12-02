@@ -184,8 +184,8 @@ export default function Schedule() {
         };
         return (
           <div>
-            <Chip label={getJobCategoryTitle()} color="primary" />
-            <Chip label={getJobTypeTitle()} color="secondary" />
+            <Chip label={getJobCategoryTitle()} color="primary" size="small" />
+            <Chip label={getJobTypeTitle()} color="secondary" size="small" />
           </div>
         );
       },
@@ -195,9 +195,9 @@ export default function Schedule() {
       key: "enabled",
       render: (record, row) => {
         return row ? (
-          <Chip label="Enabled" color="success" />
+          <Chip label="Enabled" color="success" size="small" />
         ) : (
-          <Chip label="Disabled" color="error" />
+          <Chip label="Disabled" color="error" size="small" />
         );
       },
     },
