@@ -283,7 +283,8 @@ export default function Schedule() {
                     <TableCell
                       key={column.key}
                       sx={{
-                        paddingLeft: column.key === "name" ? "40px" : "inherit",
+                        paddingLeft: column.key === "name" ? "20px" : "inherit",
+                        textAlign: column.key === "name" ? "left" : "center",
                       }}
                     >
                       <strong>{column.title}</strong>
@@ -305,7 +306,11 @@ export default function Schedule() {
                         <TableCell
                           key={column.key}
                           align={column.align}
-                          sx={{ fontWeight: "inherit" }}
+                          sx={{
+                            fontWeight: "inherit",
+                            textAlign:
+                              column.key === "name" ? "left" : "center",
+                          }}
                         >
                           {column.render ? column.render(value, row) : value}
                         </TableCell>

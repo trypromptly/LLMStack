@@ -77,6 +77,9 @@ def prepare_env():
         if not 'generatedfiles_root' in config:
             config['generatedfiles_root'] = './generatedfiles'
 
+        if not 'use_remote_job_queue' in config:
+            config['use_remote_job_queue'] = True
+
         if not 'llmstack-runner' in config:
             config['llmstack-runner'] = {}
 
@@ -91,6 +94,12 @@ def prepare_env():
 
         if not 'playwright_port' in config['llmstack-runner']:
             config['llmstack-runner']['playwright_port'] = 50053
+
+        if not 'rq_redis_port' in config['llmstack-runner']:
+            config['llmstack-runner']['rq_redis_port'] = 50379
+
+        if not 'rq_redis_host' in config['llmstack-runner']:
+            config['llmstack-runner']['rq_redis_host'] = 'localhost'
 
     with open(config_path, 'w') as f:
         toml.dump(config, f)
@@ -139,7 +148,7 @@ def start_runner(environment):
     except docker.errors.NotFound:
         runner_container = client.containers.run(f'{image_name}:{image_tag}', name='llmstack-runner',
                                                  ports={
-                                                     '50051/tcp': os.environ['RUNNER_PORT'], '50052/tcp': os.environ['RUNNER_WSS_PORT'], '50053/tcp': os.environ['RUNNER_PLAYWRIGHT_PORT']},
+                                                     '50051/tcp': os.environ['RUNNER_PORT'], '50052/tcp': os.environ['RUNNER_WSS_PORT'], '50053/tcp': os.environ['RUNNER_PLAYWRIGHT_PORT'], '6379/tcp': os.environ['RUNNER_RQ_REDIS_PORT']},
                                                  detach=True, remove=True, environment=environment,)
 
     # Start runner container if not already running
@@ -229,6 +238,11 @@ def main():
     # Run llmstack runserver in a separate process
     server_process = subprocess.Popen(['llmstack', 'runserver'])
 
+    # Run llmstack rqworker in a separate process
+    print('Starting LLMStack rqworker')
+    rqworker_process = subprocess.Popen(
+        ['llmstack', 'manage.py', 'rqworker', 'default', '--verbosity=0', '--with-scheduler'])
+
     # Wait for server to be up at LLMSTACK_PORT and open browser
     import time
     import webbrowser
@@ -265,6 +279,10 @@ def main():
     # Stop server process
     server_process.terminate()
     server_process.wait()
+
+    # Stop rqworker process
+    rqworker_process.terminate()
+    rqworker_process.wait()
 
 
 if __name__ == '__main__':

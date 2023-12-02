@@ -322,8 +322,8 @@ PLAYWRIGHT_URL = os.getenv('PLAYWRIGHT_URL', 'ws://playwright:30000/ws')
 
 RQ_QUEUES = {
     'default': {
-        'HOST': os.getenv('REDIS_HOST', 'redis'),
-        'PORT': os.getenv('REDIS_PORT', 6379),
+        'HOST': os.getenv('REDIS_HOST', os.getenv('RUNNER_RQ_REDIS_HOST', 'redis')),
+        'PORT': os.getenv('REDIS_PORT', os.getenv('RUNNER_RQ_REDIS_PORT', 6379)),
         'DB': os.getenv('REDIS_DB', 0),
         'DEFAULT_TIMEOUT': 1500,
     },
