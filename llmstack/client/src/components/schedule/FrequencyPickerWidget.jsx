@@ -70,16 +70,14 @@ export default function FrequencyPickerWidget(props) {
               maxDateTime={maxStartTime}
               timeSteps={{ minutes: 15 }}
               disablePast
-              value={moment(
-                `${frequency?.start_date} ${frequency?.start_time}`,
-                "YYYY-MM-DD HH:mm:ss",
-              )}
+              value={moment(frequency?.scheduled_time)}
               onChange={(value) => {
                 handleChange({
                   ...frequency,
                   type: "repeat",
                   start_date: value.format("YYYY-MM-DD"),
                   start_time: value.format("HH:mm:ss"),
+                  scheduled_time: value,
                 });
               }}
               label="Schedule Start Time"
