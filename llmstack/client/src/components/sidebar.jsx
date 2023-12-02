@@ -16,13 +16,13 @@ import {
 import {
   AppsOutlined,
   CorporateFareOutlined,
+  EventRepeatOutlined,
   HistoryOutlined,
   HomeOutlined,
   LightbulbOutlined,
   PlayArrowOutlined,
   SettingsOutlined,
   SourceOutlined,
-  ScheduleOutlined,
 } from "@mui/icons-material";
 import { onLogoutClick } from "./logout";
 import { LoggedOutModal } from "./LoggedOutModal";
@@ -46,7 +46,6 @@ const logoStyle = {
   width: "54px",
   borderRadius: process.env.REACT_APP_SITE_NAME ? "5px" : "inherit",
   border: process.env.REACT_APP_SITE_NAME ? "solid 1px #183a58" : "inherit",
-  // paddingTop: "10px",
 };
 
 const menuItemStyle = {
@@ -64,7 +63,7 @@ function getNavItemIcon(itemLabel) {
     Apps: <AppsOutlined />,
     Data: <SourceOutlined />,
     Organization: <CorporateFareOutlined />,
-    Jobs: <ScheduleOutlined />,
+    Jobs: <EventRepeatOutlined />,
   };
   return iconMap[itemLabel];
 }
