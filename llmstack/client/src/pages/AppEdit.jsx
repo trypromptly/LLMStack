@@ -45,11 +45,9 @@ import { ReactComponent as IntegrationsIcon } from "../assets/images/icons/integ
 import { ReactComponent as SlackIcon } from "../assets/images/icons/slack.svg";
 import { ReactComponent as TwilioIcon } from "../assets/images/icons/twilio.svg";
 import { ReactComponent as TemplateIcon } from "../assets/images/icons/template.svg";
-import { ReactComponent as TestsIcon } from "../assets/images/icons/tests.svg";
 import { ReactComponent as WebIcon } from "../assets/images/icons/web.svg";
 import { AppApiExamples } from "../components/apps/AppApiExamples";
 import { AppTemplate } from "../components/apps/AppTemplate";
-import { AppTests } from "../components/apps/AppTests";
 import { AppVersions } from "../components/apps/AppVersions";
 import { apiBackendsState } from "../data/atoms";
 
@@ -68,11 +66,6 @@ const menuItems = [
     name: "History",
     value: "history",
     icon: <TimelineIcon />,
-  },
-  {
-    name: "Tests",
-    value: "tests",
-    icon: <SvgIcon component={TestsIcon} />,
   },
   {
     name: "Versions",
@@ -567,7 +560,6 @@ export default function AppEditPage(props) {
             )}
             {selectedMenuItem === "preview" && <AppPreview app={app} />}
             {selectedMenuItem === "history" && <AppRunHistory app={app} />}
-            {selectedMenuItem === "tests" && <AppTests app={app} />}
             {selectedMenuItem === "versions" && <AppVersions app={app} />}
             {selectedMenuItem === "integrations/website" && (
               <AppWebConfigEditor
