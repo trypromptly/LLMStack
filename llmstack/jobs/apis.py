@@ -11,6 +11,7 @@ from rest_framework.response import Response as DRFResponse
 from llmstack.apps.apis import AppViewSet
 from llmstack.datasources.apis import DataSourceEntryViewSet, DataSourceViewSet
 from llmstack.jobs.models import CronJob, RepeatableJob, ScheduledJob, TaskRunLog
+from llmstack.jobs.serializers import TaskRunLogSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,15 @@ class JobsViewSet(viewsets.ViewSet):
         job.enabled = True
         job.save()
         return DRFResponse(status=204)
+
+    def get_tasks(self, request, uid):
+        job = self._get_job_by_uuid(uid, request=request)
+        if not job:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+
+        tasks = TaskRunLog.objects.filter(task_id=job.id).order_by('-id')
+        serializer = TaskRunLogSerializer(tasks, many=True)
+        return DRFResponse(status=200, data=serializer.data)
 
 
 class AppRunJobsViewSet(viewsets.ViewSet):

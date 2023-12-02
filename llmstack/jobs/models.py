@@ -58,6 +58,11 @@ class TaskRunLog(models.Model):
             id=self.task_id).first()
         return entry.name if entry else ''
 
+    def task_uuid(self):
+        entry = apps.get_model(app_label='jobs', model_name=self.task_type).objects.filter(
+            id=self.task_id).first()
+        return entry.uuid if entry else ''
+
     def user(self):
         entry = apps.get_model(app_label='jobs', model_name=self.task_type).objects.filter(
             id=self.task_id).first()
