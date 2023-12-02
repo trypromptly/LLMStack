@@ -14,7 +14,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 export default function SplitButton({ options, sx }) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(1);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const handleClick = () => {
     options[selectedIndex].onClick();
@@ -45,7 +45,13 @@ export default function SplitButton({ options, sx }) {
         aria-label="split button"
         sx={sx}
       >
-        <Button onClick={handleClick}>{options[selectedIndex].title}</Button>
+        <Button
+          onClick={handleClick}
+          sx={{ textTransform: "none" }}
+          startIcon={options[selectedIndex]?.startIcon || null}
+        >
+          {options[selectedIndex]?.title}
+        </Button>
         <Button
           size="small"
           aria-controls={open ? "split-button-menu" : undefined}
