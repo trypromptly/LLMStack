@@ -33,6 +33,8 @@ export default function FrequencyPickerWidget(props) {
           value={frequency?.type || ""}
           onChange={(event) => handleChange({ type: event.target.value })}
           placeholder="Select a frequency"
+          variant="filled"
+          sx={{ lineHeight: "0.5em" }}
         >
           <MenuItem value="run_once">Run Once</MenuItem>
           <MenuItem value="repeat">Repeat</MenuItem>
@@ -89,7 +91,11 @@ export default function FrequencyPickerWidget(props) {
               value={frequency?.interval}
               type="number"
               onChange={(event) =>
-                handleChange({ ...frequency, interval: event.target.value })
+                handleChange({
+                  ...frequency,
+                  type: "repeat",
+                  interval: event.target.value,
+                })
               }
             />
             <DatePicker
@@ -98,7 +104,7 @@ export default function FrequencyPickerWidget(props) {
               onChange={(value) => {
                 handleChange({
                   ...frequency,
-                  type: "run_once",
+                  type: "repeat",
                   end_date: value.format("YYYY-MM-DD"),
                 });
               }}
@@ -126,7 +132,7 @@ export default function FrequencyPickerWidget(props) {
             onChange={(value) => {
               handleChange({
                 ...frequency,
-                type: "run_once",
+                type: "cron",
                 end_date: value.format("YYYY-MM-DD"),
               });
             }}
@@ -137,5 +143,3 @@ export default function FrequencyPickerWidget(props) {
     </Box>
   );
 }
-
-// Rest of the code remains the same

@@ -31,7 +31,7 @@ const UI_SCHEMA = {
     "ui:description": "Enter a name for this job.",
   },
   application: {
-    "ui:description": "Select an application to run.",
+    "ui:description": "Application to run with this job.",
     "ui:widget": "appselect",
   },
   frequency: {
@@ -66,7 +66,7 @@ export default function AddAppRunScheduleConfigForm(props) {
               (app) => app.published_uuid === formData?.application,
             ),
             frequencyObj: formData?.frequency
-              ? JSON.parse(formData?.frequency)
+              ? JSON.parse(formData?.frequency || "{}")
               : null,
           });
         }}

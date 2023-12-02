@@ -19,6 +19,8 @@ import {
 } from "@mui/material";
 
 import { axios } from "../data/axios";
+import AddAppRunScheduleModal from "../components/schedule/AddAppRunScheduleModal";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import PauseCircleOutlinedIcon from "@mui/icons-material/PauseCircleOutlined";
 import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined";
@@ -140,6 +142,8 @@ export default function Schedule() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [jobId, setJobId] = useState(null);
+  const [openAddAppRunScheduleModal, setOpenAddAppRunScheduleModal] =
+    useState(false);
 
   const modalCancelCb = () => {
     setModalType(null);
@@ -260,16 +264,10 @@ export default function Schedule() {
             options={[
               {
                 key: 1,
-                title: "Application Run",
+                title: "App Run Job",
+                startIcon: <AddOutlinedIcon />,
                 onClick: () => {
-                  window.location.href = "/jobs/add_app_run";
-                },
-              },
-              {
-                key: 2,
-                title: "Datasource Refresh",
-                onClick: () => {
-                  window.location.href = "/jobs/add_datasource_refresh";
+                  setOpenAddAppRunScheduleModal(true);
                 },
               },
             ]}
@@ -338,6 +336,12 @@ export default function Schedule() {
           onCancel={modalCancelCb}
           jobId={jobId}
           onOk={modalCancelCb}
+        />
+      )}
+      {openAddAppRunScheduleModal && (
+        <AddAppRunScheduleModal
+          open={openAddAppRunScheduleModal}
+          onClose={() => setOpenAddAppRunScheduleModal(false)}
         />
       )}
     </div>

@@ -43,6 +43,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
               enqueueSnackbar("No data found in file", {
                 variant: "warning",
               });
+              setFile(null);
               return;
             }
             const headers = Object.keys(results.data[0]);
@@ -51,6 +52,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
               enqueueSnackbar("Headers do not match expected headers", {
                 variant: "error",
               });
+              setFile(null);
               return;
             }
             headers.forEach((header) => {
@@ -58,6 +60,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
                 enqueueSnackbar("Headers do not match expected headers", {
                   variant: "error",
                 });
+                setFile(null);
                 return;
               }
             });
@@ -155,13 +158,14 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
     };
 
     return (
-      <GridToolbarContainer>
+      <GridToolbarContainer sx={{ alignSelf: "flex-end" }}>
         <Button
           color="primary"
           startIcon={<UploadFile />}
           type="file"
           variant="contained"
           onClick={handleFileUpload}
+          size="small"
         >
           Upload CSV
         </Button>
@@ -177,8 +181,9 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
           startIcon={<AddOutlined />}
           onClick={handleClick}
           variant="contained"
+          size="small"
         >
-          Add record
+          Add Record
         </Button>
         <GridToolbarExport
           csvOptions={{
@@ -194,13 +199,15 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
   return (
     <Box
       sx={{
-        height: 500,
         width: "100%",
         "& .actions": {
           color: "text.secondary",
         },
         "& .textPrimary": {
           color: "text.primary",
+        },
+        "& .MuiDataGrid-columnHeaderTitle": {
+          fontWeight: "bold",
         },
       }}
     >
@@ -215,6 +222,8 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
             headerName: "Actions",
             width: 100,
             cellClassName: "actions",
+            flex: 1,
+            maxWidth: 100,
             getActions: (actionProps) => {
               const { id: _id } = actionProps;
               const isInEditMode =
@@ -259,6 +268,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
           },
         ]}
         editMode="row"
+        autoHeight={true}
         rowModesModel={rowModesModel}
         onRowModesModelChange={handleRowModesModelChange}
         onRowEditStop={handleRowEditStop}
