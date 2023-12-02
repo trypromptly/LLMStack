@@ -72,3 +72,6 @@ class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration]):
             'BtnLink': 'connections/hubspot/login/',
             'RedirectUrl': 'connections/hubspot/callback/',
         }
+    
+    def get_access_token(self, connection) -> str:
+        return connection

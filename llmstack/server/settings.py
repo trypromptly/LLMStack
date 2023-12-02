@@ -466,3 +466,23 @@ DATASOURCE_PROCESSOR_EXCLUDE_LIST = sum(list(
 APP_TEMPLATES_DIR = os.getenv('APP_TEMPATES_DIR').split(',') if os.getenv('APP_TEMPATES_DIR') else [
     os.path.join(BASE_DIR, 'contrib', 'apps', 'templates')
 ]
+
+SOCIALACCOUNT_PROVIDERS = {
+    'connection_google': {
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        'SCOPE': [
+            'profile', 'https://www.googleapis.com/auth/drive.readonly',
+            'https://www.googleapis.com/auth/drive.readonly.metadata',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'offline',
+        },
+        'APP': {
+            'client_id': os.getenv('CONNECTION_GOOGLE_CLIENT_ID', ''),
+            'secret': os.getenv('CONNECTION_GOOGLE_CLIENT_SECRET', ''),
+            'key': os.getenv('CONNECTION_GOOGLE_CLIENT_KEY', ''),
+        },
+    }
+}

@@ -99,6 +99,7 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
         self.profile = Profile.objects.get(user=self.datasource.owner)
+        self._env = self.profile.get_vendor_env()
 
         vectorstore_embedding_endpoint = self.profile.vectostore_embedding_endpoint
         vectorstore_embeddings_batch_size = self.profile.vectorstore_embeddings_batch_size
