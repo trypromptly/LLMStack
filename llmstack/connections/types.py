@@ -31,6 +31,8 @@ def get_connection_type_interface_subclasses():
 
 ConnectionConfigurationSchemaType = TypeVar(
     'ConnectionConfigurationSchemaType')
+
+
 class ConnectionTypeInterface(Generic[ConnectionConfigurationSchemaType]):
     """Interface for connection types."""
     @staticmethod
@@ -48,11 +50,11 @@ class ConnectionTypeInterface(Generic[ConnectionConfigurationSchemaType]):
     @staticmethod
     def description() -> str:
         raise NotImplementedError
-    
+
     @staticmethod
     def connection_type():
         raise NotImplementedError
-    
+
     @staticmethod
     def metadata() -> dict:
         return {}
