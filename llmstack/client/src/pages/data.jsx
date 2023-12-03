@@ -313,10 +313,12 @@ export default function DataPage() {
             {!record?.type?.is_external_datasource && (
               <IconButton
                 disabled={!row.isUserOwned}
-                onClick={() => {
+                onClick={(e) => {
                   setModalTitle("Add New Data Entry");
                   setSelectedDataSource(row);
                   setAddDataSourceModalOpen(true);
+
+                  e.stopPropagation();
                 }}
               >
                 <AddOutlined />
