@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Button,
+  Collapse,
   Grid,
   Pagination,
   IconButton,
@@ -17,11 +18,12 @@ import {
   DialogContentText,
   DialogActions,
 } from "@mui/material";
-
+import moment from "moment";
 import { axios } from "../data/axios";
 import AddAppRunScheduleModal from "../components/schedule/AddAppRunScheduleModal";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import PauseCircleOutlinedIcon from "@mui/icons-material/PauseCircleOutlined";
 import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined";
 import { enqueueSnackbar } from "notistack";
@@ -149,6 +151,26 @@ export default function Schedule() {
     setModalType(null);
     setJobId(null);
     setModalOpen(false);
+  };
+
+  const handleExpandJob = (row) => {
+    const newScheduledJobs = [...scheduledJobs];
+    const index = newScheduledJobs.findIndex((job) => job.uuid === row.uuid);
+    newScheduledJobs[index].expand = !newScheduledJobs[index].expand;
+    setScheduledJobs(newScheduledJobs);
+
+    if (newScheduledJobs[index].expand) {
+      axios()
+        .get(`/api/jobs/${row.uuid}/tasks`)
+        .then((res) => {
+          const newScheduledJobs = [...scheduledJobs];
+          const index = newScheduledJobs.findIndex(
+            (job) => job.uuid === row.uuid,
+          );
+          newScheduledJobs[index].tasks = res.data;
+          setScheduledJobs(newScheduledJobs);
+        });
+    }
   };
 
   const columnData = [
@@ -295,10 +317,15 @@ export default function Schedule() {
             </TableHead>
             <TableBody>
               {scheduledJobs.map((row) => {
-                return (
+                return [
                   <TableRow
                     key={row.uuid}
                     sx={{ cursor: "pointer", backgroundColor: "inherit" }}
+                    onClick={() => {
+                      if (row.task_category === "app_run") {
+                        handleExpandJob(row);
+                      }
+                    }}
                   >
                     {columnData.map((column) => {
                       const value = row[column.key];
@@ -316,8 +343,82 @@ export default function Schedule() {
                         </TableCell>
                       );
                     })}
-                  </TableRow>
-                );
+                  </TableRow>,
+                  <TableRow key={`${row.uuid}_details`}>
+                    <TableCell
+                      style={{
+                        paddingBottom: 0,
+                        paddingTop: 0,
+                        border: 0,
+                      }}
+                      colSpan={12}
+                    >
+                      <Collapse in={row.expand} timeout="auto" unmountOnExit>
+                        <Box sx={{ margin: 1 }}>
+                          <Table size="small" aria-label="tasks">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>
+                                  <strong>Created At</strong>
+                                </TableCell>
+                                <TableCell>
+                                  <strong>Status</strong>
+                                </TableCell>
+                                <TableCell>
+                                  <strong>Actions</strong>
+                                </TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {row.tasks?.map((task) => {
+                                return (
+                                  <TableRow key={task.uuid}>
+                                    <TableCell>
+                                      {moment
+                                        .utc(task.created_at)
+                                        .local()
+                                        .format("D-MMM-YYYY h:mm:ss A")}
+                                    </TableCell>
+                                    <TableCell>
+                                      {task.status === "succeeded" ? (
+                                        <Chip
+                                          label="Success"
+                                          color="success"
+                                          size="small"
+                                        />
+                                      ) : (
+                                        <Chip
+                                          label="Failed"
+                                          color="error"
+                                          size="small"
+                                        />
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<DownloadOutlinedIcon />}
+                                        onClick={() => {
+                                          window.open(
+                                            `/api/jobs/${row.uuid}/tasks/${task.uuid}/download`,
+                                          );
+                                        }}
+                                        sx={{ textTransform: "none" }}
+                                      >
+                                        Download
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>,
+                ];
               })}
             </TableBody>
           </Table>
