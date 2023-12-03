@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import ReactGA from "react-ga4";
 import { Avatar, Box, Chip, Fab, Grid, Stack, Typography } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Liquid } from "liquidjs";
@@ -511,6 +512,13 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
         session_id: appSessionId,
       }),
     );
+
+    ReactGA.event({
+      category: "App",
+      action: "Run Agent",
+      label: app?.name,
+      transport: "beacon",
+    });
   };
 
   useEffect(() => {

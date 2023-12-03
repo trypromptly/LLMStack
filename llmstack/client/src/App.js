@@ -52,7 +52,9 @@ export default function App({ children }) {
   const location = useLocation();
 
   useEffect(() => {
-    ReactGA.initialize("G-WV60HC9CHD");
+    ReactGA.initialize(
+      process.env.REACT_APP_GA_MEASUREMENT_ID || "G-WV60HC9CHD",
+    );
     ReactGA.send({
       hitType: "pageview",
       page: location.pathname + location.search,

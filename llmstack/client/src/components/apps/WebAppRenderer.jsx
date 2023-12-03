@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import ReactGA from "react-ga4";
 import { Button } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { CircularProgress, Grid } from "@mui/material";
@@ -164,6 +165,13 @@ export function WebAppRenderer({ app, ws }) {
       }),
     );
     setIsRunning(true);
+
+    ReactGA.event({
+      category: "App",
+      action: "Run Web App",
+      label: app?.name,
+      transport: "beacon",
+    });
   };
 
   return (

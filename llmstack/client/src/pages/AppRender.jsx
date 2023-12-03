@@ -35,11 +35,14 @@ function AppRenderPage({ headless = false }) {
   }/ws`;
 
   useEffect(() => {
-    ReactGA.initialize("G-WV60HC9CHD", {
-      gaOptions: {
-        cookieFlags: "SameSite=None;Secure",
+    ReactGA.initialize(
+      process.env.REACT_APP_GA_MEASUREMENT_ID || "G-WV60HC9CHD",
+      {
+        gaOptions: {
+          cookieFlags: "SameSite=None;Secure",
+        },
       },
-    });
+    );
   }, []);
 
   const isMobile = useRecoilValue(isMobileState);

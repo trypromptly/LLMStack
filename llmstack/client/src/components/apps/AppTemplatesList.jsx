@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import ReactGA from "react-ga4";
 import { Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { axios } from "../../data/axios";
@@ -98,6 +99,13 @@ export function AppTemplatesList() {
             key={index}
             style={{ maxWidth: "300px", cursor: "pointer" }}
             onClick={() => {
+              ReactGA.event({
+                category: "App Template",
+                action: "Select",
+                label: template.slug,
+                transport: "beacon",
+              });
+
               navigate(`/apps/templates/${template.slug}`);
             }}
           >

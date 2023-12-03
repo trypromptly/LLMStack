@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReactGA from "react-ga4";
 import { Button, Stack, Typography } from "@mui/material";
 import { AddOutlined } from "@mui/icons-material";
 import AddConnectionModal from "./connections/AddConnectionModal";
@@ -74,6 +75,13 @@ function Connections() {
             });
             reject(err);
           });
+
+        ReactGA.event({
+          category: "Connections",
+          action: "Create Connection",
+          label: conn.connection_type_slug,
+          transport: "beacon",
+        });
       }
     });
   };

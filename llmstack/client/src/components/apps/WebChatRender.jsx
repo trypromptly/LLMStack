@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import ReactGA from "react-ga4";
 import { Avatar, Chip, Fab, Grid, Stack, Typography } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Liquid } from "liquidjs";
@@ -324,6 +325,13 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
         session_id: appSessionId,
       }),
     );
+
+    ReactGA.event({
+      category: "App",
+      action: "Run Chat App",
+      label: app?.name,
+      transport: "beacon",
+    });
   };
 
   useEffect(() => {
