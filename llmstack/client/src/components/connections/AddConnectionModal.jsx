@@ -300,33 +300,55 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
         );
       case "credentials":
         return (
-          <Button
-            onClick={() => {
-              if (!validateForm()) {
-                return;
-              }
-              onSaveCb({
-                ...connection,
-                ...localConnection,
-                ...{
-                  provider_slug: connectionType?.provider_slug,
-                  connection_type_slug: connectionType?.slug,
-                  configuration: configFormData,
-                  base_connection_type: connectionType?.base_connection_type,
-                },
-              }).then((conn) => {
-                setLocalConnection(conn);
-                if (conn.id) {
-                  onSaveCb({ ...conn, ...{ status: "Active" } }).then(() => {
-                    onCancelCb();
-                  });
+          <div>
+            {!connectionActive &&
+              connectionType.provider_slug !== "promptly" && (
+                <Button
+                  onClick={testConnection({
+                    ...connection,
+                    ...localConnection,
+                    ...{
+                      provider_slug: connectionType?.provider_slug,
+                      connection_type_slug: connectionType?.slug,
+                      configuration: configFormData,
+                      base_connection_type:
+                        connectionType?.base_connection_type,
+                    },
+                  })}
+                  variant="outlined"
+                >
+                  Test Connection
+                </Button>
+              )}
+            &nbsp;
+            <Button
+              onClick={() => {
+                if (!validateForm()) {
+                  return;
                 }
-              });
-            }}
-            variant="contained"
-          >
-            Save
-          </Button>
+                onSaveCb({
+                  ...connection,
+                  ...localConnection,
+                  ...{
+                    provider_slug: connectionType?.provider_slug,
+                    connection_type_slug: connectionType?.slug,
+                    configuration: configFormData,
+                    base_connection_type: connectionType?.base_connection_type,
+                  },
+                }).then((conn) => {
+                  setLocalConnection(conn);
+                  if (conn.id) {
+                    onSaveCb({ ...conn, ...{ status: "Active" } }).then(() => {
+                      onCancelCb();
+                    });
+                  }
+                });
+              }}
+              variant="contained"
+            >
+              Save
+            </Button>
+          </div>
         );
       default:
         return null;
