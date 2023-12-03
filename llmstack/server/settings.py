@@ -420,6 +420,11 @@ PROVIDERS = [
         'name': 'LinkedIn',
         'processor_packages': ['llmstack.processors.providers.linkedin'],
         'slug': 'linkedin',
+    },
+    {
+        'name': 'Apollo',
+        'processor_packages': ['llmstack.processors.providers.apollo'],
+        'slug': 'apollo',
     }
 ]
 
