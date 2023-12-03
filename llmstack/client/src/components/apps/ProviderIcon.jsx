@@ -1,3 +1,5 @@
+import apolloIcon_light from "../../assets/images/apollo-icon-light.png";
+import apolloIcon_dark from "../../assets/images/apollo-icon-dark.png";
 import promptlyIcon_light from "../../assets/images/promptly-icon-light.png";
 import openAiIcon_light from "../../assets/images/openai-icon-light.png";
 import openAiIcon_dark from "../../assets/images/openai-icon-dark.png";
@@ -20,6 +22,8 @@ const getIconImage = (icon, isActive) => {
   switch (icon?.replaceAll(" ", "").toLowerCase()) {
     case "promptly":
       return promptlyIcon_light;
+    case "apollo":
+      return isActive ? apolloIcon_dark : apolloIcon_light;
     case "anthropic":
       return isActive ? anthropicIcon_dark : anthropicIcon_light;
     case "openai":
