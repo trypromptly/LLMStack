@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta
 
 import croniter
+from django.http import StreamingHttpResponse
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -81,6 +82,41 @@ class JobsViewSet(viewsets.ViewSet):
         tasks = TaskRunLog.objects.filter(task_id=job.id).order_by('-id')
         serializer = TaskRunLogSerializer(tasks, many=True)
         return DRFResponse(status=200, data=serializer.data)
+
+    def _get_task_run_csv(self, job, task):
+        # Create a csv file with the task data job.callable_args[1] as input data and task.result as output data
+        input_data = json.loads(job.callable_args)[1]  # Array of input objects
+        output_data = task.result  # Array of output objects
+
+        assert len(input_data) == len(output_data) and len(
+            input_data) > 0, "Input and output data must be of same length and greater than 0"
+
+        # Get the headers from the first input object
+        headers = list(input_data[0].keys())
+
+        yield ','.join(headers + ['output']) + '\n'
+
+        # Iterate over the input and output data and write to csv
+        for i in range(len(input_data)):
+            input_row = list(
+                map(lambda key: str(input_data[i][key]).strip(), headers))
+            yield ','.join(input_row) + ',' + output_data[i]['output'] + '\n'
+
+    def download_task(self, request, uid, task_uid):
+        job = self._get_job_by_uuid(uid, request=request)
+        if not job:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+
+        task = TaskRunLog.objects.filter(task_id=job.id, uuid=task_uid).first()
+        if not task:
+            return DRFResponse(status=404, data={'message': f"No task found with uuid: {task_uid}"})
+
+        response = StreamingHttpResponse(
+            content_type='text/csv', streaming_content=self._get_task_run_csv(job, task))
+        response[
+            'Content-Disposition'] = f'attachment; filename="{job.name}_{task.created_at.strftime("%Y-%m-%d_%H-%M-%S")}.csv"'
+
+        return response
 
 
 class AppRunJobsViewSet(viewsets.ViewSet):

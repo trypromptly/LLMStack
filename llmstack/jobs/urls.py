@@ -21,4 +21,6 @@ urlpatterns = [
          apis.JobsViewSet.as_view({'post': 'resume'})),
     path('api/jobs/<str:uid>/tasks',
          apis.JobsViewSet.as_view({'get': 'get_tasks'})),
+    path('api/jobs/<str:uid>/tasks/<str:task_uid>/download',
+         apis.JobsViewSet.as_view({'get': 'download_task'})),
 ]
