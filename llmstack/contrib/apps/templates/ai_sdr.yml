@@ -61,7 +61,7 @@ app:
       type: string
       required: true
   output_template:
-    markdown: "{{agent}}"
+    markdown: "{{agent.content}}"
   processors:
     - id: _inputs1
       name: Web Search

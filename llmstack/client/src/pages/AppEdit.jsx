@@ -257,7 +257,7 @@ export default function AppEditPage(props) {
             : appInputFields,
         output_template:
           app?.type?.slug === "agent"
-            ? { markdown: "{{agent}}" }
+            ? { markdown: "{{agent.content}}" }
             : appOutputTemplate,
         web_config: app?.web_config || {},
         slack_config: app?.slack_config || {},

@@ -30,7 +30,7 @@ app:
       description: "Enter your question here"
   output_template:
     markdown: |
-      {{agent}}
+      {{agent.content}}
   processors:
     - id: "_inputs1"
       name: "Datasource"

@@ -34,7 +34,7 @@ export function AppOutputEditor({
           {isAgent ? (
             <TextField
               variant="outlined"
-              value={"{{agent}}"}
+              value={"{{agent.content}}"}
               disabled
               fullWidth
             />

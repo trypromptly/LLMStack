@@ -440,8 +440,9 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
             templates.current[message.output.agent.from_id],
             message.output.agent.from_id === "agent"
               ? {
-                  [message.output.agent.from_id]:
-                    chunkedOutput.current[message.output.agent.id],
+                  [message.output.agent.from_id]: {
+                    content: chunkedOutput.current[message.output.agent.id],
+                  },
                 }
               : typeof chunkedOutput.current[message.output.agent.id]
                   ?.output === "string"
