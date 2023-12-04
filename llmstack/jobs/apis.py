@@ -144,8 +144,8 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             if not frequency.get('start_date') or not frequency.get('start_time') or not frequency.get('scheduled_time'):
                 return DRFResponse(status=400, data={'message': f"run_once and repeat frequency requires a start_date and start_time"})
             if frequency.get('scheduled_time'):
-                scheduled_time = datetime.fromisoformat(
-                    frequency.get('scheduled_time'))
+                scheduled_time = datetime.strptime(frequency.get(
+                    'scheduled_time').replace('Z', '+00:00'), '%Y-%m-%dT%H:%M:%S.%f%z')
             else:
                 scheduled_time = timezone.make_aware(datetime.strptime(
                     f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S"), timezone.get_current_timezone())
@@ -230,7 +230,8 @@ class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
             if not frequency.get('start_date') or not frequency.get('start_time') or not frequency.get('scheduled_time'):
                 return DRFResponse(status=400, data={'message': f"run_once and repeat frequency requires a start_date and start_time"})
             if frequency.get('scheduled_time'):
-                scheduled_time = frequency.get('scheduled_time')
+                scheduled_time = datetime.strptime(frequency.get(
+                    'scheduled_time').replace('Z', '+00:00'), '%Y-%m-%dT%H:%M:%S.%f%z')
             else:
                 scheduled_time = timezone.make_aware(datetime.strptime(
                     f"{frequency.get('start_date')}T{frequency.get('start_time')}", "%Y-%m-%dT%H:%M:%S"), timezone.get_current_timezone())
