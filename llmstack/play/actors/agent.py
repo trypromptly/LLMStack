@@ -1,7 +1,7 @@
 import logging
 import time
 import uuid
-from typing import Any
+from typing import Any, Optional
 
 import orjson as json
 from asgiref.sync import async_to_sync
@@ -39,7 +39,7 @@ class AgentOutput(BaseModel):
     """
     Output from the agent
     """
-    id: str = ''  # Unique ID for the output
+    id: Optional[str] = ''  # Unique ID for the output
     content: Any = ''  # Content of the output
     from_id: str = ''  # ID of the actor that produced the output
     type: str = 'step'  # Type of output
