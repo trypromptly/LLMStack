@@ -1,15 +1,18 @@
 from typing import Any
 import uuid
 import logging
+from llmstack.apps.app_session_utils import create_agent_app_session_data, get_agent_app_session_data
 
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.apps.handlers.twilio_utils import RequestValidator
 from llmstack.apps.models import AppVisibility
 from llmstack.play.actor import ActorConfig
+from llmstack.play.actors.agent import AgentActor
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor
 from llmstack.play.actors.output import OutputActor
 from llmstack.play.utils import convert_template_vars_from_legacy_format
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 from llmstack.processors.providers.twilio.create_message import TwilioCreateMessageProcessor
 
 logger = logging.getLogger(__name__)
@@ -33,6 +36,24 @@ def verify_request_signature(app: Any, base_url: str, headers: dict, raw_body: b
     return True
 
 class TwilioSmsAppRunner(AppRunner):
+    def _get_processors_as_functions(self):
+        functions = []
+        processor_classes = {}
+
+        for processor_class in ApiProcessorInterface.__subclasses__():
+            processor_classes[(processor_class.provider_slug(),
+                               processor_class.slug())] = processor_class
+
+        for processor in self.app_data['processors'] if self.app_data and 'processors' in self.app_data else []:
+            if (processor['provider_slug'], processor['processor_slug']) not in processor_classes:
+                continue
+            functions.append({
+                'name': processor['id'],
+                'description': processor['description'],
+                'parameters': processor_classes[(processor['provider_slug'], processor['processor_slug'])].get_tool_input_schema(processor),
+            })
+        return functions
+    
     def app_init(self):
         self.twilio_auth_token = self.twilio_config.get('auth_token') if self.twilio_config else ''
         self.twilio_account_sid = self.twilio_config.get('account_sid') if self.twilio_config else ''
@@ -130,12 +151,32 @@ class TwilioSmsAppRunner(AppRunner):
             ActorConfig(
                 name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
                 ),
+            
             ActorConfig(
                 name='output', template_key='output',  dependencies=['input'],
                 actor=OutputActor, kwargs={'template': '{{_inputs0}}'},
                 ),
             ]
+        
+        
         processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        if self.app.type.slug == 'agent':
+            agent_app_session_data = get_agent_app_session_data(self.app_session)
+            if not agent_app_session_data:
+                agent_app_session_data = create_agent_app_session_data(self.app_session, {})
+            actor_configs.append(
+                ActorConfig(
+                    name='agent', template_key='agent', 
+                    actor=AgentActor,
+                    kwargs={
+                        'processor_configs': processor_configs, 
+                        'functions': self._get_processors_as_functions(), 
+                        'input': self.request.data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 
+                        'config': self.app_data['config'],
+                        'agent_app_session_data': agent_app_session_data,
+                        }
+                ),
+            )
         
         # Add our twilio processor responsible for sending the outgoing message
         processor_actor_configs.append(
