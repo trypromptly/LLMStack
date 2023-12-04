@@ -117,7 +117,10 @@ class JobsViewSet(viewsets.ViewSet):
             csv_writer.writerow(input_row + [output_data[i]['output']])
 
             # Yield the current row
-            yield row_output.getvalue().strip()
+            yield row_output.getvalue().strip() + '\n'
+
+            # Clear the buffer
+            row_output.truncate(0)
 
     def download_task(self, request, uid, task_uid):
         job = self._get_job_by_uuid(uid, request=request)

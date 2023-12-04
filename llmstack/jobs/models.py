@@ -176,6 +176,31 @@ def run_task(task_model: str, task_id: int):
     return True
 
 
+def run_task_now(task_model: str, task_id: int):
+    job = get_current_job()
+    task_run_log = TaskRunLog.objects.create(
+        task_id=task_id,
+        task_type=task_model,
+        job_id=job.id,
+        status='started',
+    )
+    task = get_scheduled_task(task_model, task_id)
+
+    if task is None:
+        logger.error(f'Could not find task {task_model}:{task_id}')
+        return False
+
+    args = task.parse_args()
+    kwargs = task.parse_kwargs()
+    results, errors = task.callable_func()(*args, **kwargs)
+
+    task_run_log.result = results
+    task_run_log.errors = errors
+    task_run_log.save()
+
+    return True
+
+
 class BaseTask(models.Model):
     TASK_TYPE = 'BaseTask'
 
@@ -323,7 +348,7 @@ class BaseTask(models.Model):
         Schedule the next execution for the task.
         """
         job = self.rqueue.enqueue(
-            run_task,
+            run_task_now,
             args=(self.TASK_TYPE, self.id),
             on_success=success_callback,
             on_failure=failure_callback,

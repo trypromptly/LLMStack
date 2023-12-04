@@ -423,6 +423,12 @@ export default function Schedule() {
                                           color="success"
                                           size="small"
                                         />
+                                      ) : task.status === "started" ? (
+                                        <Chip
+                                          label="Started"
+                                          color="warning"
+                                          size="small"
+                                        />
                                       ) : (
                                         <Chip
                                           label="Failed"
@@ -436,6 +442,7 @@ export default function Schedule() {
                                         variant="outlined"
                                         size="small"
                                         startIcon={<DownloadOutlinedIcon />}
+                                        disabled={task.status !== "succeeded"}
                                         onClick={() => {
                                           window.open(
                                             `/api/jobs/${row.uuid}/tasks/${task.uuid}/download`,
