@@ -76,6 +76,13 @@ class JobsViewSet(viewsets.ViewSet):
         job.save()
         return DRFResponse(status=204)
 
+    def run(self, request, uid):
+        job = self._get_job_by_uuid(uid, request=request)
+        if not job:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+        job.schedule_now()
+        return DRFResponse(status=204)
+
     def get_tasks(self, request, uid):
         job = self._get_job_by_uuid(uid, request=request)
         if not job:

@@ -318,6 +318,24 @@ class BaseTask(models.Model):
         super(BaseTask, self).save()
         return True
 
+    def schedule_now(self):
+        """ 
+        Schedule the next execution for the task.
+        """
+        job = self.rqueue.enqueue(
+            run_task,
+            args=(self.TASK_TYPE, self.id),
+            on_success=success_callback,
+            on_failure=failure_callback,
+            job_id=self._next_job_id(),
+            meta=self._get_job_meta(),
+            job_timeout=self.timeout,
+            result_ttl=self.result_ttl,
+        )
+        self.job_id = job.id
+        super(BaseTask, self).save()
+        return True
+
     def enqueue_to_run(self) -> bool:
         """Enqueue job to run now."""
         kwargs = self._enqueue_args()

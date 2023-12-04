@@ -26,6 +26,7 @@ import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import PauseCircleOutlinedIcon from "@mui/icons-material/PauseCircleOutlined";
 import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined";
+import RefreshOutlinedIcon from "@mui/icons-material/RefreshOutlined";
 import { enqueueSnackbar } from "notistack";
 
 import SplitButton from "../components/SplitButton";
@@ -70,6 +71,7 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
         onOk();
       });
   }
+
   function pauseAppRunJob() {
     axios()
       .post(`/api/jobs/${jobId}/pause`)
@@ -87,6 +89,20 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
   const resumeAppRunJob = () => {
     axios()
       .post(`/api/jobs/${jobId}/resume`)
+      .then((res) => {
+        window.location.reload();
+      })
+      .catch((err) => {
+        enqueueSnackbar(err.message, { variant: "error" });
+      })
+      .finally(() => {
+        onOk();
+      });
+  };
+
+  const runJob = () => {
+    axios()
+      .post(`/api/jobs/${jobId}/run`)
       .then((res) => {
         window.location.reload();
       })
@@ -131,6 +147,17 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
           onCancel={onCancel}
           title="Resume Job"
           text="Are you sure you want to resume this job?"
+        />
+      );
+    case "run":
+      return (
+        <ConfirmationModal
+          id="run-job"
+          open={open}
+          onOk={runJob}
+          onCancel={onCancel}
+          title="Run Job"
+          text="Are you sure you want to run this job now?"
         />
       );
     default:
@@ -229,6 +256,16 @@ export default function Schedule() {
       render: (record, row) => {
         return (
           <Box>
+            <IconButton
+              onClick={() => {
+                setJobId(row.uuid);
+                setModalType("run");
+                setModalOpen(true);
+              }}
+              color="primary"
+            >
+              <RefreshOutlinedIcon />
+            </IconButton>
             {row?.model !== "ScheduledJob" ? (
               row?.enabled ? (
                 <IconButton
