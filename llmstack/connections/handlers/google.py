@@ -1,35 +1,38 @@
 import datetime
 import logging
-from typing import Optional
-from django.utils import timezone
 from datetime import timedelta
+from typing import Optional
 
-import requests
-from llmstack.connections.handlers import Oauth2BaseConfiguration
-from llmstack.connections.handlers.custom_google_provider.provider import CustomGoogleProvider
-from llmstack.connections.types import ConnectionTypeInterface
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from llmstack.connections.models import ConnectionType
 import jwt
+import requests
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from django.utils import timezone
+
+from llmstack.connections.handlers import Oauth2BaseConfiguration
+from llmstack.connections.handlers.custom_google_provider.provider import (
+    CustomGoogleProvider,
+)
+from llmstack.connections.models import ConnectionType
+from llmstack.connections.types import ConnectionTypeInterface
 
 logger = logging.getLogger(__name__)
 
+
 class GoogleAdapter(GoogleOAuth2Adapter):
-    provider_id = CustomGoogleProvider.id 
-    
+    provider_id = CustomGoogleProvider.id
+
     def get_connection_type_slug(self):
         return 'google_oauth2'
-    
+
     def get_callback_url(self, request, app):
-        from django.urls import reverse
         from allauth.utils import build_absolute_uri
+        from django.urls import reverse
 
         callback_url = reverse('google_connection_callback')
         protocol = self.redirect_uri_protocol
-        protocol = 'http'
         redirect_uri = build_absolute_uri(request, callback_url, protocol)
         return redirect_uri
-    
+
     def complete_login(self, request, app, token, **kwargs):
         response = kwargs.get("response")
         try:
@@ -61,7 +64,8 @@ class GoogleAdapter(GoogleOAuth2Adapter):
             'client_secret': app.secret,
         }
         return GoogleLoginConfiguration(**extra_data)
-        
+
+
 class GoogleLoginConfiguration(Oauth2BaseConfiguration):
     refresh_token: Optional[str]
     scope: Optional[str]
@@ -69,6 +73,7 @@ class GoogleLoginConfiguration(Oauth2BaseConfiguration):
     expires_at: Optional[float]
     client_id: Optional[str]
     client_secret: Optional[str]
+
 
 class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
     @staticmethod
@@ -86,11 +91,11 @@ class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
     @staticmethod
     def description() -> str:
         return 'Login to Google'
-    
+
     @staticmethod
     def type() -> ConnectionType:
         return ConnectionType.OAUTH2
-    
+
     @staticmethod
     def metadata() -> dict:
         return {
@@ -98,7 +103,7 @@ class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
             'BtnLink': 'connections/google/login/',
             'RedirectUrl': 'connections/google/callback/',
         }
-    
+
     def refresh_access_token(self, connection) -> str:
         refresh_token = connection.configuration['refresh_token']
         client_id = connection.configuration['client_id']
@@ -109,7 +114,7 @@ class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
             'client_secret': client_secret,
             'refresh_token': refresh_token,
             'grant_type': 'refresh_token'
-            }
+        }
         response = requests.post(token_url, data=payload)
         if response.status_code == 200:
             new_token = response.json().get('access_token')
@@ -118,13 +123,12 @@ class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):
             return new_token, expires_at.timestamp()
         else:
             return None
-        
-    
+
     def get_access_token(self, connection) -> str:
         expires_at = connection.configuration['expires_at']
         if expires_at < datetime.datetime.now().timestamp():
             token, expires_at = self.refresh_access_token(connection)
             connection.configuration['token'] = token
             connection.configuration['expires_at'] = expires_at
-            
+
         return connection
