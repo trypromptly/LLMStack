@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 import logging
 from datetime import datetime, timedelta
@@ -94,13 +96,21 @@ class JobsViewSet(viewsets.ViewSet):
         # Get the headers from the first input object
         headers = list(input_data[0].keys())
 
-        yield ','.join(headers + ['output']) + '\n'
-
         # Iterate over the input and output data and write to csv
         for i in range(len(input_data)):
-            input_row = list(
-                map(lambda key: str(input_data[i][key]).strip(), headers))
-            yield ','.join(input_row) + ',' + output_data[i]['output'] + '\n'
+            row_output = io.StringIO()
+            csv_writer = csv.writer(row_output, quoting=csv.QUOTE_ALL)
+
+            # Write headers for the first row
+            if i == 0:
+                csv_writer.writerow(headers + ['output'])
+
+            # Write the current row
+            input_row = [str(input_data[i][key]).strip() for key in headers]
+            csv_writer.writerow(input_row + [output_data[i]['output']])
+
+            # Yield the current row
+            yield row_output.getvalue().strip()
 
     def download_task(self, request, uid, task_uid):
         job = self._get_job_by_uuid(uid, request=request)
