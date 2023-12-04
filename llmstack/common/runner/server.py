@@ -48,7 +48,7 @@ async def get_browser_content_from_page(page) -> BrowserContent:
     content.text = await page.inner_text('body')
 
     try:
-        buttons = await page.locator('button').all()
+        buttons = await page.locator('button:visible').all()
         nth = 0
         for button in buttons[:50]:
             content.buttons.append(BrowserButton(
@@ -62,26 +62,32 @@ async def get_browser_content_from_page(page) -> BrowserContent:
 
     try:
         inputs = await page.locator('input').all()
-        for input in inputs[:50]:
-            nth = 0
+        nth = 0
+        for input in inputs:
             input_type = await input.get_attribute('type')
             if input_type == 'submit':
                 content.buttons.append(BrowserButton(
                     text=(await input.text_content()).strip(),
                     selector=f'input >> nth={nth}',
                 ))
-            else:
-                content.inputs.append(BrowserInputField(
-                    text=(await input.text_content()).strip(),
-                    selector=f'input >> nth={nth}',
-                ))
+            elif input_type == 'text':
+                text = (await input.text_content()).strip()
+                # Get corresponding label if any and set it as text
+                label = input.locator('xpath=../label')
+                if label:
+                    text = (await label.text_content(timeout=100)).strip()
+                if text:
+                    content.inputs.append(BrowserInputField(
+                        text=text,
+                        selector=f'input >> nth={nth}',
+                    ))
             nth += 1
     except Exception as e:
         logger.exception(e)
         pass
 
     try:
-        selects = await page.locator('select').all()
+        selects = await page.locator('select:visible').all()
         nth = 0
         for select in selects[:50]:
             content.selects.append(BrowserSelectField(
@@ -94,7 +100,7 @@ async def get_browser_content_from_page(page) -> BrowserContent:
         pass
 
     try:
-        textareas = await page.locator('textarea').all()
+        textareas = await page.locator('textarea:visible').all()
         nth = 0
         for textarea in textareas[:50]:
             content.textareas.append(BrowserTextAreaField(
@@ -107,9 +113,9 @@ async def get_browser_content_from_page(page) -> BrowserContent:
         pass
 
     try:
-        links = await page.locator('a').all()
+        links = await page.locator('a:visible').all()
         nth = 0
-        for link in links[:100]:
+        for link in links[:10]:
             content.links.append(BrowserLink(
                 text=(await link.text_content()).strip(),
                 selector=f'a >> nth={nth}',
