@@ -34,7 +34,10 @@ class PostgresDatabaseSchema(DataSourceSchema):
         description='Postgres connection details')
 ```
 
-**llmstack** framework takes care of storing the connection details in the database in an encrypted format or as plain text. To define this behavior you will also need to define a `ConnectionConfiguration` class. This class will inherit from `from llmstack.common.utils.models import Config`.
+The above schema will be used to render the UI for the user to enter the connection details.
+![Postgres Connection Schema](/img/external-datasource-config.png)
+
+**LLMStack** framework takes care of storing the connection details in the database in an encrypted format or as plain text. To define this behavior you will also need to define a `ConnectionConfiguration` class. This class will inherit from `from llmstack.common.utils.models import Config`.
 e.g
 
 ```python
