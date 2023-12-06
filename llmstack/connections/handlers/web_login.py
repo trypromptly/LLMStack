@@ -6,16 +6,16 @@ import grpc
 from django.conf import settings
 from pydantic import Field
 
+from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
 from llmstack.connections.models import (
     Connection,
     ConnectionActivationInput,
     ConnectionActivationOutput,
     ConnectionStatus,
+    ConnectionType,
 )
-from llmstack.connections.types import  ConnectionTypeInterface
-from llmstack.common.blocks.base.schema import BaseSchema
-from llmstack.connections.models import ConnectionType
+from llmstack.connections.types import ConnectionTypeInterface
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
     @staticmethod
     def description() -> str:
         return 'Login to a website'
-    
+
     @staticmethod
     def type() -> ConnectionType:
         return ConnectionType.BROWSER_LOGIN
@@ -56,8 +56,10 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
             self._is_terminated = True
 
     async def _request_iterator(self, connection, timeout):
+        session_data = connection.configuration['_storage_state'] if '_storage_state' in connection.configuration and connection.configuration['_storage_state'] else ''
         yield runner_pb2.RemoteBrowserRequest(init_data=runner_pb2.BrowserInitData(url=connection.configuration['start_url'],
                                                                                    terminate_url_pattern='',
+                                                                                   session_data=session_data,
                                                                                    timeout=timeout, persist_session=True))
 
         # Sleep till timeout or self._is_terminated is True
