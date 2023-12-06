@@ -96,6 +96,7 @@ class AppConsumer(AsyncWebsocketConsumer):
 class ConnectionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
+        self._activation_task = None
 
         if self.user.is_anonymous:
             await self.close()
