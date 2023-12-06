@@ -162,8 +162,10 @@ class Runner(RunnerServicer):
                 for next_request in request_iterator:
                     if next_request is not None:
                         if next_request.input.type == TERMINATE:
-                            raise Exception(
+                            logger.info(
                                 'Terminating browser because of timeout')
+                            page_load_task.cancel()
+                            break
                     else:
                         # Sleep a bit to prevent a busy loop that consumes too much CPU
                         await asyncio.sleep(0.1)
@@ -195,7 +197,7 @@ class Runner(RunnerServicer):
                 if terminate:
                     raise Exception('Terminating browser')
 
-        return session_data
+                return session_data
 
     def GetRemoteBrowser(self, request_iterator: Iterator[RemoteBrowserRequest], context: ServicerContext) -> Iterator[RemoteBrowserResponse]:
         # Get input from the client
