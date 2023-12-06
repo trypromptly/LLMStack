@@ -31,7 +31,7 @@ class PostgresDatabaseSchema(DataSourceSchema):
 
 
 class PostgresConnectionConfiguration(Config):
-    config_type = 'postrges_connection'
+    config_type = 'postgres_connection'
     is_encrypted = True
     postgres_config: Optional[Dict]
 
@@ -58,7 +58,7 @@ class PostgresDataSource(DataSourceProcessor[PostgresDatabaseSchema]):
 
     @staticmethod
     def name() -> str:
-        return 'Postgre'
+        return 'Postgres'
 
     @staticmethod
     def slug() -> str:
