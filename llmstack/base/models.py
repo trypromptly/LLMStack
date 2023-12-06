@@ -158,6 +158,16 @@ class AbstractProfile(models.Model):
     def add_connection(self, connection):
         connection_id = connection['id'] if 'id' in connection else str(
             uuid.uuid4())
+
+        # Check if connection already exists and merge the configuration
+        existing_connection = self.get_connection(connection_id)
+        if existing_connection:
+            existing_connection['configuration'] = {
+                **existing_connection['configuration'],
+                **connection['configuration'],
+            }
+            connection = existing_connection
+
         connection_json = json.dumps(connection)
         if not self._connections:
             self._connections = {}
