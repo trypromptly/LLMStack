@@ -538,6 +538,9 @@ class AppViewSet(viewsets.ViewSet):
         if not request_location:
             location = get_location(request_ip)
             request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ''
+        
+        request_user_agent = request.META.get('HTTP_USER_AGENT', '')
+        request_content_type = request.META.get('CONTENT_TYPE', '')
 
         if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA', request=request, user=app.owner)):
             raise Exception(
@@ -566,7 +569,8 @@ class AppViewSet(viewsets.ViewSet):
         app_runner = app_runner_class(
             app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid, 
             request=request, session_id=session_id, app_owner=app_owner, stream=stream, 
-            request_ip=request_ip, request_location=request_location
+            request_ip=request_ip, request_location=request_location, request_user_agent=request_user_agent,
+            request_content_type=request_content_type,
         )
 
         return app_runner.run_app()

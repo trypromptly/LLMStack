@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 class AppRunner:
     def __init__(self, app, app_data, request_uuid, request: Request, app_owner, 
-                 session_id=None, stream=False, request_ip='', request_location=''):
+                 session_id=None, stream=False, request_ip='', request_location='', 
+                 request_user_agent='', request_content_type=''):
         self.app = app
         self.app_data = app_data
         self.stream = stream
@@ -57,8 +58,8 @@ class AppRunner:
             request_user_email=request_user_email,
             request_ip=request_ip,
             request_location=request_location,
-            request_user_agent=request.META.get('HTTP_USER_AGENT', ''),
-            request_content_type=request.META.get('CONTENT_TYPE', ''),
+            request_user_agent=request_user_agent,
+            request_content_type=request_content_type,
             request_body=request.data,
         )
 
