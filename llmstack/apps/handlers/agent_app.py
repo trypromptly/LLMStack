@@ -48,31 +48,7 @@ class AgentRunner(AppRunner):
         ] 
         return actor_configs
     
-    def run_app(self):
-        # Check if the app access permissions are valid
-        self._is_app_accessible()
-
-        csp = self._get_csp()
-
-        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
-        
-        template = convert_template_vars_from_legacy_format(
-            self.app_data['output_template'].get(
-                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
-        )
-            
-        # Actor configs
-        actor_configs = self._get_base_actor_configs(template, processor_configs)
-
-        actor_configs.extend(map(lambda x: ActorConfig(
-            name=x.name, template_key=x.template_key, actor=x.actor, dependencies=(x.dependencies + ['agent']), kwargs=x.kwargs), processor_actor_configs)
-        )
-        actor_configs.append(
-            ActorConfig(
-                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'agent'], kwargs={'processor_configs': processor_configs, 'is_agent': True},
-            ),
-        )
-
+    def _start(self, input_data, app_session, actor_configs, csp, template, processor_configs=[]):
         try:
             coordinator_ref = Coordinator.start(
                 session_id=self.app_session['uuid'], actor_configs=actor_configs,
@@ -87,7 +63,7 @@ class AgentRunner(AppRunner):
             output_actor = coordinator.get_actor('output').get().proxy()
             output_iter = None
             if input_actor and output_actor:
-                input_actor.write(self.request.data.get('input', {})).get()
+                input_actor.write(input_data.get('input', {})).get()
                 output_iter = output_actor.get_output().get(
                 ) if not self.stream else output_actor.get_output_stream().get()
 
@@ -123,3 +99,38 @@ class AgentRunner(AppRunner):
             'session': {'id': self.app_session['uuid']},
             'output': output, 'csp': csp,
         }
+
+    def _get_bookkeeping_actor_config(self, processor_configs):
+        return ActorConfig(
+                name='bookkeeping', template_key='bookkeeping', 
+                actor=BookKeepingActor,
+                dependencies=['_inputs0', 'output', 'agent'], 
+                kwargs={'processor_configs': processor_configs, 'is_agent': True},
+            )
+        
+    def run_app(self):
+        # Check if the app access permissions are valid
+        self._is_app_accessible()
+
+        csp = self._get_csp()
+
+        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        
+        template = convert_template_vars_from_legacy_format(
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
+        )
+            
+        # Actor configs
+        actor_configs = self._get_base_actor_configs(template, processor_configs)
+
+        actor_configs.extend(map(lambda x: ActorConfig(
+            name=x.name, template_key=x.template_key, actor=x.actor, dependencies=(x.dependencies + ['agent']), kwargs=x.kwargs), processor_actor_configs)
+        )
+        actor_configs.append(self._get_bookkeeping_actor_config(processor_configs))
+        
+        input_data = self.request.data
+        return self._start(
+            input_data, self.app_session,
+            actor_configs, csp, template,
+            processor_configs)

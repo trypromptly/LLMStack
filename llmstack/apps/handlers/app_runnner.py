@@ -194,7 +194,7 @@ class AppRunner:
             })
         return functions
     
-    def _start(self, input_data, app_session, actor_configs, csp, template):
+    def _start(self, input_data, app_session, actor_configs, csp, template, processor_configs=[]):
         try:
             coordinator_ref = Coordinator.start(
                 session_id=app_session['uuid'], actor_configs=actor_configs,
@@ -265,6 +265,14 @@ class AppRunner:
         ]
         return actor_configs
     
+    def _get_bookkeeping_actor_config(self, processor_configs):
+        return ActorConfig(
+            name='bookkeeping', template_key='bookkeeping', 
+            actor=BookKeepingActor, dependencies=['_inputs0', 'output'], 
+            kwargs={'processor_configs': processor_configs},
+            )
+            
+    
     def run_app(self):
         # Check if the app access permissions are valid
         self._is_app_accessible()
@@ -277,14 +285,15 @@ class AppRunner:
             self.app_data['output_template'].get(
                 'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
         )
+        
         # Actor configs
         actor_configs = self._get_base_actor_configs(template, processor_configs)
         
         actor_configs.extend(processor_actor_configs)
+        
+        
         actor_configs.append(
-            ActorConfig(
-                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output'], kwargs={'processor_configs': processor_configs},
-            ),
+            self._get_bookkeeping_actor_config(processor_configs),
         )
 
         input_data = self.request.data
