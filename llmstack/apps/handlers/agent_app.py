@@ -10,6 +10,7 @@ from llmstack.play.actors.input import InputActor
 from llmstack.play.actors.output import OutputActor
 from llmstack.play.actors.agent import AgentActor
 from llmstack.play.coordinator import Coordinator
+from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 from llmstack.processors.providers.promptly.http_api import PromptlyHttpAPIProcessor
 
@@ -17,25 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 class AgentRunner(AppRunner):
-
-    def run_app(self):
-        # Check if the app access permissions are valid
-        self._is_app_accessible()
-
-        csp = 'frame-ancestors self'
-        if self.app.is_published:
-            csp = 'frame-ancestors *'
-            if self.web_config and 'allowed_sites' in self.web_config and len(self.web_config['allowed_sites']) > 0:
-                csp = 'frame-ancestors ' + \
-                    ' '.join(self.web_config['allowed_sites'])
-
-        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
-        
+    
+    def _get_base_actor_configs(self, output_template, processor_configs):
         agent_app_session_data = get_agent_app_session_data(self.app_session)
         if not agent_app_session_data:
             agent_app_session_data = create_agent_app_session_data(self.app_session, {})
             
-        # Actor configs
         actor_configs = [
             ActorConfig(
                 name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
@@ -57,7 +45,24 @@ class AgentRunner(AppRunner):
                 actor=OutputActor, kwargs={
                     'template': self.app_data['output_template']['markdown']}
             ),
-        ]
+        ] 
+        return actor_configs
+    
+    def run_app(self):
+        # Check if the app access permissions are valid
+        self._is_app_accessible()
+
+        csp = self._get_csp()
+
+        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        
+        template = convert_template_vars_from_legacy_format(
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
+        )
+            
+        # Actor configs
+        actor_configs = self._get_base_actor_configs(template, processor_configs)
 
         actor_configs.extend(map(lambda x: ActorConfig(
             name=x.name, template_key=x.template_key, actor=x.actor, dependencies=(x.dependencies + ['agent']), kwargs=x.kwargs), processor_actor_configs)

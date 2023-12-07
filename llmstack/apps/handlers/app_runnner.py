@@ -243,16 +243,33 @@ class AppRunner:
             'output': output, 'csp': csp,
         }
 
-    def run_app(self):
-        # Check if the app access permissions are valid
-        self._is_app_accessible()
-        
+    def _get_csp(self):
         csp = 'frame-ancestors self'
         if self.app.is_published:
             csp = 'frame-ancestors *'
             if self.web_config and 'allowed_sites' in self.web_config and len(self.web_config['allowed_sites']) > 0:
                 csp = 'frame-ancestors ' + \
                     ' '.join(self.web_config['allowed_sites'])
+        return csp
+    
+    def _get_base_actor_configs(self, output_template, processor_configs):
+        # Actor configs
+        actor_configs = [
+            ActorConfig(
+                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
+            ),
+            ActorConfig(
+                name='output', template_key='output',
+                actor=OutputActor, kwargs={'template': output_template},
+            ),
+        ]
+        return actor_configs
+    
+    def run_app(self):
+        # Check if the app access permissions are valid
+        self._is_app_accessible()
+        
+        csp = self._get_csp()
 
         processor_actor_configs, processor_configs = self._get_processor_actor_configs()
         
@@ -261,15 +278,7 @@ class AppRunner:
                 'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
         )
         # Actor configs
-        actor_configs = [
-            ActorConfig(
-                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
-            ),
-            ActorConfig(
-                name='output', template_key='output',
-                actor=OutputActor, kwargs={'template': template},
-            ),
-        ]
+        actor_configs = self._get_base_actor_configs(template, processor_configs)
         
         actor_configs.extend(processor_actor_configs)
         actor_configs.append(
