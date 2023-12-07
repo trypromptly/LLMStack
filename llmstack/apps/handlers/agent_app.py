@@ -17,23 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class AgentRunner(AppRunner):
-    def _get_processors_as_functions(self):
-        functions = []
-        processor_classes = {}
-
-        for processor_class in ApiProcessorInterface.__subclasses__():
-            processor_classes[(processor_class.provider_slug(),
-                               processor_class.slug())] = processor_class
-
-        for processor in self.app_data['processors'] if self.app_data and 'processors' in self.app_data else []:
-            if (processor['provider_slug'], processor['processor_slug']) not in processor_classes:
-                continue
-            functions.append({
-                'name': processor['id'],
-                'description': processor['description'],
-                'parameters': processor_classes[(processor['provider_slug'], processor['processor_slug'])].get_tool_input_schema(processor),
-            })
-        return functions
 
     def run_app(self):
         # Check if the app access permissions are valid

@@ -17,6 +17,7 @@ from llmstack.play.actors.output import OutputActor
 from llmstack.play.coordinator import Coordinator
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.base.models import Profile
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 logger = logging.getLogger(__name__)
@@ -175,6 +176,24 @@ class AppRunner:
                 }
         return processor_actor_configs, processor_configs
 
+    def _get_processors_as_functions(self):
+        functions = []
+        processor_classes = {}
+
+        for processor_class in ApiProcessorInterface.__subclasses__():
+            processor_classes[(processor_class.provider_slug(),
+                               processor_class.slug())] = processor_class
+
+        for processor in self.app_data['processors'] if self.app_data and 'processors' in self.app_data else []:
+            if (processor['provider_slug'], processor['processor_slug']) not in processor_classes:
+                continue
+            functions.append({
+                'name': processor['id'],
+                'description': processor['description'],
+                'parameters': processor_classes[(processor['provider_slug'], processor['processor_slug'])].get_tool_input_schema(processor),
+            })
+        return functions
+    
     def _start(self, input_data, app_session, actor_configs, csp, template):
         try:
             coordinator_ref = Coordinator.start(
@@ -227,14 +246,7 @@ class AppRunner:
     def run_app(self):
         # Check if the app access permissions are valid
         self._is_app_accessible()
-
-        template = convert_template_vars_from_legacy_format(
-            self.app_data['output_template'].get(
-                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
-        )
-
-        debug_data = []
-
+        
         csp = 'frame-ancestors self'
         if self.app.is_published:
             csp = 'frame-ancestors *'
@@ -242,6 +254,12 @@ class AppRunner:
                 csp = 'frame-ancestors ' + \
                     ' '.join(self.web_config['allowed_sites'])
 
+        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        
+        template = convert_template_vars_from_legacy_format(
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
+        )
         # Actor configs
         actor_configs = [
             ActorConfig(
@@ -252,7 +270,7 @@ class AppRunner:
                 actor=OutputActor, kwargs={'template': template},
             ),
         ]
-        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        
         actor_configs.extend(processor_actor_configs)
         actor_configs.append(
             ActorConfig(
