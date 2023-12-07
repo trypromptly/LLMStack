@@ -18,6 +18,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
+from llmstack.common.utils.utils import get_location
 
 from llmstack.processors.apis import EndpointViewSet
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
@@ -530,6 +531,13 @@ class AppViewSet(viewsets.ViewSet):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
         stream = request.data.get('stream', False)
+        request_ip = request.headers.get('X-Forwarded-For', 
+                                         request.META.get('REMOTE_ADDR', '',)
+                                        ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
+        request_location = request.headers.get('X-Client-Geo-Location', '')
+        if not request_location:
+            location = get_location(request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ''
 
         if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA', request=request, user=app.owner)):
             raise Exception(
@@ -557,7 +565,8 @@ class AppViewSet(viewsets.ViewSet):
 
         app_runner = app_runner_class(
             app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid, 
-            request=request, session_id=session_id, app_owner=app_owner, stream=stream
+            request=request, session_id=session_id, app_owner=app_owner, stream=stream, 
+            request_ip=request_ip, request_location=request_location
         )
 
         return app_runner.run_app()

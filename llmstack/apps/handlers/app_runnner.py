@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 class AppRunner:
-    def __init__(self, app, app_data, request_uuid, request: Request, app_owner, session_id=None, stream=False):
+    def __init__(self, app, app_data, request_uuid, request: Request, app_owner, 
+                 session_id=None, stream=False, request_ip='', request_location=''):
         self.app = app
         self.app_data = app_data
         self.stream = stream
@@ -47,17 +48,6 @@ class AppRunner:
                 request_user_email = self.app_run_request_user.email
             elif self.app_run_request_user and self.app_run_request_user.username and len(self.app_run_request_user.username) > 0:
                 request_user_email = self.app_run_request_user.username
-
-        request_ip = request.headers.get(
-            'X-Forwarded-For', request.META.get(
-                'REMOTE_ADDR', '',
-            ),
-        ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
-        request_location = request.headers.get('X-Client-Geo-Location', '')
-
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ''
 
         self.input_actor_request = InputRequest(
             request_app_uuid=self.app.uuid,
