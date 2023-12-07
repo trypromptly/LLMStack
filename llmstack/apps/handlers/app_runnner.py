@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import uuid
 
@@ -25,15 +24,16 @@ logger = logging.getLogger(__name__)
 
 
 class AppRunner:
-    def __init__(self, app, app_data, request_uuid, request: Request, app_owner, session_id=None):
+    def __init__(self, app, app_data, request_uuid, request: Request, app_owner, session_id=None, stream=False):
         self.app = app
         self.app_data = app_data
-        self.stream = request.data.get('stream', False)
+        self.stream = stream
         self.app_owner_profile = app_owner
         self.request = request
         self.app_run_request_user = request.user
         self.session_id = session_id
         self.app_session = self._get_or_create_app_session()
+        
         self.web_config = WebIntegrationConfig().from_dict(
             app.web_integration_config,
             app_owner.decrypt_value,

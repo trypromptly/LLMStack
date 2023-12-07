@@ -529,6 +529,7 @@ class AppViewSet(viewsets.ViewSet):
     def run_app_internal(self, uid, session_id, request_uuid, request, platform=None, preview=False):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
+        stream = request.data.get('stream', False)
 
         if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA', request=request, user=app.owner)):
             raise Exception(
@@ -555,7 +556,8 @@ class AppViewSet(viewsets.ViewSet):
             app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
 
         app_runner = app_runner_class(
-            app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid, request=request, session_id=session_id, app_owner=app_owner,
+            app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid, 
+            request=request, session_id=session_id, app_owner=app_owner, stream=stream
         )
 
         return app_runner.run_app()
