@@ -11,8 +11,6 @@ from llmstack.play.actors.output import OutputActor
 from llmstack.play.actors.agent import AgentActor
 from llmstack.play.coordinator import Coordinator
 from llmstack.play.utils import convert_template_vars_from_legacy_format
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
-from llmstack.processors.providers.promptly.http_api import PromptlyHttpAPIProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +46,7 @@ class AgentRunner(AppRunner):
         ] 
         return actor_configs
     
-    def _start(self, input_data, app_session, actor_configs, csp, template, processor_configs=[]):
+    def _start_agent(self, input_data, app_session, actor_configs, csp, template, processor_configs=[]):
         try:
             coordinator_ref = Coordinator.start(
                 session_id=self.app_session['uuid'], actor_configs=actor_configs,
@@ -108,6 +106,9 @@ class AgentRunner(AppRunner):
                 kwargs={'processor_configs': processor_configs, 'is_agent': True},
             )
         
+    def _get_input_data(self):
+        return self.request.data
+    
     def run_app(self):
         # Check if the app access permissions are valid
         self._is_app_accessible()
@@ -129,8 +130,7 @@ class AgentRunner(AppRunner):
         )
         actor_configs.append(self._get_bookkeeping_actor_config(processor_configs))
         
-        input_data = self.request.data
-        return self._start(
-            input_data, self.app_session,
+        return self._start_agent(
+            self._get_input_data(), self.app_session,
             actor_configs, csp, template,
             processor_configs)
