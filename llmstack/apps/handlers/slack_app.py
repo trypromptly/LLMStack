@@ -224,20 +224,7 @@ class SlackAppRunner(AppRunner):
                 actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'slack_processor'], 
                 kwargs={'processor_configs': processor_configs},
             )
-        
-    def run_app(self):
-        # Check if the app access permissions are valid
-        self._is_app_accessible()
-
-        csp = self._get_csp()
-        
-        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
-        
-        template = convert_template_vars_from_legacy_format(
-            self.app_data['output_template'].get(
-                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
-        )
-        
+    def _get_actor_configs(self, template, processor_configs, processor_actor_configs):
         # Actor configs
         actor_configs = self._get_base_actor_configs(template, processor_configs)
         
@@ -251,14 +238,4 @@ class SlackAppRunner(AppRunner):
         # Add our slack processor responsible to sending the outgoing message
         actor_configs.append(self._get_slack_processor_actor_configs(self._get_input_data()))
         actor_configs.append(self._get_bookkeeping_actor_config(processor_configs))
-        
-        if self.app.type.slug == 'agent':
-            return self._start_agent(
-                self._get_input_data(), self.app_session,
-                actor_configs, csp, template,
-                processor_configs)
-        else:
-            return self._start(
-                self._get_input_data(), self.app_session,
-                actor_configs, csp, template,
-            )
+        return actor_configs
