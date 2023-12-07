@@ -83,9 +83,6 @@ class SlackAppRunner(AppRunner):
 
         return None
 
-    def _is_slack_url_verification_request(self):
-        return self.request.data.get('type') == 'url_verification'
-
     def _get_input_data(self, slack_request_payload):
         slack_message_type = slack_request_payload['type']
         if slack_message_type == 'url_verification':
@@ -167,53 +164,39 @@ class SlackAppRunner(AppRunner):
         csp = 'frame-ancestors self'
         input_data = self._get_input_data(self.request.data)
         # Actor configs
-        if self._is_slack_url_verification_request():
-            template = '{"challenge": "{{_inputs0.challenge}}"}'
-            actor_configs = [
-                ActorConfig(
-                    name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
-                ),
-                ActorConfig(
-                    name='output', template_key='output',
-                    actor=OutputActor, kwargs={'template': template},
-                ),
-            ]
-            processor_configs = {}
-        else:
-            template = convert_template_vars_from_legacy_format(
-                self.app_data['output_template'].get(
-                    'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
-            )
-            actor_configs = [
-                ActorConfig(
-                    name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
-                ),
-                ActorConfig(
-                    name='output', template_key='output',
-                    actor=OutputActor, dependencies=['input'],
-                    kwargs={'template': '{{_inputs0.user}}'},
-                ),
-            ]
 
-            processor_actor_configs, processor_configs = self._get_processor_actor_configs()
-            # Add our slack processor responsible to sending the outgoing message
-            processor_actor_configs.append(
-                self._get_slack_processor_actor_configs(input_data),
-            )
-            actor_configs.extend(processor_actor_configs)
+        
+        template = convert_template_vars_from_legacy_format(
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
+        )
+        actor_configs = [
+            ActorConfig(
+                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
+            ),
+            ActorConfig(
+                name='output', template_key='output',
+                actor=OutputActor, dependencies=['input'],
+                kwargs={'template': '{{_inputs0.user}}'},
+            ),
+        ]
 
-            actor_configs.append(
-                ActorConfig(
-                    name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'slack_processor'], kwargs={'processor_configs': processor_configs},
-                ),
-            )
+        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        # Add our slack processor responsible to sending the outgoing message
+        processor_actor_configs.append(
+            self._get_slack_processor_actor_configs(input_data),
+        )
+        actor_configs.extend(processor_actor_configs)
 
-        output = self._start(
+        actor_configs.append(
+            ActorConfig(
+                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'slack_processor'], kwargs={'processor_configs': processor_configs},
+            ),
+        )
+
+        self._start(
             input_data, self.app_session,
             actor_configs, csp, template,
         )
 
-        if self._is_slack_url_verification_request():
-            return output
-        else:
-            return {}
+        return {}

@@ -570,6 +570,10 @@ class AppViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['post'])
     def run_slack(self, request, uid):
+         # If the request is a url verification request, return the challenge
+        if request.data.get('type') == 'url_verification':
+            return DRFResponse(status=200, data={'challenge': request.data['challenge']})
+        
         return self.run(request, uid, platform='slack')
 
     @action(detail=True, methods=['post'])
