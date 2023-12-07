@@ -335,7 +335,7 @@ class AppRunner:
                 ),
             ] 
         else:
-        # Actor configs
+            # Actor configs
             actor_configs = [
                 ActorConfig(
                     name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
