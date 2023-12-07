@@ -8,6 +8,7 @@ from llmstack.apps.app_session_utils import (
 )
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.apps.handlers.twilio_utils import RequestValidator
+from llmstack.apps.integration_configs import TwilioIntegrationConfig
 from llmstack.apps.models import AppVisibility
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.agent import AgentActor
@@ -62,6 +63,11 @@ class TwilioSmsAppRunner(AppRunner):
         return functions
 
     def app_init(self):
+        self.twilio_config = TwilioIntegrationConfig().from_dict(
+            self.app.twilio_integration_config,
+            self.app_owner_profile.decrypt_value,
+        ) if self.app.twilio_integration_config else None
+        
         self.twilio_auth_token = self.twilio_config.get(
             'auth_token') if self.twilio_config else ''
         self.twilio_account_sid = self.twilio_config.get(

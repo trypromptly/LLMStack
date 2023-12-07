@@ -3,6 +3,7 @@ import uuid
 
 from llmstack.apps.apis import AppRunnerException
 from llmstack.apps.handlers.app_runnner import AppRunner
+from llmstack.apps.integration_configs import DiscordIntegrationConfig
 from llmstack.apps.models import AppVisibility
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
@@ -30,6 +31,11 @@ def process_discord_message_text(text):
 class DiscordBotRunner(AppRunner):
 
     def app_init(self):
+        self.discord_config = DiscordIntegrationConfig().from_dict(
+            self.app.discord_integration_config,
+            self.app_owner_profile.decrypt_value,
+        ) if self.app.discord_integration_config else None
+        
         self.discord_bot_token = self.discord_config.get('bot_token')
         self.session_id = self._get_discord_bot_seession_id(self.request.data)
 

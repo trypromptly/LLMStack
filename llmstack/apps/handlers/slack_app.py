@@ -5,6 +5,7 @@ import uuid
 import requests
 
 from llmstack.apps.handlers.app_runnner import AppRunner
+from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor
@@ -40,6 +41,11 @@ def get_slack_user_email(slack_user_id, slack_bot_token):
 class SlackAppRunner(AppRunner):
 
     def app_init(self):
+        self.slack_config = SlackIntegrationConfig().from_dict(
+            self.app.slack_integration_config,
+            self.app_owner_profile.decrypt_value,
+        ) if self.app.slack_integration_config else None
+        
         self.slack_bot_token = self.slack_config.get('bot_token')
         self.stream = False
         self.app_run_request_user = self._get_app_request_user(
