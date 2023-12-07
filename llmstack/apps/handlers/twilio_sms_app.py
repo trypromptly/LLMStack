@@ -87,8 +87,8 @@ class TwilioSmsAppRunner(AppRunner):
             raise Exception('Invalid app visibility for discord app')
         return super()._is_app_accessible()
 
-    def _get_input_data(self, twilio_request_payload):
-
+    def _get_input_data(self):
+        twilio_request_payload = self.request.data
         input_data = {
             '_request': {
                 'ToCountry': twilio_request_payload.get('ToCountry', ''),
@@ -168,7 +168,7 @@ class TwilioSmsAppRunner(AppRunner):
     def _get_base_actor_configs(self, output_template, processor_configs):
         actor_configs = []
         if self.app.type.slug == 'agent':
-            input_data = self._get_input_data(self.request.data)
+            input_data = self._get_input_data()
             agent_app_session_data = get_agent_app_session_data(self.app_session)
             if not agent_app_session_data:
                 agent_app_session_data = create_agent_app_session_data(self.app_session, {})
@@ -205,6 +205,7 @@ class TwilioSmsAppRunner(AppRunner):
             
         return actor_configs
     
+    
     def run_app(self):
         # Check if the app access permissions are valid
         self._is_app_accessible()
@@ -229,16 +230,16 @@ class TwilioSmsAppRunner(AppRunner):
             actor_configs.extend(processor_actor_configs)
         
         # Add our twilio processor responsible for sending the outgoing message
-        actor_configs.append(self._get_twilio_processor_actor_configs(self._get_input_data(self.request.data)))
+        actor_configs.append(self._get_twilio_processor_actor_configs(self._get_input_data()))
         actor_configs.append(self._get_bookkeeping_actor_config(processor_configs))
 
         if self.app.type.slug == 'agent':
             return self._start_agent(
-                self._get_input_data(self.request.data), self.app_session,
+                self._get_input_data(), self.app_session,
                 actor_configs, csp, template,
                 processor_configs)
         else:
             return self._start(
-                self._get_input_data(self.request.data), self.app_session,
+                self._get_input_data(), self.app_session,
                 actor_configs, csp, template,
             )
