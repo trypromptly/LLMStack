@@ -10,7 +10,6 @@ from llmstack.apps.app_session_utils import get_app_session
 from llmstack.apps.app_session_utils import get_app_session_data
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from llmstack.apps.models import AppVisibility
-from llmstack.common.utils.utils import get_location
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor, InputRequest
