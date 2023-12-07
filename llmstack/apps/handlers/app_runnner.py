@@ -28,13 +28,14 @@ class AppRunner:
                  request_user_agent='', request_content_type=''):
         self.app = app
         self.app_data = app_data
-        self.stream = stream
         self.app_owner_profile = app_owner
         self.request = request
         self.app_run_request_user = request.user
         self.session_id = session_id
         self.app_session = self._get_or_create_app_session()
         
+        self.stream = stream
+
         self.web_config = WebIntegrationConfig().from_dict(
             app.web_integration_config,
             app_owner.decrypt_value,
