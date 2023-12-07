@@ -103,9 +103,6 @@ class DiscordBotRunner(AppRunner):
 
         return super()._is_app_accessible()
 
-    def _is_discord_url_verification_request(self):
-        return self.request.data.get('type') == 1
-
     def run_app(self):
         # Check if the app access permissions are valid
         try:
@@ -119,53 +116,37 @@ class DiscordBotRunner(AppRunner):
 
         csp = 'frame-ancestors self'
         input_data = self._get_input_data(self.request.data)
-        if self._is_discord_url_verification_request():
-            template = '{"type": "{{_inputs0.type}}"}'
-            actor_configs = [
-                ActorConfig(
-                    name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
-                ),
-                ActorConfig(
-                    name='output', template_key='output',
-                    actor=OutputActor, kwargs={
-                        'template': '{"type": "{{_inputs0.type}}"}'},
-                ),
-            ]
-            processor_configs = {}
-        else:
-            template = convert_template_vars_from_legacy_format(
-                self.app_data['output_template'].get(
-                    'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
-            )
-            actor_configs = [
-                ActorConfig(
-                    name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
-                ),
-                ActorConfig(
-                    name='output', template_key='output',
-                    actor=OutputActor, kwargs={
-                        'template': '{{_inputs0.channel}}'},
-                ),
-            ]
-            processor_actor_configs, processor_configs = self._get_processor_actor_configs()
-            # Add our discord processor responsible for sending the outgoing message
-            processor_actor_configs.append(
-                self._get_discord_processor_actor_configs(input_data),
-            )
-            actor_configs.extend(processor_actor_configs)
 
-            actor_configs.append(
-                ActorConfig(
-                    name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'discord_processor'], kwargs={'processor_configs': processor_configs},
-                ),
-            )
+        template = convert_template_vars_from_legacy_format(
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
+        )
+        actor_configs = [
+            ActorConfig(
+                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
+            ),
+            ActorConfig(
+                name='output', template_key='output',
+                actor=OutputActor, kwargs={
+                    'template': '{{_inputs0.channel}}'},
+            ),
+        ]
+        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        # Add our discord processor responsible for sending the outgoing message
+        processor_actor_configs.append(
+            self._get_discord_processor_actor_configs(input_data),
+        )
+        actor_configs.extend(processor_actor_configs)
+
+        actor_configs.append(
+            ActorConfig(
+                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'discord_processor'], kwargs={'processor_configs': processor_configs},
+            ),
+        )
 
         self._start(
             input_data, self.app_session,
             actor_configs, csp, template,
         )
 
-        if self._is_discord_url_verification_request():
-            return {'type': 1}
-        else:
-            return {'type': 5}
+        return {'type': 5}

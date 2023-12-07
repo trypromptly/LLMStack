@@ -562,6 +562,10 @@ class AppViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['post'])
     def run_discord(self, request, uid):
+        # If the request is a url verification request, return the challenge
+        if request.data.get('type') == 1:
+            return DRFResponse(status=200, data={'type': 1})
+        
         return self.run(request, uid, platform='discord')
 
     @action(detail=True, methods=['post'])
