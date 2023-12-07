@@ -3,10 +3,12 @@ import re
 import uuid
 
 import requests
+from llmstack.apps.app_session_utils import create_agent_app_session_data, get_agent_app_session_data
 
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.play.actor import ActorConfig
+from llmstack.play.actors.agent import AgentActor
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor
 from llmstack.play.actors.output import OutputActor
@@ -89,7 +91,9 @@ class SlackAppRunner(AppRunner):
 
         return None
 
-    def _get_input_data(self, slack_request_payload):
+    def _get_input_data(self):
+        slack_request_payload = self.request.data
+        
         slack_message_type = slack_request_payload['type']
         if slack_message_type == 'url_verification':
             return {'input': {'challenge': slack_request_payload['challenge']}}
@@ -162,47 +166,99 @@ class SlackAppRunner(AppRunner):
 
         return super()._is_app_accessible()
 
+    def _get_csp(self):
+        return 'frame-ancestors self'
+    
+    def _get_base_actor_configs(self, output_template, processor_configs):
+        actor_configs = []
+        if self.app.type.slug == 'agent':
+            input_data = self._get_input_data()
+            agent_app_session_data = get_agent_app_session_data(self.app_session)
+            if not agent_app_session_data:
+                agent_app_session_data = create_agent_app_session_data(self.app_session, {})
+            actor_configs = [
+                ActorConfig(
+                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
+                ),
+                ActorConfig(
+                    name='agent', template_key='agent', 
+                    actor=AgentActor, 
+                    kwargs={
+                        'processor_configs': processor_configs, 
+                        'functions': self._get_processors_as_functions(), 
+                        'input': input_data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 
+                        'config': self.app_data['config'],
+                        'agent_app_session_data': agent_app_session_data,
+                        }
+                ),
+                ActorConfig(
+                name='output', template_key='output',
+                actor=OutputActor, dependencies=['input'],
+                kwargs={'template': '{{_inputs0.user}}'},
+                ),
+            ] 
+        else:
+            actor_configs = [
+                ActorConfig(
+                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
+                ),
+                ActorConfig(
+                name='output', template_key='output',
+                actor=OutputActor, dependencies=['input'],
+                kwargs={'template': '{{_inputs0.user}}'},
+                ),
+            ]
+        return actor_configs
+    
+    def _get_bookkeeping_actor_config(self, processor_configs):
+        if self.app.type.slug == 'agent':
+            return ActorConfig(
+                name='bookkeeping', template_key='bookkeeping', 
+                actor=BookKeepingActor,
+                dependencies=['_inputs0', 'output', 'slack_processor', 'agent'], 
+                kwargs={'processor_configs': processor_configs, 'is_agent': True},
+            )
+        else:
+            return ActorConfig(
+                name='bookkeeping', template_key='bookkeeping', 
+                actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'slack_processor'], 
+                kwargs={'processor_configs': processor_configs},
+            )
+        
     def run_app(self):
         # Check if the app access permissions are valid
         self._is_app_accessible()
-        debug_data = []
 
-        csp = 'frame-ancestors self'
-        input_data = self._get_input_data(self.request.data)
-        # Actor configs
-
+        csp = self._get_csp()
+        
+        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
         
         template = convert_template_vars_from_legacy_format(
             self.app_data['output_template'].get(
                 'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
         )
-        actor_configs = [
-            ActorConfig(
-                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
-            ),
-            ActorConfig(
-                name='output', template_key='output',
-                actor=OutputActor, dependencies=['input'],
-                kwargs={'template': '{{_inputs0.user}}'},
-            ),
-        ]
+        
+        # Actor configs
+        actor_configs = self._get_base_actor_configs(template, processor_configs)
+        
+        if self.app.type.slug == 'agent':
+            actor_configs.extend(map(lambda x: ActorConfig(
+            name=x.name, template_key=x.template_key, actor=x.actor, dependencies=(x.dependencies + ['agent']), kwargs=x.kwargs), processor_actor_configs)
+        ) 
+        else:
+            actor_configs.extend(processor_actor_configs)
 
-        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
         # Add our slack processor responsible to sending the outgoing message
-        processor_actor_configs.append(
-            self._get_slack_processor_actor_configs(input_data),
-        )
-        actor_configs.extend(processor_actor_configs)
-
-        actor_configs.append(
-            ActorConfig(
-                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'slack_processor'], kwargs={'processor_configs': processor_configs},
-            ),
-        )
-
-        self._start(
-            input_data, self.app_session,
-            actor_configs, csp, template,
-        )
-
-        return {}
+        actor_configs.append(self._get_slack_processor_actor_configs(self._get_input_data()))
+        actor_configs.append(self._get_bookkeeping_actor_config(processor_configs))
+        
+        if self.app.type.slug == 'agent':
+            return self._start_agent(
+                self._get_input_data(), self.app_session,
+                actor_configs, csp, template,
+                processor_configs)
+        else:
+            return self._start(
+                self._get_input_data(), self.app_session,
+                actor_configs, csp, template,
+            )
