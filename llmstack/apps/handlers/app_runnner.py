@@ -381,8 +381,12 @@ class AppRunner:
         # Actor configs
         actor_configs = self._get_base_actor_configs(template, processor_configs)
         
-        actor_configs.extend(processor_actor_configs)
-        
+        if self.app.type.slug == 'agent':
+            actor_configs.extend(map(lambda x: ActorConfig(
+            name=x.name, template_key=x.template_key, actor=x.actor, dependencies=(x.dependencies + ['agent']), kwargs=x.kwargs), processor_actor_configs)
+        )
+        else:
+            actor_configs.extend(processor_actor_configs)
         
         actor_configs.append(self._get_bookkeeping_actor_config(processor_configs))
 
