@@ -213,6 +213,7 @@ class AgentActor(Actor):
 
                 try:
                     tool_invoke_input = ToolInvokeInput(
+                        input=self._input,
                         tool_name=function_name,
                         tool_args=json.loads(function_args),
                     )
