@@ -79,7 +79,8 @@ class TwilioSmsAppRunner(AppRunner):
 
     def _get_twilio_app_seession_id(self, twilio_request_payload):
         if 'From' in twilio_request_payload:
-            return generate_uuid(twilio_request_payload['From'])
+            id = f'{str(self.app.uuid)}-{twilio_request_payload["From"]}'
+            return generate_uuid(id)
         return None
 
     def _is_app_accessible(self):
