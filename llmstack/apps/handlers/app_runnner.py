@@ -127,6 +127,7 @@ class AppRunner:
                             'input': convert_template_vars_from_legacy_format(processor['input']),
                             'config': convert_template_vars_from_legacy_format(processor['config']),
                             'session_data': app_session_data['data'] if app_session_data and 'data' in app_session_data else {},
+                            'is_tool': True if self.app.type.slug == 'agent' else False,
                         },
                         output_cls=processor_cls.get_output_cls(),
                     ),

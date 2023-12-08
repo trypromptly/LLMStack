@@ -77,7 +77,7 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
     Abstract class for API processors
     """
 
-    def __init__(self, input, config, env, output_stream=None, dependencies=[], all_dependencies=[], session_data=None, id=None):
+    def __init__(self, input, config, env, output_stream=None, dependencies=[], all_dependencies=[], session_data=None, id=None, is_tool=False):
         Actor.__init__(self, dependencies=dependencies,
                        all_dependencies=all_dependencies)
 
@@ -92,6 +92,7 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
         self._env = env
         self._id = id
         self._output_stream = output_stream
+        self._is_tool = is_tool
 
         self.process_session_data(session_data)
 
@@ -192,6 +193,9 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
 
     def input(self, message: Any) -> Any:
         # Hydrate the input and config before processing
+        if self._is_tool:
+            # NO-OP when the processor is a tool
+            return
         try:
             self._input = hydrate_input(
                 self._input, message) if message else self._input
