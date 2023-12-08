@@ -1,58 +1,48 @@
 import asyncio
-import json
 import logging
 import uuid
 
 from rest_framework.request import Request
 
-from llmstack.apps.app_session_utils import create_app_session
+from llmstack.apps.app_session_utils import create_agent_app_session_data, create_app_session, get_agent_app_session_data
 from llmstack.apps.app_session_utils import create_app_session_data
 from llmstack.apps.app_session_utils import get_app_session
 from llmstack.apps.app_session_utils import get_app_session_data
-from llmstack.apps.integration_configs import DiscordIntegrationConfig, TwilioIntegrationConfig
-from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from llmstack.apps.models import AppVisibility
-from llmstack.common.utils.utils import get_location
 from llmstack.play.actor import ActorConfig
+from llmstack.play.actors.agent import AgentActor
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor, InputRequest
 from llmstack.play.actors.output import OutputActor
 from llmstack.play.coordinator import Coordinator
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.base.models import Profile
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 logger = logging.getLogger(__name__)
 
 
 class AppRunner:
-    def __init__(self, app, app_data, request_uuid, request: Request, app_owner, session_id=None):
+    def __init__(self, app, app_data, request_uuid, request: Request, app_owner, 
+                 session_id=None, stream=False, request_ip='', request_location='', 
+                 request_user_agent='', request_content_type=''):
         self.app = app
         self.app_data = app_data
-        self.stream = request.data.get('stream', False)
         self.app_owner_profile = app_owner
         self.request = request
         self.app_run_request_user = request.user
         self.session_id = session_id
         self.app_session = self._get_or_create_app_session()
+        
+        self.stream = stream
+
         self.web_config = WebIntegrationConfig().from_dict(
             app.web_integration_config,
             app_owner.decrypt_value,
         ) if app.web_integration_config else None
-        self.slack_config = SlackIntegrationConfig().from_dict(
-            app.slack_integration_config,
-            app_owner.decrypt_value,
-        ) if app.slack_integration_config else None
-        self.discord_config = DiscordIntegrationConfig().from_dict(
-            app.discord_integration_config,
-            app_owner.decrypt_value,
-        ) if app.discord_integration_config else None
-        self.twilio_config = TwilioIntegrationConfig().from_dict(
-            app.twilio_integration_config,
-            app_owner.decrypt_value,
-        ) if app.twilio_integration_config else None
-
+        
         self.app_init()
 
         request_user_email = ''
@@ -61,17 +51,6 @@ class AppRunner:
                 request_user_email = self.app_run_request_user.email
             elif self.app_run_request_user and self.app_run_request_user.username and len(self.app_run_request_user.username) > 0:
                 request_user_email = self.app_run_request_user.username
-
-        request_ip = request.headers.get(
-            'X-Forwarded-For', request.META.get(
-                'REMOTE_ADDR', '',
-            ),
-        ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
-        request_location = request.headers.get('X-Client-Geo-Location', '')
-
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ''
 
         self.input_actor_request = InputRequest(
             request_app_uuid=self.app.uuid,
@@ -82,8 +61,8 @@ class AppRunner:
             request_user_email=request_user_email,
             request_ip=request_ip,
             request_location=request_location,
-            request_user_agent=request.META.get('HTTP_USER_AGENT', ''),
-            request_content_type=request.META.get('CONTENT_TYPE', ''),
+            request_user_agent=request_user_agent,
+            request_content_type=request_content_type,
             request_body=request.data,
         )
 
@@ -198,7 +177,25 @@ class AppRunner:
                 }
         return processor_actor_configs, processor_configs
 
-    def _start(self, input_data, app_session, actor_configs, csp, template):
+    def _get_processors_as_functions(self):
+        functions = []
+        processor_classes = {}
+
+        for processor_class in ApiProcessorInterface.__subclasses__():
+            processor_classes[(processor_class.provider_slug(),
+                               processor_class.slug())] = processor_class
+
+        for processor in self.app_data['processors'] if self.app_data and 'processors' in self.app_data else []:
+            if (processor['provider_slug'], processor['processor_slug']) not in processor_classes:
+                continue
+            functions.append({
+                'name': processor['id'],
+                'description': processor['description'],
+                'parameters': processor_classes[(processor['provider_slug'], processor['processor_slug'])].get_tool_input_schema(processor),
+            })
+        return functions
+    
+    def _start(self, input_data, app_session, actor_configs, csp, template, processor_configs=[]):
         try:
             coordinator_ref = Coordinator.start(
                 session_id=app_session['uuid'], actor_configs=actor_configs,
@@ -246,45 +243,163 @@ class AppRunner:
             'session': {'id': self.app_session['uuid']},
             'output': output, 'csp': csp,
         }
+        
+    def _start_agent(self, input_data, app_session, actor_configs, csp, template, processor_configs=[]):
+        try:
+            coordinator_ref = Coordinator.start(
+                session_id=self.app_session['uuid'], actor_configs=actor_configs,
+            )
+            coordinator = coordinator_ref.proxy()
 
-    def run_app(self):
-        # Check if the app access permissions are valid
-        self._is_app_accessible()
+            agent_actor = coordinator.get_actor('agent').get().proxy()
+            agent_actor.run()
 
-        template = convert_template_vars_from_legacy_format(
-            self.app_data['output_template'].get(
-                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
-        )
+            output = None
+            input_actor = coordinator.get_actor('input').get().proxy()
+            output_actor = coordinator.get_actor('output').get().proxy()
+            output_iter = None
+            if input_actor and output_actor:
+                input_actor.write(input_data.get('input', {})).get()
+                output_iter = output_actor.get_output().get(
+                ) if not self.stream else output_actor.get_output_stream().get()
 
-        debug_data = []
+            if self.stream:
+                # Return a wrapper over output_iter where we call next() on output_iter and yield the result
+                async def stream_output():
+                    metadata_sent = False
+                    try:
+                        while True:
+                            await asyncio.sleep(0.0001)
+                            if not metadata_sent:
+                                metadata_sent = True
+                                yield {'session': {'id': self.app_session['uuid']}, 'csp': csp, 'templates': {**{k: v['processor']['output_template'] for k, v in processor_configs.items()}, **{'agent': self.app_data['output_template']}} if processor_configs else {'agent': self.app_data['output_template']}}
+                            output = next(output_iter)
+                            yield output
+                    except StopIteration:
+                        pass
+                    except Exception as e:
+                        logger.exception(e)
+                        coordinator_ref.stop()
+                        raise Exception(f'Error streaming output: {e}')
+                return stream_output()
 
+            for output in output_iter:
+                # Iterate through output_iter to get the final output
+                pass
+
+        except Exception as e:
+            logger.exception(e)
+            raise Exception(f'Error starting coordinator: {e}')
+
+        return {
+            'session': {'id': self.app_session['uuid']},
+            'output': output, 'csp': csp,
+        }
+
+    def _get_csp(self):
         csp = 'frame-ancestors self'
         if self.app.is_published:
             csp = 'frame-ancestors *'
             if self.web_config and 'allowed_sites' in self.web_config and len(self.web_config['allowed_sites']) > 0:
                 csp = 'frame-ancestors ' + \
                     ' '.join(self.web_config['allowed_sites'])
-
+        return csp
+    
+    def _get_base_actor_configs(self, output_template, processor_configs):
+        actor_configs = []
+        if self.app.type.slug == 'agent':
+            agent_app_session_data = get_agent_app_session_data(self.app_session)
+            if not agent_app_session_data:
+                agent_app_session_data = create_agent_app_session_data(self.app_session, {})
+                
+            actor_configs = [
+                ActorConfig(
+                    name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
+                ),
+                ActorConfig(
+                    name='agent', template_key='agent', 
+                    actor=AgentActor, 
+                    kwargs={
+                            'processor_configs': processor_configs, 
+                            'functions': self._get_processors_as_functions(), 
+                            'input': self.request.data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 
+                            'config': self.app_data['config'],
+                            'agent_app_session_data': agent_app_session_data,
+                            }
+                ),
+                ActorConfig(
+                    name='output', template_key='output',
+                    dependencies=['_inputs0', 'agent'],
+                    actor=OutputActor, kwargs={
+                        'template': self.app_data['output_template']['markdown']}
+                ),
+            ] 
+        else:
+            # Actor configs
+            actor_configs = [
+                ActorConfig(
+                    name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
+                ),
+                ActorConfig(
+                    name='output', template_key='output',
+                    actor=OutputActor, kwargs={'template': output_template},
+                ),
+            ]
+        return actor_configs
+    
+    def _get_bookkeeping_actor_config(self, processor_configs):
+        if self.app.type.slug == 'agent':
+            return ActorConfig(
+                name='bookkeeping', template_key='bookkeeping', 
+                actor=BookKeepingActor,
+                dependencies=['_inputs0', 'output', 'agent'], 
+                kwargs={'processor_configs': processor_configs, 'is_agent': True},
+            )
+        else:
+            return ActorConfig(
+                name='bookkeeping', template_key='bookkeeping', 
+                actor=BookKeepingActor, dependencies=['_inputs0', 'output'], 
+                kwargs={'processor_configs': processor_configs},
+                )
+            
+    def _get_input_data(self):
+        return self.request.data
+    
+    def _get_actor_configs(self, template, processor_configs, processor_actor_configs):
         # Actor configs
-        actor_configs = [
-            ActorConfig(
-                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
-            ),
-            ActorConfig(
-                name='output', template_key='output',
-                actor=OutputActor, kwargs={'template': template},
-            ),
-        ]
-        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
-        actor_configs.extend(processor_actor_configs)
-        actor_configs.append(
-            ActorConfig(
-                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output'], kwargs={'processor_configs': processor_configs},
-            ),
+        actor_configs = self._get_base_actor_configs(template, processor_configs)
+        
+        if self.app.type.slug == 'agent':
+            actor_configs.extend(map(lambda x: ActorConfig(
+            name=x.name, template_key=x.template_key, actor=x.actor, dependencies=(x.dependencies + ['agent']), kwargs=x.kwargs), processor_actor_configs)
         )
+        else:
+            actor_configs.extend(processor_actor_configs)
+        
+        actor_configs.append(self._get_bookkeeping_actor_config(processor_configs))
 
-        input_data = self.request.data
-        return self._start(
-            input_data, self.app_session,
-            actor_configs, csp, template,
+        return actor_configs
+        
+    def run_app(self):
+        # Check if the app access permissions are valid
+        self._is_app_accessible()
+        
+        csp = self._get_csp()
+
+        template = convert_template_vars_from_legacy_format(
+            self.app_data['output_template'].get(
+                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
         )
+        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        actor_configs = self._get_actor_configs(template, processor_configs, processor_actor_configs)
+        
+        if self.app.type.slug == 'agent':
+            return self._start_agent(
+                self._get_input_data(), self.app_session,
+                actor_configs, csp, template,
+                processor_configs)
+        else:
+            return self._start(
+                self._get_input_data(), self.app_session,
+                actor_configs, csp, template,
+            )

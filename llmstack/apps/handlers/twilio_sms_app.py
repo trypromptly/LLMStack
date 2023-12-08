@@ -8,6 +8,7 @@ from llmstack.apps.app_session_utils import (
 )
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.apps.handlers.twilio_utils import RequestValidator
+from llmstack.apps.integration_configs import TwilioIntegrationConfig
 from llmstack.apps.models import AppVisibility
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.agent import AgentActor
@@ -62,6 +63,11 @@ class TwilioSmsAppRunner(AppRunner):
         return functions
 
     def app_init(self):
+        self.twilio_config = TwilioIntegrationConfig().from_dict(
+            self.app.twilio_integration_config,
+            self.app_owner_profile.decrypt_value,
+        ) if self.app.twilio_integration_config else None
+        
         self.twilio_auth_token = self.twilio_config.get(
             'auth_token') if self.twilio_config else ''
         self.twilio_account_sid = self.twilio_config.get(
@@ -81,8 +87,8 @@ class TwilioSmsAppRunner(AppRunner):
             raise Exception('Invalid app visibility for discord app')
         return super()._is_app_accessible()
 
-    def _get_input_data(self, twilio_request_payload):
-
+    def _get_input_data(self):
+        twilio_request_payload = self.request.data
         input_data = {
             '_request': {
                 'ToCountry': twilio_request_payload.get('ToCountry', ''),
@@ -141,67 +147,76 @@ class TwilioSmsAppRunner(AppRunner):
             output_cls=TwilioCreateMessageProcessor.get_output_cls(),
         )
 
-    def run_app(self):
-        # Check if the app access permissions are valid
-        try:
-            self._is_app_accessible()
-        except Exception as e:
-            logger.exception('Error while validating app access permissions')
-            return {}
-
-        csp = 'frame-ancestors self'
-        input_data = self._get_input_data(self.request.data)
-
-        template = convert_template_vars_from_legacy_format(
-            self.app_data['output_template'].get(
-                'markdown', '') if self.app_data and 'output_template' in self.app_data else self.app.output_template.get('markdown', ''),
-        )
-
-        actor_configs = [
-            ActorConfig(
-                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
-            ),
-
-            ActorConfig(
-                name='output', template_key='output',  dependencies=['input'],
-                actor=OutputActor, kwargs={'template': '{{_inputs0}}'},
-            ),
-        ]
-
-        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+    def _get_csp(self):
+        return 'frame-ancestors self'
+    
+    def _get_bookkeeping_actor_config(self, processor_configs):
         if self.app.type.slug == 'agent':
-            agent_app_session_data = get_agent_app_session_data(
-                self.app_session)
-            if not agent_app_session_data:
-                agent_app_session_data = create_agent_app_session_data(
-                    self.app_session, {})
-            actor_configs.append(
-                ActorConfig(
-                    name='agent', template_key='agent',
-                    actor=AgentActor,
-                    kwargs={
-                        'processor_configs': processor_configs,
-                        'functions': self._get_processors_as_functions(),
-                        'input': input_data['input'], 'env': self.app_owner_profile.get_vendor_env(),
-                        'config': self.app_data['config'],
-                        'agent_app_session_data': agent_app_session_data,
-                    }
-                ),
+            return ActorConfig(
+                name='bookkeeping', template_key='bookkeeping', 
+                actor=BookKeepingActor,
+                dependencies=['_inputs0', 'output', 'twilio_processor', 'agent'], 
+                kwargs={'processor_configs': processor_configs, 'is_agent': True},
             )
-
+        else:
+            return ActorConfig(
+                name='bookkeeping', template_key='bookkeeping', 
+                actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'twilio_processor'], 
+                kwargs={'processor_configs': processor_configs},
+            )
+    
+    def _get_base_actor_configs(self, output_template, processor_configs):
+        actor_configs = []
+        if self.app.type.slug == 'agent':
+            input_data = self._get_input_data()
+            agent_app_session_data = get_agent_app_session_data(self.app_session)
+            if not agent_app_session_data:
+                agent_app_session_data = create_agent_app_session_data(self.app_session, {})
+            actor_configs = [
+                ActorConfig(
+                    name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
+                ),
+                ActorConfig(
+                    name='agent', template_key='agent', 
+                    actor=AgentActor, 
+                    kwargs={
+                            'processor_configs': processor_configs, 
+                            'functions': self._get_processors_as_functions(), 
+                            'input': input_data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 
+                            'config': self.app_data['config'],
+                            'agent_app_session_data': agent_app_session_data,
+                            }
+                ),
+                ActorConfig(
+                    name='output', template_key='output',
+                    dependencies=['_inputs0'],
+                    actor=OutputActor, kwargs={'template': '{{_inputs0}}'}
+                ),
+            ]
+        else:
+            actor_configs = [
+                ActorConfig(
+                    name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request}),
+                ActorConfig(
+                    name='output', template_key='output',  dependencies=['input'],
+                    actor=OutputActor, kwargs={'template': '{{_inputs0}}'}
+                    )
+                ]
+            
+        return actor_configs
+    
+    def _get_actor_configs(self, template, processor_configs, processor_actor_configs):
+        # Actor configs
+        actor_configs = self._get_base_actor_configs(template, processor_configs)
+        
+        if self.app.type.slug == 'agent':
+            actor_configs.extend(map(lambda x: ActorConfig(
+            name=x.name, template_key=x.template_key, actor=x.actor, dependencies=(x.dependencies + ['agent']), kwargs=x.kwargs), processor_actor_configs)
+        )
+        else:
+            actor_configs.extend(processor_actor_configs)
+        
         # Add our twilio processor responsible for sending the outgoing message
-        processor_actor_configs.append(
-            self._get_twilio_processor_actor_configs(input_data),
-        )
-        actor_configs.extend(processor_actor_configs)
-
-        actor_configs.append(
-            ActorConfig(
-                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['_inputs0', 'output', 'twilio_processor'], kwargs={'processor_configs': processor_configs})
-        )
-
-        self._start(
-            input_data, self.app_session,
-            actor_configs, csp, template,
-        )
-        return {}
+        actor_configs.append(self._get_twilio_processor_actor_configs(self._get_input_data()))
+        actor_configs.append(self._get_bookkeeping_actor_config(processor_configs))
+        return actor_configs
