@@ -322,7 +322,7 @@ class AppRunner:
                     kwargs={
                             'processor_configs': processor_configs, 
                             'functions': self._get_processors_as_functions(), 
-                            'input': self.request.data.get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 
+                            'input': self._get_input_data().get('input', {}), 'env': self.app_owner_profile.get_vendor_env(), 
                             'config': self.app_data['config'],
                             'agent_app_session_data': agent_app_session_data,
                             }
@@ -363,7 +363,8 @@ class AppRunner:
                 )
             
     def _get_input_data(self):
-        return self.request.data
+        input = self.request.data.get('input', {})
+        return {'input': {**input, "_request" : {}}}
     
     def _get_actor_configs(self, template, processor_configs, processor_actor_configs):
         # Actor configs
