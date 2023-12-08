@@ -87,7 +87,9 @@ class SlackAppRunner(AppRunner):
                 session_identifier = f"{slack_request_payload['event']['channel']}_{thread_ts}"
             else:
                 session_identifier = f"{slack_request_payload['event']['user']}_{thread_ts}"
-            return generate_uuid(session_identifier)
+            
+            id = f'{str(self.app.uuid)}-{session_identifier}'
+            return generate_uuid(id)
 
         return None
 
