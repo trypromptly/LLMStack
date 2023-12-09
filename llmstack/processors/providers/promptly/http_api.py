@@ -9,7 +9,7 @@ from pydantic import Field, HttpUrl, root_validator
 from requests.auth import HTTPBasicAuth
 
 from llmstack.common.blocks.base.processor import Schema
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, hydrate_input
 
 logger = logging.getLogger(__name__)
 
@@ -178,13 +178,30 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
         return HttpAPIProcessorInput(input_data=json.dumps(tool_args))
 
     def process(self):
-        url = f"{self._config.url}{self._config.path}"
         method = self._config.method
-
         input_data = json.loads(self._input.input_data or '{}')
         params = {}
         headers = {}
         body_data = {}
+        auth = None
+        connection_configuration = {}
+        
+        if self._config.connection_id:
+            connection = self._env['connections'][self._config.connection_id]
+            if connection['base_connection_type'] == 'credentials':
+                if connection['connection_type_slug'] == 'basic_authentication':
+                    auth = HTTPBasicAuth(connection['configuration']['username'],
+                                         connection['configuration']['password'])
+                elif connection['connection_type_slug'] == 'bearer_authentication':
+                    headers["Authorization"] = f"{connection['configuration']['token_prefix']} {connection['configuration']['token']}"
+            elif connection['base_connection_type'] == 'oauth2':
+                headers["Authorization"] = f"Bearer {connection['configuration']['token']}"
+            
+            connection_configuration = connection['configuration']
+        
+        self._config = hydrate_input(self._config, {'_connection' : connection_configuration})
+        
+        url = f"{self._config.url}{self._config.path}"
 
         requred_parameters = [
             parameter.name for parameter in self._config.parameters if parameter.required]
@@ -217,17 +234,7 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
                 if param.name in input_data:
                     body_data[param.name] = input_data.get(param.name)
 
-        auth = None
-        if self._config.connection_id:
-            connection = self._env['connections'][self._config.connection_id]
-            if connection['base_connection_type'] == 'credentials':
-                if connection['connection_type_slug'] == 'basic_authentication':
-                    auth = HTTPBasicAuth(connection['configuration']['username'],
-                                         connection['configuration']['password'])
-                elif connection['connection_type_slug'] == 'bearer_authentication':
-                    headers["Authorization"] = f"{connection['configuration']['token_prefix']} {connection['configuration']['token']}"
-            elif connection['base_connection_type'] == 'oauth2':
-                headers["Authorization"] = f"Bearer {connection['configuration']['token']}"
+        
 
         if method == HttpMethod.GET:
             response = requests.get(url=url,
