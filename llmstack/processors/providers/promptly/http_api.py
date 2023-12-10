@@ -23,7 +23,6 @@ class HttpMethod(str, Enum):
     def __str__(self):
         return self.value
 
-
 class FieldType(str, Enum):
     STRING = 'string'
     NUMBER = 'number'
@@ -34,7 +33,6 @@ class FieldType(str, Enum):
     def __str__(self):
         return self.value
 
-
 class ParameterLocation(str, Enum):
     PATH = 'path'
     QUERY = 'query'
@@ -44,22 +42,21 @@ class ParameterLocation(str, Enum):
     def __str__(self):
         return self.value
 
-
 class ParameterType(Schema):
     name: str
     location: ParameterLocation = Field(default=ParameterLocation.PATH)
     required: bool = True
     description: Optional[str] = None
+    value: Optional[str] = None
 
-
-class RequestBodyParameterType(ParameterType):
+class RequestBodyParameterType(Schema):
+    name: str
     type: FieldType = Field(default=FieldType.STRING)
-
+    required: bool = True
+    description: Optional[str] = None
 
 class HttpAPIProcessorInput(Schema):
-    input_data: Optional[str] = Field(
-        description='Input', advanced_parameter=False, widget='textarea')
-
+    input_data: Optional[str] = Field(description='Input', advanced_parameter=False, widget='textarea')
 
 class HttpAPIProcessorOutput(Schema):
     code: int = Field(title='Response code', default=200,
@@ -81,34 +78,43 @@ class HttpAPIProcessorOutput(Schema):
     elapsed: Optional[int] = Field(
         title='Response elapsed time', default=None, advanced_parameter=False)
 
-
 class RequestBody(Schema):
     parameters: List[RequestBodyParameterType] = Field(
         title='Request body parameters', default=[], advanced_parameter=False)
 
+class ContentType(str, Enum):
+    JSON = 'application/json'
 
+    def __str__(self):
+        return self.value
+    
 class HttpAPIProcessorConfiguration(Schema):
+    url: Optional[HttpUrl] = Field(
+        description='URL to make the request to', advanced_parameter=False)
     path: str = Field(
         description='Path to append to the URL. You can add a prameter by encolosing it in single brackets {param}', advanced_parameter=False)
     method: HttpMethod = Field(
         default=HttpMethod.GET, advanced_parameter=False)
+    content_type: ContentType = Field(
+        default=ContentType.JSON, advanced_parameter=False)
 
+    parameters: List[ParameterType] = Field(
+        title='Parameters to pass', default=[], advanced_parameter=False)
+    request_body: Optional[RequestBody] = Field(
+        default=None, advanced_parameter=False)
+    
+    connection_id: Optional[str] = Field(
+        widget='connection',  advanced_parameter=False, description='Use your authenticated connection to make the request')
+    
+    body: Optional[str] = Field(
+        description='Optional Request body, if not set body will be created from parameters', widget='textarea', advanced_parameter=False)
+    
     openapi_spec: Optional[str] = Field(
         description='OpenAPI spec', widget='textarea')
     openapi_spec_url: Optional[HttpUrl] = Field(
         description='URL to the OpenAPI spec')
     parse_openapi_spec: bool = Field(default=True)
     _openapi_spec_parsed: bool = Field(default=False, widget='hidden')
-
-    url: Optional[HttpUrl] = Field(
-        description='URL to make the request to', advanced_parameter=False)
-    parameters: List[ParameterType] = Field(
-        title='Parameters to pass', default=[], advanced_parameter=False)
-    request_body: Optional[RequestBody] = Field(
-        default=None, advanced_parameter=False)
-
-    connection_id: Optional[str] = Field(
-        widget='connection',  advanced_parameter=False)
 
     allow_redirects: Optional[bool] = True
     timeout: Optional[float] = Field(default=5, advanced_parameter=True)
@@ -132,16 +138,20 @@ class HttpAPIProcessorConfiguration(Schema):
         schema = {'type': 'object', 'properties': {}}
         required_fields = []
         for parameter in values['parameters']:
-            schema['properties'][parameter.name] = {
+            param_name = f'{parameter.location}_{parameter.name}'
+            schema['properties'][param_name] = {
                 'type': 'string', 'description': parameter.description}
             if parameter.required:
-                required_fields.append(parameter.name)
+                required_fields.append(param_name)
+                
         if values['request_body']:
             for parameter in values['request_body'].parameters:
-                schema['properties'][parameter.name] = {
+                param_name = f'body_{parameter.name}'
+                schema['properties'][param_name] = {
                     'type': parameter.type, 'description': parameter.description}
                 if parameter.required:
-                    required_fields.append(parameter.name)
+                    required_fields.append(param_name)
+                    
         schema['required'] = required_fields
         values['_schema'] = json.dumps(schema)
         return values
@@ -178,79 +188,100 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
         return HttpAPIProcessorInput(input_data=json.dumps(tool_args))
 
     def process(self):
-        method = self._config.method
-        input_data = json.loads(self._input.input_data or '{}')
-        params = {}
-        headers = {}
-        body_data = {}
-        auth = None
-        connection_configuration = {}
+        input_json = json.loads(self._input.input_data or '{}')
         
+        path_params = {}
+        query_params = {}
+        headers = {}
+        cookies = {}
+        body_data = {}
+        
+        for param_key in input_json:
+            if param_key.startswith('path_'):
+                path_params[param_key[5:]] = input_json[param_key]
+            elif param_key.startswith('query_'):
+                query_params[param_key[6:]] = input_json[param_key]
+            elif param_key.startswith('header_'):
+                headers[param_key[7:]] = input_json[param_key]
+            elif param_key.startswith('body_'):
+                body_data[param_key[5:]] = input_json[param_key]
+            elif param_key.startswith('cookie_'):
+                cookies[param_key[7:]] = input_json[param_key]
+            
+        auth = None
+        method = self._config.method
+        
+        connection_configuration = {}
         if self._config.connection_id:
             connection = self._env['connections'][self._config.connection_id]
-            if connection['base_connection_type'] == 'credentials':
-                if connection['connection_type_slug'] == 'basic_authentication':
+            connection_type = connection['base_connection_type']
+    
+            if connection_type == 'credentials':
+                type_slug = connection['connection_type_slug']
+                if type_slug == 'basic_authentication':
                     auth = HTTPBasicAuth(connection['configuration']['username'],
                                          connection['configuration']['password'])
-                elif connection['connection_type_slug'] == 'bearer_authentication':
+                elif type_slug == 'bearer_authentication':
                     headers["Authorization"] = f"{connection['configuration']['token_prefix']} {connection['configuration']['token']}"
-            elif connection['base_connection_type'] == 'oauth2':
+                elif type_slug == 'api_key_authentication' and connection['configuration']['header_key']:
+                    headers[connection['configuration']['header_key']] = connection['configuration']['api_key']
+            elif connection_type == 'oauth2':
                 headers["Authorization"] = f"Bearer {connection['configuration']['token']}"
             
             connection_configuration = connection['configuration']
         
-        self._config = hydrate_input(self._config, {'_connection' : connection_configuration})
+        url = f'{self._config.url}{self._config.path}'
+        url = hydrate_input(url, {'_parameters' : path_params, '_connection' : connection_configuration})    
         
-        url = f"{self._config.url}{self._config.path}"
-
-        requred_parameters = [
-            parameter.name for parameter in self._config.parameters if parameter.required]
-        for required_parameter in requred_parameters:
-            if required_parameter not in input_data:
-                raise Exception(
-                    f'Required parameter {required_parameter} not found in input')
-
-        # Extract all parameters from the url and replace them with the values from the input
-        for param in self._config.parameters:
-            if param.location == ParameterLocation.PATH:
-                url = url.replace(f'{{{param.name}}}', str(
-                    input_data.get(param.name, '')))
-            elif param.location == ParameterLocation.QUERY:
-                if param.name in input_data:
-                    params[param.name] = input_data[param.name]
-            elif param.location == ParameterLocation.HEADER:
-                if param.name in input_data:
-                    headers[param.name] = input_data[param.name]
+        if self._config:
+            for parameter in self._config.parameters:
+                if not parameter.required:
+                    continue
+                if parameter.location == ParameterLocation.PATH and parameter.name not in path_params:
+                    raise Exception(
+                        f'Required parameter {parameter.name} not found in input')
+                if parameter.location == ParameterLocation.QUERY and parameter.name not in query_params:
+                    raise Exception(
+                        f'Required parameter {parameter.name} not found in input')
+                if parameter.location == ParameterLocation.HEADER and parameter.name not in headers:
+                    raise Exception(
+                        f'Required parameter {parameter.name} not found in input')
+                if parameter.location == ParameterLocation.COOKIE and parameter.name not in cookies:
+                    raise Exception(
+                        f'Required parameter {parameter.name} not found in input')
 
         if self._config.request_body:
-            required_body_parameters = [
-                parameter.name for parameter in self._config.request_body.parameters if parameter.required]
-            for required_body_parameter in required_body_parameters:
-                if required_body_parameter not in input_data:
+            for parameter in self._config.request_body.parameters:
+                if not parameter.required:
+                    continue
+                if parameter.name not in body_data:
                     raise Exception(
-                        f'Required parameter {required_body_parameter} not found in input')
+                        f'Required parameter {parameter.name} not found in input')
 
-            for param in self._config.request_body.parameters:
-                if param.name in input_data:
-                    body_data[param.name] = input_data.get(param.name)
-
+        # Check if user has provided their own body
+        if self._config.body:
+            headers['Content-Type'] = self._config.content_type.value
+            body = self._config.body
+            body = hydrate_input(body, {'_parameters' : body_data, '_connection' : connection_configuration})
+            body_data = bytes(body, 'utf-8')          
         
-
-        if method == HttpMethod.GET:
-            response = requests.get(url=url,
+        http_method = str(method).lower()        
+        response = requests.request(http_method, 
+                                    url=url, 
                                     headers=headers,
-                                    params=params,
+                                    params=query_params,
+                                    data=body_data,
+                                    cookies=cookies,
                                     timeout=self._config.timeout,
                                     auth=auth,
                                     allow_redirects=self._config.allow_redirects)
-
-            content_json = None
-            try:
-                content_json = response.json()
-            except:
-                pass
-
-            async_to_sync(self._output_stream.write)(HttpAPIProcessorOutput(
+        content_json = None
+        try:
+            content_json = response.json()
+        except:
+            pass
+        
+        async_to_sync(self._output_stream.write)(HttpAPIProcessorOutput(
                 code=response.status_code,
                 is_ok=response.ok,
                 text=response.text,
@@ -261,43 +292,6 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
                 url=response.url,
                 headers=dict(response.headers),
             ))
-
-        elif method == HttpMethod.POST:
-            response = requests.post(url=url,
-                                     headers=headers,
-                                     params=params,
-                                     data=body_data,
-                                     timeout=self._config.timeout,
-                                     auth=auth,
-                                     allow_redirects=self._config.allow_redirects)
-            content_json = None
-            try:
-                content_json = response.json()
-            except:
-                pass
-
-            async_to_sync(self._output_stream.write)(HttpAPIProcessorOutput(
-                code=200,
-                is_ok=True,
-                text=response.text,
-                content_json=content_json,
-                encoding=response.encoding,
-                cookies=response.cookies,
-                elapsed=response.elapsed.total_seconds(),
-                url=response.url,
-                headers=dict(response.headers),
-            ))
-        elif method == HttpMethod.PUT:
-            response = requests.put(url=url,
-                                    params=params,
-                                    data=body_data,
-                                    timeout=self._config.timeout,
-                                    auth=None,
-                                    allow_redirects=self._config.allow_redirects)
-
-        else:
-            raise NotImplementedError
-
         output = self._output_stream.finalize()
         return output
 

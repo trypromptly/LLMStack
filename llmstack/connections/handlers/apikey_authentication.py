@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import Field
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.connections.types import ConnectionTypeInterface
@@ -5,6 +6,7 @@ from llmstack.connections.models import ConnectionType
 
 class APIKeyAuthenticationConfiguration(BaseSchema):
     api_key: str = Field(widget='password', description='Paste your API Key here')
+    header_key: Optional[str] = Field(description='Key to use in Header for API Key authentication. This is Optional', default=None)
 
 class APIKeyAuthenticationBasedAPILogin(ConnectionTypeInterface[APIKeyAuthenticationConfiguration]):
     @staticmethod
