@@ -88,6 +88,10 @@ class AgentConfigSchema(BaseSchema):
         default=0, description='Number of messages to keep in chat history', advanced_parameter=True,
         le=1000, ge=0,
     )
+    seed: Optional[int] = Field(
+        title='Random Seed',
+        default=None, description='Random seed to use for the agent', advanced_parameter=True,
+    )
 
 
 class Agent(AppTypeInterface[AgentConfigSchema]):

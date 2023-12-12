@@ -82,6 +82,8 @@ class WebBrowserConfiguration(ApiProcessorSchema):
         description='Maximum number of browsing steps', default=8, ge=1, le=20)
     system_message: str = Field(
         description='System message to use', default=DEFAULT_SYSTEM_MESSAGE, widget='textarea')
+    seed: Optional[int] = Field(
+        description='Seed to use for random number generator')
 
 
 class BrowserInstructionType(str, Enum):
@@ -392,6 +394,7 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
                 'model': model,
                 'messages': messages,
                 'max_tokens': 4000,
+                'seed': self._config.seed,
             }
 
             if self._config.model is not Model.GPT_4_V_LATEST:

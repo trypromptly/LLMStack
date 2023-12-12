@@ -88,6 +88,8 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
     hybrid_semantic_search_ratio: Optional[float] = Field(
         default=0.75, description='Ratio of semantic search to hybrid search', ge=0.0, le=1.0, multiple_of=0.01, advanced_parameter=True,
     )
+    seed: Optional[int] = Field(
+        description='Seed for the model', advanced_parameter=True)
 
 
 class TextChatInput(ApiProcessorSchema):
@@ -270,6 +272,7 @@ Citations:
                 [context_message] + self._chat_history,
                 temperature=self._config.temperature,
                 stream=True,
+                seed=self._config.seed,
             )
         elif self._env['localai_base_url'] and self._config.use_localai_if_available:
             openai_client = OpenAI(
@@ -285,6 +288,7 @@ Citations:
                 [context_message] + self._chat_history,
                 temperature=self._config.temperature,
                 stream=True,
+                seed=self._config.seed,
             )
         elif self._env['openai_api_key'] is not None:
             openai_client = OpenAI(
@@ -297,6 +301,7 @@ Citations:
                 [context_message] + self._chat_history,
                 temperature=self._config.temperature,
                 stream=True,
+                seed=self._config.seed,
             )
         else:
             raise Exception('No OpenAI API key provided')
