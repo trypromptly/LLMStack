@@ -81,6 +81,18 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
             elif instruction.type == BrowserInstructionType.COPY:
                 input = runner_pb2.BrowserInput(
                     type=runner_pb2.COPY, selector=instruction.selector)
+            elif instruction.type == BrowserInstructionType.SCROLLX:
+                input = runner_pb2.BrowserInput(
+                    type=runner_pb2.SCROLL_X, selector=instruction.selector, data=instruction.data)
+            elif instruction.type == BrowserInstructionType.SCROLLY:
+                input = runner_pb2.BrowserInput(
+                    type=runner_pb2.SCROLL_Y, selector=instruction.selector, data=instruction.data)
+            elif instruction.type == BrowserInstructionType.TERMINATE:
+                input = runner_pb2.BrowserInput(
+                    type=runner_pb2.TERMINATE)
+            elif instruction.type == BrowserInstructionType.ENTER:
+                input = runner_pb2.BrowserInput(
+                    type=runner_pb2.ENTER)
             playwright_request.steps.append(input)
         playwright_request.url = self._input.url
         playwright_request.timeout = self._config.timeout if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100 else 100
