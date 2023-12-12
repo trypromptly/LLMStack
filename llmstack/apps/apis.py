@@ -22,6 +22,8 @@ from llmstack.common.utils.utils import get_location
 
 from llmstack.processors.apis import EndpointViewSet
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
+from rest_framework.parsers import JSONParser
+from drf_yaml.parsers import YAMLParser
 
 from .models import App, AppData
 from .models import AppAccessPermission
@@ -70,6 +72,8 @@ class AppTypeViewSet(viewsets.ViewSet):
 
 
 class AppViewSet(viewsets.ViewSet):
+    parser_classes = (JSONParser, YAMLParser)
+    
     def get_permissions(self):
         if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord' or self.action == 'run_twiliosms' or self.action == 'run_twiliovoice':
             return [AllowAny()]
@@ -428,6 +432,7 @@ class AppViewSet(viewsets.ViewSet):
         # Find the versioned app data and update it
         app_data = {
             'name': request.data['name'] if 'name' in request.data else 'Untitled',
+            'type_slug': request.data['type_slug'] if 'type_slug' in request.data else '',
             'description': request.data['description'] if 'description' in request.data else '',
             'config': request.data['config'] if 'config' in request.data else {},
             'input_fields': request.data['input_fields'] if 'input_fields' in request.data else [],
@@ -456,7 +461,7 @@ class AppViewSet(viewsets.ViewSet):
 
     def post(self, request):
         owner = request.user
-        app_type_slug = request.data['app_type_slug'] if 'app_type_slug' in request.data else None
+        app_type_slug = request.data['type_slug'] if 'type_slug' in request.data else None
         app_type = get_object_or_404(AppType, id=request.data['app_type']) if 'app_type' in request.data else get_object_or_404(
             AppType, slug=app_type_slug)
         app_name = request.data['name']

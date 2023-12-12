@@ -330,6 +330,8 @@ RQ_QUEUES = {
 }
 
 USE_REMOTE_JOB_QUEUE = os.getenv('USE_REMOTE_JOB_QUEUE', 'True') == 'True'
+TASK_RUN_DELAY = int(os.getenv('TASK_RUN_DELAY', '60')) # Interval between two subtask runs in seconds
+MAX_SUBTASKS_PER_TASK = int(os.getenv('MAX_SUBTASKS_PER_TASK', '500')) # Maximum number of subtasks per task/job
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 

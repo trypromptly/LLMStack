@@ -59,7 +59,9 @@ export function AppEditor(props) {
           <AceEditor
             mode="yaml"
             theme="dracula"
-            value={yaml.dump(app?.data || {})}
+            value={yaml.dump(
+              { ...app?.data, type_slug: app?.type?.slug } || {},
+            )}
             editorProps={{ $blockScrolling: true }}
             setOptions={{
               useWorker: false,
