@@ -71,15 +71,15 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
         description='Connection to use', widget='connection', advanced_parameter=False)
     model: Model = Field(
-        description='Backing model to use', default=Model.GPT_4_LATEST, advanced_parameter=False)
+        description='Backing model to use', default=Model.GPT_4_V_LATEST, advanced_parameter=False)
     stream_video: bool = Field(
-        description='Stream video of the browser', default=False)
+        description='Stream video of the browser', default=True)
     stream_text: bool = Field(
         description='Stream output text from the browser', default=False)
     timeout: int = Field(
         description='Timeout in seconds', default=10, ge=1, le=100)
     max_steps: int = Field(
-        description='Maximum number of browsing steps', default=10, ge=1, le=20)
+        description='Maximum number of browsing steps', default=8, ge=1, le=20)
     system_message: str = Field(
         description='System message to use', default=DEFAULT_SYSTEM_MESSAGE, widget='textarea')
 
