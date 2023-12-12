@@ -168,9 +168,7 @@ def run_task(task_model: str, task_id: int):
         args = task.parse_args()
         kwargs = task.parse_kwargs()
         kwargs = {**kwargs, '_job_metadata': {
-            'task_run_log_uuid' : str(task_run_log.uuid), 
-            'timeout' : job.timeout, 
-            'result_ttl' : job.result_ttl
+            'task_run_log_uuid' : str(task_run_log.uuid)
             }}
         results, errors = task.callable_func()(*args, **kwargs)
 
@@ -200,9 +198,7 @@ def run_task_now(task_model: str, task_id: int):
     kwargs = {
         **kwargs, 
         '_job_metadata': {
-            'task_run_log_uuid' : str(task_run_log.uuid),
-            'timeout' : job.timeout, 
-            'result_ttl' : job.result_ttl}
+            'task_run_log_uuid' : str(task_run_log.uuid)}
         }
     results, errors = task.callable_func()(*args, **kwargs)
 

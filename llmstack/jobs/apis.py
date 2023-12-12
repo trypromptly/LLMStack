@@ -173,7 +173,7 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         job_args = {
             'name': data.get('job_name',
                              self._create_job_name(app_name, request.user, frequency.get('type'), datetime.now())),
-            'callable': 'llmstack.jobs.jobs.run_app',
+            'callable': 'llmstack.jobs.jobs.run_app_task',
             'callable_args': json.dumps([app_id, data['app_run_data']]),
             'callable_kwargs': json.dumps({}),
             'enabled': True,
