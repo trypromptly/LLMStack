@@ -9,6 +9,7 @@ enum BrowserCommandType {
   TYPE = 5; // type selector
   SCROLL_X = 6; // scroll horizontal
   SCROLL_Y = 7; // scroll vertical
+  ENTER = 8; // enter
 }
 
 message BrowserInput {
@@ -67,6 +68,7 @@ message BrowserContent {
   repeated BrowserSelectField selects = 8; // selects on page
   repeated BrowserTextAreaField textareas = 9; // textareas on page
   repeated BrowserLink links = 10; // links on page
+  string error = 11; // error if any
 }
 
 message RemoteBrowserRequest {

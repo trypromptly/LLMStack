@@ -7,6 +7,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 CLICK: BrowserCommandType
 COPY: BrowserCommandType
 DESCRIPTOR: _descriptor.FileDescriptor
+ENTER: BrowserCommandType
 GOTO: BrowserCommandType
 RUNNING: RemoteBrowserState
 SCROLL_X: BrowserCommandType
@@ -26,8 +27,9 @@ class BrowserButton(_message.Message):
     def __init__(self, selector: _Optional[str] = ..., text: _Optional[str] = ...) -> None: ...
 
 class BrowserContent(_message.Message):
-    __slots__ = ["buttons", "html", "inputs", "links", "screenshot", "selects", "text", "textareas", "title", "url"]
+    __slots__ = ["buttons", "error", "html", "inputs", "links", "screenshot", "selects", "text", "textareas", "title", "url"]
     BUTTONS_FIELD_NUMBER: _ClassVar[int]
+    ERROR_FIELD_NUMBER: _ClassVar[int]
     HTML_FIELD_NUMBER: _ClassVar[int]
     INPUTS_FIELD_NUMBER: _ClassVar[int]
     LINKS_FIELD_NUMBER: _ClassVar[int]
@@ -38,6 +40,7 @@ class BrowserContent(_message.Message):
     TITLE_FIELD_NUMBER: _ClassVar[int]
     URL_FIELD_NUMBER: _ClassVar[int]
     buttons: _containers.RepeatedCompositeFieldContainer[BrowserButton]
+    error: str
     html: str
     inputs: _containers.RepeatedCompositeFieldContainer[BrowserInputField]
     links: _containers.RepeatedCompositeFieldContainer[BrowserLink]
@@ -47,7 +50,7 @@ class BrowserContent(_message.Message):
     textareas: _containers.RepeatedCompositeFieldContainer[BrowserTextAreaField]
     title: str
     url: str
-    def __init__(self, url: _Optional[str] = ..., title: _Optional[str] = ..., html: _Optional[str] = ..., text: _Optional[str] = ..., screenshot: _Optional[bytes] = ..., buttons: _Optional[_Iterable[_Union[BrowserButton, _Mapping]]] = ..., inputs: _Optional[_Iterable[_Union[BrowserInputField, _Mapping]]] = ..., selects: _Optional[_Iterable[_Union[BrowserSelectField, _Mapping]]] = ..., textareas: _Optional[_Iterable[_Union[BrowserTextAreaField, _Mapping]]] = ..., links: _Optional[_Iterable[_Union[BrowserLink, _Mapping]]] = ...) -> None: ...
+    def __init__(self, url: _Optional[str] = ..., title: _Optional[str] = ..., html: _Optional[str] = ..., text: _Optional[str] = ..., screenshot: _Optional[bytes] = ..., buttons: _Optional[_Iterable[_Union[BrowserButton, _Mapping]]] = ..., inputs: _Optional[_Iterable[_Union[BrowserInputField, _Mapping]]] = ..., selects: _Optional[_Iterable[_Union[BrowserSelectField, _Mapping]]] = ..., textareas: _Optional[_Iterable[_Union[BrowserTextAreaField, _Mapping]]] = ..., links: _Optional[_Iterable[_Union[BrowserLink, _Mapping]]] = ..., error: _Optional[str] = ...) -> None: ...
 
 class BrowserInitData(_message.Message):
     __slots__ = ["persist_session", "session_data", "terminate_url_pattern", "timeout", "url"]
