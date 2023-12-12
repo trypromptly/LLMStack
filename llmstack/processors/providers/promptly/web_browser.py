@@ -117,9 +117,9 @@ class WebBrowserOutput(ApiProcessorSchema):
 
 class WebBrowserInput(ApiProcessorSchema):
     start_url: str = Field(
-        description='URL to visit to start the session')
+        description='URL to visit to start the session', default='')
     task: str = Field(
-        ..., description='Details of the task to perform')
+        description='Details of the task to perform', default='')
 
 
 TOOLS = [
