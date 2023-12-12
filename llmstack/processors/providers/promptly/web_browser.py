@@ -2,14 +2,13 @@ import base64
 import logging
 from enum import Enum
 from time import sleep
-from typing import List, Optional
+from typing import Optional
 
 import grpc
 import openai
 import orjson as json
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from google.protobuf.json_format import MessageToJson
 from pydantic import BaseModel, Field, validator
 
 from llmstack.apps.schemas import OutputTemplate
@@ -21,6 +20,39 @@ from llmstack.processors.providers.api_processor_interface import (
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_SYSTEM_MESSAGE = '''You are a helpful assistant that browses internet using a web browser tool and accomplishes user provided task. 
+You can click on buttons, type into input fields, select options from dropdowns, copy text from elements, scroll the page and navigate to other pages. 
+You can also use the text from the page to generate the next set of instructions. For example, you can use the text from a button to click on it. 
+You can also use the text from a link to navigate to the URL specified in the link. Please follow the instructions below to accomplish the task.
+
+- ONLY return a valid JSON object (no other text is necessary). Use doublequotes for property names and values. For example, use {"output": "Hello World"} instead of {'output': 'Hello World'}. Thinking of the output as a JSON object will help you generate the output in the correct format.
+- Following is the JSON format for the output
+{
+    'output': <output>
+    'instructions': [{
+        'type': <type_of_instruction>,
+        'tag': <tag_to_use>,
+        'data': <data_to_use>
+    }]
+}
+where <output> is your response to the user and 'instructions' is an array of instructions to browse the page
+
+<type_of_instruction> can be one of the following:
+    'Click': Click on the element identified by the tag
+    'Type': Type the data into the element identified by the tag
+    'Wait': Wait for the element identified by the tag to appear
+    'Goto': Navigate to the URL specified in data
+    'Copy': Copy the text from the element identified by the tag
+    'Enter': Press the Enter key
+    'Scrollx': Scroll the page horizontally by the number of pixels specified in data
+    'Scrolly': Scroll the page vertically by the number of pixels specified in data
+    'Terminate': Terminate the browser session if no more instructions are needed
+<tag_to_use> is the identifier to use to identify the element to perform the instruction on. Identifiers are next to the elements on the page. For example all text areas have identifier with prefix `ta=`. Similar `in=`, `b=`, `a=`, `s=` are used for input fields, buttons, links and selects respectively.
+<data_to_use> is the data to use for the instruction. For example, if type_of_instruction is 'Type', then data_to_use is the text to type into the element identified by tag_to_use. If type_of_instruction is 'ScrollX' or 'ScrollY', then data_to_use is the number of pixels to scroll the page by.
+- If the task is done and no more instructions are needed, you can terminate the browser session by generating an instruction with type_of_instruction as 'Terminate'.
+- Let's think step by step.
+'''
+
 
 class Model(str, Enum):
     GPT_3_5_LATEST = 'gpt-3.5-turbo-latest'
@@ -29,6 +61,7 @@ class Model(str, Enum):
     GPT_4 = 'gpt-4'
     GPT_4_32K = 'gpt-4-32k'
     GPT_4_LATEST = 'gpt-4-turbo-latest'
+    GPT_4_V_LATEST = 'gpt-4-vision-latest'
 
     def __str__(self):
         return self.value
@@ -48,7 +81,7 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     max_steps: int = Field(
         description='Maximum number of browsing steps', default=10, ge=1, le=20)
     system_message: str = Field(
-        description='System message to use', default='You are a helpful assistant that browses internet using a web browser tool and accomplishes user provided task.')
+        description='System message to use', default=DEFAULT_SYSTEM_MESSAGE, widget='textarea')
 
 
 class BrowserInstructionType(str, Enum):
@@ -57,8 +90,10 @@ class BrowserInstructionType(str, Enum):
     WAIT = 'Wait'
     GOTO = 'Goto'
     COPY = 'Copy'
-    SCROLL_X = 'ScrollX'
-    SCROLL_Y = 'ScrollY'
+    TERMINATE = 'Terminate'
+    ENTER = 'Enter'
+    SCROLLX = 'Scrollx'
+    SCROLLY = 'Scrolly'
 
     def __str__(self):
         return self.value
@@ -106,7 +141,7 @@ TOOLS = [
                             "properties": {
                                 "type": {
                                     "type": "string",
-                                    "enum": ["Click", "Type", "Wait", "Goto", "Copy", "ScrollX", "ScrollY"],
+                                    "enum": ["Click", "Type", "Wait", "Goto", "Copy", "Scrollx", "Scrolly"],
                                     "title": "Instruction Type",
                                     "description": "The type of action to perform in the browser (e.g., 'Click' a button, 'Type' into a field, 'ScrollX' by 500 in pixels)."
                                 },
@@ -160,6 +195,43 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(markdown='')
 
+    def _process_browser_content(self, browser_response):
+        content = browser_response.content
+        output = ''
+
+        if content.error:
+            output += f'Error encountered running previous instructions: {content.error}\n\n'
+
+        if content.text:
+            output += f'Text from page:\n------\n{content.text[:10000]}\n'
+
+        if content.buttons:
+            output += f'\nButtons on page:\n------\n'
+            for button in content.buttons:
+                output += f'selector: {button.selector}, text: {button.text}\n'
+
+        if content.links:
+            output += f'\nLinks on page:\n------\n'
+            for link in content.links[:100]:
+                output += f'selector: {link.selector}, url: {link.url}, text: {link.text}\n'
+
+        if content.inputs:
+            output += f'\nInput fields on page:\n------\n'
+            for input_field in content.inputs:
+                output += f'selector: {input_field.selector}, text: {input_field.text}\n'
+
+        if content.textareas:
+            output += f'\nTextareas on page:\n------\n'
+            for textarea in content.textareas:
+                output += f'selector: {textarea.selector}, text: {textarea.text}\n'
+
+        if content.selects:
+            output += f'\nSelects on page:\n------\n'
+            for select in content.selects:
+                output += f'selector: {select.selector}, text: {select.text}\n'
+
+        return output
+
     def _request_iterator(self, start_url) -> Optional[runner_pb2.PlaywrightBrowserRequest]:
         # Our first instruction is always to goto the start_url
         playwright_start_request = runner_pb2.PlaywrightBrowserRequest()
@@ -194,12 +266,18 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
                 elif step.type == BrowserInstructionType.TYPE:
                     input = runner_pb2.BrowserInput(
                         type=runner_pb2.TYPE, selector=step.selector, data=step.data)
-                elif step.type == BrowserInstructionType.SCROLL_X:
+                elif step.type == BrowserInstructionType.SCROLLX:
                     input = runner_pb2.BrowserInput(
                         type=runner_pb2.SCROLL_X, selector=step.selector, data=step.data)
-                elif step.type == BrowserInstructionType.SCROLL_Y:
+                elif step.type == BrowserInstructionType.SCROLLY:
                     input = runner_pb2.BrowserInput(
                         type=runner_pb2.SCROLL_Y, selector=step.selector, data=step.data)
+                elif step.type == BrowserInstructionType.TERMINATE:
+                    input = runner_pb2.BrowserInput(
+                        type=runner_pb2.TERMINATE)
+                elif step.type == BrowserInstructionType.ENTER:
+                    input = runner_pb2.BrowserInput(
+                        type=runner_pb2.ENTER)
                 playwright_request.steps.append(input)
             playwright_request.url = start_url
             playwright_request.timeout = self._config.timeout if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100 else 100
@@ -225,13 +303,15 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
             model = 'gpt-3.5-turbo-1106'
         elif model == 'gpt-4-turbo-latest':
             model = 'gpt-4-1106-preview'
+        elif model == 'gpt-4-vision-latest':
+            model = 'gpt-4-vision-preview'
 
         messages = [{
             'role': 'system',
-            'content': self._config.system_message
+            'content': self._config.system_message,
         }, {
             'role': 'user',
-            'content': self._input.task
+            'content': f'Perform the following task: {self._input.task}'
         }]
 
         self._terminated = False
@@ -247,29 +327,25 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
 
         # Wait till we get the first playwright non video response
         for response in playwright_response_iter:
-            if response.content.text:
-                browser_response = MessageToJson(response)
-                tool_call_message = {
-                    'role': 'assistant',
-                    'tool_calls': [
-                            {
-                                'id': 'initial_message',
-                                'function': {
-                                    'name': 'run_browser_instructions',
-                                    'arguments': '{\n  "steps": []\n}',
-                                },
-                                'type': 'function',
-                            }
-                    ],
-                }
-                tool_message = {
-                    'role': 'tool',
-                    'tool_call_id': 'initial_message',
-                    'name': 'run_browser_instructions',
+            if response.content.text or response.content.screenshot:
+                browser_text_response = self._process_browser_content(response)
+                browser_response = browser_text_response
+                if self._config.model == Model.GPT_4_V_LATEST:
+                    browser_response = [{
+                        'type': 'text',
+                        'text': browser_text_response,
+                    }]
+                    if response.content.screenshot:
+                        browser_response.append({
+                            'type': 'image_url',
+                            'image_url': {
+                                'url': f"data:image/png;base64,{base64.b64encode(response.content.screenshot).decode('utf-8')}",
+                            },
+                        })
+                messages.append({
+                    'role': 'user',
                     'content': browser_response,
-                }
-                messages.append(tool_call_message)
-                messages.append(tool_message)
+                })
                 break
             elif response.video:
                 # Send base64 encoded video
@@ -288,91 +364,95 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
         total_steps = 1
         while not self._terminated:
             if total_steps > self._config.max_steps:
+                logger.info(
+                    f'Max steps reached: {total_steps} and {self._config.max_steps}')
                 self._terminated = True
                 break
 
             total_steps += 1
 
             # Check tool responses and trim old messages
-            if len(messages) > 4:
-                for message in messages[:-2]:
-                    if message['role'] == 'tool':
-                        message['content'] = ''
+            if len(messages) > 3:
+                for message in messages[:-3]:
+                    if message['role'] == 'user':
+                        if type(message['content']) == list:
+                            for content in message['content']:
+                                if content['type'] == 'image_url':
+                                    message['content'].remove(content)
+                                elif content['type'] == 'text':
+                                    content['text'] = content['text'][:300]
+                        else:
+                            message['content'] = message['content'][:300]
+
+            chat_completions_args = {
+                'model': model,
+                'messages': messages,
+                'max_tokens': 4000,
+            }
+
+            if self._config.model is not Model.GPT_4_V_LATEST:
+                chat_completions_args['response_format'] = {
+                    "type": "json_object"}
 
             result = openai_client.chat.completions.create(
-                model=model,
-                messages=messages,
-                stream=True,
-                tools=TOOLS,
+                **chat_completions_args,
             )
-            function_calls = []
-            content = ''
-            finish_reason = None
-            tool_call_id = None
-            for data in result:
-                choice = data.choices[0] if len(
-                    data.choices) > 0 else None
-                if not choice or not choice.delta:
-                    continue
 
-                content += choice.delta.content if choice.delta.content else ''
-                tool_call_chunks = choice.delta.tool_calls if choice.delta.tool_calls else []
-                finish_reason = choice.finish_reason
-                for tool_call_chunk in tool_call_chunks:
-                    function_name = tool_call_chunk.function.name if tool_call_chunk.function and tool_call_chunk.function.name and tool_call_chunk.type == 'function' else ''
-                    function_arguments = tool_call_chunk.function.arguments if tool_call_chunk.function and tool_call_chunk.function.arguments else ''
+            if result.object == 'chat.completion':
+                # Clean up messages
+                try:
+                    content = result.choices[0].message.content
+                    if content.startswith('```json'):
+                        content = content.replace('```json', '')
 
-                    if tool_call_chunk.index < len(function_calls):
-                        function_calls[tool_call_chunk.index].update({
-                            'name': function_calls[tool_call_chunk.index]['name'] + function_name,
-                            'arguments': function_calls[tool_call_chunk.index]['arguments'] + function_arguments,
-                        })
-                    else:
-                        if tool_call_chunk.type == 'function':
-                            tool_call_id = tool_call_chunk.id
+                    if content.startswith('```'):
+                        content = content.replace('```', '')
 
-                        function_calls.append({
-                            'name': function_name,
-                            'arguments': function_arguments,
-                        })
+                    if content.startswith('json'):
+                        content = content.replace('json', '')
 
-                # Stream text content to the output
-                if choice.delta.content and self._config.stream_text:
-                    async_to_sync(output_stream.write)(WebBrowserOutput(
-                        text=choice.delta.content
-                    ))
+                    if content.endswith('```'):
+                        content = content.replace('```', '')
 
-            if finish_reason == 'tool_calls':
-                # Convert function arguments to dict
-                for function_call in function_calls:
-                    function_call['arguments_json'] = function_call['arguments']
                     try:
-                        function_call['arguments'] = json.loads(
-                            function_call['arguments'])
+                        result = json.loads(content)
                     except:
-                        pass
-            elif finish_reason == 'stop':
-                output_text += content
-                self._terminated = True
-                break
+                        result = {
+                            'output': content,
+                        }
 
-            # Iterate through function calls and convert to browser instructions
-            for function_call in function_calls:
-                if function_call['name'] == 'run_browser_instructions':
-                    steps = []
-                    for step in function_call['arguments']['steps']:
-                        try:
+                    if 'instructions' in result:
+                        steps = []
+                        for instruction in result['instructions']:
+                            instruction_type = instruction['type']
                             steps.append(BrowserInstruction(
-                                type=step['type'],
-                                selector=step['selector'] if 'selector' in step else None,
-                                data=step['data'] if 'data' in step else None,
+                                type=instruction_type,
+                                selector=instruction['selector'] if 'selector' in instruction else instruction[
+                                    'tag'] if 'tag' in instruction else None,
+                                data=instruction['data'] if 'data' in instruction else None,
                             ))
-                        except Exception as e:
-                            logger.exception(e)
-                            self._terminated = True
-                            break
 
-                    self._instructions.append({'steps': steps})
+                        self._instructions.append({'steps': steps})
+                    else:
+                        self._instructions.append({'steps': [BrowserInstruction(
+                            type='Wait',
+                            data='1',
+                        )]})
+
+                    messages.append({
+                        'role': 'assistant',
+                        'content': result['output'] if 'output' in result else '',
+                    })
+
+                    if 'output' in result and self._config.stream_text:
+                        async_to_sync(output_stream.write)(
+                            WebBrowserOutput(text=result['output'] + '\n\n'))
+                    elif 'output' in result:
+                        output_text += result['output'] + '\n\n'
+                except Exception as e:
+                    logger.exception(e)
+                    self._terminated = True
+                    break
 
             try:
                 # Get the next response from the browser and generate the next set of instructions
@@ -383,31 +463,26 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
                             text='',
                             video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}"
                         ))
-                    elif response.content.text:
-                        # Pass the page content as response to tool_call
-                        browser_response = MessageToJson(response)
-                        tool_call_message = {
-                            'role': 'assistant',
-                            'tool_calls': [
-                                    {
-                                        'id': tool_call_id,
-                                        'function': {
-                                            'name': function_call['name'],
-                                            'arguments': function_call['arguments_json'],
-                                        },
-                                        'type': 'function',
-                                    } for function_call in function_calls
-                            ],
-                        }
-                        tool_message = {
-                            'role': 'tool',
-                            'tool_call_id': tool_call_id,
-                            'name': 'run_browser_instructions',
+                    elif response.content.text or response.content.screenshot:
+                        browser_text_response = self._process_browser_content(
+                            response)
+                        browser_response = browser_text_response
+                        if self._config.model == Model.GPT_4_V_LATEST:
+                            browser_response = [{
+                                'type': 'text',
+                                'text': browser_text_response,
+                            }]
+                            if response.content.screenshot:
+                                browser_response.append({
+                                    'type': 'image_url',
+                                    'image_url': {
+                                        'url': f"data:image/png;base64,{base64.b64encode(response.content.screenshot).decode('utf-8')}",
+                                    },
+                                })
+                        messages.append({
+                            'role': 'user',
                             'content': browser_response,
-                        }
-                        messages.append(tool_call_message)
-                        messages.append(tool_message)
-                        # Break to call llm again
+                        })
                         break
                     else:
                         self._terminated = True
