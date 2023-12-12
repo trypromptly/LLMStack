@@ -52,6 +52,8 @@ def hydrate_input(input, values):
         elif isinstance(obj, BaseModel):
             cls = obj.__class__
             return cls.parse_obj(traverse(obj.dict()))
+        elif isinstance(obj, str):
+            return render(obj)
         return obj
 
     return traverse(input)
