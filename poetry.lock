@@ -1360,6 +1360,20 @@ websocket-client = ">=0.32.0"
 ssh = ["paramiko (>=2.4.3)"]
 
 [[package]]
+name = "drf-yaml"
+version = "3.0.1"
+description = "YAML support for Django REST Framework"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "drf_yaml-3.0.1-py3-none-any.whl", hash = "sha256:0f3a0c15f5bea0c0f067c24b21789c83aa4c4b50d3ef74ad1a83007b4ad72f2f"},
+    {file = "drf_yaml-3.0.1.tar.gz", hash = "sha256:b6aa05d34f66717d9973984e6d664de76999fa088aab2b91739e2dfb0877a202"},
+]
+
+[package.dependencies]
+PyYAML = ">=5.1"
+
+[[package]]
 name = "effdet"
 version = "0.4.1"
 description = "EfficientDet for PyTorch"
@@ -7217,4 +7231,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "be44067be077fc9588cd02bf18378667854d04f1c233bdf05c34ba14c6229513"
+content-hash = "7ffb2acc30ba6df1f3fdabb5cf29f38cd023b3666461111df181f75980335f5c"
