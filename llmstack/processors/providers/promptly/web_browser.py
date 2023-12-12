@@ -193,7 +193,11 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
 
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
-        return OutputTemplate(markdown='')
+        return OutputTemplate(
+            markdown='''![video](data:videostream/output._video)
+
+{{text}}
+''')
 
     def _process_browser_content(self, browser_response):
         content = browser_response.content
