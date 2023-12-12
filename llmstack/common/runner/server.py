@@ -8,24 +8,17 @@ import subprocess
 from concurrent import futures
 from typing import Iterator
 
-import ffmpeg
 import redis
 from grpc import ServicerContext
 from grpc import server as grpc_server
 from grpc_health.v1 import health, health_pb2, health_pb2_grpc
 from playwright._impl._api_types import TimeoutError
-from playwright.async_api import ElementHandle, Page, async_playwright
+from playwright.async_api import async_playwright
 
 from llmstack.common.runner.display import VirtualDisplayPool
-from llmstack.common.runner.proto import runner_pb2
+from llmstack.common.runner.playwright.browser import Playwright
 from llmstack.common.runner.proto.runner_pb2 import (
     TERMINATE,
-    BrowserButton,
-    BrowserContent,
-    BrowserInputField,
-    BrowserLink,
-    BrowserSelectField,
-    BrowserTextAreaField,
     PlaywrightBrowserRequest,
     PlaywrightBrowserResponse,
     RemoteBrowserRequest,
@@ -41,98 +34,11 @@ from llmstack.common.runner.proto.runner_pb2_grpc import (
 logger = logging.getLogger(__name__)
 
 
-async def get_browser_content_from_page(page) -> BrowserContent:
-    content = BrowserContent()
-    content.url = page.url
-    content.title = await page.title()
-    content.text = await page.inner_text('body')
-
-    try:
-        buttons = await page.locator('button:visible').all()
-        nth = 0
-        for button in buttons[:50]:
-            content.buttons.append(BrowserButton(
-                text=(await button.text_content()).strip(),
-                selector=f'button >> nth={nth}',
-            ))
-            nth += 1
-    except Exception as e:
-        logger.exception(e)
-        pass
-
-    try:
-        inputs = await page.locator('input').all()
-        nth = 0
-        for input in inputs:
-            input_type = await input.get_attribute('type')
-            if input_type == 'submit':
-                content.buttons.append(BrowserButton(
-                    text=(await input.text_content()).strip(),
-                    selector=f'input >> nth={nth}',
-                ))
-            elif input_type == 'text':
-                text = (await input.text_content()).strip()
-                # Get corresponding label if any and set it as text
-                label = input.locator('xpath=../label')
-                if label:
-                    text = (await label.text_content(timeout=100)).strip()
-                if text:
-                    content.inputs.append(BrowserInputField(
-                        text=text,
-                        selector=f'input >> nth={nth}',
-                    ))
-            nth += 1
-    except Exception as e:
-        logger.exception(e)
-        pass
-
-    try:
-        selects = await page.locator('select:visible').all()
-        nth = 0
-        for select in selects[:50]:
-            content.selects.append(BrowserSelectField(
-                text=(await select.text_content()).strip(),
-                selector=f'select >> nth={nth}',
-            ))
-            nth += 1
-    except Exception as e:
-        logger.exception(e)
-        pass
-
-    try:
-        textareas = await page.locator('textarea:visible').all()
-        nth = 0
-        for textarea in textareas[:50]:
-            content.textareas.append(BrowserTextAreaField(
-                text=(await textarea.text_content()).strip(),
-                selector=f'textarea >> nth={nth}',
-            ))
-            nth += 1
-    except Exception as e:
-        logger.exception(e)
-        pass
-
-    try:
-        links = await page.locator('a:visible').all()
-        nth = 0
-        for link in links[:10]:
-            content.links.append(BrowserLink(
-                text=(await link.text_content()).strip(),
-                selector=f'a >> nth={nth}',
-                url=await link.get_attribute('href'),
-            ))
-            nth += 1
-    except Exception as e:
-        logger.exception(e)
-        pass
-
-    return content
-
-
 class Runner(RunnerServicer):
     def __init__(self, display_pool: VirtualDisplayPool = None):
         super().__init__()
         self.display_pool = display_pool
+        self.playwright = Playwright(display_pool)
 
     async def _process_remote_browser_input_stream(self, request_iterator: Iterator[RemoteBrowserRequest], display, request: RemoteBrowserRequest):
         os.environ['DISPLAY'] = f'{display["DISPLAY"]}.0'
@@ -247,191 +153,8 @@ class Runner(RunnerServicer):
             ),
         )
 
-    async def _process_playwright_request(self, page: Page, request):
-        steps = list(request.steps)
-        outputs = []
-        logger.info(steps)
-
-        for step in steps:
-            if step.type == TERMINATE:
-                raise Exception(
-                    'Terminating browser because of timeout')
-            elif step.type == runner_pb2.GOTO:
-                await page.goto((page.url + step.data if step.data and step.data.startswith('/') else step.data) or page.url)
-            elif step.type == runner_pb2.CLICK:
-                locator = page.locator(step.selector)
-                await locator.click()
-            elif step.type == runner_pb2.WAIT:
-                await page.wait_for_selector(step.selector or 'body', timeout=int(step.data)*1000 if step.data else 5000)
-            elif step.type == runner_pb2.COPY:
-                results = await page.query_selector_all(step.selector or 'body')
-                outputs.append({
-                    'url': page.url,
-                    'text': "".join([await result.inner_text() for result in results]),
-                })
-            elif step.type == runner_pb2.TYPE:
-                await page.type(step.selector, step.data)
-            elif step.type == runner_pb2.SCROLL_X:
-                await page.mouse.wheel(delta_x=int(step.data))
-            elif step.type == runner_pb2.SCROLL_Y:
-                await page.mouse.wheel(delta_y=int(step.data))
-
-        return outputs
-
-    async def _process_playwright_input_stream(self, initial_request, request_iterator, display, ffmpeg_process):
-        os.environ['DISPLAY'] = f'{display["DISPLAY"]}.0'
-        logger.info(f"Using {os.environ['DISPLAY']}")
-        outputs = []
-        content = BrowserContent()
-        session_data = initial_request.session_data
-
-        async with async_playwright() as playwright:
-            try:
-                session_data = json.loads(
-                    session_data) if session_data else None
-                browser = await playwright.chromium.launch(headless=False)
-                context = await browser.new_context(no_viewport=True, storage_state=session_data)
-                page = await context.new_page()
-
-                url = initial_request.url
-                if not url.startswith('http'):
-                    url = f'https://{url}'
-
-                # Load the start_url before processing the steps
-                await page.goto(url, wait_until='domcontentloaded')
-
-                outputs = await self._process_playwright_request(
-                    page, initial_request)
-                content = await get_browser_content_from_page(page)
-
-                yield (outputs, content)
-
-                for next_request in request_iterator:
-                    outputs += await self._process_playwright_request(
-                        page, next_request)
-                    # Populate content from the last page
-                    content = await get_browser_content_from_page(page)
-
-                    yield (outputs, content)
-
-                    await asyncio.sleep(0.1)
-
-            except Exception as e:
-                logger.exception(e)
-            finally:
-                # Clean up
-                await browser.close()
-
-                if ffmpeg_process:
-                    ffmpeg_process.kill()
-
-                yield (outputs, content)
-
     def GetPlaywrightBrowser(self, request_iterator: Iterator[PlaywrightBrowserRequest], context: ServicerContext) -> Iterator[PlaywrightBrowserResponse]:
-        # Get the first request from the client
-        initial_request = next(request_iterator)
-        display = self.display_pool.get_display(remote_control=False)
-        SENTINAL = object()
-
-        if not display:
-            yield PlaywrightBrowserResponse(state=RemoteBrowserState.TERMINATED)
-            return
-
-        # Start ffmpeg in a separate process to stream the display
-        ffmpeg_process = (
-            ffmpeg
-            .input(f"{display['DISPLAY']}.0", format='x11grab', framerate=10, video_size=(1024, 720))
-            .output('pipe:', format='mp4', vcodec='h264', movflags='faststart+frag_keyframe+empty_moov+default_base_moof', g=25, y=None)
-            .run_async(pipe_stdout=True, pipe_stderr=True)
-        ) if initial_request.stream_video else None
-
-        # Use ThreadPoolExecutor to run the async function in a separate thread
-        with futures.ThreadPoolExecutor(thread_name_prefix='async_tasks') as executor:
-            browser_done = False
-            video_done = False
-            # Wrap the coroutine in a function that gets the current event loop or creates a new one
-
-            def run_async_code(loop, fn):
-                asyncio.set_event_loop(loop)
-
-                return loop.run_until_complete(fn())
-
-            # Create a queue to store the browser output
-            content_queue = asyncio.Queue()
-
-            # Create a queue to store browser video output
-            video_queue = asyncio.Queue()
-
-            async def collect_browser_content():
-                async for (outputs, content) in self._process_playwright_input_stream(
-                        initial_request, request_iterator, display, ffmpeg_process):
-                    await content_queue.put((outputs, content))
-                await content_queue.put(SENTINAL)
-
-            async def read_video_output():
-                while True and ffmpeg_process:
-                    try:
-                        chunk = ffmpeg_process.stdout.read(1024 * 3)
-                        if len(chunk) == 0:
-                            break
-                        await video_queue.put(chunk)
-                    except Exception as e:
-                        logger.error(e)
-                        break
-                await video_queue.put(SENTINAL)
-
-            # Start a task to read the video output from ffmpeg
-            video_future = executor.submit(
-                run_async_code, asyncio.new_event_loop(), read_video_output)
-
-            # Submit the function to the executor and get a Future object
-            content_future = executor.submit(
-                run_async_code, asyncio.new_event_loop(), collect_browser_content)
-
-            # Wait for the future to complete and get the return value
-            try:
-                yield PlaywrightBrowserResponse(state=RemoteBrowserState.RUNNING)
-
-                while not browser_done and not video_done:
-                    try:
-                        item = content_queue.get_nowait()
-                        if item is SENTINAL:
-                            browser_done = True
-                            break
-
-                        (output_texts, content) = item
-                        response = PlaywrightBrowserResponse(
-                            state=RemoteBrowserState.RUNNING)
-
-                        for output_text in output_texts:
-                            response.outputs.append(runner_pb2.BrowserOutput(
-                                text=output_text['text'], url=output_text['url']))
-                        response.content.CopyFrom(content)
-
-                        yield response
-                    except asyncio.QueueEmpty:
-                        pass
-
-                    try:
-                        chunk = video_queue.get_nowait()
-                        if chunk is SENTINAL:
-                            video_done = True
-                            break
-                        yield PlaywrightBrowserResponse(video=chunk)
-                    except asyncio.QueueEmpty:
-                        pass
-
-                    if content_future.done() or video_future.done() or browser_done or video_done:
-                        break
-
-                yield PlaywrightBrowserResponse(
-                    state=RemoteBrowserState.TERMINATED)
-            except Exception as e:
-                logger.error(e)
-                yield PlaywrightBrowserResponse(
-                    state=RemoteBrowserState.TERMINATED)
-            finally:
-                self.display_pool.put_display(display)
+        return self.playwright.get_browser(request_iterator=request_iterator)
 
 
 def main():
