@@ -84,7 +84,6 @@ async def run_playwright(url, connection=None):
                 pass
         browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await playwright.chromium.launch()
         if storage_state:
-            logger.info('Using storage state')
             context = await browser.new_context(storage_state=storage_state)
             page = await context.new_page()
         else:
