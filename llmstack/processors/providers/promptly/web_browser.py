@@ -124,55 +124,6 @@ class WebBrowserInput(ApiProcessorSchema):
         description='Details of the task to perform', default='')
 
 
-TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "run_browser_instructions",
-            "description": "Run a series of browser instructions as specified by an array of step objects. Returns the page content after all instructions have been executed. Page content contains text, buttons, input fields and link details that can be used to inform the next instruction.",
-            "parameters": {
-                "type": "object",
-                "description": "An object containing an array of browser instruction steps to be executed.",
-                "properties": {
-                    "steps": {
-                        "type": "array",
-                        "title": "Browser Instruction Steps",
-                        "description": "An ordered list of instructions for the browser to execute. Each step is an object containing instruction details.",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "enum": ["Click", "Type", "Wait", "Goto", "Copy", "Scrollx", "Scrolly"],
-                                    "title": "Instruction Type",
-                                    "description": "The type of action to perform in the browser (e.g., 'Click' a button, 'Type' into a field, 'ScrollX' by 500 in pixels)."
-                                },
-                                "selector": {
-                                    "type": "string",
-                                    "title": "Element Selector",
-                                    "description": "The CSS selector used to identify the target element for the action."
-                                },
-                                "data": {
-                                    "type": "string",
-                                    "title": "Instruction Data",
-                                    "description": "Additional data needed for the instruction, such as text to type, the URL to navigate to, time in seconds to wait, ScrollX in pixels etc ."
-                                }
-                            },
-                            "required": ["type"],
-                            "title": "Step",
-                            "description": "A single step containing the type, selector, and data needed to perform a browser action."
-                        },
-                        "title": "Steps",
-                        "description": "The series of steps to be performed in the browser session."
-                    }
-                },
-                "required": ["steps"]
-            }
-        }
-    }
-]
-
-
 class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBrowserConfiguration]):
     """
     Browse a given URL
