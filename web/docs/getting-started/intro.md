@@ -11,7 +11,8 @@ Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow th
 
 ## Prerequisites
 
-- [Python](https://www.python.org/downloads/) (version 3.8 or above)
+- [Python](https://www.python.org/downloads/) (version 3.9 or above)
+- [Docker](https://docs.docker.com/get-docker/) (if you want to use jobs or browser automation)
 
 ## Installation
 
@@ -82,9 +83,17 @@ Providers are the entities that provide the functionality to the processors. For
 
 Apps are the final product of LLMStack. Apps are created by chaining multiple processors together. LLMStack provides a visual editor to create apps. Apps can be shared with other users of LLMStack installation. Apps can be invoked using APIs, from the UI or triggered from Slack, Discord etc.
 
+#### Agents
+
+Agents are the autonomous apps that can perform tasks on your behalf. Agents use the provided processors as tools to perform tasks. For example, you can create an agent to act as an SDR (Sales Development Representative) and use it to send emails to your leads, using the processors provided by LLMStack as tools.
+
 ### Datasources
 
-Datasources are used to provide context to LLMs to build applications that can perform tasks on your data. LLMStack allows you to import data from various sources like CSV, PDF, URLs, Youtube etc., and use them in your apps. When a datasource is created, LLMStack chunks the data based on the type, creates embeddings and saves them in a vector database included in the installation. Datasources can also be shared with other users of LLMStack installation in the context of an organization.
+Datasources are used to provide context to LLMs to build applications that can perform tasks on your data. LLMStack allows you to import data from various sources like CSV, PDF, URLs, Youtube etc., and use them in your apps. You can even connect to external datastores and use them as datasources in LLMStack. When a datasource is created, LLMStack chunks the data based on the type, creates embeddings and saves them in a vector database included in the installation. Datasources can also be shared with other users of LLMStack installation in the context of an organization.
+
+### Connections
+
+Connections are used to store encrypted credentials for your external services like databases, APIs etc. Connections can be used in processors to connect to external services or in datasources to import data from external datastores.
 
 ### Variables
 

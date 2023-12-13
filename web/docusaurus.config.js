@@ -7,7 +7,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "LLMStack",
-  tagline: "AI Apps and Chatbots in Minutes | No-code AI App Builder",
+  tagline: "AI Agents in Minutes | No-code AI App Builder",
   favicon: "img/llmstack-icon.png",
 
   // Set the production url of your site here

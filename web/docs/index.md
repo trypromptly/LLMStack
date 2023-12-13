@@ -5,7 +5,7 @@ sidebar_label: Introduction
 sidebar_position: 0
 ---
 
-LLMStack is a no-code platform for building generative AI applications, chatbots, agents and connecting them to your data and business processes. It is a framework to build new AI experiences or integrate AI into your existing products. LLMStack is designed to be modular and extensible. It helps you manage data that can be connected to your LLM applications to create context aware Generative AI applications.
+LLMStack is a no-code platform for building generative AI Agents, workflows, chatbots and connecting them to your data and business processes. It is a framework to build new AI experiences or integrate AI into your existing products. LLMStack is designed to be modular and extensible. It helps you manage data that can be connected to your LLM applications to create context aware generative AI Agents.
 
 :::info
 Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow the documentation to deploy LLMStack on your own infrastructure.
@@ -14,6 +14,8 @@ Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow th
 <div style={{ position: "relative", paddingBottom: "64.92335437330928%", height: 0 }}><iframe src="https://www.loom.com/embed/1399a39c19394d9cad224e2e62c15285?sid=24115d9b-7ad4-4e5f-bdd9-110895fc1bae" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}></iframe></div>
 
 ## Features
+
+**🤖 Agents**: Build generative AI agents like AI SDRs, Research Analysts, RPA Automations etc., **without writing any code**. Connect agents to your internal or external tools, search the web or browse the internet with agents.
 
 **🔗 Chain multiple models**: LLMStack allows you to chain multiple LLMs together to build complex generative AI applications.
 
@@ -30,6 +32,12 @@ Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow th
 ## What can you build with LLMStack?
 
 Using LLMStack you can build a variety of generative AI applications, chatbots and agents. Here are some examples:
+
+**👩🏻‍💼 AI SDRs**: You can build AI SDRs (Sales Development Representatives) that can generate personalized emails, LinkedIn messages, cold calls, etc., for your sales team
+
+**👩🏻‍💻 Research Analysts**: You can build AI Research Analysts that can generate research reports, investment thesis, etc., for your investment team
+
+**🤖 RPA Automations**: You can build RPA automations that can automate your business processes by generating emails, filling forms, etc.,
 
 **📝 Text generation**: You can build apps that generate product descriptions, blog posts, news articles, tweets, emails, chat messages, etc., by using text generation models and optionally connecting your data. Check out this [marketing content generator](https://trypromptly.com/app/50ee8bae-712e-4b95-9254-74d7bcf3f0cb) for example
 

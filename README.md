@@ -26,7 +26,7 @@ LLMStack deployment comes with a default admin account whose credentials are `ad
 
 ### Installation
 
-#### Pre-requisites
+#### Prerequisites
 
 LLMStack depends on a background docker container to run jobs. Make sure you have Docker installed on your machine if want to use jobs. You can follow the instructions [here](https://docs.docker.com/get-docker/) to install Docker.
 
