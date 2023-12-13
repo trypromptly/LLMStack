@@ -11,44 +11,55 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
+from drf_yaml.parsers import YAMLParser
 from flags.state import flag_enabled
 from pydantic import BaseModel
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response as DRFResponse
-from llmstack.common.utils.utils import get_location
 
-from llmstack.processors.apis import EndpointViewSet
-from llmstack.processors.providers.api_processors import ApiProcessorFactory
-from rest_framework.parsers import JSONParser
-from drf_yaml.parsers import YAMLParser
-
-from .models import App, AppData
-from .models import AppAccessPermission
-from .models import AppHub
-from .models import AppRunGraphEntry
-from .models import AppTemplate
-from .models import AppType
-from .models import AppVisibility
-from .models import TestCase
-from .models import TestSet
-from .serializers import AppDataSerializer, AppHubSerializer
-from .serializers import AppSerializer
-from .serializers import AppTemplateSerializer
-from .serializers import AppTypeSerializer
-from .serializers import CloneableAppSerializer
-from .serializers import TestCaseSerializer
-from .serializers import TestSetSerializer
 from llmstack.apps.handlers.app_runner_factory import AppRunerFactory
-from llmstack.apps.integration_configs import DiscordIntegrationConfig, TwilioIntegrationConfig
-from llmstack.apps.integration_configs import SlackIntegrationConfig
-from llmstack.apps.integration_configs import WebIntegrationConfig
+from llmstack.apps.integration_configs import (
+    DiscordIntegrationConfig,
+    SlackIntegrationConfig,
+    TwilioIntegrationConfig,
+    WebIntegrationConfig,
+)
+from llmstack.apps.yaml_loader import (
+    get_app_template_by_slug,
+    get_app_templates_from_contrib,
+)
+from llmstack.base.models import Profile
+from llmstack.common.utils.utils import get_location
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
-from llmstack.base.models import Profile
-from llmstack.apps.yaml_loader import get_app_template_by_slug, get_app_templates_from_contrib
+from llmstack.processors.apis import EndpointViewSet
+from llmstack.processors.providers.api_processors import ApiProcessorFactory
+
+from .models import (
+    App,
+    AppAccessPermission,
+    AppData,
+    AppHub,
+    AppRunGraphEntry,
+    AppTemplate,
+    AppType,
+    AppVisibility,
+    TestCase,
+    TestSet,
+)
+from .serializers import (
+    AppDataSerializer,
+    AppHubSerializer,
+    AppSerializer,
+    AppTemplateSerializer,
+    AppTypeSerializer,
+    CloneableAppSerializer,
+    TestCaseSerializer,
+    TestSetSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +83,8 @@ class AppTypeViewSet(viewsets.ViewSet):
 
 
 class AppViewSet(viewsets.ViewSet):
-    parser_classes = (JSONParser, YAMLParser)
-    
+    parser_classes = (JSONParser, FormParser, MultiPartParser, YAMLParser)
+
     def get_permissions(self):
         if self.action == 'getByPublishedUUID' or self.action == 'run' or self.action == 'run_slack' or self.action == 'run_discord' or self.action == 'run_twiliosms' or self.action == 'run_twiliovoice':
             return [AllowAny()]
@@ -188,7 +199,7 @@ class AppViewSet(viewsets.ViewSet):
                 (
                         request.user.is_authenticated and ((app.visibility == AppVisibility.ORGANIZATION and Profile.objects.get(user=app.owner).organization == Profile.objects.get(user=request.user).organization) or
                                                            (request.user.email in app.read_accessible_by or request.user.email in app.write_accessible_by))
-                    ):
+                        ):
                 serializer = AppSerializer(
                     instance=app, request_user=request.user,
                 )
@@ -417,15 +428,19 @@ class AppViewSet(viewsets.ViewSet):
         ) if 'twilio_config' in request.data and request.data['twilio_config'] else {}
         draft = request.data['draft'] if 'draft' in request.data else True
         comment = request.data['comment'] if 'comment' in request.data else ''
-        
-        processors_data = request.data['processors'] if 'processors' in request.data else []
+
+        processors_data = request.data['processors'] if 'processors' in request.data else [
+        ]
         processed_processors_data = []
         try:
             for processor in processors_data:
-                processor_cls = ApiProcessorFactory.get_api_processor(processor['processor_slug'], processor['provider_slug'])
+                processor_cls = ApiProcessorFactory.get_api_processor(
+                    processor['processor_slug'], processor['provider_slug'])
                 configuration_cls = processor_cls.get_configuration_cls()
-                config_dict = json.loads(configuration_cls(**processor['config']).json())
-                processed_processors_data.append({**processor, **{'config' : config_dict}})
+                config_dict = json.loads(
+                    configuration_cls(**processor['config']).json())
+                processed_processors_data.append(
+                    {**processor, **{'config': config_dict}})
         except Exception as e:
             processed_processors_data = processors_data
 
@@ -536,14 +551,14 @@ class AppViewSet(viewsets.ViewSet):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
         stream = request.data.get('stream', False)
-        request_ip = request.headers.get('X-Forwarded-For', 
+        request_ip = request.headers.get('X-Forwarded-For',
                                          request.META.get('REMOTE_ADDR', '',)
-                                        ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
+                                         ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
         request_location = request.headers.get('X-Client-Geo-Location', '')
         if not request_location:
             location = get_location(request_ip)
             request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ''
-        
+
         request_user_agent = request.META.get('HTTP_USER_AGENT', '')
         request_content_type = request.META.get('CONTENT_TYPE', '')
 
@@ -572,8 +587,8 @@ class AppViewSet(viewsets.ViewSet):
             app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
 
         app_runner = app_runner_class(
-            app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid, 
-            request=request, session_id=session_id, app_owner=app_owner, stream=stream, 
+            app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid,
+            request=request, session_id=session_id, app_owner=app_owner, stream=stream,
             request_ip=request_ip, request_location=request_location, request_user_agent=request_user_agent,
             request_content_type=request_content_type,
         )
@@ -585,15 +600,15 @@ class AppViewSet(viewsets.ViewSet):
         # If the request is a url verification request, return the challenge
         if request.data.get('type') == 1:
             return DRFResponse(status=200, data={'type': 1})
-        
+
         return self.run(request, uid, platform='discord')
 
     @action(detail=True, methods=['post'])
     def run_slack(self, request, uid):
-         # If the request is a url verification request, return the challenge
+        # If the request is a url verification request, return the challenge
         if request.data.get('type') == 'url_verification':
             return DRFResponse(status=200, data={'challenge': request.data['challenge']})
-        
+
         return self.run(request, uid, platform='slack')
 
     @action(detail=True, methods=['post'])
