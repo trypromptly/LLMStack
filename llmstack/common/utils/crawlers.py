@@ -1,3 +1,4 @@
+import json
 import logging
 import multiprocessing as mp
 from urllib.parse import urlparse
@@ -72,10 +73,23 @@ def run_sitemap_spider_in_process(sitemap_url):
     return result.get()
 
 
-async def run_playwright(url):
+async def run_playwright(url, connection=None):
     async with async_playwright() as playwright:
+        storage_state = None
+        if connection:
+            storage_state = connection['configuration']['_storage_state']
+            try:
+                storage_state = json.loads(storage_state)
+            except:
+                pass
         browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await playwright.chromium.launch()
-        page = await browser.new_page()
+        if storage_state:
+            logger.info('Using storage state')
+            context = await browser.new_context(storage_state=storage_state)
+            page = await context.new_page()
+        else:
+            page = await browser.new_page()
+            
         await page.goto(url)
         await page.wait_for_timeout(5000)
         html_content = await page.content()
@@ -86,7 +100,7 @@ async def run_playwright(url):
 class URLSpider(CrawlSpider):
     name = 'url_spider'
 
-    def __init__(self, url, output, max_depth=0, allowed_domains=None, allowed_regex=None, denied_regex=None, use_renderer=False, *args, **kwargs):
+    def __init__(self, url, output, max_depth=0, allowed_domains=None, allowed_regex=None, denied_regex=None, use_renderer=False, connection=None, *args, **kwargs):
         self.start_urls = [url]
         unstructured_trace = logging.getLogger('unstructured.trace')
         unstructured_trace.disabled = True
@@ -114,11 +128,12 @@ class URLSpider(CrawlSpider):
         self.output = output
         self.max_depth = max_depth
         self.use_renderer = use_renderer
+        self.connection = connection
 
     def get_html_content(self, response):
         if self.use_renderer:
             try:
-                html_content = async_to_sync(run_playwright)(response.url)
+                html_content = async_to_sync(run_playwright)(response.url, connection=self.connection)
                 return html_content
             except Exception as e:
                 logging.exception('Error in fetching file with Playwright')
@@ -193,7 +208,7 @@ class URLSpider(CrawlSpider):
         )
 
 
-def _run_url_spider_process(url, q, max_depth=0, allowed_domains=None, allowed_regex=None, denied_regex=None, use_renderer=False):
+def _run_url_spider_process(url, q, max_depth=0, allowed_domains=None, allowed_regex=None, denied_regex=None, use_renderer=False, connection=None):
     output = []
     process = CrawlerProcess(CRAWLER_SETTINGS)
     process.crawl(
@@ -204,16 +219,17 @@ def _run_url_spider_process(url, q, max_depth=0, allowed_domains=None, allowed_r
         denied_regex=denied_regex,
         output=output,
         use_renderer=use_renderer,
+        connection=connection,
     )
     process.start()  # The script will block here until the crawling is finished
     q.put(output)
 
 
-def run_url_spider_in_process(url, max_depth=0, allowed_domains=None, allow_regex=None, deny_regex=None, use_renderer=False):
+def run_url_spider_in_process(url, max_depth=0, allowed_domains=None, allow_regex=None, deny_regex=None, use_renderer=False, connection=None):
     result = mp.Queue()
     mp.Process(
         target=_run_url_spider_process,
         args=(url, result, max_depth, allowed_domains,
-              allow_regex, deny_regex, use_renderer),
+              allow_regex, deny_regex, use_renderer, connection),
     ).start()
     return result.get()
