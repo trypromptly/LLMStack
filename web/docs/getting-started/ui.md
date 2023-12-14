@@ -3,7 +3,7 @@ id: ui
 title: LLMStack UI
 ---
 
-LLMStack comes with an easy to use web based UI. It allows you to manage your LLMStack instance, build powerful AI applications and much more.
+LLMStack comes with an easy to use web based UI. It allows you to manage your LLMStack instance, build powerful AI agents, workflows and much more.
 
 :::note
 Below screens assume that your LLMStack installation is running on `http://localhost:3000`. If you are running LLMStack on a different URL, please replace `http://localhost:3000` with your URL.
@@ -43,6 +43,10 @@ The History page allows you to view the history of all the apps and playground t
 
 The Data Sources page allows you to manage your data sources. You can upload files, add URLs and connect external data sources to LLMStack.
 
+## Jobs
+
+Jobs allows you to trigger your apps or agents with a batch of inputs. You can upload a CSV file with inputs and trigger your apps or agents with each input. In the jobs page, you can schedule jobs, view the status of each job and download the outputs from each runs.
+
 ![Data Sources Page](/img/ui/llmstack-datasources.png)
 
 ## Discover
@@ -54,3 +58,7 @@ The Discover page allows you to discover new apps. If you are part of an organiz
 The Settings page allows you to manage your account. You can manage your API keys and access your API key for the LLMStack APIs.
 
 ![Settings Page](/img/ui/llmstack-settings.png)
+
+### Connections
+
+On the settings page, you can also manage your external connections. Connections allows you to save your encrypted credentials for external services like your LinkedIn account, Hubspot account, etc. You can then use these connections in your apps to connect to these external services.
