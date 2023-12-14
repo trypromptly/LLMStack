@@ -50,7 +50,21 @@ where <output> is your response to the user and 'instructions' is an array of in
 <tag_to_use> is the identifier to use to identify the element to perform the instruction on. Identifiers are next to the elements on the page. For example all text areas have identifier with prefix `ta=`. Similar `in=`, `b=`, `a=`, `s=` are used for input fields, buttons, links and selects respectively.
 <data_to_use> is the data to use for the instruction. For example, if type_of_instruction is 'Type', then data_to_use is the text to type into the element identified by tag_to_use. If type_of_instruction is 'ScrollX' or 'ScrollY', then data_to_use is the number of pixels to scroll the page by.
 - If the task is done and no more instructions are needed, you can terminate the browser session by generating an instruction with type_of_instruction as 'Terminate'.
-- Let's think step by step.
+
+For example, a valid output can be:
+{
+    "output": "Searching for OpenAI",
+    "instruction": {
+        "type": "Type",
+        "tag": "ta=0",
+        "data": "OpenAI",
+    }, {
+        "type": "Click",
+        "tag": "b=0",
+    }]
+}
+
+Let's think step by step.
 '''
 
 
@@ -115,6 +129,8 @@ class WebBrowserOutput(ApiProcessorSchema):
     text: str = Field(default='', description='Text of the result')
     video: Optional[str] = Field(
         default=None, description='Video of the result')
+    content: Optional[dict] = Field(
+        default=None, description='Content of the result including text, buttons, links, inputs, textareas and selects')
 
 
 class WebBrowserInput(ApiProcessorSchema):
@@ -138,7 +154,7 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
 
     @staticmethod
     def description() -> str:
-        return 'Browse web based on instructions'
+        return 'Visit a website and perform actions to complete a task'
 
     @staticmethod
     def provider_slug() -> str:
@@ -170,7 +186,7 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
         if content.links:
             output += f'\nLinks on page:\n------\n'
             for link in content.links[:100]:
-                output += f'selector: {link.selector}, url: {link.url}, text: {link.text}\n'
+                output += f'selector: {link.selector}, text: {link.text}\n'
 
         if content.inputs:
             output += f'\nInput fields on page:\n------\n'
@@ -375,6 +391,7 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
                     try:
                         result = json.loads(content)
                     except:
+                        logger.error(f'Error parsing json: {content}')
                         result = {
                             'output': content,
                         }

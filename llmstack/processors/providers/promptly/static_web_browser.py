@@ -5,6 +5,7 @@ from typing import List, Optional
 import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
+from google.protobuf.json_format import MessageToDict
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
@@ -105,6 +106,7 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
     def process(self) -> dict:
         output_stream = self._output_stream
         output_text = ''
+        browser_response = None
 
         channel = grpc.insecure_channel(
             f'{settings.RUNNER_HOST}:{settings.RUNNER_PORT}')
@@ -114,6 +116,11 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
             playwright_response_iter = stub.GetPlaywrightBrowser(
                 self._request_iterator())
             for response in playwright_response_iter:
+                if response.content:
+                    response_content = MessageToDict(response.content)
+                    if response_content:
+                        browser_response = response_content
+
                 if response.state == runner_pb2.TERMINATED or response.content.text:
                     output_text = "".join([x.text for x in response.outputs])
                     if not output_text:
@@ -130,7 +137,8 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
             logger.exception(e)
 
         async_to_sync(output_stream.write)(WebBrowserOutput(
-            text=output_text
+            text=output_text,
+            content=browser_response,
         ))
         output = output_stream.finalize()
 

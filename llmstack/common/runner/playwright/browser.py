@@ -35,49 +35,70 @@ class Playwright:
 
     async def get_browser_content_from_page(self, page: Page, utils_js: str) -> BrowserContent:
         content = BrowserContent()
-        content.url = page.url
-        content.title = await page.title()
 
-        # Load utils script
-        await page.evaluate(utils_js)
-
-        # Script to collect details of all elements and add bounding boxes and labels
-        page_details = await page.evaluate('addTags();')
-        content.text = page_details['text']
-
-        # Process the returned data
-        for button in page_details['buttons']:
-            content.buttons.append(BrowserButton(
-                text=button['text'], selector=button['tag']))
-
-        for input in page_details['inputs']:
-            content.inputs.append(BrowserInputField(
-                text=input['text'], selector=input['tag']))
-
-        for select in page_details['selects']:
-            content.selects.append(BrowserSelectField(
-                text=select['text'], selector=select['tag']))
-
-        for textarea in page_details['textareas']:
-            content.textareas.append(BrowserTextAreaField(
-                text=textarea['text'], selector=textarea['tag']))
-
-        for link in page_details['links']:
-            content.links.append(BrowserLink(
-                text=link['text'], selector=link['tag'], url=link['url']))
-
-        # Add a screenshot
         try:
+            content.url = page.url
+            content.title = await page.title()
+
+            # Load utils script
+            await page.evaluate(utils_js)
+
+            # Script to collect details of all elements and add bounding boxes and labels
+            page_details = await page.evaluate('addTags();')
+            content.text = page_details['text']
+
+            # Process the returned data
+            for button in page_details['buttons']:
+                content.buttons.append(BrowserButton(
+                    text=button['text'], selector=button['tag']))
+
+            # Include interactable labels and divs as buttons if clickable
+            for label in page_details['labels']:
+                content.buttons.append(BrowserButton(
+                    text=label['text'], selector=label['tag']))
+
+            for div in page_details['divs']:
+                if div['clickable']:
+                    content.buttons.append(BrowserButton(
+                        text=div['text'], selector=div['tag']))
+
+            for input in page_details['inputs']:
+                content.inputs.append(BrowserInputField(
+                    text=input['text'], selector=input['tag']))
+
+            for select in page_details['selects']:
+                content.selects.append(BrowserSelectField(
+                    text=select['text'], selector=select['tag']))
+
+            for textarea in page_details['textareas']:
+                content.textareas.append(BrowserTextAreaField(
+                    text=textarea['text'], selector=textarea['tag']))
+
+            # Add typable divs as textareas
+            for div in page_details['divs']:
+                if div['editable']:
+                    content.textareas.append(BrowserTextAreaField(
+                        text=div['text'], selector=div['tag']))
+
+            for link in page_details['links']:
+                content.links.append(BrowserLink(
+                    text=link['text'], selector=link['tag'], url=link['url']))
+
+            # Add a screenshot
             content.screenshot = await page.screenshot(type='png')
+
+            # Clear tags
+            await page.evaluate('clearTags();')
         except Exception as e:
-            logger.exception(e)
+            logger.error(e)
+            content.error = str(e)
 
         return content
 
     async def _process_playwright_request(self, page: Page, request):
 
         def _get_locator(page, selector):
-            if selector.startswith('a=') or selector.startswith('b=') or selector.startswith('in=') or selector.startswith('s=') or selector.startswith('ta='):
+            if selector.startswith('a=') or selector.startswith('b=') or selector.startswith('in=') or selector.startswith('s=') or selector.startswith('ta=') or selector.startswith('l=') or selector.startswith('d='):
                 name, value = selector.split('=')
                 if name == 'in':
                     name = 'input'
@@ -87,6 +108,10 @@ class Playwright:
                     name = 'select'
                 elif name == 'b':
                     name = 'button'
+                elif name == 'l':
+                    name = 'label'
+                elif name == 'd':
+                    name = 'div'
 
                 return page.locator(name).nth(int(value))
             return page.locator(selector)
@@ -97,8 +122,8 @@ class Playwright:
         logger.info(steps)
         terminated = False
 
-        try:
-            for step in steps:
+        for step in steps:
+            try:
                 if step.type == TERMINATE:
                     terminated = True
                     raise Exception(
@@ -125,22 +150,25 @@ class Playwright:
                 elif step.type == runner_pb2.TYPE:
                     locator = _get_locator(page, step.selector)
                     # Clear before typing
-                    await locator.fill('')
-                    await locator.press_sequentially(step.data)
+                    await locator.fill('', timeout=1000)
+                    await locator.press_sequentially(step.data, timeout=1000)
                 elif step.type == runner_pb2.SCROLL_X:
                     await page.mouse.wheel(delta_x=int(step.data), delta_y=0)
                 elif step.type == runner_pb2.SCROLL_Y:
                     await page.mouse.wheel(delta_x=0, delta_y=int(step.data))
                 elif step.type == runner_pb2.ENTER:
-                    await page.keyboard.press('Enter')
-        except Exception as e:
-            logger.exception(e)
-            error = str(e)
-        finally:
-            if terminated:
-                raise Exception('Terminating browser')
+                    if await page.evaluate('() => { return (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA"); }'):
+                        await page.keyboard.press('Enter')
+                        # Wait for navigation to complete if any
+                        await page.wait_for_timeout(5000)
+            except Exception as e:
+                logger.exception(e)
+                error = str(e)
+            finally:
+                if terminated:
+                    raise Exception('Terminating browser')
 
-            return outputs, error
+        return outputs, error
 
     async def _process_playwright_input_stream(self, initial_request, request_iterator, display, ffmpeg_process):
         os.environ['DISPLAY'] = f'{display["DISPLAY"]}.0'
@@ -177,9 +205,6 @@ class Playwright:
                         page, next_request)
                     outputs += output
 
-                    # Wait for 200ms before collecting the content
-                    await page.wait_for_timeout(200)
-
                     # Populate content from the last page
                     content = await self.get_browser_content_from_page(page, self.utils_js)
                     if error:
@@ -196,6 +221,8 @@ class Playwright:
                 await browser.close()
 
                 if ffmpeg_process:
+                    # Wait for 5 seconds before killing ffmpeg
+                    await asyncio.sleep(5)
                     ffmpeg_process.kill()
 
                 yield (outputs, content)
@@ -296,6 +323,14 @@ class Playwright:
 
                     if content_future.done() or video_future.done() or browser_done or video_done:
                         break
+
+                # Check if we have any data left in the video queue
+                while not video_queue.empty():
+                    chunk = video_queue.get_nowait()
+                    if chunk is SENTINAL:
+                        video_done = True
+                        break
+                    yield PlaywrightBrowserResponse(video=chunk)
 
                 yield PlaywrightBrowserResponse(
                     state=RemoteBrowserState.TERMINATED)
