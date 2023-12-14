@@ -96,23 +96,26 @@ class ProfileViewSet(viewsets.ViewSet):
 
         if 'google_service_account_json_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
             should_update = True
+            try:
+                google_service_account_json_key = json.loads(
+                    base64.b64decode(
+                        request.data.get(
+                            'google_service_account_json_key', '{}',
+                        ),
+                    ).decode().strip(),
+                )
 
-            google_service_account_json_key = json.loads(
-                base64.b64decode(
-                    request.data.get(
-                        'google_service_account_json_key', '{}',
-                    ),
-                ).decode().strip(),
-            )
-
-            if google_service_account_json_key and len(google_service_account_json_key.keys()) > 0:
-                profile.google_service_account_json_key = profile.encrypt_value(
-                    json.dumps(
-                        google_service_account_json_key,
-                    ),
-                ).decode('utf-8')
-            else:
-                profile.google_service_account_json_key = ''
+                if google_service_account_json_key and len(google_service_account_json_key.keys()) > 0:
+                    profile.google_service_account_json_key = profile.encrypt_value(
+                        json.dumps(
+                            google_service_account_json_key,
+                        ),
+                    ).decode('utf-8')
+                else:
+                    profile.google_service_account_json_key = ''
+            except:
+                # This is an API key
+                profile.google_service_account_json_key = profile.encrypt_value(request.data['google_service_account_json_key']).decode('utf-8')
 
         if 'azure_openai_api_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
             should_update = True

@@ -241,7 +241,8 @@ const SettingPage = () => {
                       }}
                     />
                     <SecretTextField
-                      label="Google Service Account JSON Key"
+                      label="Google Credentials"
+                      helperText="Add your Google Service Account JSON file content as base64 encoded string or paste the API key."
                       type="password"
                       fullWidth
                       variant="outlined"
