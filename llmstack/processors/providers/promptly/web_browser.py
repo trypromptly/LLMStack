@@ -396,6 +396,10 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
                             'output': content,
                         }
 
+                    # If output is json, convert that to string
+                    if 'output' in result and type(result['output']) != str:
+                        result['output'] = str(result['output'])
+
                     if 'instructions' in result:
                         steps = []
                         for instruction in result['instructions']:
