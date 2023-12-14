@@ -243,7 +243,7 @@ class Playwright:
             .input(f"{display['DISPLAY']}.0", format='x11grab', framerate=10, video_size=(1024, 720))
             .output('pipe:', format='mp4', vcodec='h264', movflags='faststart+frag_keyframe+empty_moov+default_base_moof', g=25, y=None)
             .run_async(pipe_stdout=True, pipe_stderr=True)
-        ) if initial_request.stream_video else None
+        )
 
         # Use ThreadPoolExecutor to run the async function in a separate thread
         with futures.ThreadPoolExecutor(thread_name_prefix='async_tasks') as executor:
@@ -317,7 +317,8 @@ class Playwright:
                         if chunk is SENTINAL:
                             video_done = True
                             break
-                        yield PlaywrightBrowserResponse(video=chunk)
+                        if initial_request.stream_video:
+                            yield PlaywrightBrowserResponse(video=chunk)
                     except asyncio.QueueEmpty:
                         pass
 
@@ -330,7 +331,8 @@ class Playwright:
                     if chunk is SENTINAL:
                         video_done = True
                         break
-                    yield PlaywrightBrowserResponse(video=chunk)
+                    if initial_request.stream_video:
+                        yield PlaywrightBrowserResponse(video=chunk)
 
                 yield PlaywrightBrowserResponse(
                     state=RemoteBrowserState.TERMINATED)
