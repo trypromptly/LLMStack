@@ -1,3 +1,5 @@
+import logging 
+
 from enum import Enum
 from typing import Annotated, Dict, List, Literal, Optional, Union
 from asgiref.sync import async_to_sync
@@ -6,6 +8,9 @@ from pydantic import BaseModel, Field
 import requests
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
 from llmstack.processors.providers.google import API_KEY, get_google_credential_from_env
+from google.generativeai.types import content_types
+
+logger = logging.getLogger(__name__)
 
 class GeminiModel(str, Enum):
     GEMINI_PRO = 'gemini-pro'
@@ -74,7 +79,9 @@ class ChatConfiguration(ApiProcessorSchema):
     model: GeminiModel = Field(advanced_parameter=False, default=GeminiModel.GEMINI_PRO)
     safety_settings: List[SafetySetting]
     generation_config: GenerationConfig =  Field(advanced_parameter=False, default=GenerationConfig())
-    
+    retain_history: bool = Field(
+        default=False, description='Whether to retain the chat history.',
+    )
 class Citation(BaseModel):
     startIndex: int
     endIndex: int
@@ -126,22 +133,38 @@ class ChatProcessor(ApiProcessorInterface[ChatInput, ChatOutput, ChatConfigurati
         mime_type = response.headers['Content-Type']
         return image_bytes, mime_type
 
+    def process_session_data(self, session_data):
+        self._chat_history = session_data.get('chat_history', [])
+        
+    def session_data_to_persist(self) -> dict:
+        return {'chat_history': self._chat_history} 
+    
     def process(self) -> dict:
+        history = self._chat_history if self._config.retain_history else []
+        
         token, token_type = get_google_credential_from_env(self._env)
         if token_type != API_KEY:
             raise ValueError('Invalid token type. Gemini needs an API key.')
             
         genai.configure(api_key=token)
+        model = genai.GenerativeModel(self._config.model.value)
         
-        messages = [] if self._input.system_message is None else [self._input.system_message]
-        if self._config.model.value == GeminiModel.GEMINI_PRO:
+        messages = []
+        # Add history to messages
+        for message in history:
+            messages.append(message)
+        
+        # Add system message to message_params
+        message_params = [{'text' : self._input.system_message}] if self._input.system_message else []
+        
+        if self._config.model.value == GeminiModel.GEMINI_PRO: 
             for message in self._input.messages:
                 if message.type == 'image_url':
                     raise ValueError('Gemini Pro does not support image input.')
                 elif message.type == 'text':
-                    messages.append(message.text)
-
-        elif self._config.model.value == GeminiModel.GEMINI_PRO_VISION:
+                    message_params.append({'text' : message.text})                
+            
+        elif self._config.model.value == GeminiModel.GEMINI_PRO_VISION:            
             for message in self._input.messages:
                 if message.type == 'image_url':
                     image_url = message.image_url
@@ -149,26 +172,33 @@ class ChatProcessor(ApiProcessorInterface[ChatInput, ChatOutput, ChatConfigurati
                         content, mime_type = image_url.split(',', 1)
                     elif image_url.startswith('http'):
                         content, mime_type = self.get_image_bytes_mime_type(image_url)
-                    messages.append({
+                    message_params.append({
                         'mime_type': mime_type,
                         'data': content,
                     })
                 elif message.type == 'text':
-                    messages.append(message.text)
-                 
+                    message_params.append({'text' : message.text})
         else:
-            raise ValueError(f'Invalid model: {self._config.model.value}')
+            raise ValueError(f'Invalid model: {self._config.model.value}')        
         
+        # Add current user provided input to messages
+        messages.append({'parts': message_params, 'role': 'user'})
         
-        model = genai.GenerativeModel(self._config.model.value)
-
-        response = model.generate_content(
-            contents=messages, stream=True)
-        for chunk in response:
-            async_to_sync(self._output_stream.write)(
-                ChatOutput(prediction=ChatPrediction(content=chunk.text)),
+        # Send it over to the model  
+        response = model.generate_content(contents=content_types.to_contents(messages),
+                generation_config={'max_output_tokens': self._config.generation_config.max_output_tokens, 
+                                   'temperature' : self._config.generation_config.temperature},
+                stream=True,
             )
         
+        for chunk in response:
+            async_to_sync(self._output_stream.write)(ChatOutput(prediction=ChatPrediction(content=chunk.text)))
         
         output = self._output_stream.finalize()
+        
+        # Persist history if requested
+        if self._config.retain_history:
+            history = history + messages + [{'parts': [{'text' : output.prediction.content}], 'role': 'model'}]
+            self._chat_history = history
+            
         return output
