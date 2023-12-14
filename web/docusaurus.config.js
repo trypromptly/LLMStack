@@ -60,6 +60,17 @@ const config = {
     ],
   ],
 
+  themes: [
+    [
+      require.resolve("@easyops-cn/docusaurus-search-local"),
+      {
+        hashed: true,
+        docsRouteBasePath: "/docs",
+        blogRouteBasePath: "/blog",
+      },
+    ],
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
