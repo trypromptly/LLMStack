@@ -17,9 +17,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Tooltip,
 } from "@mui/material";
 import moment from "moment";
 import { axios } from "../data/axios";
+import { useRecoilValue } from "recoil";
+import { appsState } from "../data/atoms";
 import AddAppRunScheduleModal from "../components/schedule/AddAppRunScheduleModal";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
@@ -166,8 +169,9 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
 }
 
 export default function Schedule() {
+  const apps = useRecoilValue(appsState);
   const [pageNumber, setPageNumber] = useState(1);
-  const [scheduledJobs, setScheduledJobs] = useState([]);
+  const [jobs, setJobs] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [jobId, setJobId] = useState(null);
@@ -181,23 +185,52 @@ export default function Schedule() {
   };
 
   const handleExpandJob = (row) => {
-    const newScheduledJobs = [...scheduledJobs];
-    const index = newScheduledJobs.findIndex((job) => job.uuid === row.uuid);
-    newScheduledJobs[index].expand = !newScheduledJobs[index].expand;
-    setScheduledJobs(newScheduledJobs);
+    const newJobs = [...jobs];
+    const index = newJobs.findIndex((job) => job.uuid === row.uuid);
+    newJobs[index].expand = !newJobs[index].expand;
+    setJobs(newJobs);
 
-    if (newScheduledJobs[index].expand) {
+    if (newJobs[index].expand) {
       axios()
         .get(`/api/jobs/${row.uuid}/tasks`)
         .then((res) => {
-          const newScheduledJobs = [...scheduledJobs];
-          const index = newScheduledJobs.findIndex(
-            (job) => job.uuid === row.uuid,
-          );
-          newScheduledJobs[index].tasks = res.data;
-          setScheduledJobs(newScheduledJobs);
+          const newJobs = [...jobs];
+          const index = newJobs.findIndex((job) => job.uuid === row.uuid);
+          newJobs[index].tasks = res.data;
+          setJobs(newJobs);
         });
     }
+  };
+
+  const getTaskStatusTooltip = (task) => {
+    const successCount = task.result?.filter(
+      (r) => r.status === "success",
+    )?.length;
+    const failedCount = task.result?.filter(
+      (r) => r.status === "failed",
+    )?.length;
+    const startedCount = task.result?.filter(
+      (r) => r.status === "started",
+    )?.length;
+    const notStartedCount = task.result?.filter(
+      (r) => r.status === "not_started",
+    ).length;
+    const totalCount = task.result?.length;
+
+    return (
+      <div>
+        <div>Total Rows: {totalCount}</div>
+        {successCount && totalCount !== successCount ? (
+          <div>
+            <br />
+            Success: {successCount}
+          </div>
+        ) : null}
+        {failedCount ? <div>Failed: {failedCount}</div> : null}
+        {startedCount ? <div>Started: {startedCount}</div> : null}
+        {notStartedCount ? <div>Pending: {notStartedCount}</div> : null}
+      </div>
+    );
   };
 
   const columnData = [
@@ -212,11 +245,11 @@ export default function Schedule() {
         const getJobTypeTitle = () => {
           switch (record) {
             case "ScheduledJob":
-              return "Scheduled Job";
+              return "Scheduled";
             case "RepeatableJob":
-              return "Repeatable Job";
+              return "Repeatable";
             case "CronJob":
-              return "Cron Job";
+              return "Cron";
             default:
               return null;
           }
@@ -224,19 +257,39 @@ export default function Schedule() {
         const getJobCategoryTitle = () => {
           switch (row?.task_category) {
             case "app_run":
-              return "Application Run";
+              return "App";
             case "datasource_refresh":
-              return "Datasource Refresh";
+              return "Datasource";
             default:
               return null;
           }
         };
         return (
           <div>
-            <Chip label={getJobCategoryTitle()} color="primary" size="small" />
             <Chip label={getJobTypeTitle()} color="secondary" size="small" />
+            <Chip label={getJobCategoryTitle()} color="primary" size="small" />
           </div>
         );
+      },
+    },
+    {
+      title: "Source",
+      key: "source_uuid",
+      render: (record, row) => {
+        return row?.task_category === "app_run" ? (
+          <Button
+            onClick={() => {
+              window.location.href = `/apps/${record}`;
+            }}
+            sx={{
+              textTransform: "none",
+              fontWeight: "inherit",
+              textAlign: "left",
+            }}
+          >
+            {apps.find((app) => app.uuid === record)?.name}
+          </Button>
+        ) : null;
       },
     },
     {
@@ -311,7 +364,45 @@ export default function Schedule() {
     axios()
       .get("/api/jobs")
       .then((res) => {
-        setScheduledJobs(res.data);
+        // Create an array from scheduled_jobs, repeatable_jobs and cron_jobs properties and include the job type
+        let jobs = [];
+
+        const scheduledJobs = res.data.scheduled_jobs.map((job) => {
+          return {
+            ...job,
+            model: "ScheduledJob",
+            expand: false,
+          };
+        });
+
+        const repeatableJobs = res.data.repeatable_jobs.map((job) => {
+          return {
+            ...job,
+            model: "RepeatableJob",
+            expand: false,
+          };
+        });
+
+        const cronJobs = res.data.cron_jobs.map((job) => {
+          return {
+            ...job,
+            model: "CronJob",
+            expand: false,
+          };
+        });
+
+        // Merge all jobs into one array and sort by created_at desc
+        jobs = [...scheduledJobs, ...repeatableJobs, ...cronJobs].sort(
+          (a, b) => {
+            return (
+              moment.utc(b.created_at).local() -
+              moment.utc(a.created_at).local()
+            );
+          },
+        );
+
+        // Set the jobs state
+        setJobs(jobs);
       });
   }, []);
 
@@ -353,7 +444,7 @@ export default function Schedule() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {scheduledJobs.map((row) => {
+              {jobs.map((row) => {
                 return [
                   <TableRow
                     key={row.uuid}
@@ -417,32 +508,39 @@ export default function Schedule() {
                                         .format("D-MMM-YYYY h:mm:ss A")}
                                     </TableCell>
                                     <TableCell>
-                                      {task.status === "succeeded" ? (
-                                        <Chip
-                                          label="Success"
-                                          color="success"
-                                          size="small"
-                                        />
-                                      ) : task.status === "started" ? (
-                                        <Chip
-                                          label="Started"
-                                          color="warning"
-                                          size="small"
-                                        />
-                                      ) : (
-                                        <Chip
-                                          label="Failed"
-                                          color="error"
-                                          size="small"
-                                        />
-                                      )}
+                                      <Tooltip
+                                        title={getTaskStatusTooltip(task)}
+                                      >
+                                        {task.status === "started" &&
+                                        task.result?.filter(
+                                          (r) => r.status === "success",
+                                        )?.length === task.result?.length ? (
+                                          <Chip
+                                            label="Finished"
+                                            color="success"
+                                            size="small"
+                                          />
+                                        ) : task.status === "started" ? (
+                                          <Chip
+                                            label="Started"
+                                            color="warning"
+                                            size="small"
+                                          />
+                                        ) : (
+                                          <Chip
+                                            label="Failed"
+                                            color="error"
+                                            size="small"
+                                          />
+                                        )}
+                                      </Tooltip>
                                     </TableCell>
                                     <TableCell>
                                       <Button
                                         variant="outlined"
                                         size="small"
                                         startIcon={<DownloadOutlinedIcon />}
-                                        disabled={task.status !== "succeeded"}
+                                        disabled={task.status === "failed"}
                                         onClick={() => {
                                           window.open(
                                             `/api/jobs/${row.uuid}/tasks/${task.uuid}/download`,
@@ -466,7 +564,7 @@ export default function Schedule() {
               })}
             </TableBody>
           </Table>
-          {scheduledJobs.length > 0 && (
+          {jobs.length > 0 && (
             <Pagination
               variant="outlined"
               shape="rounded"

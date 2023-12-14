@@ -7,6 +7,7 @@ import logging
 import math
 import uuid
 from datetime import timedelta
+from enum import Enum
 
 import croniter
 import django_rq
@@ -22,6 +23,13 @@ from rq import Queue, get_current_job
 logger = logging.getLogger(__name__)
 
 SCHEDULER_INTERVAL = 60
+
+
+class TaskStatus(str, Enum):
+    NOT_STARTED = 'not_started'
+    STARTED = 'started'
+    SUCCESS = 'success'
+    FAILURE = 'failure'
 
 
 class TaskRunLog(models.Model):
@@ -120,7 +128,7 @@ def success_callback(job, connection, result, *args, **kwargs):
     if task_log is None:
         logger.error(f'Could not find task log for job {job.id}')
     else:
-        task_log.status = 'succeeded'
+        task_log.status = 'started'
         task_log.save()
 
     task.job_id = None
@@ -168,12 +176,11 @@ def run_task(task_model: str, task_id: int):
         args = task.parse_args()
         kwargs = task.parse_kwargs()
         kwargs = {**kwargs, '_job_metadata': {
-            'task_run_log_uuid' : str(task_run_log.uuid)
-            }}
-        results, errors = task.callable_func()(*args, **kwargs)
+            'task_run_log_uuid': str(task_run_log.uuid)
+        }}
+        results = task.callable_func()(*args, **kwargs)
 
     task_run_log.result = results
-    task_run_log.errors = errors
     task_run_log.save()
 
     return True
@@ -196,14 +203,13 @@ def run_task_now(task_model: str, task_id: int):
     args = task.parse_args()
     kwargs = task.parse_kwargs()
     kwargs = {
-        **kwargs, 
+        **kwargs,
         '_job_metadata': {
-            'task_run_log_uuid' : str(task_run_log.uuid)}
-        }
-    results, errors = task.callable_func()(*args, **kwargs)
+            'task_run_log_uuid': str(task_run_log.uuid)}
+    }
+    results = task.callable_func()(*args, **kwargs)
 
     task_run_log.result = results
-    task_run_log.errors = errors
     task_run_log.save()
 
     return True
@@ -314,7 +320,7 @@ class BaseTask(models.Model):
             scheduled_task_id=self.id,
             timeout=self.timeout,
             result_ttl=self.result_ttl,
-            )
+        )
 
     @property
     def rqueue(self) -> Queue:

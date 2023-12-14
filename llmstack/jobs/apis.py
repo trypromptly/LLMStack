@@ -14,7 +14,12 @@ from rest_framework.response import Response as DRFResponse
 from llmstack.apps.apis import AppViewSet
 from llmstack.datasources.apis import DataSourceEntryViewSet, DataSourceViewSet
 from llmstack.jobs.models import CronJob, RepeatableJob, ScheduledJob, TaskRunLog
-from llmstack.jobs.serializers import TaskRunLogSerializer
+from llmstack.jobs.serializers import (
+    CronJobSerializer,
+    RepeatableJobSerializer,
+    ScheduledJobSerializer,
+    TaskRunLogSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +41,34 @@ class JobsViewSet(viewsets.ViewSet):
         scheduled_jobs = ScheduledJob.objects.filter(owner=request.user)
         repeatable_jobs = RepeatableJob.objects.filter(owner=request.user)
         cron_jobs = CronJob.objects.filter(owner=request.user)
-        jobs = list(map(lambda entry: entry.to_dict(), scheduled_jobs)) + list(map(
-            lambda entry: entry.to_dict(), repeatable_jobs)) + list(map(lambda entry: entry.to_dict(), cron_jobs))
-        return DRFResponse(status=200, data=jobs)
+
+        cron_jobs_serializer = CronJobSerializer(cron_jobs, many=True)
+        scheduled_jobs_serializer = ScheduledJobSerializer(
+            scheduled_jobs, many=True)
+        repeatable_jobs_serializer = RepeatableJobSerializer(
+            repeatable_jobs, many=True)
+
+        return DRFResponse(status=200, data={
+            'scheduled_jobs': scheduled_jobs_serializer.data,
+            'repeatable_jobs': repeatable_jobs_serializer.data,
+            'cron_jobs': cron_jobs_serializer.data,
+        })
 
     def get(self, request, uid):
         job = self._get_job_by_uuid(uid, request=request)
         if not job:
             return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
-        return DRFResponse(status=200, data=job.to_dict())
+
+        if isinstance(job, ScheduledJob):
+            serializer = ScheduledJobSerializer(job)
+        elif isinstance(job, RepeatableJob):
+            serializer = RepeatableJobSerializer(job)
+        elif isinstance(job, CronJob):
+            serializer = CronJobSerializer(job)
+        else:
+            return DRFResponse(status=404, data={'message': f"No job found with uuid: {uid}"})
+
+        return DRFResponse(status=200, data=serializer.data)
 
     def delete(self, request, uid):
         logger.info(f"Deleting job with uuid: {uid}")
@@ -114,7 +138,8 @@ class JobsViewSet(viewsets.ViewSet):
 
             # Write the current row
             input_row = [str(input_data[i][key]).strip() for key in headers]
-            csv_writer.writerow(input_row + [output_data[i]['output']])
+            csv_writer.writerow(
+                input_row + [output_data[i]['output']['output']])
 
             # Yield the current row
             yield row_output.getvalue().strip() + '\n'
