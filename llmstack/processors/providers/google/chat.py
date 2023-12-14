@@ -1,7 +1,9 @@
+import copy
+import json
 import logging 
 
 from enum import Enum
-from typing import Annotated, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 from asgiref.sync import async_to_sync
 import google.generativeai as genai
 from pydantic import BaseModel, Field
@@ -9,6 +11,7 @@ import requests
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
 from llmstack.processors.providers.google import API_KEY, get_google_credential_from_env
 from google.generativeai.types import content_types
+from google.ai.generativelanguage_v1beta.types import content as gag_content
 
 logger = logging.getLogger(__name__)
 
@@ -96,18 +99,43 @@ class SafetyAttributes(BaseModel):
     categories: Optional[List[str]]
     blocked: bool
     scores: List[float]
-    
-class ChatPrediction(BaseModel):
-    content: str = Field(description='Generated prediction content.')
+
+class ToolCall(BaseModel):
+    id: Optional[str]
+    """The ID of the tool call."""
+
+    function: Optional[FunctionCall]
+    """The function that the model called."""
+
+    type: Literal["function"]
+    """The type of the tool. Currently, only `function` is supported.""" 
+       
+class ChatOutput(ApiProcessorSchema):
+    content: Optional[str] = Field(description='Generated prediction content.')
+    function_calls: Optional[List[ToolCall]] = Field()
     citationMetadata: Optional[CitationMetadata] = Field(
         description='Metadata for the citations found in the response.',
     )
     safetyAttributes: Optional[SafetyAttributes] = Field(
         description='Safety attributes for the response.',
     )
-class ChatOutput(ApiProcessorSchema):
-    prediction: ChatPrediction 
 
+def _convert_schema_dict_to_gapic(schema_dict: Dict[str, Any]):
+    """Converts a JsonSchema to a dict that the GAPIC Schema class accepts."""
+    gapic_schema_dict = copy.copy(schema_dict)
+    if "type" in gapic_schema_dict:
+        gapic_schema_dict["type_"] = gapic_schema_dict.pop("type").upper()
+    if "format" in gapic_schema_dict:
+        gapic_schema_dict["format_"] = gapic_schema_dict.pop("format")
+    if "items" in gapic_schema_dict:
+        gapic_schema_dict["items"] = _convert_schema_dict_to_gapic(
+            gapic_schema_dict["items"]
+        )
+    properties = gapic_schema_dict.get("properties")
+    if properties:
+        for property_name, property_schema in properties.items():
+            properties[property_name] = _convert_schema_dict_to_gapic(property_schema)
+    return gapic_schema_dict
 class ChatProcessor(ApiProcessorInterface[ChatInput, ChatOutput, ChatConfiguration]):
     @staticmethod
     def name() -> str:
@@ -184,15 +212,44 @@ class ChatProcessor(ApiProcessorInterface[ChatInput, ChatOutput, ChatConfigurati
         # Add current user provided input to messages
         messages.append({'parts': message_params, 'role': 'user'})
         
+        if self._input.functions:
+            tools = []
+            for function in self._input.functions:
+                function_declarations = gag_content.FunctionDeclaration(
+                        {
+                            'name': function.name,
+                            'description': function.description,
+                            'parameters': _convert_schema_dict_to_gapic(json.loads(function.parameters)),
+                        })
+                
+                tools.append(gag_content.Tool({'function_declarations': [function_declarations]}))
+                
+        else:
+            tools = None
+            
         # Send it over to the model  
         response = model.generate_content(contents=content_types.to_contents(messages),
                 generation_config={'max_output_tokens': self._config.generation_config.max_output_tokens, 
                                    'temperature' : self._config.generation_config.temperature},
+                tools=tools,
                 stream=True,
             )
         
         for chunk in response:
-            async_to_sync(self._output_stream.write)(ChatOutput(prediction=ChatPrediction(content=chunk.text)))
+            result_text = ""
+            function_calls = []
+            for part in chunk.parts:
+                if part.text:
+                    result_text += part.text
+                elif part.function_call:
+                    function_calls.append({'name': part.function_call.name, 'args' : dict(part.function_call.args.items())})
+                    
+            tool_calls = list(map(lambda x: ToolCall(type='function', function=FunctionCall(name=x['name'], parameters=json.dumps(x['args']))), function_calls))
+            
+            if len(result_text) > 0:
+                async_to_sync(self._output_stream.write)(ChatOutput(content=result_text))
+            elif len(tool_calls) > 0:
+                async_to_sync(self._output_stream.write)(ChatOutput(function_calls=tool_calls))
         
         output = self._output_stream.finalize()
         
