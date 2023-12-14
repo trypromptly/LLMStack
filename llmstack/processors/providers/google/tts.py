@@ -1,15 +1,13 @@
 import logging
-import orjson as json
 from typing import Optional
 
 import requests
 from asgiref.sync import async_to_sync
-from google.auth.transport.requests import Request
-from google.oauth2 import service_account
 from pydantic import BaseModel
 from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, AUDIO_WIDGET_NAME, ApiProcessorSchema
+from llmstack.processors.providers.google import API_KEY, get_google_credential_from_env, get_project_id_from_env
 
 SCOPES = ['https://www.googleapis.com/auth/cloud-platform']
 
@@ -80,30 +78,20 @@ class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeec
 
     def process(self) -> dict:
         api_url = 'https://texttospeech.googleapis.com/v1/text:synthesize'
+        
         token = None
         project_id = None
-        google_service_account_json_key = json.loads(
-            self._env.get('google_service_account_json_key', '{}'),
-        )
 
         if self._config.project_id:
             project_id = self._config.project_id
         else:
-            project_id = google_service_account_json_key.get(
-                'project_id', None,
-            )
-
+            project_id = get_project_id_from_env(self._env)
+           
         if self._config.auth_token:
             token = self._config.auth_token
+            token_type = API_KEY
         else:
-            credentials = service_account.Credentials.from_service_account_info(
-                google_service_account_json_key,
-            )
-            credentials = credentials.with_scopes(
-                ['https://www.googleapis.com/auth/cloud-platform'],
-            )
-            credentials.refresh(Request())
-            token = credentials.token
+            token, token_type = get_google_credential_from_env(self._env)
 
         if token is None:
             raise Exception('No auth token provided.')
@@ -111,10 +99,16 @@ class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeec
         if project_id is None:
             raise Exception('No project ID provided.')
 
-        headers = {
-            'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json; charset=utf-8',
-        }
+        if token_type == API_KEY:
+            headers = {
+                'X-Goog-Api-Key': token,
+                'Content-Type': 'application/json; charset=utf-8',
+            }
+        else:
+            headers = {
+                'Authorization': f'Bearer {token}',
+                'Content-Type': 'application/json; charset=utf-8',
+            }
 
         data = {
             'input': {'text': self._input.input_text},
