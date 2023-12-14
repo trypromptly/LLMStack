@@ -45,7 +45,7 @@ The Data Sources page allows you to manage your data sources. You can upload fil
 
 ## Jobs
 
-Jobs allows you to trigger your apps or agents with a batch of inputs. You can upload a CSV file with inputs and trigger your apps or agents with each input. In the jobs page, you can schedule jobs, view the status of each job and download the outputs from each runs.
+Jobs allows you to trigger your apps or agents with a batch of inputs. You can upload a CSV file with inputs and run your apps or agents with each row in the CSV file as input. In the jobs page, you can schedule jobs, view the status of each job and download the outputs from each runs.
 
 ![Data Sources Page](/img/ui/llmstack-datasources.png)
 

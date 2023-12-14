@@ -6,7 +6,7 @@ title: Getting Started
 import ReactPlayer from "react-player";
 
 :::info
-Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow the instructions below to deploy LLMStack on your own infrastructure.
+Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow the instructions below to deploy LLMStack on your own infrastructure. If you are using Promptly, you can skip this section and go to [Key Concepts](#key-concepts) section.
 :::
 
 ## Prerequisites
@@ -39,6 +39,10 @@ llmstack
 LLMStack should automatically open your browser and point it to login page on [http://localhost:3000](http://localhost:3000). You can also alternatively open [http://localhost:3000](http://localhost:3000) to login into the platform.
 
 LLMStack creates a config file in your home directory at `~/.llmstack/config` to store the configuration. You can change the port and other settings from this file. Refer to the [configuration](config.md) section for more information.
+
+:::note
+When you start LLMStack for the first time, it will download the required docker images. This may take a few minutes depending on your internet connection.
+:::
 
 <ReactPlayer
   playing
@@ -74,6 +78,10 @@ pip install llmstack --upgrade
 ### Processors
 
 Processors are the basic building blocks in LLMStack. These provide the functionality to process the input from user or from a previous processor in a chain, take some action and optionally generate a response. LLMStack comes with a few built-in processors like OpenAI's ChatGPT, Image Generation, Stability's Image Generation etc. You can also create your own processors and add them to LLMStack.
+
+#### Tools
+
+Tools are processors that can be used to perform some action when used in the context of [agents](#agents). For example, you can use `ChatGPT` processor with a prompt to generate essays as a tool in an Agent app and the agent will use the tool whenever it needs to generate an essay.
 
 ### Providers
 

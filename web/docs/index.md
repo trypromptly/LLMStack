@@ -5,7 +5,7 @@ sidebar_label: Introduction
 sidebar_position: 0
 ---
 
-LLMStack is a no-code platform for building generative AI Agents, workflows, chatbots and connecting them to your data and business processes. It is a framework to build new AI experiences or integrate AI into your existing products. LLMStack is designed to be modular and extensible. It helps you manage data that can be connected to your LLM applications to create context aware generative AI Agents.
+Promptly / LLMStack is a no-code platform for building generative AI Agents, workflows, chatbots and connecting them to your data and business processes. It is a framework to build new AI experiences or integrate AI into your existing products. LLMStack is designed to be modular and extensible. It helps you manage data that can be connected to your LLM applications to create context aware generative AI Agents.
 
 :::info
 Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow the documentation to deploy LLMStack on your own infrastructure.

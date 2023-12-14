@@ -13,8 +13,8 @@ The `ElevenLabs` provider includes processors for text to speech models from [El
 
 ### Configuration
 
-- `voice_id`: The voice ID to be used. You can find a list of all available voices at <https://api.elevenlabs.io/v1/voices>.
-- `model_id`: The identifier of the model to be used. You can find a list of all available models at <https://api.elevenlabs.io/v1/models>.
+- `voice_id`: The voice ID to be used. You can find a list of all available voices at https://api.elevenlabs.io/v1/voices.
+- `model_id`: The identifier of the model to be used. You can find a list of all available models at https://api.elevenlabs.io/v1/models.
 - `optimize_streaming_latency`: Whether to optimize for streaming latency. This can reduce the quality of the generated audio.
 - `voice_settings`: Voice settings.
 
