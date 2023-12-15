@@ -71,24 +71,24 @@ class HttpAPIProcessorInput(Schema):
 
 
 class HttpAPIProcessorOutput(Schema):
-    code: int = Field(title='Response code', default=200,
+    code: int = Field(description='Response code', default=200,
                       advanced_parameter=False)
-    headers: Dict[str, str] = Field(
-        title='Response headers', default={}, advanced_parameter=False)
+    headers: Dict[str, str] = Field(title='Response headers',
+                                    description='Response headers', default={}, advanced_parameter=False)
     text: Optional[str] = Field(
-        title='Response text', default=None, advanced_parameter=False)
+        description='Response text', default=None, advanced_parameter=False)
     content_json: Optional[Union[Dict[str, Any], List[Dict]]] = Field(
-        title='Response JSON', default=None, advanced_parameter=False)
-    is_ok: bool = Field(title='Is response OK',
+        description='Response JSON', default=None, advanced_parameter=False)
+    is_ok: bool = Field(description='Is response OK',
                         default=True, advanced_parameter=False)
     url: Optional[str] = Field(
-        title='Response URL', default=None, advanced_parameter=False)
+        description='Response URL', default=None, advanced_parameter=False)
     encoding: Optional[str] = Field(
-        title='Response encoding', default=None, advanced_parameter=False)
+        description='Response encoding', default=None, advanced_parameter=False)
     cookies: Optional[Dict[str, str]] = Field(
-        title='Response cookies', default=None, advanced_parameter=False)
+        description='Response cookies', default=None, advanced_parameter=False)
     elapsed: Optional[int] = Field(
-        title='Response elapsed time', default=None, advanced_parameter=False)
+        description='Response elapsed time', default=None, advanced_parameter=False)
 
 
 class RequestBody(Schema):
