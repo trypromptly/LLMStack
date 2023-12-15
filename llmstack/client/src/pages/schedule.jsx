@@ -304,6 +304,24 @@ export default function Schedule() {
       },
     },
     {
+      title: "Created",
+      key: "created_at",
+      render: (record, row) => {
+        return row?.created_at
+          ? moment.utc(row?.created_at).local().format("D-MMM-YYYY h:mm:ss A")
+          : null;
+      },
+    },
+    {
+      title: "Last Run",
+      key: "last_run",
+      render: (record, row) => {
+        return row?.updated_at
+          ? moment.utc(row?.updated_at).local().fromNow()
+          : null;
+      },
+    },
+    {
       title: "Action",
       key: "operation",
       render: (record, row) => {
