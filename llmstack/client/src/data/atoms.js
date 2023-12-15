@@ -410,6 +410,25 @@ export const appsState = atom({
   default: appsFetchSelector,
 });
 
+const appsBriefFetchSelector = selector({
+  key: "appsBriefFetchSelector",
+  get: async () => {
+    try {
+      const apps = await axios().get(
+        "/api/apps?fields=uuid,name,visibility,is_published,app_type_name,unique_processors,published_uuid",
+      );
+      return apps.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
+export const appsBriefState = atom({
+  key: "appsBriefState",
+  default: appsBriefFetchSelector,
+});
+
 export const profileFlagsFetchSelector = selector({
   key: "profileFlagsFetchSelector",
   get: async () => {

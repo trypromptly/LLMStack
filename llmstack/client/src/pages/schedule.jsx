@@ -22,7 +22,7 @@ import {
 import moment from "moment";
 import { axios } from "../data/axios";
 import { useRecoilValue } from "recoil";
-import { appsState } from "../data/atoms";
+import { appsBriefState } from "../data/atoms";
 import AddAppRunScheduleModal from "../components/schedule/AddAppRunScheduleModal";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
@@ -169,7 +169,7 @@ function ActionModal({ modalType, open, onCancel, onOk, jobId }) {
 }
 
 export default function Schedule() {
-  const apps = useRecoilValue(appsState);
+  const apps = useRecoilValue(appsBriefState);
   const [pageNumber, setPageNumber] = useState(1);
   const [jobs, setJobs] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);

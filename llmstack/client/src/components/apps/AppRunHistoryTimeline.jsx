@@ -32,6 +32,8 @@ import { ReactComponent as SlackIcon } from "../../assets/images/icons/slack.svg
 import { ReactComponent as TwilioIcon } from "../../assets/images/icons/twilio.svg";
 import "ace-builds/src-noconflict/mode-sh";
 import "ace-builds/src-noconflict/theme-chrome";
+import { useRecoilValue } from "recoil";
+import { appsBriefState } from "../../data/atoms";
 
 const browserAndOSFromUACache = {};
 
@@ -299,7 +301,7 @@ const FilterBar = ({ apps, sessions, users, onFilter }) => {
 
 export function AppRunHistoryTimeline(props) {
   const { filter, filteredColumns, showFilterBar } = props;
-  const [apps, setApps] = useState([]);
+  const apps = useRecoilValue(appsBriefState);
   const [rows, setRows] = useState([]);
   const [expandedRows, setExpandedRows] = useState({});
   const [loading, setLoading] = useState(false);
@@ -310,14 +312,6 @@ export function AppRunHistoryTimeline(props) {
       (column) => !filteredColumns || filteredColumns.includes(column.id),
     );
   }, [filteredColumns]);
-
-  useEffect(() => {
-    axios()
-      .get("/api/apps?fields=uuid,name")
-      .then((response) => {
-        setApps(response.data);
-      });
-  }, []);
 
   const renderTableCell = (column, row) => {
     const value = row[column.id];

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   Button,
@@ -22,6 +22,8 @@ import { axios } from "../../data/axios";
 import { useNavigate } from "react-router-dom";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import AppVisibilityIcon from "./AppVisibilityIcon";
+import { useRecoilValue } from "recoil";
+import { appsBriefState } from "../../data/atoms";
 
 const DeleteUnpublishedAppModal = ({ open, setOpen, appId }) => {
   const [deleteValue, setDeleteValue] = useState("");
@@ -130,7 +132,7 @@ const DeletePublishedAppAlert = ({ open, setOpen }) => {
 
 export function AppList() {
   const [page, setPage] = useState(0);
-  const [apps, setApps] = useState([]);
+  const apps = useRecoilValue(appsBriefState);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openDeletePublishedAppAlert, setOpenDeletePublishedAppAlert] =
     useState(false);
@@ -139,16 +141,6 @@ export function AppList() {
   const [appIdToDelete, setAppIdToDelete] = useState("");
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    axios()
-      .get(
-        "/api/apps?fields=uuid,name,visibility,is_published,app_type_name,unique_processors",
-      )
-      .then((response) => {
-        setApps(response.data);
-      });
-  }, [setApps]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
