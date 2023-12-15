@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import List
 from typing import Optional
 
-import requests
+from . import prequests as requests
 from striprtf.striprtf import rtf_to_text
 from unstructured.documents.elements import Element
 from unstructured.documents.elements import ElementMetadata
@@ -31,10 +31,11 @@ timeout = 100
 
 
 class ExtraParams:
-    def __init__(self, openai_key=None, azure_openai_key=None, youtube_api_key=None):
+    def __init__(self, openai_key=None, azure_openai_key=None, youtube_api_key=None, connection=None):
         self._openai_key = openai_key
         self._youtube_api_key = youtube_api_key
         self._azure_openai_key = azure_openai_key
+        self._connection = connection
 
     @property
     def openai_key(self):
@@ -43,10 +44,14 @@ class ExtraParams:
     @property
     def azure_openai_key(self):
         return self._azure_openai_key
+    
+    @property
+    def connection(self):
+        return self._connection
 
 
-def get_url_content_type(url):
-    response = requests.head(url, allow_redirects=True, verify=False)
+def get_url_content_type(url, connection=None):
+    response = requests.head(url, allow_redirects=True, verify=False, _connection=connection)
 
     content_type = response.headers.get('Content-Type', '')
     return content_type
@@ -167,7 +172,7 @@ def extract_text_from_url(url, extra_params: Optional[ExtraParams] = None):
         )
         return text
 
-    url_content_type = get_url_content_type(url=url)
+    url_content_type = get_url_content_type(url=url, connection=extra_params.connection)
     url_content_type_parts = url_content_type.split(';')
     mime_type = url_content_type_parts[0]
     url_content_type_args = {}
@@ -181,16 +186,17 @@ def extract_text_from_url(url, extra_params: Optional[ExtraParams] = None):
     data = None
     if mime_type == 'text/html':
         try:
-            result = run_url_spider_in_process(url=url, use_renderer=True)
+            result = run_url_spider_in_process(url=url, use_renderer=True, connection=extra_params.connection)
             data = result[0]['html_page'].encode('utf-8')
         except:
             logger.exception('Error in running url spider')
             data = requests.get(
                 url=url, headers=headers,
                 timeout=timeout,
+                _connection=extra_params.connection,
             ).content
     else:
-        data = requests.get(url=url, headers=headers, timeout=timeout).content
+        data = requests.get(url=url, headers=headers, timeout=timeout, _connection=extra_params.connection).content
 
     elements = extract_text_elements(
         mime_type=mime_type,
