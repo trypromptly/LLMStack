@@ -54,20 +54,14 @@ When you start LLMStack for the first time, it will download the required docker
 />
 
 :::note
-If you are deploying LLMStack on a server, make sure to update `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` in `~/.llmstack/config` file to include the hostname of your server. Refer to the [configuration](config.md) section for more information.
+If you are deploying LLMStack on a server, make sure to update `allowed_hosts` and `csrf_trusted_origins` in `~/.llmstack/config` file to include the hostname of your server. Refer to the [configuration](config.md) section for more information.
 :::
-
-Instead of downloading the release, you can also clone the repository and run the above commands in the cloned repository.
-
-```
-git clone https://github.com/trypromptly/LLMStack.git
-```
 
 You can add your own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `~/.llmstack/config` file.
 
-## Updating
+## Upgrading
 
-To update LLMStack to the new release, you can run the following command:
+To upgrade LLMStack to the latest release, you can run the following command:
 
 ```
 pip install llmstack --upgrade

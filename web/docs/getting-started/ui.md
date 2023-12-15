@@ -43,11 +43,11 @@ The History page allows you to view the history of all the apps and playground t
 
 The Data Sources page allows you to manage your data sources. You can upload files, add URLs and connect external data sources to LLMStack.
 
+![Data Sources Page](/img/ui/llmstack-datasources.png)
+
 ## Jobs
 
 Jobs allows you to trigger your apps or agents with a batch of inputs. You can upload a CSV file with inputs and run your apps or agents with each row in the CSV file as input. In the jobs page, you can schedule jobs, view the status of each job and download the outputs from each runs.
-
-![Data Sources Page](/img/ui/llmstack-datasources.png)
 
 ## Discover
 

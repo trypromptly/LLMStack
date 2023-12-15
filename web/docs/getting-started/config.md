@@ -3,20 +3,22 @@ id: config
 title: Configuration
 ---
 
-You can configure the LLMStack installation by editing the `.env` file in the root directory of the installation. The `.env` file is a simple text file with key-value pairs. You can edit the file using any text editor. Following is the list of available configuration options:
+You can configure the LLMStack installation by editing the `.llmstack/config` file in the user's home directory. The `config` file is in TOML format. You can edit the file using any text editor. Following is the list of available configuration options:
 
-| Key                    | Description                                                                                                                                                                                                | Default Value                                                       |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `SECRET_KEY`           | Secret key for your installation. This is the key used for signing data. **_Make sure this is changed_**                                                                                                   | Hardcoded random string.                                            |
-| `CIPHER_KEY_SALT`      | Salt used to encrypt user keys and other sensitive data                                                                                                                                                    | `salt`                                                              |
-| `DATABASE_PASSWORD`    | Password for the database user. This is used when setting up the initial db user and for connecting to the database later                                                                                  | `llmstack`                                                          |
-| `POSTGRES_VOLUME`      | Path to the directory where the database data will be stored. By default, data is stored in `/tmp` which is ephemeral. Make sure to change this to a persistent directory if you want to persist the data. | `/tmp/postgres_llmstack`                                            |
-| `REDIS_VOLUME`         | Path to the directory where the redis data will be stored. By default, data is stored in `/tmp` which is ephemeral. Make sure to change this to a persistent directory if you want to persist the data.    | `/tmp/redis_llmstack`                                               |
-| `WEAVIATE_VOLUME`      | Path to the directory where the weaviate data will be stored. By default, data is stored in `/tmp` which is ephemeral. Make sure to change this to a persistent directory if you want to persist the data. | `/tmp/weaviate_llmstack`                                            |
-| `LLMSTACK_PORT`        | Port on which the LLMStack web server will listen.                                                                                                                                                         | `3000`                                                              |
-| `LOG_LEVEL`            | Log level for the LLMStack web server.                                                                                                                                                                     | `ERROR`                                                             |
-| `ALLOWED_HOSTS`        | Comma separated list of allowed hosts for the LLMStack API server server. If you are running LLMStack on a non localhost domain, you need to add allowed hosts                                             | `localhost`                                                         |
-| `CSRF_TRUSTED_ORIGINS` | Comma separated list of trusted origins. If you are running LLMStack on a non localhost domain, you need to add the domain to this list.                                                                   | `http://127.0.0.1:{LLMSTACK_PORT},http://localhost:{LLMSTACK_PORT}` |
+| Key                            | Description                                                                                                                                                    | Default Value                                                       |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `secret_key`                   | Secret key for your installation. This is the key used for signing data. **_Make sure this is changed_**                                                       | Hardcoded random string.                                            |
+| `cipher_key_salt`              | Salt used to encrypt user keys and other sensitive data                                                                                                        | `salt`                                                              |
+| `database_engine`              | Database engine to use for the LLMStack installation.                                                                                                          | `sqlite3`                                                           |
+| `database_name`                | Name of the database to use for the LLMStack installation.                                                                                                     | `./llmstack.sqlite`                                                 |
+| `database_password`            | Password for the database user. This is used when setting up the initial db user and for connecting to the database later                                      |                                                                     |
+| `llmstack_port`                | Port on which the LLMStack web server will listen.                                                                                                             | `3000`                                                              |
+| `log_level`                    | Log level for the LLMStack web server.                                                                                                                         | `ERROR`                                                             |
+| `allowed_hosts`                | Comma separated list of allowed hosts for the LLMStack API server server. If you are running LLMStack on a non localhost domain, you need to add allowed hosts | `localhost`                                                         |
+| `site_url`                     | URL of the LLMStack installation. This is used for generating links in emails and other places.                                                                | `http://localhost:{LLMSTACK_PORT}`                                  |
+| `csrf_trusted_origins`         | Comma separated list of trusted origins. If you are running LLMStack on a non localhost domain, you need to add the domain to this list.                       | `http://127.0.0.1:{LLMSTACK_PORT},http://localhost:{LLMSTACK_PORT}` |
+| `default_vector_database`      | Default vector database to use for all apps.                                                                                                                   | `chroma`                                                            |
+| `default_vector_database_path` | Default path for the vector database. This is used for storing the vector database.                                                                            | `~/.llmstack/chromadb`                                              |
 
 ## Default Platform Keys
 
@@ -24,16 +26,18 @@ You can set default keys for providers like OpenAI, Cohere etc., for all apps fr
 
 | Key                                       | Description                                                                             | Default Value |
 | ----------------------------------------- | --------------------------------------------------------------------------------------- | ------------- |
-| `DEFAULT_OPENAI_API_KEY`                  | Default OpenAI API key ChatGPT, Image generation, whisper and other models from OpenAI. | None          |
-| `DEFAULT_DREAMSTUDIO_API_KEY`             | Default DreamStudio API key to use for all apps for Stability models.                   | None          |
-| `DEFAULT_AZURE_OPENAI_API_KEY`            | Default Azure OpenAI API key if the user wants to Azure's OpenAI.                       | None          |
-| `DEFAULT_COHERE_API_KEY`                  | Default Cohere API key to use for all apps.                                             | None          |
-| `DEFAULT_FOREFRONTAI_API_KEY`             | Default ForefrontAI API key to use for all apps.                                        | None          |
-| `DEFAULT_ELEVENLABS_API_KEY`              | Default Eleven Labs API key for text to speech processor.                               | None          |
-| `DEFAULT_ANTHROPIC_API_KEY`               | Default Anthropic API key for models like Claude.                                       | None          |
-| `DEFAULT_LOCALAI_API_KEY`                 | Default LocalAI API to your installation .                                              | None          |
-| `DEFAULT_LOCALAI_BASE_URL`                | Default LocalAI base URL of the installation.                                           | None          |
-| `DEFAULT_AWS_SECRET_ACCESS_KEY`           | Default AWS Secret Access Key to use for all apps.                                      | None          |
-| `DEFAULT_AWS_DEFAULT_REGION`              | Default AWS Default Region to use for all apps.                                         | None          |
-| `DEFAULT_AWS_ACCESS_KEY_ID`               | Default AWS Access Key ID to use for all apps.                                          | None          |
-| `DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY` | Default Google Service Account JSON Key for Google's Vertex AI offering.                | None          |
+| `default_openai_api_key`                  | Default OpenAI API key ChatGPT, Image generation, whisper and other models from OpenAI. | None          |
+| `default_dreamstudio_api_key`             | Default DreamStudio API key to use for all apps for Stability models.                   | None          |
+| `default_azure_openai_api_key`            | Default Azure OpenAI API key if the user wants to Azure's OpenAI.                       | None          |
+| `default_cohere_api_key`                  | Default Cohere API key to use for all apps.                                             | None          |
+| `default_forefront_api_key`               | Default ForefrontAI API key to use for all apps.                                        | None          |
+| `default_elevenlabs_api_key`              | Default Eleven Labs API key for text to speech processor.                               | None          |
+| `default_anthropic_api_key`               | Default Anthropic API key for models like Claude.                                       | None          |
+| `default_localai_api_key`                 | Default LocalAI API to your installation .                                              | None          |
+| `default_localai_base_url`                | Default LocalAI base URL of the installation.                                           | None          |
+| `default_aws_secret_access_key`           | Default AWS Secret Access Key to use for all apps.                                      | None          |
+| `default_aws_region`                      | Default AWS Default Region to use for all apps.                                         | None          |
+| `default_aws_access_key_id`               | Default AWS Access Key ID to use for all apps.                                          | None          |
+| `default_google_service_account_json_key` | Default Google Service Account JSON Key for Google's Vertex AI offering.                | None          |
+| `default_google_custom_search_api_key`    | Default Google Custom Search API Key for Google's Custom Search API.                    | None          |
+| `default_google_custom_search_cx`         | Default Google Custom Search CX for Google's Custom Search API.                         | None          |

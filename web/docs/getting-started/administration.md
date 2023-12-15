@@ -10,7 +10,7 @@ Make sure you add `/` at the end of the URL to access admin page.
 :::
 
 :::note
-If you changed the `LLMSTACK_PORT` in the `.env` file, use that port instead of `3000`.
+If you changed the `llmstack_port` in the `.llmstack/config` file, use that port instead of `3000`.
 :::
 
 ## Users

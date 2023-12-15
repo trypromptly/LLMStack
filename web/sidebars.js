@@ -37,10 +37,12 @@ const sidebars = {
         "processors/openai",
         "processors/azure",
         "processors/google",
+        "processors/anthropic",
         "processors/cohere",
         "processors/stability",
         "processors/elevenlabs",
         "processors/localai",
+        "processors/linkedin",
       ],
     },
     {

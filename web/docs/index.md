@@ -15,7 +15,7 @@ Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow th
 
 ## Features
 
-**🤖 Agents**: Build generative AI agents like AI SDRs, Research Analysts, RPA Automations etc., **without writing any code**. Connect agents to your internal or external tools, search the web or browse the internet with agents.
+**🤖 Agents**: Build generative AI agents like AI SDRs, Research Analysts, RPA Automations etc., **without writing any code**. Connect agents to your internal or external tools, search the web or browse the internet.
 
 **🔗 Chain multiple models**: LLMStack allows you to chain multiple LLMs together to build complex generative AI applications.
 
