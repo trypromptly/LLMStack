@@ -26,8 +26,6 @@ import moment from "moment";
 import AceEditor from "react-ace";
 import UAParser from "ua-parser-js";
 import MarkdownRenderer from "./MarkdownRenderer";
-import { useRecoilValue } from "recoil";
-import { appsState } from "../../data/atoms";
 import { axios } from "../../data/axios";
 import { ReactComponent as DiscordIcon } from "../../assets/images/icons/discord.svg";
 import { ReactComponent as SlackIcon } from "../../assets/images/icons/slack.svg";
@@ -66,7 +64,6 @@ const allcolumns = [
     format: (value) => moment.utc(value).local().fromNow(),
   },
   { id: "name", label: "Name" },
-  { id: "type", label: "Type" },
   { id: "session_key", label: "Session" },
   { id: "request_user_email", label: "User" },
   { id: "request_location", label: "Location" },
@@ -302,7 +299,7 @@ const FilterBar = ({ apps, sessions, users, onFilter }) => {
 
 export function AppRunHistoryTimeline(props) {
   const { filter, filteredColumns, showFilterBar } = props;
-  const apps = useRecoilValue(appsState);
+  const [apps, setApps] = useState([]);
   const [rows, setRows] = useState([]);
   const [expandedRows, setExpandedRows] = useState({});
   const [loading, setLoading] = useState(false);
@@ -314,14 +311,29 @@ export function AppRunHistoryTimeline(props) {
     );
   }, [filteredColumns]);
 
+  useEffect(() => {
+    axios()
+      .get("/api/apps?fields=uuid,name")
+      .then((response) => {
+        setApps(response.data);
+      });
+  }, []);
+
   const renderTableCell = (column, row) => {
     const value = row[column.id];
 
     if (column.id === "name") {
       if (row.app_uuid !== null) {
-        return (
-          apps.find((app) => app.uuid === row.app_uuid)?.name || "Deleted App"
-        );
+        const app = apps.find((app) => app.uuid === row.app_uuid);
+        if (app) {
+          return (
+            <Button sx={{ textTransform: "none" }} href={`/apps/${app.uuid}`}>
+              {app.name}
+            </Button>
+          );
+        } else {
+          return "Deleted App";
+        }
       }
       return "Playground";
     } else if (column.id === "type") {
@@ -366,16 +378,20 @@ export function AppRunHistoryTimeline(props) {
           </Box>
         );
       } else if (row.platform_data?.twilio?.requestor) {
-        return (<Box>
-          <SvgIcon
-            component={TwilioIcon}
-            fontSize="8"
-            sx={{
-              marginRight: "5px",
-              color: "#555",
-              verticalAlign: "middle",
-            }}/>{row.platform_data?.twilio?.requestor}
-        </Box>)
+        return (
+          <Box>
+            <SvgIcon
+              component={TwilioIcon}
+              fontSize="8"
+              sx={{
+                marginRight: "5px",
+                color: "#555",
+                verticalAlign: "middle",
+              }}
+            />
+            {row.platform_data?.twilio?.requestor}
+          </Box>
+        );
       } else if (
         row.request_user_email === null ||
         row.request_user_email === ""
