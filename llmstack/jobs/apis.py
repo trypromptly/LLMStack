@@ -137,9 +137,16 @@ class JobsViewSet(viewsets.ViewSet):
                 csv_writer.writerow(headers + ['output'])
 
             # Write the current row
-            input_row = [str(input_data[i][key]).strip() for key in headers]
-            csv_writer.writerow(
-                input_row + [output_data[i]['output']['output']])
+            try:
+                input_row = [str(input_data[i][key]).strip()
+                             for key in headers]
+                if not output_data[i]['output']:
+                    output_data[i]['output'] = {'output': ''}
+                csv_writer.writerow(
+                    input_row + [output_data[i]['output']['output']])
+            except Exception as e:
+                logger.error(
+                    f"Error writing row to csv: {output_data[i]} - {e}")
 
             # Yield the current row
             yield row_output.getvalue().strip() + '\n'
