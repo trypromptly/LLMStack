@@ -113,7 +113,7 @@ export default function DropzoneFileWidget(props) {
       setFilesInfo(filesInfoEvent);
       const newValue = filesInfoEvent.map((fileInfo) => fileInfo.dataURL);
       if (props?.schema?.multiple || props?.schema?.maxFiles > 1) {
-        onChange(newValue);
+        onChange(newValue.join("|"));
       } else {
         onChange(newValue[0]);
       }
@@ -159,7 +159,8 @@ export default function DropzoneFileWidget(props) {
         <input {...getInputProps()} multiple={false} />
         <p>
           Drag 'n' drop some files here, or click to select files. Maximum size
-          of each file is {prettyBytes(props?.schema?.maxSize || 20000000)}
+          of each file is {prettyBytes(props?.schema?.maxSize || 2000000)}. Only{" "}
+          {props?.schema?.maxFiles || 1} file(s) can be uploaded at once.
         </p>
       </div>
       {thumbs && <aside style={thumbsContainer}>{thumbs}</aside>}

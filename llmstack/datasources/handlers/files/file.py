@@ -33,7 +33,7 @@ class FileSchema(DataSourceSchema):
             'audio/mp3': [],
             'video/mp4': [],
             'video/webm': [],
-        }, maxSize=250000000,
+        }, maxSize=25000000, maxFiles=4,
     )
 
     @staticmethod
@@ -73,14 +73,18 @@ class FileDataSource(DataSourceProcessor[FileSchema]):
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = FileSchema(**data)
-        mime_type, file_name, file_data = validate_parse_data_uri(entry.file)
+        files = entry.file.split('|')
+        data_source_entries = []
+        for file in files:
+            mime_type, file_name, file_data = validate_parse_data_uri(file)
 
-        data_source_entry = DataSourceEntryItem(
-            name=file_name, data={'mime_type': mime_type,
-                                  'file_name': file_name, 'file_data': file_data},
-        )
+            data_source_entry = DataSourceEntryItem(
+                name=file_name, data={'mime_type': mime_type,
+                                    'file_name': file_name, 'file_data': file_data},
+            )
+            data_source_entries.append(data_source_entry)
 
-        return [data_source_entry]
+        return data_source_entries
 
     def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         logger.info(
