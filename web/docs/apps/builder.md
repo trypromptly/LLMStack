@@ -15,6 +15,10 @@ If an app is built using a [template](templates.md), the template used will be s
 
 The editor is where you can edit your app. It is a visual editor that allows you to build your app by chaining processors together. You can also add data sources to your app and connect them to your processors if they can use datasources. You can define the input and output of your app in the editor. You can also define the configuration of your app in the editor. The editor is a powerful tool that allows you to build sophisticated apps without writing any code.
 
+### YAML
+
+You can also edit the app in YAML format. You can switch to YAML mode by clicking on the `UI/YAML` toggle button at the bottom of the editor. You can switch back to the visual editor by toggling the button back.
+
 ### Input
 
 You can define the input that the app takes here. Input is defined as a list of fields. Each field has a name, type and a description. Input fields are available as template variables in processors and output of the app. The field types can be one of the following:
@@ -31,6 +35,8 @@ You can define the input that the app takes here. Input is defined as a list of 
 
 Processors are the building blocks and the core of your app. You can chain processors together to build your app. You can add a processor to an app by selecting the provider and processor and then clicking on the `+Processor` button.
 
+If the app is an `Agent`, the processors you add behave as tools for the agent. You can add multiple processors to an agent and the agent will use them to perform tasks. For example, you can add `ChatGPT` processor to an agent and the agent will use it to generate text whenever it needs to generate text. In this context, you must specify output template for the processor which will be used by the agent to generate the tool output from processor invocation. You can only use output from that processor in the output template unlike in the output template of the app where you have access to output from all the processors in the app. Description of processor in the agent is editable and is used as the description of the tool for the LLM to use.
+
 ### Output
 
 You can define the output of your app here. Output is defined in freeform text. You can use variables from the previous steps to define the output. You can also use markdown to format the output. To insert a variable in the output, click on the variable from the dropdown below the output text area, expand the step and click on the variable to insert in the output.
@@ -38,7 +44,7 @@ You can define the output of your app here. Output is defined in freeform text. 
 ## Preview
 
 :::note
-Make sure to save the app by clicking on the `Save App` button at the bottom of the screen before previewing the app.
+Make sure to save the app by clicking on the `Save App` or `Save Draft` button at the bottom of the screen before previewing the app. Changes to published version of the app will be reflected only after saving a new version of the app. You can save a draft version of the app and preview the changes before publishing them to the live app.
 :::
 
 The preview tab allows you to test your app. You can see how the app renders on web, provide input to your app and see the output. You can also test your app with different input values.
@@ -59,8 +65,14 @@ Versions tab allows you to manage versions of your app. You can create a new ver
 
 ## Integrations
 
-Integrations tab allows you to connect your app to other platforms. You can connect your app to Slack, Discord and more. You can also embed your app in your website using the embed code. You can integrate your app in existing products to provide AI capabilities to your users using the app API.
+Integrations tab allows you to connect your app to other platforms. You can connect your app to Slack, Discord, Twilio and more. You can also embed your app in your website using the embed code. You can integrate your app in existing products to provide AI capabilities to your users using the app API.
 
 ## Publish
 
+:::note
+Make sure to save the app using the `Save App` button at the bottom of the screen before you can publish the app.
+:::
+
 You can publish the app by clicking on the `Publish` button at the top right corner. You can publish the app as a private app that is only accessible to you or the individuals you share the app with, to an org you are part of or as a public app that is accessible to everyone. Once the app is published, you can share the app with others using the app URL. You can also embed the app in your website using the embed code from integrations/web tab or integrate the app in your existing products using the app API.
+
+You can also add others to the app as collaborators in the `Publish` modal and adding the email adding the email addresses of the collaborators. Collaborators can edit the app or just view the app based on the permissions you provide.

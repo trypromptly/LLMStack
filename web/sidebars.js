@@ -43,6 +43,7 @@ const sidebars = {
         "processors/elevenlabs",
         "processors/localai",
         "processors/linkedin",
+        "processors/juniper",
       ],
     },
     {
@@ -52,6 +53,7 @@ const sidebars = {
       items: [
         "apps/types",
         "apps/builder",
+        "apps/yaml",
         "apps/variables",
         "apps/templates",
         "apps/sharing",
@@ -64,6 +66,7 @@ const sidebars = {
             "apps/integrations/api",
             "apps/integrations/discord",
             "apps/integrations/slack",
+            "apps/integrations/twilio",
             "apps/integrations/whatsapp",
           ],
         },

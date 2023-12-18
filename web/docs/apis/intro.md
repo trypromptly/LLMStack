@@ -27,7 +27,7 @@ You will need to parse the output in your client code and stitch the chunks toge
 
 ### Apps
 
-Run an app.
+#### Run an app.
 
 ```bash
 POST /api/apps/<app_uuid>/run
@@ -41,7 +41,7 @@ POST /api/apps/<app_uuid>/run/<session_id>
 
 where `session_id` is a unique identifier for the session. You can use the same session id to run the app multiple times. If you don't pass a session id, LLMStack will generate a random session id for you.
 
-#### Request body
+##### Request body
 
 You can pass the values for the app's input variables in the request body. You can also pass `stream` parameter to stream the response.
 
@@ -52,7 +52,7 @@ You can pass the values for the app's input variables in the request body. You c
 }
 ```
 
-#### Response body
+##### Response body
 
 ```json
 {
@@ -61,6 +61,22 @@ You can pass the values for the app's input variables in the request body. You c
   },
   "output": <APP_OUTPUT>
 }
+```
+
+#### Create an App
+
+You can create an app by sending a POST request to `/api/apps` with the app definition as `YAML` in the request body. Make sure to set the `Content-Type` header to `text/yaml`.
+
+```bash
+POST /api/apps
+```
+
+#### Update an App
+
+You can update an app by sending a PATCH request to `/api/apps/<app_uuid>` with the app definition as `YAML` in the request body. Make sure to set the `Content-Type` header to `text/yaml`.
+
+```bash
+PATCH /api/apps/<app_uuid>
 ```
 
 ### Datasources

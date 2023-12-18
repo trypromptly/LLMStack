@@ -3,22 +3,48 @@ id: openai
 title: OpenAI
 ---
 
+:::info[`provider_slug`: `openai`]
+:::
+
 The `OpenAI` provider includes processors that correspond to [models from OpenAI](https://platform.openai.com/docs/models/overview).
 
-## ChatGPT
+## ChatGPT with Vision
+
+:::info[`processor_slug`: `chatgpt_vision`]
+:::
 
 ### Input
 
-`system_message`: A message from the system, which will be prepended to the chat history.
-`chat_history`: A list of messages, each with a role (user, assistant, system) and message text.
-`messages`: A list of new messages that you want to send to the ChatGPT.
-`functions`: A list of functions the model may generate JSON inputs for.
+- `system_message`: A message from the system, which will be prepended to the messages.
+- `messages`: A list of messages that you want to send to the ChatGPT.
 
 ### Configuration
 
-`datasources`: List of datasource UUIDs to use to retrieve data from the vector store for the asked question. If not provided, it will not provide any context to the ChatGPT model.
-
 - `model`: The ChatGPT model to use. Currently supports gpt-3.5-turbo and gpt-4.
+- `max_tokens`: The maximum number of tokens allowed for the generated answer.
+- `temperature`: The sampling temperature to use for generating responses.
+- `retain_history`: Whether to retain and use the chat history.
+- `auto_prune_chat_history`: Automatically prune chat history if retaining.
+
+### Output
+
+- `result`: The model generated response.
+
+## ChatGPT
+
+:::info[`processor_slug`: `chatgpt`]
+:::
+
+### Input
+
+- `system_message`: A message from the system, which will be prepended to the chat history.
+- `chat_history`: A list of messages, each with a role (user, assistant, system) and message text.
+- `messages`: A list of new messages that you want to send to the ChatGPT.
+- `functions`: A list of functions the model may generate JSON inputs for.
+
+### Configuration
+
+- `model`: The ChatGPT model to use.
 - `max_tokens`: The maximum number of tokens allowed for the generated answer.
 - `temperature`: The sampling temperature to use for generating responses.
 - `n`: How many completions to generate for each prompt.
@@ -33,6 +59,9 @@ The `OpenAI` provider includes processors that correspond to [models from OpenAI
 
 ## Completions
 
+:::info[`processor_slug`: `completions`]
+:::
+
 ### Input
 
 - `prompt`: The prompt to ask the OpenAI Completions model.
@@ -43,7 +72,7 @@ The `OpenAI` provider includes processors that correspond to [models from OpenAI
 
 - `model`: OpenAI Completions model to use.
 - `max_tokens`: Maximum number of tokens to generate in the completion.
-- `temperature`: Sampling temperature to use, between 0 and 2. Higher values will make the output more random, while lower    values will make it more focused and deterministic.
+- `temperature`: Sampling temperature to use, between 0 and 2. Higher values will make the output more random, while lower values will make it more focused and deterministic.
 
 - `n`: How many completions to generate for each prompt.
 - `stream`: Whether to stream the completions back to the client.
@@ -54,6 +83,9 @@ The `OpenAI` provider includes processors that correspond to [models from OpenAI
 - `text`: The generated text from the OpenAI Completions model.
 
 ## Image generation
+
+:::info[`processor_slug`: `image_generations`]
+:::
 
 ### Input
 
@@ -71,6 +103,9 @@ The `OpenAI` provider includes processors that correspond to [models from OpenAI
 
 ## Image variation
 
+:::info[`processor_slug`: `image_variations`]
+:::
+
 ### Input
 
 - `image`: The base64 encoded image to generate variations of.
@@ -86,6 +121,9 @@ The `OpenAI` provider includes processors that correspond to [models from OpenAI
 - `images`: An array of generated image variations as base64 encoded strings.
 
 ## Image edit
+
+:::info[`processor_slug`: `images_edit`]
+:::
 
 ### Input
 
@@ -104,6 +142,9 @@ The `OpenAI` provider includes processors that correspond to [models from OpenAI
 
 ## Audio transcription
 
+:::info[`processor_slug`: `audio_transcriptions`]
+:::
+
 ### Input
 
 - `audio_file`: The audio file to transcribe.
@@ -118,6 +159,9 @@ The `OpenAI` provider includes processors that correspond to [models from OpenAI
 
 ## Audio translation
 
+:::info[`processor_slug`: `audio_translations`]
+:::
+
 ### Input
 
 - `file`: The audio file to translate, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.
@@ -130,3 +174,19 @@ The `OpenAI` provider includes processors that correspond to [models from OpenAI
 ### Output
 
 - `text`: The translated text.
+
+## Text to Speech
+
+:::info[`processor_slug`: `text_to_speech`]
+:::
+
+### Input
+
+- `input_text`: The text to convert to speech.
+
+### Configuration
+
+- `model`: The ID of the OpenAI Text to Speech model to use.
+- `voice`: The voice to use for the generated audio.
+- `respones_format`: The format of the response. Can be `mp3`, `opus`, `aac` or `flac`.
+- `speed`: The speed of the generated audio.

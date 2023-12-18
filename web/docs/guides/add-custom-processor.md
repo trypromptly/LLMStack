@@ -67,7 +67,7 @@ This is the display name of the processor. This is used in the UI to display the
 This is the slug of the processor.
 :::note
 This should be unique across all processors.
-:::warning
+:::
 
 ```python
 @staticmethod

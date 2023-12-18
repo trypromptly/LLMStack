@@ -49,6 +49,8 @@ The Data Sources page allows you to manage your data sources. You can upload fil
 
 Jobs allows you to trigger your apps or agents with a batch of inputs. You can upload a CSV file with inputs and run your apps or agents with each row in the CSV file as input. In the jobs page, you can schedule jobs, view the status of each job and download the outputs from each runs.
 
+![Jobs Page](/img/ui/llmstack-jobs.png)
+
 ## Discover
 
 The Discover page allows you to discover new apps. If you are part of an organization, you will see all the apps shared in your organization. If you are not part of an organization, you will see all the public apps.
@@ -62,3 +64,5 @@ The Settings page allows you to manage your account. You can manage your API key
 ### Connections
 
 On the settings page, you can also manage your external connections. Connections allows you to save your encrypted credentials for external services like your LinkedIn account, Hubspot account, etc. You can then use these connections in your apps to connect to these external services.
+
+![Connections](/img/ui/llmstack-connections.png)

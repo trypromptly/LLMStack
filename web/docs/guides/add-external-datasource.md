@@ -1,6 +1,6 @@
 ---
 id: add-external-datasource
-title: Add External Datasource
+title: Implement External Datasource
 ---
 
 LLMStack supports adding an external datastore as a read-only datasource. Adding an external datastore gives you the ability to query the datastore and use the results in your LLM applications.

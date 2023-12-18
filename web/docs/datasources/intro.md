@@ -28,9 +28,22 @@ You can upload your files to LLMStack and use them as data sources. LLMStack sup
 
 You can add URLs to LLMStack and use them as data sources. LLMStack will download the content from the URL and use it as a data source. You can add sitemap URLs to LLMStack and it will crawl the sitemap and download the content from the URLs in the sitemap.
 
+#### Authenticated URLs
+
+If you want to add urls that require authentication, like an internal documentation page etc., add a `Web Login` connection to your account from `Settings` page and login to the website you want to add urls for using the remote web browser. Once the connection is added, you can add urls from the website as a data source by selecting the associated connection.
+
 ### External Data Sources
 
 You can connect your external data sources to LLMStack and use them as data sources. LLMStack supports the following external data sources:
 
-- Google Drive
-- Amazon S3
+#### Google Drive
+
+:::note
+In LLMStack, you should have a google project with Google Drive API enabled to use this feature.
+:::
+
+To load files from your google drive, add a `Google Login` connection from `Settings` page. Once the connection is added, you can add your google drive files as a data source.
+
+#### Weaviate
+
+You can connect your Weaviate instance to LLMStack and use it as a data source.
