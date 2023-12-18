@@ -65,7 +65,7 @@ You can pass the values for the app's input variables in the request body. You c
 
 #### Create an App
 
-You can create an app by sending a POST request to `/api/apps` with the app definition as `YAML` in the request body. Make sure to set the `Content-Type` header to `text/yaml`.
+You can create an app by sending a POST request to `/api/apps` with the app definition as `YAML` in the request body. Make sure to set the `Content-Type` header to `application/yaml`.
 
 ```bash
 POST /api/apps
@@ -73,7 +73,7 @@ POST /api/apps
 
 #### Update an App
 
-You can update an app by sending a PATCH request to `/api/apps/<app_uuid>` with the app definition as `YAML` in the request body. Make sure to set the `Content-Type` header to `text/yaml`.
+You can update an app by sending a PATCH request to `/api/apps/<app_uuid>` with the app definition as `YAML` in the request body. Make sure to set the `Content-Type` header to `application/yaml`.
 
 ```bash
 PATCH /api/apps/<app_uuid>
