@@ -50,6 +50,12 @@ WEAVIATE_SCHEMA = Template('''
                     "enabled": true
                 }
             },
+            "replicationConfig": {
+                "factor": 1
+            },
+            "shardingConfig": {
+                "desiredCount": 1
+            },
             "properties": [
                 {
                     "name": "$content_key",
