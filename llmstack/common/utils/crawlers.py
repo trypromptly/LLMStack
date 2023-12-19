@@ -1,23 +1,25 @@
-import json
-import os
 import asyncio
+import json
 import logging
 import multiprocessing as mp
+import os
 from typing import Optional
 from urllib.parse import urlparse
 
-from scrapy import Selector, Spider
 import scrapy
+from scrapy import Selector, Spider
 from scrapy.crawler import CrawlerProcess
+from scrapy.exceptions import CloseSpider
 from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider
-from scrapy.spiders import Rule
-from scrapy.spiders import SitemapSpider
+from scrapy.spiders import CrawlSpider, Rule, SitemapSpider
+from scrapy_playwright.handler import (
+    PERSISTENT_CONTEXT_PATH_KEY,
+    BrowserContextWrapper,
+    ScrapyPlaywrightDownloadHandler,
+)
 from twisted.internet.defer import Deferred
 from unstructured.partition.auto import partition_html
-from scrapy.exceptions import CloseSpider
-from scrapy_playwright.handler import ScrapyPlaywrightDownloadHandler, PERSISTENT_CONTEXT_PATH_KEY, BrowserContextWrapper
 
 CRAWLER_SETTINGS = {
     'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
@@ -27,6 +29,7 @@ CRAWLER_SETTINGS = {
 
 
 logger = logging.getLogger(__name__)
+
 
 def get_domain(url):
     parsed_url = urlparse(url)
@@ -74,13 +77,14 @@ def run_sitemap_spider_in_process(sitemap_url):
     ).start()
     return result.get()
 
+
 class PromptlyScrapyPlaywrightDownloadHandler(ScrapyPlaywrightDownloadHandler):
     def __init__(self, settings):
         super().__init__(settings)
         PLAYWRIGHT_URL = f'ws://{os.getenv("RUNNER_HOST", "runner")}:{os.getenv("RUNNER_PLAYWRIGHT_PORT", 50053)}'
         self.browser_cdp_url = PLAYWRIGHT_URL
         logging.getLogger("scrapy-playwright").setLevel(logging.ERROR)
-    
+
     async def _maybe_connect(self) -> None:
         async with self.browser_launch_lock:
             if not hasattr(self, "browser"):
@@ -88,12 +92,12 @@ class PromptlyScrapyPlaywrightDownloadHandler(ScrapyPlaywrightDownloadHandler):
                 self.browser = await self.browser_type.connect(
                     ws_endpoint=self.browser_cdp_url, **self.browser_cdp_kwargs
                 )
-                
+
     async def _create_browser_context(
         self,
         name: str,
         context_kwargs,
-        spider = None,
+        spider=None,
     ):
         """Create a new context, also launching a local browser or connecting
         to a remote one if necessary.
@@ -122,10 +126,12 @@ class PromptlyScrapyPlaywrightDownloadHandler(ScrapyPlaywrightDownloadHandler):
             remote = False
 
         context.on(
-            "close", self._make_close_browser_context_callback(name, persistent, remote, spider)
+            "close", self._make_close_browser_context_callback(
+                name, persistent, remote, spider)
         )
         self.stats.inc_value("playwright/context_count")
-        self.stats.inc_value(f"playwright/context_count/persistent/{persistent}")
+        self.stats.inc_value(
+            f"playwright/context_count/persistent/{persistent}")
         self.stats.inc_value(f"playwright/context_count/remote/{remote}")
         logger.debug(
             "Browser context started: '%s' (persistent=%s, remote=%s)",
@@ -140,7 +146,8 @@ class PromptlyScrapyPlaywrightDownloadHandler(ScrapyPlaywrightDownloadHandler):
             },
         )
         if self.default_navigation_timeout is not None:
-            context.set_default_navigation_timeout(self.default_navigation_timeout)
+            context.set_default_navigation_timeout(
+                self.default_navigation_timeout)
         self.context_wrappers[name] = BrowserContextWrapper(
             context=context,
             semaphore=asyncio.Semaphore(value=self.max_pages_per_context),
@@ -148,9 +155,10 @@ class PromptlyScrapyPlaywrightDownloadHandler(ScrapyPlaywrightDownloadHandler):
         )
         self._set_max_concurrent_context_count()
         return self.context_wrappers[name]
-    
+
     def download_request(self, request: Request, spider: Spider) -> Deferred:
         return super().download_request(request, spider)
+
 
 class URLSpider(CrawlSpider):
     name = 'url_spider'
@@ -186,7 +194,7 @@ class URLSpider(CrawlSpider):
         self.max_depth = max_depth
         self.use_renderer = use_renderer
         self.connection = connection
-    
+
     @classmethod
     def update_settings(cls, settings) -> None:
         super().update_settings(settings)
@@ -202,16 +210,17 @@ class URLSpider(CrawlSpider):
             "http": "llmstack.common.utils.crawlers.PromptlyScrapyPlaywrightDownloadHandler",
             "https": "llmstack.common.utils.crawlers.PromptlyScrapyPlaywrightDownloadHandler",
         }, priority='spider')
-        settings.set('TWISTED_REACTOR', "twisted.internet.asyncioreactor.AsyncioSelectorReactor", priority='spider')
+        settings.set(
+            'TWISTED_REACTOR', "twisted.internet.asyncioreactor.AsyncioSelectorReactor", priority='spider')
         if os.getenv('RUNNER_HOST', None) and os.getenv('RUNNER_PLAYWRIGHT_PORT', None):
             PLAYWRIGHT_URL = f'ws://{os.getenv("RUNNER_HOST", None)}:{os.getenv("RUNNER_PLAYWRIGHT_PORT", None)}'
             settings.set('PLAYWRIGHT_CDP_URL', PLAYWRIGHT_URL)
-            
 
     def _get_cookies(self, url):
         cookies = []
         if self.connection:
-            _storage_state = json.loads(self.connection.get('configuration', {}).get('_storage_state', '{}'))
+            _storage_state = json.loads(self.connection.get(
+                'configuration', {}).get('_storage_state', '{}'))
             cookie_list = _storage_state.get('cookies', {})
             url_domain = '.'.join(urlparse(url).netloc.split('.')[-2:])
             for cookie_entry in cookie_list:
@@ -219,7 +228,7 @@ class URLSpider(CrawlSpider):
                     if cookie_entry['domain'].endswith(url_domain):
                         cookies.append(cookie_entry)
         return cookies
-    
+
     def start_requests(self):
         if not self.start_urls and hasattr(self, "start_url"):
             raise AttributeError(
@@ -229,12 +238,12 @@ class URLSpider(CrawlSpider):
             )
         for url in self.start_urls:
             cookies = self._get_cookies(url)
-            yield Request(url, meta=dict(playwright=True, 
-                                         cookies=cookies, 
+            yield Request(url, meta=dict(playwright=True,
+                                         cookies=cookies,
                                          playwright_context_kwargs={
-                                            "storage_state": json.loads(self.connection['configuration']['_storage_state']) if self.connection else None 
-                                        }))
-            
+                                             "storage_state": json.loads(self.connection['configuration']['_storage_state']) if self.connection else None
+                                         }))
+
     def get_text_from_html(self, html_response):
         text_data = [
             text.strip().rstrip() for text in html_response.xpath(
@@ -243,14 +252,14 @@ class URLSpider(CrawlSpider):
         ]
         text_data = [text for text in text_data if text != '']
         return '\n'.join(text_data).strip()
-    
+
     def _parse_response_data(self, response):
         html_content = response.body.decode('utf-8')
         page_data = {}
         if html_content:
             page_data = {
                 'raw_text': self.get_text_from_html(
-                Selector(text=html_content, type='html'),
+                    Selector(text=html_content, type='html'),
                 ),
                 'html_partition': '\n\n'.join(
                     [str(el) for el in partition_html(text=html_content)],
@@ -267,13 +276,13 @@ class URLSpider(CrawlSpider):
                     ).getall()
                 ],
             }
-        
+
         return {
             'title': response.css('title::text').get(),
             'url': response.url,
             **page_data,
         }
-        
+
     def parse_start_url(self, response):
         data = self._parse_response_data(response)
         # Add more data extraction here as needed
@@ -287,10 +296,10 @@ class URLSpider(CrawlSpider):
 
                 req = response.follow(link, callback=self.parse_document)
                 cookies = self._get_cookies(link)
-                yield req.replace(meta=dict(playwright=True, 
+                yield req.replace(meta=dict(playwright=True,
                                             playwright_context_kwargs={
-                                                "storage_state": json.loads(self.connection['configuration']['_storage_state']) if self.connection else None 
-                                                },
+                                                "storage_state": json.loads(self.connection['configuration']['_storage_state']) if self.connection else None
+                                            },
                                             cookies=cookies))
 
     def parse_document(self, response):
@@ -334,5 +343,5 @@ def run_url_spider_in_process(url, max_depth=0, allowed_domains=None, allow_rege
     process.start()
     process.join()
     process.close()
-    
-    return result.get(block=True)
+
+    return result.get()
