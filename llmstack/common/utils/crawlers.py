@@ -341,7 +341,5 @@ def run_url_spider_in_process(url, max_depth=0, allowed_domains=None, allow_rege
               allow_regex, deny_regex, use_renderer, connection, playwright_url),
     )
     process.start()
-    process.join()
-    process.close()
 
     return result.get()
