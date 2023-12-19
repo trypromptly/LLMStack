@@ -140,6 +140,7 @@ grpcio-health-checking = "1.53.0"
 croniter = "^2.0.1"
 drf-yaml = "^3.0.1"
 google-generativeai = "^0.3.1"
+scrapy-playwright = "^0.0.33"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]

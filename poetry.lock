@@ -5288,6 +5288,21 @@ w3lib = ">=1.17.0"
 "zope.interface" = ">=5.1.0"
 
 [[package]]
+name = "scrapy-playwright"
+version = "0.0.33"
+description = "Playwright integration for Scrapy"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "scrapy-playwright-0.0.33.tar.gz", hash = "sha256:8d70c1ab7d2dfa06c39699dfe4f83c9ec8ba01e4b3b8835b15ba374ae293f73f"},
+    {file = "scrapy_playwright-0.0.33-py3-none-any.whl", hash = "sha256:23e8aa1d19d22e2dd137a490285c0b66e69b0e08d6bbe667b8c36e6fdd37fd1a"},
+]
+
+[package.dependencies]
+playwright = ">=1.15"
+scrapy = ">=2.0,<2.4.0 || >2.4.0"
+
+[[package]]
 name = "sendgrid"
 version = "6.10.0"
 description = "Twilio SendGrid library for Python"
@@ -7347,4 +7362,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "7d021673f00ee194f69aead92043efc0dbb019f8be0f4a992aed9b1f3ac8fc56"
+content-hash = "dfba75d5a63b1f47ed37bfbc858b5b120d220723ec88f32902499005567fb7e6"
