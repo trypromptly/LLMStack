@@ -199,7 +199,7 @@ class AppViewSet(viewsets.ViewSet):
                 (
                         request.user.is_authenticated and ((app.visibility == AppVisibility.ORGANIZATION and Profile.objects.get(user=app.owner).organization == Profile.objects.get(user=request.user).organization) or
                                                            (request.user.email in app.read_accessible_by or request.user.email in app.write_accessible_by))
-                        ):
+                    ):
                 serializer = AppSerializer(
                     instance=app, request_user=request.user,
                 )
@@ -413,25 +413,29 @@ class AppViewSet(viewsets.ViewSet):
         ):
             return DRFResponse(status=403)
 
-        app.name = request.data['name']
+        app.name = request.data['name'] if 'name' in request.data else app.name
         app.web_integration_config = WebIntegrationConfig(**request.data['web_config']).to_dict(
             app_owner_profile.encrypt_value,
-        ) if 'web_config' in request.data and request.data['web_config'] else {}
+        ) if 'web_config' in request.data and request.data['web_config'] else app.web_integration_config
         app.slack_integration_config = SlackIntegrationConfig(**request.data['slack_config']).to_dict(
             app_owner_profile.encrypt_value,
-        ) if 'slack_config' in request.data and request.data['slack_config'] else {}
+        ) if 'slack_config' in request.data and request.data['slack_config'] else app.slack_integration_config
         app.discord_integration_config = DiscordIntegrationConfig(**request.data['discord_config']).to_dict(
             app_owner_profile.encrypt_value,
-        ) if 'discord_config' in request.data and request.data['discord_config'] else {}
+        ) if 'discord_config' in request.data and request.data['discord_config'] else app.discord_integration_config
         app.twilio_integration_config = TwilioIntegrationConfig(**request.data['twilio_config']).to_dict(
             app_owner_profile.encrypt_value,
-        ) if 'twilio_config' in request.data and request.data['twilio_config'] else {}
+        ) if 'twilio_config' in request.data and request.data['twilio_config'] else app.twilio_integration_config
         draft = request.data['draft'] if 'draft' in request.data else True
         comment = request.data['comment'] if 'comment' in request.data else ''
 
+        versioned_app_data = AppData.objects.filter(
+            app_uuid=app.uuid, is_draft=True).first()
+
         processors_data = request.data['processors'] if 'processors' in request.data else [
         ]
-        processed_processors_data = []
+        processed_processors_data = [] if len(
+            processors_data) > 0 else versioned_app_data.data['processors']
         try:
             for processor in processors_data:
                 processor_cls = ApiProcessorFactory.get_api_processor(
@@ -446,16 +450,15 @@ class AppViewSet(viewsets.ViewSet):
 
         # Find the versioned app data and update it
         app_data = {
-            'name': request.data['name'] if 'name' in request.data else 'Untitled',
-            'type_slug': request.data['type_slug'] if 'type_slug' in request.data else '',
-            'description': request.data['description'] if 'description' in request.data else '',
-            'config': request.data['config'] if 'config' in request.data else {},
-            'input_fields': request.data['input_fields'] if 'input_fields' in request.data else [],
-            'output_template': request.data['output_template'] if 'output_template' in request.data else {},
+            'name': request.data['name'] if 'name' in request.data else versioned_app_data.data['name'],
+            'type_slug': request.data['type_slug'] if 'type_slug' in request.data else versioned_app_data.data['type_slug'],
+            'description': request.data['description'] if 'description' in request.data else versioned_app_data.data['description'],
+            'config': request.data['config'] if 'config' in request.data else versioned_app_data.data['config'],
+            'input_fields': request.data['input_fields'] if 'input_fields' in request.data else versioned_app_data.data['input_fields'],
+            'output_template': request.data['output_template'] if 'output_template' in request.data else versioned_app_data.data['output_template'],
             'processors': processed_processors_data
         }
-        versioned_app_data = AppData.objects.filter(
-            app_uuid=app.uuid, is_draft=True).first()
+
         if versioned_app_data:
             versioned_app_data.comment = comment
             versioned_app_data.data = app_data
@@ -476,6 +479,7 @@ class AppViewSet(viewsets.ViewSet):
 
     def post(self, request):
         owner = request.user
+        app_owner_profile = get_object_or_404(Profile, user=owner)
         app_type_slug = request.data['type_slug'] if 'type_slug' in request.data else None
         app_type = get_object_or_404(AppType, id=request.data['app_type']) if 'app_type' in request.data else get_object_or_404(
             AppType, slug=app_type_slug)
@@ -488,6 +492,18 @@ class AppViewSet(viewsets.ViewSet):
         }
         app_processors = request.data['processors'] if 'processors' in request.data else [
         ]
+        web_integration_config = WebIntegrationConfig(**request.data['web_config']).to_dict(
+            app_owner_profile.encrypt_value,
+        ) if 'web_config' in request.data and request.data['web_config'] else {}
+        slack_integration_config = SlackIntegrationConfig(**request.data['slack_config']).to_dict(
+            app_owner_profile.encrypt_value,
+        ) if 'slack_config' in request.data and request.data['slack_config'] else {}
+        discord_integration_config = DiscordIntegrationConfig(**request.data['discord_config']).to_dict(
+            app_owner_profile.encrypt_value,
+        ) if 'discord_config' in request.data and request.data['discord_config'] else {}
+        twilio_integration_config = TwilioIntegrationConfig(**request.data['twilio_config']).to_dict(
+            app_owner_profile.encrypt_value,
+        ) if 'twilio_config' in request.data and request.data['twilio_config'] else {}
         draft = request.data['draft'] if 'draft' in request.data else True
         comment = request.data['comment'] if 'comment' in request.data else 'First version'
 
@@ -503,6 +519,10 @@ class AppViewSet(viewsets.ViewSet):
             type=app_type,
             template=template,
             template_slug=template_slug,
+            web_integration_config=web_integration_config,
+            slack_integration_config=slack_integration_config,
+            discord_integration_config=discord_integration_config,
+            twilio_integration_config=twilio_integration_config,
         )
         app_data = {
             'name': app_name,
