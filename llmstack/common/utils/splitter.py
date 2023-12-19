@@ -170,6 +170,12 @@ class HtmlSplitter(TextSplitter):
         if element.tag == lxml.etree.Comment:
             return [lxml.html.tostring(element).decode('utf-8')]
         
+        if len(lxml.html.tostring(element).decode('utf-8')) <= max_length:
+            return [lxml.html.tostring(element).decode('utf-8')]
+        
+        if element.tag == 'p':
+            return [lxml.html.tostring(element).decode('utf-8')]
+        
         # If string representation of element is less than max_length, return it        
         attribute_list = []
         for k,v in element.items():
