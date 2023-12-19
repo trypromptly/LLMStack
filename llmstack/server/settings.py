@@ -316,6 +316,9 @@ WEAVIATE_TEXT2VEC_MODULE_CONFIG = {
 }
 WEAVIATE_EMBEDDINGS_API_RATE_LIMIT = 1000
 WEAVIATE_EMBEDDINGS_BATCH_SIZE = 50
+WEAVIATE_REPLICATION_FACTOR = int(
+    os.getenv('WEAVIATE_REPLICATION_FACTOR', '1'))
+WEAVIATE_SHARD_COUNT = int(os.getenv('WEAVIATE_SHARD_COUNT', '1'))
 USE_CUSTOM_EMBEDDING = os.getenv('USE_CUSTOM_EMBEDDING', 'False') == 'True'
 
 PLAYWRIGHT_URL = os.getenv('PLAYWRIGHT_URL', 'ws://playwright:30000/ws')
@@ -330,8 +333,10 @@ RQ_QUEUES = {
 }
 
 USE_REMOTE_JOB_QUEUE = os.getenv('USE_REMOTE_JOB_QUEUE', 'True') == 'True'
-TASK_RUN_DELAY = int(os.getenv('TASK_RUN_DELAY', '60')) # Interval between two subtask runs in seconds
-MAX_SUBTASKS_PER_TASK = int(os.getenv('MAX_SUBTASKS_PER_TASK', '500')) # Maximum number of subtasks per task/job
+# Interval between two subtask runs in seconds
+TASK_RUN_DELAY = int(os.getenv('TASK_RUN_DELAY', '60'))
+# Maximum number of subtasks per task/job
+MAX_SUBTASKS_PER_TASK = int(os.getenv('MAX_SUBTASKS_PER_TASK', '500'))
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 

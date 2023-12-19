@@ -1,36 +1,87 @@
-from enum import Enum
 import json
 import logging
+from enum import Enum
+from string import Template
+from typing import List, Optional, TypeVar
 
 from django.conf import settings
-from string import Template
-from typing import List
-from typing import Optional
-from typing import TypeVar
 from pydantic import BaseModel
 
-from llmstack.common.blocks.base.schema import BaseSchema as _Schema
-from llmstack.common.blocks.base.processor import ProcessorInterface, BaseInputType
-from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
-from llmstack.common.blocks.embeddings.openai_embedding import EmbeddingAPIProvider
-from llmstack.common.blocks.embeddings.openai_embedding import OpenAIEmbeddingConfiguration
-from llmstack.common.blocks.embeddings.openai_embedding import OpenAIEmbeddingInput
-from llmstack.common.blocks.embeddings.openai_embedding import OpenAIEmbeddingOutput
-from llmstack.common.blocks.embeddings.openai_embedding import OpenAIEmbeddingsProcessor
-from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.common.blocks.data.store.vectorstore import DocumentQuery
-from llmstack.common.blocks.data.store.vectorstore import VectorStoreInterface
-from llmstack.common.blocks.data.store.vectorstore.weaviate import Weaviate as PromptlyWeaviate
-from llmstack.datasources.models import DataSource
 from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
+from llmstack.common.blocks.base.processor import BaseInputType, ProcessorInterface
+from llmstack.common.blocks.base.schema import BaseSchema as _Schema
+from llmstack.common.blocks.data.store.vectorstore import (
+    Document,
+    DocumentQuery,
+    VectorStoreInterface,
+)
+from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
+from llmstack.common.blocks.data.store.vectorstore.weaviate import (
+    Weaviate as PromptlyWeaviate,
+)
+from llmstack.common.blocks.embeddings.openai_embedding import (
+    EmbeddingAPIProvider,
+    OpenAIEmbeddingConfiguration,
+    OpenAIEmbeddingInput,
+    OpenAIEmbeddingOutput,
+    OpenAIEmbeddingsProcessor,
+)
+from llmstack.datasources.models import DataSource
 
 logger = logging.getLogger(__name__)
 
 EntryConfigurationSchemaType = TypeVar('EntryConfigurationSchemaType')
 
 WEAVIATE_SCHEMA = Template('''
-    {"classes": [{"class": "$class_name", "description": "Text data source", "vectorizer": "text2vec-openai", "moduleConfig": {"text2vec-openai": {"model": "ada", "type": "text"}}, "properties": [{"name": "$content_key", "dataType": ["text"], "description": "Text",
-        "moduleConfig": {"text2vec-openai": {"skip": false, "vectorizePropertyName": false}}}, {"name": "source", "dataType": ["string"], "description": "Document source"}, {"name": "metadata", "dataType": ["string[]"], "description": "Document metadata"}]}]}
+{
+    "classes": [
+        {
+            "class": "$class_name",
+            "description": "Text data source",
+            "vectorizer": "text2vec-openai",
+            "moduleConfig": {
+                "text2vec-openai": {
+                    "model": "ada",
+                    "type": "text"
+                }
+            },
+            "vectorIndexConfig": {
+                "pq": {
+                    "enabled": true
+                }
+            },
+            "properties": [
+                {
+                    "name": "$content_key",
+                    "dataType": [
+                        "text"
+                    ],
+                    "description": "Text",
+                    "moduleConfig": {
+                        "text2vec-openai": {
+                            "skip": false,
+                            "vectorizePropertyName": false
+                        }
+                    }
+                },
+                {
+                    "name": "source",
+                    "dataType": [
+                        "string"
+                    ],
+                    "description": "Document source"
+                },
+                {
+                    "name": "metadata",
+                    "dataType": [
+                        "string[]"
+                    ],
+                    "description": "Document metadata"
+                }
+            ]
+        }
+    ]
+}
 ''')
 
 
@@ -108,8 +159,9 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         promptly_weaviate = None
         embedding_endpoint_configuration = None
 
-        default_vector_database = settings.VECTOR_DATABASES.get('default')['ENGINE']
-        
+        default_vector_database = settings.VECTOR_DATABASES.get('default')[
+            'ENGINE']
+
         if default_vector_database == 'weaviate':
             if vectorstore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
                 promptly_weaviate = PromptlyWeaviate(
@@ -149,6 +201,8 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
                 self.get_weaviate_schema(self.datasource_class_name),
             )
             weaviate_schema['classes'][0]['moduleConfig']['text2vec-openai'] = self.profile.weaviate_text2vec_config
+            weaviate_schema['classes'][0]['replicationConfig']['factor'] = settings.WEAVIATE_REPLICATION_FACTOR
+            weaviate_schema['classes'][0]['shardingConfig']['desiredCount'] = settings.WEAVIATE_SHARD_COUNT
             # Create an index for the datasource
             promptly_weaviate.get_or_create_index(
                 index_name=self.datasource_class_name,
@@ -208,7 +262,7 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
             return self.hybrid_search(query, **kwargs)
         else:
             return self.similarity_search(query, **kwargs)
-        
+
     def similarity_search(self, query: str, **kwargs) -> List[dict]:
 
         document_query = DocumentQuery(
