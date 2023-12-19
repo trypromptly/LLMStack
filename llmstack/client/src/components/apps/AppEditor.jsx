@@ -60,7 +60,14 @@ export function AppEditor(props) {
             mode="yaml"
             theme="dracula"
             value={yaml.dump(
-              { ...app?.data, type_slug: app?.type?.slug } || {},
+              {
+                ...app?.data,
+                type_slug: app?.type?.slug,
+                web_config: app?.web_config,
+                twilio_config: app?.twilio_config,
+                slack_config: app?.slack_config,
+                discord_config: app?.discord_config,
+              } || {},
             )}
             editorProps={{ $blockScrolling: true }}
             setOptions={{
