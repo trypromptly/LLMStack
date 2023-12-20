@@ -79,9 +79,9 @@ class AgentActor(Actor):
             'role': 'user',
             'content': self._input.get('task', 'Hello')
         })
-    # This will send a message to itself to start the loop
 
     def run(self) -> None:
+        # This will send a message to itself to start the loop
         self.actor_ref.tell(
             Message(message_type=MessageType.BEGIN, message=None, message_to=self._id))
 
@@ -246,7 +246,7 @@ class AgentActor(Actor):
                 )
                 # Persist session data
                 self._agent_app_session_data['data'] = {
-                    'chat_history': self._chat_history + self._agent_messages}
+                    'chat_history': self._chat_history + self._agent_messages + [{'role': 'assistant', 'content': full_content}]}
                 save_agent_app_session_data(self._agent_app_session_data)
 
                 self._output_stream.bookkeep(bookkeeping_data)
