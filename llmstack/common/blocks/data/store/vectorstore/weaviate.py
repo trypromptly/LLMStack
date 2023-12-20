@@ -2,19 +2,18 @@ import json
 import logging
 import re
 import time
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 import weaviate
 from pydantic import BaseModel
 from weaviate.util import get_valid_uuid
 
-from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.common.blocks.data.store.vectorstore import DocumentQuery
-from llmstack.common.blocks.data.store.vectorstore import VectorStoreInterface
+from llmstack.common.blocks.data.store.vectorstore import (
+    Document,
+    DocumentQuery,
+    VectorStoreInterface,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +154,7 @@ class Weaviate(VectorStoreInterface):
                     username=configuration.username, password=configuration.password),
                 additional_headers=headers,
                 timeout_config=(2, 20),
+                startup_period=None
             )
         elif configuration.api_key is not None:
             self._client = weaviate.Client(
@@ -163,12 +163,14 @@ class Weaviate(VectorStoreInterface):
                     api_key=configuration.api_key),
                 additional_headers=headers,
                 timeout_config=(2, 20),
+                startup_period=None
             )
         else:
             self._client = weaviate.Client(
                 url=configuration.url,
                 additional_headers=headers,
                 timeout_config=(2, 20),
+                startup_period=None
             )
 
         self.client.batch.configure(
