@@ -45,15 +45,11 @@ const getIconImage = (icon, isActive) => {
   }
 };
 
-export function ProviderIcon({
-  provider_slug,
-  isActive = false,
-  style = null,
-}) {
+export function ProviderIcon({ providerSlug, isActive = false, style = null }) {
   return (
     <img
-      src={getIconImage(provider_slug, isActive)}
-      alt={provider_slug}
+      src={getIconImage(providerSlug, isActive)}
+      alt={providerSlug}
       style={style || { width: 40, height: 40, marginRight: 10 }}
     />
   );

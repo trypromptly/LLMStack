@@ -150,7 +150,7 @@ export function AppStepCard({
         }
         avatar={
           typeof icon === "string" ? (
-            <ProviderIcon provider_slug={icon} isActive={isActive} />
+            <ProviderIcon providerSlug={icon} isActive={isActive} />
           ) : (
             icon
           )
