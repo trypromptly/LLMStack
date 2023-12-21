@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import {
   Button,
   FormControl,
+  ListItemIcon,
+  ListItemText,
   MenuItem,
   Select,
   Stack,
@@ -15,6 +17,7 @@ import {
   organizationState,
   profileFlagsState,
 } from "../../data/atoms";
+import { ProviderIcon } from "./ProviderIcon";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 const Separator = styled("div")`
@@ -85,16 +88,34 @@ export function AddProcessorDivider({
                   setApiBackend("");
                 }}
                 id="provider-select"
-                style={{ width: 120 }}
                 size="small"
                 displayEmpty
+                renderValue={(value) => (
+                  <MenuItem sx={{ padding: 0 }}>
+                    <ListItemIcon sx={{ minWidth: "26px !important" }}>
+                      <ProviderIcon
+                        providerSlug={value}
+                        style={{ width: "20px" }}
+                      />
+                    </ListItemIcon>
+                    <Typography>{value}</Typography>
+                  </MenuItem>
+                )}
               >
                 <MenuItem value="">
-                  <Typography variant="caption">Provider</Typography>
+                  <ListItemText>
+                    <Typography variant="caption">Provider</Typography>
+                  </ListItemText>
                 </MenuItem>
                 {apiProviders.map((provider) => (
                   <MenuItem value={provider.name} key={provider.name}>
-                    {provider.name}
+                    <ListItemIcon>
+                      <ProviderIcon
+                        providerSlug={provider?.slug}
+                        style={{ width: "20px", height: "20px" }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText>{provider.name}</ListItemText>
                   </MenuItem>
                 ))}
               </Select>
