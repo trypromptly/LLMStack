@@ -11,9 +11,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { TextFieldWithVars } from "./TextFieldWithVars";
-import { AppStepCard } from "./AppStepCard";
-import CustomObjectFieldTemplate from "../../components/ConfigurationFormObjectFieldTemplate";
 import { AppSelector } from "./AppSelector";
+import { AppStepCard } from "./AppStepCard";
 import { appsState } from "../../data/atoms";
 import { useRecoilValue } from "recoil";
 
@@ -111,7 +110,6 @@ function PromptlyAppStepCard({
                 processors[index].config = formData;
                 setProcessors([...processors]);
               }}
-              templates={{ ObjectFieldTemplate: CustomObjectFieldTemplate }}
               widgets={{
                 appselect: (props) => (
                   <AppSelector
@@ -324,6 +322,7 @@ export function ProcessorEditor({
                   );
                 },
               }}
+              disableAdvanced={true}
             />
           </AccordionDetails>
         </Accordion>
@@ -356,7 +355,6 @@ export function ProcessorEditor({
                 processors[index].config = formData;
                 setProcessors([...processors]);
               }}
-              templates={{ ObjectFieldTemplate: CustomObjectFieldTemplate }}
             />
           </AccordionDetails>
         </Accordion>

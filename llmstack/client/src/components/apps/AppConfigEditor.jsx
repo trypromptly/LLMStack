@@ -13,8 +13,6 @@ import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { AppInputSchemaEditor } from "./AppInputSchemaEditor";
 import { AppStepCard } from "./AppStepCard";
-import { TextFieldWithVars } from "./TextFieldWithVars";
-import CustomObjectFieldTemplate from "../../components/ConfigurationFormObjectFieldTemplate";
 
 export function AppConfigEditor({
   appType,
@@ -116,12 +114,6 @@ export function AppConfigEditor({
               onChange={({ formData }) => {
                 setConfig(formData);
               }}
-              widgets={{
-                richtext: (props) => (
-                  <TextFieldWithVars {...props} richText={true} />
-                ),
-              }}
-              templates={{ ObjectFieldTemplate: CustomObjectFieldTemplate }}
             />
           </AccordionDetails>
         </Accordion>

@@ -17,7 +17,6 @@ import { useRecoilValue } from "recoil";
 import { isMobileState } from "../../data/atoms";
 import { get, set } from "lodash";
 import ThemedJsonForm from "../ThemedJsonForm";
-import { TextFieldWithVars } from "./TextFieldWithVars";
 import { AppSaveButtons } from "./AppSaveButtons";
 
 function AppTemplatePage(props) {
@@ -67,6 +66,7 @@ function AppTemplatePage(props) {
   return (
     <Box>
       <ThemedJsonForm
+        disableAdvanced={true}
         schema={{ ...page.schema, ...{ title: "", description: "" } }}
         uiSchema={page.ui_schema}
         validator={validator}
@@ -74,9 +74,6 @@ function AppTemplatePage(props) {
         onChange={({ formData }) => {
           setUserFormData(formData);
           updateApp(formData);
-        }}
-        widgets={{
-          richtext: (props) => <TextFieldWithVars {...props} richText={true} />,
         }}
       />
     </Box>

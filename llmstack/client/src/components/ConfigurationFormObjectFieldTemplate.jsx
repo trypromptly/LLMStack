@@ -58,15 +58,16 @@ function ObjectFieldGrid(props) {
 }
 
 function RootObjectFieldTemplate(props) {
-  const { properties, uiSchema } = props;
+  const { properties, uiSchema, disableAdvanced } = props;
 
   let requiredProperties = [];
   let optionalProperties = [];
   properties.forEach((prop) => {
     if (
-      uiSchema[prop.name] &&
-      "ui:advanced" in uiSchema[prop.name] &&
-      !uiSchema[prop.name]["ui:advanced"]
+      disableAdvanced ||
+      (uiSchema[prop.name] &&
+        "ui:advanced" in uiSchema[prop.name] &&
+        !uiSchema[prop.name]["ui:advanced"])
     ) {
       requiredProperties.push(prop);
     } else {

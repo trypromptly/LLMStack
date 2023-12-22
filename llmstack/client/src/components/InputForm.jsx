@@ -4,77 +4,11 @@ import validator from "@rjsf/validator-ajv8";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { inputValueState, templateValueState } from "../data/atoms";
 import ThemedJsonForm from "./ThemedJsonForm";
-import { createTheme } from "@mui/material/styles";
 
 import { Box, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 
 import { Empty as EmptyComponent } from "./form/Empty";
-
-const theme = createTheme({
-  spacing: 2,
-  typography: {
-    fontSize: 12,
-  },
-  components: {
-    MuiTextField: {
-      defaultProps: {
-        variant: "standard",
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          overflow: "scroll",
-          textAlign: "left",
-          "& .MuiTypography-root.MuiTypography-h5": {
-            font: "inherit",
-            fontSize: "1rem",
-            fontWeight: "600",
-            margin: "0.5rem 0.2rem",
-            color: "#757575",
-          },
-          "& .MuiTypography-root.MuiTypography-subtitle2": {
-            fontSize: "0.75rem",
-          },
-          "& .MuiBox-root .form-group .MuiFormControl-root .MuiBox-root": {
-            display: "None",
-          },
-          "& .MuiBox-root .form-group .MuiFormControl-root .MuiFormHelperText-root":
-            {
-              display: "block",
-            },
-          "& .MuiBox-root .form-group .MuiFormControl-root .MuiFormHelperText-root.Mui-focused":
-            {
-              display: "block",
-            },
-        },
-      },
-    },
-    MuiSelect: {
-      styleOverrides: {
-        select: {
-          textTransform: "capitalize",
-        },
-      },
-    },
-    MuiFormControl: {
-      styleOverrides: {
-        root: {
-          padding: "2px",
-          "& .MuiFormHelperText-root": {
-            textAlign: "left",
-            margin: "2px",
-          },
-          "& .MuiFormControl-root:has(.MuiSlider-root) label": {
-            fontSize: "0.75rem",
-            textAlign: "start",
-          },
-        },
-      },
-    },
-  },
-});
 
 const getTemplateVariables = (input) => {
   const data = typeof input === "string" ? input : JSON.stringify(input);
@@ -111,8 +45,8 @@ export function InputThemedForm(props) {
       onChange={({ formData }) => {
         setData(formData);
       }}
-      theme={theme}
-    ></ThemedJsonForm>
+      disableAdvanced={true}
+    />
   );
 }
 
@@ -129,9 +63,7 @@ export function TemplateVariablesThemedForm(props) {
       onChange={({ formData }) => {
         setData(formData);
       }}
-    >
-      <div></div>
-    </ThemedJsonForm>
+    />
   );
 }
 

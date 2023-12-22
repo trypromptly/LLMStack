@@ -13,7 +13,6 @@ import StreamingVideoPlayer from "./StreamingVideoPlayer";
 function FunctionFormComponent(props) {
   // Render a form component with submit button
   const [formData, setFormData] = useState({});
-  const [submitBtnDisabled, setSubmitBtnDisabled] = useState(false);
   try {
     const form = JSON.parse(props.children[0]);
     return (
@@ -24,18 +23,6 @@ function FunctionFormComponent(props) {
         onChange={(e) => {
           setFormData(e.formData);
         }}
-        submitBtn={
-          <Button
-            variant="contained"
-            onClick={() => {
-              setSubmitBtnDisabled(true);
-              props.onFormSubmit(formData);
-            }}
-            disabled={submitBtnDisabled}
-          >
-            Submit
-          </Button>
-        }
       />
     );
   } catch (e) {

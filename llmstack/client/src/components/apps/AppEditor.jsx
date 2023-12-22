@@ -179,7 +179,6 @@ export function AppEditor(props) {
             color="primary"
             size="small"
             value={editorType}
-            exclusive
             sx={{
               marginBottom: "50px",
               padding: "18px 0",

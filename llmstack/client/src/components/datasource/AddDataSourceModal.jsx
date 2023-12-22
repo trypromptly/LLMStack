@@ -15,17 +15,7 @@ import { axios } from "../../data/axios";
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { useReloadDataSourceEntries } from "../../data/init";
-import GdriveFileSelector from "../form/GdriveFileSelector";
-import WebpageURLExtractorWidget from "../form/WebpageURLExtractorWidget";
 import { enqueueSnackbar } from "notistack";
-
-function CustomGdriveFileWidget(props) {
-  return <GdriveFileSelector {...props} />;
-}
-
-function CustomWebpageURLExtractorWidget(props) {
-  return <WebpageURLExtractorWidget {...props} />;
-}
 
 export function AddDataSourceModal({
   open,
@@ -96,10 +86,6 @@ export function AddDataSourceModal({
                 "ui:DescriptionFieldTemplate": () => null,
                 "ui:TitleFieldTemplate": () => null,
               },
-            }}
-            widgets={{
-              gdrive: CustomGdriveFileWidget,
-              webpageurls: CustomWebpageURLExtractorWidget,
             }}
             formData={formData}
             onChange={({ formData }) => {

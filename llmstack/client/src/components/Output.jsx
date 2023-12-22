@@ -1,61 +1,10 @@
 import * as React from "react";
-// eslint-disable-next-line
-import AceEditor from "react-ace";
-
 import { List, ListItem } from "@mui/material";
-
 import { Box, Tab, CircularProgress, Alert } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-
-import "ace-builds/src-noconflict/mode-python";
-import "ace-builds/src-noconflict/theme-github";
-import { createTheme } from "@mui/material/styles";
-
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "./ThemedJsonForm";
 import { Empty } from "./form/Empty";
-
-const outputTheme = createTheme({
-  typography: {
-    fontFamily: "Lato, sans-serif",
-    fontSize: 14,
-    color: "#000",
-  },
-  components: {
-    MuiFormControl: {
-      styleOverrides: {
-        root: {
-          "& .Mui-disabled": {
-            color: "#000",
-          },
-        },
-      },
-    },
-    MuiImageList: {
-      styleOverrides: {
-        root: {
-          width: "100% !important",
-          height: "100% !important",
-        },
-      },
-    },
-    MuiListItemText: {
-      styleOverrides: {
-        root: {
-          whiteSpace: "pre-wrap",
-        },
-      },
-    },
-    MuiImageListItem: {
-      styleOverrides: {
-        img: {
-          width: "auto",
-          height: "auto",
-        },
-      },
-    },
-  },
-});
 
 export function Errors(props) {
   let errors = props.runError?.errors || props.runError || [];
@@ -85,9 +34,8 @@ export function Result(props) {
       uiSchema={props.uiSchema}
       formData={formData}
       readonly={true}
-      theme={outputTheme}
       className="output-form"
-    ></ThemedJsonForm>
+    />
   ) : (
     <Empty emptyMessage="No output" />
   );

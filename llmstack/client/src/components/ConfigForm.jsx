@@ -11,7 +11,6 @@ import "ace-builds/src-noconflict/theme-chrome";
 
 import ThemedJsonForm from "./ThemedJsonForm";
 import { endpointConfigValueState } from "../data/atoms";
-import CustomObjectFieldTemplate from "../components/ConfigurationFormObjectFieldTemplate";
 import { Empty as EmptyComponent } from "../components/form/Empty";
 
 export function ThemedForm(props) {
@@ -25,10 +24,7 @@ export function ThemedForm(props) {
         setData(formData);
       }}
       validator={validator}
-      templates={{ ObjectFieldTemplate: CustomObjectFieldTemplate }}
-    >
-      <div></div>
-    </ThemedJsonForm>
+    />
   );
 }
 

@@ -161,7 +161,7 @@ export function AppInputSchemaEditor({ fields, setFields, readOnly = false }) {
               </TableCell>
               <TableCell>
                 <Select
-                  value={field.required}
+                  value={field.required ? true : false}
                   onChange={(e) =>
                     updateField(index, { ...field, required: e.target.value })
                   }
