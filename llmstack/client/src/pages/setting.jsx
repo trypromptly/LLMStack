@@ -11,7 +11,15 @@ import {
   InputLabel,
   Paper,
   Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
+  Select,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+
 import { styled } from "@mui/material/styles";
 import FileUpload from "@mui/icons-material/FileUpload";
 import ContentCopy from "@mui/icons-material/ContentCopy";
@@ -21,6 +29,7 @@ import Connections from "../components/Connections";
 import { fetchData, patchData } from "./dataUtil";
 import { organizationState, profileFlagsState } from "../data/atoms";
 import { useRecoilValue } from "recoil";
+import { axios } from "../data/axios";
 import "../index.css";
 import ThemedJsonForm from "../components/ThemedJsonForm";
 import validator from "@rjsf/validator-ajv8";
@@ -169,6 +178,13 @@ const SettingPage = () => {
         setLoading(false);
       },
     );
+
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("showNotification")) {
+      enqueueSnackbar(searchParams.get("notificationMessage") || "", {
+        variant: searchParams.get("notificationType") || "info",
+      });
+    }
   }, []);
 
   const handleUpdate = (update_keys) => {
@@ -410,6 +426,15 @@ const SettingPage = () => {
             <Connections />
           </Grid>
         </Grid>
+      )}
+      {subscriptionUpdateModalOpen && (
+        <SubscriptionUpdateModal
+          open={subscriptionUpdateModalOpen}
+          handleCloseCb={() => {
+            setSubscriptionUpdateModalOpen(false);
+          }}
+          userEmail={formData.user_email}
+        />
       )}
     </div>
   );
