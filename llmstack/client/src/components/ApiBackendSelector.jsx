@@ -9,14 +9,15 @@ import {
   InputLabel,
   ListItemIcon,
   ListItemText,
+  Typography,
 } from "@mui/material";
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import {
   useRecoilValue,
   useRecoilState,
   useSetRecoilState,
   useResetRecoilState,
 } from "recoil";
-
 import {
   apiProviderDropdownListState,
   apiBackendDropdownListState,
@@ -83,7 +84,7 @@ export default function ApiBackendSelector() {
 
   return (
     <Grid item id="apibackendselector">
-      <Grid container direction="row" gap={2}>
+      <Grid container direction="row" gap={2} alignItems={"center"}>
         <Box
           sx={{
             minWidth: 150,
@@ -165,6 +166,26 @@ export default function ApiBackendSelector() {
             </FormControl>
           </Box>
         )}
+        <Box>
+          <Typography
+            variant="body1"
+            sx={{
+              display: "flex",
+              border: "solid 1px #ccc",
+              borderRadius: 1,
+              padding: 1,
+              maxWidth: "350px",
+              color: "#666",
+              alignItems: "center",
+              textAlign: "left",
+              gap: 1,
+              backgroundColor: "#faf5e8",
+            }}
+          >
+            <LightbulbIcon color="info" />
+            {apiBackendSelected?.description || "Select an API Backend "}
+          </Typography>
+        </Box>
       </Grid>
     </Grid>
   );
