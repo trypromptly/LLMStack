@@ -469,6 +469,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
                 configuration: formData,
               });
             }}
+            disableAdvanced={true}
           />
         )}
         {isRemoteBrowser && (
