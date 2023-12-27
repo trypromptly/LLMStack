@@ -167,6 +167,7 @@ const defaultTheme = createTheme({
       styleOverrides: {
         root: {
           "& .MuiOutlinedInput-root": {
+            padding: "0.3rem",
             "& > fieldset": {
               border: "1px solid rgb(204, 204, 204)",
             },
