@@ -103,7 +103,7 @@ const defaultTheme = createTheme({
         root: {
           "& textarea": {
             whiteSpace: "pre-wrap",
-            padding: "0.1rem",
+            padding: "0.3rem",
           },
         },
       },
