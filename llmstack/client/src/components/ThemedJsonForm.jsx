@@ -234,6 +234,14 @@ const AudioWidget = (props) => {
   return <audio src={props.value} controls />;
 };
 
+const CustomObjectFieldTemplateWithAdvanced = (props) => {
+  return <CustomObjectFieldTemplate {...props} disableAdvanced={false} />;
+};
+
+const CustomObjectFieldTemplateWithoutAdvanced = (props) => {
+  return <CustomObjectFieldTemplate {...props} disableAdvanced={true} />;
+};
+
 const ThemedJsonForm = ({
   schema,
   uiSchema,
@@ -258,14 +266,9 @@ const ThemedJsonForm = ({
       templates={{
         ...templates,
         FieldTemplate,
-        ...{
-          ObjectFieldTemplate: (props) => (
-            <CustomObjectFieldTemplate
-              {...props}
-              disableAdvanced={disableAdvanced}
-            />
-          ),
-        },
+        ObjectFieldTemplate: disableAdvanced
+          ? CustomObjectFieldTemplateWithoutAdvanced
+          : CustomObjectFieldTemplateWithAdvanced,
       }}
       widgets={{
         ...{
