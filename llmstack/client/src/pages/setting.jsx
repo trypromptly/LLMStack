@@ -23,7 +23,7 @@ import SecretTextField from "../components/form/SecretTextField";
 import { fetchData, patchData } from "./dataUtil";
 import { organizationState, profileFlagsState } from "../data/atoms";
 import { useRecoilValue } from "recoil";
-import "../App.css";
+import "../index.css";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -130,7 +130,7 @@ const SettingPage = () => {
           <Grid container>
             <Grid item xs={12} md={6}>
               <Stack spacing={2} sx={{ textAlign: "left", margin: "10px" }}>
-                <Typography variant="h6" className="App-section-header">
+                <Typography variant="h6" className="section-header">
                   Settings
                 </Typography>
                 <Box sx={{ padding: "15px 0" }}>

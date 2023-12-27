@@ -13,6 +13,19 @@ code {
     monospace;
 }
 
+.section-header {
+  text-align: left;
+  margin-bottom: 10px;
+  padding: 5px 10px;
+  font-weight: 600 !important;
+  border-radius: 5px;
+  color: #1c3c5a !important;
+  font-size: 18px !important;
+  border-bottom: solid 3px #1c3c5a;
+  border-left: solid 1px #ccc;
+  border-right: solid 1px #ccc;
+}
+
 @media screen and (max-width: 768px) {
   .prompt-hub-container {
     justify-content: center;

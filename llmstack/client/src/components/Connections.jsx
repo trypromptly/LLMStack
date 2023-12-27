@@ -7,7 +7,7 @@ import ConnectionList from "./connections/ConnectionList";
 import DeleteConnectionModal from "./connections/DeleteConnectionModal";
 import { enqueueSnackbar } from "notistack";
 
-import "../App.css";
+import "../index.css";
 import { axios } from "../data/axios";
 import { connectionsState } from "../data/atoms";
 import { useRecoilCallback } from "recoil";
@@ -117,7 +117,7 @@ function Connections() {
 
   return (
     <Stack sx={{ margin: "10px", marginBottom: "60px" }}>
-      <Typography variant="h6" className="App-section-header">
+      <Typography variant="h6" className="section-header">
         Connections
       </Typography>
       <Button
