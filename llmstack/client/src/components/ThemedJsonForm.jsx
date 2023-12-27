@@ -242,6 +242,22 @@ const CustomObjectFieldTemplateWithoutAdvanced = (props) => {
   return <CustomObjectFieldTemplate {...props} disableAdvanced={true} />;
 };
 
+const PasswordWidget = (props) => {
+  return <SecretTextField {...props} />;
+};
+
+const ConnectionSelectorWidget = (props) => {
+  return <ConnectionSelector {...props} />;
+};
+
+const RichTextWidget = (props) => {
+  return <TextFieldWithVars {...props} richText={true} />;
+};
+
+const DatasourceWidget = (props) => {
+  return <DataSourceSelector {...props} />;
+};
+
 const ThemedJsonForm = ({
   schema,
   uiSchema,
@@ -279,14 +295,12 @@ const ThemedJsonForm = ({
           output_text: TextWidget,
           output_image: ImageWidget,
           output_audio: AudioWidget,
-          datasource: (props) => (
-            <DataSourceSelector multiple={true} {...props} />
-          ),
+          datasource: DatasourceWidget,
           gdrive: CustomGdriveFileWidget,
           webpageurls: CustomWebpageURLExtractorWidget,
-          password: (props) => <SecretTextField {...props} />,
-          connection: (props) => <ConnectionSelector {...props} />,
-          richtext: (props) => <TextFieldWithVars {...props} richText={true} />,
+          password: PasswordWidget,
+          connection: ConnectionSelectorWidget,
+          richtext: RichTextWidget,
         },
         ...widgets,
       }}
