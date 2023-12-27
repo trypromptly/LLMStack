@@ -94,7 +94,13 @@ class BaseSchema(BaseModel):
 
     @ classmethod
     def get_schema(cls):
-        return super().schema()
+        schema = super().schema()
+        if 'title' in schema:
+            # Convert camel case to title case
+            schema['title'] = ''.join(
+                ' ' + char if char.isupper() else char for char in schema['title']).strip().title()
+
+        return schema
 
     @ classmethod
     def get_ui_schema(cls):
