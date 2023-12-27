@@ -103,7 +103,7 @@ const defaultTheme = createTheme({
         root: {
           "& textarea": {
             whiteSpace: "pre-wrap",
-            padding: "0.3rem",
+            padding: "0.6rem",
           },
         },
       },
@@ -143,6 +143,10 @@ const defaultTheme = createTheme({
             maxHeight: "3.2em",
           },
 
+          "& .MuiInputBase-root": {
+            padding: "0.1rem",
+          },
+
           "& .MuiTypography-body1": {
             fontSize: "0.9rem",
             fontWeight: "600",
@@ -167,7 +171,6 @@ const defaultTheme = createTheme({
       styleOverrides: {
         root: {
           "& .MuiOutlinedInput-root": {
-            padding: "0.3rem",
             "& > fieldset": {
               border: "1px solid rgb(204, 204, 204)",
             },
