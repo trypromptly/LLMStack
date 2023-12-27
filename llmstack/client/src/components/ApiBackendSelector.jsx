@@ -179,10 +179,17 @@ export default function ApiBackendSelector() {
               alignItems: "center",
               textAlign: "left",
               gap: 1,
-              backgroundColor: "#faf5e8",
+              backgroundColor: "#f0f7ff",
             }}
           >
-            <LightbulbIcon color="info" />
+            <a
+              href={`https://llmstack.ai/docs/processors/${apiBackendSelected?.api_provider?.slug}`}
+              target="_blank"
+              aria-label="Learn more about this API Backend"
+              rel="noreferrer"
+            >
+              <LightbulbIcon color="info" />
+            </a>
             {apiBackendSelected?.description || "Select an API Backend "}
           </Typography>
         </Box>
