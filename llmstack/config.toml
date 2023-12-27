@@ -20,3 +20,11 @@ debug="True"
 playwright_url=""
 generatedfiles_root="./generated_files"
 site_url="http://localhost:3000"
+
+[llmstack-runner]
+host = "localhost"
+port = 50051
+wss_port = 50052
+playwright_port = 50053
+rq_redis_port = 50379
+rq_redis_host = "localhost"

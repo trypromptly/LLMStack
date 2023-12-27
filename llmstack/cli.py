@@ -74,31 +74,31 @@ def prepare_env():
     with open(config_path) as f:
         config = toml.load(f)
 
-        if not 'generatedfiles_root' in config:
+        if 'generatedfiles_root' not in config:
             config['generatedfiles_root'] = './generatedfiles'
 
-        if not 'use_remote_job_queue' in config:
+        if 'use_remote_job_queue' not in config:
             config['use_remote_job_queue'] = True
 
-        if not 'llmstack-runner' in config:
+        if 'llmstack-runner' not in config:
             config['llmstack-runner'] = {}
 
-        if not 'host' in config['llmstack-runner']:
+        if 'host' not in config['llmstack-runner']:
             config['llmstack-runner']['host'] = 'localhost'
 
-        if not 'port' in config['llmstack-runner']:
+        if 'port' not in config['llmstack-runner']:
             config['llmstack-runner']['port'] = 50051
 
-        if not 'wss_port' in config['llmstack-runner']:
+        if 'wss_port' not in config['llmstack-runner']:
             config['llmstack-runner']['wss_port'] = 50052
 
-        if not 'playwright_port' in config['llmstack-runner']:
+        if 'playwright_port' not in config['llmstack-runner']:
             config['llmstack-runner']['playwright_port'] = 50053
 
-        if not 'rq_redis_port' in config['llmstack-runner']:
+        if 'rq_redis_port' not in config['llmstack-runner']:
             config['llmstack-runner']['rq_redis_port'] = 50379
 
-        if not 'rq_redis_host' in config['llmstack-runner']:
+        if 'rq_redis_host' not in config['llmstack-runner']:
             config['llmstack-runner']['rq_redis_host'] = 'localhost'
 
     with open(config_path, 'w') as f:
