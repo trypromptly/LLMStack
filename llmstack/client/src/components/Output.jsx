@@ -35,6 +35,7 @@ export function Result(props) {
       formData={formData}
       readonly={true}
       className="output-form"
+      disableAdvanced={true}
     />
   ) : (
     <Empty emptyMessage="No output" />

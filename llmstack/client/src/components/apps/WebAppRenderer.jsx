@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import ReactGA from "react-ga4";
 import { Button } from "@mui/material";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { CircularProgress, Grid } from "@mui/material";
 import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
 import FileUploadWidget from "../form/DropzoneFileWidget";
@@ -17,28 +16,6 @@ import { Liquid } from "liquidjs";
 import "./WebAppRenderer.css";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { ContentCopyOutlined } from "@mui/icons-material";
-
-const defaultTheme = createTheme({
-  components: {
-    MuiInputBase: {
-      defaultProps: {
-        autoComplete: "off",
-      },
-    },
-    MuiTextField: {
-      defaultProps: {
-        variant: "outlined",
-      },
-      styleOverrides: {
-        root: {
-          "& .MuiOutlinedInput-root": {
-            "& > fieldset": { border: "1px solid #ccc" },
-          },
-        },
-      },
-    },
-  },
-});
 
 function CustomFileWidget(props) {
   return <FileUploadWidget {...props} />;
@@ -185,38 +162,36 @@ export function WebAppRenderer({ app, ws }) {
       }}
     >
       <LexicalRenderer text={app.data?.config?.input_template} />
-      <ThemeProvider theme={defaultTheme}>
-        <Form
-          schema={schema}
-          uiSchema={{
-            ...uiSchema,
-            ...{
-              "ui:submitButtonOptions": { props: { disabled: isRunning } },
-            },
-          }}
-          validator={validator}
-          formData={userFormData}
-          onSubmit={({ formData }) => {
-            if (!isRunning) {
-              setUserFormData(formData);
-              runApp(formData);
-            } else {
-              ws.send(
-                JSON.stringify({
-                  event: "stop",
-                  session_id: appSessionId,
-                }),
-              );
-              setIsRunning(false);
-            }
-          }}
-          templates={{ ButtonTemplates: { SubmitButton } }}
-          widgets={{
-            FileWidget: CustomFileWidget,
-            voice: CustomVoiceRecorderWidget,
-          }}
-        />
-      </ThemeProvider>
+      <Form
+        schema={schema}
+        uiSchema={{
+          ...uiSchema,
+          ...{
+            "ui:submitButtonOptions": { props: { disabled: isRunning } },
+          },
+        }}
+        validator={validator}
+        formData={userFormData}
+        onSubmit={({ formData }) => {
+          if (!isRunning) {
+            setUserFormData(formData);
+            runApp(formData);
+          } else {
+            ws.send(
+              JSON.stringify({
+                event: "stop",
+                session_id: appSessionId,
+              }),
+            );
+            setIsRunning(false);
+          }
+        }}
+        templates={{ ButtonTemplates: { SubmitButton } }}
+        widgets={{
+          FileWidget: CustomFileWidget,
+          voice: CustomVoiceRecorderWidget,
+        }}
+      />
       <div style={{ marginTop: 10 }} ref={outputRef}>
         {output && !isRunning && (
           <Button

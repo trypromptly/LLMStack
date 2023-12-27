@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Alert, Box } from "@mui/material";
 
 export function Empty({ emptyImage, emptyMessage, ...props }) {
   return (
@@ -11,9 +11,9 @@ export function Empty({ emptyImage, emptyMessage, ...props }) {
       color="#838383"
     >
       {emptyImage ? emptyImage : null}
-      <Typography variant="h6">
+      <Alert severity="info" style={{ marginTop: "10px" }}>
         {emptyMessage ? emptyMessage : "No data available"}
-      </Typography>
+      </Alert>
     </Box>
   );
 }

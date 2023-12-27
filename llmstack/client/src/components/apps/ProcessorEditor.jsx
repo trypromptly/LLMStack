@@ -15,6 +15,7 @@ import { AppSelector } from "./AppSelector";
 import { AppStepCard } from "./AppStepCard";
 import { appsState } from "../../data/atoms";
 import { useRecoilValue } from "recoil";
+import "./AppEditor.css";
 
 function PromptlyAppStepCard({
   appId,
@@ -288,9 +289,9 @@ export function ProcessorEditor({
             expandIcon={<ExpandMoreIcon />}
             aria-controls="input-content"
             id="input-header"
-            style={{ backgroundColor: "#dce8fb" }}
+            className="app-editor-section-header"
           >
-            <Typography>Input</Typography>
+            Input
           </AccordionSummary>
           <AccordionDetails>
             <ThemedJsonForm
@@ -331,9 +332,9 @@ export function ProcessorEditor({
             expandIcon={<ExpandMoreIcon />}
             aria-controls="config-content"
             id="config-header"
-            style={{ backgroundColor: "#dce8fb" }}
+            className="app-editor-section-header"
           >
-            <Typography>Configuration</Typography>
+            Configuration
           </AccordionSummary>
           <AccordionDetails>
             <ThemedJsonForm

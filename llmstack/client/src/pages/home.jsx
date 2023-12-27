@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Stack, Grid, Divider, Button as MuiButton } from "@mui/material";
+import { Stack, Grid, Box, Button } from "@mui/material";
 
 import ApiBackendSelector from "../components/ApiBackendSelector";
 import { useRecoilState, useRecoilValue } from "recoil";
@@ -98,7 +98,7 @@ export default function HomePage() {
   };
   const Run = () => {
     return (
-      <MuiButton
+      <Button
         type="primary"
         onClick={(e) => {
           if (isLoggedIn) {
@@ -108,7 +108,7 @@ export default function HomePage() {
         variant="contained"
       >
         {"Run"}
-      </MuiButton>
+      </Button>
     );
   };
 
@@ -126,15 +126,8 @@ export default function HomePage() {
   useEffect(() => {}, [paramValues, promptValues]);
 
   return (
-    <div
-      id="home-page"
-      style={{ height: "100%", overflow: "scroll", padding: "2px" }}
-    >
-      <Stack
-        spacing={2}
-        divider={<Divider orientation="horizontal" flexItem />}
-        sx={{ width: "100%", height: "100%", paddingTop: "5px" }}
-      >
+    <Box sx={{ margin: "10px 2px" }}>
+      <Stack>
         <ApiBackendSelector />
         <Grid container spacing={2}>
           <Grid item xs={12} md={4} sx={{ height: "100%" }}>
@@ -181,6 +174,6 @@ export default function HomePage() {
           </Grid>
         </Grid>
       </Stack>
-    </div>
+    </Box>
   );
 }

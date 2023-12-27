@@ -76,7 +76,11 @@ function ConnectionItem({
             setDeleteConnectionModal(true);
           }}
         >
-          <DeleteForever sx={{ color: "#d5847e" }} />
+          <DeleteForever
+            sx={(theme) => ({
+              color: theme.palette.error.main,
+            })}
+          />
         </IconButton>
       </TableCell>
     </TableRow>

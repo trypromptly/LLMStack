@@ -1,5 +1,4 @@
 import Form from "@rjsf/mui";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { getTemplate, getUiOptions } from "@rjsf/utils";
 import {
   FormControl,
@@ -22,133 +21,6 @@ import CustomObjectFieldTemplate from "./ConfigurationFormObjectFieldTemplate";
 import { TextFieldWithVars } from "./apps/TextFieldWithVars";
 import GdriveFileSelector from "./form/GdriveFileSelector";
 import WebpageURLExtractorWidget from "./form/WebpageURLExtractorWidget";
-
-const defaultTheme = createTheme({
-  spacing: 2,
-  typography: {
-    fontSize: 12,
-  },
-  palette: {
-    slider: {
-      main: "#97afcf",
-    },
-  },
-  components: {
-    MuiImageList: {
-      styleOverrides: {
-        root: {
-          width: "100% !important",
-          height: "100% !important",
-        },
-      },
-    },
-    MuiImageListItem: {
-      styleOverrides: {
-        root: {
-          whiteSpace: "pre-wrap",
-        },
-        img: {
-          width: "auto",
-          height: "auto",
-        },
-      },
-    },
-    MuiTextField: {
-      defaultProps: {
-        variant: "outlined",
-      },
-      styleOverrides: {
-        root: {
-          "& .MuiOutlinedInput-root": {
-            "& > fieldset": { border: "1px solid rgb(204, 204, 204)" },
-          },
-        },
-      },
-    },
-    MuiInputBase: {
-      defaultProps: {
-        autoComplete: "off",
-      },
-      styleOverrides: {
-        "& textarea": {
-          border: "1px solid #ced4da",
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          overflow: "scroll",
-          textAlign: "left",
-          "& .MuiTypography-root.MuiTypography-h5": {
-            font: "inherit",
-            fontSize: "1rem",
-            fontWeight: "600",
-            margin: "0.5rem 0.2rem",
-            color: "#757575",
-          },
-          "& .MuiTypography-root.MuiTypography-subtitle2": {
-            color: "#666666",
-            fontSize: "0.75rem",
-          },
-          "& .MuiBox-root .form-group .MuiFormControl-root .MuiBox-root": {
-            display: "None",
-          },
-          "& .MuiBox-root .form-group .MuiFormControl-root .MuiFormHelperText-root":
-            {
-              display: "block",
-            },
-          "& .MuiBox-root .form-group .MuiFormControl-root .MuiFormHelperText-root.Mui-focused":
-            {
-              display: "block",
-            },
-        },
-      },
-    },
-    MuiSlider: {
-      defaultProps: {
-        size: "small",
-        color: "slider",
-      },
-    },
-    MuiSelect: {
-      styleOverrides: {
-        select: {
-          textTransform: "capitalize",
-          textAlign: "left",
-        },
-      },
-    },
-    MuiFormControl: {
-      styleOverrides: {
-        root: {
-          padding: "2px",
-          "& .MuiFormHelperText-root": {
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            display: "block",
-            textAlign: "left",
-            margin: "2px",
-          },
-          "& .MuiFormHelperText-root.Mui-focused": {
-            display: "block",
-            overflow: "visible",
-            textOverflow: "visible",
-            whiteSpace: "normal",
-          },
-          "& .MuiFormControl-root:has(.MuiSlider-root) label": {
-            fontSize: "0.75rem",
-            textAlign: "start",
-          },
-          "& .Mui-disabled": {
-            color: "#000",
-          },
-        },
-      },
-    },
-  },
-});
 
 function CustomGdriveFileWidget(props) {
   return <GdriveFileSelector {...props} />;
@@ -368,7 +240,7 @@ const ThemedJsonForm = ({
   formData,
   onChange,
   submitBtn = <div></div>,
-  theme = defaultTheme,
+  theme,
   validator,
   templates = {},
   widgets = {},
@@ -376,52 +248,48 @@ const ThemedJsonForm = ({
   ...props
 }) => {
   return (
-    <ThemeProvider theme={theme}>
-      <Form
-        {...props}
-        schema={schema}
-        uiSchema={uiSchema}
-        validator={validator}
-        formData={formData}
-        onChange={onChange}
-        templates={{
-          ...templates,
-          FieldTemplate,
-          ...{
-            ObjectFieldTemplate: (props) => (
-              <CustomObjectFieldTemplate
-                {...props}
-                disableAdvanced={disableAdvanced}
-              />
-            ),
-          },
-        }}
-        widgets={{
-          ...{
-            customselect: CustomselectWidget,
-            TextareaWidget: TextAreaWidget,
-            FileWidget: CustomFileWidget,
-            output_chat: ChatWidget,
-            output_text: TextWidget,
-            output_image: ImageWidget,
-            output_audio: AudioWidget,
-            datasource: (props) => (
-              <DataSourceSelector multiple={true} {...props} />
-            ),
-            gdrive: CustomGdriveFileWidget,
-            webpageurls: CustomWebpageURLExtractorWidget,
-            password: (props) => <SecretTextField {...props} />,
-            connection: (props) => <ConnectionSelector {...props} />,
-            richtext: (props) => (
-              <TextFieldWithVars {...props} richText={true} />
-            ),
-          },
-          ...widgets,
-        }}
-      >
-        {submitBtn}
-      </Form>
-    </ThemeProvider>
+    <Form
+      {...props}
+      schema={schema}
+      uiSchema={uiSchema}
+      validator={validator}
+      formData={formData}
+      onChange={onChange}
+      templates={{
+        ...templates,
+        FieldTemplate,
+        ...{
+          ObjectFieldTemplate: (props) => (
+            <CustomObjectFieldTemplate
+              {...props}
+              disableAdvanced={disableAdvanced}
+            />
+          ),
+        },
+      }}
+      widgets={{
+        ...{
+          customselect: CustomselectWidget,
+          TextareaWidget: TextAreaWidget,
+          FileWidget: CustomFileWidget,
+          output_chat: ChatWidget,
+          output_text: TextWidget,
+          output_image: ImageWidget,
+          output_audio: AudioWidget,
+          datasource: (props) => (
+            <DataSourceSelector multiple={true} {...props} />
+          ),
+          gdrive: CustomGdriveFileWidget,
+          webpageurls: CustomWebpageURLExtractorWidget,
+          password: (props) => <SecretTextField {...props} />,
+          connection: (props) => <ConnectionSelector {...props} />,
+          richtext: (props) => <TextFieldWithVars {...props} richText={true} />,
+        },
+        ...widgets,
+      }}
+    >
+      {submitBtn}
+    </Form>
   );
 };
 

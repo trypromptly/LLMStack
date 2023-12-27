@@ -77,7 +77,7 @@ export default function AppEditorMenu(props) {
               {item.children.map((child) => (
                 <ListItemButton
                   key={child.name}
-                  sx={{ pl: 4 }}
+                  sx={{ pl: 10 }}
                   selected={selectedMenuItem === child.value}
                   onClick={(e) => setSelectedMenuItem(child.value)}
                 >

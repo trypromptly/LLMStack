@@ -80,7 +80,7 @@ function Menu({ menuItems }) {
     (link === "/" && location.pathname.startsWith("/apps"));
 
   return (
-    <Stack sx={{ padding: "10px 0", width: "100%" }} spacing={1}>
+    <Stack spacing={2}>
       {menuItems.map((item) => (
         <div
           style={
@@ -165,7 +165,7 @@ export default function Sidebar({ menuItems }) {
           <img style={logoStyle} src={logo} alt="logo" />
         </a>
       </Box>
-      <Box style={{ justifyContent: "center" }}>
+      <Box style={{ justifyContent: "center", paddingTop: "10px" }}>
         <Menu menuItems={menuItems} />
       </Box>
       <Box

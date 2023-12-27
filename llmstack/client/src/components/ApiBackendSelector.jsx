@@ -7,6 +7,8 @@ import {
   Box,
   FormControl,
   InputLabel,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import {
   useRecoilValue,
@@ -25,6 +27,7 @@ import {
   endpointConfigValueState,
   inputValueState,
 } from "../data/atoms";
+import { ProviderIcon } from "./apps/ProviderIcon";
 
 export default function ApiBackendSelector() {
   const apiprovidersDropdown = useRecoilValue(apiProviderDropdownListState);
@@ -80,12 +83,18 @@ export default function ApiBackendSelector() {
 
   return (
     <Grid item id="apibackendselector">
-      <Grid container direction="row">
-        <Box sx={{ minWidth: 150 }}>
+      <Grid container direction="row" gap={2}>
+        <Box
+          sx={{
+            minWidth: 150,
+            "& .MuiSelect-outlined": {
+              display: "flex",
+            },
+          }}
+        >
           <FormControl fullWidth>
             <InputLabel id="select-api-provider-label">API Provider</InputLabel>
             <Select
-              style={{ width: "auto" }}
               onChange={(e) => {
                 setApiProviderSelected(e.target.value);
                 setApiBackendSelected(null);
@@ -93,11 +102,23 @@ export default function ApiBackendSelector() {
                 resetInputValueState();
               }}
               value={apiProviderSelected ? apiProviderSelected : ""}
-              label="Select API Provider"
+              label="API Provider"
             >
               {apiprovidersDropdown.map((option, index) => (
                 <MenuItem key={index} value={option.value}>
-                  {option.label}
+                  <ListItemIcon
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      minWidth: "32px !important",
+                    }}
+                  >
+                    <ProviderIcon
+                      providerSlug={option?.value}
+                      style={{ width: "20px", height: "20px" }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText>{option.label}</ListItemText>
                 </MenuItem>
               ))}
             </Select>
@@ -109,7 +130,12 @@ export default function ApiBackendSelector() {
             <FormControl fullWidth>
               <InputLabel id="select-api-backend-label">API Backend</InputLabel>
               <Select
-                style={{ width: 150 }}
+                sx={{
+                  lineHeight: "32px",
+                  "& .MuiSelect-outlined": {
+                    textAlign: "center",
+                  },
+                }}
                 onChange={(e) => {
                   setApiBackendSelected(
                     apibackends.find(
@@ -121,7 +147,7 @@ export default function ApiBackendSelector() {
                   resetInputValueState();
                 }}
                 value={apiBackendSelected ? apiBackendSelected.id : ""}
-                label="Select API Backend"
+                label="API Backend"
               >
                 {/* TODO: Find a better way to render Promptly App processor in playground */}
                 {apibackendsDropdown

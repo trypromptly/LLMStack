@@ -3,7 +3,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Grid,
-  Divider,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { canExpand } from "@rjsf/utils";
@@ -23,7 +22,7 @@ function ObjectFieldGrid(props) {
   const { AddButton } = registry.templates;
 
   return (
-    <Grid container={true} spacing={2} style={{ marginTop: "10px" }}>
+    <Grid container={true} style={{ marginTop: "10px" }}>
       {properties.map((element, index) =>
         // Remove the <Grid> if the inner element is hidden as the <Grid>
         // itself would otherwise still take up space.
@@ -78,11 +77,10 @@ function RootObjectFieldTemplate(props) {
   return (
     <>
       <ObjectFieldGrid {...{ ...props, properties: requiredProperties }} />
-      <Divider style={{ margin: "16px 0" }} />
       {optionalProperties.length > 0 && (
-        <Accordion>
+        <Accordion sx={{ marginTop: "16px" }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <strong style={{ marginLeft: "5px" }}>Advanced</strong>
+            <strong>Advanced</strong>
           </AccordionSummary>
           <AccordionDetails>
             <ObjectFieldGrid

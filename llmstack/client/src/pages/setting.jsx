@@ -133,12 +133,13 @@ const SettingPage = () => {
                 <Typography variant="h6" className="App-section-header">
                   Settings
                 </Typography>
-                <Paper sx={{ marginBottom: "30px" }}>
+                <Box sx={{ padding: "15px 0" }}>
                   <TextField
                     label="Promptly Token"
                     value={formData.token}
                     fullWidth
                     variant="outlined"
+                    size="medium"
                     InputProps={{
                       readOnly: true,
                       endAdornment: (
@@ -157,9 +158,14 @@ const SettingPage = () => {
                       ),
                     }}
                   />
-                </Paper>
+                  <Typography variant="caption">
+                    This is your API token. You can use this token to access
+                    {process.env.REACT_APP_SITE_NAME} API directly. Please do
+                    not share this token with anyone.
+                  </Typography>
+                </Box>
                 <Paper sx={{ width: "100%" }}>
-                  <Stack gap={2} padding={1}>
+                  <Stack gap={2} padding={1} spacing={2}>
                     <SecretTextField
                       label="OpenAI API Token"
                       type="password"
@@ -276,7 +282,7 @@ const SettingPage = () => {
                       }}
                     />
                     <Paper>
-                      <Typography variant="h7">&nbsp;LocalAI</Typography>
+                      <Typography variant="h5">&nbsp;LocalAI</Typography>
                     </Paper>
                     <TextField
                       label="LocalAI Base URL"

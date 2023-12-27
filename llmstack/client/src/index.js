@@ -32,8 +32,205 @@ const AddDatasourceRefreshSchedulePage = lazy(() =>
 );
 
 const defaultTheme = createTheme({
+  spacing: 4,
   typography: {
     fontFamily: "Lato, sans-serif",
+    fontSize: 14,
+  },
+  palette: {
+    primary: {
+      main: "#0a398d",
+      light: "#0a398d",
+      dark: "#1b4ca3",
+      contrastText: "#fff",
+    },
+    secondary: {
+      main: "#1e88e5",
+      light: "#1e88e5",
+      dark: "#1e88e5",
+      contrastText: "#fff",
+    },
+    error: {
+      main: "#d0625a",
+      light: "#d0625a",
+      dark: "#e74c41",
+      contrastText: "#fff",
+    },
+    warning: {
+      main: "#e86a1f",
+      light: "#e86a1f",
+      dark: "#ff9800",
+      contrastText: "#fff",
+    },
+    info: {
+      main: "#2196f3",
+      light: "#2196f3",
+      dark: "#2196f3",
+      contrastText: "#fff",
+    },
+    success: {
+      main: "#3a923e",
+      light: "#3a923e",
+      dark: "#58b65c",
+      contrastText: "#fff",
+    },
+  },
+  components: {
+    MuiImageList: {
+      styleOverrides: {
+        root: {
+          width: "100% !important",
+          height: "100% !important",
+        },
+      },
+    },
+    MuiImageListItem: {
+      styleOverrides: {
+        root: {
+          whiteSpace: "pre-wrap",
+        },
+        img: {
+          width: "auto",
+          height: "auto",
+        },
+      },
+    },
+    MuiInputBase: {
+      defaultProps: {
+        autoComplete: "off",
+      },
+      styleOverrides: {
+        root: {
+          "& textarea": {
+            whiteSpace: "pre-wrap",
+            padding: "0.1rem",
+          },
+        },
+      },
+    },
+    MuiSlider: {
+      defaultProps: {
+        size: "small",
+      },
+    },
+    MuiSelect: {
+      defaultProps: {
+        variant: "outlined",
+        size: "small",
+      },
+      styleOverrides: {
+        select: {
+          textAlign: "left",
+          margin: "0.1rem",
+        },
+      },
+    },
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          padding: "2px",
+
+          "& .MuiFormHelperText-root": {
+            overflow: "hidden",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            textOverflow: "ellipsis",
+            whiteSpace: "normal",
+            textAlign: "left",
+            margin: "2px",
+            lineHeight: "1.6em",
+            maxHeight: "3.2em",
+          },
+
+          "& .MuiTypography-body1": {
+            fontSize: "0.9rem",
+            fontWeight: "600",
+            textAlign: "left",
+          },
+
+          "& .form-group": {
+            textAlign: "left",
+          },
+
+          "& .field-boolean .MuiTypography-subtitle2": {
+            display: "none",
+          },
+        },
+      },
+    },
+    MuiTextField: {
+      defaultProps: {
+        variant: "outlined",
+        size: "small",
+      },
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-root": {
+            "& > fieldset": {
+              border: "1px solid rgb(204, 204, 204)",
+            },
+            "&.Mui-focused > fieldset": { border: "1px solid #0f477e" },
+            "&:hover > fieldset": { border: "1px solid #0f477e" },
+            "&.Mui-error > fieldset": { border: "1px solid #fcc" },
+          },
+        },
+      },
+    },
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          fontWeight: "550",
+          lineHeight: "1.66",
+          textAlign: "left",
+          textTransform: "capitalize",
+        },
+      },
+    },
+    MuiCheckbox: {
+      styleOverrides: {
+        root: {
+          padding: "0.1rem",
+          marginLeft: "0.5rem",
+          marginRight: "0.2rem",
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        caption: {
+          fontSize: "0.7rem",
+          marginLeft: 2,
+        },
+        h5: {
+          fontSize: "1rem",
+          fontWeight: "600",
+          margin: "0.5rem 0.2rem",
+          textAlign: "left",
+        },
+
+        subtitle2: {
+          textAlign: "left",
+        },
+      },
+    },
+    MuiButtonBase: {
+      styleOverrides: {
+        root: {
+          "&.MuiButton-contained": {
+            textTransform: "none",
+          },
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          fontWeight: "600",
+          textTransform: "capitalize",
+        },
+      },
+    },
   },
 });
 

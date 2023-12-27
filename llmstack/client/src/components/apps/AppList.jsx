@@ -197,9 +197,11 @@ export function AppList() {
                   </TableCell>
                   <TableCell>
                     <DeleteForeverIcon
-                      style={{
-                        color: row.is_published ? "#ccc" : "#d5847e",
-                      }}
+                      sx={(theme) => ({
+                        color: row.is_published
+                          ? "#ccc"
+                          : theme.palette.error.main,
+                      })}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (row.is_published) {

@@ -13,6 +13,7 @@ import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { AppInputSchemaEditor } from "./AppInputSchemaEditor";
 import { AppStepCard } from "./AppStepCard";
+import "./AppEditor.css";
 
 export function AppConfigEditor({
   appType,
@@ -62,9 +63,9 @@ export function AppConfigEditor({
             expandIcon={<ExpandMoreIcon />}
             aria-controls="input-content"
             id="input-header"
-            style={{ backgroundColor: "#dce8fb" }}
+            className="app-editor-section-header"
           >
-            <Typography>App Input</Typography>
+            App Input
           </AccordionSummary>
           <AccordionDetails>
             <AppInputSchemaEditor
@@ -91,9 +92,9 @@ export function AppConfigEditor({
             expandIcon={<ExpandMoreIcon />}
             aria-controls="config-content"
             id="config-header"
-            style={{ backgroundColor: "#dce8fb" }}
+            className="app-editor-section-header"
           >
-            <Typography>Configuration</Typography>
+            Configuration
           </AccordionSummary>
           <AccordionDetails>
             <ThemedJsonForm
@@ -122,7 +123,7 @@ export function AppConfigEditor({
             expandIcon={<ExpandMoreIcon />}
             aria-controls="transformer-content"
             id="transformer-header"
-            style={{ backgroundColor: "#dce8fb" }}
+            className="app-editor-section-header"
           >
             <Typography>Data Transformer</Typography>
           </AccordionSummary>
