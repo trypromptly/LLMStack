@@ -10,7 +10,13 @@ import {
   ImageList,
   ImageListItem,
   Chip,
+  Paper,
+  Box,
+  Typography,
+  ListItemIcon,
 } from "@mui/material";
+import ErrorIcon from "@mui/icons-material/Error";
+
 import { useState } from "react";
 import { DataSourceSelector } from "./datasource/DataSourceSelector";
 import MuiCustomSelect from "./MuiCustomSelect";
@@ -258,6 +264,30 @@ const DatasourceWidget = (props) => {
   return <DataSourceSelector {...props} />;
 };
 
+const ErrorListTemplate = (props) => {
+  const { errors } = props;
+
+  return (
+    <Paper elevation={2}>
+      <Box mb={2} p={2}>
+        <Typography variant="h6">Errors</Typography>
+        <List dense={true}>
+          {errors.map((error, i) => {
+            return (
+              <ListItem key={i} dense={true}>
+                <ListItemIcon>
+                  <ErrorIcon color="error" />
+                </ListItemIcon>
+                <ListItemText primary={error.message} />
+              </ListItem>
+            );
+          })}
+        </List>
+      </Box>
+    </Paper>
+  );
+};
+
 const ThemedJsonForm = ({
   schema,
   uiSchema,
@@ -273,6 +303,7 @@ const ThemedJsonForm = ({
 }) => {
   return (
     <Form
+      ref={props.formRef}
       {...props}
       schema={schema}
       uiSchema={uiSchema}
@@ -280,11 +311,12 @@ const ThemedJsonForm = ({
       formData={formData}
       onChange={onChange}
       templates={{
-        ...templates,
+        ErrorListTemplate,
         FieldTemplate,
         ObjectFieldTemplate: disableAdvanced
           ? CustomObjectFieldTemplateWithoutAdvanced
           : CustomObjectFieldTemplateWithAdvanced,
+        ...templates,
       }}
       widgets={{
         ...{
@@ -304,6 +336,7 @@ const ThemedJsonForm = ({
         },
         ...widgets,
       }}
+      transformErrors={props?.transformErrors}
     >
       {submitBtn}
     </Form>
