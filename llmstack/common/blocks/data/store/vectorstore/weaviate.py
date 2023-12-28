@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 import weaviate
+from django.conf import settings
 from pydantic import BaseModel
 from weaviate.util import get_valid_uuid
 
@@ -147,13 +148,19 @@ class Weaviate(VectorStoreInterface):
             headers['authorization'] = 'Bearer ' + \
                 configuration.weaviate_rw_api_key
 
+        # TODO: Read these from configuration
+        connect_timeout = settings.VECTOR_DATABASES.get(
+            'default').get('CONNECT_TIMEOUT', 5)
+        read_timeout = settings.VECTOR_DATABASES.get(
+            'default').get('READ_TIMEOUT', 60)
+
         if configuration.username is not None and configuration.password is not None:
             self._client = weaviate.Client(
                 url=configuration.url,
                 auth_client_secret=weaviate.AuthClientPassword(
                     username=configuration.username, password=configuration.password),
                 additional_headers=headers,
-                timeout_config=(2, 20),
+                timeout_config=(connect_timeout, read_timeout),
                 startup_period=None
             )
         elif configuration.api_key is not None:
@@ -162,14 +169,14 @@ class Weaviate(VectorStoreInterface):
                 auth_client_secret=weaviate.AuthApiKey(
                     api_key=configuration.api_key),
                 additional_headers=headers,
-                timeout_config=(2, 20),
+                timeout_config=(connect_timeout, read_timeout),
                 startup_period=None
             )
         else:
             self._client = weaviate.Client(
                 url=configuration.url,
                 additional_headers=headers,
-                timeout_config=(2, 20),
+                timeout_config=(connect_timeout, read_timeout),
                 startup_period=None
             )
 

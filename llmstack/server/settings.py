@@ -132,6 +132,8 @@ VECTOR_DATABASES = {
         'PASSWORD': os.getenv('VECTOR_DATABASE_PASSWORD', None),
         'AUTH_TOKEN': os.getenv('VECTOR_DATABASE_AUTH_TOKEN', None),
         'API_KEY': os.getenv('VECTOR_DATABASE_API_KEY', None),
+        'CONNECT_TIMEOUT': os.getenv('VECTOR_DATABASE_CONNECT_TIMEOUT', 5),
+        'READ_TIMEOUT': os.getenv('VECTOR_DATABASE_READ_TIMEOUT', 60),
     }
 }
 
