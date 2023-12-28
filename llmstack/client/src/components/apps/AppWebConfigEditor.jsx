@@ -2,7 +2,6 @@ import { Box, Stack } from "@mui/material";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
 import validator from "@rjsf/validator-ajv8";
-
 import ThemedJsonForm from "../ThemedJsonForm";
 import { createRef } from "react";
 
@@ -29,7 +28,7 @@ const webConfigUISchema = {
 export function AppWebConfigEditor(props) {
   const formRef = createRef();
 
-  function webConfigValidate(formData, errors) {
+  function webConfigValidate(formData, errors, uiSchema) {
     return errors;
   }
 
