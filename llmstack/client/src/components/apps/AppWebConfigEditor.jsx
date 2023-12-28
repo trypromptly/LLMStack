@@ -1,41 +1,52 @@
-import { Box, Stack, TextField } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
+import validator from "@rjsf/validator-ajv8";
 
-export function AllowedDomainsList(props) {
-  const { allowedDomains, setAllowedDomains } = props;
+import ThemedJsonForm from "../ThemedJsonForm";
+import { createRef } from "react";
 
-  return (
-    <TextField
-      helperText="Domains that are allowed to embed this app. Use comma to separate multiple domains"
-      variant="outlined"
-      label="Allowed Domains"
-      value={allowedDomains?.join(", ")}
-      onChange={(e) => {
-        const domains = e.target.value.split(",");
-        setAllowedDomains(domains.map((domain) => domain.trim()));
-      }}
-      size="small"
-    />
-  );
-}
+const webConfigSchema = {
+  type: "object",
+  properties: {
+    allowed_sites: {
+      type: "array",
+      title: "Allowed Sites",
+      description: "Domains that are allowed to embed this app.",
+      items: {
+        type: "string",
+      },
+    },
+  },
+};
+
+const webConfigUISchema = {
+  allowed_sites: {
+    "ui:emptyValue": [],
+  },
+};
 
 export function AppWebConfigEditor(props) {
-  const { app, webConfig, saveApp, setWebConfig } = props;
+  const formRef = createRef();
+
+  function webConfigValidate(formData, errors) {
+    return errors;
+  }
 
   return (
     <Box>
       <Stack direction="column" gap={2}>
-        <EmbedCodeSnippet app={app} integration="web" />
-        <AllowedDomainsList
-          allowedDomains={webConfig?.allowed_sites}
-          setAllowedDomains={(allowedDomains) =>
-            setWebConfig({
-              ...webConfig,
-              allowed_sites: allowedDomains,
-            })
-          }
+        <ThemedJsonForm
+          schema={webConfigSchema}
+          uiSchema={webConfigUISchema}
+          formData={props.webConfig || {}}
+          onChange={(e) => props.setWebConfig(e.formData)}
+          validator={validator}
+          disableAdvanced={true}
+          formRef={formRef}
+          customValidate={webConfigValidate}
         />
+        <EmbedCodeSnippet app={props.app} integration="web" />
       </Stack>
       <Stack
         direction="row"
@@ -46,7 +57,17 @@ export function AppWebConfigEditor(props) {
           margin: "auto",
         }}
       >
-        <AppSaveButtons saveApp={saveApp} />
+        <AppSaveButtons
+          saveApp={() => {
+            return new Promise((resolve, reject) => {
+              if (formRef.current.validateForm() === false) {
+                resolve();
+              } else {
+                props.saveApp().then(resolve).catch(reject);
+              }
+            });
+          }}
+        />
       </Stack>
     </Box>
   );
