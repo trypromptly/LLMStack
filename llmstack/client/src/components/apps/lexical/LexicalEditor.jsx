@@ -24,9 +24,8 @@ import {
   createCommand,
 } from "lexical";
 import { Chip } from "@mui/material";
-import ToolbarPlugin from "./plugins/ToolbarPlugin";
-
 import "./LexicalEditor.css";
+import ToolbarPlugin from "./plugins/ToolbarPlugin";
 
 const theme = {
   ltr: "ltr",
