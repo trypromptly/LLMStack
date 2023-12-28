@@ -137,6 +137,7 @@ export default function App({ children }) {
               textAlign: "center",
               height: "100vh",
               width: "100%",
+              paddingLeft: isMobile ? 0 : "65px",
               backgroundColor: "#fff",
               overflow: "auto",
             }}
