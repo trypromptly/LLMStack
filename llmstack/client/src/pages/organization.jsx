@@ -312,6 +312,7 @@ export default function OrganizationPage() {
             Settings
           </Typography>
           <ThemedJsonForm
+            disableAdvanced={true}
             schema={settingsSchema}
             validator={validator}
             uiSchema={settingsUiSchema}

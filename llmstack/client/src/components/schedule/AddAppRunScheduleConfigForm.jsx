@@ -48,6 +48,7 @@ export default function AddAppRunScheduleConfigForm(props) {
   return (
     <Box sx={{ width: "95%", margin: "5px" }}>
       <ThemedJsonForm
+        disableAdvanced={true}
         schema={SCHEMA}
         validator={validator}
         uiSchema={{
