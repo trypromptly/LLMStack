@@ -1,95 +1,98 @@
 import { Box, Stack, TextField } from "@mui/material";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
+import validator from "@rjsf/validator-ajv8";
+
+import ThemedJsonForm from "../ThemedJsonForm";
+import { createRef } from "react";
+
+const discordConfigSchema = {
+  type: "object",
+  properties: {
+    app_id: {
+      type: "string",
+      title: "App ID",
+      description: "Application ID",
+    },
+    slash_command_name: {
+      type: "string",
+      title: "Slash Command Name",
+      description:
+        "The name of the slash command that will be used to trigger the app.",
+    },
+    slash_command_description: {
+      type: "string",
+      title: "Slash Command Description",
+      description:
+        "The description of the slash command that will be used to trigger the app.",
+    },
+    bot_token: {
+      type: "string",
+      title: "Bot Token",
+      description:
+        "Bot token to use for sending messages to Discord. This token is available in the Bot section of your application console.",
+    },
+    public_key: {
+      type: "string",
+      title: "Public Key",
+      description:
+        "Public key of the Discord app. Your public key can be found in the Bot section of the your application console.",
+    },
+  },
+};
+
+const discordConfigUISchema = {
+  app_id: {
+    "ui:widget": "text",
+    "ui:emptyValue": "",
+  },
+  slash_command_name: {
+    "ui:widget": "text",
+    "ui:emptyValue": "",
+  },
+  slash_command_description: {
+    "ui:widget": "text",
+    "ui:emptyValue": "",
+  },
+  bot_token: {
+    "ui:widget": "password",
+    "ui:emptyValue": "",
+  },
+  public_key: {
+    "ui:widget": "password",
+    "ui:emptyValue": "",
+  },
+};
 
 export function AppDiscordConfigEditor(props) {
-  const { app, discordConfig, saveApp, setDiscordConfig } = props;
+  const formRef = createRef();
+
+  function discordConfigValidate(formData, errors, uiSchema) {
+    return errors;
+  }
 
   return (
     <Box>
       <Stack direction="column" gap={2}>
-        <TextField
-          id="app_id"
-          label="Application ID"
-          helperText="App ID of the Discord app. Your application's ID can be found in the URL of the your application console."
-          onChange={(e) =>
-            setDiscordConfig({
-              ...discordConfig,
-              app_id: e.target.value,
-            })
-          }
-          defaultValue={discordConfig?.app_id || ""}
-          size="small"
-        />
-        <TextField
-          id="slash_command_name"
-          label="Slash Command Name"
-          helperText="The name of the slash command that will be used to trigger the app."
-          onChange={(e) =>
-            setDiscordConfig({
-              ...discordConfig,
-              slash_command_name: e.target.value,
-            })
-          }
-          defaultValue={discordConfig?.slash_command_name || ""}
-          size="small"
-        />
-        <TextField
-          id="slash_command_description"
-          label="Slash Command Description"
-          helperText="The description of the slash command that will be used to trigger the app."
-          onChange={(e) =>
-            setDiscordConfig({
-              ...discordConfig,
-              slash_command_description: e.target.value,
-            })
-          }
-          defaultValue={
-            discordConfig?.slash_command_description || "Promptly App"
-          }
-          size="small"
-        />
-        <TextField
-          id="bot_token"
-          label="Bot Token"
-          helperText="Bot token of the Discord app. Your bot's token can be found in the Bot section of the your application console."
-          onChange={(e) =>
-            setDiscordConfig({
-              ...discordConfig,
-              bot_token: e.target.value,
-            })
-          }
-          defaultValue={discordConfig?.bot_token || ""}
-          size="small"
-        />
-        <TextField
-          id="public_key"
-          label="Public Key"
-          helperText="Public key of the Discord app. Your public key can be found in the Bot section of the your application console."
-          onChange={(e) =>
-            setDiscordConfig({
-              ...discordConfig,
-              public_key: e.target.value,
-            })
-          }
-          defaultValue={discordConfig?.public_key || ""}
-          size="small"
+        <ThemedJsonForm
+          schema={discordConfigSchema}
+          uiSchema={discordConfigUISchema}
+          formData={props.discordConfig || {}}
+          onChange={(e) => props.setDiscordConfig(e.formData)}
+          validator={validator}
+          disableAdvanced={true}
+          formRef={formRef}
+          customValidate={discordConfigValidate}
         />
         <TextField
           id="slash_command_id"
           label="Slash Command ID"
           helperText="Slash command ID of the Discord app. Your slash command ID can be found in the Slash Commands section of the your application console."
           disabled={true}
-          onChange={(e) =>
-            setDiscordConfig({
-              ...discordConfig,
-              slash_command_id: e.target.value,
-            })
-          }
-          defaultValue={discordConfig?.slash_command_id || ""}
+          defaultValue={props.discordConfig?.slash_command_id || ""}
           size="small"
         />
-        <EmbedCodeSnippet app={app} integration="discord" />
+        <EmbedCodeSnippet app={props.app} integration="discord" />
       </Stack>
       <Stack
         direction="row"
@@ -100,7 +103,17 @@ export function AppDiscordConfigEditor(props) {
           margin: "auto",
         }}
       >
-        <AppSaveButtons saveApp={saveApp} />
+        <AppSaveButtons
+          saveApp={() => {
+            return new Promise((resolve, reject) => {
+              if (formRef.current.validateForm() === false) {
+                resolve();
+              } else {
+                props.saveApp().then(resolve).catch(reject);
+              }
+            });
+          }}
+        />
       </Stack>
     </Box>
   );

@@ -58,8 +58,6 @@ export function AppSlackConfigEditor(props) {
   const formRef = createRef();
 
   function slackConfigValidate(formData, errors, uiSchema) {
-    console.log(props.app);
-    console.log("IN VALIDATOR");
     if ((formData.bot_token || "").length < 5) {
       errors.bot_token.addError("Bot token is required");
     }
