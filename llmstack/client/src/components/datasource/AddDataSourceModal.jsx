@@ -91,6 +91,7 @@ export function AddDataSourceModal({
             onChange={({ formData }) => {
               setFormData(formData);
             }}
+            disableAdvanced={true}
           />
         </Stack>
       </DialogContent>
