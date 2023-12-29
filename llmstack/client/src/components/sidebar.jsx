@@ -295,7 +295,6 @@ export default function Sidebar({ menuItems }) {
               </ListItemButton>
             </ListItem>
           )}
-          {isLoggedIn && <Divider sx={{ margin: "5px 0" }} />}
           {isLoggedIn && (
             <ListItem key={"logout"} disablePadding>
               <ListItemButton
@@ -328,6 +327,7 @@ export default function Sidebar({ menuItems }) {
               </ListItemButton>
             </ListItem>
           )}
+          {isLoggedIn && <Divider sx={{ margin: "5px 0" }} />}
           {isLoggedIn && (
             <ListItem key={"profile-icon"} disablePadding>
               <ListItemButton
