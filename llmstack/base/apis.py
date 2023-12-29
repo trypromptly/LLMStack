@@ -113,9 +113,16 @@ class ProfileViewSet(viewsets.ViewSet):
                     ).decode('utf-8')
                 else:
                     profile.google_service_account_json_key = ''
-            except:
+            except Exception as e:
                 # This is an API key
-                profile.google_service_account_json_key = profile.encrypt_value(request.data['google_service_account_json_key']).decode('utf-8')
+                encrypted_value = profile.encrypt_value(
+                    request.data['google_service_account_json_key'],
+                )
+                if encrypted_value:
+                    profile.google_service_account_json_key = encrypted_value.decode(
+                        'utf-8')
+                else:
+                    profile.google_service_account_json_key = ''
 
         if 'azure_openai_api_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
             should_update = True
