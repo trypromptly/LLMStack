@@ -84,22 +84,18 @@ const settingsSchema = {
 const settingsUiSchema = {
   openai_key: {
     "ui:widget": "password",
-    "ui:help": "Add your OpenAI API key here",
     "ui:default": "",
   },
   stabilityai_key: {
     "ui:widget": "password",
-    "ui:help": "Add your StabilityAI API key here",
     "ui:default": "",
   },
   cohere_key: {
     "ui:widget": "password",
-    "ui:help": "Add your Cohere API key here",
     "ui:default": "",
   },
   elevenlabs_key: {
     "ui:widget": "password",
-    "ui:help": "Add your Elevenlabs API key here",
     "ui:default": "",
   },
   google_service_account_json_key: {
@@ -110,22 +106,20 @@ const settingsUiSchema = {
   },
   azure_openai_api_key: {
     "ui:widget": "password",
-    "ui:help": "Add your Azure OpenAI API key here",
     "ui:default": "",
   },
   localai_base_url: {
     "ui:widget": "text",
-    "ui:help": "Add your LocalAI base URL here",
+    "ui:help": "LocalAI base URL here if you want to use a self-hosted LocalAI",
     "ui:default": "",
   },
   localai_api_key: {
     "ui:widget": "password",
-    "ui:help": "Add your LocalAI API key here",
+    "ui:help": "LocalAI API key if your instance needs authentication",
     "ui:default": "",
   },
   anthropic_api_key: {
     "ui:widget": "password",
-    "ui:help": "Add your Anthropic API key here",
     "ui:default": "",
   },
 };
