@@ -306,10 +306,23 @@ export default function AppEditPage(props) {
     <div id="app-edit-page" style={{ margin: 10 }}>
       <AppBar
         position="sticky"
-        sx={{ backgroundColor: "inherit", zIndex: 100 }}
+        sx={{
+          backgroundColor: "#fff",
+          zIndex: 100,
+          border: "1px solid #ddd",
+          borderRadius: "4px",
+        }}
+        elevation={1}
       >
         {app?.type && (
-          <Paper elevation={1} sx={{ padding: "10px 15px", boxShadow: "none" }}>
+          <Paper
+            elevation={1}
+            sx={{
+              padding: "10px 15px",
+              boxShadow: "none",
+              backgroundColor: "#edeff755",
+            }}
+          >
             <Stack direction="row" spacing={1}>
               <Stack direction="column">
                 <Stack direction="row" spacing={1.2}>
