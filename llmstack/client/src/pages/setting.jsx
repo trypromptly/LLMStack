@@ -113,17 +113,15 @@ const settingsUiSchema = {
     "ui:help": "Add your Azure OpenAI API key here",
     "ui:default": "",
   },
-  localai: {
-    localai_base_url: {
-      "ui:widget": "text",
-      "ui:help": "Add your LocalAI base URL here",
-      "ui:default": "",
-    },
-    localai_api_key: {
-      "ui:widget": "password",
-      "ui:help": "Add your LocalAI API key here",
-      "ui:default": "",
-    },
+  localai_base_url: {
+    "ui:widget": "text",
+    "ui:help": "Add your LocalAI base URL here",
+    "ui:default": "",
+  },
+  localai_api_key: {
+    "ui:widget": "password",
+    "ui:help": "Add your LocalAI API key here",
+    "ui:default": "",
   },
   anthropic_api_key: {
     "ui:widget": "password",
