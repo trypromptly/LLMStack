@@ -270,7 +270,7 @@ export default function Sidebar({ menuItems }) {
                   px: 2.5,
                 }}
                 component={"a"}
-                href={"https://discord.gg/3JsEzSXspJ"}
+                href={"https://github.com/trypromptly/LLMStack"}
                 target="_blank"
               >
                 <ListItemIcon
@@ -281,7 +281,7 @@ export default function Sidebar({ menuItems }) {
                     color: "#666",
                   })}
                 >
-                  <SvgIcon component={GithubIcon} />
+                  <SvgIcon component={GithubIcon} viewBox="-1 -1 18 18" />
                 </ListItemIcon>
                 <ListItemText
                   primary={"Github"}
@@ -363,6 +363,7 @@ export default function Sidebar({ menuItems }) {
                       sx={{
                         width: 26,
                         height: 26,
+                        fontSize: "0.8rem",
                         cursor: "pointer",
                         border: "1px solid #728bd0",
                         margin: "0 auto",
@@ -377,7 +378,7 @@ export default function Sidebar({ menuItems }) {
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    profile && profile.name && profile.name.size > 0
+                    profile && profile.name && profile.name.length > 0
                       ? profile.name
                       : "Human"
                   }
