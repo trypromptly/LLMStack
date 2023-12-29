@@ -1,50 +1,74 @@
-import { Alert, Box, Stack, TextField } from "@mui/material";
+import { Alert, Box, Stack } from "@mui/material";
 import { useRecoilValue } from "recoil";
 import { profileFlagsState } from "../../data/atoms";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
+import ThemedJsonForm from "../ThemedJsonForm";
+import { createRef } from "react";
+import validator from "@rjsf/validator-ajv8";
+
+const twilioConfigSchema = {
+  type: "object",
+  properties: {
+    account_sid: {
+      type: "string",
+      title: "Account SID",
+      description:
+        "Twilio Account SID can be found on the Twilio Console dashboard under Account Info.",
+    },
+    auth_token: {
+      type: "string",
+      title: "Auth Token",
+      description:
+        "Twilio Auth token Auth Token can be found on the Twilio Console dashboard under Account Info.",
+    },
+    phone_numbers: {
+      type: "array",
+      title: "Twilio Phone Numbers",
+      description: "Add Twilio phone numbers",
+      items: {
+        type: "string",
+      },
+    },
+  },
+};
+
+const twilioConfigUISchema = {
+  account_sid: {
+    "ui:widget": "text",
+    "ui:emptyValue": "",
+  },
+  auth_token: {
+    "ui:widget": "password",
+    "ui:emptyValue": "",
+  },
+  phone_numbers: {
+    "ui:emptyValue": [],
+  },
+};
 
 export function AppTwilioConfigEditor(props) {
-  const { app, saveApp, twilioConfig, setTwilioConfig } = props;
   const profileFlags = useRecoilValue(profileFlagsState);
+  const formRef = createRef();
+
+  function twilioConfigValidate(formData, errors, uiSchema) {
+    return errors;
+  }
 
   return profileFlags.CAN_ADD_TWILIO_INTERGRATION ? (
     <Box>
       <Stack direction="column" gap={2}>
-        <TextField
-          id="account_sid"
-          label="Account SID"
-          helperText="Twilio Account SID can be found on the Twilio Console dashboard under Account Info."
-          onChange={(e) =>
-            setTwilioConfig({ ...twilioConfig, account_sid: e.target.value })
-          }
-          defaultValue={twilioConfig?.account_sid || ""}
-          size="small"
+        <ThemedJsonForm
+          schema={twilioConfigSchema}
+          uiSchema={twilioConfigUISchema}
+          formData={props.twilioConfig || {}}
+          onChange={(e) => props.setTwilioConfig(e.formData)}
+          disableAdvanced={true}
+          validator={validator}
+          formRef={formRef}
+          customValidate={twilioConfigValidate}
         />
-        <TextField
-          id="auth_token"
-          label="Auth Token"
-          helperText="Twilio Auth token Auth Token can be found on the Twilio Console dashboard under Account Info."
-          onChange={(e) =>
-            setTwilioConfig({ ...twilioConfig, auth_token: e.target.value })
-          }
-          defaultValue={twilioConfig?.auth_token || ""}
-          size="small"
-        />
-        <TextField
-          id="twilio_numbers"
-          label="Twilio Phone Numbers"
-          helperText="Add comma separated list of Twilio phone numbers"
-          onChange={(e) =>
-            setTwilioConfig({
-              ...twilioConfig,
-              phone_numbers: e.target.value.split(",").map((n) => n.trim()),
-            })
-          }
-          defaultValue={twilioConfig?.phone_numbers?.join(",")}
-          size="small"
-        />
-        <EmbedCodeSnippet app={app} integration="twilio" />
+        <EmbedCodeSnippet app={props.app} integration="twilio" />
       </Stack>
       <Stack
         direction="row"
@@ -55,7 +79,17 @@ export function AppTwilioConfigEditor(props) {
           margin: "auto",
         }}
       >
-        <AppSaveButtons saveApp={saveApp} />
+        <AppSaveButtons
+          saveApp={() => {
+            return new Promise((resolve, reject) => {
+              if (formRef.current.validateForm() === false) {
+                resolve();
+              } else {
+                props.saveApp().then(resolve).catch(reject);
+              }
+            });
+          }}
+        />
       </Stack>
     </Box>
   ) : (
