@@ -42,7 +42,6 @@ export default function LoginPage() {
         } else {
           window.location.href = "/";
         }
-        
       },
     );
   };
@@ -79,6 +78,7 @@ export default function LoginPage() {
               autoFocus
               onChange={(e) => setUsername(e.target.value)}
               value={username}
+              size="medium"
             />
             <TextField
               variant="outlined"
@@ -92,6 +92,7 @@ export default function LoginPage() {
               autoComplete="current-password"
               onChange={(e) => setPassword(e.target.value)}
               value={password}
+              size="medium"
             />
             <Button
               type="submit"
@@ -99,7 +100,7 @@ export default function LoginPage() {
               variant="contained"
               color="primary"
               size="large"
-              sx={{ mt: 4, mb: 4, textTransform: "none" }}
+              sx={{ mt: 4, mb: 4, textTransform: "none", pt: 4, pb: 4 }}
               onClick={onSignInClick}
             >
               Sign In
