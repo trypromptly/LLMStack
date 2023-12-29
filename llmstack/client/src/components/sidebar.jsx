@@ -262,7 +262,7 @@ export default function Sidebar({ menuItems }) {
             </ListItemButton>
           </ListItem>
           {SITE_NAME === "LLMStack" && (
-            <ListItem key={"help"} disablePadding>
+            <ListItem key={"github"} disablePadding>
               <ListItemButton
                 sx={{
                   minHeight: 32,
