@@ -3,9 +3,11 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Collapse,
   Divider,
   Grid,
+  LinearProgress,
   Pagination,
   Stack,
   SvgIcon,
@@ -505,7 +507,6 @@ export function AppRunHistoryTimeline(props) {
             <Divider />
           </Box>
         )}
-        {loading && <span>Loading</span>}
         <Table stickyHeader aria-label="sticky table">
           <TableHead>
             <TableRow>
@@ -564,7 +565,9 @@ export function AppRunHistoryTimeline(props) {
                   >
                     <Collapse in={row.expand} timeout="auto" unmountOnExit>
                       <Box sx={{ margin: 1 }}>
-                        {!expandedRows[row.request_uuid] && "Loading...  "}
+                        {!expandedRows[row.request_uuid] && (
+                          <CircularProgress />
+                        )}
                         {expandedRows[row.request_uuid] && (
                           <Grid
                             container
@@ -656,6 +659,9 @@ export function AppRunHistoryTimeline(props) {
             })}
           </TableBody>
         </Table>
+        {loading && (
+          <LinearProgress sx={{ margin: "10px auto", width: "80vw" }} />
+        )}
         <Pagination
           count={Math.ceil((total || 0) / 20)}
           variant="outlined"
