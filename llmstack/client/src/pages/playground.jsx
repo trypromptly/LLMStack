@@ -18,7 +18,7 @@ import Output from "../components/Output";
 import InputForm from "../components/InputForm";
 import ConfigForm from "../components/ConfigForm";
 
-export default function HomePage() {
+export default function PlaygroundPage() {
   const isLoggedIn = useRecoilValue(isLoggedInState);
   const [input] = useRecoilState(inputValueState);
 

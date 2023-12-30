@@ -13,7 +13,7 @@ import { TourProvider } from "@reactour/tour";
 
 const App = lazy(() => import("./App"));
 const ErrorPage = lazy(() => import("./pages/error"));
-const HomePage = lazy(() => import("./pages/home"));
+const PlaygroundPage = lazy(() => import("./pages/playground"));
 const LoginPage = lazy(() => import("./pages/login"));
 const SignupPage = lazy(() => import("./pages/signup"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
@@ -256,7 +256,7 @@ router = createBrowserRouter([
     path: "/playground",
     element: (
       <App>
-        <HomePage isSharedPageMode={false} />
+        <PlaygroundPage isSharedPageMode={false} />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -423,7 +423,7 @@ router = createBrowserRouter([
     path: "/s/:shareId",
     element: (
       <App>
-        <HomePage isSharedPageMode={true} />
+        <PlaygroundPage isSharedPageMode={true} />
       </App>
     ),
     errorElement: <ErrorPage />,
