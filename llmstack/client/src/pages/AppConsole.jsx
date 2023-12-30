@@ -105,7 +105,7 @@ const menuItems = [
   },
 ];
 
-export default function AppEditPage(props) {
+export default function AppConsolePage(props) {
   const { appId } = useParams();
   const { page } = props;
   const apiBackends = useRecoilValue(apiBackendsState);

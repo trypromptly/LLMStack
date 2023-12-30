@@ -22,7 +22,7 @@ const SettingPage = lazy(() => import("./pages/setting"));
 const OrganizationPage = lazy(() => import("./pages/organization"));
 const AppRenderPage = lazy(() => import("./pages/AppRender"));
 const AppStudioPage = lazy(() => import("./pages/AppStudio"));
-const AppEditPage = lazy(() => import("./pages/AppEdit"));
+const AppConsolePage = lazy(() => import("./pages/AppConsole"));
 const DataPage = lazy(() => import("./pages/data"));
 const Discover = lazy(() => import("./pages/discover"));
 const SchedulePage = lazy(() => import("./pages/schedule"));
@@ -283,7 +283,7 @@ router = createBrowserRouter([
     path: "/apps/:appTypeSlug/create",
     element: (
       <App>
-        <AppEditPage />
+        <AppConsolePage />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -292,7 +292,7 @@ router = createBrowserRouter([
     path: "/apps/:appId",
     element: (
       <App>
-        <AppEditPage />
+        <AppConsolePage />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -301,7 +301,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/preview",
     element: (
       <App>
-        <AppEditPage page="preview" />
+        <AppConsolePage page="preview" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -310,7 +310,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/template",
     element: (
       <App>
-        <AppEditPage page="template" />
+        <AppConsolePage page="template" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -319,7 +319,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/editor",
     element: (
       <App>
-        <AppEditPage page="editor" />
+        <AppConsolePage page="editor" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -328,7 +328,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/history",
     element: (
       <App>
-        <AppEditPage page="history" />
+        <AppConsolePage page="history" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -337,7 +337,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/tests",
     element: (
       <App>
-        <AppEditPage page="tests" />
+        <AppConsolePage page="tests" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -346,7 +346,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/versions",
     element: (
       <App>
-        <AppEditPage page="versions" />
+        <AppConsolePage page="versions" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -355,7 +355,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/integrations/website",
     element: (
       <App>
-        <AppEditPage page="integrations/website" />
+        <AppConsolePage page="integrations/website" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -364,7 +364,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/integrations/api",
     element: (
       <App>
-        <AppEditPage page="integrations/api" />
+        <AppConsolePage page="integrations/api" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -373,7 +373,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/integrations/slack",
     element: (
       <App>
-        <AppEditPage page="integrations/slack" />
+        <AppConsolePage page="integrations/slack" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -382,7 +382,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/integrations/discord",
     element: (
       <App>
-        <AppEditPage page="integrations/discord" />
+        <AppConsolePage page="integrations/discord" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -391,7 +391,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/integrations/twilio",
     element: (
       <App>
-        <AppEditPage page="integrations/twilio" />
+        <AppConsolePage page="integrations/twilio" />
       </App>
     ),
     errorElement: <ErrorPage />,
@@ -400,7 +400,7 @@ router = createBrowserRouter([
     path: "/apps/:appId/preview",
     element: (
       <App>
-        <AppEditPage page="preview" />
+        <AppConsolePage page="preview" />
       </App>
     ),
     errorElement: <ErrorPage />,
