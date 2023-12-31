@@ -16,6 +16,7 @@ from llmstack.common.utils.db_models import ArrayField
 
 logger = logging.getLogger(__name__)
 
+
 class AppVisibility(models.IntegerChoices):
     PRIVATE = 0, 'Private'  # only the owner of the app and listed emails can access the app
     # only members of the organization can access the app
@@ -237,7 +238,7 @@ class App(models.Model):
     def discord_config(self):
         profile = Profile.objects.get(user=self.owner)
         return DiscordIntegrationConfig().from_dict(self.discord_integration_config, profile.decrypt_value) if self.discord_integration_config else None
-    
+
     @property
     def twilio_config(self):
         profile = Profile.objects.get(user=self.owner)
@@ -408,3 +409,7 @@ def update_app_pre_save(sender, instance, **kwargs):
         instance.type, 'slack',
     )
     instance = slack_app_type_handler_cls.pre_save(instance)
+
+    twilio_sms_type_handler_cls = AppTypeFactory.get_app_type_handler(
+        instance.type, 'twilio_sms')
+    instance = twilio_sms_type_handler_cls.pre_save(instance)
