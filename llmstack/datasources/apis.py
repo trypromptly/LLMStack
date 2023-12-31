@@ -4,12 +4,12 @@ import uuid
 from concurrent.futures import Future
 
 from django.shortcuts import get_object_or_404
+from django.test import RequestFactory
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 from rq.job import Job
 
 from llmstack.apps.tasks import (
-    add_data_entry_task,
     delete_data_entry_task,
     delete_data_source_task,
     extract_urls_task,
@@ -300,30 +300,15 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource_entry_items = datasource_entry_handler.validate_and_process(
             entry_data,
         )
-        processed_datasource_entry_items = []
+        logger.info(f'Adding {len(datasource_entry_items)} entries')
         for datasource_entry_item in datasource_entry_items:
-            datasource_entry_object = DataSourceEntry.objects.create(
-                datasource=datasource,
-                name=datasource_entry_item.name,
-                status=DataSourceEntryStatus.PROCESSING,
-            )
-            datasource_entry_object.save()
-            processed_datasource_entry_items.append(
-                datasource_entry_item.copy(update={'uuid': str(
-                    datasource_entry_object.uuid), 'metadata': entry_metadata}),
-            )
+            request.data['datasource_id'] = uid
+            request.data['input_data'] = datasource_entry_item.dict()
 
-        # Trigger a task to process the data source entry
-        try:
-            job = DataSourceEntryProcessingJob.create(
-                func=add_data_entry_task, args=[
-                    datasource, processed_datasource_entry_items,
-                ],
-            ).add_to_queue()
-            return DRFResponse({'success': True}, status=202)
-        except Exception as e:
-            logger.error(f'Error while adding entry to data source: {e}')
-            return DRFResponse({'errors': [str(e)]}, status=500)
+            response = DataSourceEntryViewSet().upsert(request)
+            logger.info(f'Response: {response}')
+
+        return DRFResponse({'status': 'success'}, status=200)
 
     def extract_urls(self, request):
         if not request.user.is_authenticated or request.method != 'POST':
