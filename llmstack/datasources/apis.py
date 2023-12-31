@@ -15,9 +15,11 @@ from llmstack.apps.tasks import (
     extract_urls_task,
     resync_data_entry_task,
 )
-from llmstack.datasources.handlers.datasource_processor import DataSourceProcessor
+from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceProcessor
+from llmstack.datasources.tasks import process_datasource_add_entry_request
 from llmstack.datasources.types import DataSourceTypeFactory
 from llmstack.jobs.adhoc import DataSourceEntryProcessingJob, ExtractURLJob
+from llmstack.jobs.models import AdhocJob, TaskRunLog, TaskStatus
 
 from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
 from .serializers import (
@@ -105,6 +107,68 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
 
         return DRFResponse(status=202)
 
+    def upsert(self, request):
+        if 'datasource_id' not in request.data:
+            return DRFResponse({'errors': ['No datasource_id provided']}, status=400)
+
+        input_data = request.data.get('input_data')
+        if not input_data:
+            return DRFResponse({'errors': ['No input_data provided']}, status=400)
+
+        name = input_data['name'] if 'name' in input_data else ''
+        data = input_data['data'] if 'data' in input_data else ''
+
+        if not name or not data:
+            return DRFResponse({'errors': ['No name or data provided']}, status=400)
+
+        datasource = get_object_or_404(DataSource, uuid=request.data['datasource_id'],
+                                       owner=request.user)
+
+        datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
+            datasource.type)
+        if not datasource_entry_handler_cls:
+            logger.error(
+                'No handler found for data source type {datasource.type}',
+            )
+            return DRFResponse({'errors': ['No handler found for data source type']}, status=400)
+
+        datasource_entry_handler = datasource_entry_handler_cls(datasource)
+        if not datasource_entry_handler:
+            logger.error(
+                'Error while creating handler for data source type {datasource.type}',
+            )
+            return DRFResponse({'errors': ['Error while creating handler for data source type']},
+                               status=400)
+
+        # Create an entry in the database with status as processing
+        datasource_entry_obj = DataSourceEntry.objects.create(
+            name=name,
+            datasource=datasource,
+            status=DataSourceEntryStatus.PROCESSING)
+        datasource_entry_obj.save()
+
+        try:
+            result = datasource_entry_handler.add_entry(
+                DataSourceEntryItem(**input_data))
+            datasource_entry_config = result.config
+            datasource_entry_config["input"] = input_data
+
+            datasource_entry_obj.config = datasource_entry_config
+            datasource_entry_obj.size = result.size
+            datasource_entry_obj.status = DataSourceEntryStatus.READY
+        except Exception as e:
+            logger.exception(f'Error adding data_source_entry: %s' %
+                             str(input_data['name']))
+
+            datasource_entry_obj.config = {'errors': {'message': str(e)}}
+            datasource_entry_obj.status = DataSourceEntryStatus.FAILED
+
+        datasource_entry_obj.save()
+        datasource.size += datasource_entry_obj.size
+        datasource.save(update_fields=['size'])
+
+        return DRFResponse(DataSourceEntrySerializer(instance=datasource_entry_obj).data, status=200)
+
 
 class DataSourceViewSet(viewsets.ModelViewSet):
     queryset = DataSource.objects.all()
@@ -177,6 +241,29 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource.delete()
         return DRFResponse(status=204)
 
+    def add_entry_async(self, request, uid):
+        datasource = get_object_or_404(
+            DataSource, uuid=uuid.UUID(uid), owner=request.user,
+        )
+
+        adhoc_job = AdhocJob(
+            name=f'add_entry_{datasource.uuid}',
+            callable='llmstack.datasources.tasks.process_datasource_add_entry_request',
+            callable_args=[uid,
+                           request.data['entry_data']],
+            callable_kwargs={},
+            queue='default',
+            enabled=False,
+            repeat=0,
+            job_id=None,
+            status='queued',
+            metadata={'datasource_id': uid},
+            owner=datasource.owner)
+
+        adhoc_job.save(schedule_job=True, func_args=[uid,
+                                                     request.data['entry_data']])
+        return DRFResponse({'job_id': adhoc_job.uuid}, status=202)
+
     def add_entry(self, request, uid):
         datasource = get_object_or_404(
             DataSource, uuid=uuid.UUID(uid), owner=request.user,
@@ -213,7 +300,6 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource_entry_items = datasource_entry_handler.validate_and_process(
             entry_data,
         )
-
         processed_datasource_entry_items = []
         for datasource_entry_item in datasource_entry_items:
             datasource_entry_object = DataSourceEntry.objects.create(
@@ -278,3 +364,20 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             urls = job.result
 
         return DRFResponse({'urls': urls})
+
+    def add_entry_jobs(self, request, uid):
+        query_params = request.query_params
+
+        jobs = AdhocJob.objects.filter(metadata__datasource_id=uid).order_by(
+            '-created_at')
+
+        if 'status' in query_params:
+            jobs = jobs.filter(status__in=query_params['status'].split(','))
+
+        return DRFResponse([
+            {
+                'uuid': str(job.uuid),
+                'name': job.name,
+                'status': job.status,
+                'created_at': job.created_at,
+                'updated_at': job.updated_at} for job in jobs], status=200)
