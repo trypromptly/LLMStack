@@ -30,6 +30,7 @@ import {
   SettingsOutlined,
   SourceOutlined,
 } from "@mui/icons-material";
+import TwitterIcon from "@mui/icons-material/Twitter";
 import { onLogoutClick } from "./logout";
 import { ReactComponent as GithubIcon } from "../assets/images/icons/github.svg";
 import { LoggedOutModal } from "./LoggedOutModal";
@@ -295,6 +296,38 @@ export default function Sidebar({ menuItems }) {
               </ListItemButton>
             </ListItem>
           )}
+          <ListItem key={"twitter"} disablePadding>
+            <ListItemButton
+              sx={{
+                minHeight: 32,
+                justifyContent: open ? "initial" : "center",
+                px: 2.5,
+              }}
+              component={"a"}
+              href={"https://twitter.com/trypromptly"}
+              target="_blank"
+            >
+              <ListItemIcon
+                sx={(theme) => ({
+                  minWidth: 0,
+                  mr: open ? 1 : "auto",
+                  justifyContent: "center",
+                  color: "#666",
+                })}
+              >
+                <TwitterIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary={"Updates"}
+                sx={{
+                  opacity: open ? 1 : 0,
+                  display: open ? "block" : "none",
+                  color: "#666",
+                  margin: 0,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
           {isLoggedIn && (
             <ListItem key={"logout"} disablePadding>
               <ListItemButton
