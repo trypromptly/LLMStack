@@ -4,7 +4,6 @@ import uuid
 from concurrent.futures import Future
 
 from django.shortcuts import get_object_or_404
-from django.test import RequestFactory
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 from rq.job import Job
@@ -12,14 +11,15 @@ from rq.job import Job
 from llmstack.apps.tasks import (
     delete_data_entry_task,
     delete_data_source_task,
-    extract_urls_task,
     resync_data_entry_task,
 )
+
+from tasks import extract_urls_task
+
 from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceProcessor
-from llmstack.datasources.tasks import process_datasource_add_entry_request
 from llmstack.datasources.types import DataSourceTypeFactory
-from llmstack.jobs.adhoc import DataSourceEntryProcessingJob, ExtractURLJob
-from llmstack.jobs.models import AdhocJob, TaskRunLog, TaskStatus
+from llmstack.jobs.adhoc import ExtractURLJob
+from llmstack.jobs.models import AdhocJob
 
 from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
 from .serializers import (
