@@ -14,7 +14,7 @@ from llmstack.apps.tasks import (
     resync_data_entry_task,
 )
 
-from tasks import extract_urls_task
+from .tasks import extract_urls_task
 
 from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceProcessor
 from llmstack.datasources.types import DataSourceTypeFactory
