@@ -20,6 +20,9 @@ class TwilioSmsAppConfigSchema(BaseSchema):
     phone_numbers: List[str] = Field(
         title='Phone Numbers', description='Phone numbers to send SMS messages from.', required=True,
     )
+    auto_create_sms_webhook: bool = Field(default=False, title='Auto Create SMS Webhook',
+                                          description='Automatically create an SMS webhook for the phone numbers.', required=False,
+                                          )
 
 
 class TwilioSmsApp(AppTypeInterface[TwilioSmsAppConfigSchema]):
@@ -80,7 +83,5 @@ class TwilioSmsApp(AppTypeInterface[TwilioSmsAppConfigSchema]):
                     if response.status_code != 200:
                         raise Exception(
                             f'Failed to update SMS webhook for phone number {phone_number}. Error: {response.text}')
-                    logger.info(
-                        f'{response.text} for phone number {phone_number}')
 
         return app
