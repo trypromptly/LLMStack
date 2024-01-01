@@ -7,6 +7,7 @@ from .types.chat import ChatApp
 from .types.web import WebApp
 from .types.discord import DiscordApp
 from .types.slack import SlackApp
+from .types.twilio_sms import TwilioSmsApp
 
 
 class AppTypeFactory:

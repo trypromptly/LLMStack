@@ -6,7 +6,7 @@ from channels.db import database_sync_to_async
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import ValidationError
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
