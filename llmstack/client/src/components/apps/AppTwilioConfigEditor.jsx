@@ -30,6 +30,12 @@ const twilioConfigSchema = {
         type: "string",
       },
     },
+    auto_create_sms_webhook: {
+      type: "boolean",
+      title: "Create Twilio SMS Webhook",
+      description:
+        "Update Twilio SMS Webhook to point to send message to application",
+    },
   },
 };
 
