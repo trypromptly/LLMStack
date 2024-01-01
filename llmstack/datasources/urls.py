@@ -34,15 +34,27 @@ urlpatterns = [
         'api/datasources/<str:uid>/add_entry',
         apis.DataSourceViewSet.as_view({'post': 'add_entry'}),
     ),
-
+    path(
+        'api/datasources/<str:uid>/add_entry_async',
+        apis.DataSourceViewSet.as_view({'post': 'add_entry_async'}),
+    ),
+    path(
+        'api/datasources/<str:uid>/add_entry_jobs',
+        apis.DataSourceViewSet.as_view({'get': 'add_entry_jobs'}),
+    ),
     # Data source entries
     path(
         'api/datasource_entries',
         apis.DataSourceEntryViewSet.as_view({'get': 'get'}),
     ),
     path(
+        'api/datasource_entries/upsert',
+        apis.DataSourceEntryViewSet.as_view({'post': 'upsert'}),
+    ),
+    path(
         'api/datasource_entries/<str:uid>',
-        apis.DataSourceEntryViewSet.as_view({'get': 'get', 'delete': 'delete'}),
+        apis.DataSourceEntryViewSet.as_view(
+            {'get': 'get', 'delete': 'delete'}),
     ),
     path(
         'api/datasource_entries/<str:uid>/text_content',

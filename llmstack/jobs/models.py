@@ -37,6 +37,7 @@ class TaskRunLog(models.Model):
         ('ScheduledJob', 'ScheduledJob'),
         ('RepeatableJob', 'RepeatableJob'),
         ('CronJob', 'CronJob'),
+        ('AdhocJob', 'AdhocJob')
     ]
     STATUS = [
         ('started', 'started'),
@@ -621,4 +622,40 @@ class CronJob(BaseTask):
     class Meta:
         verbose_name = 'Cron Job'
         verbose_name_plural = 'Cron Jobs'
+        ordering = ('name', )
+
+
+class AdhocJob(BaseTask):
+    TASK_TYPE = 'AdhocJob'
+
+    def save(self, *args, **kwargs):
+        schedule_job = kwargs.pop('schedule_job', False)
+        if schedule_job:
+            func = self.callable_func()
+            func_args = kwargs.pop('func_args', [])
+            func_args = func_args + [str(self.uuid)]
+            on_success = kwargs.pop('on_success', None)
+            on_failure = kwargs.pop('on_failure', None)
+            job_meta = kwargs.pop('job_meta', None)
+
+            job = self.rqueue.enqueue(func,
+                                      args=func_args,
+                                      on_success=on_success,
+                                      on_failure=on_failure,
+                                      job_id=self._next_job_id(),
+                                      meta=job_meta,
+                                      job_timeout=self.timeout,
+                                      result_ttl=self.result_ttl,
+                                      )
+            self.job_id = job.id
+
+        update_fields = kwargs.get('update_fields', None)
+        if update_fields:
+            kwargs['update_fields'] = set(
+                update_fields).union({'updated_at'})
+        super(AdhocJob, self).save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = 'Adhoc Job'
+        verbose_name_plural = 'Adhoc Jobs'
         ordering = ('name', )
