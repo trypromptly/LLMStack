@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Box,
   FormGroup,
   FormControlLabel,
   Switch,
   TextField,
   Typography,
-  Stack
+  Paper,
 } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
 
@@ -14,10 +13,13 @@ function SlackIntegrationSnippet({ app }) {
   const inputRef = useRef(null);
   const url = `${window.location.origin}/api/apps/${app?.uuid}/slack/run`;
   return (
-    <Box>
-      <Typography sx={{ textAlign: "left" }}>
-        Copy the following URL in the Event Subscriptions Section in your Slack
-        App
+    <Paper sx={{ padding: 2 }}>
+      <Typography variant="h5" sx={{ marginLeft: 0 }}>
+        Slack Configuration
+      </Typography>
+      <Typography sx={{ textAlign: "left", marginBottom: 2 }} variant="body1">
+        Copy and paste the following URL in the Event Subscriptions Section in
+        your Slack App
       </Typography>
       <TextField
         inputRef={inputRef}
@@ -38,7 +40,7 @@ function SlackIntegrationSnippet({ app }) {
         Make sure to add app_mention scope in the Subscribe to bot events
         section
       </Typography>
-    </Box>
+    </Paper>
   );
 }
 
@@ -46,10 +48,13 @@ function DiscordIntegrationSnippet({ app }) {
   const inputRef = useRef(null);
   const url = `${window.location.origin}/api/apps/${app?.uuid}/discord/run`;
   return (
-    <Box>
-      <Typography sx={{ textAlign: "left" }}>
-        Copy the following URL in the INTERACTIONS ENDPOINT URL Section in your
-        Discord App
+    <Paper sx={{ padding: 2 }}>
+      <Typography variant="h5" sx={{ marginLeft: 0 }}>
+        Discord Configuration
+      </Typography>
+      <Typography sx={{ textAlign: "left", marginBottom: 2 }} variant="body1">
+        Copy and paste the following URL in the INTERACTIONS ENDPOINT URL
+        Section in your Discord App
       </Typography>
       <TextField
         inputRef={inputRef}
@@ -70,7 +75,7 @@ function DiscordIntegrationSnippet({ app }) {
         Make sure to add bot scopes in the OAuth2 URL Generator section of your
         app.
       </Typography>
-    </Box>
+    </Paper>
   );
 }
 
@@ -94,8 +99,11 @@ function WebIntegrationSnippet({ app }) {
   }, []);
 
   return (
-    <Box>
-      <Typography sx={{ textAlign: "left" }}>
+    <Paper sx={{ padding: 2 }}>
+      <Typography variant="h5" sx={{ marginLeft: 0 }}>
+        Code Snippet
+      </Typography>
+      <Typography sx={{ textAlign: "left", marginBottom: 2 }} variant="body1">
         Copy the following code and paste it in your website body section to
         embed this app on your page.
       </Typography>
@@ -130,7 +138,7 @@ function WebIntegrationSnippet({ app }) {
           />
         </FormGroup>
       )}
-    </Box>
+    </Paper>
   );
 }
 
@@ -138,16 +146,20 @@ function TwilioIntegrationSnippet({ app }) {
   const inputRef = useRef(null);
   const showTwilioVoiceUrl =
     app?.twilio_config?.use_twilio_transcription ||
-    app?.twilio_config?.voicemail_greeting || 
-    app?.twilio_config?.voicemail_length || false;
+    app?.twilio_config?.voicemail_greeting ||
+    app?.twilio_config?.voicemail_length ||
+    false;
   const smsUrl = `${window.location.origin}/api/apps/${app?.uuid}/twiliosms/run`;
   const voiceUrl = `${window.location.origin}/api/apps/${app?.uuid}/twiliovoice/run`;
 
   return (
-    <Stack>
-      <Typography sx={{ textAlign: "left" }}>
-        Copy the following URL in the Messaging Configuration URL Section in
-        your Twilio Phone Number
+    <Paper sx={{ padding: 2 }}>
+      <Typography variant="h5" sx={{ marginLeft: 0 }}>
+        Twilio Configuration
+      </Typography>
+      <Typography sx={{ textAlign: "left", marginBottom: 2 }} variant="body1">
+        Copy and paste the following URL in the Messaging Configuration URL
+        Section in your Twilio Phone Number
       </Typography>
       <TextField
         inputRef={inputRef}
@@ -164,6 +176,10 @@ function TwilioIntegrationSnippet({ app }) {
           enqueueSnackbar("Code copied successfully", { variant: "success" });
         }}
       />
+      <Typography sx={{ textAlign: "left !important" }} variant="subtitle2">
+        This will be automatically done if you have selected "Create Twilio SMS
+        Webhook" above
+      </Typography>
       {showTwilioVoiceUrl && (
         <div>
           <Typography sx={{ textAlign: "left" }}>
@@ -189,7 +205,7 @@ function TwilioIntegrationSnippet({ app }) {
           />
         </div>
       )}
-    </Stack>
+    </Paper>
   );
 }
 
