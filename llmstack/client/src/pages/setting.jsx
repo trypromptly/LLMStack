@@ -13,20 +13,16 @@ import {
   Stack,
 } from "@mui/material";
 
-import { LoadingButton } from "@mui/lab";
-
 import { styled } from "@mui/material/styles";
 import FileUpload from "@mui/icons-material/FileUpload";
 import ContentCopy from "@mui/icons-material/ContentCopy";
 import { useEffect, useState } from "react";
 import { enqueueSnackbar } from "notistack";
 import Connections from "../components/Connections";
-import SecretTextField from "../components/form/SecretTextField";
 import SubscriptionUpdateModal from "../components/SubscriptionUpdateModal";
 import { fetchData, patchData } from "./dataUtil";
 import { organizationState, profileFlagsState } from "../data/atoms";
 import { useRecoilValue } from "recoil";
-import { axios } from "../data/axios";
 import "../index.css";
 import ThemedJsonForm from "../components/ThemedJsonForm";
 import validator from "@rjsf/validator-ajv8";
@@ -146,6 +142,8 @@ const SettingPage = () => {
     logo: "",
   });
   const [loading, setLoading] = useState(true);
+  const [subscriptionUpdateModalOpen, setSubscriptionUpdateModalOpen] =
+    useState(false);
   const [updateKeys, setUpdateKeys] = useState(new Set());
   const profileFlags = useRecoilValue(profileFlagsState);
   const organization = useRecoilValue(organizationState);
@@ -399,18 +397,9 @@ const SettingPage = () => {
                 {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT ===
                   "true" && (
                   <Button
-                    href={`${
-                      process.env.REACT_APP_SUBSCRIPTION_MANAGEMENT_URL
-                    }?prefilled_email=${encodeURIComponent(
-                      formData.user_email,
-                    )}`}
-                    target="_blank"
                     variant="outlined"
-                    style={{
-                      marginRight: "10px",
-                      display: profileFlags.IS_ORGANIZATION_MEMBER
-                        ? "none"
-                        : "inherit",
+                    onClick={() => {
+                      setSubscriptionUpdateModalOpen(true);
                     }}
                   >
                     Manage Subscription
