@@ -508,18 +508,20 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
               }}
             />
           </ThemeProvider>
-          {embed && (
-            <Typography sx={{ textAlign: "center" }} variant="caption">
-              Powered by{" "}
-              <a
-                href="https://trypromptly.com"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Promptly
-              </a>
-            </Typography>
-          )}
+          {embed &&
+            (app.has_footer ||
+              !process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT) && (
+              <Typography sx={{ textAlign: "center" }} variant="caption">
+                Powered by{" "}
+                <a
+                  href="https://trypromptly.com"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Promptly
+                </a>
+              </Typography>
+            )}
         </Stack>
       </div>
     </>

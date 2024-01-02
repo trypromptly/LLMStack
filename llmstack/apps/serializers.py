@@ -1,22 +1,30 @@
 from rest_framework import serializers
 
-from llmstack.apps.yaml_loader import get_app_template_by_slug
-
-from .models import App, AppAccessPermission, AppData
-from .models import AppHub
-from .models import AppRunGraphEntry
-from .models import AppSession
-from .models import AppTemplate
-from .models import AppTemplateCategory
-from .models import AppType
-from .models import TestCase
-from .models import TestSet
 from llmstack.apps.app_templates import AppTemplateFactory
 from llmstack.apps.app_types import AppTypeFactory
+from llmstack.apps.yaml_loader import get_app_template_by_slug
+from llmstack.base.models import Profile
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.processors.models import ApiBackend, Endpoint
-from llmstack.base.models import Profile
-from llmstack.processors.serializers import ApiBackendSerializer, ApiProviderSerializer, EndpointSerializer
+from llmstack.processors.serializers import (
+    ApiBackendSerializer,
+    ApiProviderSerializer,
+    EndpointSerializer,
+)
+
+from .models import (
+    App,
+    AppAccessPermission,
+    AppData,
+    AppHub,
+    AppRunGraphEntry,
+    AppSession,
+    AppTemplate,
+    AppTemplateCategory,
+    AppType,
+    TestCase,
+    TestSet,
+)
 
 
 class DynamicFieldsModelSerializer(serializers.ModelSerializer):
@@ -125,7 +133,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
 
     def get_has_footer(self, obj):
         profile = Profile.objects.get(user=obj.owner)
-        return not profile.is_pro_subscriber() and not profile.organization
+        return not profile.organization
 
     def get_last_modified_by_email(self, obj):
         return obj.last_modified_by.email if obj.last_modified_by and obj.has_write_permission(self._request_user) else None
