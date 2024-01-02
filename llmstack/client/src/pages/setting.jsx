@@ -398,6 +398,12 @@ const SettingPage = () => {
                   "true" && (
                   <Button
                     variant="outlined"
+                    style={{
+                      marginRight: "10px",
+                      display: profileFlags.IS_ORGANIZATION_MEMBER
+                        ? "none"
+                        : "inherit",
+                    }}
                     onClick={() => {
                       setSubscriptionUpdateModalOpen(true);
                     }}
