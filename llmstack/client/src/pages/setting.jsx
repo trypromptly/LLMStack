@@ -12,12 +12,14 @@ import {
   Paper,
   Stack,
 } from "@mui/material";
+
 import { styled } from "@mui/material/styles";
 import FileUpload from "@mui/icons-material/FileUpload";
 import ContentCopy from "@mui/icons-material/ContentCopy";
 import { useEffect, useState } from "react";
 import { enqueueSnackbar } from "notistack";
 import Connections from "../components/Connections";
+import SubscriptionUpdateModal from "../components/SubscriptionUpdateModal";
 import { fetchData, patchData } from "./dataUtil";
 import { organizationState, profileFlagsState } from "../data/atoms";
 import { useRecoilValue } from "recoil";
@@ -140,6 +142,8 @@ const SettingPage = () => {
     logo: "",
   });
   const [loading, setLoading] = useState(true);
+  const [subscriptionUpdateModalOpen, setSubscriptionUpdateModalOpen] =
+    useState(false);
   const [updateKeys, setUpdateKeys] = useState(new Set());
   const profileFlags = useRecoilValue(profileFlagsState);
   const organization = useRecoilValue(organizationState);
@@ -169,6 +173,13 @@ const SettingPage = () => {
         setLoading(false);
       },
     );
+
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("showNotification")) {
+      enqueueSnackbar(searchParams.get("notificationMessage") || "", {
+        variant: searchParams.get("notificationType") || "info",
+      });
+    }
   }, []);
 
   const handleUpdate = (update_keys) => {
@@ -386,18 +397,15 @@ const SettingPage = () => {
                 {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT ===
                   "true" && (
                   <Button
-                    href={`${
-                      process.env.REACT_APP_SUBSCRIPTION_MANAGEMENT_URL
-                    }?prefilled_email=${encodeURIComponent(
-                      formData.user_email,
-                    )}`}
-                    target="_blank"
                     variant="outlined"
                     style={{
                       marginRight: "10px",
                       display: profileFlags.IS_ORGANIZATION_MEMBER
                         ? "none"
                         : "inherit",
+                    }}
+                    onClick={() => {
+                      setSubscriptionUpdateModalOpen(true);
                     }}
                   >
                     Manage Subscription
@@ -410,6 +418,15 @@ const SettingPage = () => {
             <Connections />
           </Grid>
         </Grid>
+      )}
+      {subscriptionUpdateModalOpen && (
+        <SubscriptionUpdateModal
+          open={subscriptionUpdateModalOpen}
+          handleCloseCb={() => {
+            setSubscriptionUpdateModalOpen(false);
+          }}
+          userEmail={formData.user_email}
+        />
       )}
     </div>
   );
