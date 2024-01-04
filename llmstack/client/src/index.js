@@ -76,6 +76,13 @@ const defaultTheme = createTheme({
     },
   },
   components: {
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: "0.2rem",
+        },
+      },
+    },
     MuiImageList: {
       styleOverrides: {
         root: {
