@@ -91,7 +91,9 @@
       "api_endpoint": "completions",
       "params": {
         "type": "object",
-        "required": ["model"],
+        "required": [
+          "model"
+        ],
         "properties": {
           "n": {
             "type": "integer",
@@ -178,7 +180,11 @@
             "description": "The number of images to generate. Must be between 1 and 10."
           },
           "size": {
-            "enum": ["256x256", "512x512", "1024x1024"],
+            "enum": [
+              "256x256",
+              "512x512",
+              "1024x1024"
+            ],
             "type": "string",
             "default": "1024x1024",
             "description": "The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024."
@@ -188,7 +194,10 @@
             "description": "A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse."
           },
           "response_format": {
-            "enum": ["url", "b64_json"],
+            "enum": [
+              "url",
+              "b64_json"
+            ],
             "type": "string",
             "default": "url",
             "description": "The format in which the generated images are returned. Must be one of url or b64_json."
@@ -211,7 +220,10 @@
       "api_endpoint": "text2image",
       "params": {
         "type": "object",
-        "required": ["engine", "seed"],
+        "required": [
+          "engine",
+          "seed"
+        ],
         "properties": {
           "seed": {
             "type": "integer",
@@ -296,7 +308,9 @@
       "api_endpoint": "generate",
       "params": {
         "type": "object",
-        "required": ["model"],
+        "required": [
+          "model"
+        ],
         "properties": {
           "k": {
             "type": "integer",
@@ -321,7 +335,11 @@
             "description": "The ID of a custom playground preset. You can create presets in the playground. If you use a preset, the prompt parameter becomes optional, and any included parameters will override the preset's parameters."
           },
           "truncate": {
-            "enum": ["NONE", "START", "END"],
+            "enum": [
+              "NONE",
+              "START",
+              "END"
+            ],
             "type": "string",
             "default": "END",
             "description": "Passing START will discard the start of the input. END will discard the end of the input. In both cases, input is discarded until the remaining input is exactly the maximum input token length for the model.If NONE is selected, when the input exceeds the maximum input token length an error will be returned."
@@ -364,7 +382,11 @@
             "description": "Can be used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation."
           },
           "return_likelihoods": {
-            "enum": ["GENERATION", "ALL", "NONE"],
+            "enum": [
+              "GENERATION",
+              "ALL",
+              "NONE"
+            ],
             "type": "string",
             "default": "NONE",
             "description": "If GENERATION is selected, the token likelihoods will only be provided for generated text.If ALL is selected, the token likelihoods will be provided both for the prompt and the generated text."
@@ -387,7 +409,9 @@
       "api_endpoint": "chat/completions",
       "params": {
         "type": "object",
-        "required": ["model"],
+        "required": [
+          "model"
+        ],
         "properties": {
           "n": {
             "type": "integer",
@@ -399,7 +423,10 @@
             "description": "Up to 4 sequences where the API will stop generating further tokens."
           },
           "model": {
-            "enum": ["gpt-3.5-turbo", "gpt-3.5-turbo-0301"],
+            "enum": [
+              "gpt-3.5-turbo",
+              "gpt-3.5-turbo-0301"
+            ],
             "type": "string",
             "default": "gpt-3.5-turbo",
             "description": "ID of the model to use. Currently, only gpt-3.5-turbo and gpt-3.5-turbo-0301 are supported."
@@ -746,6 +773,15 @@
     "fields": {
       "name": "Weaviate",
       "slug": "weaviate",
+      "description": ""
+    }
+  },
+  {
+    "model": "datasources.datasourcetype",
+    "pk": 6,
+    "fields": {
+      "name": "SingleStore",
+      "slug": "singlestore",
       "description": ""
     }
   }
