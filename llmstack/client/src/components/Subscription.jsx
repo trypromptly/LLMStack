@@ -74,9 +74,8 @@ function Subscription(props) {
       {!profileFlags.IS_ORGANIZATION_MEMBER && (
         <Button
           variant="contained"
-          style={{
-            marginTop: "8px",
-            marginRight: "10px",
+          sx={{
+            margin: "8px 10px 60px 0",
             display: profileFlags.IS_ORGANIZATION_MEMBER ? "none" : "inherit",
             alignSelf: "end",
           }}

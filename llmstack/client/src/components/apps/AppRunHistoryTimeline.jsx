@@ -167,7 +167,7 @@ const FilterBar = ({ apps, sessions, users, onFilter }) => {
       direction="row"
       spacing={1}
       sx={{
-        padding: "10px",
+        padding: "10px 0",
       }}
     >
       <Autocomplete

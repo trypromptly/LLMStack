@@ -116,7 +116,7 @@ function Connections() {
   };
 
   return (
-    <Stack sx={{ margin: "10px", marginBottom: "60px" }}>
+    <Stack sx={{ margin: "0 10px 60px 10px" }}>
       <Typography variant="h6" className="section-header">
         Connections
       </Typography>

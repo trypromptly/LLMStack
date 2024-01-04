@@ -21,7 +21,7 @@ import { enqueueSnackbar } from "notistack";
 import Connections from "../components/Connections";
 import Subscription from "../components/Subscription";
 import { fetchData, patchData } from "./dataUtil";
-import { organizationState, profileFlagsState } from "../data/atoms";
+import { profileFlagsState } from "../data/atoms";
 import { useRecoilValue } from "recoil";
 import "../index.css";
 import ThemedJsonForm from "../components/ThemedJsonForm";
@@ -144,7 +144,6 @@ const SettingPage = () => {
   const [loading, setLoading] = useState(true);
   const [updateKeys, setUpdateKeys] = useState(new Set());
   const profileFlags = useRecoilValue(profileFlagsState);
-  const organization = useRecoilValue(organizationState);
   const formRef = createRef();
 
   useEffect(() => {
@@ -227,9 +226,9 @@ const SettingPage = () => {
       {loading ? (
         <CircularProgress />
       ) : (
-        <Grid container>
+        <Grid container sx={{ m: 1 }}>
           <Grid item xs={12} md={6}>
-            <Stack spacing={2} sx={{ textAlign: "left", margin: "10px" }}>
+            <Stack spacing={2} sx={{ textAlign: "left" }}>
               <Typography variant="h6" className="section-header">
                 Settings
               </Typography>
@@ -346,7 +345,7 @@ const SettingPage = () => {
             </Stack>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} sx={{ p: 0 }}>
             <Stack>
               <Connections />
               {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT ===

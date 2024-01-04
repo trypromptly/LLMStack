@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useTour } from "@reactour/tour";
 import { useCookies } from "react-cookie";
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { AppList } from "../components/apps/AppList";
 import { SharedAppList } from "../components/apps/SharedAppList";
-import "../index.css";
 import AppTemplatesContainer from "../components/apps/AppTemplatesContainer";
+import "../index.css";
 
 const AppStudioPage = () => {
   const { steps, setSteps, setIsOpen } = useTour();
@@ -60,15 +60,8 @@ const AppStudioPage = () => {
   });
 
   return (
-    <Container
-      maxWidth="md"
-      style={{ minWidth: "100%", padding: 5 }}
-      ref={containerRef}
-    >
-      <Box
-        style={{ marginTop: "5px", marginBottom: "20px" }}
-        className="app-template-list"
-      >
+    <Box ref={containerRef} sx={{ m: 1 }}>
+      <Box sx={{ marginBottom: "20px" }} className="app-template-list">
         <Typography variant="h5" className="section-header">
           App Templates
           <br />
@@ -100,7 +93,7 @@ const AppStudioPage = () => {
         </Typography>
         <SharedAppList />
       </Box>
-    </Container>
+    </Box>
   );
 };
 

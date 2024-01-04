@@ -48,7 +48,11 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
         <Typography variant="body1">
           Choose a subscription plan to upgrade to. To compare the features of
           each plan, please visit our{" "}
-          <a href="https://www.trypromptly.com/#pricing" target="_blank">
+          <a
+            href="https://www.trypromptly.com/#pricing"
+            target="_blank"
+            rel="noreferrer"
+          >
             pricing page
           </a>
           .
