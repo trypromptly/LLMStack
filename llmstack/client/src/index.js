@@ -163,6 +163,13 @@ const defaultTheme = createTheme({
         },
       },
     },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          borderBottom: "1px solid #efefefa1",
+        },
+      },
+    },
     MuiTextField: {
       defaultProps: {
         variant: "outlined",
