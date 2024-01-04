@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 """
@@ -104,6 +105,9 @@ class AppTemplate(BaseModel):
     """
     name: str = Field(None, description='Name of the app template')
     slug: str = Field(None, description='Unique slug for the app template')
+    icon: str = Field(None, description='Icon for the app template')
+    category_slugs: List[str] = Field(
+        None, description='Slugs of the app template categories')
     description: str = Field(
         None, description='Description of the app template')
     pages: List[AppTemplatePage] = Field(
