@@ -94,7 +94,7 @@ const Drawer = styled(MuiDrawer, {
   position: "fixed",
   width: drawerWidth,
   flexShrink: 0,
-  zIndex: "2000",
+  zIndex: "200",
   whiteSpace: "nowrap",
   boxSizing: "border-box",
   "& .MuiListItemButton-root": {
