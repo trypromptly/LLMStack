@@ -284,7 +284,7 @@ class AbstractProfile(models.Model):
     @staticmethod
     def get_cipher(token, salt):
         kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256,
+            algorithm=hashes.SHA256(),
             iterations=100000,
             length=32,
             salt=salt,
