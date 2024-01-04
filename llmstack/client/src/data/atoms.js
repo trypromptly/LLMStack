@@ -1,4 +1,4 @@
-import { atom, selector } from "recoil";
+import { atom, atomFamily, selector } from "recoil";
 import { axios } from "./axios";
 
 const apiProvidersFetchSelector = selector({
@@ -383,9 +383,39 @@ export const isMobileState = atom({
   default: window.innerWidth < 768,
 });
 
-export const appTemplateState = atom({
+const appTemplatesFetchSelector = selector({
+  key: "appTemplatesFetchSelector",
+  get: async () => {
+    try {
+      const appTemplates = await axios().get("/api/apps/templates");
+      return appTemplates.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
+export const appTemplatesState = atom({
+  key: "appTemplatesState",
+  default: appTemplatesFetchSelector,
+});
+
+export const appTemplateState = atomFamily({
   key: "appTemplateState",
-  default: null,
+  default: async (templateSlug) => {
+    if (!templateSlug || templateSlug === "_blank_") {
+      return {};
+    }
+
+    try {
+      const appTemplate = await axios().get(
+        `/api/apps/templates/${templateSlug}`,
+      );
+      return appTemplate.data;
+    } catch (error) {
+      return {};
+    }
+  },
 });
 
 export const appDebugState = atom({
