@@ -45,6 +45,15 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
     <Dialog open={open} onClose={handleCloseCb} fullWidth>
       <DialogTitle>{"Upgrade Subscription"}</DialogTitle>
       <DialogContent>
+        <Typography variant="body1">
+          Choose a subscription plan to upgrade to. To compare the features of
+          each plan, please visit our{" "}
+          <a href="https://www.trypromptly.com/#pricing" target="_blank">
+            pricing page
+          </a>
+          .
+        </Typography>
+        <br />
         <FormControl>
           <RadioGroup
             overlay
@@ -88,7 +97,11 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
         </FormControl>
       </DialogContent>
       <DialogActions>
-        <Button disabled={cancelButtonDisabled} onClick={handleCloseCb}>
+        <Button
+          disabled={cancelButtonDisabled}
+          onClick={handleCloseCb}
+          sx={{ textTransform: "none" }}
+        >
           Cancel
         </Button>
         <LoadingButton
