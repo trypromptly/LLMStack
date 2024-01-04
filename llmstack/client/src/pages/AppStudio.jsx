@@ -2,11 +2,10 @@ import { useEffect, useRef } from "react";
 import { useTour } from "@reactour/tour";
 import { useCookies } from "react-cookie";
 import { Box, Container, Typography } from "@mui/material";
-import { AppTypeSelector } from "../components/apps/AppTypeSelector";
 import { AppList } from "../components/apps/AppList";
-import { AppTemplatesList } from "../components/apps/AppTemplatesList";
 import { SharedAppList } from "../components/apps/SharedAppList";
 import "../index.css";
+import AppTemplatesContainer from "../components/apps/AppTemplatesContainer";
 
 const AppStudioPage = () => {
   const { steps, setSteps, setIsOpen } = useTour();
@@ -70,26 +69,34 @@ const AppStudioPage = () => {
         style={{ marginTop: "5px", marginBottom: "20px" }}
         className="app-template-list"
       >
-        <Typography variant="h6" className="section-header">
-          Quickstart App Templates
+        <Typography variant="h5" className="section-header">
+          App Templates
+          <br />
+          <Typography variant="caption" sx={{ color: "#666" }}>
+            You can use these templates to quickly create apps. Use blank
+            templates to create apps from scratch.
+          </Typography>
         </Typography>
-        <AppTemplatesList />
-      </Box>
-      <Box style={{ marginBottom: "20px" }} className="create-new-app">
-        <Typography variant="h6" className="section-header">
-          Create a new App from scratch
-        </Typography>
-        <AppTypeSelector />
+        <AppTemplatesContainer />
       </Box>
       <Box style={{ marginBottom: "20px" }} className="your-apps">
         <Typography variant="h6" className="section-header">
           Your Apps
+          <br />
+          <Typography variant="caption" sx={{ color: "#666" }}>
+            These are the apps you have created.
+          </Typography>
         </Typography>
         <AppList />
       </Box>
       <Box style={{ marginBottom: "60px" }} className="shared-apps">
-        <Typography variant="h6" className="section-header">
-          Apps Shared With You
+        <Typography variant="h5" className="section-header">
+          Shared Apps
+          <br />
+          <Typography variant="caption" sx={{ color: "#666" }}>
+            These apps have been shared with you. You can view and edit them
+            depending on the permissions.
+          </Typography>
         </Typography>
         <SharedAppList />
       </Box>

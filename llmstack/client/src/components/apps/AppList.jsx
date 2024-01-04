@@ -152,20 +152,18 @@ export function AppList() {
   };
 
   return (
-    <Paper sx={{ width: "100%" }}>
+    <Paper sx={{ width: "100%", pt: 2 }}>
       <TableContainer>
         <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: "#f0f7ff" }}>
-              <TableCell sx={{ padding: "3px 16px" }}>App Name</TableCell>
-              <TableCell sx={{ padding: "3px 16px", textAlign: "center" }}>
-                App Type
-              </TableCell>
-              <TableCell sx={{ padding: "3px 16px", textAlign: "center" }}>
-                Visibility
-              </TableCell>
-              <TableCell sx={{ padding: "3px 16px" }}>Processors</TableCell>
-              <TableCell sx={{ padding: "3px 16px" }}>Delete</TableCell>
+            <TableRow
+              sx={{ "& > th": { padding: "3px 16px", fontWeight: 600 } }}
+            >
+              <TableCell>App Name</TableCell>
+              <TableCell sx={{ textAlign: "center" }}>App Type</TableCell>
+              <TableCell sx={{ textAlign: "center" }}>Visibility</TableCell>
+              <TableCell>Processors</TableCell>
+              <TableCell>Delete</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
