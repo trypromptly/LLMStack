@@ -292,6 +292,11 @@ const AppTemplatesContainer = () => {
                   key={category}
                   selected={selectedCategory === category}
                   onClick={() => setSelectedCategory(category)}
+                  sx={{
+                    "&.Mui-selected": {
+                      borderBottom: "1px solid #046fda66",
+                    },
+                  }}
                 >
                   <ListItemIcon sx={{ minWidth: "40px" }}>
                     <AppTemplateCategoryIcon category={category} />
@@ -318,7 +323,7 @@ const AppTemplatesContainer = () => {
               mt: isMobile ? 0 : 4,
               padding: "10px 0 10px 10px",
               mr: 1,
-              maxHeight: "600px",
+              height: "600px",
               overflowY: "scroll",
               backgroundColor: "#edeff7",
             }}
