@@ -41,7 +41,7 @@ function SearchAndFilter({
       sx={{
         position: "sticky",
         top: 0,
-        zIndex: 1000,
+        zIndex: 150,
         margin: "5px",
         paddingTop: "2px",
         background: "white",
