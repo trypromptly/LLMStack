@@ -328,10 +328,10 @@ export function AppRunHistoryTimeline(props) {
             </Button>
           );
         } else {
-          return "Deleted App";
+          return <Button sx={{ textTransform: "none" }}>Deleted App</Button>;
         }
       }
-      return "Playground";
+      return <Button sx={{ textTransform: "none" }}>Playground</Button>;
     } else if (column.id === "type") {
       return (
         <Tooltip title={row.app_uuid !== null ? "App" : "Endpoint"}>
