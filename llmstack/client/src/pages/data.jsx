@@ -259,9 +259,15 @@ export default function DataPage() {
         return (
           <Typography sx={{ display: "flex" }}>
             {row.expand ? (
-              <KeyboardArrowDownOutlined />
+              <KeyboardArrowDownOutlined
+                fontSize="10px"
+                sx={{ color: "#999", margin: "auto 0" }}
+              />
             ) : (
-              <KeyboardArrowRightOutlined />
+              <KeyboardArrowRightOutlined
+                fontSize="10px"
+                sx={{ color: "#999", margin: "auto 0" }}
+              />
             )}
             {record}
           </Typography>

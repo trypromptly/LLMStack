@@ -24,6 +24,10 @@ import { axios } from "../data/axios";
 import { useRecoilValue } from "recoil";
 import { appsBriefState } from "../data/atoms";
 import AddAppRunScheduleModal from "../components/schedule/AddAppRunScheduleModal";
+import {
+  KeyboardArrowDownOutlined,
+  KeyboardArrowRightOutlined,
+} from "@mui/icons-material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
@@ -485,7 +489,21 @@ export default function Schedule() {
                               column.key === "name" ? "left" : "center",
                           }}
                         >
-                          {column.render ? column.render(value, row) : value}
+                          <>
+                            {column.key === "name" &&
+                              (row.expand ? (
+                                <KeyboardArrowDownOutlined
+                                  fontSize="10px"
+                                  sx={{ color: "#999", margin: "auto 0" }}
+                                />
+                              ) : (
+                                <KeyboardArrowRightOutlined
+                                  fontSize="10px"
+                                  sx={{ color: "#999", margin: "auto 0" }}
+                                />
+                              ))}
+                            {column.render ? column.render(value, row) : value}
+                          </>
                         </TableCell>
                       );
                     })}
