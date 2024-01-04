@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import ReactGA from "react-ga4";
 import { Button } from "@mui/material";
-import { CircularProgress, Grid } from "@mui/material";
+import { CircularProgress, Grid, Paper, Typography } from "@mui/material";
 import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
 import FileUploadWidget from "../form/DropzoneFileWidget";
 import { Errors } from "../Output";
@@ -14,6 +14,7 @@ import { streamChunksState } from "../../data/atoms";
 import validator from "@rjsf/validator-ajv8";
 import { Liquid } from "liquidjs";
 import "./WebAppRenderer.css";
+import "../../index.css";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { ContentCopyOutlined } from "@mui/icons-material";
 
@@ -193,30 +194,43 @@ export function WebAppRenderer({ app, ws }) {
         }}
       />
       <div style={{ marginTop: 10 }} ref={outputRef}>
-        {output && !isRunning && (
-          <Button
-            startIcon={<ContentCopyOutlined />}
-            onClick={() => navigator.clipboard.writeText(output)}
-            sx={{
-              justifyContent: "flex-end",
-              textTransform: "none",
-              width: "100%",
-            }}
-          >
-            Copy
-          </Button>
+        {output && (
+          <Paper elevation={2} sx={{ p: 4 }}>
+            <Typography
+              variant="h6"
+              sx={{ marginBottom: 2 }}
+              className="section-header"
+            >
+              Output
+              {output && !isRunning && (
+                <Button
+                  startIcon={<ContentCopyOutlined />}
+                  onClick={() => navigator.clipboard.writeText(output)}
+                  sx={{
+                    textTransform: "none",
+                    float: "right",
+                    margin: "auto",
+                  }}
+                >
+                  Copy
+                </Button>
+              )}
+            </Typography>
+            {isRunning && !streamStarted.current && !errors && (
+              <Grid
+                sx={{
+                  margin: "auto",
+                  textAlign: "center",
+                }}
+              >
+                <CircularProgress />
+              </Grid>
+            )}
+            <MarkdownRenderer className="webapp-output">
+              {output}
+            </MarkdownRenderer>
+          </Paper>
         )}
-        {isRunning && !streamStarted.current && !errors && (
-          <Grid
-            sx={{
-              margin: "auto",
-              textAlign: "center",
-            }}
-          >
-            <CircularProgress />
-          </Grid>
-        )}
-        <MarkdownRenderer className="webapp-output">{output}</MarkdownRenderer>
         {errors && <Errors runError={errors} />}
       </div>
     </div>
