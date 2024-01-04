@@ -74,8 +74,8 @@
   text-align: left;
   transition: max-height 0.5s ease-in-out;
   background-color: #fff;
-  border-radius: none;
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.5);
 }
 
 .embedded {

@@ -5,7 +5,7 @@
   margin: auto 0;
   background-color: #f3f3f3;
   line-height: 1.4em;
-  border-radius: 10px;
+  border-radius: 8px;
   max-width: 75%;
   color: #222;
   animation: revealWords 2s steps(100);
@@ -27,7 +27,7 @@
   flex-direction: column;
   padding: 10px;
   margin: 0px auto;
-  border-radius: 10px;
+  border-radius: 8px;
   background-color: #244793;
   color: #fff;
   max-width: 75%;
@@ -54,8 +54,8 @@
   text-align: left;
   transition: max-height 0.5s ease-in-out;
   background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.5);
 }
 
 .embedded {
