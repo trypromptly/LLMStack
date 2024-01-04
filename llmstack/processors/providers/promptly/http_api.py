@@ -156,7 +156,7 @@ class HttpAPIProcessorConfiguration(Schema):
         schema = {'type': 'object', 'properties': {}}
         required_fields = []
         for parameter in values['parameters']:
-            param_name = f'{parameter.location}_{parameter.name}'
+            param_name = parameter.name
             schema['properties'][param_name] = {
                 'type': 'string', 'description': parameter.description}
             if parameter.required:
@@ -164,7 +164,7 @@ class HttpAPIProcessorConfiguration(Schema):
 
         if values['request_body']:
             for parameter in values['request_body'].parameters:
-                param_name = f'body_{parameter.name}'
+                param_name = parameter.name
                 schema['properties'][param_name] = {
                     'type': parameter.type, 'description': parameter.description}
                 if parameter.required:
@@ -214,17 +214,25 @@ class PromptlyHttpAPIProcessor(ApiProcessorInterface[HttpAPIProcessorInput, Http
         cookies = {}
         body_data = {}
 
-        for param_key in input_json:
-            if param_key.startswith('path_'):
-                path_params[param_key[5:]] = input_json[param_key]
-            elif param_key.startswith('query_'):
-                query_params[param_key[6:]] = input_json[param_key]
-            elif param_key.startswith('header_'):
-                headers[param_key[7:]] = input_json[param_key]
-            elif param_key.startswith('body_'):
-                body_data[param_key[5:]] = input_json[param_key]
-            elif param_key.startswith('cookie_'):
-                cookies[param_key[7:]] = input_json[param_key]
+        for parameter in self._config.parameters:
+            if parameter.name not in input_json:
+                continue
+            if parameter.location == ParameterLocation.PATH:
+                path_params[parameter.name] = input_json[parameter.name]
+
+            if parameter.location == ParameterLocation.QUERY:
+                query_params[parameter.name] = input_json[parameter.name]
+
+            if parameter.location == ParameterLocation.HEADER:
+                headers[parameter.name] = input_json[parameter.name]
+
+            if parameter.location == ParameterLocation.COOKIE:
+                cookies[parameter.name] = input_json[parameter.name]
+
+        for parameter in self._config.request_body.parameters:
+            if parameter.name not in input_json:
+                continue
+            body_data[parameter.name] = input_json[parameter.name]
 
         auth = None
         method = self._config.method
