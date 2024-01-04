@@ -1,24 +1,27 @@
 import { useEffect, useState } from "react";
 
 import {
-  TextField,
   Button,
-  FormGroup,
-  InputLabel,
-  Paper,
   Stack,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  MenuItem,
-  Select,
+  FormControl,
+  RadioGroup,
+  Card,
+  CardContent,
+  CardHeader,
+  Radio,
+  Typography,
+  Divider,
 } from "@mui/material";
+
 import { axios } from "../data/axios";
 import { LoadingButton } from "@mui/lab";
 import { enqueueSnackbar } from "notistack";
 
-const SubscriptionUpdateModal = ({ open, handleCloseCb, userEmail }) => {
+const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
   const [subscriptionPrices, setSubscriptionPrices] = useState([]);
   const [subscription, setSubscription] = useState("");
   const [updateButtonLoading, setUpdateButtonLoading] = useState(false);
@@ -40,42 +43,49 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb, userEmail }) => {
 
   return (
     <Dialog open={open} onClose={handleCloseCb} fullWidth>
-      <DialogTitle>{"Manage Subscription"}</DialogTitle>
+      <DialogTitle>{"Upgrade Subscription"}</DialogTitle>
       <DialogContent>
-        <FormGroup>
-          <Stack spacing={2} sx={{ textAlign: "left", margin: "10px" }}>
-            <Paper sx={{ marginBottom: "30px" }}>
-              <TextField
-                label="Email"
-                value={userEmail}
-                fullWidth
-                variant="outlined"
-              />
-            </Paper>
-            <Paper sx={{ marginBottom: "30px" }}>
-              <InputLabel id="subscription-id">Subscription</InputLabel>
-              <Select
-                labelId="subscription-id"
-                value={subscription}
-                label="Subscription"
-                fullWidth
-                variant="outlined"
-                onChange={(e) => {
-                  setSubscription(e.target.value);
-                }}
+        <FormControl>
+          <RadioGroup
+            overlay
+            name="subscriptions"
+            defaultValue=""
+            row
+            sx={{ gap: 4 }}
+          >
+            {subscriptionPrices.map((subscriptionPrice) => (
+              <Card
+                component="label"
+                key={subscriptionPrice.id}
+                sx={{ width: "150px", height: "150px" }}
               >
-                {subscriptionPrices.map((subscriptionPrice) => (
-                  <MenuItem
-                    key={subscriptionPrice.id}
-                    value={subscriptionPrice.id}
-                  >
-                    {subscriptionPrice.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Paper>
-          </Stack>
-        </FormGroup>
+                <CardHeader
+                  title={subscriptionPrice.product_name}
+                  subheader={<Divider />}
+                  sx={{ padding: 0 }}
+                />
+                <CardContent>
+                  <Stack>
+                    <Typography variant="h5">
+                      ${subscriptionPrice.unit_amount} /{" "}
+                      {subscriptionPrice.recurring_interval}
+                    </Typography>
+                    <Radio
+                      variant="soft"
+                      value={subscriptionPrice.id}
+                      onChange={(e) => {
+                        setSubscription(e.target.value);
+                      }}
+                      sx={{
+                        mb: 4,
+                      }}
+                    />
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </RadioGroup>
+        </FormControl>
       </DialogContent>
       <DialogActions>
         <Button disabled={cancelButtonDisabled} onClick={handleCloseCb}>
@@ -107,7 +117,7 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb, userEmail }) => {
           }}
           variant="contained"
         >
-          Update
+          Checkout
         </LoadingButton>
       </DialogActions>
     </Dialog>
