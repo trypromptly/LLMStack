@@ -19,7 +19,7 @@ import ContentCopy from "@mui/icons-material/ContentCopy";
 import { useEffect, useState } from "react";
 import { enqueueSnackbar } from "notistack";
 import Connections from "../components/Connections";
-import SubscriptionUpdateModal from "../components/SubscriptionUpdateModal";
+import Subscription from "../components/Subscription";
 import { fetchData, patchData } from "./dataUtil";
 import { organizationState, profileFlagsState } from "../data/atoms";
 import { useRecoilValue } from "recoil";
@@ -142,8 +142,6 @@ const SettingPage = () => {
     logo: "",
   });
   const [loading, setLoading] = useState(true);
-  const [subscriptionUpdateModalOpen, setSubscriptionUpdateModalOpen] =
-    useState(false);
   const [updateKeys, setUpdateKeys] = useState(new Set());
   const profileFlags = useRecoilValue(profileFlagsState);
   const organization = useRecoilValue(organizationState);
@@ -336,97 +334,26 @@ const SettingPage = () => {
                   </Box>
                 </Stack>
               </Paper>
-              {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT ===
-                "true" && (
-                <Stack>
-                  <strong>Subscription</strong>
-                  <p
-                    style={{
-                      display: profileFlags.IS_ORGANIZATION_MEMBER
-                        ? "none"
-                        : "block",
-                    }}
-                  >
-                    Logged in as&nbsp;<strong>{formData.user_email}</strong>.
-                    You are currently subscribed to&nbsp;
-                    <strong>
-                      {profileFlags.IS_PRO_SUBSCRIBER
-                        ? "Pro"
-                        : profileFlags.IS_BASIC_SUBSCRIBER
-                        ? "Basic"
-                        : "Free"}
-                    </strong>
-                    &nbsp;tier. Click on the Manage Subscription button below to
-                    change your plan.&nbsp;
-                    <br />
-                    <br />
-                    <i>
-                      Note: You will be needed to login with a link that is sent
-                      to your email.
-                    </i>
-                  </p>
-                  <p
-                    style={{
-                      display: profileFlags.IS_ORGANIZATION_MEMBER
-                        ? "block"
-                        : "none",
-                    }}
-                  >
-                    Logged in as <strong>{formData.user_email}</strong>. Your
-                    account is managed by your organization,&nbsp;
-                    <strong>{organization?.name}</strong>. Please contact your
-                    admin to manage your subscription.
-                  </p>
-                </Stack>
-              )}
-              {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT ===
-                "true" && <Divider />}
-              <Stack
-                spacing={2}
-                direction={"row"}
-                flexDirection={"row-reverse"}
+              <Button
+                variant="contained"
+                sx={{ alignSelf: "end", width: "fit-content" }}
+                onClick={() => {
+                  handleUpdate(updateKeys);
+                }}
               >
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    handleUpdate(updateKeys);
-                  }}
-                >
-                  Update
-                </Button>
-                {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT ===
-                  "true" && (
-                  <Button
-                    variant="outlined"
-                    style={{
-                      marginRight: "10px",
-                      display: profileFlags.IS_ORGANIZATION_MEMBER
-                        ? "none"
-                        : "inherit",
-                    }}
-                    onClick={() => {
-                      setSubscriptionUpdateModalOpen(true);
-                    }}
-                  >
-                    Manage Subscription
-                  </Button>
-                )}
-              </Stack>
+                Update
+              </Button>
             </Stack>
           </Grid>
+
           <Grid item xs={12} md={6}>
-            <Connections />
+            <Stack>
+              <Connections />
+              {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT ===
+                "true" && <Subscription user_email={formData.user_email} />}
+            </Stack>
           </Grid>
         </Grid>
-      )}
-      {subscriptionUpdateModalOpen && (
-        <SubscriptionUpdateModal
-          open={subscriptionUpdateModalOpen}
-          handleCloseCb={() => {
-            setSubscriptionUpdateModalOpen(false);
-          }}
-          userEmail={formData.user_email}
-        />
       )}
     </div>
   );
