@@ -129,7 +129,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
 
     def get_is_shareable(self, obj):
         profile = Profile.objects.get(user=obj.owner)
-        return not profile.is_pro_subscriber() and not profile.organization
+        return not profile.organization
 
     def get_has_footer(self, obj):
         profile = Profile.objects.get(user=obj.owner)
