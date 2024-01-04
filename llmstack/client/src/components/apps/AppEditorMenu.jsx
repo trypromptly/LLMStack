@@ -53,7 +53,14 @@ export default function AppEditorMenu(props) {
     </FormControl>
   ) : (
     <List
-      sx={{ width: "100%", maxWidth: 360, bgcolor: "background.paper" }}
+      sx={{
+        width: "100%",
+        maxWidth: 360,
+        bgcolor: "background.paper",
+        "& > .Mui-selected": {
+          borderBottom: "1px solid #046fda66",
+        },
+      }}
       component="nav"
       ref={tourRef}
     >
@@ -73,7 +80,15 @@ export default function AppEditorMenu(props) {
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText primary={item.name} />
             </ListItemButton>,
-            <List component="div" key={`${item.name}-children`}>
+            <List
+              component="div"
+              key={`${item.name}-children`}
+              sx={{
+                "& > .Mui-selected": {
+                  borderBottom: "1px solid #046fda66",
+                },
+              }}
+            >
               {item.children.map((child) => (
                 <ListItemButton
                   key={child.name}
