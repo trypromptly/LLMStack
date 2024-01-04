@@ -9,6 +9,7 @@ import {
   Button,
   Container,
   Stack,
+  SvgIcon,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -18,7 +19,10 @@ import { isMobileState, isLoggedInState } from "../data/atoms";
 import { AgentRenderer } from "../components/apps/AgentRenderer";
 import { WebChatRender } from "../components/apps/WebChatRender";
 import { WebAppRenderer } from "../components/apps/WebAppRenderer";
+import { ReactComponent as GithubIcon } from "../assets/images/icons/github.svg";
 import logo from "../assets/logo.png";
+
+const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
 
 function AppRenderPage({ headless = false }) {
   const { publishedAppId, embed, chatBubble } = useParams();
@@ -116,6 +120,17 @@ function AppRenderPage({ headless = false }) {
                 />
               </a>
               <Box sx={{ flexGrow: 1 }} />
+              {SITE_NAME === "LLMStack" && (
+                <SvgIcon
+                  component={GithubIcon}
+                  sx={{ width: "50px", height: "50px" }}
+                  viewBox="-10 -2 28 20"
+                  onClick={() => {
+                    window.location.href =
+                      "https://github.com/trypromptly/llmstack";
+                  }}
+                />
+              )}
               {app.is_shareable && (
                 <TwitterShareButton
                   url={window.location.href}
