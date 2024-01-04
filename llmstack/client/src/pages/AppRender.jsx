@@ -123,8 +123,8 @@ function AppRenderPage({ headless = false }) {
               {SITE_NAME === "LLMStack" && (
                 <SvgIcon
                   component={GithubIcon}
-                  sx={{ width: "50px", height: "50px" }}
-                  viewBox="-10 -2 28 20"
+                  sx={{ width: "54px", height: "54px" }}
+                  viewBox="-10 -4 28 26"
                   onClick={() => {
                     window.location.href =
                       "https://github.com/trypromptly/llmstack";
