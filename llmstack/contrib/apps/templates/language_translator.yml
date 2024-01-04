@@ -1,6 +1,7 @@
 name: "Language Translator"
 slug: "language-translator"
-category_slugs: ["text", "language"]
+icon: "text"
+category_slugs: ["marketing", "productivity"]
 description: "Use ChatGPT to translate given text to any desired language"
 provider_slug: "promptly"
 pages:

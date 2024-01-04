@@ -1,6 +1,7 @@
 name: "Chatbot with Internet"
 slug: "chatbot-with-internet"
-category_slugs: ["chatbot"]
+icon: "internet"
+category_slugs: ["agents", "entertainment", "customer-support", "sales", "hr"]
 description: "A chatbot that can answer user's questions based on your own content. Searches internet if it cannot find answer in your data."
 provider_slug: "promptly"
 pages:

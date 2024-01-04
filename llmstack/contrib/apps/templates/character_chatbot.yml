@@ -1,6 +1,7 @@
 name: "Character Chat"
 slug: "character-chatbot"
-category_slugs: ["chatbot"]
+icon: "chatbot"
+category_slugs: ["entertainment", "customer-support", "hr"]
 description: "Bring your favorite characters to life using this template. Simply define a few features of the character you want to create a bot for and start chatting away."
 provider_slug: "promptly"
 pages:

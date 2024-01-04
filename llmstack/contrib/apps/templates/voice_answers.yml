@@ -1,6 +1,7 @@
 name: "Voice Answers"
 slug: "voice-answers"
-category_slugs: ["voice"]
+icon: "voice"
+category_slugs: ["entertainment", "customer-support", "productivity"]
 description: "Augment your search with AI and provide voice-based answers for a richer experience. Ensure to add your ElevenLabs API key in Settings."
 provider_slug: "promptly"
 pages:

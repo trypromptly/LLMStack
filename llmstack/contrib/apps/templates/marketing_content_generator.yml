@@ -1,6 +1,7 @@
 name: "Marketing Content Generator"
 slug: "marketing-content-generator"
-category_slugs: ["content-generator"]
+icon: "text"
+category_slugs: ["marketing", "sales", "productivity"]
 description: "Add your brand guidelines and other instructions to this template and use the generated app to quickly create marketing content"
 provider_slug: "promptly"
 pages:

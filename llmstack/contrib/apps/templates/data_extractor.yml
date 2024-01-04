@@ -1,6 +1,7 @@
 name: "Data Extractor"
 slug: "data-extractor"
-category_slugs: ["text", "productivity"]
+icon: "tool"
+category_slugs: ["programming", "productivity", "sales"]
 description: "Extract structured data from unstructured data. Simply define the features you want to extract and use the saved app to extract structured info from the provided text."
 provider_slug: "promptly"
 pages:

@@ -1,6 +1,7 @@
 name: "Website Chatbot"
 slug: "website-chatbot"
-category_slugs: ["chatbot"]
+icon: "tool"
+category_slugs: ["customer-support", "marketing", "sales", "productivity"]
 description: "A chatbot that can answer user's questions based on your own content and can easily be embedded into your website."
 provider_slug: "promptly"
 pages:

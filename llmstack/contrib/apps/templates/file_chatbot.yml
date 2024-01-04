@@ -1,6 +1,7 @@
 name: "File Chat"
 slug: "file-chatbot"
-category_slugs: ["chatbot"]
+icon: "tool"
+category_slugs: ["productivity", "programming", "finance"]
 description: 'Build you own "Chat with File" app that let''s you upload any PDF, RTF, TXT, DOCX, PPTX files and ask questions on their contents.'
 provider_slug: "promptly"
 pages:

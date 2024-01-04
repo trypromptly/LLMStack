@@ -1,6 +1,7 @@
 name: "Voice Chat"
 slug: "voice-chat"
-category_slugs: ["chatbot"]
+icon: "voice"
+category_slugs: ["entertainment", "customer-support", "productivity"]
 description: "With this template, create an app that lets users ask questions by recording their voice. Whisper transcribes user's speech to text, passes it to ChatGPT along with relevant data to generate an answer. ElevenLabs will generate the final response in the provided voice"
 provider_slug: "Open AI"
 pages:

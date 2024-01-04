@@ -1,6 +1,7 @@
 name: "AI SDR"
 slug: "ai-sdr"
-category_slugs: ["chatbot"]
+icon: "bot"
+category_slugs: ["sales", "marketing", "agents"]
 description: "Create a highly customized email to a potential customer based on their LinkedIn activity"
 provider_slug: "promptly"
 pages:
