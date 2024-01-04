@@ -346,7 +346,7 @@ const SettingPage = () => {
           </Grid>
 
           <Grid item xs={12} md={6} sx={{ p: 0 }}>
-            <Stack>
+            <Stack sx={{ margin: "0 10px", marginBottom: "60px" }} spacing={4}>
               <Connections />
               {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT ===
                 "true" && <Subscription user_email={formData.user_email} />}

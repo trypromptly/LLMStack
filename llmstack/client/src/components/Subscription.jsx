@@ -13,12 +13,15 @@ function Subscription(props) {
   const organization = useRecoilValue(organizationState);
 
   return (
-    <Stack>
+    <Stack sx={{ margin: "0 10px 60px 10px" }}>
       <Stack>
-        <Typography variant="h6" className="section-header">
+        <Typography
+          variant="h6"
+          className="section-header"
+          sx={{ marginBottom: "8px" }}
+        >
           Subscription
         </Typography>
-        ;
         <Stack>
           <Paper>
             <Stack>
@@ -75,7 +78,7 @@ function Subscription(props) {
         <Button
           variant="contained"
           sx={{
-            margin: "8px 10px 60px 0",
+            marginTop: "10px",
             display: profileFlags.IS_ORGANIZATION_MEMBER ? "none" : "inherit",
             alignSelf: "end",
           }}

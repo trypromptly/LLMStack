@@ -116,14 +116,19 @@ function Connections() {
   };
 
   return (
-    <Stack sx={{ margin: "0 10px 60px 10px" }}>
+    <Stack>
       <Typography variant="h6" className="section-header">
         Connections
       </Typography>
       <Button
         startIcon={<AddOutlined />}
         variant="contained"
-        sx={{ textTransform: "none", margin: "10px", marginLeft: "auto" }}
+        sx={{
+          textTransform: "none",
+          margin: "10px",
+          marginLeft: "auto",
+          marginRight: 0,
+        }}
         onClick={() => {
           setConnection(null);
           setOpenConnectionModal(true);
