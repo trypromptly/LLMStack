@@ -257,7 +257,14 @@ export default function DataPage() {
       key: "name",
       render: (record, row) => {
         return (
-          <Typography sx={{ display: "flex" }}>
+          <Typography
+            sx={{
+              display: "flex",
+              fontSize: "0.9rem",
+              fontWeight: row.expand ? "600" : "inherit",
+              gap: 1,
+            }}
+          >
             {row.expand ? (
               <KeyboardArrowDownOutlined
                 fontSize="10px"

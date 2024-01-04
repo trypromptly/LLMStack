@@ -18,6 +18,7 @@ import {
   DialogContentText,
   DialogActions,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import moment from "moment";
 import { axios } from "../data/axios";
@@ -241,6 +242,31 @@ export default function Schedule() {
     {
       title: "Name",
       key: "name",
+      render: (record, row) => {
+        return (
+          <Typography
+            sx={{
+              display: "flex",
+              fontSize: "0.9rem",
+              fontWeight: row.expand ? "600" : "inherit",
+              gap: 1,
+            }}
+          >
+            {row.expand ? (
+              <KeyboardArrowDownOutlined
+                fontSize="10px"
+                sx={{ color: "#999", margin: "auto 0" }}
+              />
+            ) : (
+              <KeyboardArrowRightOutlined
+                fontSize="10px"
+                sx={{ color: "#999", margin: "auto 0" }}
+              />
+            )}
+            {record}
+          </Typography>
+        );
+      },
     },
     {
       title: "Type",
@@ -489,21 +515,7 @@ export default function Schedule() {
                               column.key === "name" ? "left" : "center",
                           }}
                         >
-                          <>
-                            {column.key === "name" &&
-                              (row.expand ? (
-                                <KeyboardArrowDownOutlined
-                                  fontSize="10px"
-                                  sx={{ color: "#999", margin: "auto 0" }}
-                                />
-                              ) : (
-                                <KeyboardArrowRightOutlined
-                                  fontSize="10px"
-                                  sx={{ color: "#999", margin: "auto 0" }}
-                                />
-                              ))}
-                            {column.render ? column.render(value, row) : value}
-                          </>
+                          {column.render ? column.render(value, row) : value}
                         </TableCell>
                       );
                     })}
