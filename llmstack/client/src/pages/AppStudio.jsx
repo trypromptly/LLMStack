@@ -73,7 +73,7 @@ const AppStudioPage = () => {
         <AppTemplatesContainer />
       </Box>
       <Box style={{ marginBottom: "20px" }} className="your-apps">
-        <Typography variant="h6" className="section-header">
+        <Typography variant="h5" className="section-header">
           Your Apps
           <br />
           <Typography variant="caption" sx={{ color: "#666" }}>

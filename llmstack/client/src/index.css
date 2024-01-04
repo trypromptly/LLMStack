@@ -15,6 +15,7 @@ code {
 
 .section-header {
   text-align: left;
+  margin: 0 !important;
   margin-bottom: 10px;
   padding: 5px 10px;
   font-weight: 600 !important;
