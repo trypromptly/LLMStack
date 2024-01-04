@@ -130,7 +130,7 @@ const AppTemplateCard = ({
         maxHeight: "300px",
         ":hover": {
           cursor: "pointer",
-          boxShadow: "0px 0px 10px 0px rgba(0,0,0,0.75)",
+          boxShadow: "0px 0px 10px 0px rgba(4, 45, 120, 0.5)",
           backgroundColor: "#f5f5f5",
         },
       }}
