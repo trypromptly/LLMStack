@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogTitle,
   Stack,
   TextField,
   Typography,
@@ -47,13 +48,9 @@ export function AppFromTemplateDialog({ open, setOpen, appTemplateSlug }) {
 
   return (
     <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>{appTemplate?.name || "Create a new App"}</DialogTitle>
       <DialogContent>
-        <Typography
-          style={{ paddingTop: 5, fontSize: "20px", fontWeight: 500 }}
-        >
-          {appTemplate?.name || "Create a new App"}
-        </Typography>
-        <Typography style={{ paddingTop: 10, fontSize: "14px", color: "#555" }}>
+        <Typography style={{ fontSize: "14px", color: "#555" }}>
           {appTemplate?.description}
           {appTemplate?.example_app_uuid && " Try it out "}
           {appTemplate?.example_app_uuid && (
@@ -78,8 +75,9 @@ export function AppFromTemplateDialog({ open, setOpen, appTemplateSlug }) {
           ))}
         </Stack>
         <Typography
+          variant="body1"
           style={{
-            paddingTop: 20,
+            paddingTop: 10,
             paddingBottom: 5,
             fontSize: "16px",
           }}

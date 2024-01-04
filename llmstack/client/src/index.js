@@ -84,6 +84,15 @@ const defaultTheme = createTheme({
         },
       },
     },
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          fontSize: "1.2rem",
+          fontWeight: "600",
+          color: "#0a398d",
+        },
+      },
+    },
     MuiImageList: {
       styleOverrides: {
         root: {

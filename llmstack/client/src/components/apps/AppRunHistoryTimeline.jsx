@@ -282,7 +282,7 @@ const FilterBar = ({ apps, sessions, users, onFilter }) => {
       />
       <Button
         type="primary"
-        style={{
+        sx={{
           textTransform: "none",
         }}
         variant="contained"
