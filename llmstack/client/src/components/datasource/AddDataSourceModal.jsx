@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Typography,
 } from "@mui/material";
 import { useRecoilValue, useRecoilState } from "recoil";
 import { dataSourcesState, dataSourceTypesState } from "../../data/atoms";
