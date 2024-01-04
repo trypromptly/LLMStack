@@ -24,6 +24,7 @@ code {
   border-bottom: solid 3px #1c3c5a;
   border-left: solid 1px #ccc;
   border-right: solid 1px #ccc;
+  background-color: #edeff77d;
 }
 
 @media screen and (max-width: 768px) {
