@@ -7,7 +7,7 @@ from typing import Generator
 from typing import List
 from typing import Optional
 from typing import Union
-
+from litellm import completion, text_completion
 from pydantic import confloat
 from pydantic import conint
 from pydantic import Extra
@@ -90,73 +90,23 @@ class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseCon
         """
             Invokes the API processor on the input and returns output iterator
         """
-        http_api_processor = HttpAPIProcessor({'timeout': DEFAULT_TIMEOUT})
-        http_input = HttpAPIProcessorInput(
-            url=self._get_api_url(),
-            method='POST',
-            body=JsonBody(
-                json_body=(self._get_api_request_payload(
-                    input, configuration)),
-            ),
-            headers={},
-            authorization=BearerTokenAuth(
-                token=input.env.openai_api_key) if input.env.openai_api_key else NoAuth(),
-        )
-
-        http_status_is_ok = True
-        error_message = ''
-        for http_response in http_api_processor.process_iter(
-                http_input.dict(),
-        ):
-            if http_response.is_ok:
-                if http_response.text == 'data: [DONE]':
-                    return
-                else:
-                    response = self._transform_streaming_api_response(
-                        input, configuration, http_response,
-                    )
-                    yield response
-            else:
-                http_status_is_ok = False
-                error_message += http_response.text
-
-        if not http_status_is_ok:
+        try: 
+            return text_completion(api_key=input.env.openai_api_key, **self._get_api_request_payload(
+                    input, configuration))
+        except Exception as e:
             raise Exception(
-                process_openai_error_response(
-                    http_response.copy(
-                        update={'content_json': json.loads(error_message)}),
-                ),
-            )
+                process_openai_error_response(str(e))
 
     def _process(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration) -> HttpAPIProcessorOutput:
         """
             Invokes the API processor on the input and returns the output
         """
-        http_api_processor = HttpAPIProcessor({'timeout': DEFAULT_TIMEOUT})
-        http_input = HttpAPIProcessorInput(
-            url=self._get_api_url(),
-            method='POST',
-            body=JsonBody(
-                json_body=(self._get_api_request_payload(
-                    input, configuration)),
-            ),
-            headers={},
-            authorization=BearerTokenAuth(
-                token=input.env.openai_api_key) if input.env.openai_api_key else NoAuth(),
-        )
-
-        http_response = http_api_processor.process(
-            http_input.dict(),
-        )
-
-        # If the response is ok, return the choices
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
-            response = self._transform_api_response(
-                input, configuration, http_response,
-            )
-            return response
-        else:
-            raise Exception(process_openai_error_response(http_response))
+        try: 
+            return text_completion(api_key=input.env.openai_api_key, **self._get_api_request_payload(
+                    input, configuration))
+        except Exception as e:
+            raise Exception(
+                process_openai_error_response(str(e))
 
 
 class Role(str, Enum):
