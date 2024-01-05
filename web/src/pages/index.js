@@ -5,6 +5,7 @@ import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 import HomepageFeatures from "@site/src/components/HomepageFeatures";
 import GitHubButton from "react-github-btn";
+import ReactPlayer from "react-player";
 
 import styles from "./index.module.css";
 
@@ -39,6 +40,25 @@ function HomepageHeader() {
             Star
           </GitHubButton>
         </div>
+        <p></p>
+        <ReactPlayer
+          style={{ margin: "auto" }}
+          playing
+          url="https://www.youtube.com/watch?v=P9VoR8WPy7E"
+          loop
+          muted
+          width={"900px"}
+          height={"505px"}
+          config={{
+            youtube: {
+              playerVars: {
+                showinfo: 0,
+                autoplay: 1,
+                controls: 1,
+              },
+            },
+          }}
+        />
       </div>
     </header>
   );
@@ -53,28 +73,6 @@ export default function Home() {
     >
       <HomepageHeader />
       <main>
-        <div
-          style={{
-            position: "relative",
-            paddingBottom: "64.92335437330928%",
-            height: 0,
-          }}
-        >
-          <iframe
-            src="https://www.loom.com/embed/1399a39c19394d9cad224e2e62c15285?sid=24115d9b-7ad4-4e5f-bdd9-110895fc1bae"
-            frameborder="0"
-            webkitallowfullscreen
-            mozallowfullscreen
-            allowfullscreen
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-            }}
-          ></iframe>
-        </div>
         <HomepageFeatures />
       </main>
     </Layout>
