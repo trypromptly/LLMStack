@@ -333,7 +333,7 @@ const AppTemplatesContainer = () => {
                 if (selectedCategory === "all") {
                   return true;
                 }
-                return template.category_slugs.includes(selectedCategory);
+                return template.category_slugs?.includes(selectedCategory);
               })
               .map((template) => {
                 return (
@@ -364,7 +364,7 @@ const AppTemplatesContainer = () => {
                 if (selectedCategory === "all") {
                   return true;
                 }
-                return template.category_slugs.includes(selectedCategory);
+                return template.category_slugs?.includes(selectedCategory);
               })
               .map((template) => {
                 return (
