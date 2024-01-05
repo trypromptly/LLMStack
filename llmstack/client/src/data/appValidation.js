@@ -24,12 +24,6 @@ export const useValidationErrorsForAppComponents = (index) => {
     });
   };
 
-  useEffect(() => {
-    return () => {
-      clearValidationErrorsForId(index);
-    };
-  }, [setValidationErrors]);
-
   return [setValidationErrorsForId, clearValidationErrorsForId];
 };
 
