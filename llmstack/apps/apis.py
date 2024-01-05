@@ -199,7 +199,7 @@ class AppViewSet(viewsets.ViewSet):
                 (
                         request.user.is_authenticated and ((app.visibility == AppVisibility.ORGANIZATION and Profile.objects.get(user=app.owner).organization == Profile.objects.get(user=request.user).organization) or
                                                            (request.user.email in app.read_accessible_by or request.user.email in app.write_accessible_by))
-                    ):
+                ):
                 serializer = AppSerializer(
                     instance=app, request_user=request.user,
                 )
@@ -264,21 +264,14 @@ class AppViewSet(viewsets.ViewSet):
                 )
                 json_data = serializer.data
         else:
-            queryset = AppTemplate.objects.all().order_by('order')
-            serializer = AppTemplateSerializer(queryset, many=True)
-            json_data = serializer.data
-
-            # Add app templates from contrib
-            app_template_slugs = list(map(lambda x: x['slug'], json_data))
+            json_data = []
             app_templates_from_yaml = get_app_templates_from_contrib()
             for app_template in app_templates_from_yaml:
-                if app_template.slug not in app_template_slugs:
-                    # When listing, do not show pages and app
-                    app_template_dict = app_template.dict()
-                    app_template_dict.pop('pages')
-                    app = app_template_dict.pop('app')
-                    json_data.append(
-                        {**app_template_dict, **{"app": {"type_slug": app["type_slug"]}}})
+                app_template_dict = app_template.dict()
+                app_template_dict.pop('pages')
+                app = app_template_dict.pop('app')
+                json_data.append(
+                    {**app_template_dict, **{"app": {"type_slug": app["type_slug"]}}})
 
         return DRFResponse(json_data)
 
