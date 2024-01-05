@@ -492,55 +492,6 @@ export default function AppConsolePage(props) {
                   app={app}
                   setIsPublished={setIsPublished}
                 />
-                {Object.values(validationErrors).flatMap(
-                  (entry) => entry.errors,
-                ).length > 0 && (
-                  <div>
-                    <span
-                      style={{
-                        color: "red",
-                        marginRight: "10px",
-                      }}
-                      onMouseEnter={(event) =>
-                        setErrorAnchorEl(event.currentTarget)
-                      }
-                      onMouseLeave={() => setErrorAnchorEl(null)}
-                    >
-                      [{Object.values(validationErrors).length} error
-                      {Object.values(validationErrors).length > 1 ? "s" : ""}]
-                    </span>
-                    <Popover
-                      id="error-mouse-over-popover"
-                      sx={{
-                        pointerEvents: "none",
-                        "& .MuiPopover-paper": {
-                          padding: "10px",
-                        },
-                        "& .MuiPopover-paper ol": {
-                          margin: 0,
-                          paddingLeft: "15px",
-                        },
-                        "& .MuiPopover-paper li": {
-                          fontSize: "12px",
-                        },
-                      }}
-                      open={Boolean(errorAnchorEl)}
-                      anchorEl={errorAnchorEl}
-                      anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "left",
-                      }}
-                      transformOrigin={{
-                        vertical: "top",
-                        horizontal: "left",
-                      }}
-                      onClose={() => setErrorAnchorEl(null)}
-                      disableRestoreFocus
-                    >
-                      <ErrorList errors={Object.values(validationErrors)} />
-                    </Popover>
-                  </div>
-                )}
 
                 {appId && app && (
                   <Tooltip
