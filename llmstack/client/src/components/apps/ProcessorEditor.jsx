@@ -17,6 +17,8 @@ import { appsState } from "../../data/atoms";
 import { useRecoilValue } from "recoil";
 import "./AppEditor.css";
 
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
+
 function PromptlyAppStepCard({
   appId,
   processor,
@@ -188,6 +190,8 @@ export function ProcessorEditor({
   outputSchemas,
   isTool,
 }) {
+  const [setValidationErrorsForId, clearValidationErrorsForId] =
+    useValidationErrorsForAppComponents(index);
   const processor = processors[index];
   const apiBackend = processor?.api_backend;
   const [errors, setErrors] = useState([]);
@@ -244,6 +248,18 @@ export function ProcessorEditor({
     processor.input_schema,
     processor.config_schema,
   ]);
+
+  useEffect(() => {
+    if (errors.length > 0) {
+      setValidationErrorsForId(index, {
+        id: index + 1,
+        name: processor.name,
+        errors,
+      });
+    } else {
+      clearValidationErrorsForId(index);
+    }
+  }, [errors]);
 
   return processor?.provider_slug === "promptly" &&
     processor?.processor_slug === "app" ? (
