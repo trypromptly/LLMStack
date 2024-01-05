@@ -15,7 +15,7 @@ Build tailor-made generative AI agents, applications and chatbots that cater to 
 ![llmstack-quickstart](https://github.com/trypromptly/LLMStack/assets/431988/1a5ee127-c964-4c82-a05f-b1628691bca7)
 
 <p align="center">
-  <em>See full demo video <a href="https://youtu.be/8icy1Ccs2lk" target="_blank">here</a></em>
+  <em>See full demo video <a href="https://www.youtube.com/watch?v=P9VoR8WPy7E" target="_blank">here</a></em>
 </p>
 
 ## Getting Started
@@ -48,14 +48,7 @@ Above commands will install and start LLMStack. It will create `.llmstack` in yo
 
 > You can add your own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `~/.llmstack/config` file.
 
-<div>
-  <a href="https://www.loom.com/share/1399a39c19394d9cad224e2e62c15285">
-    <p>LLMStack: Quickstart video</p>
-  </a>  
-  <a href="https://www.loom.com/share/1399a39c19394d9cad224e2e62c15285">
-    <img style="max-width:828px;" src="https://cdn.loom.com/sessions/thumbnails/1399a39c19394d9cad224e2e62c15285-with-play.gif">
-  </a>
-</div>
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" src="https://www.tella.tv/video/clr16i2sl00000glahhue313b/embed?b=0&title=0&a=1&loop=0&autoPlay=true&t=0&muted=1" allowfullscreen allowtransparency></iframe></div>
 
 ## Features
 

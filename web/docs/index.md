@@ -5,13 +5,22 @@ sidebar_label: Introduction
 sidebar_position: 0
 ---
 
+import ReactPlayer from "react-player";
+
 Promptly / LLMStack is a no-code platform for building generative AI Agents, workflows, chatbots and connecting them to your data and business processes. It is a framework to build new AI experiences or integrate AI into your existing products. LLMStack is designed to be modular and extensible. It helps you manage data that can be connected to your LLM applications to create context aware generative AI Agents.
 
 :::info
 Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow the documentation to deploy LLMStack on your own infrastructure.
 :::
 
-<div style={{ position: "relative", paddingBottom: "64.92335437330928%", height: 0 }}><iframe src="https://www.loom.com/embed/1399a39c19394d9cad224e2e62c15285?sid=24115d9b-7ad4-4e5f-bdd9-110895fc1bae" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}></iframe></div>
+<ReactPlayer
+  playing
+  controls
+  url="https://www.youtube.com/watch?v=P9VoR8WPy7E"
+  width="100%"
+  height="540px"
+  loop
+/>
 
 ## Features
 
