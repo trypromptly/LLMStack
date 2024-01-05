@@ -3,6 +3,9 @@ import { AppStepCard } from "./AppStepCard";
 import TextField from "@mui/material/TextField";
 import WebTwoToneIcon from "@mui/icons-material/WebTwoTone";
 import { TextFieldWithVars } from "./TextFieldWithVars";
+import { useEffect, useState } from "react";
+
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 
 export function AppOutputEditor({
   index,
@@ -13,6 +16,31 @@ export function AppOutputEditor({
   outputSchemas,
   isAgent,
 }) {
+  const [errors, setErrors] = useState([]);
+
+  const [setValidationErrorsForId, clearValidationErrorsForId] =
+    useValidationErrorsForAppComponents();
+
+  useEffect(() => {
+    let newErrors = [];
+    if (!outputTemplate?.markdown) {
+      newErrors.push({ message: "Application Output cannot be empty" });
+    }
+    setErrors(newErrors);
+  }, [outputTemplate]);
+
+  useEffect(() => {
+    if (errors.length > 0) {
+      setValidationErrorsForId("outputTemplate", {
+        id: "outputTemplate",
+        name: "Application Output",
+        errors: errors,
+      });
+    } else {
+      clearValidationErrorsForId("outputTemplate");
+    }
+  }, [errors]);
+
   return (
     <AppStepCard
       icon={
@@ -28,6 +56,7 @@ export function AppOutputEditor({
       stepNumber={index + 2}
       activeStep={activeStep}
       setActiveStep={setActiveStep}
+      errors={errors}
     >
       <CardContent style={{ maxHeight: 400, overflow: "auto" }}>
         <div style={{ position: "relative" }}>
