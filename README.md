@@ -48,7 +48,14 @@ Above commands will install and start LLMStack. It will create `.llmstack` in yo
 
 > You can add your own keys to providers like OpenAI, Cohere, Stability etc., from Settings page. If you want to provide default keys for all the users of your LLMStack instance, you can add them to the `~/.llmstack/config` file.
 
-<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" src="https://www.tella.tv/video/clr16i2sl00000glahhue313b/embed?b=0&title=0&a=1&loop=0&autoPlay=true&t=0&muted=1" allowfullscreen allowtransparency></iframe></div>
+<div>
+  <a href="https://www.tella.tv/video/clr16i2sl00000glahhue313b/embed?b=0&title=0&a=1&loop=0&autoPlay=true&t=0&muted=1">
+    <p>LLMStack: Quickstart video</p>
+  </a>  
+  <a href="https://www.tella.tv/video/clr16i2sl00000glahhue313b/embed?b=0&title=0&a=1&loop=0&autoPlay=true&t=0&muted=1">
+    <img style="max-width:828px;" src="https://www.tella.tv/api/stories/clr16i2sl00000glahhue313b/thumb.webp?version=2024-01-05T22:35:10.989Z&resolution=1920x1080">
+  </a>
+</div>
 
 ## Features
 
