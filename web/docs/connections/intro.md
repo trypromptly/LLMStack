@@ -5,7 +5,7 @@ title: Connections
 
 Often times, you will need to connect your app to external services to perform certain tasks. For example, you might want to send an email to your customer, or make an API call to a service, or connect to your database to fetch some data or login to an internal website to scrape some data etc. LLMStack/Promptly connections allows you to store your credentials for these external services in a secure way and use them in your apps.
 
-![Connections](/img/ui/connections.png)
+![Connections](/img/ui/llmstack-settings.png)
 
 To add a connection, click on the `+ Connection` button on the top right corner of the `Settings` page. You can add the following types of connections:
 
