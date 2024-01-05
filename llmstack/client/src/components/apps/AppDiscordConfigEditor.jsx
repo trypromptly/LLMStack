@@ -78,6 +78,31 @@ export function AppDiscordConfigEditor(props) {
     useValidationErrorsForAppComponents("discordIntegrationConfig");
 
   function discordConfigValidate(formData, errors, uiSchema) {
+    if (
+      formData.app_id ||
+      formData.bot_token ||
+      formData.public_key ||
+      formData.slash_command_name ||
+      formData.slash_command_description
+    ) {
+      if (!formData.app_id) {
+        errors.app_id.addError("App ID is required");
+      }
+      if (!formData.slash_command_name) {
+        errors.slash_command_name.addError("Slash Command Name is required");
+      }
+      if (!formData.slash_command_description) {
+        errors.slash_command_description.addError(
+          "Slash Command Description is required",
+        );
+      }
+      if (!formData.bot_token) {
+        errors.bot_token.addError("Bot Token is required");
+      }
+      if (!formData.public_key) {
+        errors.public_key.addError("Public Key is required");
+      }
+    }
     return errors;
   }
 
@@ -123,6 +148,8 @@ export function AppDiscordConfigEditor(props) {
                   name: "Discord Integration Config",
                   errors: errors.errors,
                 });
+              } else {
+                clearValidationErrorsForId("discordIntegrationConfig");
               }
               props.saveApp().then(resolve).catch(reject);
             });

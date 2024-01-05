@@ -62,15 +62,26 @@ export function AppSlackConfigEditor(props) {
     useValidationErrorsForAppComponents("slackIntegrationConfig");
 
   function slackConfigValidate(formData, errors, uiSchema) {
-    if ((formData.bot_token || "").length < 5) {
-      errors.bot_token.addError("Bot token is required");
+    if (
+      formData.app_id ||
+      formData.bot_token ||
+      formData.verification_token ||
+      formData.signing_secret
+    ) {
+      if (!formData.app_id) {
+        errors.app_id.addError("App ID is required");
+      }
+      if (!formData.bot_token) {
+        errors.bot_token.addError("Bot Token is required");
+      }
+      if (!formData.verification_token) {
+        errors.verification_token.addError("Verification Token is required");
+      }
+      if (!formData.signing_secret) {
+        errors.signing_secret.addError("Signing Secret is required");
+      }
     }
-    if ((formData.verification_token || "").length < 5) {
-      errors.verification_token.addError("Verification token is required");
-    }
-    if ((formData.signing_secret || "").length < 5) {
-      errors.signing_secret.addError("Signing secret is required");
-    }
+
     return errors;
   }
 
@@ -108,6 +119,8 @@ export function AppSlackConfigEditor(props) {
                   name: "Slack Integration Config",
                   errors: errors.errors,
                 });
+              } else {
+                clearValidationErrorsForId("slackIntegrationConfig");
               }
               props.saveApp().then(resolve).catch(reject);
             });

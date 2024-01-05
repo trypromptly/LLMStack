@@ -62,6 +62,17 @@ export function AppTwilioConfigEditor(props) {
   const formRef = createRef();
 
   function twilioConfigValidate(formData, errors, uiSchema) {
+    if (formData.account_sid || formData.auth_token || formData.phone_numbers) {
+      if (!formData.account_sid) {
+        errors.account_sid.addError("Account SID is required");
+      }
+      if (!formData.auth_token) {
+        errors.auth_token.addError("Auth Token is required");
+      }
+      if (!formData.phone_numbers || formData.phone_numbers.length === 0) {
+        errors.phone_numbers.addError("Atleast 1 Phone Number is required");
+      }
+    }
     return errors;
   }
 
@@ -99,6 +110,8 @@ export function AppTwilioConfigEditor(props) {
                   name: "Twilio Integration Config",
                   errors: errors.errors,
                 });
+              } else {
+                clearValidationErrorsForId("twilioIntegrationConfig");
               }
               props.saveApp().then(resolve).catch(reject);
             });
