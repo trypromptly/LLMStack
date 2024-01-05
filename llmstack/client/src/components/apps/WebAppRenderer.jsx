@@ -194,6 +194,7 @@ export function WebAppRenderer({ app, ws }) {
         }}
       />
       <div style={{ marginTop: 10 }} ref={outputRef}>
+        {errors && <Errors runError={errors} />}
         {output && (
           <Paper elevation={2} sx={{ p: 4 }}>
             <Typography
@@ -231,7 +232,6 @@ export function WebAppRenderer({ app, ws }) {
             </MarkdownRenderer>
           </Paper>
         )}
-        {errors && <Errors runError={errors} />}
       </div>
     </div>
   );
