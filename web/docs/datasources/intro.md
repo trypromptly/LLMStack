@@ -46,4 +46,8 @@ To load files from your google drive, add a `Google Login` connection from `Sett
 
 #### Weaviate
 
-You can connect your Weaviate instance to LLMStack and use it as a data source.
+You can connect your [Weaviate](https://weaviate.io) instance to LLMStack and use it as a data source.
+
+#### SingleStore
+
+LLMStack can connect to your [SingleStore](https://www.singlestore.com/) instance and allow you to query your database and use the results as a data source in your LLM apps.
