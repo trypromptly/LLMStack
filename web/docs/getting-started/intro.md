@@ -11,7 +11,7 @@ Check out our Cloud offering at [Promptly](https://trypromptly.com) or follow th
 
 ## Prerequisites
 
-- [Python](https://www.python.org/downloads/) (version 3.9 or above)
+- [Python](https://www.python.org/downloads/) (version 3.10 or above)
 - [Docker](https://docs.docker.com/get-docker/) (if you want to use jobs or browser automation)
 
 ## Installation
