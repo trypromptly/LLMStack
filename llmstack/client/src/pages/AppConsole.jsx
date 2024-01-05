@@ -22,6 +22,7 @@ import {
   Stack,
   SvgIcon,
   Tooltip,
+  Popover,
 } from "@mui/material";
 import ChangeHistoryIcon from "@mui/icons-material/ChangeHistory";
 import EditIcon from "@mui/icons-material/Edit";
@@ -50,6 +51,7 @@ import { AppApiExamples } from "../components/apps/AppApiExamples";
 import { AppTemplate } from "../components/apps/AppTemplate";
 import { AppVersions } from "../components/apps/AppVersions";
 import { apiBackendsState } from "../data/atoms";
+import { useValidationErrorsForAppConsole } from "../data/appValidation";
 
 const menuItems = [
   {
@@ -105,6 +107,24 @@ const menuItems = [
   },
 ];
 
+function ErrorList({ errors }) {
+  return (
+    <ol>
+      {errors.map((error, index) => (
+        <li key={index}>
+          {" "}
+          {error.name}
+          <ul>
+            {error.errors.map((err, index) => (
+              <li key={`${error.id}_${index}`}>{err.message}</li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export default function AppConsolePage(props) {
   const { appId } = useParams();
   const { page } = props;
@@ -125,6 +145,8 @@ export default function AppConsolePage(props) {
   const [selectedMenuItem, setSelectedMenuItem] = useState(page || "editor");
   const profile = useRecoilValue(profileState);
   const profileFlags = useRecoilValue(profileFlagsState);
+  const validationErrors = useValidationErrorsForAppConsole();
+  const [errorAnchorEl, setErrorAnchorEl] = useState(null);
 
   useEffect(() => {
     if (appId) {
@@ -418,6 +440,55 @@ export default function AppConsolePage(props) {
                   app={app}
                   setIsPublished={setIsPublished}
                 />
+                {Object.values(validationErrors).flatMap(
+                  (entry) => entry.errors,
+                ).length > 0 && (
+                  <div>
+                    <span
+                      style={{
+                        color: "red",
+                        marginRight: "10px",
+                      }}
+                      onMouseEnter={(event) =>
+                        setErrorAnchorEl(event.currentTarget)
+                      }
+                      onMouseLeave={() => setErrorAnchorEl(null)}
+                    >
+                      [{Object.values(validationErrors).length} error
+                      {Object.values(validationErrors).length > 1 ? "s" : ""}]
+                    </span>
+                    <Popover
+                      id="error-mouse-over-popover"
+                      sx={{
+                        pointerEvents: "none",
+                        "& .MuiPopover-paper": {
+                          padding: "10px",
+                        },
+                        "& .MuiPopover-paper ol": {
+                          margin: 0,
+                          paddingLeft: "15px",
+                        },
+                        "& .MuiPopover-paper li": {
+                          fontSize: "12px",
+                        },
+                      }}
+                      open={Boolean(errorAnchorEl)}
+                      anchorEl={errorAnchorEl}
+                      anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "left",
+                      }}
+                      transformOrigin={{
+                        vertical: "top",
+                        horizontal: "left",
+                      }}
+                      onClose={() => setErrorAnchorEl(null)}
+                      disableRestoreFocus
+                    >
+                      <ErrorList errors={Object.values(validationErrors)} />
+                    </Popover>
+                  </div>
+                )}
 
                 {appId && app && (
                   <Tooltip
