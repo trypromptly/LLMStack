@@ -33,6 +33,7 @@ const slackConfigSchema = {
         "Signing secret to verify the request from Slack. This secret is available at Features > Basic Information in your app page. More details https://api.slack.com/authentication/verifying-requests-from-slack",
     },
   },
+  required: ["app_id", "bot_token", "verification_token", "signing_secret"],
 };
 
 const slackConfigUISchema = {

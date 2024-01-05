@@ -37,6 +37,7 @@ const twilioConfigSchema = {
         "Update Twilio SMS Webhook to point to send message to application",
     },
   },
+  required: ["account_sid", "auth_token", "phone_numbers"],
 };
 
 const twilioConfigUISchema = {

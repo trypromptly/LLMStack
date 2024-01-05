@@ -39,6 +39,13 @@ const discordConfigSchema = {
         "Public key of the Discord app. Your public key can be found in the Bot section of the your application console.",
     },
   },
+  required: [
+    "app_id",
+    "slash_command_name",
+    "slash_command_description",
+    "bot_token",
+    "public_key",
+  ],
 };
 
 const discordConfigUISchema = {
