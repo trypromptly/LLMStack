@@ -2,6 +2,7 @@ import { Box, Stack, TextField } from "@mui/material";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
 import validator from "@rjsf/validator-ajv8";
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 
 import ThemedJsonForm from "../ThemedJsonForm";
 import { createRef } from "react";
@@ -73,6 +74,8 @@ const discordConfigUISchema = {
 
 export function AppDiscordConfigEditor(props) {
   const formRef = createRef();
+  const [setValidationErrorsForId, clearValidationErrorsForId] =
+    useValidationErrorsForAppComponents("discordIntegrationConfig");
 
   function discordConfigValidate(formData, errors, uiSchema) {
     return errors;
@@ -113,11 +116,15 @@ export function AppDiscordConfigEditor(props) {
         <AppSaveButtons
           saveApp={() => {
             return new Promise((resolve, reject) => {
-              if (formRef.current.validateForm() === false) {
-                resolve();
-              } else {
-                props.saveApp().then(resolve).catch(reject);
+              const errors = formRef.current.validate(props.discordConfig);
+              if (errors.errors && errors.errors.length > 0) {
+                setValidationErrorsForId("discordIntegrationConfig", {
+                  id: "discordIntegrationConfig",
+                  name: "Discord Integration Config",
+                  errors: errors.errors,
+                });
               }
+              props.saveApp().then(resolve).catch(reject);
             });
           }}
         />

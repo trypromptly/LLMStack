@@ -2,6 +2,7 @@ import { Box, Stack } from "@mui/material";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
 import validator from "@rjsf/validator-ajv8";
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 
 import ThemedJsonForm from "../ThemedJsonForm";
 import { createRef } from "react";
@@ -57,6 +58,8 @@ const slackConfigUISchema = {
 
 export function AppSlackConfigEditor(props) {
   const formRef = createRef();
+  const [setValidationErrorsForId, clearValidationErrorsForId] =
+    useValidationErrorsForAppComponents("slackIntegrationConfig");
 
   function slackConfigValidate(formData, errors, uiSchema) {
     if ((formData.bot_token || "").length < 5) {
@@ -98,11 +101,15 @@ export function AppSlackConfigEditor(props) {
         <AppSaveButtons
           saveApp={() => {
             return new Promise((resolve, reject) => {
-              if (formRef.current.validateForm() === false) {
-                resolve();
-              } else {
-                props.saveApp().then(resolve).catch(reject);
+              const errors = formRef.current.validate(props.slackConfig);
+              if (errors.errors && errors.errors.length > 0) {
+                setValidationErrorsForId("slackIntegrationConfig", {
+                  id: "slackIntegrationConfig",
+                  name: "Slack Integration Config",
+                  errors: errors.errors,
+                });
               }
+              props.saveApp().then(resolve).catch(reject);
             });
           }}
         />

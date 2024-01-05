@@ -6,6 +6,7 @@ import { AppSaveButtons } from "./AppSaveButtons";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { createRef } from "react";
 import validator from "@rjsf/validator-ajv8";
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 
 const twilioConfigSchema = {
   type: "object",
@@ -55,6 +56,8 @@ const twilioConfigUISchema = {
 };
 
 export function AppTwilioConfigEditor(props) {
+  const [setValidationErrorsForId, clearValidationErrorsForId] =
+    useValidationErrorsForAppComponents("twilioIntegrationConfig");
   const profileFlags = useRecoilValue(profileFlagsState);
   const formRef = createRef();
 
@@ -89,11 +92,15 @@ export function AppTwilioConfigEditor(props) {
         <AppSaveButtons
           saveApp={() => {
             return new Promise((resolve, reject) => {
-              if (formRef.current.validateForm() === false) {
-                resolve();
-              } else {
-                props.saveApp().then(resolve).catch(reject);
+              const errors = formRef.current.validate(props.twilioConfig);
+              if (errors.errors && errors.errors.length > 0) {
+                setValidationErrorsForId("twilioIntegrationConfig", {
+                  id: "twilioIntegrationConfig",
+                  name: "Twilio Integration Config",
+                  errors: errors.errors,
+                });
               }
+              props.saveApp().then(resolve).catch(reject);
             });
           }}
         />
