@@ -603,18 +603,22 @@ export default function AppConsolePage(props) {
           </Box>
         </Grid>
         <Grid item md={9} xs={12}>
-          {true &&
-            Object.values(validationErrors).flatMap((entry) => entry.errors)
-              .length > 0 && (
+          {Object.values(validationErrors).flatMap((entry) => entry.errors)
+            .length > 0 && (
+            <Box sx={{ marginBottom: "4px" }}>
               <Alert
                 onClose={() => {}}
                 severity="warning"
                 style={{ width: "100%", textAlign: "left" }}
               >
-                <AlertTitle>Validation Warning(s)</AlertTitle>
+                <AlertTitle>
+                  Your application has the following errors, please correct them
+                  before saving your application
+                </AlertTitle>
                 <ErrorList errors={Object.values(validationErrors)} />
               </Alert>
-            )}
+            </Box>
+          )}
           <Box sx={{ alignSelf: "flex-start" }}>
             {selectedMenuItem === "editor" && (
               <AppEditor
