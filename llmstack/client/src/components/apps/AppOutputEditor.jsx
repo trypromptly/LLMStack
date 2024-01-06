@@ -4,7 +4,6 @@ import TextField from "@mui/material/TextField";
 import WebTwoToneIcon from "@mui/icons-material/WebTwoTone";
 import { TextFieldWithVars } from "./TextFieldWithVars";
 import { useEffect, useState } from "react";
-
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 
 export function AppOutputEditor({
@@ -23,7 +22,7 @@ export function AppOutputEditor({
 
   useEffect(() => {
     let newErrors = [];
-    if (!outputTemplate?.markdown) {
+    if (!outputTemplate?.markdown.trim()) {
       newErrors.push({ message: "Application Output cannot be empty" });
     }
     setErrors(newErrors);

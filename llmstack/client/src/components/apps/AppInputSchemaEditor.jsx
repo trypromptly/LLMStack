@@ -25,11 +25,80 @@ const dataTypes = [
   "voice",
 ];
 
-export function AppInputSchemaEditor({ fields, setFields, readOnly = false }) {
+export function AppInputSchemaEditor({
+  fields,
+  setFields,
+  readOnly = false,
+  ...props
+}) {
+  React.useEffect(() => {
+    let newErrors = [];
+    if (fields.length === 0) {
+      newErrors.push({ message: "At least one field is required" });
+    }
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i];
+      if (field.name.startsWith("_")) {
+        newErrors.push({
+          message: `App Input field ${
+            i + 1
+          } name cannot start with an underscore`,
+        });
+      }
+
+      if (!field.title) {
+        newErrors.push({
+          message: `App Input field ${i + 1} must have a name`,
+        });
+      }
+      if (!field.description) {
+        newErrors.push({
+          message: `App Input field ${i + 1} must have a description`,
+        });
+      }
+      if (!field.type) {
+        newErrors.push({
+          message: `App Input field ${i + 1} must have a type`,
+        });
+      }
+      if (field.type === "select" && !field.options) {
+        newErrors.push({
+          message: `App Input field ${i + 1} must have at least one option`,
+        });
+      }
+      if (field.type === "select" && field.options) {
+        for (let j = 0; j < field.options.length; j++) {
+          const option = field.options[j];
+          if (!option.label) {
+            newErrors.push({
+              message: `App Input field ${i + 1} option ${
+                j + 1
+              } must have a label`,
+            });
+          }
+          if (!option.value) {
+            newErrors.push({
+              message: `App Input field ${i + 1} option ${
+                j + 1
+              } must have a value`,
+            });
+          }
+        }
+      }
+    }
+    props.setErrors(newErrors);
+  }, [fields]);
+
   const addField = () => {
     setFields([
       ...fields,
-      { name: "", title: "", description: "", type: "string", required: false },
+      {
+        name: `Field${fields.length + 1}`,
+        title: `Field${fields.length + 1}`,
+        description: `Description for Field${fields.length + 1}`,
+        type: "string",
+        required: true,
+      },
     ]);
   };
 
@@ -92,10 +161,6 @@ export function AppInputSchemaEditor({ fields, setFields, readOnly = false }) {
                 <TextField
                   value={field.title}
                   onChange={(e) => {
-                    if (e.target.value.startsWith("_")) {
-                      alert("Field names cannot start with an underscore");
-                      return;
-                    }
                     updateField(index, { ...field, title: e.target.value });
                   }}
                 />
