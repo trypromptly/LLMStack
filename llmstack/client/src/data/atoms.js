@@ -531,3 +531,8 @@ export const streamChunksState = atom({
   key: "streamChunksState",
   default: {},
 });
+
+export const appEditorValidationErrorsState = atom({
+  key: "appEditorValidationErrorsState",
+  default: {},
+});

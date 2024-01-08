@@ -64,7 +64,8 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
 
     @classmethod
     def pre_save(self, app: App):
-        if app.is_published and app.discord_config:
+        if app.is_published and app.discord_config and app.discord_config.get('app_id') and app.discord_config.get('bot_token') and app.discord_config.get('public_key'):
+
             config = app.discord_config
 
             slash_command_name = config['slash_command_name']

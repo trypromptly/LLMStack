@@ -14,6 +14,9 @@ import ThemedJsonForm from "../ThemedJsonForm";
 import { AppInputSchemaEditor } from "./AppInputSchemaEditor";
 import { AppStepCard } from "./AppStepCard";
 import "./AppEditor.css";
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
+
+import { useState, useEffect } from "react";
 
 export function AppConfigEditor({
   appType,
@@ -25,6 +28,22 @@ export function AppConfigEditor({
   setConfig,
   isAgent,
 }) {
+  const [errors, setErrors] = useState([]);
+  const [setValidationErrorsForId, clearValidationErrorsForId] =
+    useValidationErrorsForAppComponents("appConfig");
+
+  useEffect(() => {
+    if (errors.length > 0) {
+      setValidationErrorsForId("appConfig", {
+        id: "appConfig",
+        name: "Application Input",
+        errors: errors,
+      });
+    } else {
+      clearValidationErrorsForId("appConfig");
+    }
+  }, [errors]);
+
   return (
     <AppStepCard
       icon={
@@ -56,6 +75,7 @@ export function AppConfigEditor({
       stepNumber={1}
       activeStep={activeStep}
       setActiveStep={setActiveStep}
+      errors={errors}
     >
       <CardContent style={{ maxHeight: 400, overflow: "auto" }}>
         <Accordion defaultExpanded={!isAgent}>
@@ -84,6 +104,7 @@ export function AppConfigEditor({
               }
               setFields={setInputFields}
               readOnly={isAgent}
+              setErrors={setErrors}
             />
           </AccordionDetails>
         </Accordion>

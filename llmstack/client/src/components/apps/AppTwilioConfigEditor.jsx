@@ -6,6 +6,7 @@ import { AppSaveButtons } from "./AppSaveButtons";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { createRef } from "react";
 import validator from "@rjsf/validator-ajv8";
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 
 const twilioConfigSchema = {
   type: "object",
@@ -37,6 +38,7 @@ const twilioConfigSchema = {
         "Update Twilio SMS Webhook to point to send message to application",
     },
   },
+  required: ["account_sid", "auth_token", "phone_numbers"],
 };
 
 const twilioConfigUISchema = {
@@ -54,10 +56,23 @@ const twilioConfigUISchema = {
 };
 
 export function AppTwilioConfigEditor(props) {
+  const [setValidationErrorsForId, clearValidationErrorsForId] =
+    useValidationErrorsForAppComponents("twilioIntegrationConfig");
   const profileFlags = useRecoilValue(profileFlagsState);
   const formRef = createRef();
 
   function twilioConfigValidate(formData, errors, uiSchema) {
+    if (formData.account_sid || formData.auth_token || formData.phone_numbers) {
+      if (!formData.account_sid) {
+        errors.account_sid.addError("Account SID is required");
+      }
+      if (!formData.auth_token) {
+        errors.auth_token.addError("Auth Token is required");
+      }
+      if (!formData.phone_numbers || formData.phone_numbers.length === 0) {
+        errors.phone_numbers.addError("Atleast 1 Phone Number is required");
+      }
+    }
     return errors;
   }
 
@@ -88,11 +103,17 @@ export function AppTwilioConfigEditor(props) {
         <AppSaveButtons
           saveApp={() => {
             return new Promise((resolve, reject) => {
-              if (formRef.current.validateForm() === false) {
-                resolve();
+              const errors = formRef.current.validate(props.twilioConfig);
+              if (errors.errors && errors.errors.length > 0) {
+                setValidationErrorsForId("twilioIntegrationConfig", {
+                  id: "twilioIntegrationConfig",
+                  name: "Twilio Integration Config",
+                  errors: errors.errors,
+                });
               } else {
-                props.saveApp().then(resolve).catch(reject);
+                clearValidationErrorsForId("twilioIntegrationConfig");
               }
+              props.saveApp().then(resolve).catch(reject);
             });
           }}
         />

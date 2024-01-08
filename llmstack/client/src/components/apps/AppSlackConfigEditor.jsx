@@ -2,6 +2,7 @@ import { Box, Stack } from "@mui/material";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 import { AppSaveButtons } from "./AppSaveButtons";
 import validator from "@rjsf/validator-ajv8";
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 
 import ThemedJsonForm from "../ThemedJsonForm";
 import { createRef } from "react";
@@ -33,6 +34,7 @@ const slackConfigSchema = {
         "Signing secret to verify the request from Slack. This secret is available at Features > Basic Information in your app page. More details https://api.slack.com/authentication/verifying-requests-from-slack",
     },
   },
+  required: ["app_id", "bot_token", "verification_token", "signing_secret"],
 };
 
 const slackConfigUISchema = {
@@ -56,17 +58,30 @@ const slackConfigUISchema = {
 
 export function AppSlackConfigEditor(props) {
   const formRef = createRef();
+  const [setValidationErrorsForId, clearValidationErrorsForId] =
+    useValidationErrorsForAppComponents("slackIntegrationConfig");
 
   function slackConfigValidate(formData, errors, uiSchema) {
-    if ((formData.bot_token || "").length < 5) {
-      errors.bot_token.addError("Bot token is required");
+    if (
+      formData.app_id ||
+      formData.bot_token ||
+      formData.verification_token ||
+      formData.signing_secret
+    ) {
+      if (!formData.app_id) {
+        errors.app_id.addError("App ID is required");
+      }
+      if (!formData.bot_token) {
+        errors.bot_token.addError("Bot Token is required");
+      }
+      if (!formData.verification_token) {
+        errors.verification_token.addError("Verification Token is required");
+      }
+      if (!formData.signing_secret) {
+        errors.signing_secret.addError("Signing Secret is required");
+      }
     }
-    if ((formData.verification_token || "").length < 5) {
-      errors.verification_token.addError("Verification token is required");
-    }
-    if ((formData.signing_secret || "").length < 5) {
-      errors.signing_secret.addError("Signing secret is required");
-    }
+
     return errors;
   }
 
@@ -97,11 +112,17 @@ export function AppSlackConfigEditor(props) {
         <AppSaveButtons
           saveApp={() => {
             return new Promise((resolve, reject) => {
-              if (formRef.current.validateForm() === false) {
-                resolve();
+              const errors = formRef.current.validate(props.slackConfig);
+              if (errors.errors && errors.errors.length > 0) {
+                setValidationErrorsForId("slackIntegrationConfig", {
+                  id: "slackIntegrationConfig",
+                  name: "Slack Integration Config",
+                  errors: errors.errors,
+                });
               } else {
-                props.saveApp().then(resolve).catch(reject);
+                clearValidationErrorsForId("slackIntegrationConfig");
               }
+              props.saveApp().then(resolve).catch(reject);
             });
           }}
         />

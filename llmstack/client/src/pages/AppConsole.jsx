@@ -22,6 +22,7 @@ import {
   Stack,
   SvgIcon,
   Tooltip,
+  Popover,
 } from "@mui/material";
 import ChangeHistoryIcon from "@mui/icons-material/ChangeHistory";
 import EditIcon from "@mui/icons-material/Edit";
@@ -50,6 +51,7 @@ import { AppApiExamples } from "../components/apps/AppApiExamples";
 import { AppTemplate } from "../components/apps/AppTemplate";
 import { AppVersions } from "../components/apps/AppVersions";
 import { apiBackendsState } from "../data/atoms";
+import { useValidationErrorsForAppConsole } from "../data/appValidation";
 
 const menuItems = [
   {
@@ -105,6 +107,76 @@ const menuItems = [
   },
 ];
 
+function ErrorList({ errors }) {
+  return (
+    <ol>
+      {errors.map((error, index) => (
+        <li key={index}>
+          {" "}
+          {error.name}
+          <ul>
+            {error.errors.map((err, index) => (
+              <li key={`${error.id}_${index}`}>{err.message}</li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function AppIntegration({ integration, app, saveApp, setApp }) {
+  switch (integration) {
+    case "integrations/website":
+      return (
+        <AppWebConfigEditor
+          app={app}
+          webConfig={app?.web_config || {}}
+          setWebConfig={(webConfig) => {
+            setApp((app) => ({ ...app, web_config: webConfig }));
+          }}
+          saveApp={saveApp}
+        />
+      );
+    case "integrations/slack":
+      return (
+        <AppSlackConfigEditor
+          app={app}
+          slackConfig={app?.slack_config || {}}
+          setSlackConfig={(slackConfig) => {
+            setApp((app) => ({ ...app, slack_config: slackConfig }));
+          }}
+          saveApp={saveApp}
+        />
+      );
+    case "integrations/discord":
+      return (
+        <AppDiscordConfigEditor
+          app={app}
+          discordConfig={app?.discord_config || {}}
+          setDiscordConfig={(discordConfig) => {
+            setApp((app) => ({ ...app, discord_config: discordConfig }));
+          }}
+          saveApp={saveApp}
+        />
+      );
+    case "integrations/twilio":
+      return (
+        <AppTwilioConfigEditor
+          app={app}
+          twilioConfig={app?.twilio_config || {}}
+          setTwilioConfig={(twilioConfig) => {
+            setApp((app) => ({ ...app, twilio_config: twilioConfig }));
+          }}
+          saveApp={saveApp}
+        />
+      );
+    case "integrations/api":
+      return <AppApiExamples app={app} />;
+    default:
+      return null;
+  }
+}
 export default function AppConsolePage(props) {
   const { appId } = useParams();
   const { page } = props;
@@ -125,6 +197,8 @@ export default function AppConsolePage(props) {
   const [selectedMenuItem, setSelectedMenuItem] = useState(page || "editor");
   const profile = useRecoilValue(profileState);
   const profileFlags = useRecoilValue(profileFlagsState);
+  const validationErrors = useValidationErrorsForAppConsole();
+  const [errorAnchorEl, setErrorAnchorEl] = useState(null);
 
   useEffect(() => {
     if (appId) {
@@ -529,6 +603,22 @@ export default function AppConsolePage(props) {
           </Box>
         </Grid>
         <Grid item md={9} xs={12}>
+          {Object.values(validationErrors).flatMap((entry) => entry.errors)
+            .length > 0 && (
+            <Box sx={{ marginBottom: "4px" }}>
+              <Alert
+                onClose={() => {}}
+                severity="warning"
+                style={{ width: "100%", textAlign: "left" }}
+              >
+                <AlertTitle>
+                  Your application has the following errors, please correct them
+                  before saving your application
+                </AlertTitle>
+                <ErrorList errors={Object.values(validationErrors)} />
+              </Alert>
+            </Box>
+          )}
           <Box sx={{ alignSelf: "flex-start" }}>
             {selectedMenuItem === "editor" && (
               <AppEditor
@@ -574,48 +664,40 @@ export default function AppConsolePage(props) {
             {selectedMenuItem === "preview" && <AppPreview app={app} />}
             {selectedMenuItem === "history" && <AppRunHistory app={app} />}
             {selectedMenuItem === "versions" && <AppVersions app={app} />}
-            {selectedMenuItem === "integrations/website" && (
-              <AppWebConfigEditor
-                app={app}
-                webConfig={app?.web_config || {}}
-                setWebConfig={(webConfig) => {
-                  setApp((app) => ({ ...app, web_config: webConfig }));
-                }}
-                saveApp={saveApp}
-              />
-            )}
-            {selectedMenuItem === "integrations/slack" && (
-              <AppSlackConfigEditor
-                app={app}
-                slackConfig={app?.slack_config || {}}
-                setSlackConfig={(slackConfig) => {
-                  setApp((app) => ({ ...app, slack_config: slackConfig }));
-                }}
-                saveApp={saveApp}
-              />
-            )}
-            {selectedMenuItem === "integrations/discord" && (
-              <AppDiscordConfigEditor
-                app={app}
-                discordConfig={app?.discord_config || {}}
-                setDiscordConfig={(discordConfig) => {
-                  setApp((app) => ({ ...app, discord_config: discordConfig }));
-                }}
-                saveApp={saveApp}
-              />
-            )}
-            {selectedMenuItem === "integrations/api" && (
-              <AppApiExamples app={app} />
-            )}
-            {selectedMenuItem === "integrations/twilio" && (
-              <AppTwilioConfigEditor
-                app={app}
-                twilioConfig={app?.twilio_config || {}}
-                setTwilioConfig={(twilioConfig) => {
-                  setApp((app) => ({ ...app, twilio_config: twilioConfig }));
-                }}
-                saveApp={saveApp}
-              />
+            {(selectedMenuItem === "integrations/website" ||
+              selectedMenuItem === "integrations/slack" ||
+              selectedMenuItem === "integrations/discord" ||
+              selectedMenuItem === "integrations/api" ||
+              selectedMenuItem === "integrations/twilio") && (
+              <Box sx={{ position: "relative" }}>
+                <AppIntegration
+                  integration={selectedMenuItem}
+                  app={app}
+                  saveApp={saveApp}
+                  setApp={setApp}
+                />
+                {!app.is_published && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      width: "100%",
+                      height: "100%",
+                      zIndex: 10,
+                      opacity: 0.9,
+                      display: "flex",
+                      backgroundColor: "grey",
+                    }}
+                  >
+                    <Box sx={{ margin: "auto" }}>
+                      <Alert severity="warning">
+                        This app is not published yet. Please publish the app to
+                        enable this integration.
+                      </Alert>
+                    </Box>
+                  </Box>
+                )}
+              </Box>
             )}
             {selectedMenuItem === "template" && (
               <AppTemplate
