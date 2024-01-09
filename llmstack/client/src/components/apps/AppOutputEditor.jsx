@@ -22,7 +22,7 @@ export function AppOutputEditor({
 
   useEffect(() => {
     let newErrors = [];
-    if (!outputTemplate?.markdown.trim()) {
+    if (!(outputTemplate?.markdown || "").trim()) {
       newErrors.push({ message: "Application Output cannot be empty" });
     }
     setErrors(newErrors);
