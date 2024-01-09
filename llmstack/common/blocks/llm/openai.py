@@ -230,6 +230,7 @@ class ChatCompletionsModel(str, Enum):
     GPT_4_32K = 'gpt-4-32k'
     GPT_3_5 = 'gpt-3.5-turbo'
     GPT_3_5_16K = 'gpt-3.5-turbo-16k'
+    GPT_4_LATEST = 'gpt-4-1106-preview'
 
     def __str__(self):
         return self.value
@@ -382,12 +383,15 @@ class ResponseFormat(str, Enum):
     def __str__(self):
         return self.value
 
+
 class ImageModel(str, Enum):
     DALL_E_3 = 'dall-e-3'
     DALL_E_2 = 'dall-e-2'
-    
+
     def __str__(self):
         return self.value
+
+
 class OpenAIFile(Schema):
     name: str = Field(description='The name of the file.')
     content: bytes = Field(description='The content of the file.')
