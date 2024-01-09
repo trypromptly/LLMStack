@@ -16,7 +16,7 @@ function HomepageHeader() {
       <div className="container">
         <h1 className="hero__title">{siteConfig.title}</h1>
         <p className="hero__subtitle">
-          Open-source platform to build AI Agemts, workflows and applications
+          Open-source platform to build AI Agents, workflows and applications
           with your data
         </p>
         <div className={styles.buttons}>
