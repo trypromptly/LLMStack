@@ -22,6 +22,9 @@ class HttpUriTextExtractorConfiguration(ApiProcessorSchema):
     text_chunk_size: Optional[conint(ge=500, le=2000)] = Field(
         description='Chunksize of document', default=1500, advanced_parameter=True,
     )
+    create_index: Optional[bool] = Field(
+        description='Create index for query', default=True, advanced_parameter=True,
+    )
 
 
 class HttpUriTextExtractorInput(ApiProcessorSchema):
@@ -107,7 +110,7 @@ class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput, HttpUr
         self.extracted_text = text
         self.url = url
 
-        if query:
+        if query and self._config.create_index:
             index_name = self.temp_store.create_temp_index()
             self.storage_index_name = index_name
             for text_chunk in SpacyTextSplitter(separator='\n', chunk_size=self._config.text_chunk_size).split_text(text):
