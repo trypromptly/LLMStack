@@ -87,7 +87,7 @@ export function AppInputSchemaEditor({
       }
     }
     props.setErrors(newErrors);
-  }, [fields]);
+  }, [fields, props]);
 
   const addField = () => {
     setFields([

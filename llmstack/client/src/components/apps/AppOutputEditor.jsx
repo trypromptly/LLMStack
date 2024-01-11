@@ -38,7 +38,7 @@ export function AppOutputEditor({
     } else {
       clearValidationErrorsForId("outputTemplate");
     }
-  }, [errors]);
+  }, [errors, setValidationErrorsForId, clearValidationErrorsForId]);
 
   return (
     <AppStepCard

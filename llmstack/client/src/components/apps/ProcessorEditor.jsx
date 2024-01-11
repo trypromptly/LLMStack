@@ -259,7 +259,13 @@ export function ProcessorEditor({
     } else {
       clearValidationErrorsForId(index);
     }
-  }, [errors]);
+  }, [
+    errors,
+    index,
+    processor.name,
+    setValidationErrorsForId,
+    clearValidationErrorsForId,
+  ]);
 
   return processor?.provider_slug === "promptly" &&
     processor?.processor_slug === "app" ? (

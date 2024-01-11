@@ -1,7 +1,7 @@
 // Hook to set and get validation errors for the processor and clear them
 // when the processor is changed.
 // ----------------------------------------------------------------------
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { appEditorValidationErrorsState } from "./atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
 
@@ -32,15 +32,15 @@ export const useValidationErrorsForAppConsole = () => {
     appEditorValidationErrorsState,
   );
 
-  const clearAllValidationErrors = () => {
+  const clearAllValidationErrors = useCallback(() => {
     setValidationErrors({});
-  };
+  }, [setValidationErrors]);
 
   useEffect(() => {
     return () => {
       clearAllValidationErrors();
     };
-  }, [setValidationErrors]);
+  }, [setValidationErrors, clearAllValidationErrors]);
 
   return validationErrors;
 };

@@ -22,7 +22,6 @@ import {
   Stack,
   SvgIcon,
   Tooltip,
-  Popover,
 } from "@mui/material";
 import ChangeHistoryIcon from "@mui/icons-material/ChangeHistory";
 import EditIcon from "@mui/icons-material/Edit";
@@ -198,7 +197,6 @@ export default function AppConsolePage(props) {
   const profile = useRecoilValue(profileState);
   const profileFlags = useRecoilValue(profileFlagsState);
   const validationErrors = useValidationErrorsForAppConsole();
-  const [errorAnchorEl, setErrorAnchorEl] = useState(null);
 
   useEffect(() => {
     if (appId) {

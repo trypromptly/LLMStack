@@ -42,7 +42,7 @@ export function AppConfigEditor({
     } else {
       clearValidationErrorsForId("appConfig");
     }
-  }, [errors]);
+  }, [errors, setValidationErrorsForId, clearValidationErrorsForId]);
 
   return (
     <AppStepCard
