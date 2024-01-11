@@ -146,6 +146,34 @@ class PlaywrightBrowserResponse(_message.Message):
     video: bytes
     def __init__(self, session: _Optional[_Union[RemoteBrowserSession, _Mapping]] = ..., video: _Optional[bytes] = ..., state: _Optional[_Union[RemoteBrowserState, str]] = ..., outputs: _Optional[_Iterable[_Union[BrowserOutput, _Mapping]]] = ..., content: _Optional[_Union[BrowserContent, _Mapping]] = ...) -> None: ...
 
+class PythonCodeRunnerFile(_message.Message):
+    __slots__ = ["content", "name"]
+    CONTENT_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    content: bytes
+    name: str
+    def __init__(self, name: _Optional[str] = ..., content: _Optional[bytes] = ...) -> None: ...
+
+class PythonCodeRunnerRequest(_message.Message):
+    __slots__ = ["code", "timeout"]
+    CODE_FIELD_NUMBER: _ClassVar[int]
+    TIMEOUT_FIELD_NUMBER: _ClassVar[int]
+    code: str
+    timeout: int
+    def __init__(self, code: _Optional[str] = ..., timeout: _Optional[int] = ...) -> None: ...
+
+class PythonCodeRunnerResponse(_message.Message):
+    __slots__ = ["exit_code", "files", "stderr", "stdout"]
+    EXIT_CODE_FIELD_NUMBER: _ClassVar[int]
+    FILES_FIELD_NUMBER: _ClassVar[int]
+    STDERR_FIELD_NUMBER: _ClassVar[int]
+    STDOUT_FIELD_NUMBER: _ClassVar[int]
+    exit_code: str
+    files: _containers.RepeatedCompositeFieldContainer[PythonCodeRunnerFile]
+    stderr: _containers.RepeatedScalarFieldContainer[str]
+    stdout: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, stdout: _Optional[_Iterable[str]] = ..., stderr: _Optional[_Iterable[str]] = ..., exit_code: _Optional[str] = ..., files: _Optional[_Iterable[_Union[PythonCodeRunnerFile, _Mapping]]] = ...) -> None: ...
+
 class RemoteBrowserRequest(_message.Message):
     __slots__ = ["init_data", "input"]
     INIT_DATA_FIELD_NUMBER: _ClassVar[int]

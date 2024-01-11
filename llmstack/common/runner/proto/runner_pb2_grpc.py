@@ -6,8 +6,7 @@ import llmstack.common.runner.proto.runner_pb2 as runner__pb2
 
 
 class RunnerStub(object):
-    """Generic runner service
-    """
+    """Generic runner service"""
 
     def __init__(self, channel):
         """Constructor.
@@ -16,73 +15,89 @@ class RunnerStub(object):
             channel: A grpc.Channel.
         """
         self.GetRemoteBrowser = channel.stream_stream(
-            '/Runner/GetRemoteBrowser',
+            "/Runner/GetRemoteBrowser",
             request_serializer=runner__pb2.RemoteBrowserRequest.SerializeToString,
             response_deserializer=runner__pb2.RemoteBrowserResponse.FromString,
         )
         self.GetPlaywrightBrowser = channel.stream_stream(
-            '/Runner/GetPlaywrightBrowser',
+            "/Runner/GetPlaywrightBrowser",
             request_serializer=runner__pb2.PlaywrightBrowserRequest.SerializeToString,
             response_deserializer=runner__pb2.PlaywrightBrowserResponse.FromString,
+        )
+        self.GetPythonCodeRunner = channel.unary_stream(
+            "/Runner/GetPythonCodeRunner",
+            request_serializer=runner__pb2.PythonCodeRunnerRequest.SerializeToString,
+            response_deserializer=runner__pb2.PythonCodeRunnerResponse.FromString,
         )
 
 
 class RunnerServicer(object):
-    """Generic runner service
-    """
+    """Generic runner service"""
 
     def GetRemoteBrowser(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def GetPlaywrightBrowser(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
+    def GetPythonCodeRunner(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_RunnerServicer_to_server(servicer, server):
     rpc_method_handlers = {
-        'GetRemoteBrowser': grpc.stream_stream_rpc_method_handler(
+        "GetRemoteBrowser": grpc.stream_stream_rpc_method_handler(
             servicer.GetRemoteBrowser,
             request_deserializer=runner__pb2.RemoteBrowserRequest.FromString,
             response_serializer=runner__pb2.RemoteBrowserResponse.SerializeToString,
         ),
-        'GetPlaywrightBrowser': grpc.stream_stream_rpc_method_handler(
+        "GetPlaywrightBrowser": grpc.stream_stream_rpc_method_handler(
             servicer.GetPlaywrightBrowser,
             request_deserializer=runner__pb2.PlaywrightBrowserRequest.FromString,
             response_serializer=runner__pb2.PlaywrightBrowserResponse.SerializeToString,
         ),
+        "GetPythonCodeRunner": grpc.unary_stream_rpc_method_handler(
+            servicer.GetPythonCodeRunner,
+            request_deserializer=runner__pb2.PythonCodeRunnerRequest.FromString,
+            response_serializer=runner__pb2.PythonCodeRunnerResponse.SerializeToString,
+        ),
     }
-    generic_handler = grpc.method_handlers_generic_handler(
-        'Runner', rpc_method_handlers)
+    generic_handler = grpc.method_handlers_generic_handler("Runner", rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
- # This class is part of an EXPERIMENTAL API.
+
+# This class is part of an EXPERIMENTAL API.
 
 
 class Runner(object):
-    """Generic runner service
-    """
+    """Generic runner service"""
 
     @staticmethod
-    def GetRemoteBrowser(request_iterator,
-                         target,
-                         options=(),
-                         channel_credentials=None,
-                         call_credentials=None,
-                         insecure=False,
-                         compression=None,
-                         wait_for_ready=None,
-                         timeout=None,
-                         metadata=None):
+    def GetRemoteBrowser(
+        request_iterator,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.stream_stream(
             request_iterator,
             target,
-            '/Runner/GetRemoteBrowser',
+            "/Runner/GetRemoteBrowser",
             runner__pb2.RemoteBrowserRequest.SerializeToString,
             runner__pb2.RemoteBrowserResponse.FromString,
             options,
@@ -92,23 +107,26 @@ class Runner(object):
             compression,
             wait_for_ready,
             timeout,
-            metadata)
+            metadata,
+        )
 
     @staticmethod
-    def GetPlaywrightBrowser(request_iterator,
-                             target,
-                             options=(),
-                             channel_credentials=None,
-                             call_credentials=None,
-                             insecure=False,
-                             compression=None,
-                             wait_for_ready=None,
-                             timeout=None,
-                             metadata=None):
+    def GetPlaywrightBrowser(
+        request_iterator,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.stream_stream(
             request_iterator,
             target,
-            '/Runner/GetPlaywrightBrowser',
+            "/Runner/GetPlaywrightBrowser",
             runner__pb2.PlaywrightBrowserRequest.SerializeToString,
             runner__pb2.PlaywrightBrowserResponse.FromString,
             options,
@@ -118,4 +136,5 @@ class Runner(object):
             compression,
             wait_for_ready,
             timeout,
-            metadata)
+            metadata,
+        )
