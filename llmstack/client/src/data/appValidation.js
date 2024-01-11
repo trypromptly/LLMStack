@@ -8,21 +8,27 @@ import { useRecoilState, useSetRecoilState } from "recoil";
 export const useValidationErrorsForAppComponents = (index) => {
   const setValidationErrors = useSetRecoilState(appEditorValidationErrorsState);
 
-  const setValidationErrorsForId = (id, errors) => {
-    setValidationErrors((oldErrors) => {
-      const newErrors = { ...oldErrors };
-      newErrors[id] = errors;
-      return newErrors;
-    });
-  };
+  const setValidationErrorsForId = useCallback(
+    (id, errors) => {
+      setValidationErrors((oldErrors) => {
+        const newErrors = { ...oldErrors };
+        newErrors[id] = errors;
+        return newErrors;
+      });
+    },
+    [setValidationErrors],
+  );
 
-  const clearValidationErrorsForId = (id) => {
-    setValidationErrors((oldErrors) => {
-      const newErrors = { ...oldErrors };
-      delete newErrors[id];
-      return newErrors;
-    });
-  };
+  const clearValidationErrorsForId = useCallback(
+    (id) => {
+      setValidationErrors((oldErrors) => {
+        const newErrors = { ...oldErrors };
+        delete newErrors[id];
+        return newErrors;
+      });
+    },
+    [setValidationErrors],
+  );
 
   return [setValidationErrorsForId, clearValidationErrorsForId];
 };
@@ -40,7 +46,7 @@ export const useValidationErrorsForAppConsole = () => {
     return () => {
       clearAllValidationErrors();
     };
-  }, [setValidationErrors, clearAllValidationErrors]);
+  }, [clearAllValidationErrors]);
 
   return validationErrors;
 };
