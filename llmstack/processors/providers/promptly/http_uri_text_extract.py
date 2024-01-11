@@ -76,7 +76,6 @@ class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput, HttpUr
 
         query = self._input.query
         url = self._input.url.strip().rstrip()
-        self.temp_store = Chroma(is_persistent=False)
 
         if (query is None or query == '') and url == self.url and self.extracted_text is not None:
             async_to_sync(self._output_stream.write)(
@@ -86,6 +85,8 @@ class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput, HttpUr
             return output
 
         if query and self.storage_index_name and url == self.url:
+            self.temp_store = Chroma(is_persistent=False)
+
             documents: List[Document] = self.temp_store.hybrid_search(
                 self.storage_index_name, document_query=DocumentQuery(
                     query=query, limit=self._config.document_limit),
