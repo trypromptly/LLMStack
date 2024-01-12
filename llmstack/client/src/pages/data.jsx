@@ -22,6 +22,7 @@ import {
 import {
   AddOutlined,
   DeleteOutlineOutlined,
+  EditOutlined,
   KeyboardArrowDownOutlined,
   KeyboardArrowRightOutlined,
   PeopleOutlineOutlined,
@@ -357,7 +358,22 @@ export default function DataPage() {
       render: (record, row) => {
         return (
           <Box>
-            {!record?.type?.is_external_datasource && (
+            {row?.type?.is_external_datasource && (
+              <Tooltip title="Edit entry">
+                <IconButton
+                  onClick={(e) => {
+                    setModalTitle("Edit Data Source");
+                    setAddDataSourceModalOpen(true);
+                    setSelectedDataSource(row);
+
+                    e.stopPropagation();
+                  }}
+                >
+                  <EditOutlined />
+                </IconButton>
+              </Tooltip>
+            )}
+            {!row?.type?.is_external_datasource && (
               <IconButton
                 disabled={!row.isUserOwned}
                 onClick={(e) => {
