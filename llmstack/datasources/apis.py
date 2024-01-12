@@ -117,6 +117,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
 
         name = input_data['name'] if 'name' in input_data else ''
         data = input_data['data'] if 'data' in input_data else ''
+        entry_uuid = input_data['uuid'] if 'uuid' in input_data else None
 
         if not name or not data:
             return DRFResponse({'errors': ['No name or data provided']}, status=400)
@@ -141,11 +142,15 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
                                status=400)
 
         # Create an entry in the database with status as processing
-        datasource_entry_obj = DataSourceEntry.objects.create(
-            name=name,
-            datasource=datasource,
-            status=DataSourceEntryStatus.PROCESSING)
-        datasource_entry_obj.save()
+        if entry_uuid:
+            datasource_entry_obj = DataSourceEntry.objects.get(
+                uuid=entry_uuid)
+        else:
+            datasource_entry_obj = DataSourceEntry.objects.create(
+                name=name,
+                datasource=datasource,
+                status=DataSourceEntryStatus.PROCESSING)
+            datasource_entry_obj.save()
 
         try:
             result = datasource_entry_handler.add_entry(
@@ -221,6 +226,34 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             datasource.config = config
 
         datasource.save()
+        return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
+
+    def put(self, request, uid):
+        datasource = get_object_or_404(
+            DataSource, uuid=uuid.UUID(uid), owner=request.user,
+        )
+        if datasource.type.is_external_datasource:
+            datasource_type_cls = DataSourceTypeFactory.get_datasource_type_handler(
+                datasource.type)
+            if not datasource_type_cls:
+                logger.error(
+                    'No handler found for data source type {datasource.type}',
+                )
+                return DRFResponse({'errors': ['No handler found for data source type']}, status=400)
+
+            datasource_handler: DataSourceProcessor = datasource_type_cls(
+                datasource)
+            if not datasource_handler:
+                logger.error(
+                    f'Error while creating handler for data source {datasource.name}')
+                return DRFResponse({'errors': ['Error while creating handler for data source type']}, status=400)
+
+            config = datasource_type_cls.process_validate_config(
+                request.data['config'], datasource)
+            datasource.config = config
+
+            datasource.save()
+
         return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
 
     def delete(self, request, uid):

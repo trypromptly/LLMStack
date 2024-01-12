@@ -2,7 +2,7 @@ import logging
 import uuid
 from rq import get_current_job
 
-from llmstack.datasources.models import DataSource
+from llmstack.datasources.models import DataSource, DataSourceEntry, DataSourceEntryStatus
 from llmstack.datasources.types import DataSourceTypeFactory
 from llmstack.jobs.models import AdhocJob, TaskRunLog
 
@@ -29,6 +29,16 @@ def process_datasource_add_entry_request(datasource_id, input_data, job_id, **kw
     datasource_entry_items = list(
         map(lambda x: x.dict(), datasource_entry_items))
 
+    datasource_entries = []
+    for item in datasource_entry_items:
+        datasourceentry_obj = DataSourceEntry.objects.create(
+            datasource=datasource,
+            name=item.get('name'),
+            status=DataSourceEntryStatus.PROCESSING,
+        )
+        item['uuid'] = str(datasourceentry_obj.uuid)
+        datasource_entries.append(item)
+
     task_run_log = TaskRunLog(
         task_type=adhoc_job.TASK_TYPE,
         task_id=adhoc_job.id,
@@ -45,7 +55,7 @@ def process_datasource_add_entry_request(datasource_id, input_data, job_id, **kw
     }
 
     results = upsert_datasource_entries_task(
-        datasource_id, datasource_entry_items, **kwargs)
+        datasource_id, datasource_entries, **kwargs)
 
     task_run_log.result = results
     task_run_log.save()
