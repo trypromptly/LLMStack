@@ -603,7 +603,7 @@ export default function AppConsolePage(props) {
         <Grid item md={9} xs={12}>
           {Object.values(validationErrors).flatMap((entry) => entry.errors)
             .length > 0 && (
-            <Box sx={{ marginBottom: "4px" }}>
+            <Box sx={{ marginBottom: "8px" }}>
               <Alert
                 onClose={() => {}}
                 severity="warning"
