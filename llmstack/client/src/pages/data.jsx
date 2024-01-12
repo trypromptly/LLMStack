@@ -361,6 +361,7 @@ export default function DataPage() {
             {row?.type?.is_external_datasource && (
               <Tooltip title="Edit entry">
                 <IconButton
+                  disabled
                   onClick={(e) => {
                     setModalTitle("Edit Data Source");
                     setAddDataSourceModalOpen(true);
