@@ -168,11 +168,11 @@ class PythonCodeRunnerResponse(_message.Message):
     FILES_FIELD_NUMBER: _ClassVar[int]
     STDERR_FIELD_NUMBER: _ClassVar[int]
     STDOUT_FIELD_NUMBER: _ClassVar[int]
-    exit_code: str
+    exit_code: int
     files: _containers.RepeatedCompositeFieldContainer[PythonCodeRunnerFile]
     stderr: _containers.RepeatedScalarFieldContainer[str]
     stdout: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, stdout: _Optional[_Iterable[str]] = ..., stderr: _Optional[_Iterable[str]] = ..., exit_code: _Optional[str] = ..., files: _Optional[_Iterable[_Union[PythonCodeRunnerFile, _Mapping]]] = ...) -> None: ...
+    def __init__(self, stdout: _Optional[_Iterable[str]] = ..., stderr: _Optional[_Iterable[str]] = ..., exit_code: _Optional[int] = ..., files: _Optional[_Iterable[_Union[PythonCodeRunnerFile, _Mapping]]] = ...) -> None: ...
 
 class RemoteBrowserRequest(_message.Message):
     __slots__ = ["init_data", "input"]

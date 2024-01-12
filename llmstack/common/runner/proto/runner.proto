@@ -121,7 +121,7 @@ message PythonCodeRunnerFile {
 message PythonCodeRunnerResponse {
   repeated string stdout = 1; // stdout of code
   repeated string stderr = 2; // stderr of code
-  string exit_code = 3; // exit code of code
+  int32 exit_code = 3; // exit code of code
   repeated PythonCodeRunnerFile files = 4; // files created by code
 }
 
