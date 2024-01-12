@@ -21,6 +21,8 @@ from llmstack.common.runner.proto.runner_pb2 import (
     TERMINATE,
     PlaywrightBrowserRequest,
     PlaywrightBrowserResponse,
+    PythonCodeRunnerRequest,
+    PythonCodeRunnerResponse,
     RemoteBrowserRequest,
     RemoteBrowserResponse,
     RemoteBrowserSession,
@@ -185,6 +187,10 @@ class Runner(RunnerServicer):
         context: ServicerContext,
     ) -> Iterator[PlaywrightBrowserResponse]:
         return self.playwright.get_browser(request_iterator=request_iterator)
+
+    def GetPythonCodeRunner(self, request: PythonCodeRunnerRequest, context: ServicerContext) -> Iterator[PythonCodeRunnerResponse]:
+        response = PythonCodeRunnerResponse(exit_code=0)
+        yield response
 
 
 def main():
