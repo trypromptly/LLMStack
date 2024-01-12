@@ -35,7 +35,7 @@ def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseMode
         'image': str,
         'text': str,
         'richtext': str,
-        'datasource': str,
+        'datasource': list,
         'color': str,
         'voice': str,
     }
