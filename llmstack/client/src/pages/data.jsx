@@ -111,9 +111,10 @@ function DataSourceEntries({ dataSourceEntryData }) {
       key: "operation",
       render: (record, row) => {
         const isAdhocSyncSupported =
-          row?.datasource?.type?.name.toLowerCase() === "file" ||
-          row?.datasource?.type?.name.toLowerCase() === "pdf" ||
-          row?.datasource?.type?.name.toLowerCase() === "url";
+          (row?.status === "READY" || row?.status === "ERROR") &&
+          (row?.datasource?.type?.name.toLowerCase() === "file" ||
+            row?.datasource?.type?.name.toLowerCase() === "pdf" ||
+            row?.datasource?.type?.name.toLowerCase() === "url");
         return (
           <Box>
             <Tooltip title="View contents">
