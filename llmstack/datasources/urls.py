@@ -16,7 +16,8 @@ urlpatterns = [
     # Data sources
     path(
         'api/datasources',
-        apis.DataSourceViewSet.as_view({'get': 'get', 'post': 'post'}),
+        apis.DataSourceViewSet.as_view(
+            {'get': 'get', 'post': 'post', 'put': 'put'}),
     ),
     path(
         'api/datasources/url/extract_urls',
