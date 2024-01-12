@@ -301,7 +301,12 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
     def resync_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         # Delete old data
-        self.delete_entry(data)
+        try:
+            self.delete_entry(data)
+        except Exception as e:
+            logger.error(
+                f'Error while deleting old data for data_source_entry: {data} - {e}',
+            )
         # Add new data
         return self.add_entry(DataSourceEntryItem(**data["input"]))
 
