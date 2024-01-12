@@ -77,7 +77,7 @@ export function DataSourceSelector(props) {
       <AddDataSourceModal
         open={showAddDataSourceModal}
         handleCancelCb={() => setShowAddDataSourceModal(false)}
-        dataSourceAddedCb={(dataSource) => props.onChange(dataSource.uuid)}
+        dataSourceAddedCb={(dataSource) => props.onChange([dataSource.uuid])}
       />
     </FormControl>
   );
