@@ -62,6 +62,7 @@ export function AppEditor(props) {
             value={yaml.dump(
               {
                 ...app?.data,
+                is_published: app?.is_published || false,
                 type_slug: app?.type?.slug,
                 web_config: app?.web_config,
                 twilio_config: app?.twilio_config,

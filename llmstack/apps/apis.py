@@ -498,6 +498,7 @@ class AppViewSet(viewsets.ViewSet):
             app_owner_profile.encrypt_value,
         ) if 'twilio_config' in request.data and request.data['twilio_config'] else {}
         draft = request.data['draft'] if 'draft' in request.data else True
+        is_published = request.data['is_published'] if 'is_published' in request.data else False
         comment = request.data['comment'] if 'comment' in request.data else 'First version'
 
         template_slug = request.data['template_slug'] if 'template_slug' in request.data else None
@@ -529,6 +530,9 @@ class AppViewSet(viewsets.ViewSet):
         AppData.objects.create(
             app_uuid=app.uuid, data=app_data, is_draft=draft, comment=comment,
         )
+
+        if is_published and not draft:
+            self.publish(request, str(app.uuid))
 
         return DRFResponse(AppSerializer(instance=app).data, status=201)
 
