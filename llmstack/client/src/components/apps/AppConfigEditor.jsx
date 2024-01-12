@@ -44,7 +44,7 @@ export function AppConfigEditor({
         clearValidationErrorsForId("appConfig");
       }
     }
-  }, [errors, setValidationErrorsForId, clearValidationErrorsForId]);
+  }, [errors, isAgent, setValidationErrorsForId, clearValidationErrorsForId]);
 
   return (
     <AppStepCard

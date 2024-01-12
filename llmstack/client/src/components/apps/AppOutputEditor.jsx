@@ -28,7 +28,7 @@ export function AppOutputEditor({
       }
       setErrors(newErrors);
     }
-  }, [outputTemplate]);
+  }, [isAgent, outputTemplate]);
 
   useEffect(() => {
     if (errors.length > 0) {
