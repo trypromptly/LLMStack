@@ -88,6 +88,7 @@ export function AppEditor(props) {
             }}
             onBlur={(value) => {
               try {
+                if (!yamlContent.current) return;
                 const data = yaml.load(yamlContent.current);
                 setApp({ ...app, data });
                 setProcessors(data.processors);
