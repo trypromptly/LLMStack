@@ -109,7 +109,6 @@ function DataSourceEntries({ dataSourceEntryData }) {
       title: "Action",
       key: "operation",
       render: (record, row) => {
-        console.log(row);
         const isAdhocSyncSupported =
           row?.datasoruce?.type?.name.toLowerCase() === "file" ||
           row?.datasource?.type?.name.toLowerCase() === "pdf" ||
