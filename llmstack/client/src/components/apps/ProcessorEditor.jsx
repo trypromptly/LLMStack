@@ -198,7 +198,7 @@ export function ProcessorEditor({
 
   useEffect(() => {
     let newErrors = [];
-    if (processor?.api_backend?.input_schema?.required) {
+    if (!isTool && processor?.api_backend?.input_schema?.required) {
       processor?.api_backend?.input_schema?.required.forEach(
         (requiredField) => {
           if (!processor?.input[requiredField]) {
@@ -242,6 +242,7 @@ export function ProcessorEditor({
 
     setErrors(newErrors);
   }, [
+    isTool,
     processor,
     processor.input,
     processor.config,
