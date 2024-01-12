@@ -21,11 +21,13 @@ export function AppOutputEditor({
     useValidationErrorsForAppComponents();
 
   useEffect(() => {
-    let newErrors = [];
-    if (!(outputTemplate?.markdown || "").trim()) {
-      newErrors.push({ message: "Application Output cannot be empty" });
+    if (!isAgent) {
+      let newErrors = [];
+      if (!(outputTemplate?.markdown || "").trim()) {
+        newErrors.push({ message: "Application Output cannot be empty" });
+      }
+      setErrors(newErrors);
     }
-    setErrors(newErrors);
   }, [outputTemplate]);
 
   useEffect(() => {

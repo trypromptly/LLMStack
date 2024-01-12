@@ -33,14 +33,16 @@ export function AppConfigEditor({
     useValidationErrorsForAppComponents("appConfig");
 
   useEffect(() => {
-    if (errors.length > 0) {
-      setValidationErrorsForId("appConfig", {
-        id: "appConfig",
-        name: "Application Input",
-        errors: errors,
-      });
-    } else {
-      clearValidationErrorsForId("appConfig");
+    if (!isAgent) {
+      if (errors.length > 0) {
+        setValidationErrorsForId("appConfig", {
+          id: "appConfig",
+          name: "Application Input",
+          errors: errors,
+        });
+      } else {
+        clearValidationErrorsForId("appConfig");
+      }
     }
   }, [errors, setValidationErrorsForId, clearValidationErrorsForId]);
 
