@@ -110,12 +110,12 @@ function DataSourceEntries({ dataSourceEntryData }) {
       key: "operation",
       render: (record, row) => {
         const isAdhocSyncSupported =
-          row?.datasoruce?.type?.name.toLowerCase() === "file" ||
+          row?.datasource?.type?.name.toLowerCase() === "file" ||
           row?.datasource?.type?.name.toLowerCase() === "pdf" ||
           row?.datasource?.type?.name.toLowerCase() === "url";
         return (
           <Box>
-            <Tooltip title="View Contents">
+            <Tooltip title="View contents">
               <IconButton
                 onClick={() => {
                   setDataSourceEntryDrawerOpen(true);
@@ -127,7 +127,7 @@ function DataSourceEntries({ dataSourceEntryData }) {
               </IconButton>
             </Tooltip>
             {isAdhocSyncSupported && (
-              <Tooltip title="ReSync Contents">
+              <Tooltip title="Resync contents">
                 <IconButton
                   onClick={() => {
                     enqueueSnackbar("Resyncing data source entry", {
@@ -161,7 +161,7 @@ function DataSourceEntries({ dataSourceEntryData }) {
                 </IconButton>
               </Tooltip>
             )}
-            <Tooltip title="Delete Entry">
+            <Tooltip title="Delete entry">
               <IconButton
                 onClick={() => {
                   setDataSourceEntry(row);
