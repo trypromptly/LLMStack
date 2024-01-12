@@ -45,6 +45,7 @@ import { LocaleDate, FileSize } from "../components/Utils";
 import { useReloadDataSourceEntries, useReloadDataSources } from "../data/init";
 import { axios } from "../data/axios";
 import moment from "moment";
+import { enqueueSnackbar } from "notistack";
 
 function DataSourceEntries({ dataSourceEntryData }) {
   const [dataSourceEntryDrawerOpen, setDataSourceEntryDrawerOpen] =
@@ -52,6 +53,7 @@ function DataSourceEntries({ dataSourceEntryData }) {
   const [dataSourceEntry, setDataSourceEntry] = useState(null);
   const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
     useState(false);
+  const [resyncEntries, setResyncEntries] = useState(new Set());
   const reloadDataSourceEntries = useReloadDataSourceEntries();
 
   const columns = [
@@ -107,7 +109,11 @@ function DataSourceEntries({ dataSourceEntryData }) {
       title: "Action",
       key: "operation",
       render: (record, row) => {
-        const isAdhocSyncSupported = record?.sync_config;
+        console.log(row);
+        const isAdhocSyncSupported =
+          row?.datasoruce?.type?.name.toLowerCase() === "file" ||
+          row?.datasource?.type?.name.toLowerCase() === "pdf" ||
+          row?.datasource?.type?.name.toLowerCase() === "url";
         return (
           <Box>
             <Tooltip title="View Contents">
@@ -116,13 +122,42 @@ function DataSourceEntries({ dataSourceEntryData }) {
                   setDataSourceEntryDrawerOpen(true);
                   setDataSourceEntry(row);
                 }}
+                disabled={resyncEntries.has(row.uuid)}
               >
                 <VisibilityOutlined />
               </IconButton>
             </Tooltip>
             {isAdhocSyncSupported && (
-              <Tooltip title="Sync Contents">
-                <IconButton>
+              <Tooltip title="ReSync Contents">
+                <IconButton
+                  onClick={() => {
+                    enqueueSnackbar("Resyncing data source entry", {
+                      variant: "success",
+                    });
+                    setResyncEntries((oldResyncEntries) => {
+                      return new Set([...oldResyncEntries, row.uuid]);
+                    });
+                    axios()
+                      .post(`/api/datasource_entries/${row.uuid}/resync`)
+                      .then((res) => {
+                        reloadDataSourceEntries();
+                      })
+                      .catch((err) => {
+                        enqueueSnackbar("Failed to resync data source entry", {
+                          variant: "error",
+                        });
+                      })
+                      .finally(() => {
+                        setResyncEntries((oldResyncEntries) => {
+                          return new Set(
+                            [...oldResyncEntries].filter(
+                              (entry) => entry !== row.uuid,
+                            ),
+                          );
+                        });
+                      });
+                  }}
+                >
                   <SyncOutlined />
                 </IconButton>
               </Tooltip>
