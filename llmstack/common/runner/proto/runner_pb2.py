@@ -20,10 +20,10 @@ _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "runner_pb2", globals())
 if _descriptor._USE_C_DESCRIPTORS == False:
     DESCRIPTOR._options = None
-    _BROWSERCOMMANDTYPE._serialized_start = 1405
-    _BROWSERCOMMANDTYPE._serialized_end = 1530
-    _REMOTEBROWSERSTATE._serialized_start = 1532
-    _REMOTEBROWSERSTATE._serialized_end = 1594
+    _BROWSERCOMMANDTYPE._serialized_start = 1635
+    _BROWSERCOMMANDTYPE._serialized_end = 1760
+    _REMOTEBROWSERSTATE._serialized_start = 1762
+    _REMOTEBROWSERSTATE._serialized_end = 1824
     _BROWSERINPUT._serialized_start = 16
     _BROWSERINPUT._serialized_end = 97
     _BROWSERINITDATA._serialized_start = 99
@@ -52,6 +52,12 @@ if _descriptor._USE_C_DESCRIPTORS == False:
     _PLAYWRIGHTBROWSERREQUEST._serialized_end = 1215
     _PLAYWRIGHTBROWSERRESPONSE._serialized_start = 1218
     _PLAYWRIGHTBROWSERRESPONSE._serialized_end = 1403
-    _RUNNER._serialized_start = 1597
-    _RUNNER._serialized_end = 1763
+    _PYTHONCODERUNNERREQUEST._serialized_start = 1405
+    _PYTHONCODERUNNERREQUEST._serialized_end = 1461
+    _PYTHONCODERUNNERFILE._serialized_start = 1463
+    _PYTHONCODERUNNERFILE._serialized_end = 1516
+    _PYTHONCODERUNNERRESPONSE._serialized_start = 1518
+    _PYTHONCODERUNNERRESPONSE._serialized_end = 1633
+    _RUNNER._serialized_start = 1827
+    _RUNNER._serialized_end = 2073
 # @@protoc_insertion_point(module_scope)

@@ -189,7 +189,7 @@ class Runner(RunnerServicer):
         return self.playwright.get_browser(request_iterator=request_iterator)
 
     def GetPythonCodeRunner(self, request: PythonCodeRunnerRequest, context: ServicerContext) -> Iterator[PythonCodeRunnerResponse]:
-        response = PythonCodeRunnerResponse(exit_code=0)
+        response = PythonCodeRunnerResponse(exit_code=2)
         yield response
 
 

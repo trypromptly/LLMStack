@@ -108,21 +108,22 @@ message PlaywrightBrowserResponse {
   BrowserContent content = 5; // content of page
 }
 
-message PythonCodeRunnerRequest {
-  string code = 1; // python code to run
-  int32 timeout = 2; // timeout in seconds
-}
-
 message PythonCodeRunnerFile {
   string name = 1; // name of file
   bytes content = 2; // content of file
 }
 
+message PythonCodeRunnerRequest {
+  string code = 1; // python code to run
+  int32 timeout_secs = 2; // timeout in seconds
+  repeated PythonCodeRunnerFile files = 3; // files to include in code run
+}
+
 message PythonCodeRunnerResponse {
-  repeated string stdout = 1; // stdout of code
-  repeated string stderr = 2; // stderr of code
-  int32 exit_code = 3; // exit code of code
-  repeated PythonCodeRunnerFile files = 4; // files created by code
+  RemoteBrowserState state = 1; // state of runner
+  repeated string stdout = 2; // stdout of code
+  repeated string stderr = 3; // stderr of code
+  int32 exit_code = 4; // exit code of code
 }
 
 // Generic runner service
