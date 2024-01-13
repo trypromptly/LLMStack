@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import orjson as json
 from pydantic import BaseModel
@@ -71,5 +71,5 @@ class TwilioIntegrationConfig(AppIntegrationConfig):
     is_encrypted = True
     account_sid: str = ''
     auth_token: str = ''
-    phone_numbers: list = []
-    auto_create_sms_webhook = False
+    phone_numbers: List[str] = []
+    auto_create_sms_webhook: bool = False
