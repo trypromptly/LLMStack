@@ -118,6 +118,7 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
             axios()
               .post("/api/subscriptions/checkout", {
                 price_id: subscription,
+                rewardful_referral_id: window.Rewardful?.referral || null,
               })
               .then((res) => {
                 enqueueSnackbar("Loading Checkout Page", {
