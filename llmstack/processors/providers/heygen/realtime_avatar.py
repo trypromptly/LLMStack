@@ -1,22 +1,35 @@
-from enum import Enum
 import json
 import logging
+from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.common.utils.prequests import post
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.common.utils.prequests import post
 
 logger = logging.getLogger(__name__)
 
 
+class TaskType(str, Enum):
+    CREATE_SESSION = 'create_session'
+    START_SESSION = 'start_session'
+    SUBMIT_ICE_CANDIDATE = 'submit_ice_candidate'
+    CLOSE_SESSION = 'close_session'
+    REPEAT = 'repeat'
+    TALK = 'talk'
+
+    def __str__(self):
+        return self.value
+
+
 class RealtimeAvatarInput(ApiProcessorSchema):
-    task_type: str = Field(description='The type of the task.', widget='text')
+    task_type: TaskType = Field(
+        description='The type of the task.', default=TaskType.REPEAT)
     text: Optional[str] = Field(
         description='The text of the task.', widget='textarea')
     session_id: Optional[str] = Field(
@@ -24,7 +37,8 @@ class RealtimeAvatarInput(ApiProcessorSchema):
 
 
 class RealtimeAvatarOutput(ApiProcessorSchema):
-    task_type: str = Field(description='The type of the task.')
+    task_type: TaskType = Field(
+        description='The type of the task.', default=TaskType.REPEAT)
     task_response_json: str = Field(description='The response of the task.')
 
 
@@ -92,7 +106,7 @@ class RealtimeAvatarProcessor(ApiProcessorInterface[RealtimeAvatarInput, Realtim
         if connection is None:
             raise Exception('Connection not found')
 
-        if task_type == 'create_session':
+        if task_type == TaskType.CREATE_SESSION:
             logger.info('Creating session')
             create_session_url = 'https://api.heygen.com/v1/realtime.new'
             body = {
@@ -113,7 +127,7 @@ class RealtimeAvatarProcessor(ApiProcessorInterface[RealtimeAvatarInput, Realtim
                 task_response_json=json.dumps(response.json()),
             )
 
-        elif task_type == 'start_session':
+        elif task_type == TaskType.START_SESSION:
             start_session_url = 'https://api.heygen.com/v1/realtime.start'
             body = {
                 "session_id": session_id,
@@ -134,21 +148,22 @@ class RealtimeAvatarProcessor(ApiProcessorInterface[RealtimeAvatarInput, Realtim
                 task_response_json=json.dumps(response.json()),
             )
 
-        elif task_type == 'submit_ice_candidate':
+        elif task_type == TaskType.SUBMIT_ICE_CANDIDATE:
             result = RealtimeAvatarOutput(
                 task_type=task_type,
                 task_response_json=json.dumps({}),
             )
-        elif task_type == 'close_session':
+        elif task_type == TaskType.CLOSE_SESSION:
             result = RealtimeAvatarOutput(
                 task_type=task_type,
                 task_response_json=json.dumps({}),
             )
-        elif task_type == 'task':
+        elif task_type == TaskType.REPEAT or task_type == TaskType.TALK:
             task_url = 'https://api.heygen.com/v1/realtime.task'
             body = {
                 "session_id": session_id,
-                "text": self._input.text
+                "text": self._input.text,
+                "task_type": task_type
             }
             response = post(task_url, json=body, _connection=connection)
             if response.status_code != 200:
