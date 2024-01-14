@@ -166,6 +166,9 @@ class AbstractProfile(models.Model):
                 **existing_connection['configuration'],
                 **connection['configuration'],
             }
+            existing_connection['status'] = connection['status']
+            existing_connection['name'] = connection['name']
+            existing_connection['description'] = connection['description']
             connection = existing_connection
 
         connection_json = json.dumps(connection)
