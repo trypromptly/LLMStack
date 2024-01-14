@@ -19,6 +19,7 @@ from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response as DRFResponse
+from llmstack.apps.handlers.app_processor_runner import AppProcessorRunner
 
 from llmstack.apps.handlers.app_runner_factory import AppRunerFactory
 from llmstack.apps.integration_configs import (
@@ -561,6 +562,29 @@ class AppViewSet(viewsets.ViewSet):
             logger.exception('Error while running app')
             return DRFResponse({'errors': [str(e)]}, status=400)
 
+    def processor_run(self, request, uid, id, session_id=None, platform=None):
+        stream = False
+        request_uuid = str(uuid.uuid4())
+        try:
+            result = self.run_processor_internal(
+                uid, id, session_id, request_uuid, request, platform,
+            )
+            if stream:
+                response = StreamingHttpResponse(
+                    streaming_content=result, content_type='application/json',
+                )
+                response.is_async = True
+                return response
+            response_body = {k: v for k, v in result.items() if k != 'csp'}
+            response_body['_id'] = request_uuid
+            return DRFResponse(response_body, status=200, headers={'Content-Security-Policy': result['csp'] if 'csp' in result else 'frame-ancestors self'})
+        except AppRunnerException as e:
+            logger.exception('Error while running app')
+            return DRFResponse({'errors': [str(e)]}, status=e.status_code)
+        except Exception as e:
+            logger.exception('Error while running app')
+            return DRFResponse({'errors': [str(e)]}, status=400)
+
     async def run_app_internal_async(self, uid, session_id, request_uuid, request, preview=False):
         return await database_sync_to_async(self.run_app_internal)(uid, session_id, request_uuid, request, preview=preview)
 
@@ -611,6 +635,46 @@ class AppViewSet(viewsets.ViewSet):
         )
 
         return app_runner.run_app()
+
+    def run_processor_internal(self, uid, processor_id, session_id, request_uuid, request, platform=None, preview=False):
+        app = get_object_or_404(App, uuid=uuid.UUID(uid))
+        app_owner = get_object_or_404(Profile, user=app.owner)
+
+        stream = request.data.get('stream', False)
+
+        request_ip = request.headers.get('X-Forwarded-For',
+                                         request.META.get('REMOTE_ADDR', '',)
+                                         ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
+
+        request_location = request.headers.get('X-Client-Geo-Location', '')
+
+        if not request_location:
+            location = get_location(request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ''
+
+        request_user_agent = request.META.get('HTTP_USER_AGENT', '')
+        request_content_type = request.META.get('CONTENT_TYPE', '')
+
+        if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA', request=request, user=app.owner)):
+            raise Exception(
+                'You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.')
+
+        app_data_obj = AppData.objects.filter(
+            app_uuid=app.uuid, is_draft=preview).order_by('-created_at').first()
+
+        # If we are running a published app, use the published app data
+        if not app_data_obj and preview:
+            app_data_obj = AppData.objects.filter(
+                app_uuid=app.uuid, is_draft=False).order_by('-created_at').first()
+
+        app_runner = AppProcessorRunner(
+            app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid,
+            request=request, session_id=session_id, app_owner=app_owner, stream=stream,
+            request_ip=request_ip, request_location=request_location, request_user_agent=request_user_agent,
+            request_content_type=request_content_type,
+        )
+
+        return app_runner.run_app(processor_id=processor_id)
 
     @action(detail=True, methods=['post'])
     def run_discord(self, request, uid):

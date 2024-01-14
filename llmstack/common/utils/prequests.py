@@ -7,26 +7,33 @@ def request(method, url, **kwargs):
     _connection = kwargs.pop('_connection', None)
     if _connection:
         connection = _connection
-        # connection is one of api_key, basic_auth, bearer_token, oauth2 or web_login 
+        # connection is one of api_key, basic_auth, bearer_token, oauth2 or web_login
         if connection.get('base_connection_type', None) == 'credentials':
             if connection.get('connection_type_slug', None) == 'basic_authentication':
-                kwargs['auth'] = (connection['username'], connection['password'])
+                kwargs['auth'] = (connection['username'],
+                                  connection['password'])
             elif connection.get('connection_type_slug', None) == 'bearer_authentication':
                 assert 'Authorization' not in kwargs['headers']
                 token = connection.get('configuration', {}).get('token', None)
-                kwargs['headers'] = {**kwargs['headers'], **{'Authorization': 'Bearer ' + token}}
+                kwargs['headers'] = {**kwargs.get('headers', {}),
+                                     **{'Authorization': 'Bearer ' + token}}
             elif connection.get('connection_type_slug', None) == 'api_key_authentication':
-                header_key = connection.get('configuration', {}).get('header_key', None)
-                api_key = connection.get('configuration', {}).get('api_key', None)
-                kwargs['headers'] = {**kwargs['headers'], **{header_key: api_key}}
-                
-        elif  connection.get('base_connection_type', None) == 'oauth2':
+                header_key = connection.get(
+                    'configuration', {}).get('header_key', None)
+                api_key = connection.get(
+                    'configuration', {}).get('api_key', None)
+                kwargs['headers'] = {
+                    **kwargs.get('headers', {}), **{header_key: api_key}}
+
+        elif connection.get('base_connection_type', None) == 'oauth2':
             assert 'Authorization' not in kwargs['headers']
             token = connection.get('configuration', {}).get('token', None)
-            kwargs['headers'] = {**kwargs['headers'], **{'Authorization': 'Bearer ' + token}}
-        
+            kwargs['headers'] = {**kwargs.get('headers', {}),
+                                 **{'Authorization': 'Bearer ' + token}}
+
         elif connection.get('base_connection_type', None) == 'browser_login' and connection.get('connection_type_slug', None) == 'web_login':
-            _storage_state = json.loads(connection.get('configuration', {}).get('_storage_state', '{}'))
+            _storage_state = json.loads(connection.get(
+                'configuration', {}).get('_storage_state', '{}'))
             cookie_list = _storage_state.get('cookies', {})
             url_domain = '.'.join(urlparse(url).netloc.split('.')[-2:])
             cookies = {}
@@ -36,8 +43,9 @@ def request(method, url, **kwargs):
                         cookies[cookie_entry['name']] = cookie_entry['value']
 
             kwargs['cookies'] = {**kwargs.get('cookies', {}), **cookies}
-            
+
     return requests.request(method=method, url=url, **kwargs)
+
 
 def get(url, params=None, **kwargs):
     r"""Sends a GET request.
