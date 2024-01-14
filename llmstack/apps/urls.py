@@ -32,6 +32,9 @@ urlpatterns = [
         apis.AppViewSet.as_view(
             {'get': 'get', 'patch': 'patch', 'delete': 'delete'}),
     ),
+    path('api/apps/<str:uid>/processors/<str:id>/run',
+         apis.AppViewSet.as_view({'post': 'processor_run'})),
+
     path('api/apps/<str:uid>/run', apis.AppViewSet.as_view({'post': 'run'})),
     path('api/apps/<str:uid>/versions',
          apis.AppViewSet.as_view({'get': 'versions'})),
