@@ -1,9 +1,8 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import Field
 
-from llmstack.apps.types.app_type_interface import AppTypeInterface
-from llmstack.apps.types.app_type_interface import BaseSchema
+from llmstack.apps.types.app_type_interface import AppTypeInterface, BaseSchema
 
 
 class WebAppConfigSchema(BaseSchema):
@@ -14,6 +13,10 @@ class WebAppConfigSchema(BaseSchema):
     allowed_sites: List[str] = Field(
         title='Allowed Sites to Embed this App',
         default=[], description='List of domains that are allowed to embed this app. Leave empty to allow all sites.', advanced_parameter=True, hidden=True,
+    )
+    init_template: Optional[str] = Field(
+        title='Initialization Template',
+        description='Template to render when the app is initialized', widget='textarea',
     )
 
 
