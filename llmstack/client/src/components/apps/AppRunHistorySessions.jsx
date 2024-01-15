@@ -193,12 +193,12 @@ const ExpandedRowItem = ({ items }) => {
                     ).map((key) => (
                       <span key={key}>
                         <b>{key}</b>:{" "}
-                        {
+                        {JSON.stringify(
                           parseInput(
                             item.request_body,
                             item.request_user_agent,
-                          )[key]
-                        }
+                          )[key],
+                        )}
                       </span>
                     ))
                   : parseInput(item.request_body, item.request_user_agent)
