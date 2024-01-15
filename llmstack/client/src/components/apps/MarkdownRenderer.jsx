@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import loadingImage from "../../assets/images/loading.gif";
 import ThemedJsonForm from "../ThemedJsonForm";
 import validator from "@rjsf/validator-ajv8";
@@ -9,6 +10,7 @@ import AceEditor from "react-ace";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { ContentCopyOutlined } from "@mui/icons-material";
 import StreamingVideoPlayer from "./StreamingVideoPlayer";
+import { HeyGenRealtimeAvatar } from "./HeyGenRealtimeAvatar";
 
 function FunctionFormComponent(props) {
   // Render a form component with submit button
@@ -33,11 +35,23 @@ function FunctionFormComponent(props) {
 
 export default function MarkdownRenderer(props) {
   const messageId = props.messageId;
+  const runProcessor = props.runProcessor;
+
   return (
     <ReactMarkdown
       {...props}
       remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
       components={{
+        "promptly-heygen-realtime-avatar": ({ node, ...props }) => {
+          return (
+            <HeyGenRealtimeAvatar
+              node={node}
+              {...props}
+              runProcessor={runProcessor}
+            />
+          );
+        },
         img: ({ node, ...props }) => {
           const { alt, src } = props;
           // We provide alt text and style as altText|style where style is a string
