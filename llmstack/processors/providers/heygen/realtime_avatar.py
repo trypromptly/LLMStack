@@ -62,14 +62,13 @@ class Quality(str, Enum):
 
 class RealtimeAvatarConfiguration(ApiProcessorSchema):
     reuse_session: bool = Field(
-        description='Whether to reuse the heygen session.', default=False)
-
+        description='Reuse the heygen session if valid instesd of creating a new one.', default=False)
     quality: Optional[Quality] = Field(
-        description='The quality of the data to be retrieved.', default=Quality.HIGH)
+        description='The quality of the data to be retrieved.', default=Quality.MEDIUM)
     avatar_name: Optional[str] = Field(
-        description='The name of the avatar to be used.', default='default')
+        description='The name of the avatar to be used.', advanced_parameter=False)
     voice_id: Optional[str] = Field(
-        description='Voice to use. selected from voice list')
+        description='Voice to use. selected from voice list', advanced_parameter=False)
 
     connection_id: Optional[str] = Field(
         widget='connection',  advanced_parameter=False, description='Use your authenticated connection to make the request')
