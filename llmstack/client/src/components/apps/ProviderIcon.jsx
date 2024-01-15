@@ -19,6 +19,8 @@ import localAiIcon_light from "../../assets/images/localai-icon-light.png";
 import localAiIcon_dark from "../../assets/images/localai-icon-dark.png";
 import linkedinIcon_light from "../../assets/images/linkedin-icon-light.png";
 import linkedinIcon_dark from "../../assets/images/linkedin-icon-dark.png";
+import heygenIcon_light from "../../assets/images/heygen-icon-light.png";
+import heygenIcon_dark from "../../assets/images/heygen-icon-dark.png";
 
 const getIconImage = (icon, isActive) => {
   switch (icon?.replaceAll(" ", "").toLowerCase()) {
@@ -44,6 +46,8 @@ const getIconImage = (icon, isActive) => {
       return isActive ? localAiIcon_dark : localAiIcon_light;
     case "linkedin":
       return isActive ? linkedinIcon_dark : linkedinIcon_light;
+    case "heygen":
+      return isActive ? heygenIcon_dark : heygenIcon_light;
     default:
       return promptlyIcon_light;
   }
