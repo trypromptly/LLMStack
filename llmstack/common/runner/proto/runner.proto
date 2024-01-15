@@ -113,18 +113,18 @@ message PythonCodeRunnerFile {
   bytes content = 2; // content of file
 }
 
-message PythonCodeRunnerRequest {
+message RestrictedPythonCodeRunnerRequest {
   string code = 1; // python code to run
   int32 timeout_secs = 2; // timeout in seconds
-  repeated PythonCodeRunnerFile files = 3; // files to include in code run
 }
 
-message PythonCodeRunnerResponse {
+message RestrictedPythonCodeRunnerResponse {
   RemoteBrowserState state = 1; // state of runner
-  repeated string stdout = 2; // stdout of code
-  repeated string stderr = 3; // stderr of code
-  int32 exit_code = 4; // exit code of code
-}
+  string result = 2; // result of runner
+  repeated string stdout = 3; // stdout of code
+  repeated string stderr = 4; // stderr of code
+  int32 exit_code = 5; // exit code of code
+}c
 
 // Generic runner service
 service Runner {
@@ -133,5 +133,5 @@ service Runner {
 
   rpc GetPlaywrightBrowser (stream PlaywrightBrowserRequest) returns (stream PlaywrightBrowserResponse) {}
 
-  rpc GetPythonCodeRunner (PythonCodeRunnerRequest) returns (stream PythonCodeRunnerResponse) {}
+  rpc GetRestrictedPythonCodeRunner (RestrictedPythonCodeRunnerRequest) returns (stream RestrictedPythonCodeRunnerResponse) {}
 }
