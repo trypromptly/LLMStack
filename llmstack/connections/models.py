@@ -26,7 +26,9 @@ class ConnectionStatus(str, Enum):
 class ConnectionType(str, Enum):
     BROWSER_LOGIN = 'browser_login'
     OAUTH2 = 'oauth2'
-    CREDENTIALS = 'credentials'    
+    CREDENTIALS = 'credentials'
+
+
 class Connection(BaseModel):
     """
     Connection model
