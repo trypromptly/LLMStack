@@ -52,6 +52,7 @@ class AppConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.app_id = self.scope['url_route']['kwargs']['app_id']
         self.preview = True if 'preview' in self.scope['url_route']['kwargs'] else False
+        self._session_id = None
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -64,7 +65,8 @@ class AppConsumer(AsyncWebsocketConsumer):
         json_data = json.loads(text_data)
         input = json_data.get('input', {})
         event = json_data.get('event', None)
-        self._session_id = json_data.get('session_id', None)
+        self._session_id = self._session_id or json_data.get(
+            'session_id', None)
 
         if event == 'run':
             try:
@@ -73,6 +75,8 @@ class AppConsumer(AsyncWebsocketConsumer):
                 output_stream = await AppViewSet().run_app_internal_async(self.app_id, self._session_id, request_uuid, request, self.preview)
                 async for output in output_stream:
                     if 'errors' in output or 'session' in output:
+                        if 'session' in output:
+                            self._session_id = output['session']['id']
                         await self.send(text_data=json.dumps(output))
                     else:
                         await self.send(text_data=json.dumps({'output': output}))
@@ -81,6 +85,11 @@ class AppConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 logger.exception(e)
                 await self.send(text_data=json.dumps({'errors': [str(e)]}))
+
+        if event == 'init':
+            # Create a new session and return the session id
+            self._session_id = await AppViewSet().init_app_async(self.app_id)
+            await self.send(text_data=json.dumps({'session': {'id': self._session_id}}))
 
         if event == 'stop':
             if self._output_stream is not None:

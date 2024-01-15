@@ -19,8 +19,9 @@ from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response as DRFResponse
-from llmstack.apps.handlers.app_processor_runner import AppProcessorRunner
 
+from llmstack.apps.app_session_utils import create_app_session
+from llmstack.apps.handlers.app_processor_runner import AppProcessorRunner
 from llmstack.apps.handlers.app_runner_factory import AppRunerFactory
 from llmstack.apps.integration_configs import (
     DiscordIntegrationConfig,
@@ -200,7 +201,7 @@ class AppViewSet(viewsets.ViewSet):
                 (
                         request.user.is_authenticated and ((app.visibility == AppVisibility.ORGANIZATION and Profile.objects.get(user=app.owner).organization == Profile.objects.get(user=request.user).organization) or
                                                            (request.user.email in app.read_accessible_by or request.user.email in app.write_accessible_by))
-                ):
+                        ):
                 serializer = AppSerializer(
                     instance=app, request_user=request.user,
                 )
@@ -562,12 +563,26 @@ class AppViewSet(viewsets.ViewSet):
             logger.exception('Error while running app')
             return DRFResponse({'errors': [str(e)]}, status=400)
 
-    def processor_run(self, request, uid, id, session_id=None, platform=None):
+    async def init_app_async(self, uid):
+        return await database_sync_to_async(self.init_app)(uid)
+
+    def init_app(self, uid):
+        app = get_object_or_404(App, uuid=uuid.UUID(uid))
+        session_id = str(uuid.uuid4())
+
+        create_app_session(app, session_id)
+
+        return session_id
+
+    def processor_run(self, request, uid, id):
         stream = False
         request_uuid = str(uuid.uuid4())
+        preview = request.data.get('preview', False)
+        session_id = request.data.get('session_id', None)
+
         try:
             result = self.run_processor_internal(
-                uid, id, session_id, request_uuid, request, platform,
+                uid, id, session_id, request_uuid, request, None, preview
             )
             if stream:
                 response = StreamingHttpResponse(
