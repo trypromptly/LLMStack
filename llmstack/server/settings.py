@@ -434,6 +434,11 @@ PROVIDERS = [
         'name': 'Apollo',
         'processor_packages': ['llmstack.processors.providers.apollo'],
         'slug': 'apollo',
+    },
+    {
+        'name': 'HeyGen',
+        'processor_packages': ['llmstack.processors.providers.heygen'],
+        'slug': 'heygen',
     }
 ]
 
