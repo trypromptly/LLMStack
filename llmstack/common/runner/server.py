@@ -21,8 +21,8 @@ from llmstack.common.runner.proto.runner_pb2 import (
     TERMINATE,
     PlaywrightBrowserRequest,
     PlaywrightBrowserResponse,
-    PythonCodeRunnerRequest,
-    PythonCodeRunnerResponse,
+    RestrictedPythonCodeRunnerRequest,
+    RestrictedPythonCodeRunnerResponse,
     RemoteBrowserRequest,
     RemoteBrowserResponse,
     RemoteBrowserSession,
@@ -188,8 +188,114 @@ class Runner(RunnerServicer):
     ) -> Iterator[PlaywrightBrowserResponse]:
         return self.playwright.get_browser(request_iterator=request_iterator)
 
-    def GetPythonCodeRunner(self, request: PythonCodeRunnerRequest, context: ServicerContext) -> Iterator[PythonCodeRunnerResponse]:
-        response = PythonCodeRunnerResponse(exit_code=2)
+    def GetRestrictedPythonCodeRunner(self, request: RestrictedPythonCodeRunnerRequest, context: ServicerContext) -> Iterator[RestrictedPythonCodeRunnerResponse]:
+        from RestrictedPython import compile_restricted
+        from RestrictedPython import safe_builtins
+        from RestrictedPython.PrintCollector import PrintCollector
+        from RestrictedPython.Guards import (
+            guarded_iter_unpack_sequence,
+            guarded_unpack_sequence,
+            safe_builtins
+        )
+
+        class CustomPrint(object):
+            def __init__(self):
+                self.enabled = True
+                self.lines = []
+
+            def write(self, text):
+                if self.enabled:
+                    if text and text.strip():
+                        log_line = "{0}".format(text)
+                        self.lines.append(log_line)
+
+            def enable(self):
+                self.enabled = True
+
+            def disable(self):
+                self.enabled = False
+
+            def __call__(self, *args):
+                return self
+
+            def _call_print(self, *objects, **kwargs):
+                print(*objects, file=self)
+
+        def custom_write(obj):
+            """
+            Custom hooks which controls the way objects/lists/tuples/dicts behave in
+            RestrictedPython
+            """
+            return obj
+
+        def custom_get_item(obj, key):
+            return obj[key]
+
+        def custom_get_iter(obj):
+            return iter(obj)
+
+        def custom_inplacevar(op, x, y):
+            if op not in IOPERATOR_TO_STR.values():
+                raise Exception(
+                    "'{} is not supported inplace variable'".format(op))
+            glb = {"x": x, "y": y}
+            exec("x" + op + "y", glb)
+            return glb["x"]
+
+        def custom_import(self, name, globals=None, locals=None, fromlist=(), level=0):
+            import importlib
+            m = importlib.import_module(name)
+            return m
+
+        def execute_restricted_code(source_code):
+            errors = None
+            allowed_modules = {}
+            for module in []:
+                allowed_modules[module] = None
+
+            allowed_builtins = safe_builtins.copy()
+
+            for builtin in []:
+                allowed_builtins += (builtin,)
+
+            custom_print = CustomPrint()
+            code = compile_restricted(source_code, "<string>", "exec")
+            builtins = allowed_builtins.copy()
+
+            builtins["_write_"] = custom_write
+            builtins["_print_"] = custom_print
+            builtins["__import__"] = custom_import
+            builtins["_getitem_"] = custom_get_item
+            builtins["_getiter_"] = custom_get_iter
+            builtins["_unpack_sequence_"] = guarded_unpack_sequence
+            builtins["_iter_unpack_sequence_"] = guarded_iter_unpack_sequence
+            builtins["_inplacevar_"] = custom_inplacevar
+            builtins["_getattr_"] = getattr
+            builtins["getattr"] = getattr
+            builtins["_setattr_"] = setattr
+            builtins["setattr"] = setattr
+
+            restricted_globals = dict(__builtins__=builtins)
+            code_exec_result = {'result': None}
+            try:
+                exec(code, restricted_globals, code_exec_result)
+            except Exception as e:
+                errors = f"error: {e}"
+
+            result = code_exec_result.get('result', None)
+            logs = custom_print.lines
+
+            # Return the result and any printed output
+            return result, logs, errors
+
+        result, stdout, stderr = execute_restricted_code(
+            request.code)
+        response = RestrictedPythonCodeRunnerResponse(
+            exit_code=1,
+            stdout=stdout,
+            stderr=stderr,
+            result=json.dumps(result),
+            state=RemoteBrowserState.TERMINATED)
         yield response
 
 
