@@ -1,17 +1,35 @@
-import React, { useEffect, useRef } from "react";
-import { Box } from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, Box } from "@mui/material";
 
 const newSession = async (processor, runProcessor) => {
-  // await new Promise((resolve) => setTimeout(resolve, 2000));
+  try {
+    const response = await runProcessor(processor, {
+      task_type: "create_session",
+    });
 
-  const response = await runProcessor(processor, {
-    task_type: "create_session",
-  });
+    if (response?.task_response_json?.data?.session_id) {
+      return response?.task_response_json?.data;
+    }
 
-  if (response) {
-    return response?.task_response_json?.data;
+    throw new Error("Failed to create new session");
+  } catch (error) {
+    // Handle or log the error as needed
+    console.error(error);
+    throw error; // Rethrow the error to be caught by the retry logic
   }
-  return null;
+};
+
+const retryWithBackoff = async (fn, maxRetries, delay) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn(); // Attempt to run the function
+    } catch (error) {
+      const nextDelay = delay * Math.pow(2, i); // Calculate the next delay
+      console.log(`Retry ${i + 1}: waiting for ${nextDelay}ms`);
+      await new Promise((resolve) => setTimeout(resolve, nextDelay)); // Wait for the delay before next retry
+    }
+  }
+  throw new Error("Max retries reached");
 };
 
 // submit the ICE candidate
@@ -19,9 +37,9 @@ const handleICE = async (session_id, candidate, processor, runProcessor) => {
   const respose = await runProcessor(processor, {
     task_type: "submit_ice_candidate",
     task_input_json: {
-      session_id,
       candidate,
     },
+    session_id,
   });
 
   return respose?.task_response_json?.data;
@@ -31,9 +49,9 @@ const startSession = async (session_id, sdp, processor, runProcessor) => {
   const response = await runProcessor(processor, {
     task_type: "start_session",
     task_input_json: {
-      session_id,
       sdp,
     },
+    session_id,
   });
 
   return response?.task_response_json;
@@ -53,7 +71,14 @@ const createNewSession = async (
   runProcessor,
 ) => {
   // call the new interface to get the server's offer SDP and ICE server to create a new RTCPeerConnection
-  const sessionInfo = await newSession(processor, runProcessor);
+  const maxRetries = 5; // Maximum number of retries
+  const initialDelay = 4000; // Initial delay in milliseconds
+
+  const sessionInfo = await retryWithBackoff(
+    () => newSession(processor, runProcessor),
+    maxRetries,
+    initialDelay,
+  );
 
   if (!sessionInfo) {
     console.error("Failed to create new session");
@@ -99,6 +124,7 @@ const createNewSession = async (
   peerConnection.ondatachannel = (event) => {
     const dataChannel = event.channel;
     dataChannel.onmessage = (event) => {
+      mediaElement.muted = false;
       console.log("Data channel message received", event);
     };
   };
@@ -139,6 +165,7 @@ const videoStyle = {
 
 export const HeyGenRealtimeAvatar = (props) => {
   const { processor, runProcessor } = props;
+  const [error, setError] = useState(null);
   const videoRef = useRef(null);
   const sessionRef = useRef(null);
   const createSessionRef = useRef(null);
@@ -152,7 +179,13 @@ export const HeyGenRealtimeAvatar = (props) => {
       !createSessionRef.current
     ) {
       createSessionRef.current = true;
-      createNewSession(videoRef, sessionRef, processor, runProcessor);
+
+      createNewSession(videoRef, sessionRef, processor, runProcessor).catch(
+        (e) => {
+          setError(e);
+          console.error(e);
+        },
+      );
     }
 
     return () => {
@@ -162,7 +195,10 @@ export const HeyGenRealtimeAvatar = (props) => {
 
   return (
     <Box>
-      <video ref={videoRef} autoPlay style={videoStyle} />
+      {error && (
+        <Alert severity="error">{`${error.message}. Please refresh the app.`}</Alert>
+      )}
+      <video ref={videoRef} autoPlay muted style={videoStyle} />
     </Box>
   );
 };
