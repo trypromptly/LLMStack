@@ -17,6 +17,7 @@ import "./WebAppRenderer.css";
 import "../../index.css";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { ContentCopyOutlined } from "@mui/icons-material";
+import { useProcessors } from "./useProcessors";
 
 function CustomFileWidget(props) {
   return <FileUploadWidget {...props} />;
@@ -25,6 +26,10 @@ function CustomFileWidget(props) {
 function CustomVoiceRecorderWidget(props) {
   return <VoiceRecorderWidget {...props} />;
 }
+
+const MemoizedMarkdownRenderer = React.memo(MarkdownRenderer, (prev, next) => {
+  return prev.children === next.children;
+});
 
 export function WebAppRenderer({ app, ws }) {
   const outputRef = useRef(null);
@@ -41,6 +46,8 @@ export function WebAppRenderer({ app, ws }) {
     app?.data?.output_template?.markdown || "",
   );
   const setStreamChunks = useSetRecoilState(streamChunksState);
+  const [runProcessor, processorSessionId, setProcessorSessionId] =
+    useProcessors(app?.uuid);
   const chunkedOutput = useRef({});
   const streamStarted = useRef(false);
 
@@ -49,6 +56,27 @@ export function WebAppRenderer({ app, ws }) {
       window.scrollTo(0, outputRef.current.scrollHeight);
     }
   }, [output]);
+
+  useEffect(() => {
+    if (ws && app?.data?.config?.init_template && !appSessionId) {
+      ws.send(
+        JSON.stringify({
+          event: "init",
+        }),
+      );
+    }
+  }, [app?.data?.config?.init_template, ws, appSessionId]);
+
+  useEffect(() => {
+    if (ws && appSessionId && app?.data?.config?.init_template) {
+      setProcessorSessionId(appSessionId);
+    }
+  }, [
+    app?.data?.config?.init_template,
+    ws,
+    appSessionId,
+    setProcessorSessionId,
+  ]);
 
   const SubmitButton = (props) => {
     const submitButtonText =
@@ -163,6 +191,11 @@ export function WebAppRenderer({ app, ws }) {
       }}
     >
       <LexicalRenderer text={app.data?.config?.input_template} />
+      {processorSessionId && app.data?.config?.init_template && (
+        <MemoizedMarkdownRenderer runProcessor={runProcessor}>
+          {app.data?.config?.init_template}
+        </MemoizedMarkdownRenderer>
+      )}
       <Form
         schema={schema}
         uiSchema={{
