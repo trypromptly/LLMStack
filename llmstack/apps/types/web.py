@@ -14,9 +14,9 @@ class WebAppConfigSchema(BaseSchema):
         title='Allowed Sites to Embed this App',
         default=[], description='List of domains that are allowed to embed this app. Leave empty to allow all sites.', advanced_parameter=True, hidden=True,
     )
-    init_template: Optional[str] = Field(
-        title='Initialization Template',
-        description='Template to render when the app is initialized', widget='textarea',
+    layout: Optional[str] = Field(
+        title='Layout',
+        description='Layout to use for the app page', widget='textarea',
     )
 
 

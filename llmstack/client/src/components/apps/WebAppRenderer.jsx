@@ -58,25 +58,20 @@ export function WebAppRenderer({ app, ws }) {
   }, [output]);
 
   useEffect(() => {
-    if (ws && app?.data?.config?.init_template && !appSessionId) {
+    if (ws && app?.data?.config?.layout && !appSessionId) {
       ws.send(
         JSON.stringify({
           event: "init",
         }),
       );
     }
-  }, [app?.data?.config?.init_template, ws, appSessionId]);
+  }, [app?.data?.config?.layout, ws, appSessionId]);
 
   useEffect(() => {
-    if (ws && appSessionId && app?.data?.config?.init_template) {
+    if (ws && appSessionId && app?.data?.config?.layout) {
       setProcessorSessionId(appSessionId);
     }
-  }, [
-    app?.data?.config?.init_template,
-    ws,
-    appSessionId,
-    setProcessorSessionId,
-  ]);
+  }, [app?.data?.config?.layout, ws, appSessionId, setProcessorSessionId]);
 
   const SubmitButton = (props) => {
     const submitButtonText =
@@ -191,9 +186,9 @@ export function WebAppRenderer({ app, ws }) {
       }}
     >
       <LexicalRenderer text={app.data?.config?.input_template} />
-      {processorSessionId && app.data?.config?.init_template && (
+      {processorSessionId && app.data?.config?.layout && (
         <MemoizedMarkdownRenderer runProcessor={runProcessor}>
-          {app.data?.config?.init_template}
+          {app.data?.config?.layout}
         </MemoizedMarkdownRenderer>
       )}
       <Form
