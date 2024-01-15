@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, Box } from "@mui/material";
+import promptlyLoader from "../../assets/images/promptly-loading.gif";
 
 const newSession = async (processor, runProcessor) => {
   try {
@@ -160,6 +161,7 @@ const createNewSession = async (
 const videoStyle = {
   width: "100%",
   height: "100%",
+  maxHeight: "440px",
   objectFit: "cover",
 };
 
@@ -198,7 +200,13 @@ export const HeyGenRealtimeAvatar = (props) => {
       {error && (
         <Alert severity="error">{`${error.message}. Please refresh the app.`}</Alert>
       )}
-      <video ref={videoRef} autoPlay muted style={videoStyle} />
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        style={videoStyle}
+        poster={promptlyLoader}
+      />
     </Box>
   );
 };
