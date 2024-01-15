@@ -121,7 +121,6 @@ const VoiceRecorderWidget = (props) => {
 
   return (
     <div>
-      <label>{props.label}</label>
       <div>
         {recordedBlob ? (
           <Stack direction={"row"}>
