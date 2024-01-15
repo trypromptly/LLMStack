@@ -1,7 +1,6 @@
-import json
 import logging
-from enum import Enum
 import time
+from enum import Enum
 from typing import Dict, Optional
 
 from asgiref.sync import async_to_sync
@@ -33,27 +32,23 @@ class RealtimeAvatarInput(ApiProcessorSchema):
         description='The type of the task. Only valid selections are repeat and talk', default=TaskType.REPEAT)
     task_input_json: Optional[Dict] = Field(
         description='The input of the task.', default=None, widget='hidden')
-    text: Optional[str] = Field(
-        description='The text of the task.', widget='textarea')
+    text: Optional[str] = Field(description='The text of the task.')
     session_id: Optional[str] = Field(
         description='The session ID to use.', default=None)
 
     @root_validator
     def validate_input(cls, values):
-        if values.get('task_type') == TaskType.REPEAT and not values.get('text'):
-            raise ValueError('Text is required for repeat tasks')
-        elif values.get('task_type') == TaskType.TALK and not values.get('text'):
-            raise ValueError('Text is required for talk tasks')
-        else:
-            if not values.get('task_input_json'):
-                raise ValueError('Task type is not supported')
+        if (values.get('task_type') == TaskType.REPEAT or values.get('task_type') == TaskType.TALK) and not values.get('text'):
+            raise ValueError('Text is required for repeat/talk tasks')
+        elif values.get('task_type') is not TaskType.CREATE_SESSION and not values.get('task_input_json') and not values.get('text'):
+            raise ValueError('Task type is not supported')
         return values
 
 
 class RealtimeAvatarOutput(ApiProcessorSchema):
     task_type: TaskType = Field(
         description='The type of the task.', default=TaskType.REPEAT)
-    task_response_json: str = Field(description='The response of the task.')
+    task_response_json: Dict = Field(description='The response of the task.')
 
 
 class Quality(str, Enum):
@@ -126,7 +121,7 @@ class RealtimeAvatarProcessor(ApiProcessorInterface[RealtimeAvatarInput, Realtim
             if self._config.reuse_session and self._heygen_session and (time.time() * 1000 - self._heygen_session['created_at'] < 1000 * 60 * 3):
                 result = RealtimeAvatarOutput(
                     task_type=task_type,
-                    task_response_json=json.dumps({'data': self._heygen_session['data']}))
+                    task_response_json={'data': self._heygen_session['data']})
 
                 async_to_sync(output_stream.write)(result)
                 return output_stream.finalize()
@@ -142,12 +137,12 @@ class RealtimeAvatarProcessor(ApiProcessorInterface[RealtimeAvatarInput, Realtim
 
         elif task_type == TaskType.START_SESSION:
             url = 'https://api.heygen.com/v1/realtime.start'
-            body = {**json.loads(self._input.task_input_json),
+            body = {**self._input.task_input_json,
                     **{'session_id': session_id}}
 
         elif task_type == TaskType.SUBMIT_ICE_CANDIDATE:
             url = 'https://api.heygen.com/v1/realtime.ice'
-            body = {**json.loads(self._input.task_input_json),
+            body = {**self._input.task_input_json,
                     **{'session_id': session_id}}
 
         elif task_type == TaskType.CLOSE_SESSION:
@@ -176,7 +171,7 @@ class RealtimeAvatarProcessor(ApiProcessorInterface[RealtimeAvatarInput, Realtim
 
         result = RealtimeAvatarOutput(
             task_type=task_type,
-            task_response_json=json.dumps(response.json()),
+            task_response_json=response.json(),
         )
         async_to_sync(output_stream.write)(result)
 
