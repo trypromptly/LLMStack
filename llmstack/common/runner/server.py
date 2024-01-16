@@ -197,6 +197,9 @@ class Runner(RunnerServicer):
             guarded_unpack_sequence,
             safe_builtins
         )
+        from google.protobuf.struct_pb2 import Struct, Value
+        from google.protobuf.json_format import ParseDict
+        from google.protobuf.json_format import MessageToJson
 
         class CustomPrint(object):
             def __init__(self):
@@ -247,7 +250,7 @@ class Runner(RunnerServicer):
             m = importlib.import_module(name)
             return m
 
-        def execute_restricted_code(source_code):
+        async def execute_restricted_code(source_code, input_data={}):
             errors = None
             allowed_modules = {}
             for module in []:
@@ -276,26 +279,56 @@ class Runner(RunnerServicer):
             builtins["setattr"] = setattr
 
             restricted_globals = dict(__builtins__=builtins)
-            code_exec_result = {'result': None}
+            local_variables = {**input_data}
             try:
-                exec(code, restricted_globals, code_exec_result)
+                exec(code, restricted_globals, local_variables)
             except Exception as e:
                 errors = f"error: {e}"
 
-            result = code_exec_result.get('result', None)
-            logs = custom_print.lines
-
+            local_variables = {
+                k: v for k, v in local_variables.items() if isinstance(v, (int, float, str, bool, list, dict, tuple, type(None), Value, Struct))}
             # Return the result and any printed output
-            return result, logs, errors
+            return local_variables, custom_print.lines, errors
 
-        result, stdout, stderr = execute_restricted_code(
-            request.code)
+        yield RestrictedPythonCodeRunnerResponse(
+            state=RemoteBrowserState.RUNNING)
+
+        with futures.ThreadPoolExecutor() as executor:
+            def run_async_code(loop):
+                asyncio.set_event_loop(loop)
+                input_data = {}
+                # Convert Protobuf Message to dict
+                if isinstance(input_data, Struct):
+                    try:
+                        input_data = json.loads(
+                            MessageToJson(request.input_data))
+                    except Exception as e:
+                        return None, [], str(e)
+
+                return loop.run_until_complete(execute_restricted_code(
+                    request.source_code))
+
+            # Create a new event loop that will be run in a separate thread
+            new_loop = asyncio.new_event_loop()
+            # Submit the function to the executor and get a Future object
+            future = executor.submit(run_async_code, new_loop)
+            # Wait for the future to complete and get the return value
+            try:
+                result, stdout, stderr = future.result(
+                    timeout=min(request.timeout_secs if request.timeout_secs else 30, 30))
+
+            except Exception as e:
+                logger.error(e)
+                result, stdout, stderr = None, [], str(e)
+
         response = RestrictedPythonCodeRunnerResponse(
-            exit_code=1,
+            exit_code=0,
             stdout=stdout,
             stderr=stderr,
-            result=json.dumps(result),
+            local_variables=ParseDict(result, Struct()) if (
+                result and isinstance(result, dict) and len(result.keys()) > 0) else None,
             state=RemoteBrowserState.TERMINATED)
+
         yield response
 
 
