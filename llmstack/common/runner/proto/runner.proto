@@ -124,7 +124,7 @@ message RestrictedPythonCodeRunnerResponse {
   RemoteBrowserState state = 1; // state of runner
   google.protobuf.Struct local_variables = 2; // local variable after running code
   repeated string stdout = 3; // stdout of code
-  repeated string stderr = 4; // stderr of code
+  string stderr = 4; // stderr of code
   int32 exit_code = 5; // exit code of code
 }
 
