@@ -10,10 +10,17 @@ from stability_sdk import client
 
 from llmstack.common.utils.utils import get_key_or_raise
 from llmstack.processors.providers.api_processor_interface import (
-    IMAGE_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    IMAGE_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
-from .utils import (GuidancePreset, Sampler, get_guidance_preset_enum,
-                    get_sampler_grpc_enum)
+from .utils import (
+    GuidancePreset,
+    Sampler,
+    get_guidance_preset_enum,
+    get_sampler_grpc_enum,
+)
 
 logger = logging.getLogger(__name__)
 

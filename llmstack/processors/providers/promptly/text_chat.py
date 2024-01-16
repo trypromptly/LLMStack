@@ -14,7 +14,9 @@ from llmstack.apps.schemas import OutputTemplate
 from llmstack.datasources.models import DataSource
 from llmstack.datasources.types import DataSourceTypeFactory
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

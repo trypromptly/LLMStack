@@ -8,9 +8,11 @@ from psycopg2.extras import Range
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
-from llmstack.common.blocks.data.store.postgres import (PostgresConfiguration,
-                                                        PostgresOutput,
-                                                        get_pg_connection)
+from llmstack.common.blocks.data.store.postgres import (
+    PostgresConfiguration,
+    PostgresOutput,
+    get_pg_connection,
+)
 
 
 class PostgresReaderInput(BaseSchema):

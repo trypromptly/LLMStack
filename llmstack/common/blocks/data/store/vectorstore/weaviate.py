@@ -11,7 +11,10 @@ from pydantic import BaseModel
 from weaviate.util import get_valid_uuid
 
 from llmstack.common.blocks.data.store.vectorstore import (
-    Document, DocumentQuery, VectorStoreInterface)
+    Document,
+    DocumentQuery,
+    VectorStoreInterface,
+)
 
 logger = logging.getLogger(__name__)
 

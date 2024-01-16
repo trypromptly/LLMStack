@@ -1,8 +1,18 @@
 from django.contrib import admin
 
-from .models import (App, AppData, AppHub, AppRunGraphEntry, AppSession,
-                     AppSessionData, AppTemplate, AppTemplateCategory, AppType,
-                     TestCase, TestSet)
+from .models import (
+    App,
+    AppData,
+    AppHub,
+    AppRunGraphEntry,
+    AppSession,
+    AppSessionData,
+    AppTemplate,
+    AppTemplateCategory,
+    AppType,
+    TestCase,
+    TestSet,
+)
 
 
 class AppHubAdmin(admin.ModelAdmin):

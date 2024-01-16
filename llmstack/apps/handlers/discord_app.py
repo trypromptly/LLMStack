@@ -10,8 +10,9 @@ from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor
 from llmstack.play.actors.output import OutputActor
 from llmstack.play.utils import convert_template_vars_from_legacy_format
-from llmstack.processors.providers.discord.send_message import \
-    DiscordSendMessageProcessor
+from llmstack.processors.providers.discord.send_message import (
+    DiscordSendMessageProcessor,
+)
 
 logger = logging.getLogger(__name__)
 

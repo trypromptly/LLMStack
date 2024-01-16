@@ -9,8 +9,9 @@ class ConnectionsConfig(AppConfig):
     def ready(self) -> None:
         from allauth.socialaccount import providers
 
-        from llmstack.connections.handlers.custom_google_provider.provider import \
-            CustomGoogleProvider
+        from llmstack.connections.handlers.custom_google_provider.provider import (
+            CustomGoogleProvider,
+        )
 
         providers.registry.register(CustomGoogleProvider)
 

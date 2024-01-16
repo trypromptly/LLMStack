@@ -7,7 +7,10 @@ from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import (
-    CHAT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    CHAT_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 
 class ChatCompletionsModel(str, Enum):

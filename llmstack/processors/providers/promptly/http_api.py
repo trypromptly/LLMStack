@@ -10,7 +10,9 @@ from requests.auth import HTTPBasicAuth
 
 from llmstack.common.blocks.base.processor import Schema
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, hydrate_input)
+    ApiProcessorInterface,
+    hydrate_input,
+)
 
 logger = logging.getLogger(__name__)
 

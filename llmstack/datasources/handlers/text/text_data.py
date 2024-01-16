@@ -4,8 +4,11 @@ from typing import List
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.datasources.handlers.datasource_processor import (
-    WEAVIATE_SCHEMA, DataSourceEntryItem, DataSourceProcessor,
-    DataSourceSchema)
+    WEAVIATE_SCHEMA,
+    DataSourceEntryItem,
+    DataSourceProcessor,
+    DataSourceSchema,
+)
 
 logger = logging.getLogger(__file__)
 

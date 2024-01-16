@@ -1,7 +1,10 @@
 import unittest
 
-from llmstack.common.utils.splitter import (CharacterTextSplitter,
-                                            CSVTextSplitter, HtmlSplitter)
+from llmstack.common.utils.splitter import (
+    CharacterTextSplitter,
+    CSVTextSplitter,
+    HtmlSplitter,
+)
 
 # Unitest for CSVTextSplitter
 

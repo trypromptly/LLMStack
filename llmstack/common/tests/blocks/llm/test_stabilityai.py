@@ -2,9 +2,11 @@ import os
 import unittest
 
 from llmstack.common.blocks.llm.stabilityai import (
-    StabilityAIGrpcInputEnvironment, StabilityAIGrpcProcessorConfiguration,
+    StabilityAIGrpcInputEnvironment,
+    StabilityAIGrpcProcessorConfiguration,
     StabilityAIText2ImageGrpcProcessor,
-    StabilityAIText2ImageGrpcProcessorInput)
+    StabilityAIText2ImageGrpcProcessorInput,
+)
 
 
 class StabilityAIText2ImageGrpcProcessorTestCase(unittest.TestCase):

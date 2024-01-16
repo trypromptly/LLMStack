@@ -1,7 +1,9 @@
 import logging
 
-from llmstack.apps.app_session_utils import (create_app_session_data,
-                                             get_app_session_data)
+from llmstack.apps.app_session_utils import (
+    create_app_session_data,
+    get_app_session_data,
+)
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.input import InputActor

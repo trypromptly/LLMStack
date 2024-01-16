@@ -7,10 +7,15 @@ from pydantic import Field, confloat, conint
 from llmstack.common.blocks.llm.localai import (
     LocalAICompletionsAPIProcessor,
     LocalAICompletionsAPIProcessorConfiguration,
-    LocalAICompletionsAPIProcessorInput, LocalAICompletionsAPIProcessorOutput)
+    LocalAICompletionsAPIProcessorInput,
+    LocalAICompletionsAPIProcessorOutput,
+)
 from llmstack.common.blocks.llm.openai import OpenAIAPIInputEnvironment
 from llmstack.processors.providers.api_processor_interface import (
-    TEXT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    TEXT_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

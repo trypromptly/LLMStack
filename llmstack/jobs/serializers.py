@@ -1,8 +1,7 @@
 import orjson as json
 from rest_framework import serializers
 
-from llmstack.jobs.models import (CronJob, RepeatableJob, ScheduledJob,
-                                  TaskRunLog)
+from llmstack.jobs.models import CronJob, RepeatableJob, ScheduledJob, TaskRunLog
 
 
 class TaskRunLogSerializer(serializers.ModelSerializer):

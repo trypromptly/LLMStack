@@ -3,8 +3,11 @@ import uuid
 
 from rq import get_current_job
 
-from llmstack.datasources.models import (DataSource, DataSourceEntry,
-                                         DataSourceEntryStatus)
+from llmstack.datasources.models import (
+    DataSource,
+    DataSourceEntry,
+    DataSourceEntryStatus,
+)
 from llmstack.datasources.types import DataSourceTypeFactory
 from llmstack.jobs.models import AdhocJob, TaskRunLog
 
@@ -79,10 +82,13 @@ def process_datasource_add_entry_request(
 def extract_urls_task(url):
     from urllib.parse import urlparse
 
-    from llmstack.common.utils.utils import (extract_urls_from_sitemap,
-                                             get_url_content_type,
-                                             is_sitemap_url,
-                                             is_youtube_video_url, scrape_url)
+    from llmstack.common.utils.utils import (
+        extract_urls_from_sitemap,
+        get_url_content_type,
+        is_sitemap_url,
+        is_youtube_video_url,
+        scrape_url,
+    )
 
     url_content_type = get_url_content_type(url=url)
     url_content_type_parts = url_content_type.split(";")

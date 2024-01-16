@@ -11,10 +11,13 @@ from PIL import Image
 from pydantic import Field
 from stability_sdk import client
 
-from llmstack.common.blocks.base.processor import (BaseConfiguration,
-                                                   BaseInput,
-                                                   BaseInputEnvironment,
-                                                   BaseOutputType, Schema)
+from llmstack.common.blocks.base.processor import (
+    BaseConfiguration,
+    BaseInput,
+    BaseInputEnvironment,
+    BaseOutputType,
+    Schema,
+)
 from llmstack.common.blocks.llm import LLMBaseProcessor
 
 logger = logging.getLogger(__name__)

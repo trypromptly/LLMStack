@@ -7,7 +7,9 @@ from jnpr.junos.utils.config import Config
 from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 
 class JunosCommandType(str, Enum):

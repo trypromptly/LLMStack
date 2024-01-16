@@ -1,7 +1,6 @@
 import unittest
 
-from llmstack.common.blocks.data.source.file import (File, FileConfiguration,
-                                                     FileInput)
+from llmstack.common.blocks.data.source.file import File, FileConfiguration, FileInput
 
 
 class FileTextLoaderTestCase(unittest.TestCase):

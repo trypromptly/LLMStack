@@ -7,11 +7,16 @@ from pydantic import Field
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.data.store.postgres import PostgresConfiguration
 from llmstack.common.blocks.data.store.postgres.read import (
-    PostgresReader, PostgresReaderInput)
+    PostgresReader,
+    PostgresReaderInput,
+)
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.models import Config
 from llmstack.datasources.handlers.datasource_processor import (
-    DataSourceEntryItem, DataSourceProcessor, DataSourceSchema)
+    DataSourceEntryItem,
+    DataSourceProcessor,
+    DataSourceSchema,
+)
 from llmstack.datasources.models import DataSource
 
 logger = logging.getLogger(__name__)

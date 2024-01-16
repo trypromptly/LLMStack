@@ -10,12 +10,15 @@ from llmstack.common.blocks.llm.localai import (
     LocalAIChatCompletionsAPIProcessor,
     LocalAIChatCompletionsAPIProcessorConfiguration,
     LocalAIChatCompletionsAPIProcessorInput,
-    LocalAIChatCompletionsAPIProcessorOutput)
-from llmstack.common.blocks.llm.openai import \
-    FunctionCall as OpenAIFunctionCall
+    LocalAIChatCompletionsAPIProcessorOutput,
+)
+from llmstack.common.blocks.llm.openai import FunctionCall as OpenAIFunctionCall
 from llmstack.common.blocks.llm.openai import OpenAIAPIInputEnvironment
 from llmstack.processors.providers.api_processor_interface import (
-    CHAT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    CHAT_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,10 @@
 import unittest
 
 from llmstack.common.blocks.data.store.sqlite import SQLiteConfiguration
-from llmstack.common.blocks.data.store.sqlite.read import (SQLiteReader,
-                                                           SQLiteReaderInput)
+from llmstack.common.blocks.data.store.sqlite.read import (
+    SQLiteReader,
+    SQLiteReaderInput,
+)
 
 
 class SqliteReadTest(unittest.TestCase):

@@ -17,15 +17,19 @@ from playwright.async_api import async_playwright
 
 from llmstack.common.runner.display import VirtualDisplayPool
 from llmstack.common.runner.playwright.browser import Playwright
-from llmstack.common.runner.proto.runner_pb2 import (TERMINATE,
-                                                     PlaywrightBrowserRequest,
-                                                     PlaywrightBrowserResponse,
-                                                     RemoteBrowserRequest,
-                                                     RemoteBrowserResponse,
-                                                     RemoteBrowserSession,
-                                                     RemoteBrowserState)
+from llmstack.common.runner.proto.runner_pb2 import (
+    TERMINATE,
+    PlaywrightBrowserRequest,
+    PlaywrightBrowserResponse,
+    RemoteBrowserRequest,
+    RemoteBrowserResponse,
+    RemoteBrowserSession,
+    RemoteBrowserState,
+)
 from llmstack.common.runner.proto.runner_pb2_grpc import (
-    RunnerServicer, add_RunnerServicer_to_server)
+    RunnerServicer,
+    add_RunnerServicer_to_server,
+)
 
 logger = logging.getLogger(__name__)
 

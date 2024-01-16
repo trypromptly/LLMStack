@@ -8,13 +8,14 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import "ace-builds/src-noconflict/mode-yaml";
-import "ace-builds/src-noconflict/theme-dracula";
 import yaml from "js-yaml";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import AceEditor from "react-ace";
 import { axios } from "../../data/axios";
+
+import "ace-builds/src-noconflict/mode-yaml";
+import "ace-builds/src-noconflict/theme-dracula";
 
 function AppDataModal({ open, setOpen, data }) {
   const style = {

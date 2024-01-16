@@ -5,9 +5,14 @@ from typing import List
 import weaviate
 
 from llmstack.datasources.handlers.datasource_processor import (
-    DataSourceEntryItem, DataSourceProcessor)
-from llmstack.datasources.models import (DataSource, DataSourceEntry,
-                                         DataSourceEntryStatus)
+    DataSourceEntryItem,
+    DataSourceProcessor,
+)
+from llmstack.datasources.models import (
+    DataSource,
+    DataSourceEntry,
+    DataSourceEntryStatus,
+)
 from llmstack.datasources.types import DataSourceTypeFactory
 
 logger = logging.getLogger(__name__)
@@ -36,7 +41,7 @@ def delete_data_entry_task(
         entry_data.delete()
     except Exception as e:
         logger.exception(
-            f"Error deleting data_source_entry: %s" % str(entry_data.name),
+            "Error deleting data_source_entry: %s" % str(entry_data.name),
         )
         entry_data.status = DataSourceEntryStatus.FAILED
         entry_data.config = {

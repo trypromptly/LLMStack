@@ -2,8 +2,7 @@ import json
 import unittest
 
 from llmstack.common.blocks.data.text_extractor import TextExtractorInput
-from llmstack.common.blocks.data.text_extractor.local import \
-    LocalTextExtractorProcessor
+from llmstack.common.blocks.data.text_extractor.local import LocalTextExtractorProcessor
 
 
 class LocalTextExtractorProcessorTestCase(unittest.TestCase):

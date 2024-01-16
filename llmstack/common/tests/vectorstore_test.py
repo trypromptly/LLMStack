@@ -1,8 +1,7 @@
 import os
 import unittest
 
-from llmstack.common.blocks.data.store.vectorstore import (Document,
-                                                           DocumentQuery)
+from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
 from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.blocks.data.store.vectorstore.weaviate import Weaviate
 

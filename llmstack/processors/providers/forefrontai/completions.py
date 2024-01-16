@@ -4,7 +4,9 @@ from typing import Any, List, Optional
 from pydantic import BaseModel, Field
 
 from llmstack.processors.providers.api_processor_interface import (
-    TEXT_WIDGET_NAME, ApiProcessorInterface)
+    TEXT_WIDGET_NAME,
+    ApiProcessorInterface,
+)
 
 logger = logging.getLogger(__name__)
 

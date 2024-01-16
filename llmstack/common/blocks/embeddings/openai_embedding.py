@@ -6,12 +6,17 @@ from typing import Any, Dict, Generic, List, Optional
 
 from pydantic import Field
 
-from llmstack.common.blocks.base.processor import (BaseConfiguration,
-                                                   BaseConfigurationType,
-                                                   BaseInput, BaseInputType,
-                                                   BaseOutput, BaseOutputType,
-                                                   CacheManager,
-                                                   ProcessorInterface, Schema)
+from llmstack.common.blocks.base.processor import (
+    BaseConfiguration,
+    BaseConfigurationType,
+    BaseInput,
+    BaseInputType,
+    BaseOutput,
+    BaseOutputType,
+    CacheManager,
+    ProcessorInterface,
+    Schema,
+)
 from llmstack.common.utils.utils import retrier
 
 logger = logging.getLogger(__name__)

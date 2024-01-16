@@ -8,17 +8,24 @@ from django.conf import settings
 from pydantic import BaseModel
 
 from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
-from llmstack.common.blocks.base.processor import (BaseInputType,
-                                                   ProcessorInterface)
+from llmstack.common.blocks.base.processor import BaseInputType, ProcessorInterface
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.data.store.vectorstore import (
-    Document, DocumentQuery, VectorStoreInterface)
+    Document,
+    DocumentQuery,
+    VectorStoreInterface,
+)
 from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
-from llmstack.common.blocks.data.store.vectorstore.weaviate import \
-    Weaviate as PromptlyWeaviate
+from llmstack.common.blocks.data.store.vectorstore.weaviate import (
+    Weaviate as PromptlyWeaviate,
+)
 from llmstack.common.blocks.embeddings.openai_embedding import (
-    EmbeddingAPIProvider, OpenAIEmbeddingConfiguration, OpenAIEmbeddingInput,
-    OpenAIEmbeddingOutput, OpenAIEmbeddingsProcessor)
+    EmbeddingAPIProvider,
+    OpenAIEmbeddingConfiguration,
+    OpenAIEmbeddingInput,
+    OpenAIEmbeddingOutput,
+    OpenAIEmbeddingsProcessor,
+)
 from llmstack.datasources.models import DataSource
 
 logger = logging.getLogger(__name__)

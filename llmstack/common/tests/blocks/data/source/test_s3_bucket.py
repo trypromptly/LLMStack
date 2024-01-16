@@ -2,7 +2,10 @@ import os
 import unittest
 
 from llmstack.common.blocks.data.source.s3_bucket import (
-    S3Bucket, S3BucketConfiguration, S3BucketInput)
+    S3Bucket,
+    S3BucketConfiguration,
+    S3BucketInput,
+)
 
 
 class S3BucketTestCase(unittest.TestCase):

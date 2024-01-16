@@ -4,7 +4,6 @@ import { Avatar, Box, Chip, Fab, Grid, Stack, Typography } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Form from "@rjsf/mui";
 import validator from "@rjsf/validator-ajv8";
-import "ace-builds/src-noconflict/mode-json";
 import { Liquid } from "liquidjs";
 import { get } from "lodash";
 import React, { useEffect, useRef, useState } from "react";
@@ -20,6 +19,8 @@ import "./AgentRenderer.css";
 import { LexicalRenderer } from "./lexical/LexicalRenderer";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { ProviderIcon } from "./ProviderIcon";
+
+import "ace-builds/src-noconflict/mode-json";
 
 function CustomFileWidget(props) {
   return <FileUploadWidget {...props} />;

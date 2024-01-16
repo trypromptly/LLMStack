@@ -5,14 +5,16 @@ from pydantic import Field
 
 from llmstack.base.models import Profile
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
-from llmstack.common.blocks.data.source.uri import (Uri, UriConfiguration,
-                                                    UriInput)
+from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.datasources.handlers.datasource_processor import (
-    WEAVIATE_SCHEMA, DataSourceEntryItem, DataSourceProcessor,
-    DataSourceSchema)
+    WEAVIATE_SCHEMA,
+    DataSourceEntryItem,
+    DataSourceProcessor,
+    DataSourceSchema,
+)
 from llmstack.datasources.models import DataSource
 
 logger = logging.getLogger(__name__)

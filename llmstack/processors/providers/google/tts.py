@@ -6,9 +6,15 @@ from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
 from llmstack.processors.providers.api_processor_interface import (
-    AUDIO_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    AUDIO_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 from llmstack.processors.providers.google import (
-    API_KEY, get_google_credential_from_env, get_project_id_from_env)
+    API_KEY,
+    get_google_credential_from_env,
+    get_project_id_from_env,
+)
 
 SCOPES = ["https://www.googleapis.com/auth/cloud-platform"]
 

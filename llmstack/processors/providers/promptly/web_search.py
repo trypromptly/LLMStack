@@ -7,7 +7,9 @@ from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 
 class SearchEngine(str, Enum):

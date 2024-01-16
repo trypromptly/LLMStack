@@ -8,19 +8,25 @@ from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 from rq.job import Job
 
-from llmstack.apps.tasks import (delete_data_entry_task,
-                                 delete_data_source_task,
-                                 resync_data_entry_task)
+from llmstack.apps.tasks import (
+    delete_data_entry_task,
+    delete_data_source_task,
+    resync_data_entry_task,
+)
 from llmstack.datasources.handlers.datasource_processor import (
-    DataSourceEntryItem, DataSourceProcessor)
+    DataSourceEntryItem,
+    DataSourceProcessor,
+)
 from llmstack.datasources.types import DataSourceTypeFactory
 from llmstack.jobs.adhoc import ExtractURLJob
 from llmstack.jobs.models import AdhocJob
 
-from .models import (DataSource, DataSourceEntry, DataSourceEntryStatus,
-                     DataSourceType)
-from .serializers import (DataSourceEntrySerializer, DataSourceSerializer,
-                          DataSourceTypeSerializer)
+from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
+from .serializers import (
+    DataSourceEntrySerializer,
+    DataSourceSerializer,
+    DataSourceTypeSerializer,
+)
 from .tasks import extract_urls_task
 
 logger = logging.getLogger(__name__)

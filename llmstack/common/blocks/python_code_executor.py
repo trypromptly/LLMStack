@@ -4,13 +4,19 @@ from datetime import datetime
 from typing import List, Optional
 
 from RestrictedPython import compile_restricted
-from RestrictedPython.Guards import (guarded_iter_unpack_sequence,
-                                     guarded_unpack_sequence, safe_builtins)
+from RestrictedPython.Guards import (
+    guarded_iter_unpack_sequence,
+    guarded_unpack_sequence,
+    safe_builtins,
+)
 from RestrictedPython.transformer import IOPERATOR_TO_STR
 
-from llmstack.common.blocks.base.processor import (BaseConfiguration,
-                                                   BaseInput, BaseOutput,
-                                                   ProcessorInterface)
+from llmstack.common.blocks.base.processor import (
+    BaseConfiguration,
+    BaseInput,
+    BaseOutput,
+    ProcessorInterface,
+)
 
 logger = logging.getLogger(__name__)
 

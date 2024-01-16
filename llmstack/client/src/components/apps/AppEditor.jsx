@@ -1,6 +1,4 @@
 import { Box, Button, ButtonGroup, Stack, Tooltip } from "@mui/material";
-import "ace-builds/src-noconflict/mode-yaml";
-import "ace-builds/src-noconflict/theme-dracula";
 import yaml from "js-yaml";
 import { useEffect, useRef, useState } from "react";
 import AceEditor from "react-ace";
@@ -10,6 +8,9 @@ import { AppConfigEditor } from "./AppConfigEditor";
 import { AppOutputEditor } from "./AppOutputEditor";
 import { AppSaveButtons } from "./AppSaveButtons";
 import { ProcessorEditor } from "./ProcessorEditor";
+
+import "ace-builds/src-noconflict/mode-yaml";
+import "ace-builds/src-noconflict/theme-dracula";
 
 export function AppEditor(props) {
   const {

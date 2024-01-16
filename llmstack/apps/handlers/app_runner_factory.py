@@ -10,13 +10,11 @@ class AppRunerFactory:
 
             return DiscordBotRunner
         elif app_type_slug == "twilio-sms":
-            from llmstack.apps.handlers.twilio_sms_app import \
-                TwilioSmsAppRunner
+            from llmstack.apps.handlers.twilio_sms_app import TwilioSmsAppRunner
 
             return TwilioSmsAppRunner
         elif app_type_slug == "twilio-voice":
-            from llmstack.apps.handlers.twilio_voice_app import \
-                TwilioVoiceAppRunner
+            from llmstack.apps.handlers.twilio_voice_app import TwilioVoiceAppRunner
 
             return TwilioVoiceAppRunner
         elif app_type_slug == "web":

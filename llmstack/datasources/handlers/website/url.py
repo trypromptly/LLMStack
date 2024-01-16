@@ -6,12 +6,16 @@ from pydantic import Field
 from llmstack.base.models import Profile
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.common.utils.text_extract import (ExtraParams,
-                                                extract_text_from_url)
+from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
 from llmstack.common.utils.utils import extract_urls_from_sitemap
 from llmstack.datasources.handlers.datasource_processor import (
-    WEAVIATE_SCHEMA, DataSourceEntryItem, DataSourceProcessor,
-    DataSourceSchema, DataSourceSyncConfiguration, DataSourceSyncType)
+    WEAVIATE_SCHEMA,
+    DataSourceEntryItem,
+    DataSourceProcessor,
+    DataSourceSchema,
+    DataSourceSyncConfiguration,
+    DataSourceSyncType,
+)
 from llmstack.datasources.models import DataSource
 
 logger = logging.getLogger(__file__)

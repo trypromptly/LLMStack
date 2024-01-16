@@ -5,12 +5,18 @@ from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.common.blocks.llm.cohere import (
-    CohereAPIInputEnvironment, CohereGenerateAPIProcessor,
-    CohereGenerateAPIProcessorConfiguration, CohereGenerateAPIProcessorInput,
-    CohereGenerateAPIProcessorOutput, CohereGenerateAPIProcessorOutputMetadata,
-    GenerateModel)
+    CohereAPIInputEnvironment,
+    CohereGenerateAPIProcessor,
+    CohereGenerateAPIProcessorConfiguration,
+    CohereGenerateAPIProcessorInput,
+    CohereGenerateAPIProcessorOutput,
+    CohereGenerateAPIProcessorOutputMetadata,
+    GenerateModel,
+)
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

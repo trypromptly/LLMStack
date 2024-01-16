@@ -7,17 +7,22 @@ import requests
 from pydantic import root_validator
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
-from llmstack.common.blocks.data.source import (DataSourceConfigurationSchema,
-                                                DataSourceInputSchema,
-                                                DataSourceOutputSchema)
+from llmstack.common.blocks.data.source import (
+    DataSourceConfigurationSchema,
+    DataSourceInputSchema,
+    DataSourceOutputSchema,
+)
 from llmstack.common.blocks.data.text_extractor import TextExtractorInput
-from llmstack.common.blocks.data.text_extractor.local import \
-    LocalTextExtractorProcessor
+from llmstack.common.blocks.data.text_extractor.local import LocalTextExtractorProcessor
 from llmstack.common.blocks.data.text_extractor.whisper import (
-    WhisperTextExtractorInput, WhisperTextExtractorProcessor)
-from llmstack.common.utils.text_extract import (get_url_content_type,
-                                                is_youtube_video_url,
-                                                run_url_spider_in_process)
+    WhisperTextExtractorInput,
+    WhisperTextExtractorProcessor,
+)
+from llmstack.common.utils.text_extract import (
+    get_url_content_type,
+    is_youtube_video_url,
+    run_url_spider_in_process,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -12,9 +12,10 @@ from google.generativeai.types import content_types
 from pydantic import BaseModel, Field
 
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
-from llmstack.processors.providers.google import (
-    API_KEY, get_google_credential_from_env)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
+from llmstack.processors.providers.google import API_KEY, get_google_credential_from_env
 
 logger = logging.getLogger(__name__)
 

@@ -5,8 +5,10 @@ import uuid
 import requests
 from django.contrib.auth.models import AnonymousUser, User
 
-from llmstack.apps.app_session_utils import (create_agent_app_session_data,
-                                             get_agent_app_session_data)
+from llmstack.apps.app_session_utils import (
+    create_agent_app_session_data,
+    get_agent_app_session_data,
+)
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.apps.integration_configs import SlackIntegrationConfig
 from llmstack.play.actor import ActorConfig
@@ -15,8 +17,7 @@ from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor
 from llmstack.play.actors.output import OutputActor
 from llmstack.play.utils import convert_template_vars_from_legacy_format
-from llmstack.processors.providers.slack.post_message import \
-    SlackPostMessageProcessor
+from llmstack.processors.providers.slack.post_message import SlackPostMessageProcessor
 
 logger = logging.getLogger(__name__)
 

@@ -13,8 +13,10 @@ import requests
 from django.conf import settings
 from pydantic import BaseModel
 
-from llmstack.common.utils.crawlers import (run_sitemap_spider_in_process,
-                                            run_url_spider_in_process)
+from llmstack.common.utils.crawlers import (
+    run_sitemap_spider_in_process,
+    run_url_spider_in_process,
+)
 
 logger = logging.getLogger(__name__)
 

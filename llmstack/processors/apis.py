@@ -7,8 +7,12 @@ from collections import namedtuple
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Max
-from django.http import (Http404, HttpResponseForbidden, HttpResponseNotFound,
-                         StreamingHttpResponse)
+from django.http import (
+    Http404,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    StreamingHttpResponse,
+)
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from flags.state import flag_enabled
@@ -25,8 +29,7 @@ from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor, InputRequest
 from llmstack.play.actors.output import OutputActor
 from llmstack.play.coordinator import Coordinator
-from llmstack.processors.providers.api_processor_interface import \
-    ApiProcessorInterface
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 
 from .models import Endpoint, RunEntry
 from .providers.api_processors import ApiProcessorFactory

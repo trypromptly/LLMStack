@@ -5,8 +5,7 @@ from collections import defaultdict
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
-from llmstack.common.blocks.data.store.sqlite import (SQLiteConfiguration,
-                                                      SQLiteOutput)
+from llmstack.common.blocks.data.store.sqlite import SQLiteConfiguration, SQLiteOutput
 
 
 class SQLiteReaderInput(BaseSchema):

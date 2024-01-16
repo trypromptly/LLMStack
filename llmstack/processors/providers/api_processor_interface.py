@@ -7,10 +7,12 @@ import ujson as json
 from pydantic import AnyUrl, BaseModel
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.common.blocks.base.processor import (BaseConfigurationType,
-                                                   BaseInputType,
-                                                   BaseOutputType,
-                                                   ProcessorInterface)
+from llmstack.common.blocks.base.processor import (
+    BaseConfigurationType,
+    BaseInputType,
+    BaseOutputType,
+    ProcessorInterface,
+)
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput

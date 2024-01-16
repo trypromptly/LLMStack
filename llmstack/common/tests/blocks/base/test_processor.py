@@ -2,12 +2,16 @@ import unittest
 
 from pydantic import BaseModel
 
-from llmstack.common.blocks.base.processor import (BaseConfiguration,
-                                                   BaseConfigurationType,
-                                                   BaseInput, BaseInputType,
-                                                   BaseOutput, BaseOutputType,
-                                                   BaseProcessor,
-                                                   ProcessorInterface)
+from llmstack.common.blocks.base.processor import (
+    BaseConfiguration,
+    BaseConfigurationType,
+    BaseInput,
+    BaseInputType,
+    BaseOutput,
+    BaseOutputType,
+    BaseProcessor,
+    ProcessorInterface,
+)
 
 
 class TestInputModel(BaseModel):

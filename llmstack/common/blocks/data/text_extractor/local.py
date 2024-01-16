@@ -1,9 +1,11 @@
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.data import DataDocument
 from llmstack.common.blocks.data.text_extractor import (
-    TextExtractorConfiguration, TextExtractorInput, TextExtractorOutput)
-from llmstack.common.utils.text_extract import (ExtraParams,
-                                                extract_text_elements)
+    TextExtractorConfiguration,
+    TextExtractorInput,
+    TextExtractorOutput,
+)
+from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 
 
 class LocalTextExtractorProcessor(

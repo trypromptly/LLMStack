@@ -11,9 +11,14 @@ from pydantic import Field
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 from llmstack.processors.providers.promptly.web_browser import (
-    BrowserInstruction, BrowserInstructionType, WebBrowserOutput)
+    BrowserInstruction,
+    BrowserInstructionType,
+    WebBrowserOutput,
+)
 
 logger = logging.getLogger(__name__)
 

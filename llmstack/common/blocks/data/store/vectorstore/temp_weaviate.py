@@ -3,11 +3,11 @@ import logging
 import uuid
 from typing import Any
 
-from llmstack.common.blocks.data.store.vectorstore import (Document,
-                                                           DocumentQuery)
+from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
 from llmstack.common.blocks.data.store.vectorstore.weaviate import Weaviate
-from llmstack.common.blocks.data.store.vectorstore.weaviate import \
-    WeaviateConfiguration as BaseWeaviateConfiguration
+from llmstack.common.blocks.data.store.vectorstore.weaviate import (
+    WeaviateConfiguration as BaseWeaviateConfiguration,
+)
 
 logger = logging.getLogger(__name__)
 

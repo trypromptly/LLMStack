@@ -6,14 +6,20 @@ from asgiref.sync import async_to_sync
 from pydantic import Field, conint
 
 from llmstack.common.blocks.llm.openai import (
-    OpenAIAPIInputEnvironment, OpenAIFile, OpenAIImageVariationsProcessor,
+    OpenAIAPIInputEnvironment,
+    OpenAIFile,
+    OpenAIImageVariationsProcessor,
     OpenAIImageVariationsProcessorConfiguration,
-    OpenAIImageVariationsProcessorInput, OpenAIImageVariationsProcessorOutput,
-    Size)
-from llmstack.common.utils.utils import (get_key_or_raise,
-                                         validate_parse_data_uri)
+    OpenAIImageVariationsProcessorInput,
+    OpenAIImageVariationsProcessorOutput,
+    Size,
+)
+from llmstack.common.utils.utils import get_key_or_raise, validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
-    IMAGE_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    IMAGE_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

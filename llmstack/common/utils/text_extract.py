@@ -16,9 +16,11 @@ from unstructured.partition.pdf import partition_pdf
 from unstructured.partition.pptx import partition_pptx
 from unstructured.partition.text import partition_text
 
-from llmstack.common.utils.audio_loader import (partition_audio,
-                                                partition_video,
-                                                partition_youtube_audio)
+from llmstack.common.utils.audio_loader import (
+    partition_audio,
+    partition_video,
+    partition_youtube_audio,
+)
 from llmstack.common.utils.crawlers import run_url_spider_in_process
 
 from . import prequests as requests

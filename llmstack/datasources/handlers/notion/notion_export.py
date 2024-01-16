@@ -10,8 +10,11 @@ from pydantic import Field
 from llmstack.base.models import Profile
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.datasources.handlers.datasource_processor import (
-    WEAVIATE_SCHEMA, DataSourceEntryItem, DataSourceProcessor,
-    DataSourceSchema)
+    WEAVIATE_SCHEMA,
+    DataSourceEntryItem,
+    DataSourceProcessor,
+    DataSourceSchema,
+)
 from llmstack.datasources.handlers.utils import extract_documents
 from llmstack.datasources.models import DataSource
 

@@ -4,8 +4,7 @@ import os
 import unittest
 
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
-from llmstack.common.blocks.data.source.uri import (Uri, UriConfiguration,
-                                                    UriInput)
+from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
 
 
 class UriTextLoaderTestCase(unittest.TestCase):

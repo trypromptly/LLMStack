@@ -8,10 +8,13 @@ from asgiref.sync import async_to_sync
 from openai import OpenAI
 from pydantic import BaseModel, Field, confloat, conint
 
-from llmstack.common.blocks.llm.openai import \
-    OpenAIChatCompletionsAPIProcessorConfiguration
+from llmstack.common.blocks.llm.openai import (
+    OpenAIChatCompletionsAPIProcessorConfiguration,
+)
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

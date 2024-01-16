@@ -1,9 +1,11 @@
 import os
 import unittest
 
-from llmstack.common.blocks.data.source.s3_path import (S3Path,
-                                                        S3PathConfiguration,
-                                                        S3PathInput)
+from llmstack.common.blocks.data.source.s3_path import (
+    S3Path,
+    S3PathConfiguration,
+    S3PathInput,
+)
 
 
 class S3PathTestCase(unittest.TestCase):

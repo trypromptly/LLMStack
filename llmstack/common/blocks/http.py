@@ -6,9 +6,13 @@ from typing import Any, Dict, Generator, List, Optional, Union
 import requests
 from pydantic import Field, HttpUrl
 
-from llmstack.common.blocks.base.processor import (BaseConfiguration,
-                                                   BaseInput, BaseOutput,
-                                                   BaseProcessor, Schema)
+from llmstack.common.blocks.base.processor import (
+    BaseConfiguration,
+    BaseInput,
+    BaseOutput,
+    BaseProcessor,
+    Schema,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -284,7 +288,7 @@ class HttpAPIProcessor(
                 authorization.password,
             )
         elif isinstance(authorization, OAuth2):
-            raise NotImplemented()
+            raise NotImplementedError
         elif isinstance(authorization, NoAuth):
             pass
         else:

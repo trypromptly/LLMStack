@@ -5,13 +5,25 @@ from llmstack.apps.yaml_loader import get_app_template_by_slug
 from llmstack.base.models import Profile
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.processors.models import ApiBackend, Endpoint
-from llmstack.processors.serializers import (ApiBackendSerializer,
-                                             ApiProviderSerializer,
-                                             EndpointSerializer)
+from llmstack.processors.serializers import (
+    ApiBackendSerializer,
+    ApiProviderSerializer,
+    EndpointSerializer,
+)
 
-from .models import (App, AppAccessPermission, AppData, AppHub,
-                     AppRunGraphEntry, AppSession, AppTemplate,
-                     AppTemplateCategory, AppType, TestCase, TestSet)
+from .models import (
+    App,
+    AppAccessPermission,
+    AppData,
+    AppHub,
+    AppRunGraphEntry,
+    AppSession,
+    AppTemplate,
+    AppTemplateCategory,
+    AppType,
+    TestCase,
+    TestSet,
+)
 
 
 class DynamicFieldsModelSerializer(serializers.ModelSerializer):
@@ -308,9 +320,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
         )
 
     def get_template(self, obj):
-        if obj.template:
-            return AppTemplateSerializer(instance=obj.template).data
-        elif obj.template_slug is not None:
+        if obj.template_slug is not None:
             app_template = get_app_template_by_slug(obj.template_slug)
             if app_template:
                 return app_template.dict(exclude_none=True)

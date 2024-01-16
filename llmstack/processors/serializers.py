@@ -4,8 +4,7 @@ from rest_framework import serializers
 
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
-from .models import (ApiBackend, ApiProvider, Endpoint, Request, Response,
-                     RunEntry)
+from .models import ApiBackend, ApiProvider, Endpoint, Request, Response, RunEntry
 
 
 class ApiProviderSerializer(serializers.ModelSerializer):

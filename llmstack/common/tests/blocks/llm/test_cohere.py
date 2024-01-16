@@ -2,8 +2,11 @@ import os
 import unittest
 
 from llmstack.common.blocks.llm.cohere import (
-    CohereAPIInputEnvironment, CohereGenerateAPIProcessor,
-    CohereGenerateAPIProcessorConfiguration, CohereGenerateAPIProcessorInput)
+    CohereAPIInputEnvironment,
+    CohereGenerateAPIProcessor,
+    CohereGenerateAPIProcessorConfiguration,
+    CohereGenerateAPIProcessorInput,
+)
 
 
 class CohereGenerateAPIProcessorTestCase(unittest.TestCase):

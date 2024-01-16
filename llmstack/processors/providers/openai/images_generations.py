@@ -7,7 +7,10 @@ from asgiref.sync import async_to_sync
 from pydantic import Field, conint
 
 from llmstack.processors.providers.api_processor_interface import (
-    IMAGE_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    IMAGE_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

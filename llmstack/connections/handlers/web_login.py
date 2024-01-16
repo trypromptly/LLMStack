@@ -8,9 +8,13 @@ from pydantic import Field
 
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
-from llmstack.connections.models import (Connection, ConnectionActivationInput,
-                                         ConnectionActivationOutput,
-                                         ConnectionStatus, ConnectionType)
+from llmstack.connections.models import (
+    Connection,
+    ConnectionActivationInput,
+    ConnectionActivationOutput,
+    ConnectionStatus,
+    ConnectionType,
+)
 from llmstack.connections.types import ConnectionTypeInterface
 
 logger = logging.getLogger(__name__)

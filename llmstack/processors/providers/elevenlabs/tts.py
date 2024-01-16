@@ -8,7 +8,10 @@ from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
 from llmstack.processors.providers.api_processor_interface import (
-    AUDIO_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    AUDIO_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -9,15 +9,18 @@ import ffmpeg
 from playwright.async_api import Page, async_playwright
 
 from llmstack.common.runner.proto import runner_pb2
-from llmstack.common.runner.proto.runner_pb2 import (TERMINATE, BrowserButton,
-                                                     BrowserContent,
-                                                     BrowserInputField,
-                                                     BrowserLink,
-                                                     BrowserSelectField,
-                                                     BrowserTextAreaField,
-                                                     PlaywrightBrowserRequest,
-                                                     PlaywrightBrowserResponse,
-                                                     RemoteBrowserState)
+from llmstack.common.runner.proto.runner_pb2 import (
+    TERMINATE,
+    BrowserButton,
+    BrowserContent,
+    BrowserInputField,
+    BrowserLink,
+    BrowserSelectField,
+    BrowserTextAreaField,
+    PlaywrightBrowserRequest,
+    PlaywrightBrowserResponse,
+    RemoteBrowserState,
+)
 
 logger = logging.getLogger(__name__)
 

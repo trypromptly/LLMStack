@@ -8,9 +8,12 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.http import HttpRequest, QueryDict
 
 from llmstack.connections.actors import ConnectionActivationActor
-from llmstack.connections.models import (Connection, ConnectionActivationInput,
-                                         ConnectionActivationOutput,
-                                         ConnectionStatus)
+from llmstack.connections.models import (
+    Connection,
+    ConnectionActivationInput,
+    ConnectionActivationOutput,
+    ConnectionStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +47,6 @@ def _build_request_from_input(post_data, scope):
         .decode("utf-8")
         .split(",")[0]
         .strip(),
-        "CONTENT_TYPE": "application/json",
     }
     http_request.method = method
     http_request.GET = query_params

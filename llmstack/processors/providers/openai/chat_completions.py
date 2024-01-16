@@ -7,15 +7,18 @@ from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field, confloat, conint
 
 from llmstack.common.blocks.llm.openai import ChatCompletionsModel
-from llmstack.common.blocks.llm.openai import \
-    FunctionCall as OpenAIFunctionCall
+from llmstack.common.blocks.llm.openai import FunctionCall as OpenAIFunctionCall
 from llmstack.common.blocks.llm.openai import (
     OpenAIChatCompletionsAPIProcessor,
     OpenAIChatCompletionsAPIProcessorConfiguration,
     OpenAIChatCompletionsAPIProcessorInput,
-    OpenAIChatCompletionsAPIProcessorOutput)
+    OpenAIChatCompletionsAPIProcessorOutput,
+)
 from llmstack.processors.providers.api_processor_interface import (
-    CHAT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+    CHAT_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,9 @@ import os
 import unittest
 
 from llmstack.common.blocks.data.text_extractor.whisper import (
-    WhisperTextExtractorInput, WhisperTextExtractorProcessor)
+    WhisperTextExtractorInput,
+    WhisperTextExtractorProcessor,
+)
 
 
 class WhisperTextExtractorProcessorTestCase(unittest.TestCase):

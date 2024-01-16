@@ -8,10 +8,12 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.timezone import now
 
-from llmstack.apps.integration_configs import (DiscordIntegrationConfig,
-                                               SlackIntegrationConfig,
-                                               TwilioIntegrationConfig,
-                                               WebIntegrationConfig)
+from llmstack.apps.integration_configs import (
+    DiscordIntegrationConfig,
+    SlackIntegrationConfig,
+    TwilioIntegrationConfig,
+    WebIntegrationConfig,
+)
 from llmstack.base.models import Profile
 from llmstack.common.utils.db_models import ArrayField
 from llmstack.processors.models import Endpoint

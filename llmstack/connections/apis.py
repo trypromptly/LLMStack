@@ -9,7 +9,9 @@ from rest_framework.response import Response
 
 from llmstack.base.models import Profile
 from llmstack.connections.types import (
-    ConnectionTypeFactory, get_connection_type_interface_subclasses)
+    ConnectionTypeFactory,
+    get_connection_type_interface_subclasses,
+)
 
 from .models import Connection, ConnectionType
 

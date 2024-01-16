@@ -5,9 +5,11 @@ from pydantic import root_validator
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.data import DataDocument
-from llmstack.common.blocks.data.source import (DataSourceConfigurationSchema,
-                                                DataSourceInputSchema,
-                                                DataSourceOutputSchema)
+from llmstack.common.blocks.data.source import (
+    DataSourceConfigurationSchema,
+    DataSourceInputSchema,
+    DataSourceOutputSchema,
+)
 
 
 class DirectoryTextLoaderInputSchema(DataSourceInputSchema):

@@ -11,7 +11,7 @@ class BasicHTTPAuthWithRedis:
 
     def __init__(self, src=None):
         try:
-            import redis
+            import redis  # noqa
         except ImportError:
             logger.error("Unable to load redis module")
             sys.exit()

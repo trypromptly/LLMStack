@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 
-from llmstack.processors.providers.api_processor_interface import \
-    ApiProcessorInterface
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 
 
 class PredictInput(BaseModel):

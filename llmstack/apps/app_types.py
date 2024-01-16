@@ -3,6 +3,7 @@ import uuid
 from llmstack.apps.models import App, AppType
 
 from .types.app_type_interface import AppTypeInterface
+
 # Import all app types here
 from .types.chat import ChatApp
 from .types.discord import DiscordApp

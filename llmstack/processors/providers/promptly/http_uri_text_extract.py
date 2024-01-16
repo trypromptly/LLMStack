@@ -4,14 +4,14 @@ from typing import List, Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field, conint
 
-from llmstack.common.blocks.data.store.vectorstore import (Document,
-                                                           DocumentQuery)
+from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
 from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.common.utils.text_extract import (ExtraParams,
-                                                extract_text_from_url)
+from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

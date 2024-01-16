@@ -8,7 +8,9 @@ from pydantic import Field, root_validator
 
 from llmstack.common.utils.prequests import post
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -4,12 +4,18 @@ from typing import Any, List, Optional
 
 from asgiref.sync import async_to_sync
 
-from llmstack.common.blocks.http import (BearerTokenAuth, HttpAPIProcessor,
-                                         HttpAPIProcessorInput, HttpMethod,
-                                         JsonBody)
+from llmstack.common.blocks.http import (
+    BearerTokenAuth,
+    HttpAPIProcessor,
+    HttpAPIProcessorInput,
+    HttpMethod,
+    JsonBody,
+)
 from llmstack.play.actor import BookKeepingData
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 

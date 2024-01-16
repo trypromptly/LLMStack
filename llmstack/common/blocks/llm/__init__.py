@@ -1,10 +1,12 @@
 import logging
 
-from llmstack.common.blocks.base.processor import (BaseConfigurationType,
-                                                   BaseInputType,
-                                                   BaseOutputType,
-                                                   CacheManager,
-                                                   ProcessorInterface)
+from llmstack.common.blocks.base.processor import (
+    BaseConfigurationType,
+    BaseInputType,
+    BaseOutputType,
+    CacheManager,
+    ProcessorInterface,
+)
 
 LOGGER = logging.getLogger(__name__)
 

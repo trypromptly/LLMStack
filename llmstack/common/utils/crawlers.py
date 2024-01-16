@@ -13,9 +13,11 @@ from scrapy.exceptions import CloseSpider
 from scrapy.http import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule, SitemapSpider
-from scrapy_playwright.handler import (PERSISTENT_CONTEXT_PATH_KEY,
-                                       BrowserContextWrapper,
-                                       ScrapyPlaywrightDownloadHandler)
+from scrapy_playwright.handler import (
+    PERSISTENT_CONTEXT_PATH_KEY,
+    BrowserContextWrapper,
+    ScrapyPlaywrightDownloadHandler,
+)
 from twisted.internet.defer import Deferred
 from unstructured.partition.auto import partition_html
 

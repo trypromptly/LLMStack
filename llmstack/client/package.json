@@ -53,7 +53,7 @@
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
-    "format": "prettier --write --plugin=prettier-plugin-organize-imports \"src/**/*.{js,jsx,ts,tsx,json}\""
+    "format": "prettier --write --plugin=prettier-plugin-organize-imports \"src/**/*.{js,jsx,ts,tsx,json}\" --log-level=silent"
   },
   "eslintConfig": {
     "extends": [

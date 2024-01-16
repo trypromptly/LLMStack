@@ -6,7 +6,9 @@ from jinja2 import Template
 from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 
 class HTTPMethod(str, Enum):

@@ -3,8 +3,7 @@ from typing import Iterator
 from pydantic import Field
 
 from llmstack.common.blocks.base.schema import BaseSchema
-from llmstack.connections.models import (Connection, ConnectionStatus,
-                                         ConnectionType)
+from llmstack.connections.models import Connection, ConnectionStatus, ConnectionType
 from llmstack.connections.types import ConnectionTypeInterface
 
 

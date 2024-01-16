@@ -9,8 +9,9 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from django.utils import timezone
 
 from llmstack.connections.handlers import Oauth2BaseConfiguration
-from llmstack.connections.handlers.custom_google_provider.provider import \
-    CustomGoogleProvider
+from llmstack.connections.handlers.custom_google_provider.provider import (
+    CustomGoogleProvider,
+)
 from llmstack.connections.models import ConnectionType
 from llmstack.connections.types import ConnectionTypeInterface
 

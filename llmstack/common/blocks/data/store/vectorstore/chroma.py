@@ -8,7 +8,10 @@ from django.conf import settings
 from pydantic import BaseModel
 
 from llmstack.common.blocks.data.store.vectorstore import (
-    Document, DocumentQuery, VectorStoreInterface)
+    Document,
+    DocumentQuery,
+    VectorStoreInterface,
+)
 
 
 class ChromaConfiguration(BaseModel):

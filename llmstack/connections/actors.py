@@ -3,8 +3,11 @@ from typing import Iterator
 
 from pykka import ThreadingActor
 
-from llmstack.connections.models import (Connection, ConnectionActivationInput,
-                                         ConnectionStatus)
+from llmstack.connections.models import (
+    Connection,
+    ConnectionActivationInput,
+    ConnectionStatus,
+)
 from llmstack.connections.types import ConnectionTypeFactory
 
 logger = logging.getLogger(__name__)

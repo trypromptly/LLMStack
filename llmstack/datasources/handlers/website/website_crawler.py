@@ -7,8 +7,11 @@ from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.crawlers import run_url_spider_in_process
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.datasources.handlers.datasource_processor import (
-    WEAVIATE_SCHEMA, DataSourceEntryItem, DataSourceProcessor,
-    DataSourceSchema)
+    WEAVIATE_SCHEMA,
+    DataSourceEntryItem,
+    DataSourceProcessor,
+    DataSourceSchema,
+)
 
 logger = logging.getLogger(__file__)
 

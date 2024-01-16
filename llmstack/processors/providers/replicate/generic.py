@@ -4,7 +4,9 @@ from pydantic import Field
 
 from llmstack.common.utils.utils import get_key_or_raise
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 from llmstack.processors.providers.replicate.utils import fetch_data_from_api
 
 

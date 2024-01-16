@@ -12,7 +12,9 @@ from django.core.files.storage import storages
 from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface, ApiProcessorSchema)
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 generatedfiles_storage = storages["generatedfiles"]
 

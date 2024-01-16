@@ -8,7 +8,9 @@ from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.models import Config
 from llmstack.common.utils.prequests import post
 from llmstack.datasources.handlers.datasource_processor import (
-    DataSourceProcessor, DataSourceSchema)
+    DataSourceProcessor,
+    DataSourceSchema,
+)
 from llmstack.datasources.models import DataSource
 
 

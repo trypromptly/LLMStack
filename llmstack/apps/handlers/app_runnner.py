@@ -4,12 +4,14 @@ import uuid
 
 from rest_framework.request import Request
 
-from llmstack.apps.app_session_utils import (create_agent_app_session_data,
-                                             create_app_session,
-                                             create_app_session_data,
-                                             get_agent_app_session_data,
-                                             get_app_session,
-                                             get_app_session_data)
+from llmstack.apps.app_session_utils import (
+    create_agent_app_session_data,
+    create_app_session,
+    create_app_session_data,
+    get_agent_app_session_data,
+    get_app_session,
+    get_app_session_data,
+)
 from llmstack.apps.integration_configs import WebIntegrationConfig
 from llmstack.apps.models import AppVisibility
 from llmstack.base.models import Profile
@@ -20,8 +22,7 @@ from llmstack.play.actors.input import InputActor, InputRequest
 from llmstack.play.actors.output import OutputActor
 from llmstack.play.coordinator import Coordinator
 from llmstack.play.utils import convert_template_vars_from_legacy_format
-from llmstack.processors.providers.api_processor_interface import \
-    ApiProcessorInterface
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 logger = logging.getLogger(__name__)

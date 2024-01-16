@@ -5,18 +5,26 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 from pydantic import Extra, Field, confloat, conint
 
-from llmstack.common.blocks.base.processor import (BaseConfiguration,
-                                                   BaseConfigurationType,
-                                                   BaseInput,
-                                                   BaseInputEnvironment,
-                                                   BaseInputType, BaseOutput,
-                                                   BaseOutputType, Schema)
+from llmstack.common.blocks.base.processor import (
+    BaseConfiguration,
+    BaseConfigurationType,
+    BaseInput,
+    BaseInputEnvironment,
+    BaseInputType,
+    BaseOutput,
+    BaseOutputType,
+    Schema,
+)
 from llmstack.common.blocks.http import BearerTokenAuth
 from llmstack.common.blocks.http import HttpAPIError as BaseError
-from llmstack.common.blocks.http import (HttpAPIProcessor,
-                                         HttpAPIProcessorInput,
-                                         HttpAPIProcessorOutput, JsonBody,
-                                         NoAuth, RawRequestBody)
+from llmstack.common.blocks.http import (
+    HttpAPIProcessor,
+    HttpAPIProcessorInput,
+    HttpAPIProcessorOutput,
+    JsonBody,
+    NoAuth,
+    RawRequestBody,
+)
 from llmstack.common.blocks.llm import LLMBaseProcessor
 
 logger = logging.getLogger(__name__)

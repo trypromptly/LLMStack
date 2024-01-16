@@ -23,8 +23,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import "ace-builds/src-noconflict/mode-sh";
-import "ace-builds/src-noconflict/theme-chrome";
 import moment from "moment";
 import { useEffect, useMemo, useState } from "react";
 import AceEditor from "react-ace";
@@ -36,6 +34,9 @@ import { ReactComponent as TwilioIcon } from "../../assets/images/icons/twilio.s
 import { appsBriefState } from "../../data/atoms";
 import { axios } from "../../data/axios";
 import MarkdownRenderer from "./MarkdownRenderer";
+
+import "ace-builds/src-noconflict/mode-sh";
+import "ace-builds/src-noconflict/theme-chrome";
 
 const browserAndOSFromUACache = {};
 

@@ -1,8 +1,19 @@
 from django.contrib import admin
 
-from .models import (ApiBackend, ApiProvider, Endpoint,
-                     EndpointInvocationCount, Feedback, PromptHub, Request,
-                     Response, RunEntry, Share, ShareTag, VersionedEndpoint)
+from .models import (
+    ApiBackend,
+    ApiProvider,
+    Endpoint,
+    EndpointInvocationCount,
+    Feedback,
+    PromptHub,
+    Request,
+    Response,
+    RunEntry,
+    Share,
+    ShareTag,
+    VersionedEndpoint,
+)
 
 admin.site.register(ApiProvider)
 admin.site.register(ApiBackend)

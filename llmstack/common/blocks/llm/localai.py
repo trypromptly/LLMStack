@@ -6,9 +6,14 @@ from pydantic import Field, confloat, conint
 
 from llmstack.common.blocks.http import HttpAPIProcessorOutput
 from llmstack.common.blocks.llm.openai import (
-    ChatMessage, FunctionCall, OpenAIAPIProcessor,
-    OpenAIAPIProcessorConfiguration, OpenAIAPIProcessorInput,
-    OpenAIAPIProcessorOutput, OpenAIAPIProcessorOutputMetadata)
+    ChatMessage,
+    FunctionCall,
+    OpenAIAPIProcessor,
+    OpenAIAPIProcessorConfiguration,
+    OpenAIAPIProcessorInput,
+    OpenAIAPIProcessorOutput,
+    OpenAIAPIProcessorOutputMetadata,
+)
 
 logger = logging.getLogger(__name__)
 

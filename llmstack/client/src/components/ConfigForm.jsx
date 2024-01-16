@@ -1,14 +1,15 @@
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { Box, Tab } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/theme-chrome";
 import * as React from "react";
 import AceEditor from "react-ace";
 import { useRecoilState } from "recoil";
 import { Empty as EmptyComponent } from "../components/form/Empty";
 import { endpointConfigValueState } from "../data/atoms";
 import ThemedJsonForm from "./ThemedJsonForm";
+
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/theme-chrome";
 
 export function ThemedForm(props) {
   const [data, setData] = useRecoilState(endpointConfigValueState);
