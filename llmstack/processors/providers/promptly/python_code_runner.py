@@ -1,6 +1,4 @@
-import base64
 from enum import Enum
-import json
 import logging
 from typing import Dict, List, Optional
 from django.conf import settings
@@ -104,9 +102,6 @@ class PythonCodeRunner(ApiProcessorInterface[PythonCodeRunnerInput, PythonCodeRu
 
     def process(self) -> PythonCodeRunnerOutput:
         output_stream = self._output_stream
-        stdout = []
-        stderr = ''
-        result = ''
 
         input_data = get_input_dict(self._input.inputs)
         logger.info(f'input_data: {input_data}')
