@@ -145,6 +145,9 @@ scrapy-playwright = "^0.0.33"
 [tool.poetry.extras]
 networking = ["junos-eznc"]
 
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.6.0"
+
 [tool.poetry-dynamic-versioning]
 enable = true
 vcs = "git"
