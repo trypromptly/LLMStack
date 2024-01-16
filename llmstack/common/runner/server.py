@@ -199,7 +199,7 @@ class Runner(RunnerServicer):
         )
         from google.protobuf.struct_pb2 import Struct, Value
         from google.protobuf.json_format import ParseDict
-        from google.protobuf.json_format import MessageToJson
+        from google.protobuf.json_format import MessageToDict
 
         class CustomPrint(object):
             def __init__(self):
@@ -296,17 +296,8 @@ class Runner(RunnerServicer):
         with futures.ThreadPoolExecutor() as executor:
             def run_async_code(loop):
                 asyncio.set_event_loop(loop)
-                input_data = {}
-                # Convert Protobuf Message to dict
-                if isinstance(input_data, Struct):
-                    try:
-                        input_data = json.loads(
-                            MessageToJson(request.input_data))
-                    except Exception as e:
-                        return None, [], str(e)
-
                 return loop.run_until_complete(execute_restricted_code(
-                    request.source_code))
+                    request.source_code, MessageToDict(request.input_data) if request.input_data else {}))
 
             # Create a new event loop that will be run in a separate thread
             new_loop = asyncio.new_event_loop()
