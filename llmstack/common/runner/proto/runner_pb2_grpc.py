@@ -24,10 +24,10 @@ class RunnerStub(object):
             request_serializer=runner__pb2.PlaywrightBrowserRequest.SerializeToString,
             response_deserializer=runner__pb2.PlaywrightBrowserResponse.FromString,
         )
-        self.GetPythonCodeRunner = channel.unary_stream(
-            "/Runner/GetPythonCodeRunner",
-            request_serializer=runner__pb2.PythonCodeRunnerRequest.SerializeToString,
-            response_deserializer=runner__pb2.PythonCodeRunnerResponse.FromString,
+        self.GetRestrictedPythonCodeRunner = channel.unary_stream(
+            "/Runner/GetRestrictedPythonCodeRunner",
+            request_serializer=runner__pb2.RestrictedPythonCodeRunnerRequest.SerializeToString,
+            response_deserializer=runner__pb2.RestrictedPythonCodeRunnerResponse.FromString,
         )
 
 
@@ -65,10 +65,10 @@ def add_RunnerServicer_to_server(servicer, server):
             request_deserializer=runner__pb2.PlaywrightBrowserRequest.FromString,
             response_serializer=runner__pb2.PlaywrightBrowserResponse.SerializeToString,
         ),
-        "GetPythonCodeRunner": grpc.unary_stream_rpc_method_handler(
-            servicer.GetPythonCodeRunner,
-            request_deserializer=runner__pb2.PythonCodeRunnerRequest.FromString,
-            response_serializer=runner__pb2.PythonCodeRunnerResponse.SerializeToString,
+        "GetRestrictedPythonCodeRunner": grpc.unary_stream_rpc_method_handler(
+            servicer.GetRestrictedPythonCodeRunner,
+            request_deserializer=runner__pb2.RestrictedPythonCodeRunnerRequest.FromString,
+            response_serializer=runner__pb2.RestrictedPythonCodeRunnerResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler("Runner", rpc_method_handlers)
@@ -76,8 +76,6 @@ def add_RunnerServicer_to_server(servicer, server):
 
 
 # This class is part of an EXPERIMENTAL API.
-
-
 class Runner(object):
     """Generic runner service"""
 
@@ -129,6 +127,35 @@ class Runner(object):
             "/Runner/GetPlaywrightBrowser",
             runner__pb2.PlaywrightBrowserRequest.SerializeToString,
             runner__pb2.PlaywrightBrowserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
+
+    @staticmethod
+    def GetRestrictedPythonCodeRunner(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            "/Runner/GetRestrictedPythonCodeRunner",
+            runner__pb2.RestrictedPythonCodeRunnerRequest.SerializeToString,
+            runner__pb2.RestrictedPythonCodeRunnerResponse.FromString,
             options,
             channel_credentials,
             insecure,
