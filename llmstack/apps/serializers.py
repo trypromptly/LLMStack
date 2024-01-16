@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from llmstack.apps.app_templates import AppTemplateFactory
 from llmstack.apps.app_types import AppTypeFactory
 from llmstack.apps.yaml_loader import get_app_template_by_slug
 from llmstack.base.models import Profile
@@ -309,93 +308,6 @@ class AppTemplateCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = AppTemplateCategory
         fields = ['name', 'slug']
-
-
-class AppTemplateSerializer(serializers.ModelSerializer):
-    class AppTemplateAppSerializer(serializers.ModelSerializer):
-        processors = serializers.SerializerMethodField()
-        input_fields = serializers.SerializerMethodField()
-
-        def get_processors(self, obj):
-            processors = []
-            if obj.run_graph:
-                nodes = obj.run_graph.all()
-
-                entry_nodes = list(
-                    filter(
-                        lambda x: x.entry_endpoint is None, nodes,
-                    ),
-                )
-                node = entry_nodes[0].exit_endpoint if entry_nodes else None
-                while node:
-                    processors.append({
-                        'input': node.input,
-                        'config': node.config,
-                        'api_backend': ApiBackendSerializer(instance=node.api_backend).data,
-                        'processor_slug': node.api_backend.slug,
-                        'provider_slug': node.api_backend.api_provider.slug,
-                        'endpoint': str(node.uuid),
-                    })
-                    node_to_find = node
-                    edge = list(
-                        filter(
-                            lambda x: x.entry_endpoint
-                            == node_to_find, nodes,
-                        ),
-                    )[0]
-
-                    node = edge.exit_endpoint if edge else None
-            return processors
-
-        def get_input_fields(self, obj):
-            app_data = AppData.objects.filter(
-                app_uuid=obj.uuid).order_by('-created_at').first()
-            if app_data:
-                return app_data.data.get('input_fields', [])
-            return []
-
-        class Meta:
-            model = App
-            fields = [
-                'config', 'input_schema', 'type',
-                'input_ui_schema', 'output_template', 'processors',
-                'input_fields'
-            ]
-
-    app = serializers.SerializerMethodField()
-    pages = serializers.SerializerMethodField()
-    categories = AppTemplateCategorySerializer(many=True)
-
-    def get_app(self, obj):
-        hide_details = self.context.get('hide_details', True)
-        if hide_details:
-            return None
-
-        app_obj = App.objects.get(uuid=obj.app_uuid, is_cloneable=True)
-        if app_obj is None:
-            return None
-
-        return AppTemplateSerializer.AppTemplateAppSerializer(
-            instance=app_obj).data
-
-    def get_pages(self, obj):
-        hide_details = self.context.get('hide_details', True)
-        if hide_details:
-            return None
-
-        app_template_handler_cls = AppTemplateFactory.get_app_template_handler(
-            obj,
-        )
-        if app_template_handler_cls is None:
-            return []
-        return app_template_handler_cls.get_pages_schema()
-
-    class Meta:
-        model = AppTemplate
-        fields = [
-            'name', 'description', 'slug', 'app',
-            'pages', 'categories', 'example_app_uuid',
-        ]
 
 
 class AppDataSerializer(serializers.ModelSerializer):

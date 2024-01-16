@@ -56,7 +56,6 @@ from .serializers import (
     AppDataSerializer,
     AppHubSerializer,
     AppSerializer,
-    AppTemplateSerializer,
     AppTypeSerializer,
     CloneableAppSerializer,
     TestCaseSerializer,
@@ -275,12 +274,6 @@ class AppViewSet(viewsets.ViewSet):
                     page['schema'] = page['input_schema']
                     page['ui_schema'] = page['input_ui_schema']
                 json_data = object_dict
-            else:
-                object = get_object_or_404(AppTemplate, slug=slug)
-                serializer = AppTemplateSerializer(
-                    instance=object, context={'hide_details': False},
-                )
-                json_data = serializer.data
         else:
             json_data = []
             app_templates_from_yaml = get_app_templates_from_contrib()
