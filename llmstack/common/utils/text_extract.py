@@ -31,7 +31,12 @@ timeout = 100
 
 
 class ExtraParams:
-    def __init__(self, openai_key=None, azure_openai_key=None, youtube_api_key=None, connection=None):
+    def __init__(
+            self,
+            openai_key=None,
+            azure_openai_key=None,
+            youtube_api_key=None,
+            connection=None):
         self._openai_key = openai_key
         self._youtube_api_key = youtube_api_key
         self._azure_openai_key = azure_openai_key
@@ -44,14 +49,18 @@ class ExtraParams:
     @property
     def azure_openai_key(self):
         return self._azure_openai_key
-    
+
     @property
     def connection(self):
         return self._connection
 
 
 def get_url_content_type(url, connection=None):
-    response = requests.head(url, allow_redirects=True, verify=False, _connection=connection)
+    response = requests.head(
+        url,
+        allow_redirects=True,
+        verify=False,
+        _connection=connection)
 
     content_type = response.headers.get('Content-Type', '')
     return content_type
@@ -63,7 +72,12 @@ def is_youtube_video_url(url):
     return match is not None
 
 
-def extract_text_elements(mime_type, data, file_name, charset='utf-8', extra_params: Optional[ExtraParams] = None) -> List[Element]:
+def extract_text_elements(
+        mime_type,
+        data,
+        file_name,
+        charset='utf-8',
+        extra_params: Optional[ExtraParams] = None) -> List[Element]:
     data_fp = BytesIO(data)
     elements = []
     if mime_type == 'application/pdf':
@@ -99,7 +113,10 @@ def extract_text_elements(mime_type, data, file_name, charset='utf-8', extra_par
     elif mime_type == 'audio/mpeg' or mime_type == 'audio/mp3':
         audio_text = '\n\n'.join(
             partition_audio(
-                data, mime_type=mime_type, openai_key=extra_params.openai_key, file_name=file_name,
+                data,
+                mime_type=mime_type,
+                openai_key=extra_params.openai_key,
+                file_name=file_name,
             ),
         )
         elements = [
@@ -111,7 +128,10 @@ def extract_text_elements(mime_type, data, file_name, charset='utf-8', extra_par
     elif mime_type == 'video/mp4' or mime_type == 'video/mpeg':
         video_text = '\n\n'.join(
             partition_video(
-                data, mime_type=mime_type, openai_key=extra_params.openai_key, file_name=file_name,
+                data,
+                mime_type=mime_type,
+                openai_key=extra_params.openai_key,
+                file_name=file_name,
             ),
         )
         elements = [
@@ -123,7 +143,10 @@ def extract_text_elements(mime_type, data, file_name, charset='utf-8', extra_par
     elif mime_type == 'video/webm':
         video_text = '\n\n'.join(
             partition_video(
-                data, mime_type=mime_type, openai_key=extra_params.openai_key, file_name=file_name,
+                data,
+                mime_type=mime_type,
+                openai_key=extra_params.openai_key,
+                file_name=file_name,
             ),
         )
         elements = [
@@ -154,17 +177,25 @@ def extract_text_elements(mime_type, data, file_name, charset='utf-8', extra_par
     return merged_elements
 
 
-def extract_text_from_b64_json(mime_type, base64_encoded_data, file_name='filename', extra_params=None):
+def extract_text_from_b64_json(
+        mime_type,
+        base64_encoded_data,
+        file_name='filename',
+        extra_params=None):
     decoded_data = base64.b64decode(base64_encoded_data)
     elements = extract_text_elements(
-        mime_type=mime_type, data=decoded_data, file_name=file_name, extra_params=extra_params,
+        mime_type=mime_type,
+        data=decoded_data,
+        file_name=file_name,
+        extra_params=extra_params,
     )
     return '\n\n'.join([str(el) for el in elements])
 
 
 def extract_text_from_url(url, extra_params: Optional[ExtraParams] = None):
     if is_youtube_video_url(url):
-        # Get Youtube video content from URL parse the content and return the text
+        # Get Youtube video content from URL parse the content and return the
+        # text
         text = '\n\n'.join(
             partition_youtube_audio(
                 url=url, openai_key=extra_params.openai_key,
@@ -172,7 +203,8 @@ def extract_text_from_url(url, extra_params: Optional[ExtraParams] = None):
         )
         return text
 
-    url_content_type = get_url_content_type(url=url, connection=extra_params.connection)
+    url_content_type = get_url_content_type(
+        url=url, connection=extra_params.connection)
     url_content_type_parts = url_content_type.split(';')
     mime_type = url_content_type_parts[0]
     url_content_type_args = {}
@@ -186,9 +218,10 @@ def extract_text_from_url(url, extra_params: Optional[ExtraParams] = None):
     data = None
     if mime_type == 'text/html':
         try:
-            result = run_url_spider_in_process(url=url, use_renderer=True, connection=extra_params.connection)
+            result = run_url_spider_in_process(
+                url=url, use_renderer=True, connection=extra_params.connection)
             data = result[0]['html_page'].encode('utf-8')
-        except:
+        except BaseException:
             logger.exception('Error in running url spider')
             data = requests.get(
                 url=url, headers=headers,
@@ -196,7 +229,11 @@ def extract_text_from_url(url, extra_params: Optional[ExtraParams] = None):
                 _connection=extra_params.connection,
             ).content
     else:
-        data = requests.get(url=url, headers=headers, timeout=timeout, _connection=extra_params.connection).content
+        data = requests.get(
+            url=url,
+            headers=headers,
+            timeout=timeout,
+            _connection=extra_params.connection).content
 
     elements = extract_text_elements(
         mime_type=mime_type,

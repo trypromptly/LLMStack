@@ -101,7 +101,11 @@ def is_organization_owner(value, request=None, **kwargs):
 
 @conditions.register('can_upload_app_logo')
 def can_upload_app_logo(value, request=None, **kwargs):
-    if flag_enabled('IS_PRO_SUBSCRIBER', request=request) or flag_enabled('IS_ORGANIZATION_MEMBER', request=request):
+    if flag_enabled(
+        'IS_PRO_SUBSCRIBER',
+        request=request) or flag_enabled(
+        'IS_ORGANIZATION_MEMBER',
+            request=request):
         return True
 
     return False
@@ -127,7 +131,11 @@ def can_make_app_public_visible(value, request=None, **kwargs):
 
 @conditions.register('can_make_app_unlisted_visible')
 def can_make_app_unlisted_visible(value, request=None, **kwargs):
-    if flag_enabled('IS_BASIC_SUBSCRIBER', request=request) or flag_enabled('IS_PRO_SUBSCRIBER', request=request):
+    if flag_enabled(
+        'IS_BASIC_SUBSCRIBER',
+        request=request) or flag_enabled(
+        'IS_PRO_SUBSCRIBER',
+            request=request):
         return True
 
     if flag_enabled('IS_ORGANIZATION_MEMBER', request=request):
@@ -166,14 +174,20 @@ def can_make_app_private_visible(value, request=None, **kwargs):
     if not request.user.is_authenticated:
         return False
 
-    if flag_enabled('IS_PRO_SUBSCRIBER', request=request) or flag_enabled('IS_ORGANIZATION_MEMBER', request=request):
+    if flag_enabled(
+        'IS_PRO_SUBSCRIBER',
+        request=request) or flag_enabled(
+        'IS_ORGANIZATION_MEMBER',
+            request=request):
         return True
 
     published_private_apps = App.objects.filter(
-        owner=request.user, is_published=True, visibility=AppVisibility.PRIVATE,
-    )
+        owner=request.user, is_published=True, visibility=AppVisibility.PRIVATE, )
 
-    if len(published_private_apps) < 1 or (flag_enabled('IS_BASIC_SUBSCRIBER', request=request) and len(published_private_apps) < 10):
+    if len(published_private_apps) < 1 or (
+        flag_enabled(
+            'IS_BASIC_SUBSCRIBER',
+            request=request) and len(published_private_apps) < 10):
         return True
 
     return False

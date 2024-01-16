@@ -46,7 +46,9 @@ def build_input_fields_from_input_schema(input_schema, input_ui_schema):
 
     if 'ui:order' in input_ui_schema:
         input_fields = sorted(
-            input_fields, key=lambda x: input_ui_schema['ui:order'].index(x['name']))
+            input_fields,
+            key=lambda x: input_ui_schema['ui:order'].index(
+                x['name']))
 
     return input_fields
 
@@ -58,7 +60,7 @@ def build_processors_from_run_graph(run_graph):
             'id',
         ) if x is not None and x.exit_endpoint is not None
     ]
-    for endpoint, index in zip(endpoints, range(1, len(endpoints)+1)):
+    for endpoint, index in zip(endpoints, range(1, len(endpoints) + 1)):
         processor_obj = {
             'id': f'_input{index}',
             'processor_slug': endpoint.api_backend.slug,
@@ -73,13 +75,18 @@ def build_processors_from_run_graph(run_graph):
 def build_app_data_from_app(app):
     return {
         'name': app.name,
-        'slug': app.name.lower().replace(' ', '-'),
+        'slug': app.name.lower().replace(
+            ' ',
+            '-'),
         'description': app.description,
         'type_slug': app.type.slug,
         'config': app.config,
-        'input_fields': build_input_fields_from_input_schema(app.input_schema, app.input_ui_schema),
+        'input_fields': build_input_fields_from_input_schema(
+            app.input_schema,
+            app.input_ui_schema),
         'output_template': app.output_template,
-        'processors': build_processors_from_run_graph(app.run_graph),
+        'processors': build_processors_from_run_graph(
+            app.run_graph),
     }
 
 
@@ -98,14 +105,17 @@ class Migration(migrations.Migration):
             if not app_data_obj:
                 try:
                     app_data = build_app_data_from_app(app)
-                    # We make a non-draft version of the app_data if the app is published
+                    # We make a non-draft version of the app_data if the app is
+                    # published
                     if app.is_published:
                         AppData.objects.create(
                             app_uuid=app.uuid, data=app_data, is_draft=False
                         )
                     AppData.objects.create(
-                        app_uuid=app.uuid, data=app_data, is_draft=True, version=1 if app.is_published else 0
-                    )
+                        app_uuid=app.uuid,
+                        data=app_data,
+                        is_draft=True,
+                        version=1 if app.is_published else 0)
                 except Exception as e:
                     print(
                         f'Error creating app_data for app {app.name} - {str(app.uuid)}')

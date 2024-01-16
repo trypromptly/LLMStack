@@ -125,8 +125,7 @@ class S3FileDataSource(DataSourceProcessor[S3FileSchema]):
 
         if document.metadata['HTTPHeader']['http_status_code'] != 200:
             logger.error(
-                f'Error fetching file from S3: {result.result.metadata.http_status}',
-            )
+                f'Error fetching file from S3: {result.result.metadata.http_status}', )
             raise Exception('Error fetching file from S3')
 
         mime_type = document.metadata['HTTPHeader']['content_type']
@@ -141,8 +140,11 @@ class S3FileDataSource(DataSourceProcessor[S3FileSchema]):
         mime_type, file_name, file_data = validate_parse_data_uri(data_url)
 
         data_source_entry = DataSourceEntryItem(
-            name=file_name, data={'mime_type': mime_type,
-                                  'file_name': file_name, 'file_data': file_data},
+            name=file_name,
+            data={
+                'mime_type': mime_type,
+                'file_name': file_name,
+                'file_data': file_data},
         )
 
         return [data_source_entry]
@@ -154,19 +156,28 @@ class S3FileDataSource(DataSourceProcessor[S3FileSchema]):
 
         file_text = extract_text_from_b64_json(
             data.data['mime_type'],
-            data.data['file_data'], openai_key=self.openai_key, file_name=data.data['file_name'],
+            data.data['file_data'],
+            openai_key=self.openai_key,
+            file_name=data.data['file_name'],
         )
 
         if data.data['mime_type'] == 'text/csv':
             docs = [
-                Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': data.data['file_name']}) for t in CSVTextSplitter(
-                    chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
-                ).split_text(file_text)
-            ]
+                Document(
+                    page_content_key=self.get_content_key(),
+                    page_content=t,
+                    metadata={
+                        'source': data.data['file_name']}) for t in CSVTextSplitter(
+                    chunk_size=2,
+                    length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
+                ).split_text(file_text)]
         else:
             docs = [
-                Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': data.data['file_name']}) for t in SpacyTextSplitter(
+                Document(
+                    page_content_key=self.get_content_key(),
+                    page_content=t,
+                    metadata={
+                        'source': data.data['file_name']}) for t in SpacyTextSplitter(
                     chunk_size=1500,
-                ).split_text(file_text)
-            ]
+                ).split_text(file_text)]
         return docs

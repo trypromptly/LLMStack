@@ -16,7 +16,8 @@ class PredictConfiguration(BaseModel):
     version: str
 
 
-class Predict(ApiProcessorInterface[PredictInput, PredictOutput, PredictConfiguration]):
+class Predict(
+        ApiProcessorInterface[PredictInput, PredictOutput, PredictConfiguration]):
 
     def name() -> str:
         return 'replicate/predict'

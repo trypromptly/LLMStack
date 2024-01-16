@@ -15,7 +15,7 @@ def get_connection_type_interface_subclasses():
 
     try:
         import jnpr.junos
-    except:
+    except BaseException:
         excluded_packages.append('llmstack.connections.handlers.junos_login')
 
     for package in allowed_packages:
@@ -88,7 +88,9 @@ class ConnectionTypeFactory:
     Factory class for Data source types
     """
     @staticmethod
-    def get_connection_type_handler(connection_type_slug, provider_slug) -> ConnectionTypeInterface:
+    def get_connection_type_handler(
+            connection_type_slug,
+            provider_slug) -> ConnectionTypeInterface:
         subclasses = get_connection_type_interface_subclasses()
         for subclass in subclasses:
             # Convert to lowercase to avoid case sensitivity

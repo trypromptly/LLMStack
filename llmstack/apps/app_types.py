@@ -15,7 +15,8 @@ class AppTypeFactory:
     Factory class for App types
     """
     @staticmethod
-    def get_app_type_handler(app_type: AppType, platform: str = None) -> AppTypeInterface:
+    def get_app_type_handler(app_type: AppType,
+                             platform: str = None) -> AppTypeInterface:
         subclasses = AppTypeInterface.__subclasses__()
         # Match with platform
         if platform:

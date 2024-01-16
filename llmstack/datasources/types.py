@@ -24,7 +24,8 @@ class DataSourceTypeFactory:
     Factory class for Data source types
     """
     @staticmethod
-    def get_datasource_type_handler(datasource_type: DataSourceType) -> DataSourceProcessor:
+    def get_datasource_type_handler(
+            datasource_type: DataSourceType) -> DataSourceProcessor:
         subclasses = get_data_source_type_interface_subclasses()
         for subclass in subclasses:
             # Convert to lowercase to avoid case sensitivity

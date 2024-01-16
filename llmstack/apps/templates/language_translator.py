@@ -7,10 +7,14 @@ from .app_template_interface import TemplatePage
 
 class LanguageTranslatorSchema(BaseSchema):
     input_language: str = Field(
-        title='Input language', description='Default value for the user input language', path='input_fields[1].default',
+        title='Input language',
+        description='Default value for the user input language',
+        path='input_fields[1].default',
     )
     output_language: str = Field(
-        title='Output language', description='Default value for expected output language', path='input_fields[2].default',
+        title='Output language',
+        description='Default value for expected output language',
+        path='input_fields[2].default',
     )
 
 

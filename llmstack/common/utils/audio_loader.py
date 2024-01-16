@@ -34,8 +34,7 @@ def partition_audio(data, mime_type, openai_key, file_name='audio_file.mp3'):
     """
     if openai_key is None:
         raise Exception(
-            'OpenAI API key is missing, it is required for audio partitioning.',
-        )
+            'OpenAI API key is missing, it is required for audio partitioning.', )
 
     extension = 'mp3'
     if mime_type.endswith('mp3'):
@@ -64,7 +63,10 @@ def partition_audio(data, mime_type, openai_key, file_name='audio_file.mp3'):
     return result
 
 
-def extract_audio_from_video(video_data: bytes, video_format: str, audio_format: str = 'mp3') -> bytes:
+def extract_audio_from_video(
+        video_data: bytes,
+        video_format: str,
+        audio_format: str = 'mp3') -> bytes:
     with tempfile.TemporaryDirectory() as dir:
         with tempfile.NamedTemporaryFile(suffix=f'.{video_format}', dir=dir) as video_temp_file:
 
@@ -97,7 +99,11 @@ def partition_video(data, mime_type, openai_key, file_name='video_file'):
 
     # Extract audio from video
     audio_data = extract_audio_from_video(data, extension)
-    return partition_audio(audio_data, 'audio/mp3', openai_key, 'audio_file.mp3')
+    return partition_audio(
+        audio_data,
+        'audio/mp3',
+        openai_key,
+        'audio_file.mp3')
 
 
 def partition_youtube_audio(url, openai_key):
@@ -121,6 +127,9 @@ def partition_youtube_audio(url, openai_key):
             audio_data = audio_file.read()
 
         result = partition_audio(
-            audio_data, file_name=audio_file_name, mime_type=mime_type, openai_key=openai_key,
+            audio_data,
+            file_name=audio_file_name,
+            mime_type=mime_type,
+            openai_key=openai_key,
         )
         return [f'Description : {description}', f'Title : {title}'] + result

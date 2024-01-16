@@ -35,7 +35,10 @@ class ProcessingJob(Job):
 
     @classmethod
     def create(cls, **kwargs):
-        return super().create(id=cls.generate_job_id(), connection=cls.get_connection(), **kwargs)
+        return super().create(
+            id=cls.generate_job_id(),
+            connection=cls.get_connection(),
+            **kwargs)
 
     def add_to_queue(self, *args, **kwargs) -> Job:
         if self._use_redis:

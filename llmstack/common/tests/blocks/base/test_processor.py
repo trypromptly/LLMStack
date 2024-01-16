@@ -16,7 +16,8 @@ class TestConfigurationModel(BaseModel):
     pass
 
 
-class TestProcessor(BaseProcessor[TestInputModel, TestOutputModel, TestConfigurationModel]):
+class TestProcessor(
+        BaseProcessor[TestInputModel, TestOutputModel, TestConfigurationModel]):
     @staticmethod
     def name() -> str:
         return 'Test Processor'
@@ -79,12 +80,16 @@ class TestProcessor1Configuration(BaseConfiguration):
     style: str
 
 
-class TestProcessor1(ProcessorInterface[TestProcessor1Input, TestProcessor1Output, TestProcessor1Configuration]):
+class TestProcessor1(
+        ProcessorInterface[TestProcessor1Input, TestProcessor1Output, TestProcessor1Configuration]):
     @staticmethod
     def name() -> str:
         return 'TestProcessor'
 
-    def process(self, input: TestProcessor1Input, configuration: TestProcessor1Configuration) -> BaseOutputType:
+    def process(
+            self,
+            input: TestProcessor1Input,
+            configuration: TestProcessor1Configuration) -> BaseOutputType:
         if configuration.style == 'lower':
             return TestProcessor1Output(answer=input.name.lower())
         elif configuration.style == 'upper':
@@ -101,11 +106,11 @@ class ProcessorInterfaceTestCase(unittest.TestCase):
         self.assertEqual(TestProcessor1.name(), 'TestProcessor')
 
     def test_input_schema(self):
-        schema = """{"title":"TestProcessor1Input","type":"object","properties":{"_env":{"title":" Env","description":"Environment variables (metadata) to be passed with input","allOf":[{"$ref":"#\/definitions\/BaseInputEnvironment"}]},"name":{"title":"Name","type":"string"}},"required":["name"],"definitions":{"BaseInputEnvironment":{"title":"BaseInputEnvironment","type":"object","properties":{"bypass_cache":{"title":"Bypass Cache","description":"Bypass cache","default":true,"type":"boolean"}}}}}"""
+        schema = """{"title":"TestProcessor1Input","type":"object","properties":{"_env":{"title":" Env","description":"Environment variables (metadata) to be passed with input","allOf":[{"$ref":"#\\/definitions\\/BaseInputEnvironment"}]},"name":{"title":"Name","type":"string"}},"required":["name"],"definitions":{"BaseInputEnvironment":{"title":"BaseInputEnvironment","type":"object","properties":{"bypass_cache":{"title":"Bypass Cache","description":"Bypass cache","default":true,"type":"boolean"}}}}}"""
         self.assertEqual(TestProcessor1.get_input_schema(), schema)
 
     def test_output_schema(self):
-        schema = """{"title":"TestProcessor1Output","type":"object","properties":{"metadata":{"title":"Metadata","description":"Metadata","default":{},"allOf":[{"$ref":"#\/definitions\/BaseSchema"}]},"answer":{"title":"Answer","type":"string"}},"required":["answer"],"definitions":{"BaseSchema":{"title":"BaseSchema","type":"object","properties":{}}}}"""
+        schema = """{"title":"TestProcessor1Output","type":"object","properties":{"metadata":{"title":"Metadata","description":"Metadata","default":{},"allOf":[{"$ref":"#\\/definitions\\/BaseSchema"}]},"answer":{"title":"Answer","type":"string"}},"required":["answer"],"definitions":{"BaseSchema":{"title":"BaseSchema","type":"object","properties":{}}}}"""
         self.assertEqual(TestProcessor1.get_output_schema(), schema)
 
     def test_configuration_schema(self):

@@ -39,7 +39,8 @@ class HttpUriTextExtractorOutput(ApiProcessorSchema):
     )
 
 
-class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput, HttpUriTextExtractorOutput, HttpUriTextExtractorConfiguration]):
+class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput,
+                         HttpUriTextExtractorOutput, HttpUriTextExtractorConfiguration]):
     """
     HttpUri Text Extractor processor
     """
@@ -77,7 +78,8 @@ class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput, HttpUr
         query = self._input.query
         url = self._input.url.strip().rstrip()
 
-        if (query is None or query == '') and url == self.url and self.extracted_text is not None:
+        if (query is None or query ==
+                '') and url == self.url and self.extracted_text is not None:
             async_to_sync(self._output_stream.write)(
                 HttpUriTextExtractorOutput(text=self.extracted_text),
             )
@@ -111,10 +113,16 @@ class HttpUriTextExtract(ApiProcessorInterface[HttpUriTextExtractorInput, HttpUr
         if query:
             index_name = self.temp_store.create_temp_index()
             self.storage_index_name = index_name
-            for text_chunk in SpacyTextSplitter(separator='\n', chunk_size=self._config.text_chunk_size).split_text(text):
+            for text_chunk in SpacyTextSplitter(
+                    separator='\n',
+                    chunk_size=self._config.text_chunk_size).split_text(text):
                 self.temp_store.add_text(
-                    index_name, Document(page_content_key="content", page_content=text_chunk, metadata={
-                                         'source': self.url}),
+                    index_name,
+                    Document(
+                        page_content_key="content",
+                        page_content=text_chunk,
+                        metadata={
+                            'source': self.url}),
                 )
             documents: List[Document] = self.temp_store.hybrid_search(
                 self.storage_index_name, document_query=DocumentQuery(

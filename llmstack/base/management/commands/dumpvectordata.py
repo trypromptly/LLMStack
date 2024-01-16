@@ -72,7 +72,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--format', type=str, default='json',
+            '--format',
+            type=str,
+            default='json',
             help='Format of the output file. (json, yaml, pickle) (default: json)',
         )
         parser.add_argument('--output', type=str, default='console')

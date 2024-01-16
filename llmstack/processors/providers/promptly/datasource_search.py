@@ -43,20 +43,29 @@ class DataSourceSearchOutput(ApiProcessorSchema):
 class DataSourceSearchConfigurations(ApiProcessorSchema):
     datasources: List[str] = Field(
         None,
-        description='Datasource to use', widget='datasource', advanced_parameter=False,
+        description='Datasource to use',
+        widget='datasource',
+        advanced_parameter=False,
     )
     document_limit: int = Field(
         default=4, description='Limit of documents to return',
     )
     search_filters: str = Field(
-        title='Search filters', default=None, description='Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata', advanced_parameter=True,
+        title='Search filters',
+        default=None,
+        description='Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata',
+        advanced_parameter=True,
     )
     hybrid_semantic_search_ratio: Optional[float] = Field(
-        default=0.75, description='Ratio of semantic search to hybrid search', ge=0.0, le=1.0, multiple_of=0.01
-    )
+        default=0.75,
+        description='Ratio of semantic search to hybrid search',
+        ge=0.0,
+        le=1.0,
+        multiple_of=0.01)
 
 
-class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, DataSourceSearchOutput, DataSourceSearchConfigurations]):
+class DataSourceSearchProcessor(
+        ApiProcessorInterface[DataSourceSearchInput, DataSourceSearchOutput, DataSourceSearchConfigurations]):
     @staticmethod
     def name() -> str:
         return 'Datasource Search'
@@ -84,8 +93,7 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
             )
 
             datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-                datasource.type,
-            )
+                datasource.type, )
             datasource_entry_handler = datasource_entry_handler_cls(datasource)
 
             try:
@@ -98,13 +106,16 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
                         use_hybrid_search=True,
                     ),
                 )
-            except:
+            except BaseException:
                 logger.exception('Error while searching')
                 raise Exception('Error while searching')
 
         if documents and len(documents) > 0:
             if 'score' in documents[0].metadata:
-                documents = sorted(documents, key=lambda d: d.metadata['score'], reverse=True)[
+                documents = sorted(
+                    documents,
+                    key=lambda d: d.metadata['score'],
+                    reverse=True)[
                     :self._config.document_limit]
             else:
                 documents = documents[:self._config.document_limit]
@@ -126,8 +137,7 @@ class DataSourceSearchProcessor(ApiProcessorInterface[DataSourceSearchInput, Dat
                         distance=document.metadata['distance'] if 'distance' in document.metadata else 0.0,
                         score=document.metadata['score'] if 'score' in document.metadata else None,
                     ),
-                    additional_properties=document.metadata
-                ),
+                    additional_properties=document.metadata),
             )
             answer_text += f'Content: {document.page_content} \n\nSource: {source} \n\n\n\n'
 

@@ -22,7 +22,8 @@ class BaseSchema(BaseModel):
     def get_schema(cls):
         return super().schema()
 
-    # TODO: This is a copy of the same method in DataSourceTypeInterface. Refactor to a common place.
+    # TODO: This is a copy of the same method in DataSourceTypeInterface.
+    # Refactor to a common place.
     @classmethod
     def get_ui_schema(cls):
         schema = cls.get_schema()
@@ -38,7 +39,8 @@ class BaseSchema(BaseModel):
                     if 'description' in schema[key][prop_key]:
                         ui_schema[key][prop_key]['ui:description'] = schema[key][prop_key]['description']
                     if 'type' in schema[key][prop_key]:
-                        if schema[key][prop_key]['type'] == 'string' and prop_key in ('data', 'text', 'content'):
+                        if schema[key][prop_key]['type'] == 'string' and prop_key in (
+                                'data', 'text', 'content'):
                             ui_schema[key][prop_key]['ui:widget'] = 'textarea'
                         elif schema[key][prop_key]['type'] == 'string':
                             ui_schema[key][prop_key]['ui:widget'] = 'text'
@@ -58,8 +60,7 @@ class BaseSchema(BaseModel):
                     if 'format' in schema[key][prop_key] and schema[key][prop_key]['format'] == 'date-time':
                         ui_schema[key][prop_key]['ui:widget'] = 'datetime'
                     ui_schema[key][prop_key]['ui:advanced'] = schema[key][prop_key].get(
-                        'advanced_parameter', False,
-                    )
+                        'advanced_parameter', False, )
             else:
                 ui_schema[key] = copy.deepcopy(schema[key])
         return ui_schema['properties']
@@ -96,5 +97,9 @@ class AppTypeInterface(Generic[AppConfigurationSchemaType]):
         return app
 
     @classmethod
-    def verify_request_signature(cls, app: Any, headers: dict, raw_body: bytes):
+    def verify_request_signature(
+            cls,
+            app: Any,
+            headers: dict,
+            raw_body: bytes):
         return True

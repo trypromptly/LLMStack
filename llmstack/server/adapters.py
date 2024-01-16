@@ -4,13 +4,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class CustomAccountAdapter(DefaultAccountAdapter):
     def save_user(self, request, user, form, commit=True):
         user = super().save_user(request, user, form, False)
         if not user.username:
             user.username = user.email
 
-        # Apple login doesn't seem to provide email, so we use username as email
+        # Apple login doesn't seem to provide email, so we use username as
+        # email
         if not user.email:
             user.email = user.username
 
@@ -26,7 +28,8 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         if not user.username:
             user.username = user.email
 
-        # Apple login doesn't seem to provide email, so we use username as email
+        # Apple login doesn't seem to provide email, so we use username as
+        # email
         if not user.email:
             user.email = user.username
 

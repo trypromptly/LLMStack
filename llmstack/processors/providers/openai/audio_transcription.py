@@ -15,17 +15,27 @@ logger = logging.getLogger(__name__)
 
 class AudioTranscriptionInput(ApiProcessorSchema):
     file: str = Field(
-        default='', description='The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.', accepts={'audio/*': []}, maxSize=20000000, widget='file',
+        default='',
+        description='The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.',
+        accepts={
+            'audio/*': []},
+        maxSize=20000000,
+        widget='file',
     )
     file_data: Optional[str] = Field(
-        default='', description='The base64 encoded data of audio file to transcribe', pattern=r'data:(.*);name=(.*);base64,(.*)',
+        default='',
+        description='The base64 encoded data of audio file to transcribe',
+        pattern=r'data:(.*);name=(.*);base64,(.*)',
     )
     prompt: Optional[str] = Field(
-        default=None, description='An optional text to guide the model\'s style or continue a previous audio segment. The prompt should match the audio language.',
+        default=None,
+        description='An optional text to guide the model\'s style or continue a previous audio segment. The prompt should match the audio language.',
     )
     language: Optional[str] = Field(
-        default=None, description='The language of the audio file. Currently, only English is supported.',
+        default=None,
+        description='The language of the audio file. Currently, only English is supported.',
     )
+
 
 class AudioTranscriptionOutput(ApiProcessorSchema):
     text: str = Field(
@@ -49,7 +59,8 @@ class AudioTranscriptionConfiguration(ApiProcessorSchema):
     )
 
 
-class AudioTranscription(ApiProcessorInterface[AudioTranscriptionInput, AudioTranscriptionOutput, AudioTranscriptionConfiguration]):
+class AudioTranscription(
+        ApiProcessorInterface[AudioTranscriptionInput, AudioTranscriptionOutput, AudioTranscriptionConfiguration]):
 
     """
     OpenAI Audio Transcription API
@@ -70,15 +81,13 @@ class AudioTranscription(ApiProcessorInterface[AudioTranscriptionInput, AudioTra
     def provider_slug() -> str:
         return 'openai'
 
-    def process(self) -> dict:        
+    def process(self) -> dict:
         if self._input.file and len(self._input.file) > 0:
             mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
-                self._input.file,
-            )
+                self._input.file, )
         elif self._input.file_data and len(self._input.file_data) > 0:
             mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
-                self._input.file_data,
-            )
+                self._input.file_data, )
         else:
             raise Exception('No file or file_data found in input')
 

@@ -35,7 +35,8 @@ class CompletionsOutput(BaseModel):
     )
 
 
-class Completions(ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
+class Completions(
+        ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
     """
     Forefront Completions
     """

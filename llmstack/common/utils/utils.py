@@ -18,9 +18,11 @@ from llmstack.common.utils.crawlers import run_sitemap_spider_in_process, run_ur
 logger = logging.getLogger(__name__)
 
 city_loc_reader = geoip2.database.Reader(
-    settings.GEOIP_CITY_DB_PATH) if hasattr(settings, 'GEOIP_CITY_DB_PATH') else None
+    settings.GEOIP_CITY_DB_PATH) if hasattr(
+        settings, 'GEOIP_CITY_DB_PATH') else None
 country_loc_reader = geoip2.database.Reader(
-    settings.GEOIP_COUNTRY_DB_PATH) if hasattr(settings, 'GEOIP_COUNTRY_DB_PATH') else None
+    settings.GEOIP_COUNTRY_DB_PATH) if hasattr(
+        settings, 'GEOIP_COUNTRY_DB_PATH') else None
 
 
 def get_location(ip):
@@ -72,7 +74,9 @@ def extract_urls_from_sitemap(sitemap_xml: str) -> List[str]:
     return list(map(lambda entry: entry['url'], result))
 
 
-def validate_parse_data_uri(data_uri, data_uri_regex=r'data:(?P<mime>[\w/\-\.]+);name=(?P<filename>.*);base64,(?P<data>.*)'):
+def validate_parse_data_uri(
+        data_uri,
+        data_uri_regex=r'data:(?P<mime>[\w/\-\.]+);name=(?P<filename>.*);base64,(?P<data>.*)'):
     pattern = re.compile(data_uri_regex)
     match = pattern.match(data_uri)
 
@@ -93,10 +97,11 @@ def sanitize_dict_values(value):
     else:
         return str(value)
 
+
 def get_key_or_raise(dict, key, exception_message):
     try:
         return dict[key]
-    except:
+    except BaseException:
         raise Exception(exception_message)
 
 
@@ -136,7 +141,14 @@ def scrape_url(url):
         return run_url_spider_in_process(url, use_renderer=True)
 
 
-def _retry_func(func, exceptions: List[Exception] = [], num_tries=1, min_delay=1, max_delay=None, backoff=2, log_exception=False):
+def _retry_func(
+        func,
+        exceptions: List[Exception] = [],
+        num_tries=1,
+        min_delay=1,
+        max_delay=None,
+        backoff=2,
+        log_exception=False):
     f"""
     Retries a function or method until it returns True.
     :param func: The function to be retried.
@@ -175,7 +187,12 @@ def _retry_func(func, exceptions: List[Exception] = [], num_tries=1, min_delay=1
                 _delay = min(_delay, max_delay)
 
 
-def retrier(exceptions: List[Exception] = [], num_tries=1, min_delay=1, max_delay=None, backoff=2):
+def retrier(
+        exceptions: List[Exception] = [],
+        num_tries=1,
+        min_delay=1,
+        max_delay=None,
+        backoff=2):
     """
     A decorator for retrying a function or method until it returns True.
     :param exceptions: The exceptions to catch. Default is Exception.
@@ -187,17 +204,44 @@ def retrier(exceptions: List[Exception] = [], num_tries=1, min_delay=1, max_dela
 
     def decorator(func):
         def wrapper(*args, **kwargs):
-            return _retry_func(lambda: func(*args, **kwargs), exceptions, num_tries, min_delay, max_delay, backoff)
+            return _retry_func(
+                lambda: func(
+                    *args,
+                    **kwargs),
+                exceptions,
+                num_tries,
+                min_delay,
+                max_delay,
+                backoff)
 
         return wrapper
 
     return decorator
 
 
-def retry_func(func, func_args=None, func_kwargs=None, exceptions: List[Exception] = [], num_tries=1, min_delay=1, max_delay=None, backoff=2, log_exception=False):
+def retry_func(
+        func,
+        func_args=None,
+        func_kwargs=None,
+        exceptions: List[Exception] = [],
+        num_tries=1,
+        min_delay=1,
+        max_delay=None,
+        backoff=2,
+        log_exception=False):
     args = func_args if func_args else []
     kwargs = func_kwargs if func_kwargs else {}
-    return _retry_func(partial(func, *args, **kwargs), exceptions, num_tries, min_delay, max_delay, backoff, log_exception)
+    return _retry_func(
+        partial(
+            func,
+            *args,
+            **kwargs),
+        exceptions,
+        num_tries,
+        min_delay,
+        max_delay,
+        backoff,
+        log_exception)
 
 
 def get_ui_schema_from_jsonschema(schema):
@@ -213,7 +257,8 @@ def get_ui_schema_from_jsonschema(schema):
                 if 'description' in schema[key][prop_key]:
                     ui_schema[key][prop_key]['ui:description'] = schema[key][prop_key]['description']
                 if 'type' in schema[key][prop_key]:
-                    if schema[key][prop_key]['type'] == 'string' and prop_key in ('data', 'text', 'content'):
+                    if schema[key][prop_key]['type'] == 'string' and prop_key in (
+                            'data', 'text', 'content'):
                         ui_schema[key][prop_key]['ui:widget'] = 'textarea'
                     elif schema[key][prop_key]['type'] == 'string':
                         ui_schema[key][prop_key]['ui:widget'] = 'text'
@@ -233,8 +278,7 @@ def get_ui_schema_from_jsonschema(schema):
                 if 'format' in schema[key][prop_key] and schema[key][prop_key]['format'] == 'date-time':
                     ui_schema[key][prop_key]['ui:widget'] = 'datetime'
                 ui_schema[key][prop_key]['ui:advanced'] = schema[key][prop_key].get(
-                    'advanced_parameter', False,
-                )
+                    'advanced_parameter', False, )
         else:
             ui_schema[key] = copy.deepcopy(schema[key])
     return ui_schema['properties']

@@ -11,7 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 class BookKeepingActor(Actor):
-    def __init__(self, output_stream, processor_configs, dependencies=[], all_dependencies=[], is_agent=False, **kwargs):
+    def __init__(
+            self,
+            output_stream,
+            processor_configs,
+            dependencies=[],
+            all_dependencies=[],
+            is_agent=False,
+            **kwargs):
         super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
         self._processor_configs = processor_configs
         self._output_stream = output_stream
@@ -30,12 +37,14 @@ class BookKeepingActor(Actor):
             processor_config = self._processor_configs[
                 message.message_from
             ] if message.message_from in self._processor_configs else None
-            if processor_config and 'app_session_data' in processor_config and processor_config['app_session_data']:
+            if processor_config and 'app_session_data' in processor_config and processor_config[
+                    'app_session_data']:
                 processor_config['app_session_data']['data'] = message.message['session_data']
                 save_app_session_data(processor_config['app_session_data'])
 
             # Persist history
-            if len(self._bookkeeping_data_map) == len(self.dependencies) and not self._is_agent:
+            if len(self._bookkeeping_data_map) == len(
+                    self.dependencies) and not self._is_agent:
                 self._output_stream.bookkeep_done()
 
         if message.message_type == MessageType.AGENT_DONE:
@@ -55,4 +64,5 @@ class BookKeepingActor(Actor):
         return super().on_stop()
 
     def get_dependencies(self):
-        return list(set([x['template_key'] for x in self._processor_configs.values()]))
+        return list(set([x['template_key']
+                    for x in self._processor_configs.values()]))

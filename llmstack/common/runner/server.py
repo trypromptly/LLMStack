@@ -58,9 +58,8 @@ class Runner(RunnerServicer):
                     page.wait_for_url(
                         re.compile(
                             request.init_data.terminate_url_pattern or 'chrome://newtab'),
-                        timeout=request.init_data.timeout*1000
-                    )
-                )
+                        timeout=request.init_data.timeout *
+                        1000))
 
                 # Navigate to the initial URL
                 await page.goto(request.init_data.url or 'chrome://newtab')
@@ -73,7 +72,8 @@ class Runner(RunnerServicer):
                             page_load_task.cancel()
                             break
                     else:
-                        # Sleep a bit to prevent a busy loop that consumes too much CPU
+                        # Sleep a bit to prevent a busy loop that consumes too
+                        # much CPU
                         await asyncio.sleep(0.1)
 
                     if page_load_task.done():
@@ -93,7 +93,8 @@ class Runner(RunnerServicer):
                 if not page_load_task.done():
                     page_load_task.cancel()
 
-                if request.init_data.persist_session and (page_load_task.done() or not request.init_data.terminate_url_pattern):
+                if request.init_data.persist_session and (
+                        page_load_task.done() or not request.init_data.terminate_url_pattern):
                     session_data = await context.storage_state()
 
                 # Clean up
@@ -105,7 +106,10 @@ class Runner(RunnerServicer):
 
                 return session_data
 
-    def GetRemoteBrowser(self, request_iterator: Iterator[RemoteBrowserRequest], context: ServicerContext) -> Iterator[RemoteBrowserResponse]:
+    def GetRemoteBrowser(
+            self,
+            request_iterator: Iterator[RemoteBrowserRequest],
+            context: ServicerContext) -> Iterator[RemoteBrowserResponse]:
         # Get input from the client
         request = next(request_iterator)
 
@@ -123,7 +127,8 @@ class Runner(RunnerServicer):
 
         # Use ThreadPoolExecutor to run the async function in a separate thread
         with futures.ThreadPoolExecutor() as executor:
-            # Wrap the coroutine in a function that gets the current event loop or creates a new one
+            # Wrap the coroutine in a function that gets the current event loop
+            # or creates a new one
             def run_async_code(loop):
                 asyncio.set_event_loop(loop)
                 return loop.run_until_complete(
@@ -153,7 +158,10 @@ class Runner(RunnerServicer):
             ),
         )
 
-    def GetPlaywrightBrowser(self, request_iterator: Iterator[PlaywrightBrowserRequest], context: ServicerContext) -> Iterator[PlaywrightBrowserResponse]:
+    def GetPlaywrightBrowser(
+            self,
+            request_iterator: Iterator[PlaywrightBrowserRequest],
+            context: ServicerContext) -> Iterator[PlaywrightBrowserResponse]:
         return self.playwright.get_browser(request_iterator=request_iterator)
 
 
@@ -164,8 +172,11 @@ def main():
                         help='Port to run the server on', default=50051)
     parser.add_argument('--host', type=str,
                         help='Host to run the server on', default='0.0.0.0')
-    parser.add_argument('--max-displays', type=int,
-                        help='Maximum number of virtual displays to use', default=5)
+    parser.add_argument(
+        '--max-displays',
+        type=int,
+        help='Maximum number of virtual displays to use',
+        default=5)
     parser.add_argument('--start-display', type=int,
                         help='Start display number number', default=99)
     parser.add_argument('--display-res', type=str,
@@ -180,16 +191,32 @@ def main():
                         help='Redis DB', default=0)
     parser.add_argument('--redis-password', type=str,
                         help='Redis password', default=None)
-    parser.add_argument('--hostname', type=str,
-                        help='Hostname for mapping remote browser', default='localhost')
-    parser.add_argument('--wss-hostname', type=str,
-                        help='Hostname for remote browser websocket', default='localhost')
-    parser.add_argument('--wss-port', type=int,
-                        help='Port for remote browser websocket', default=23100)
-    parser.add_argument('--wss-secure', type=bool, default=False,
-                        help='Secure remote browser websocket', action=argparse.BooleanOptionalAction)
-    parser.add_argument('--playwright-port', type=int,
-                        help='Port for playwright server. Disabled by default', default=-1)
+    parser.add_argument(
+        '--hostname',
+        type=str,
+        help='Hostname for mapping remote browser',
+        default='localhost')
+    parser.add_argument(
+        '--wss-hostname',
+        type=str,
+        help='Hostname for remote browser websocket',
+        default='localhost')
+    parser.add_argument(
+        '--wss-port',
+        type=int,
+        help='Port for remote browser websocket',
+        default=23100)
+    parser.add_argument(
+        '--wss-secure',
+        type=bool,
+        default=False,
+        help='Secure remote browser websocket',
+        action=argparse.BooleanOptionalAction)
+    parser.add_argument(
+        '--playwright-port',
+        type=int,
+        help='Port for playwright server. Disabled by default',
+        default=-1)
     parser.add_argument
     parser.add_argument('--log-level', type=str,
                         help='Log level', default='INFO')
@@ -223,14 +250,17 @@ def main():
 
     # Connect and verify redis
     redis_client = redis.Redis(
-        host=args.redis_host, port=args.redis_port, db=args.redis_db, password=args.redis_password)
+        host=args.redis_host,
+        port=args.redis_port,
+        db=args.redis_db,
+        password=args.redis_password)
     redis_client.ping()
 
     # Start playwright server if port is specified
     playwright_process = None
     if args.playwright_port > 0:
-        playwright_process = subprocess.Popen(['playwright', 'run-server',
-                                               '--port', str(args.playwright_port)])
+        playwright_process = subprocess.Popen(
+            ['playwright', 'run-server', '--port', str(args.playwright_port)])
 
     display_pool = VirtualDisplayPool(
         redis_client, hostname=args.hostname, max_displays=args.max_displays,

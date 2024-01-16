@@ -139,8 +139,11 @@ class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
             )
             mime_type, file_name, file_data = validate_parse_data_uri(data_url)
             data_source_entry = DataSourceEntryItem(
-                name=file_name, data={
-                    'mime_type': mime_type, 'file_name': file_name, 'file_data': file_data},
+                name=file_name,
+                data={
+                    'mime_type': mime_type,
+                    'file_name': file_name,
+                    'file_data': file_data},
             )
             data_source_entries.append(data_source_entry)
 
@@ -153,14 +156,17 @@ class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
 
         file_text = extract_text_from_b64_json(
             data.data['mime_type'],
-            data.data['file_data'], file_name=data.data['file_name'], extra_params=ExtraParams(
+            data.data['file_data'],
+            file_name=data.data['file_name'],
+            extra_params=ExtraParams(
                 openai_key=self.openai_key),
         )
 
         if data.data['mime_type'] == 'text/csv':
             docs = []
             for entry in CSVTextSplitter(
-                    chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
+                chunk_size=2,
+                length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
             ).split_text(file_text):
                 if self.split_csv:
                     for entry_chunk in SpacyTextSplitter(
@@ -168,23 +174,30 @@ class S3BucketDataSource(DataSourceProcessor[S3BucketSchema]):
                     ).split_text(file_text):
                         docs.append(
                             Document(
-                                page_content_key=self.get_content_key(
-                                ), page_content=entry_chunk, metadata={'source': data.data['file_name']},
+                                page_content_key=self.get_content_key(),
+                                page_content=entry_chunk,
+                                metadata={
+                                    'source': data.data['file_name']},
                             ),
                         )
                 else:
                     docs.append(
                         Document(
-                            page_content_key=self.get_content_key(
-                            ), page_content=entry, metadata={'source': data.data['file_name']},
+                            page_content_key=self.get_content_key(),
+                            page_content=entry,
+                            metadata={
+                                'source': data.data['file_name']},
                         ),
                     )
 
         else:
             docs = [
-                Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': data.data['file_name']}) for t in SpacyTextSplitter(
+                Document(
+                    page_content_key=self.get_content_key(),
+                    page_content=t,
+                    metadata={
+                        'source': data.data['file_name']}) for t in SpacyTextSplitter(
                     chunk_size=1500,
-                ).split_text(file_text)
-            ]
+                ).split_text(file_text)]
 
         return docs

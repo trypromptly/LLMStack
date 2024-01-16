@@ -13,6 +13,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='app',
             name='twilio_integration_config',
-            field=models.JSONField(blank=True, default=dict, help_text='Twilio config for this app'),
+            field=models.JSONField(
+                blank=True,
+                default=dict,
+                help_text='Twilio config for this app'),
         ),
     ]

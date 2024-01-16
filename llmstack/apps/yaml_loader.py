@@ -13,7 +13,8 @@ from llmstack.apps.schemas import AppTemplate
 from llmstack.common.blocks.base.schema import get_ui_schema_from_json_schema
 
 
-def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseModel']:
+def get_input_model_from_fields(name: str,
+                                input_fields: list) -> Type['BaseModel']:
     """
     Dynamically creates a Pydantic model from a list of input fields.
 
@@ -70,7 +71,8 @@ def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseMode
             field['format'] = 'data-url'
             field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
 
-        if field_type == 'select' and 'options' in field and len(field['options']) > 0:
+        if field_type == 'select' and 'options' in field and len(
+                field['options']) > 0:
             field['widget'] = 'select'
 
             # For select fields, the datatype is the type of the first option

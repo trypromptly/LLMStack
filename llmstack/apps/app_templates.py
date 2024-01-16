@@ -22,7 +22,8 @@ class AppTemplateFactory:
     Factory class for App templates
     """
     @staticmethod
-    def get_app_template_handler(app_template: AppTemplate) -> AppTemplateInterface:
+    def get_app_template_handler(
+            app_template: AppTemplate) -> AppTemplateInterface:
         subclasses = AppTemplateInterface.__subclasses__()
         for subclass in subclasses:
             if subclass.slug() == app_template.slug.lower():

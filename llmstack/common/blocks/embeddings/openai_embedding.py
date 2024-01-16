@@ -58,11 +58,24 @@ class OpenAIEmbeddingConfiguration(BaseConfiguration):
     api_key: str = None
 
 
-class OpenAIEmbeddingsProcessor(ProcessorInterface[OpenAIEmbeddingInput, OpenAIEmbeddingOutput, OpenAIEmbeddingConfiguration],  Generic[BaseInputType, BaseOutputType, BaseConfigurationType]):
-    def __init__(self, configuration: dict, cache_manager: CacheManager = None, input_tx_cb: callable = None, output_tx_cb: callable = None):
+class OpenAIEmbeddingsProcessor(ProcessorInterface[OpenAIEmbeddingInput,
+                                                   OpenAIEmbeddingOutput,
+                                                   OpenAIEmbeddingConfiguration],
+                                Generic[BaseInputType,
+                                        BaseOutputType,
+                                        BaseConfigurationType]):
+    def __init__(
+            self,
+            configuration: dict,
+            cache_manager: CacheManager = None,
+            input_tx_cb: callable = None,
+            output_tx_cb: callable = None):
         super().__init__(configuration, cache_manager, input_tx_cb, output_tx_cb)
 
-    def process(self, input: OpenAIEmbeddingInput, configuration: OpenAIEmbeddingConfiguration) -> OpenAIEmbeddingOutput:
+    def process(
+            self,
+            input: OpenAIEmbeddingInput,
+            configuration: OpenAIEmbeddingConfiguration) -> OpenAIEmbeddingOutput:
         import openai
         importlib.reload(openai)
 
@@ -73,20 +86,35 @@ class OpenAIEmbeddingsProcessor(ProcessorInterface[OpenAIEmbeddingInput, OpenAIE
         min_retry_wait = configuration.min_retry_wait
         max_retry_wait = configuration.max_retry_wait
 
-        @retrier(exceptions=[], num_tries=num_tries, min_delay=min_retry_wait, max_delay=max_retry_wait, backoff=2)
+        @retrier(exceptions=[],
+                 num_tries=num_tries,
+                 min_delay=min_retry_wait,
+                 max_delay=max_retry_wait,
+                 backoff=2)
         def _get_openai_embedding(text: str, api_key: str, model: str):
 
             openai.api_type = 'open_ai'
             openai.api_key = api_key
-            return openai.Embedding.create(input=[text], model=model, timeout=timeout)
+            return openai.Embedding.create(
+                input=[text], model=model, timeout=timeout)
 
-        @retrier(exceptions=[],  num_tries=num_tries, min_delay=min_retry_wait, max_delay=max_retry_wait, backoff=2)
-        def _get_azure_openai_embedding(text: str, api_key: str, api_version: str, endpoint: str, deployment_id: str):
+        @retrier(exceptions=[],
+                 num_tries=num_tries,
+                 min_delay=min_retry_wait,
+                 max_delay=max_retry_wait,
+                 backoff=2)
+        def _get_azure_openai_embedding(
+                text: str,
+                api_key: str,
+                api_version: str,
+                endpoint: str,
+                deployment_id: str):
             openai.api_version = api_version
             openai.api_base = f'https://{endpoint}.openai.azure.com'
             openai.api_type = 'azure'
             openai.api_key = api_key
-            return openai.Embedding.create(input=[text], deployment_id=deployment_id, timeout=timeout)
+            return openai.Embedding.create(
+                input=[text], deployment_id=deployment_id, timeout=timeout)
 
         if configuration.api_type == EmbeddingAPIProvider.AZURE_OPENAI:
             result = _get_azure_openai_embedding(
@@ -104,7 +132,7 @@ class OpenAIEmbeddingsProcessor(ProcessorInterface[OpenAIEmbeddingInput, OpenAIE
             )
         try:
             embeddings = result['data'][0]['embedding']
-        except:
+        except BaseException:
             raise Exception(
                 f'Error while retrieving OpenAI Embedding: {result}',
             )
@@ -113,4 +141,7 @@ class OpenAIEmbeddingsProcessor(ProcessorInterface[OpenAIEmbeddingInput, OpenAIE
             if key != 'data':
                 metadata[key] = json.loads(json.dumps(result[key]))
 
-        return OpenAIEmbeddingOutput(embeddings=embeddings, metadata=OpenAIEmbeddingOutputMetadata(raw_response=metadata))
+        return OpenAIEmbeddingOutput(
+            embeddings=embeddings,
+            metadata=OpenAIEmbeddingOutputMetadata(
+                raw_response=metadata))

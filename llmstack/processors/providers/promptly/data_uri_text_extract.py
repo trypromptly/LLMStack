@@ -29,7 +29,9 @@ class DataUriTextExtractorConfiguration(ApiProcessorSchema):
 
 class DataUriTextExtractorInput(ApiProcessorSchema):
     file: str = Field(
-        default='', description='The file to extract text from', accepts={
+        default='',
+        description='The file to extract text from',
+        accepts={
             'application/pdf': [],
             'application/rtf': [],
             'text/plain': [],
@@ -37,11 +39,16 @@ class DataUriTextExtractorInput(ApiProcessorSchema):
             'application/msword': [],
             'application/vnd.openxmlformats-officedocument.presentationml.presentation': [],
             'application/vnd.ms-powerpoint': [],
-            'image/jpeg': [], 'image/png': [],
-        }, maxSize=50000000, widget='file',
+            'image/jpeg': [],
+            'image/png': [],
+        },
+        maxSize=50000000,
+        widget='file',
     )
     file_data: Optional[str] = Field(
-        default='', description='The base64 encoded data of file', pattern=r'data:(.*);name=(.*);base64,(.*)',
+        default='',
+        description='The base64 encoded data of file',
+        pattern=r'data:(.*);name=(.*);base64,(.*)',
     )
     query: Optional[str] = Field(
         default='', description='The query to search the document',
@@ -50,11 +57,14 @@ class DataUriTextExtractorInput(ApiProcessorSchema):
 
 class DataUriTextExtractorOutput(ApiProcessorSchema):
     text: str = Field(
-        default='', description='The extracted text from the file', widget='textarea',
+        default='',
+        description='The extracted text from the file',
+        widget='textarea',
     )
 
 
-class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUriTextExtractorOutput, DataUriTextExtractorConfiguration]):
+class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput,
+                         DataUriTextExtractorOutput, DataUriTextExtractorConfiguration]):
     """
     DataUri Text Extractor processor
     """
@@ -104,7 +114,8 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
             raise Exception('No file found in input')
         mime_type, file_name, data = validate_parse_data_uri(file)
 
-        if (query is None or query == '') and mime_type == self.mime_type and file_name == self.file_name and data == self.data and self.extracted_text != '':
+        if (query is None or query ==
+                '') and mime_type == self.mime_type and file_name == self.file_name and data == self.data and self.extracted_text != '':
             async_to_sync(self._output_stream.write)(
                 DataUriTextExtractorOutput(text=self.extracted_text),
             )
@@ -140,15 +151,20 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
             self.storage_index_name = index_name
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 text_chunks = SpacyTextSplitter(
-                    separator='\n', pipeline='sentencizer', chunk_size=self._config.text_chunk_size,
+                    separator='\n',
+                    pipeline='sentencizer',
+                    chunk_size=self._config.text_chunk_size,
                 ).split_text(text)
                 futures = [
                     executor.submit(
                         self.temp_store.add_text,
-                        index_name, Document(page_content_key="content", page_content=text_chunk, metadata={
-                            'source': file_name}),
-                    ) for text_chunk in text_chunks
-                ]
+                        index_name,
+                        Document(
+                            page_content_key="content",
+                            page_content=text_chunk,
+                            metadata={
+                                'source': file_name}),
+                    ) for text_chunk in text_chunks]
                 concurrent.futures.wait(futures)
             documents: List[Document] = self.temp_store.hybrid_search(
                 self.storage_index_name, document_query=DocumentQuery(

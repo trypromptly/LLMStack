@@ -163,7 +163,19 @@ class PromptlyScrapyPlaywrightDownloadHandler(ScrapyPlaywrightDownloadHandler):
 class URLSpider(CrawlSpider):
     name = 'url_spider'
 
-    def __init__(self, url, output, max_depth=0, allowed_domains=None, allowed_regex=None, denied_regex=None, use_renderer=False, connection=None, playwright_url=None, *args, **kwargs):
+    def __init__(
+            self,
+            url,
+            output,
+            max_depth=0,
+            allowed_domains=None,
+            allowed_regex=None,
+            denied_regex=None,
+            use_renderer=False,
+            connection=None,
+            playwright_url=None,
+            *args,
+            **kwargs):
         self.start_urls = [url]
         unstructured_trace = logging.getLogger('unstructured.trace')
         unstructured_trace.disabled = True
@@ -211,8 +223,14 @@ class URLSpider(CrawlSpider):
             "https": "llmstack.common.utils.crawlers.PromptlyScrapyPlaywrightDownloadHandler",
         }, priority='spider')
         settings.set(
-            'TWISTED_REACTOR', "twisted.internet.asyncioreactor.AsyncioSelectorReactor", priority='spider')
-        if os.getenv('RUNNER_HOST', None) and os.getenv('RUNNER_PLAYWRIGHT_PORT', None):
+            'TWISTED_REACTOR',
+            "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+            priority='spider')
+        if os.getenv(
+                'RUNNER_HOST',
+                None) and os.getenv(
+                'RUNNER_PLAYWRIGHT_PORT',
+                None):
             PLAYWRIGHT_URL = f'ws://{os.getenv("RUNNER_HOST", None)}:{os.getenv("RUNNER_PLAYWRIGHT_PORT", None)}'
             settings.set('PLAYWRIGHT_CDP_URL', PLAYWRIGHT_URL)
 
@@ -315,7 +333,16 @@ class URLSpider(CrawlSpider):
         )
 
 
-def _run_url_spider_process(url, q, max_depth=0, allowed_domains=None, allowed_regex=None, denied_regex=None, use_renderer=False, connection=None, playwright_url=None):
+def _run_url_spider_process(
+        url,
+        q,
+        max_depth=0,
+        allowed_domains=None,
+        allowed_regex=None,
+        denied_regex=None,
+        use_renderer=False,
+        connection=None,
+        playwright_url=None):
     output = []
     process = CrawlerProcess(CRAWLER_SETTINGS)
     process.crawl(
@@ -333,12 +360,28 @@ def _run_url_spider_process(url, q, max_depth=0, allowed_domains=None, allowed_r
     q.put(output)
 
 
-def run_url_spider_in_process(url, max_depth=0, allowed_domains=None, allow_regex=None, deny_regex=None, use_renderer=False, connection=None, playwright_url=None):
+def run_url_spider_in_process(
+        url,
+        max_depth=0,
+        allowed_domains=None,
+        allow_regex=None,
+        deny_regex=None,
+        use_renderer=False,
+        connection=None,
+        playwright_url=None):
     result = mp.Queue()
     process = mp.Process(
         target=_run_url_spider_process,
-        args=(url, result, max_depth, allowed_domains,
-              allow_regex, deny_regex, use_renderer, connection, playwright_url),
+        args=(
+            url,
+            result,
+            max_depth,
+            allowed_domains,
+            allow_regex,
+            deny_regex,
+            use_renderer,
+            connection,
+            playwright_url),
     )
     process.start()
 

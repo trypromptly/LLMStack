@@ -12,7 +12,7 @@ class AbstractHistoryStore:
 
 class DefaultHistoryStore(AbstractHistoryStore):
     @staticmethod
-    def persist(data: RunEntry,  **kwargs):
+    def persist(data: RunEntry, **kwargs):
         data.save()
 
 

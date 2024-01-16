@@ -19,7 +19,7 @@ class WebsiteCrawlerSchema(DataSourceSchema):
         default='.*', description='Regex to allow urls', widget='hidden',
     )
     deny_regex: Optional[str] = Field(
-        default='.*', description='Regex to deny urls',  widget='hidden',
+        default='.*', description='Regex to deny urls', widget='hidden',
     )
 
     @staticmethod
@@ -70,13 +70,19 @@ class WebsiteCrawlerDataSource(DataSourceProcessor[WebsiteCrawlerSchema]):
 
         return result
 
-    def get_data_documents(self, data: DataSourceEntryItem) -> DataSourceEntryItem:
+    def get_data_documents(
+            self,
+            data: DataSourceEntryItem) -> DataSourceEntryItem:
         logger.info(
             f'Processing url: {data.name}',
         )
         docs = [
-            Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': data.name}) for t in SpacyTextSplitter(
+            Document(
+                page_content_key=self.get_content_key(),
+                page_content=t,
+                metadata={
+                    'source': data.name}) for t in SpacyTextSplitter(
                 chunk_size=1500,
-            ).split_text(data.data['html_partition'])
-        ]
+            ).split_text(
+                data.data['html_partition'])]
         return docs

@@ -21,18 +21,27 @@ def prepare_env():
     Verifies that .llmstack dir exists in current directory or user's home dir.
     If it doesn't exist, creates it and returns the .env.local file path.
     """
-    if not os.path.exists('.llmstack') and not os.path.exists(os.path.join(os.path.expanduser('~'), '.llmstack')):
+    if not os.path.exists('.llmstack') and not os.path.exists(
+            os.path.join(os.path.expanduser('~'), '.llmstack')):
         # Create .llmstack dir in user's home dir
         os.mkdir(os.path.join(os.path.expanduser('~'), '.llmstack'))
 
-    if not os.path.exists('.llmstack/config') and not os.path.exists(os.path.join(os.path.expanduser('~'), '.llmstack/config')):
+    if not os.path.exists('.llmstack/config') and not os.path.exists(
+            os.path.join(os.path.expanduser('~'), '.llmstack/config')):
         # Copy config.toml file from installed package to ~/.llmstack/config
         import shutil
-        shutil.copyfile(os.path.join(os.path.dirname(__file__), 'config.toml'), os.path.join(
-            os.path.expanduser('~'), '.llmstack', 'config'))
+        shutil.copyfile(
+            os.path.join(
+                os.path.dirname(__file__),
+                'config.toml'),
+            os.path.join(
+                os.path.expanduser('~'),
+                '.llmstack',
+                'config'))
 
         # Given this is the first time the user is running llmstack, we should
-        # ask the user for secret key, cipher_key_salt, database_password and save it in the config file
+        # ask the user for secret key, cipher_key_salt, database_password and
+        # save it in the config file
         config_path = os.path.join(
             os.path.expanduser('~'), '.llmstack', 'config')
         config = {}
@@ -58,7 +67,8 @@ def prepare_env():
             toml.dump(config, f)
 
     # Chdir to .llmstack
-    if not os.path.exists('.llmstack') and os.path.exists(os.path.join(os.path.expanduser('~'), '.llmstack')):
+    if not os.path.exists('.llmstack') and os.path.exists(
+            os.path.join(os.path.expanduser('~'), '.llmstack')):
         os.chdir(os.path.join(os.path.expanduser('~'), '.llmstack'))
     elif os.path.exists('.llmstack'):
         os.chdir('.llmstack')
@@ -117,7 +127,8 @@ def start_runner(environment):
     image_tag = environment.get('RUNNER_IMAGE_TAG', 'main')
 
     # Pull image if it is not locally available
-    if not any(f'{image_name}:{image_tag}' in image.tags for image in client.images.list()):
+    if not any(
+            f'{image_name}:{image_tag}' in image.tags for image in client.images.list()):
         print(f'[llmstack-runner] Pulling {image_name}:{image_tag}')
 
         layers_status = defaultdict(dict)
@@ -146,10 +157,18 @@ def start_runner(environment):
     try:
         runner_container = client.containers.get('llmstack-runner')
     except docker.errors.NotFound:
-        runner_container = client.containers.run(f'{image_name}:{image_tag}', name='llmstack-runner',
-                                                 ports={
-                                                     '50051/tcp': os.environ['RUNNER_PORT'], '50052/tcp': os.environ['RUNNER_WSS_PORT'], '50053/tcp': os.environ['RUNNER_PLAYWRIGHT_PORT'], '6379/tcp': os.environ['RUNNER_RQ_REDIS_PORT']},
-                                                 detach=True, remove=True, environment=environment,)
+        runner_container = client.containers.run(
+            f'{image_name}:{image_tag}',
+            name='llmstack-runner',
+            ports={
+                '50051/tcp': os.environ['RUNNER_PORT'],
+                '50052/tcp': os.environ['RUNNER_WSS_PORT'],
+                '50053/tcp': os.environ['RUNNER_PLAYWRIGHT_PORT'],
+                '6379/tcp': os.environ['RUNNER_RQ_REDIS_PORT']},
+            detach=True,
+            remove=True,
+            environment=environment,
+        )
 
     # Start runner container if not already running
     print('[llmstack-runner] Started LLMStack Runner')

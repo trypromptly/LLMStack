@@ -1,4 +1,5 @@
-# A lot of the implementation is adopted from django-rq and django-tasks-scheduler
+# A lot of the implementation is adopted from django-rq and
+# django-tasks-scheduler
 from __future__ import unicode_literals
 
 import importlib
@@ -63,17 +64,23 @@ class TaskRunLog(models.Model):
         raise NotImplementedError
 
     def task_name(self):
-        entry = apps.get_model(app_label='jobs', model_name=self.task_type).objects.filter(
+        entry = apps.get_model(
+            app_label='jobs',
+            model_name=self.task_type).objects.filter(
             id=self.task_id).first()
         return entry.name if entry else ''
 
     def task_uuid(self):
-        entry = apps.get_model(app_label='jobs', model_name=self.task_type).objects.filter(
+        entry = apps.get_model(
+            app_label='jobs',
+            model_name=self.task_type).objects.filter(
             id=self.task_id).first()
         return entry.uuid if entry else ''
 
     def user(self):
-        entry = apps.get_model(app_label='jobs', model_name=self.task_type).objects.filter(
+        entry = apps.get_model(
+            app_label='jobs',
+            model_name=self.task_type).objects.filter(
             id=self.task_id).first()
         return entry.owner if entry else ''
 
@@ -133,7 +140,8 @@ def success_callback(job, connection, result, *args, **kwargs):
         task_log.save()
 
     task.job_id = None
-    # If task is a scehduledJob we have already ran the job no need to schedule it again
+    # If task is a scehduledJob we have already ran the job no need to
+    # schedule it again
     task.save(schedule_job=False if task.TASK_TYPE == 'ScheduledJob' else True)
 
 
@@ -169,7 +177,9 @@ def run_task(task_model: str, task_id: int):
         logger.error(f'Could not find task {task_model}:{task_id}')
         return False
 
-    if task.TASK_TYPE == 'ScheduledJob' and timedelta(seconds=task.timeout or 600) < (timezone.now() - task.scheduled_time):
+    if task.TASK_TYPE == 'ScheduledJob' and timedelta(
+            seconds=task.timeout or 600) < (
+            timezone.now() - task.scheduled_time):
         # Task got scheduled post the end time
         results = {}
         errors = {'detail': 'Task got scheduled post the end time'}
@@ -239,25 +249,37 @@ class BaseTask(models.Model):
     callable_kwargs = models.TextField(blank=True, null=True)
     enabled = models.BooleanField(default=True)
     repeat = models.PositiveIntegerField(
-        blank=True, null=True, help_text='Number of times to repeat the job. Blank repeats forever.')
+        blank=True,
+        null=True,
+        help_text='Number of times to repeat the job. Blank repeats forever.')
     queue = models.CharField(choices=RQ_QUEUE_NAMES, max_length=32)
     job_id = models.CharField(
         max_length=128, editable=False, blank=True, null=True)
-    timeout = models.IntegerField(blank=True, null=True, help_text='Timeout specifies the maximum runtime, in seconds, for the job '
-                                  'before it\'ll be considered \'lost\'. Blank uses the default timeout.'
-                                  )
+    timeout = models.IntegerField(
+        blank=True,
+        null=True,
+        help_text='Timeout specifies the maximum runtime, in seconds, for the job '
+        'before it\'ll be considered \'lost\'. Blank uses the default timeout.')
     status = models.CharField(
         max_length=50, null=False, choices=TASK_STATUSES, default='queued')
-    result_ttl = models.IntegerField(blank=True, null=True,
-                                     help_text='The TTL value (in seconds) of the job result. -1: '
-                                     'Result never expires, you should delete jobs manually. '
-                                     '0: Result gets deleted immediately. >0: Result expires '
-                                     'after n seconds.')
+    result_ttl = models.IntegerField(
+        blank=True,
+        null=True,
+        help_text='The TTL value (in seconds) of the job result. -1: '
+        'Result never expires, you should delete jobs manually. '
+        '0: Result gets deleted immediately. >0: Result expires '
+        'after n seconds.')
     owner = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, help_text='Owner of the task', null=False
-    )
+        User,
+        on_delete=models.DO_NOTHING,
+        help_text='Owner of the task',
+        null=False)
     task_category = models.CharField(
-        max_length=128, choices=TASK_CATEGORY, editable=False, null=False, default='generic')
+        max_length=128,
+        choices=TASK_CATEGORY,
+        editable=False,
+        null=False,
+        default='generic')
     metadata = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -277,7 +299,7 @@ class BaseTask(models.Model):
         args = {}
         try:
             args = json.loads(self.callable_args) if self.callable_args else {}
-        except:
+        except BaseException:
             pass
         return args
 
@@ -286,7 +308,7 @@ class BaseTask(models.Model):
         try:
             kwargs = json.loads(
                 self.callable_kwargs) if self.callable_kwargs else {}
-        except:
+        except BaseException:
             pass
         return kwargs
 
@@ -300,7 +322,8 @@ class BaseTask(models.Model):
                or (self.job_id in enqueued_jobs)
                or (self.job_id in active_jobs))
         # If the job_id is not scheduled/enqueued/started,
-        # update the job_id to None. (The job_id belongs to a previous run which is completed)
+        # update the job_id to None. (The job_id belongs to a previous run
+        # which is completed)
         if not res:
             self.job_id = None
             super(BaseTask, self).save()
@@ -340,7 +363,7 @@ class BaseTask(models.Model):
         return True
 
     def schedule(self):
-        """ 
+        """
         Schedule the next execution for the task.
         """
         if not self.can_be_scheduled():
@@ -362,7 +385,7 @@ class BaseTask(models.Model):
         return True
 
     def schedule_now(self):
-        """ 
+        """
         Schedule the next execution for the task.
         """
         job = self.rqueue.enqueue(
@@ -392,7 +415,7 @@ class BaseTask(models.Model):
         return True
 
     def unschedule(self):
-        """ 
+        """
         Remove a job from the queue.
         """
         if self.job_id is None:
@@ -404,7 +427,8 @@ class BaseTask(models.Model):
         return True
 
     def _schedule_time(self):
-        return utc(self.scheduled_time) if settings.USE_TZ else self.scheduled_time
+        return utc(
+            self.scheduled_time) if settings.USE_TZ else self.scheduled_time
 
     def to_dict(self):
         res = dict(
@@ -447,11 +471,10 @@ class BaseTask(models.Model):
     def _clean_callable(self):
         try:
             self.callable_func()
-        except:
+        except BaseException:
             logger.error('Invalid callable: {}'.format(self.callable))
-            raise ValidationError({
-                'callable': ValidationError('Invalid callable, must be importable', code='invalid')
-            })
+            raise ValidationError({'callable': ValidationError(
+                'Invalid callable, must be importable', code='invalid')})
 
     def _clean_queue(self):
         queue_keys = settings.RQ_QUEUES.keys()
@@ -541,14 +564,16 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
             raise ValidationError(
                 "Job interval is not a multiple of rq_scheduler's interval frequency: %(interval)ss",
                 code='invalid',
-                params={'interval': SCHEDULER_INTERVAL})
+                params={
+                    'interval': SCHEDULER_INTERVAL})
 
     def clean_result_ttl(self) -> None:
         """
         Throws an error if there are repeats left to run and the result_ttl won't last until the next scheduled time.
         :return: None
         """
-        if self.result_ttl and self.result_ttl != -1 and self.result_ttl < self.interval_seconds() and self.repeat:
+        if self.result_ttl and self.result_ttl != - \
+                1 and self.result_ttl < self.interval_seconds() and self.repeat:
             raise ValidationError(
                 "Job result_ttl must be either indefinite (-1) or "
                 "longer than the interval, %(interval)s seconds, to ensure rescheduling.",
@@ -566,7 +591,9 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
             return super(RepeatableJob, self)._schedule_time()
 
         gap = math.ceil(
-            (_now - self.scheduled_time).total_seconds() / self.interval_seconds())
+            (_now -
+             self.scheduled_time).total_seconds() /
+            self.interval_seconds())
         if self.repeat is None or self.repeat >= gap:
             self.scheduled_time += timedelta(
                 seconds=self.interval_seconds() * gap)
@@ -600,7 +627,8 @@ class CronJob(BaseTask):
     TASK_TYPE = 'CronJob'
 
     cron_string = models.CharField(
-        max_length=64, help_text='Define the schedule in a crontab like syntax.')
+        max_length=64,
+        help_text='Define the schedule in a crontab like syntax.')
 
     def clean(self):
         super(CronJob, self).clean()

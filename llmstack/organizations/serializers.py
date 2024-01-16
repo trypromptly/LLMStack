@@ -14,7 +14,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
     def get_logo(self, obj):
         try:
             return OrganizationSettings.objects.get(organization=obj).logo.url
-        except:
+        except BaseException:
             return None
 
     def get_disabled_api_backends(self, obj):
@@ -80,12 +80,30 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganizationSettings
         fields = [
-            'name', 'slug', 'domains', 'logo', 'disabled_api_backends',
-            'default_app_visibility', 'max_app_visibility', 'allow_user_keys',
-            'azure_openai_api_key', 'openai_key', 'stabilityai_key',
-            'cohere_key', 'forefrontai_key', 'elevenlabs_key', 'azure_openai_endpoint',
-            'anthropic_api_key', 'aws_access_key_id', 'aws_secret_access_key', 'aws_default_region',
-            'vectorstore_weaviate_url', 'vectorstore_weaviate_api_key',
-            'vectorstore_weaviate_text2vec_openai_module_config', 'use_own_vectorstore',
-            'use_azure_openai_embeddings', 'embeddings_api_rate_limit', 'default_api_backend',
+            'name',
+            'slug',
+            'domains',
+            'logo',
+            'disabled_api_backends',
+            'default_app_visibility',
+            'max_app_visibility',
+            'allow_user_keys',
+            'azure_openai_api_key',
+            'openai_key',
+            'stabilityai_key',
+            'cohere_key',
+            'forefrontai_key',
+            'elevenlabs_key',
+            'azure_openai_endpoint',
+            'anthropic_api_key',
+            'aws_access_key_id',
+            'aws_secret_access_key',
+            'aws_default_region',
+            'vectorstore_weaviate_url',
+            'vectorstore_weaviate_api_key',
+            'vectorstore_weaviate_text2vec_openai_module_config',
+            'use_own_vectorstore',
+            'use_azure_openai_embeddings',
+            'embeddings_api_rate_limit',
+            'default_api_backend',
         ]

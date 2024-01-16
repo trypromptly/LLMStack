@@ -23,7 +23,8 @@ Entry configuration schema for url data source type
 
 class SitemapURLSchema(DataSourceSchema):
     url: str = Field(
-        description='Sitemap URL to scrape. URL should end with .xml', regex=r'^.*\.xml$',
+        description='Sitemap URL to scrape. URL should end with .xml',
+        regex=r'^.*\.xml$',
     )
 
     @staticmethod
@@ -70,18 +71,23 @@ class SitemapCrawlerDataSource(DataSourceProcessor[SitemapURLSchema]):
         except Exception as e:
             logger.exception('Error in extracting urls from sitemap')
 
-        return list(map(lambda entry: DataSourceEntryItem(name=entry, data={'url': entry}), sitemap_urls))
+        return list(map(lambda entry: DataSourceEntryItem(
+            name=entry, data={'url': entry}), sitemap_urls))
 
-    def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
+    def get_data_documents(
+            self,
+            data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         url = data.data['url']
         text = extract_text_from_url(
             url, extra_params=ExtraParams(openai_key=self.openai_key),
         )
         docs = [
             Document(
-                page_content_key=self.get_content_key(), page_content=t, metadata={
+                page_content_key=self.get_content_key(),
+                page_content=t,
+                metadata={
                     'source': url,
                 },
-            ) for t in SpacyTextSplitter(chunk_size=1500).split_text(text)
-        ]
+            ) for t in SpacyTextSplitter(
+                chunk_size=1500).split_text(text)]
         return docs

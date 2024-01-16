@@ -13,7 +13,8 @@ class TemplateInterface:
     def get_template_id(self) -> str:
         return self.template_id
 
-    # Returns the data to be sent to the template. Override this method in your class
+    # Returns the data to be sent to the template. Override this method in
+    # your class
     def get_data(self) -> dict:
         return {}
 

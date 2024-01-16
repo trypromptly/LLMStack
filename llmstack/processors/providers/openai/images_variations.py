@@ -16,20 +16,31 @@ logger = logging.getLogger(__name__)
 
 class ImagesVariationsInput(ApiProcessorSchema):
     image: Optional[str] = Field(
-        default='', description='The image to use as the basis for the variation(s). Must be a valid PNG file, less than 4MB, and square.', accepts={'image/png': []}, maxSize=4000000, widget='file',
+        default='',
+        description='The image to use as the basis for the variation(s). Must be a valid PNG file, less than 4MB, and square.',
+        accepts={
+            'image/png': []},
+        maxSize=4000000,
+        widget='file',
     )
     image_data: Optional[str] = Field(
-        default='', description='The base64 encoded data of image', pattern=r'data:(.*);name=(.*);base64,(.*)',
+        default='',
+        description='The base64 encoded data of image',
+        pattern=r'data:(.*);name=(.*);base64,(.*)',
     )
 
 
 class ImagesVariationsOutput(ApiProcessorSchema):
     answer: List[str] = Field(
-        default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
+        default=[],
+        description='The generated images.',
+        widget=IMAGE_WIDGET_NAME,
     )
 
 
-class ImagesVariationsConfiguration(OpenAIImageVariationsProcessorConfiguration, ApiProcessorSchema):
+class ImagesVariationsConfiguration(
+        OpenAIImageVariationsProcessorConfiguration,
+        ApiProcessorSchema):
     size: Optional[Size] = Field(
         '1024x1024',
         description='The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.',
@@ -44,7 +55,8 @@ class ImagesVariationsConfiguration(OpenAIImageVariationsProcessorConfiguration,
     )
 
 
-class ImagesVariations(ApiProcessorInterface[ImagesVariationsInput, ImagesVariationsOutput, ImagesVariationsConfiguration]):
+class ImagesVariations(
+        ApiProcessorInterface[ImagesVariationsInput, ImagesVariationsOutput, ImagesVariationsConfiguration]):
     """
     OpenAI Images Generations API
     """
@@ -80,16 +92,19 @@ class ImagesVariations(ApiProcessorInterface[ImagesVariationsInput, ImagesVariat
         image_variations_api_processor_input = OpenAIImageVariationsProcessorInput(
             env=OpenAIAPIInputEnvironment(
                 openai_api_key=get_key_or_raise(
-                    self._env, 'openai_api_key', 'No openai_api_key found in _env',
+                    self._env,
+                    'openai_api_key',
+                    'No openai_api_key found in _env',
                 ),
             ),
-            image=OpenAIFile(name=file_name, content=image_data,
-                             mime_type=mime_type),
+            image=OpenAIFile(
+                name=file_name,
+                content=image_data,
+                mime_type=mime_type),
         )
         response: OpenAIImageVariationsProcessorOutput = OpenAIImageVariationsProcessor(
-            configuration=self._config.dict(
-            ),
-        ).process(image_variations_api_processor_input.dict())
+            configuration=self._config.dict(), ).process(
+            image_variations_api_processor_input.dict())
 
         async_to_sync(self._output_stream.write)(
             ImagesVariationsOutput(answer=response.answer),

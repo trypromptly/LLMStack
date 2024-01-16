@@ -55,7 +55,8 @@ Message = Annotated[Union[TextMessage, UrlImageMessage],
 
 class ChatMessage(ApiProcessorSchema):
     role: Optional[Role] = Field(
-        default=Role.USER, description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
+        default=Role.USER,
+        description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
     )
     content: List[Union[TextMessage, UrlImageMessage]] = Field(
         default=[], description='The message text.')
@@ -63,18 +64,22 @@ class ChatMessage(ApiProcessorSchema):
 
 class ChatCompletionsVisionInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
-        default='', description='A message from the system, which will be prepended to the chat history.', widget='textarea',
+        default='',
+        description='A message from the system, which will be prepended to the chat history.',
+        widget='textarea',
     )
-    messages:  List[Message] = Field(
-        default=[], description='A list of messages, each with a role and message text.'
-    )
+    messages: List[Message] = Field(
+        default=[],
+        description='A list of messages, each with a role and message text.')
 
 
 class ChatCompletionsVisionOutput(ApiProcessorSchema):
     result: str = Field(default='', description='The model-generated message.')
 
 
-class ChatCompletionsVisionConfiguration(OpenAIChatCompletionsAPIProcessorConfiguration, ApiProcessorSchema):
+class ChatCompletionsVisionConfiguration(
+        OpenAIChatCompletionsAPIProcessorConfiguration,
+        ApiProcessorSchema):
     model: ChatCompletionsVisionModel = Field(
         default=ChatCompletionsVisionModel.GPT_4_Vision,
         description='ID of the model to use. Currently, only `gpt-4-vision-preview` is supported.',
@@ -93,15 +98,19 @@ class ChatCompletionsVisionConfiguration(OpenAIChatCompletionsAPIProcessorConfig
         advanced_parameter=False,
     )
     retain_history: Optional[bool] = Field(
-        default=False, description='Retain and use the chat history. (Only works in apps)', advanced_parameter=False,
+        default=False,
+        description='Retain and use the chat history. (Only works in apps)',
+        advanced_parameter=False,
     )
 
     auto_prune_chat_history: Optional[bool] = Field(
-        default=False, description="Automatically prune chat history. This is only applicable if 'retain_history' is set to 'true'.",
+        default=False,
+        description="Automatically prune chat history. This is only applicable if 'retain_history' is set to 'true'.",
     )
 
 
-class ChatCompletionsVision(ApiProcessorInterface[ChatCompletionsVisionInput, ChatCompletionsVisionOutput, ChatCompletionsVisionConfiguration]):
+class ChatCompletionsVision(
+        ApiProcessorInterface[ChatCompletionsVisionInput, ChatCompletionsVisionOutput, ChatCompletionsVisionConfiguration]):
     """
     OpenAI Chat Completions with vision API
     """
@@ -154,7 +163,8 @@ class ChatCompletionsVision(ApiProcessorInterface[ChatCompletionsVisionInput, Ch
         )
 
         for data in result:
-            if data.object == 'chat.completion.chunk' and len(data.choices) > 0 and data.choices[0].delta and data.choices[0].delta.content:
+            if data.object == 'chat.completion.chunk' and len(
+                    data.choices) > 0 and data.choices[0].delta and data.choices[0].delta.content:
                 async_to_sync(output_stream.write)(
                     ChatCompletionsVisionOutput(
                         result=data.choices[0].delta.content

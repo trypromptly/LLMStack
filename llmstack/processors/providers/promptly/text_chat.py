@@ -42,18 +42,21 @@ class TextChatConfiguration(ApiProcessorSchema):
     )
     datasource: List[str] = Field(
         default=None,
-        description='Datasources to use', widget='datasource', advanced_parameter=False,
+        description='Datasources to use',
+        widget='datasource',
+        advanced_parameter=False,
     )
     system_message_prefix: str = Field(
         """You are a helpful chat assistant""",
-        description='System message that defines the character of the assistant', widget='textarea', advanced_parameter=True,
+        description='System message that defines the character of the assistant',
+        widget='textarea',
+        advanced_parameter=True,
     )
     instructions: str = Field(
         """You are a chatbot that uses the provided context to answer the user's question.
 If you cannot answer the question based on the provided context, say you don't know the answer.
 No answer should go out of the provided input. If the provided input is empty, return saying you don't know the answer.
-Keep the answers terse.""", description='Instructions for the chatbot', widget='textarea', advanced_parameter=True,
-    )
+Keep the answers terse.""", description='Instructions for the chatbot', widget='textarea', advanced_parameter=True, )
     show_citations: bool = Field(
         title='Show citations', default=False,
         description='Show citations for the answer',
@@ -65,7 +68,8 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
         description='Instructions for the chatbot')
 
     k: int = Field(
-        title='Documents Count', default=5,
+        title='Documents Count',
+        default=5,
         description='Number of documents from similarity search to use as context',
     )
     chat_history_limit: int = Field(
@@ -73,20 +77,35 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
         description='Number of chat history to keep in memory',
     )
     temperature: float = Field(
-        title='Temperature', default=0.7,
+        title='Temperature',
+        default=0.7,
         description='Temperature of the model. Higher temperature results in more random completions. Try 0.9 for more fun results.',
     )
     use_azure_if_available: bool = Field(
-        title='Use Azure if available', default=True, description='Use Azure if available. Will fallback to OpenAI when unchecked', advanced_parameter=True,
+        title='Use Azure if available',
+        default=True,
+        description='Use Azure if available. Will fallback to OpenAI when unchecked',
+        advanced_parameter=True,
     )
     use_localai_if_available: bool = Field(
-        title='Use LocalAI if available', default=False, description='Use LocalAI if available. Will fallback to OpenAI or Azure OpenAI when unchecked', advanced_parameter=True,
+        title='Use LocalAI if available',
+        default=False,
+        description='Use LocalAI if available. Will fallback to OpenAI or Azure OpenAI when unchecked',
+        advanced_parameter=True,
     )
     chat_history_in_doc_search: int = Field(
-        title='Chat history in doc search', default=0, description='Number of messages from chat history to include in doc search', advanced_parameter=True,
+        title='Chat history in doc search',
+        default=0,
+        description='Number of messages from chat history to include in doc search',
+        advanced_parameter=True,
     )
     hybrid_semantic_search_ratio: Optional[float] = Field(
-        default=0.75, description='Ratio of semantic search to hybrid search', ge=0.0, le=1.0, multiple_of=0.01, advanced_parameter=True,
+        default=0.75,
+        description='Ratio of semantic search to hybrid search',
+        ge=0.0,
+        le=1.0,
+        multiple_of=0.01,
+        advanced_parameter=True,
     )
     seed: Optional[int] = Field(
         description='Seed for the model', advanced_parameter=True)
@@ -95,7 +114,10 @@ Keep the answers terse.""", description='Instructions for the chatbot', widget='
 class TextChatInput(ApiProcessorSchema):
     question: str = Field(..., description='Question to answer')
     search_filters: str = Field(
-        title='Search filters', default=None, description='Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata', advanced_parameter=True,
+        title='Search filters',
+        default=None,
+        description='Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata',
+        advanced_parameter=True,
     )
 
 
@@ -112,7 +134,8 @@ class TextChatOutput(ApiProcessorSchema):
     citations: Optional[List[Citation]]
 
 
-class TextChat(ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConfiguration]):
+class TextChat(
+        ApiProcessorInterface[TextChatInput, TextChatOutput, TextChatConfiguration]):
     """
     Text summarizer API processor
     """
@@ -153,7 +176,8 @@ Citations:
 {% endif %}''')
 
     def session_data_to_persist(self) -> dict:
-        return {'chat_history': self._chat_history[-self._config.chat_history_limit:] if self._config.chat_history_limit > 0 else [], 'context': self._context}
+        return {'chat_history': self._chat_history[-self._config.chat_history_limit:]
+                if self._config.chat_history_limit > 0 else [], 'context': self._context}
 
     def _search_datasources(self, input):
         docs = []
@@ -165,15 +189,15 @@ Citations:
                     uuid=uuid.UUID(datasource_uuid),
                 )
                 datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-                    datasource.type,
-                )
+                    datasource.type, )
                 datasource_entry_handler = datasource_entry_handler_cls(
                     datasource,
                 )
 
                 search_query = input['question']
                 search_filters = input['search_filters']
-                if len(self._chat_history) > 0 and self._config.chat_history_in_doc_search > 0:
+                if len(
+                        self._chat_history) > 0 and self._config.chat_history_in_doc_search > 0:
                     search_query = search_query + '\n\n' + '\n\n'.join(
                         [m['content']
                             for m in self._chat_history[-self._config.chat_history_in_doc_search:]],
@@ -181,12 +205,13 @@ Citations:
 
                 output_docs = datasource_entry_handler.search(
                     alpha=self._config.hybrid_semantic_search_ratio,
-                    query=search_query, limit=self._config.k, search_filters=search_filters,
+                    query=search_query,
+                    limit=self._config.k,
+                    search_filters=search_filters,
                 )
             except Exception as e:
                 logger.error(
-                    f'Error fetching docs from datasource {datasource_uuid}: {e}',
-                )
+                    f'Error fetching docs from datasource {datasource_uuid}: {e}', )
             finally:
                 db.connections.close_all()
                 return output_docs
@@ -214,7 +239,10 @@ Citations:
 
         if docs and len(docs) > 0:
             if 'score' in docs[0].metadata:
-                docs = sorted(docs, key=lambda d: d.metadata['score'], reverse=True)[
+                docs = sorted(
+                    docs,
+                    key=lambda d: d.metadata['score'],
+                    reverse=True)[
                     :self._config.k]
             else:
                 docs = docs[:self._config.k]
@@ -307,22 +335,31 @@ Citations:
             raise Exception('No OpenAI API key provided')
 
         for data in result:
-            if data.object == 'chat.completion.chunk' and len(data.choices) > 0 and data.choices[0].delta and data.choices[0].delta.content:
+            if data.object == 'chat.completion.chunk' and len(
+                    data.choices) > 0 and data.choices[0].delta and data.choices[0].delta.content:
                 async_to_sync(output_stream.write)(
                     TextChatOutput(
                         answer=data.choices[0].delta.content
                     ))
 
         if len(docs) > 0:
-            async_to_sync(output_stream.write)(
-                TextChatOutput(answer='', citations=list(map(lambda d: Citation(
-                    text=d.page_content, source=d.metadata['source'], distance=d.metadata['distance'] if 'distance' in d.metadata else 0.0), docs))))
+            async_to_sync(
+                output_stream.write)(
+                TextChatOutput(
+                    answer='',
+                    citations=list(
+                        map(
+                            lambda d: Citation(
+                                text=d.page_content,
+                                source=d.metadata['source'],
+                                distance=d.metadata['distance'] if 'distance' in d.metadata else 0.0),
+                            docs))))
 
         output = output_stream.finalize()
 
-        self._chat_history.append(
-            {'role': 'assistant', 'content': output['answer'] if type(
-                output) is dict else output.answer},
-        )
+        self._chat_history.append({'role': 'assistant',
+                                   'content': output['answer'] if isinstance(output,
+                                                                             dict) else output.answer},
+                                  )
 
         return output

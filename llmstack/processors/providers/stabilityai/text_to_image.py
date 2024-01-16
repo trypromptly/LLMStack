@@ -41,22 +41,29 @@ class TextToImageInput(ApiProcessorSchema):
     )
 
     negative_prompt: List[str] = Field(
-        default=[''], description='Negative text prompt to use for image generation.',
+        default=[''],
+        description='Negative text prompt to use for image generation.',
     )
 
 
 class TextToImageOutput(ApiProcessorSchema):
     answer: List[str] = Field(
-        default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
+        default=[],
+        description='The generated images.',
+        widget=IMAGE_WIDGET_NAME,
     )
     api_response: Optional[Dict] = Field(
-        default=None, description='The raw response from the API.', widget='hidden',
+        default=None,
+        description='The raw response from the API.',
+        widget='hidden',
     )
 
 
 class TextToImageConfiguration(ApiProcessorSchema):
     engine_id: StableDiffusionModel = Field(
-        default=StableDiffusionModel.STABLE_DIFFUSION_V1_5, description='Inference engine (model) to use.', advanced_parameter=False,
+        default=StableDiffusionModel.STABLE_DIFFUSION_V1_5,
+        description='Inference engine (model) to use.',
+        advanced_parameter=False,
     )
     height: Optional[int] = Field(
         default=512, description='Measured in pixels. Pixel limit is 1048576',
@@ -66,7 +73,8 @@ class TextToImageConfiguration(ApiProcessorSchema):
     )
 
     cfg_scale: Optional[int] = Field(
-        default=7, description='Dictates how closely the engine attempts to match a generation to the provided prompt. v2-x models respond well to lower CFG (4-8), where as v1-x models respond well to a higher range (IE: 7-14).',
+        default=7,
+        description='Dictates how closely the engine attempts to match a generation to the provided prompt. v2-x models respond well to lower CFG (4-8), where as v1-x models respond well to a higher range (IE: 7-14).',
     )
 
     sampler: Sampler = Field(
@@ -74,23 +82,31 @@ class TextToImageConfiguration(ApiProcessorSchema):
         description='Sampling engine to use. If no sampler is declared, an appropriate default sampler for the declared inference engine will be applied automatically.',
     )
     steps: Optional[int] = Field(
-        default=30, description='Affects the number of diffusion steps performed on the requested generation.',
+        default=30,
+        description='Affects the number of diffusion steps performed on the requested generation.',
     )
 
     seed: Optional[int] = Field(
-        default=0, description='Seed for random latent noise generation. Deterministic if not being used in concert with CLIP Guidance. If not specified, or set to 0, then a random value will be used.', advanced_parameter=False,
+        default=0,
+        description='Seed for random latent noise generation. Deterministic if not being used in concert with CLIP Guidance. If not specified, or set to 0, then a random value will be used.',
+        advanced_parameter=False,
     )
 
     num_samples: int = Field(
-        default=1, description='Number of images to generate. Allows for batch image generations.', advanced_parameter=True,
+        default=1,
+        description='Number of images to generate. Allows for batch image generations.',
+        advanced_parameter=True,
     )
 
     guidance_preset: Optional[GuidancePreset] = Field(
-        default=None,  widget='hidden', description='Guidance preset to use for image generation.',
+        default=None,
+        widget='hidden',
+        description='Guidance preset to use for image generation.',
     )
 
 
-class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, TextToImageConfiguration]):
+class TextToImage(
+        ApiProcessorInterface[TextToImageInput, TextToImageOutput, TextToImageConfiguration]):
     """
     StabilityAI Images Generations API
     """
@@ -112,7 +128,9 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
 
     def process(self) -> dict:
         stability_api_key = get_key_or_raise(
-            self._env, 'stabilityai_api_key', 'No stabilityai_api_key found in _env',
+            self._env,
+            'stabilityai_api_key',
+            'No stabilityai_api_key found in _env',
         )
         prompt = self._input.prompt
         if not prompt:
@@ -175,12 +193,8 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
             if 'artifacts' in resp_json:
                 for image_data in resp_json['artifacts']:
                     if image_data['type'] == 'ARTIFACT_IMAGE':
-                        async_to_sync(self._output_stream.write)(
-                            TextToImageOutput(
-                                answer=(['' for _ in range(
-                                    image_count)] + ['data:{};base64,{}'.format(image_data['mime'], image_data['binary'])]),
-                            ),
-                        )
+                        async_to_sync(self._output_stream.write)(TextToImageOutput(answer=(['' for _ in range(
+                            image_count)] + ['data:{};base64,{}'.format(image_data['mime'], image_data['binary'])]), ), )
                         image_count += 1
 
         async_to_sync(self._output_stream.write)(

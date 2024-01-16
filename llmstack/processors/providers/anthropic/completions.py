@@ -31,17 +31,26 @@ class CompletionsOutput(ApiProcessorSchema):
 
 
 class CompletionsConfiguration(ApiProcessorSchema):
-    model: CompletionsModel = Field(default=CompletionsModel.CLAUDE_2,
-                                    description='The model that will complete your prompt.',
-                                    advanced_parameter=False)
-    max_tokens_to_sample: int = Field(ge=1, default=256,
-                                      description='The maximum number of tokens to generate before stopping.',
-                                      advanced_parameter=False)
-    temperature: float = Field(default=0.0, description='Amount of randomness injected into the response.',
-                               multiple_of=0.1, ge=0.0, le=1.0, advanced_parameter=False)
+    model: CompletionsModel = Field(
+        default=CompletionsModel.CLAUDE_2,
+        description='The model that will complete your prompt.',
+        advanced_parameter=False)
+    max_tokens_to_sample: int = Field(
+        ge=1,
+        default=256,
+        description='The maximum number of tokens to generate before stopping.',
+        advanced_parameter=False)
+    temperature: float = Field(
+        default=0.0,
+        description='Amount of randomness injected into the response.',
+        multiple_of=0.1,
+        ge=0.0,
+        le=1.0,
+        advanced_parameter=False)
 
 
-class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
+class CompletionsProcessor(
+        ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
     @staticmethod
     def name() -> str:
         return 'Completions'

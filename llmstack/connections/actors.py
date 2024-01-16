@@ -49,4 +49,5 @@ class ConnectionActivationActor(ThreadingActor):
         return self.connection_handler.activate(connection)
 
     def input(self, activation_input: ConnectionActivationInput):
-        return self.connection_handler.input(activation_input) if self.connection_handler else None
+        return self.connection_handler.input(
+            activation_input) if self.connection_handler else None

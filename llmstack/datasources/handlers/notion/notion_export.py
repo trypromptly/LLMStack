@@ -73,15 +73,20 @@ class NotionExportDataSource(DataSourceProcessor[NotionExportSchema]):
                 file_content = zip_ref.read(file_name)
                 mime_type = mime.from_buffer(file_content)
                 data_source_entry = DataSourceEntryItem(
-                    name=file_name, data={
-                        'mime_type': mime_type, 'file_name': file_name, 'file_data': file_content,
+                    name=file_name,
+                    data={
+                        'mime_type': mime_type,
+                        'file_name': file_name,
+                        'file_data': file_content,
                     },
                 )
                 result.append(data_source_entry)
 
         return result
 
-    def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
+    def get_data_documents(
+            self,
+            data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         logger.info(
             f"Processing file: {data.data['file_name']} mime_type: {data.data['mime_type']}",
         )

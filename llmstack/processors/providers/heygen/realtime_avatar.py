@@ -29,7 +29,8 @@ class TaskType(str, Enum):
 
 class RealtimeAvatarInput(ApiProcessorSchema):
     task_type: TaskType = Field(
-        description='The type of the task. Only valid selections are repeat and talk', default=TaskType.REPEAT)
+        description='The type of the task. Only valid selections are repeat and talk',
+        default=TaskType.REPEAT)
     task_input_json: Optional[Dict] = Field(
         description='The input of the task.', default=None, widget='hidden')
     text: Optional[str] = Field(description='The text of the task.')
@@ -38,7 +39,8 @@ class RealtimeAvatarInput(ApiProcessorSchema):
 
     @root_validator
     def validate_input(cls, values):
-        if (values.get('task_type') == TaskType.REPEAT or values.get('task_type') == TaskType.TALK) and not values.get('text'):
+        if (values.get('task_type') == TaskType.REPEAT or values.get(
+                'task_type') == TaskType.TALK) and not values.get('text'):
             raise ValueError('Text is required for repeat/talk tasks')
         elif values.get('task_type') is not TaskType.CREATE_SESSION and not values.get('task_input_json') and not values.get('text'):
             raise ValueError('Task type is not supported')
@@ -62,19 +64,26 @@ class Quality(str, Enum):
 
 class RealtimeAvatarConfiguration(ApiProcessorSchema):
     reuse_session: bool = Field(
-        description='Reuse the heygen session if valid instesd of creating a new one.', default=False)
+        description='Reuse the heygen session if valid instesd of creating a new one.',
+        default=False)
     quality: Optional[Quality] = Field(
-        description='The quality of the data to be retrieved.', default=Quality.MEDIUM)
+        description='The quality of the data to be retrieved.',
+        default=Quality.MEDIUM)
     avatar_name: Optional[str] = Field(
-        description='The name of the avatar to be used.', advanced_parameter=False)
+        description='The name of the avatar to be used.',
+        advanced_parameter=False)
     voice_id: Optional[str] = Field(
-        description='Voice to use. selected from voice list', advanced_parameter=False)
+        description='Voice to use. selected from voice list',
+        advanced_parameter=False)
 
     connection_id: Optional[str] = Field(
-        widget='connection',  advanced_parameter=False, description='Use your authenticated connection to make the request')
+        widget='connection',
+        advanced_parameter=False,
+        description='Use your authenticated connection to make the request')
 
 
-class RealtimeAvatarProcessor(ApiProcessorInterface[RealtimeAvatarInput, RealtimeAvatarOutput, RealtimeAvatarConfiguration]):
+class RealtimeAvatarProcessor(
+        ApiProcessorInterface[RealtimeAvatarInput, RealtimeAvatarOutput, RealtimeAvatarConfiguration]):
     @staticmethod
     def name() -> str:
         return 'Realtime Avatar'
@@ -110,14 +119,17 @@ class RealtimeAvatarProcessor(ApiProcessorInterface[RealtimeAvatarInput, Realtim
         url = None
 
         connection = self._env['connections'].get(
-            self._config.connection_id, None) if self._config.connection_id else None
+            self._config.connection_id,
+            None) if self._config.connection_id else None
 
         if connection is None:
             raise Exception('Connection not found')
 
         if task_type == TaskType.CREATE_SESSION:
-            # If we have a session and it's not expired, reuse it. Heygen sessions expire after 3 minutes of inactivity.
-            if self._config.reuse_session and self._heygen_session and (time.time() * 1000 - self._heygen_session['created_at'] < 1000 * 60 * 3):
+            # If we have a session and it's not expired, reuse it. Heygen
+            # sessions expire after 3 minutes of inactivity.
+            if self._config.reuse_session and self._heygen_session and (
+                    time.time() * 1000 - self._heygen_session['created_at'] < 1000 * 60 * 3):
                 result = RealtimeAvatarOutput(
                     task_type=task_type,
                     task_response_json={'data': self._heygen_session['data']})

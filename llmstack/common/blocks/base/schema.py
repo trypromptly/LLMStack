@@ -50,9 +50,8 @@ def get_ui_schema_from_json_schema(json_schema):
             ui_prop['ui:widget'] = 'checkbox'
         elif 'enum' in prop_schema_dict:
             ui_prop['ui:widget'] = 'select'
-            ui_prop['ui:options'] = {
-                'enumOptions': [{'value': val, 'label': val} for val in prop_schema_dict['enum']]
-            }
+            ui_prop['ui:options'] = {'enumOptions': [
+                {'value': val, 'label': val} for val in prop_schema_dict['enum']]}
 
         if 'widget' in prop_schema_dict:
             ui_prop['ui:widget'] = prop_schema_dict['widget']
@@ -98,7 +97,8 @@ class BaseSchema(BaseModel):
         if 'title' in schema:
             # Convert camel case to title case
             schema['title'] = ''.join(
-                ' ' + char if char.isupper() else char for char in schema['title']).strip().title()
+                ' ' +
+                char if char.isupper() else char for char in schema['title']).strip().title()
 
         return schema
 

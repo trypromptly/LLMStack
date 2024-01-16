@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 # 2. username: Your username for the Weaviate instance. This is an optional field.
 # 3. password: Corresponding password for the above username. This is an optional field.
 # 4. api_key: Your Weaviate API key. This is also an optional field.
-# 5. additional_headers: Any additional headers that need to be passed in the request. This is optional, and should be passed as a JSON string. The default value is '{}'.
+# 5. additional_headers: Any additional headers that need to be passed in
+# the request. This is optional, and should be passed as a JSON string.
+# The default value is '{}'.
 
 
 class WeaviateConnection(_Schema):
@@ -31,7 +33,9 @@ class WeaviateConnection(_Schema):
     password: Optional[str] = Field(description='Weaviate password')
     api_key: Optional[str] = Field(description='Weaviate API key')
     additional_headers: Optional[str] = Field(
-        description='Weaviate headers. Please enter a JSON string.', widget='textarea', default='{}')
+        description='Weaviate headers. Please enter a JSON string.',
+        widget='textarea',
+        default='{}')
 
 # This class is a definition of the Weaviate database schema.
 # `index_name`: This is a required string attribute representing the name of the weaviate index.
@@ -59,13 +63,15 @@ class WeaviateConnectionConfiguration(Config):
     weaviate_config: Optional[Dict]
 
 # This class helps to manage and interact with a Weaviate Data Source.
-# It inherits from the DataSourceProcessor class and operates on a WeaviateDatabaseSchema.
+# It inherits from the DataSourceProcessor class and operates on a
+# WeaviateDatabaseSchema.
 
 
 class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
 
     # Initializer for the class.
-    # It requires a datasource object as input, checks if it has a 'data' configuration, and sets up Weaviate Database Configuration.
+    # It requires a datasource object as input, checks if it has a 'data'
+    # configuration, and sets up Weaviate Database Configuration.
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
         if self.datasource.config and 'data' in self.datasource.config:
@@ -73,16 +79,18 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
                 self.datasource.config, self.datasource.profile.decrypt_value)
             self._configuration = WeaviateDatabaseSchema(
                 **config_dict['weaviate_config'])
-            self._weviate_client = Weaviate(**WeaviateConfiguration(
-                url=self._configuration.connection.weaviate_url,
-                username=self._configuration.connection.username,
-                password=self._configuration.connection.password,
-                api_key=self._configuration.connection.api_key,
-                additional_headers=json.loads(
-                    self._configuration.connection.additional_headers) if self._configuration.connection.additional_headers else {},
-            ).dict())
+            self._weviate_client = Weaviate(
+                **WeaviateConfiguration(
+                    url=self._configuration.connection.weaviate_url,
+                    username=self._configuration.connection.username,
+                    password=self._configuration.connection.password,
+                    api_key=self._configuration.connection.api_key,
+                    additional_headers=json.loads(
+                        self._configuration.connection.additional_headers) if self._configuration.connection.additional_headers else {},
+                ).dict())
 
-    # This static method returns the name of the datasource class as 'Weaviate'.
+    # This static method returns the name of the datasource class as
+    # 'Weaviate'.
     @staticmethod
     def name() -> str:
         return 'Weaviate'
@@ -97,12 +105,18 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
         return 'Connect to a Weaviate database'
 
     # This static method takes a dictionary for configuration and a DataSource object as inputs.
-    # Validation of these inputs is performed and a dictionary containing the Weaviate Connection Configuration is returned.
+    # Validation of these inputs is performed and a dictionary containing the
+    # Weaviate Connection Configuration is returned.
     @staticmethod
-    def process_validate_config(config_data: dict, datasource: DataSource) -> dict:
-        return WeaviateConnectionConfiguration(weaviate_config=config_data).to_dict(encrypt_fn=datasource.profile.encrypt_value)
+    def process_validate_config(
+            config_data: dict,
+            datasource: DataSource) -> dict:
+        return WeaviateConnectionConfiguration(
+            weaviate_config=config_data).to_dict(
+            encrypt_fn=datasource.profile.encrypt_value)
 
-    # This static method returns the provider slug for the datasource connector.
+    # This static method returns the provider slug for the datasource
+    # connector.
     @staticmethod
     def provider_slug() -> str:
         return 'weaviate'
@@ -116,7 +130,11 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
     def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         raise NotImplementedError
 
-    def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
+    def search(
+            self,
+            query: str,
+            use_hybrid_search=True,
+            **kwargs) -> List[dict]:
         if use_hybrid_search:
             return self.hybrid_search(query, **kwargs)
         else:

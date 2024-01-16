@@ -23,7 +23,8 @@ class CodeInterpreterConfiguration(ApiProcessorSchema):
     pass
 
 
-class CodeInterpreterProcessor(ApiProcessorInterface[CodeInterpreterInput, CodeInterpreterOutput, CodeInterpreterConfiguration]):
+class CodeInterpreterProcessor(
+        ApiProcessorInterface[CodeInterpreterInput, CodeInterpreterOutput, CodeInterpreterConfiguration]):
     @staticmethod
     def name() -> str:
         return 'Code Interpreter'
@@ -48,7 +49,8 @@ class CodeInterpreterProcessor(ApiProcessorInterface[CodeInterpreterInput, CodeI
         output_stream = self._output_stream
         code = self._input.code
 
-        # Run the input code in a sandboxed subprocess environment and return the output
+        # Run the input code in a sandboxed subprocess environment and return
+        # the output
         if not self._input.language == 'python':
             raise Exception('Invalid language')
 

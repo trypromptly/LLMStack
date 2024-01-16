@@ -111,4 +111,11 @@ class DiscordSendMessageProcessor(
         return super().on_error(error)
 
     def get_bookkeeping_data(self) -> BookKeepingData:
-        return BookKeepingData(input=self._input, timestamp=time.time(), run_data={'discord': {'user': self._input.discord_user_id, 'username': self._input.discord_username, 'global_name': self._input.discord_global_name}})
+        return BookKeepingData(
+            input=self._input,
+            timestamp=time.time(),
+            run_data={
+                'discord': {
+                    'user': self._input.discord_user_id,
+                    'username': self._input.discord_username,
+                    'global_name': self._input.discord_global_name}})

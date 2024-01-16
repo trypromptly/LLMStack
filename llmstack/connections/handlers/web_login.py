@@ -84,9 +84,11 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
                         connection.status = ConnectionStatus.FAILED
                     break
             except grpc.aio.AioRpcError as e:
-                # Handle the case where the stream has been closed by the server
+                # Handle the case where the stream has been closed by the
+                # server
                 if e.code() == grpc.StatusCode.CANCELLED:
-                    # Stream has been cancelled, likely no more messages to read
+                    # Stream has been cancelled, likely no more messages to
+                    # read
                     logger.info('Stream was cancelled, no more messages.')
                     break
                 else:

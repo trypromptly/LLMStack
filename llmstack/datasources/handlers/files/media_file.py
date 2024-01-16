@@ -58,19 +58,28 @@ class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
         entry = MediaFileSchema(**data)
         mime_type, file_name, file_data = validate_parse_data_uri(entry.file)
 
-        if mime_type not in ['audio/mpeg', 'audio/mp3', 'video/mp4', 'video/webm']:
+        if mime_type not in [
+            'audio/mpeg',
+            'audio/mp3',
+            'video/mp4',
+                'video/webm']:
             raise ValueError(
                 f'Invalid mime type: {mime_type}, expected: audio/mpeg or audio/mp3 or video/mp4 or video/webm',
             )
 
         data_source_entry = DataSourceEntryItem(
-            name=file_name, data={'mime_type': mime_type,
-                                  'file_name': file_name, 'file_data': file_data},
+            name=file_name,
+            data={
+                'mime_type': mime_type,
+                'file_name': file_name,
+                'file_data': file_data},
         )
 
         return [data_source_entry]
 
-    def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
+    def get_data_documents(
+            self,
+            data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         openai_key = self.profile.get_vendor_key('openai_key')
 
         logger.info(

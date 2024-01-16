@@ -6,12 +6,24 @@ from typing import List
 from typing import Tuple
 
 Document = namedtuple(
-    'Document', ['page_content_key', 'page_content', 'metadata', 'embeddings'], defaults=(None, None, None, None),
-)
+    'Document', [
+        'page_content_key', 'page_content', 'metadata', 'embeddings'], defaults=(
+            None, None, None, None), )
 
-DocumentQuery = namedtuple(
-    'DocumentQuery', ['query', 'page_content_key', 'limit', 'metadata', 'search_filters', 'alpha'], defaults=(None, None, 10, None, None, 0.75),
-)
+DocumentQuery = namedtuple('DocumentQuery',
+                           ['query',
+                            'page_content_key',
+                            'limit',
+                            'metadata',
+                            'search_filters',
+                            'alpha'],
+                           defaults=(None,
+                                     None,
+                                     10,
+                                     None,
+                                     None,
+                                     0.75),
+                           )
 
 
 class VectorStoreInterface(ABC):
@@ -27,7 +39,11 @@ class VectorStoreInterface(ABC):
         pass
 
     @ abstractmethod
-    def add_texts(self, index_name: str, documents: List[Document], **kwargs: Any):
+    def add_texts(
+            self,
+            index_name: str,
+            documents: List[Document],
+            **kwargs: Any):
         pass
 
     @ abstractmethod
@@ -47,13 +63,25 @@ class VectorStoreInterface(ABC):
         raise NotImplementedError
 
     @ abstractmethod
-    def similarity_search(self, index_name: str, document_query: DocumentQuery, **kwargs) -> List[Tuple[int, float]]:
+    def similarity_search(self,
+                          index_name: str,
+                          document_query: DocumentQuery,
+                          **kwargs) -> List[Tuple[int,
+                                                  float]]:
         raise NotImplementedError
 
     @abstractmethod
-    def hybrid_search(self, index_name: str, document_query: DocumentQuery, **kwargs) -> List[Tuple[int, float]]:
+    def hybrid_search(self,
+                      index_name: str,
+                      document_query: DocumentQuery,
+                      **kwargs) -> List[Tuple[int,
+                                              float]]:
         raise NotImplementedError
 
     @abstractmethod
-    def get_document_by_id(self, index_name: str, document_id: str, content_key: str) -> Document:
+    def get_document_by_id(
+            self,
+            index_name: str,
+            document_id: str,
+            content_key: str) -> Document:
         raise NotImplementedError

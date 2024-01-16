@@ -16,8 +16,17 @@ class TaskRunLogSerializer(serializers.ModelSerializer):
                   'status', 'errors', 'created_at']
 
 
-BASE_JOB_FIELDS = ['uuid', 'name', 'task_category', 'enabled',
-                   'source_uuid', 'repeat', 'timeout', 'status', 'created_at', 'updated_at']
+BASE_JOB_FIELDS = [
+    'uuid',
+    'name',
+    'task_category',
+    'enabled',
+    'source_uuid',
+    'repeat',
+    'timeout',
+    'status',
+    'created_at',
+    'updated_at']
 
 
 class BaseJobSerializer(serializers.ModelSerializer):
@@ -27,7 +36,7 @@ class BaseJobSerializer(serializers.ModelSerializer):
         try:
             callable_args = json.loads(obj.callable_args)
             return callable_args[0]
-        except:
+        except BaseException:
             return None
 
 

@@ -30,14 +30,14 @@ class GuidancePreset(str, Enum):
 
 
 def get_guidance_preset_enum(preset):
-    if preset == None:
+    if preset is None:
         return generation.GUIDANCE_PRESET_NONE
 
     return generation.GUIDANCE_PRESET_NONE
 
 
 def get_sampler_grpc_enum(sampler):
-    if sampler == None:
+    if sampler is None:
         return generation.SAMPLER_K_DPMPP_2M
     if sampler == 'ddim':
         return generation.SAMPLER_DDIM

@@ -70,15 +70,26 @@ class ApiBackendSerializer(serializers.ModelSerializer):
             obj.slug, obj.api_provider.slug)
         if processor_cls is None:
             return None
-        return processor_cls.get_output_template().dict() if processor_cls.get_output_template() else None
+        return processor_cls.get_output_template().dict(
+        ) if processor_cls.get_output_template() else None
 
     class Meta:
         model = ApiBackend
         fields = [
-            'id', 'name', 'slug', 'api_provider', 'api_endpoint', 'params', 'description', 'input_schema',
-            'output_schema', 'config_schema', 'config_ui_schema', 'input_ui_schema', 'output_ui_schema',
-            'output_template'
-        ]
+            'id',
+            'name',
+            'slug',
+            'api_provider',
+            'api_endpoint',
+            'params',
+            'description',
+            'input_schema',
+            'output_schema',
+            'config_schema',
+            'config_ui_schema',
+            'input_ui_schema',
+            'output_ui_schema',
+            'output_template']
 
 
 class EndpointSerializer(serializers.ModelSerializer):
@@ -87,8 +98,21 @@ class EndpointSerializer(serializers.ModelSerializer):
     class Meta:
         model = Endpoint
         fields = [
-            'name', 'uuid', 'api_backend', 'param_values', 'post_processor', 'prompt', 'draft',
-            'is_live', 'parent_uuid', 'description', 'version', 'created_on', 'is_app', 'config', 'input',
+            'name',
+            'uuid',
+            'api_backend',
+            'param_values',
+            'post_processor',
+            'prompt',
+            'draft',
+            'is_live',
+            'parent_uuid',
+            'description',
+            'version',
+            'created_on',
+            'is_app',
+            'config',
+            'input',
         ]
 
 
@@ -132,10 +156,24 @@ class HistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = RunEntry
         fields = [
-            'request_uuid', 'app_uuid', 'endpoint_uuid', 'session_key', 'created_at', 'request_user_email',
-            'request_ip', 'request_location', 'request_user_agent', 'request_content_type', 'request_body',
-            'response_status', 'response_body', 'response_content_type', 'response_headers', 'response_time',
-            'processor_runs', 'platform_data',
+            'request_uuid',
+            'app_uuid',
+            'endpoint_uuid',
+            'session_key',
+            'created_at',
+            'request_user_email',
+            'request_ip',
+            'request_location',
+            'request_user_agent',
+            'request_content_type',
+            'request_body',
+            'response_status',
+            'response_body',
+            'response_content_type',
+            'response_headers',
+            'response_time',
+            'processor_runs',
+            'platform_data',
         ]
 
 

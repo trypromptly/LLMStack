@@ -28,7 +28,8 @@ class GenericOutput(ApiProcessorSchema):
     )
 
 
-class Generic(ApiProcessorInterface[GenericInput, GenericOutput, GenericConfiguration]):
+class Generic(
+        ApiProcessorInterface[GenericInput, GenericOutput, GenericConfiguration]):
     def name() -> str:
         return 'replicate/generic'
 

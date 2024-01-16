@@ -46,7 +46,13 @@ class AgentOutput(BaseModel):
 
 
 class AgentActor(Actor):
-    def __init__(self, output_stream, processor_configs, dependencies=[], all_dependencies=[], **kwargs):
+    def __init__(
+            self,
+            output_stream,
+            processor_configs,
+            dependencies=[],
+            all_dependencies=[],
+            **kwargs):
         super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
         self._processor_configs = processor_configs
         self._output_stream = output_stream
@@ -56,12 +62,11 @@ class AgentActor(Actor):
         self._input = kwargs.get('input')
         self._config = kwargs.get('config', {})
         self._agent_app_session_data = kwargs.get('agent_app_session_data')
-        self._system_message = [{
-            'role': 'system',
-            'content': self._config.get('system_message', 'You are a helpful assistant that uses provided tools to perform actions.')
-        }]
+        self._system_message = [{'role': 'system', 'content': self._config.get(
+            'system_message', 'You are a helpful assistant that uses provided tools to perform actions.')}]
 
-        if 'data' in self._agent_app_session_data and 'chat_history' in self._agent_app_session_data['data']:
+        if 'data' in self._agent_app_session_data and 'chat_history' in self._agent_app_session_data[
+                'data']:
             self._chat_history = self._agent_app_session_data['data']['chat_history']
         else:
             self._chat_history = []
@@ -83,7 +88,10 @@ class AgentActor(Actor):
     def run(self) -> None:
         # This will send a message to itself to start the loop
         self.actor_ref.tell(
-            Message(message_type=MessageType.BEGIN, message=None, message_to=self._id))
+            Message(
+                message_type=MessageType.BEGIN,
+                message=None,
+                message_to=self._id))
 
     def _on_error(self, message) -> None:
         async_to_sync(self._output_stream.write)(
@@ -101,7 +109,13 @@ class AgentActor(Actor):
             response_headers={},
         )
         bookkeeping_data = BookKeepingData(
-            run_data={**output_response._asdict()}, input=self._input, config={}, output={'agent_messages': self._agent_messages}, timestamp=time.time(),
+            run_data={
+                **output_response._asdict()},
+            input=self._input,
+            config={},
+            output={
+                'agent_messages': self._agent_messages},
+            timestamp=time.time(),
         )
         self._output_stream.bookkeep(bookkeeping_data)
         async_to_sync(self._output_stream.write_raw)(
@@ -122,7 +136,13 @@ class AgentActor(Actor):
                 response_headers={},
             )
             bookkeeping_data = BookKeepingData(
-                run_data={**output_response._asdict()}, input=self._input, config={}, output={'agent_messages': self._agent_messages}, timestamp=time.time(),
+                run_data={
+                    **output_response._asdict()},
+                input=self._input,
+                config={},
+                output={
+                    'agent_messages': self._agent_messages},
+                timestamp=time.time(),
             )
             self._output_stream.bookkeep(bookkeeping_data)
 
@@ -159,7 +179,8 @@ class AgentActor(Actor):
             agent_message_id = str(uuid.uuid4())
 
             for data in result:
-                if data.object == 'chat.completion.chunk' and len(data.choices) > 0 and data.choices[0].delta:
+                if data.object == 'chat.completion.chunk' and len(
+                        data.choices) > 0 and data.choices[0].delta:
                     finish_reason = data.choices[0].finish_reason
                     delta = data.choices[0].delta
                     function_call = delta.function_call
@@ -242,7 +263,13 @@ class AgentActor(Actor):
                     response_headers={},
                 )
                 bookkeeping_data = BookKeepingData(
-                    run_data={**output_response._asdict()}, input=self._input, config={}, output={'agent_messages': self._agent_messages}, timestamp=time.time(),
+                    run_data={
+                        **output_response._asdict()},
+                    input=self._input,
+                    config={},
+                    output={
+                        'agent_messages': self._agent_messages},
+                    timestamp=time.time(),
                 )
                 # Persist session data
                 self._agent_app_session_data['data'] = {
@@ -278,7 +305,8 @@ class AgentActor(Actor):
                 processor_template = self._processor_configs[
                     message.message_from]['processor']['output_template']
 
-                processor_output = Template(processor_template['markdown']).render(
+                processor_output = Template(
+                    processor_template['markdown']).render(
                     message.message)
 
                 self._agent_messages.append({
@@ -288,7 +316,10 @@ class AgentActor(Actor):
                 })
 
                 self.actor_ref.tell(
-                    Message(message_type=MessageType.BEGIN, message=None, message_to=self._id))
+                    Message(
+                        message_type=MessageType.BEGIN,
+                        message=None,
+                        message_to=self._id))
             except Exception as e:
                 logger.error(f'Error getting tool output: {e}')
 
@@ -300,4 +331,5 @@ class AgentActor(Actor):
         super().on_stop()
 
     def get_dependencies(self):
-        return list(set([x['template_key'] for x in self._processor_configs.values()]))
+        return list(set([x['template_key']
+                    for x in self._processor_configs.values()]))

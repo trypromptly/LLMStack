@@ -12,6 +12,7 @@ from llmstack.processors.providers.api_processor_interface import ApiProcessorIn
 
 logger = logging.getLogger(__name__)
 
+
 class ResponseFormat(str, Enum):
     url = 'url'
     b64_json = 'b64_json'
@@ -19,13 +20,15 @@ class ResponseFormat(str, Enum):
     def __str__(self):
         return self.value
 
+
 class ImageModel(str, Enum):
     DALL_E_3 = 'dall-e-3'
     DALL_E_2 = 'dall-e-2'
-    
+
     def __str__(self):
         return self.value
-    
+
+
 class Size(str, Enum):
     field_256x256 = '256x256'
     field_512x512 = '512x512'
@@ -36,12 +39,14 @@ class Size(str, Enum):
     def __str__(self):
         return self.value
 
+
 class Quality(str, Enum):
     standard = 'standard'
     hd = 'hd'
-    
+
     def __str__(self):
         return self.value
+
 
 class ImagesGenerationsInput(ApiProcessorSchema):
     prompt: str = Field(
@@ -53,7 +58,9 @@ class ImagesGenerationsInput(ApiProcessorSchema):
 
 class ImagesGenerationsOutput(ApiProcessorSchema):
     data: List[str] = Field(
-        default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
+        default=[],
+        description='The generated images.',
+        widget=IMAGE_WIDGET_NAME,
     )
 
 
@@ -86,7 +93,8 @@ class ImagesGenerationsConfiguration(ApiProcessorSchema):
     )
 
 
-class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGenerationsOutput, ImagesGenerationsConfiguration]):
+class ImagesGenerations(
+        ApiProcessorInterface[ImagesGenerationsInput, ImagesGenerationsOutput, ImagesGenerationsConfiguration]):
 
     """
     OpenAI Images Generations API
@@ -113,7 +121,7 @@ class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGene
 
         if not prompt:
             raise Exception('No prompt found in input')
-        
+
         client = openai.OpenAI(api_key=_env['openai_api_key'])
         result = client.images.generate(
             prompt=prompt,
@@ -122,9 +130,9 @@ class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGene
             n=self._config.n,
             quality=self._config.quality,
             response_format=self._config.response_format,
-            
+
         )
-        
+
         async_to_sync(self._output_stream.write)(
             ImagesGenerationsOutput(
                 data=[image.b64_json or image.url for image in result.data],

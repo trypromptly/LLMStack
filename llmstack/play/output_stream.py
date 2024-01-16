@@ -33,14 +33,20 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
     """
     from llmstack.play.actors.agent import AgentOutput
     if isinstance(obj1, dict) and isinstance(obj2, AgentOutput):
-        return {**obj1, **obj2.dict(), **{'content' : stitch_model_objects(obj1.get('content', {}), obj2.dict().get('content', {}))}}
-    
+        return {
+            **obj1, **obj2.dict(), **{
+                'content': stitch_model_objects(
+                    obj1.get(
+                        'content', {}), obj2.dict().get(
+                        'content', {}))}}
+
     if isinstance(obj1, BaseModel):
         obj1 = obj1.dict()
     if isinstance(obj2, BaseModel):
         obj2 = obj2.dict()
 
-    def stitch_fields(obj1_fields: Dict[str, Any], obj2_fields: Dict[str, Any]) -> Dict[str, Any]:
+    def stitch_fields(
+            obj1_fields: Dict[str, Any], obj2_fields: Dict[str, Any]) -> Dict[str, Any]:
         stitched_fields = defaultdict(Any)
         for field in set(obj1_fields).union(obj2_fields):
             stitched_fields[field] = stitch_model_objects(
@@ -215,7 +221,11 @@ class OutputStream:
         """
         return self._status
 
-    def finalize(self, message_id=None, message_to=None, response_to=None) -> BaseModel:
+    def finalize(
+            self,
+            message_id=None,
+            message_to=None,
+            response_to=None) -> BaseModel:
         """
         Closes the output stream and returns stitched data.
         """

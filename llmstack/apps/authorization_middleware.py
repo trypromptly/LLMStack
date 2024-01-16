@@ -22,12 +22,12 @@ class AuthorizationMiddleware:
             path = request.META['PATH_INFO']
             raw_body = request.body
 
-            if ((discord_signature and discord_timestamp) or (slack_signature and slack_timestamp) or True) and re.match(r'^/api/apps/.*/run', path):
+            if ((discord_signature and discord_timestamp) or (
+                    slack_signature and slack_timestamp) or True) and re.match(r'^/api/apps/.*/run', path):
                 app_id = path.split('/')[3]
                 platform = path.split('/')[4]
                 app, signature_verifier = AppTypeFactory.get_app_type_signature_verifier(
-                    app_id, platform,
-                )
+                    app_id, platform, )
                 try:
                     signature_verifier(app, request.headers, raw_body)
                 except APIException as e:

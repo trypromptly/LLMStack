@@ -20,11 +20,12 @@ from django.test import RequestFactory
 
 logger = logging.getLogger(__name__)
 
+
 class GoogleDocument(DataSourceSchema):
     description: Optional[str] = None
     embedUrl: Optional[str] = None
     iconUrl: Optional[str] = None
-    id: str 
+    id: str
     isShared: Optional[bool] = None
     lastEditedUtc: int
     mimeType: Optional[str] = None
@@ -33,6 +34,7 @@ class GoogleDocument(DataSourceSchema):
     serviceId: Optional[str] = None
     sizeBytes: Optional[int] = None
     url: Optional[str] = None
+
 
 class GdriveFileSchema(DataSourceSchema):
     file: str = Field(
@@ -93,13 +95,16 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = GdriveFileSchema(**data)
         file_json_data = json.loads(entry.file)
-        gdrive_files = list(map(lambda x: GoogleDocument(**x), file_json_data['files']))
-        
-        return list(map(lambda x: 
-            DataSourceEntryItem(name=x.name, data={'mime_type': x.mimeType, 
-                                                   'file_name': x.name, 
-                                                   'file_data': {**x.dict(), 'connection_id' : file_json_data['connection_id'] }}), gdrive_files))
-    
+        gdrive_files = list(
+            map(lambda x: GoogleDocument(**x), file_json_data['files']))
+
+        return list(map(lambda x: DataSourceEntryItem(name=x.name,
+                                                      data={'mime_type': x.mimeType,
+                                                            'file_name': x.name,
+                                                            'file_data': {**x.dict(),
+                                                                          'connection_id': file_json_data['connection_id']}}),
+                        gdrive_files))
+
     def export_gdrive_file(self, data: DataSourceEntryItem):
         supportedExportDocsMimeTypes = {
             "application/vnd.google-apps.document":
@@ -108,32 +113,45 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "application/vnd.google-apps.presentation":
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-          }
-        
-        connection = self._env['connections'][data.data['file_data']['connection_id']]
+        }
+
+        connection = self._env['connections'][data.data['file_data']
+                                              ['connection_id']]
         # Have some better way to get the access token
-        request = RequestFactory().get(f'/api/connections/{data.data["file_data"]["connection_id"]}/access_token')
+        request = RequestFactory().get(
+            f'/api/connections/{data.data["file_data"]["connection_id"]}/access_token')
         request.user = self.datasource.owner
-        access_token = ConnectionsViewSet().get_access_token(request=request, uid=data.data['file_data']['connection_id']).data['access_token']
-        
+        access_token = ConnectionsViewSet().get_access_token(request=request,
+                                                             uid=data.data['file_data']['connection_id']).data['access_token']
+
         if data.data['mime_type'] in supportedExportDocsMimeTypes:
             exportMimeType = supportedExportDocsMimeTypes[data.data['mime_type']]
             exportUrl = f"https://www.googleapis.com/drive/v3/files/{data.data['file_data']['id']}/export?mimeType={exportMimeType}"
-            response = requests.get(exportUrl, headers={"Authorization": f"Bearer {access_token}"})  
+            response = requests.get(
+                exportUrl, headers={
+                    "Authorization": f"Bearer {access_token}"})
             if response.status_code == 200:
-                logger.info(f"Exported file {data.data['file_name']} to {exportMimeType}")
+                logger.info(
+                    f"Exported file {data.data['file_name']} to {exportMimeType}")
                 return exportMimeType, response.content
             else:
-                raise Exception(f"Error exporting file {data.data['file_name']}")
+                raise Exception(
+                    f"Error exporting file {data.data['file_name']}")
         else:
-            response = requests.get(f"https://www.googleapis.com/drive/v3/files/{data.data['file_data']['id']}?alt=media", headers={"Authorization": f"Bearer {access_token}"})
+            response = requests.get(
+                f"https://www.googleapis.com/drive/v3/files/{data.data['file_data']['id']}?alt=media",
+                headers={
+                    "Authorization": f"Bearer {access_token}"})
             if response.status_code == 200:
                 logger.info(f"Downloaded file {data.data['file_name']}")
                 return data.data['mime_type'], response.content
             else:
-                raise Exception(f"Error downloading file {data.data['file_name']}")
+                raise Exception(
+                    f"Error downloading file {data.data['file_name']}")
 
-    def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
+    def get_data_documents(
+            self,
+            data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         logger.info(
             f"Processing file: {data.data['file_name']} mime_type: {data.data['mime_type']}",
         )
@@ -147,15 +165,22 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
 
         if data.data['mime_type'] == 'text/csv':
             docs = [
-                Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': data.data['file_name']}) for t in CSVTextSplitter(
-                    chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
-                ).split_text(file_text)
-            ]
+                Document(
+                    page_content_key=self.get_content_key(),
+                    page_content=t,
+                    metadata={
+                        'source': data.data['file_name']}) for t in CSVTextSplitter(
+                    chunk_size=2,
+                    length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
+                ).split_text(file_text)]
         else:
             docs = [
-                Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': data.data['file_name']}) for t in SpacyTextSplitter(
+                Document(
+                    page_content_key=self.get_content_key(),
+                    page_content=t,
+                    metadata={
+                        'source': data.data['file_name']}) for t in SpacyTextSplitter(
                     chunk_size=1500,
-                ).split_text(file_text)
-            ]
+                ).split_text(file_text)]
 
         return docs

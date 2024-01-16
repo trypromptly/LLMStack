@@ -155,7 +155,8 @@ class SlackPostMessageConfiguration(ApiProcessorSchema):
     pass
 
 
-class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, SlackPostMessageOutput, SlackPostMessageConfiguration]):
+class SlackPostMessageProcessor(
+        ApiProcessorInterface[SlackPostMessageInput, SlackPostMessageOutput, SlackPostMessageConfiguration]):
     """
     Slack Post Message API
     """
@@ -175,7 +176,13 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
     def provider_slug() -> str:
         return 'slack'
 
-    def _send_message(self, message: str, channel: str, thread_ts: str, rich_text: Any, token: str) -> None:
+    def _send_message(
+            self,
+            message: str,
+            channel: str,
+            thread_ts: str,
+            rich_text: Any,
+            token: str) -> None:
         url = 'https://slack.com/api/chat.postMessage'
         http_processor = HttpAPIProcessor(configuration={'timeout': 60})
         response = http_processor.process(
@@ -203,10 +210,8 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
         url = 'https://slack.com/api/chat.postMessage'
 
         try:
-            rich_text = json.dumps(
-                html_to_slack_layout_blocks(
-                    f"<!doctype html><html><body>{markdown.markdown(input['text'])}</body></html>"),
-            )
+            rich_text = json.dumps(html_to_slack_layout_blocks(
+                f"<!doctype html><html><body>{markdown.markdown(input['text'])}</body></html>"), )
         except Exception as e:
             logger.exception('Error in processing markdown')
             rich_text = ''
@@ -227,7 +232,11 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
             error, dict) else 'Error in processing request'
 
         self._send_message(
-            error_msg, input['channel'], input['thread_ts'], None, input['token'])
+            error_msg,
+            input['channel'],
+            input['thread_ts'],
+            None,
+            input['token'])
         async_to_sync(self._output_stream.write)(
             SlackPostMessageOutput(code=200),
         )
@@ -236,4 +245,10 @@ class SlackPostMessageProcessor(ApiProcessorInterface[SlackPostMessageInput, Sla
         return super().on_error(error)
 
     def get_bookkeeping_data(self) -> BookKeepingData:
-        return BookKeepingData(input=self._input, timestamp=time.time(), run_data={'slack': {'user': self._input.slack_user, 'user_email': self._input.slack_user_email}})
+        return BookKeepingData(
+            input=self._input,
+            timestamp=time.time(),
+            run_data={
+                'slack': {
+                    'user': self._input.slack_user,
+                    'user_email': self._input.slack_user_email}})

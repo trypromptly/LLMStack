@@ -22,22 +22,28 @@ class JunosCommandType(str, Enum):
 
 class JunosDeviceConfiguration(ApiProcessorSchema):
     connection_id: str = Field(
-        description='Junos login connection to use', required=True, advanced_parameter=False, widget='connection')
+        description='Junos login connection to use',
+        required=True,
+        advanced_parameter=False,
+        widget='connection')
 
 
 class JunosDeviceInput(ApiProcessorSchema):
     command: str = Field(default='', description='Command to run')
-    type: JunosCommandType = Field(default=JunosCommandType.OPERATIONAL,
-                                   description='Type of command (operational/configuration) to run')
+    type: JunosCommandType = Field(
+        default=JunosCommandType.OPERATIONAL,
+        description='Type of command (operational/configuration) to run')
     device_address: Optional[str] = Field(
-        default=None, description='Address of the device. Uses the device from connection if not specified.')
+        default=None,
+        description='Address of the device. Uses the device from connection if not specified.')
 
 
 class JunosDeviceOutput(ApiProcessorSchema):
     output: str = Field(default='', description='Output of the command')
 
 
-class JunosDevice(ApiProcessorInterface[JunosDeviceInput, JunosDeviceOutput, JunosDeviceConfiguration]):
+class JunosDevice(
+        ApiProcessorInterface[JunosDeviceInput, JunosDeviceOutput, JunosDeviceConfiguration]):
     """
     Text summarizer API processor
     """
@@ -62,8 +68,10 @@ class JunosDevice(ApiProcessorInterface[JunosDeviceInput, JunosDeviceOutput, Jun
         command = self._input.command
         connection_configuration = self._env['connections'][self._config.connection_id]['configuration']
 
-        device = Device(host=self._input.device_address or connection_configuration['address'],
-                        user=connection_configuration['username'], password=connection_configuration['password']).open()
+        device = Device(
+            host=self._input.device_address or connection_configuration['address'],
+            user=connection_configuration['username'],
+            password=connection_configuration['password']).open()
 
         if self._input.type == JunosCommandType.OPERATIONAL:
             output = device.cli(command, warning=False)

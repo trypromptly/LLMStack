@@ -20,7 +20,8 @@ class EchoProcessorConfiguration(ApiProcessorSchema):
     pass
 
 
-class EchoProcessor(ApiProcessorInterface[EchoProcessorInput, EchoProcessorOutput, EchoProcessorConfiguration]):
+class EchoProcessor(
+        ApiProcessorInterface[EchoProcessorInput, EchoProcessorOutput, EchoProcessorConfiguration]):
     """
     Echo processor
     """

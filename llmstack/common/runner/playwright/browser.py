@@ -43,7 +43,8 @@ class Playwright:
             # Load utils script
             await page.evaluate(utils_js)
 
-            # Script to collect details of all elements and add bounding boxes and labels
+            # Script to collect details of all elements and add bounding boxes
+            # and labels
             page_details = await page.evaluate('addTags();')
             content.text = page_details['text']
 
@@ -98,7 +99,8 @@ class Playwright:
     async def _process_playwright_request(self, page: Page, request):
 
         def _get_locator(page, selector):
-            if selector.startswith('a=') or selector.startswith('b=') or selector.startswith('in=') or selector.startswith('s=') or selector.startswith('ta=') or selector.startswith('l=') or selector.startswith('d='):
+            if selector.startswith('a=') or selector.startswith('b=') or selector.startswith('in=') or selector.startswith(
+                    's=') or selector.startswith('ta=') or selector.startswith('l=') or selector.startswith('d='):
                 name, value = selector.split('=')
                 if name == 'in':
                     name = 'input'
@@ -227,7 +229,9 @@ class Playwright:
 
                 yield (outputs, content)
 
-    def get_browser(self, request_iterator: Iterator[PlaywrightBrowserRequest]) -> Iterator[PlaywrightBrowserResponse]:
+    def get_browser(
+            self,
+            request_iterator: Iterator[PlaywrightBrowserRequest]) -> Iterator[PlaywrightBrowserResponse]:
         # Get the first request from the client
         initial_request = next(request_iterator)
         display = self.display_pool.get_display(remote_control=False)
@@ -239,17 +243,28 @@ class Playwright:
 
         # Start ffmpeg in a separate process to stream the display
         ffmpeg_process = (
-            ffmpeg
-            .input(f"{display['DISPLAY']}.0", format='x11grab', framerate=10, video_size=(1024, 720))
-            .output('pipe:', format='mp4', vcodec='h264', movflags='faststart+frag_keyframe+empty_moov+default_base_moof', g=25, y=None)
-            .run_async(pipe_stdout=True, pipe_stderr=True)
-        )
+            ffmpeg .input(
+                f"{display['DISPLAY']}.0",
+                format='x11grab',
+                framerate=10,
+                video_size=(
+                    1024,
+                    720)) .output(
+                'pipe:',
+                format='mp4',
+                vcodec='h264',
+                movflags='faststart+frag_keyframe+empty_moov+default_base_moof',
+                g=25,
+                y=None) .run_async(
+                    pipe_stdout=True,
+                pipe_stderr=True))
 
         # Use ThreadPoolExecutor to run the async function in a separate thread
         with futures.ThreadPoolExecutor(thread_name_prefix='async_tasks') as executor:
             browser_done = False
             video_done = False
-            # Wrap the coroutine in a function that gets the current event loop or creates a new one
+            # Wrap the coroutine in a function that gets the current event loop
+            # or creates a new one
 
             def run_async_code(loop, fn):
                 asyncio.set_event_loop(loop)
@@ -286,7 +301,9 @@ class Playwright:
 
             # Submit the function to the executor and get a Future object
             content_future = executor.submit(
-                run_async_code, asyncio.new_event_loop(), collect_browser_content)
+                run_async_code,
+                asyncio.new_event_loop(),
+                collect_browser_content)
 
             # Wait for the future to complete and get the return value
             try:
@@ -304,8 +321,10 @@ class Playwright:
                             state=RemoteBrowserState.RUNNING)
 
                         for output_text in output_texts:
-                            response.outputs.append(runner_pb2.BrowserOutput(
-                                text=output_text['text'], url=output_text['url']))
+                            response.outputs.append(
+                                runner_pb2.BrowserOutput(
+                                    text=output_text['text'],
+                                    url=output_text['url']))
                         response.content.CopyFrom(content)
 
                         yield response

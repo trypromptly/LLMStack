@@ -59,14 +59,14 @@ class StableDiffusionModel(str, Enum):
 
 
 def get_guidance_preset_enum(preset):
-    if preset == None:
+    if preset is None:
         return generation.GUIDANCE_PRESET_NONE
 
     return generation.GUIDANCE_PRESET_NONE
 
 
 def get_sampler_grpc_enum(sampler):
-    if sampler == None:
+    if sampler is None:
         return generation.SAMPLER_K_DPMPP_2M
     if sampler == 'ddim':
         return generation.SAMPLER_DDIM
@@ -103,7 +103,8 @@ class StabilityAIGrpcProcessorOutput(BaseInput):
 
 class StabilityAIGrpcProcessorConfiguration(BaseConfiguration):
     engine_id: StableDiffusionModel = Field(
-        default=StableDiffusionModel.STABLE_DIFFUSION_V1_5, description='Inference engine (model) to use.',
+        default=StableDiffusionModel.STABLE_DIFFUSION_V1_5,
+        description='Inference engine (model) to use.',
     )
     height: Optional[int] = Field(
         default=512, description='Measured in pixels. Pixel limit is 1048576',
@@ -113,7 +114,8 @@ class StabilityAIGrpcProcessorConfiguration(BaseConfiguration):
     )
 
     cfg_scale: Optional[int] = Field(
-        default=7, description='Dictates how closely the engine attempts to match a generation to the provided prompt. v2-x models respond well to lower CFG (4-8), where as v1-x models respond well to a higher range (IE: 7-14).',
+        default=7,
+        description='Dictates how closely the engine attempts to match a generation to the provided prompt. v2-x models respond well to lower CFG (4-8), where as v1-x models respond well to a higher range (IE: 7-14).',
     )
 
     sampler: Sampler = Field(
@@ -121,19 +123,24 @@ class StabilityAIGrpcProcessorConfiguration(BaseConfiguration):
         description='Sampling engine to use. If no sampler is declared, an appropriate default sampler for the declared inference engine will be applied automatically.',
     )
     steps: Optional[int] = Field(
-        default=30, description='Affects the number of diffusion steps performed on the requested generation.',
+        default=30,
+        description='Affects the number of diffusion steps performed on the requested generation.',
     )
 
     seed: Optional[int] = Field(
-        default=0, description='Seed for random latent noise generation. Deterministic if not being used in concert with CLIP Guidance. If not specified, or set to 0, then a random value will be used.',
+        default=0,
+        description='Seed for random latent noise generation. Deterministic if not being used in concert with CLIP Guidance. If not specified, or set to 0, then a random value will be used.',
     )
 
     num_samples: int = Field(
-        default=1, description='Number of images to generate. Allows for batch image generations.',
+        default=1,
+        description='Number of images to generate. Allows for batch image generations.',
     )
 
     guidance_preset: Optional[GuidancePreset] = Field(
-        default=None,  widget='hidden', description='Guidance preset to use for image generation.',
+        default=None,
+        widget='hidden',
+        description='Guidance preset to use for image generation.',
     )
 
 
@@ -149,7 +156,8 @@ class StabilityAIText2ImageGrpcProcessorInput(StabilityAIGrpcProcessorInput):
     )
 
     negative_prompt: List[str] = Field(
-        default=[''], description='Negative text prompt to use for image generation.',
+        default=[''],
+        description='Negative text prompt to use for image generation.',
     )
 
 
@@ -211,12 +219,19 @@ def invoke_grpc_rpc(
     return api_response
 
 
-class StabilityAIText2ImageGrpcProcessor(LLMBaseProcessor[StabilityAIText2ImageGrpcProcessorInput, StabilityAIText2ImageGrpcProcessorOutput, StabilityAIGrpcProcessorConfiguration]):
+class StabilityAIText2ImageGrpcProcessor(
+    LLMBaseProcessor[
+        StabilityAIText2ImageGrpcProcessorInput,
+        StabilityAIText2ImageGrpcProcessorOutput,
+        StabilityAIGrpcProcessorConfiguration]):
     @staticmethod
     def name() -> str:
         return 'stability_ai_text2image'
 
-    def _process(self, input: StabilityAIText2ImageGrpcProcessorInput, configuration: StabilityAIGrpcProcessorConfiguration) -> BaseOutputType:
+    def _process(
+            self,
+            input: StabilityAIText2ImageGrpcProcessorInput,
+            configuration: StabilityAIGrpcProcessorConfiguration) -> BaseOutputType:
         stability_ai_api_key = input.env.stability_ai_api_key
         prompts = []
         for p in input.prompt:

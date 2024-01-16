@@ -29,7 +29,7 @@ class JunosLogin(ConnectionTypeInterface[JunosLoginConfiguration]):
     @staticmethod
     def description() -> str:
         return 'Login to a Junos Device'
-    
+
     @staticmethod
     def type() -> ConnectionType:
         return ConnectionType.CREDENTIALS
@@ -38,8 +38,10 @@ class JunosLogin(ConnectionTypeInterface[JunosLoginConfiguration]):
         try:
             from jnpr.junos import Device
 
-            device = Device(host=connection.configuration['address'],
-                            user=connection.configuration['username'], password=connection.configuration['password']).open()
+            device = Device(
+                host=connection.configuration['address'],
+                user=connection.configuration['username'],
+                password=connection.configuration['password']).open()
             device.close()
 
             connection.status = ConnectionStatus.ACTIVE

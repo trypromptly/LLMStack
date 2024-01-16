@@ -31,7 +31,13 @@ class QueueMixin(object):
 
 class ScheduledJobAdmin(QueueMixin, admin.ModelAdmin):
     list_display = (
-        'uuid', 'name', 'job_id', 'is_scheduled', 'scheduled_time', 'enabled', 'function_string')
+        'uuid',
+        'name',
+        'job_id',
+        'is_scheduled',
+        'scheduled_time',
+        'enabled',
+        'function_string')
     list_filter = ('enabled', )
     list_editable = ('enabled', )
     readonly_fields = ('job_id', )
@@ -104,7 +110,7 @@ class CronJobAdmin(QueueMixin, admin.ModelAdmin):
 
 class AdhocJobAdmin(QueueMixin, admin.ModelAdmin):
     list_display = (
-        'name', 'job_id',  'enabled')
+        'name', 'job_id', 'enabled')
     list_filter = ('enabled', )
     list_editable = ('enabled', )
 

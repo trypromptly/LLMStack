@@ -20,7 +20,9 @@ class GenerateOutput(CohereGenerateAPIProcessorOutput, ApiProcessorSchema):
     )
 
 
-class GenerateConfiguration(CohereGenerateAPIProcessorConfiguration, ApiProcessorSchema):
+class GenerateConfiguration(
+        CohereGenerateAPIProcessorConfiguration,
+        ApiProcessorSchema):
     model: GenerateModel = Field(
         advanced_parameter=False,
         default=GenerateModel.MEDIUM,
@@ -28,11 +30,14 @@ class GenerateConfiguration(CohereGenerateAPIProcessorConfiguration, ApiProcesso
     )
 
     preset: Optional[str] = Field(
-        default=None, description='The ID of a custom playground preset. You can create presets in the playground. If you use a preset, the prompt parameter becomes optional, and any included parameters will override the preset\'s parameters.', widget='hidden',
+        default=None,
+        description='The ID of a custom playground preset. You can create presets in the playground. If you use a preset, the prompt parameter becomes optional, and any included parameters will override the preset\'s parameters.',
+        widget='hidden',
     )
 
 
-class Generate(ApiProcessorInterface[GenerateInput, GenerateOutput, GenerateConfiguration]):
+class Generate(
+        ApiProcessorInterface[GenerateInput, GenerateOutput, GenerateConfiguration]):
     """
     Cohere Generate API
     """

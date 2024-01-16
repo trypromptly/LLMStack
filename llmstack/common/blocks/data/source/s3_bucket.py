@@ -21,8 +21,13 @@ class S3BucketConfiguration(DataSourceConfigurationSchema):
     config: Optional[Dict] = None
 
 
-class S3Bucket(ProcessorInterface[S3BucketInput, DataSourceOutputSchema, S3BucketConfiguration]):
-    def process(self, input: S3BucketInput, configuration: S3BucketConfiguration) -> DataSourceOutputSchema:
+class S3Bucket(ProcessorInterface[S3BucketInput,
+                                  DataSourceOutputSchema,
+                                  S3BucketConfiguration]):
+    def process(
+            self,
+            input: S3BucketInput,
+            configuration: S3BucketConfiguration) -> DataSourceOutputSchema:
         documents = []
         s3_client = boto3.client('s3', **configuration.dict())
         try:
@@ -38,8 +43,8 @@ class S3Bucket(ProcessorInterface[S3BucketInput, DataSourceOutputSchema, S3Bucke
             request_metadata = data['ResponseMetadata']
             documents.append(
                 DataDocument(
-                    content=content if type(content) == bytes else None,
-                    context_text=content if type(content) == str else None,
+                    content=content if isinstance(content, bytes) else None,
+                    context_text=content if isinstance(content, str) else None,
                     metadata={
                         'file_name': f"{input.bucket}/{file['Key']}", **request_metadata}
                 )

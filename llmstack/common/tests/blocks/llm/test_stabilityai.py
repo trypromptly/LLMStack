@@ -15,8 +15,10 @@ class StabilityAIText2ImageGrpcProcessorTestCase(unittest.TestCase):
 
     def test_valid_text2image(self):
         result = StabilityAIText2ImageGrpcProcessor(
-            configuration=StabilityAIGrpcProcessorConfiguration().dict(),
-        ).process(input=StabilityAIText2ImageGrpcProcessorInput(prompt=["apple"], env=StabilityAIGrpcInputEnvironment(stability_ai_api_key=self.api_key)).dict())
+            configuration=StabilityAIGrpcProcessorConfiguration().dict(), ).process(
+            input=StabilityAIText2ImageGrpcProcessorInput(
+                prompt=["apple"], env=StabilityAIGrpcInputEnvironment(
+                    stability_ai_api_key=self.api_key)).dict())
 
         self.assertTrue(len(result.answer) > 0)
 

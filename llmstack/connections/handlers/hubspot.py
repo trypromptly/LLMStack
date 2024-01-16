@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional 
+from typing import List, Optional
 import requests
 from llmstack.connections.handlers import Oauth2BaseConfiguration
 from llmstack.connections.types import ConnectionTypeInterface
@@ -7,10 +7,12 @@ from allauth.socialaccount.providers.hubspot.views import HubspotOAuth2Adapter
 from llmstack.connections.models import ConnectionType
 
 logger = logging.getLogger(__name__)
+
+
 class HubspotAdapter(HubspotOAuth2Adapter):
     def get_connection_type_slug(self):
         return 'hubspot_oauth2'
-    
+
     def get_callback_url(self, request, app):
         from django.urls import reverse
         from allauth.utils import build_absolute_uri
@@ -19,7 +21,7 @@ class HubspotAdapter(HubspotOAuth2Adapter):
         protocol = self.redirect_uri_protocol
         redirect_uri = build_absolute_uri(request, callback_url, protocol)
         return redirect_uri
-    
+
     def complete_login(self, request, app, token, **kwargs):
         headers = {"Content-Type": "application/json"}
         response = requests.get(
@@ -29,9 +31,10 @@ class HubspotAdapter(HubspotOAuth2Adapter):
         extra_data = response.json()
         provider = self.get_provider()
         uid = provider.extract_uid(extra_data)
-                                
+
         extra_data = provider.extract_extra_data(extra_data)
         return HubspotLoginConfiguration(**extra_data)
+
 
 class HubspotLoginConfiguration(Oauth2BaseConfiguration):
     user: Optional[str]
@@ -60,11 +63,11 @@ class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration]):
     @staticmethod
     def description() -> str:
         return 'Login to Hubspot'
-    
+
     @staticmethod
     def type() -> ConnectionType:
         return ConnectionType.OAUTH2
-    
+
     @staticmethod
     def metadata() -> dict:
         return {
@@ -72,6 +75,6 @@ class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration]):
             'BtnLink': 'connections/hubspot/login/',
             'RedirectUrl': 'connections/hubspot/callback/',
         }
-    
+
     def get_access_token(self, connection) -> str:
         return connection

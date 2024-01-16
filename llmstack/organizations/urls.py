@@ -25,7 +25,8 @@ urlpatterns = [
     ),
     path(
         'api/org/datasources/<str:uid>',
-        apis.OrganizationDataSourceViewSet.as_view({'get': 'get', 'delete': 'delete'}),
+        apis.OrganizationDataSourceViewSet.as_view(
+            {'get': 'get', 'delete': 'delete'}),
     ),
     path(
         'api/org/datasources/<str:uid>/entries',
@@ -47,6 +48,7 @@ urlpatterns = [
     ),
     path(
         'api/org/datasource_entries/<str:uid>/text_content',
-        apis.OrganizationDataSourceEntryViewSet.as_view({'get': 'text_content'}),
+        apis.OrganizationDataSourceEntryViewSet.as_view(
+            {'get': 'text_content'}),
     ),
 ]

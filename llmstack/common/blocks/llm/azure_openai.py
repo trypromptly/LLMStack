@@ -28,7 +28,8 @@ DEFAULT_TIMEOUT = 120
 logger = logging.getLogger(__name__)
 
 
-def process_azure_openai_error_response(response: HttpAPIProcessorOutput) -> str:
+def process_azure_openai_error_response(
+        response: HttpAPIProcessorOutput) -> str:
     """
         Processes the error response from OpenAI
     """
@@ -82,21 +83,37 @@ class AzureOpenAIAPIProcessorOutput(BaseOutput):
     metadata: Optional[AzureOpenAIAPIProcessorOutputMetadata]
 
 
-class AzureOpenAIAPIProcessor(LLMBaseProcessor[AzureOpenAIAPIProcessorInput, AzureOpenAIAPIProcessorOutput, AzureOpenAIAPIProcessorConfiguration], Generic[BaseInputType, BaseOutputType, BaseConfigurationType]):
+class AzureOpenAIAPIProcessor(LLMBaseProcessor[AzureOpenAIAPIProcessorInput,
+                                               AzureOpenAIAPIProcessorOutput,
+                                               AzureOpenAIAPIProcessorConfiguration],
+                              Generic[BaseInputType,
+                                      BaseOutputType,
+                                      BaseConfigurationType]):
     @property
     def api_url(self) -> str:
         return self._get_api_url()
 
-    def _get_api_request_payload(self, input: AzureOpenAIAPIProcessorInput, configuration: AzureOpenAIAPIProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: AzureOpenAIAPIProcessorInput,
+            configuration: AzureOpenAIAPIProcessorConfiguration) -> dict:
         raise NotImplementedError()
 
     def _get_api_url(self) -> dict:
         raise NotImplementedError()
 
-    def _transform_api_response(self, input: AzureOpenAIAPIProcessorInput, configuration: AzureOpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> BaseOutputType:
+    def _transform_api_response(
+            self,
+            input: AzureOpenAIAPIProcessorInput,
+            configuration: AzureOpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> BaseOutputType:
         raise NotImplementedError()
 
-    def _process_iter(self, input: AzureOpenAIAPIProcessorInput, configuration: AzureOpenAIAPIProcessorConfiguration) -> Generator[HttpAPIProcessorOutput, None, None]:
+    def _process_iter(self,
+                      input: AzureOpenAIAPIProcessorInput,
+                      configuration: AzureOpenAIAPIProcessorConfiguration) -> Generator[HttpAPIProcessorOutput,
+                                                                                        None,
+                                                                                        None]:
         """
             Invokes the API processor on the input and returns output iterator
         """
@@ -139,7 +156,10 @@ class AzureOpenAIAPIProcessor(LLMBaseProcessor[AzureOpenAIAPIProcessorInput, Azu
                 ),
             )
 
-    def _process(self, input: AzureOpenAIAPIProcessorInput, configuration: AzureOpenAIAPIProcessorConfiguration) -> BaseOutputType:
+    def _process(
+            self,
+            input: AzureOpenAIAPIProcessorInput,
+            configuration: AzureOpenAIAPIProcessorConfiguration) -> BaseOutputType:
         """
             Invokes the API processor on the input and returns the output
         """
@@ -161,7 +181,9 @@ class AzureOpenAIAPIProcessor(LLMBaseProcessor[AzureOpenAIAPIProcessorInput, Azu
         )
 
         # If the response is ok, return the choices
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
+        if isinstance(
+                http_response,
+                HttpAPIProcessorOutput) and http_response.is_ok:
             response = self._transform_api_response(
                 input, configuration, http_response,
             )
@@ -180,7 +202,8 @@ class AzureOpenAICompletionsAPIProcessorOutput(AzureOpenAIAPIProcessorOutput):
     )
 
 
-class AzureOpenAICompletionsAPIProcessorConfiguration(AzureOpenAIAPIProcessorConfiguration):
+class AzureOpenAICompletionsAPIProcessorConfiguration(
+        AzureOpenAIAPIProcessorConfiguration):
     pass
 
 
@@ -189,7 +212,11 @@ class AzureOpenAICompletionsAPIProcessorConfiguration(AzureOpenAIAPIProcessorCon
 """
 
 
-class OpenAICompletionsAPIProcessor(AzureOpenAIAPIProcessor[AzureOpenAICompletionsAPIProcessorInput, AzureOpenAICompletionsAPIProcessorOutput, AzureOpenAICompletionsAPIProcessorConfiguration]):
+class OpenAICompletionsAPIProcessor(
+    AzureOpenAIAPIProcessor[
+        AzureOpenAICompletionsAPIProcessorInput,
+        AzureOpenAICompletionsAPIProcessorOutput,
+        AzureOpenAICompletionsAPIProcessorConfiguration]):
 
     @staticmethod
     def name() -> str:
@@ -201,12 +228,19 @@ class OpenAICompletionsAPIProcessor(AzureOpenAIAPIProcessor[AzureOpenAICompletio
     def api_url(self) -> str:
         return self._get_api_url()
 
-    def _get_api_request_payload(self, input: AzureOpenAICompletionsAPIProcessorInput, configuration: AzureOpenAICompletionsAPIProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: AzureOpenAICompletionsAPIProcessorInput,
+            configuration: AzureOpenAICompletionsAPIProcessorConfiguration) -> dict:
         return {
             'prompt': input.prompt,
         }
 
-    def _transform_api_response(self, input: AzureOpenAIAPIProcessorInput, configuration: AzureOpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> AzureOpenAICompletionsAPIProcessorOutput:
+    def _transform_api_response(
+            self,
+            input: AzureOpenAIAPIProcessorInput,
+            configuration: AzureOpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> AzureOpenAICompletionsAPIProcessorOutput:
         choices = list(
             map(lambda x: x['text'], json.loads(response.text)['choices']),
         )
@@ -233,44 +267,59 @@ class ChatMessage(Schema):
     content: Optional[str] = Field(description='The contents of the message')
 
 
-class AzureOpenAIChatCompletionsAPIProcessorInput(AzureOpenAIAPIProcessorInput):
+class AzureOpenAIChatCompletionsAPIProcessorInput(
+        AzureOpenAIAPIProcessorInput):
     system_message: Optional[str] = Field(
         ...,
         description='The intial system message to be set.',
     )
     chat_history: List[ChatMessage] = Field(
-        default=[
-        ], description='The chat history, in the [chat format](/docs/guides/chat/introduction).',
+        default=[],
+        description='The chat history, in the [chat format](/docs/guides/chat/introduction).',
     )
     messages: List[ChatMessage] = Field(
         default=[], description='The messages to be sent to the API.',
     )
 
 
-class AzureOpenAIChatCompletionsAPIProcessorOutput(AzureOpenAIAPIProcessorOutput):
+class AzureOpenAIChatCompletionsAPIProcessorOutput(
+        AzureOpenAIAPIProcessorOutput):
     choices: List[ChatMessage] = Field(
         ...,
         description='Chat completions, in the [chat format](/docs/guides/chat/introduction).',
     )
 
 
-class AzureOpenAIChatCompletionsAPIProcessorConfiguration(AzureOpenAIAPIProcessorConfiguration):
+class AzureOpenAIChatCompletionsAPIProcessorConfiguration(
+        AzureOpenAIAPIProcessorConfiguration):
     temperature: Optional[float] = Field(
-        le=2.0, ge=0.0,
-        default=0.7, description='What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+        le=2.0,
+        ge=0.0,
+        default=0.7,
+        description='What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
     )
     top_p: Optional[float] = Field(
-        description='An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.', default=1.0, ge=0.0, le=1.0,
+        description='An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
+        default=1.0,
+        ge=0.0,
+        le=1.0,
     )
     stream: Optional[bool] = Field(
         default=False, description='Whether to stream back partial progress.',
     )
     max_tokens: Optional[int] = Field(
-        description='The maximum number of tokens to generate.', ge=1, default=1024, le=32000,
+        description='The maximum number of tokens to generate.',
+        ge=1,
+        default=1024,
+        le=32000,
     )
 
 
-class AzureOpenAIChatCompletionsAPIProcessor(AzureOpenAIAPIProcessor[AzureOpenAIChatCompletionsAPIProcessorInput, AzureOpenAIChatCompletionsAPIProcessorOutput, AzureOpenAIChatCompletionsAPIProcessorConfiguration]):
+class AzureOpenAIChatCompletionsAPIProcessor(
+    AzureOpenAIAPIProcessor[
+        AzureOpenAIChatCompletionsAPIProcessorInput,
+        AzureOpenAIChatCompletionsAPIProcessorOutput,
+        AzureOpenAIChatCompletionsAPIProcessorConfiguration]):
     def _get_api_url(self) -> str:
         return f'{self.configuration.base_url}/openai/deployments/{self.configuration.deployment_name}/chat/completions?api-version={self.configuration.api_version}'
 
@@ -281,7 +330,10 @@ class AzureOpenAIChatCompletionsAPIProcessor(AzureOpenAIAPIProcessor[AzureOpenAI
     def name() -> str:
         return 'azure_openai_chat_completions_api_processor'
 
-    def _get_api_request_payload(self, input: AzureOpenAIChatCompletionsAPIProcessorInput, configuration: AzureOpenAIChatCompletionsAPIProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: AzureOpenAIChatCompletionsAPIProcessorInput,
+            configuration: AzureOpenAIChatCompletionsAPIProcessorConfiguration) -> dict:
         input_json = json.loads(
             input.copy(
                 exclude={'env'},
@@ -308,7 +360,11 @@ class AzureOpenAIChatCompletionsAPIProcessor(AzureOpenAIAPIProcessor[AzureOpenAI
             'messages': messages,
         }
 
-    def _transform_api_response(self, input: AzureOpenAIAPIProcessorInput, configuration: AzureOpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> AzureOpenAIChatCompletionsAPIProcessorOutput:
+    def _transform_api_response(
+            self,
+            input: AzureOpenAIAPIProcessorInput,
+            configuration: AzureOpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> AzureOpenAIChatCompletionsAPIProcessorOutput:
         choices = list(
             map(lambda x: ChatMessage(**x['message']),
                 json.loads(response.text)['choices']),
@@ -319,7 +375,11 @@ class AzureOpenAIChatCompletionsAPIProcessor(AzureOpenAIAPIProcessor[AzureOpenAI
                 raw_response=json.loads(response.text)),
         )
 
-    def _transform_streaming_api_response(self, input: AzureOpenAIAPIProcessorInput, configuration: AzureOpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> AzureOpenAIChatCompletionsAPIProcessorOutput:
+    def _transform_streaming_api_response(
+            self,
+            input: AzureOpenAIAPIProcessorInput,
+            configuration: AzureOpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> AzureOpenAIChatCompletionsAPIProcessorOutput:
         text = response.content.decode('utf-8')
         json_response = json.loads(text.split('data: ')[1])
 

@@ -49,8 +49,15 @@ class FileConfiguration(DataSourceConfigurationSchema):
     }
 
 
-class File(ProcessorInterface[FileInput, DataSourceOutputSchema, FileConfiguration]):
-    def _extract_text(self, data: bytes, mime_type: str, file_name: str, configuration: FileConfiguration) -> DataSourceOutputSchema:
+class File(ProcessorInterface[FileInput,
+                              DataSourceOutputSchema,
+                              FileConfiguration]):
+    def _extract_text(
+            self,
+            data: bytes,
+            mime_type: str,
+            file_name: str,
+            configuration: FileConfiguration) -> DataSourceOutputSchema:
         if configuration.text_extractor.get(mime_type) == 'local':
             result = LocalTextExtractorProcessor().process(TextExtractorInput(
                 data=data,
@@ -62,20 +69,20 @@ class File(ProcessorInterface[FileInput, DataSourceOutputSchema, FileConfigurati
                 documents=result.documents)
         elif configuration.text_extractor.get(mime_type) == 'whisper':
             result = WhisperTextExtractorProcessor().process(WhisperTextExtractorInput(
-                data=data,
-                mime_type=mime_type,
-                id=file_name),
-                configuration=None
-            )
+                data=data, mime_type=mime_type, id=file_name), configuration=None)
             return DataSourceOutputSchema(
                 documents=result.documents)
         else:
             raise Exception("Invalid mime type")
 
-    def process(self, input: FileInput, configuration: FileConfiguration) -> DataSourceOutputSchema:
+    def process(
+            self,
+            input: FileInput,
+            configuration: FileConfiguration) -> DataSourceOutputSchema:
 
         with open(input.file, "r") as file_p:
             file_data = file_p.read()
             # Get the file mime type
             mime_type = magic.from_buffer(file_data, mime=True)
-            return self._extract_text(file_data, mime_type, input.file, configuration)
+            return self._extract_text(
+                file_data, mime_type, input.file, configuration)

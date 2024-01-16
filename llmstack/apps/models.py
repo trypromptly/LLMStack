@@ -46,7 +46,10 @@ class AppType(models.Model):
         default='', blank=True, help_text='Description of the app type',
     )
     slug = models.CharField(
-        max_length=100, unique=True, help_text='Slug of the app type', default='',
+        max_length=100,
+        unique=True,
+        help_text='Slug of the app type',
+        default='',
     )
 
     def __str__(self) -> str:
@@ -62,18 +65,32 @@ class AppRunGraphEntry(models.Model):
         help_text='Owner of the node', default=None, null=True,
     )
     entry_endpoint = models.ForeignKey(
-        Endpoint, on_delete=models.DO_NOTHING, help_text='Start endpoint of the edge. Null for first entry',
-        related_name='entry_endpoint', null=True, default=None, blank=True,
+        Endpoint,
+        on_delete=models.DO_NOTHING,
+        help_text='Start endpoint of the edge. Null for first entry',
+        related_name='entry_endpoint',
+        null=True,
+        default=None,
+        blank=True,
     )
     exit_endpoint = models.ForeignKey(
-        Endpoint, on_delete=models.DO_NOTHING, help_text='End endpoint of the edge. Null for last entry',
-        related_name='exit_endpoint', null=True, default=None, blank=True,
+        Endpoint,
+        on_delete=models.DO_NOTHING,
+        help_text='End endpoint of the edge. Null for last entry',
+        related_name='exit_endpoint',
+        null=True,
+        default=None,
+        blank=True,
     )
     logic_gate = models.TextField(
-        default='', blank=True, help_text='Logic gate to be applied on the edge specified as Jinja2 template over output schema of entry endpoint',
+        default='',
+        blank=True,
+        help_text='Logic gate to be applied on the edge specified as Jinja2 template over output schema of entry endpoint',
     )
     data_transformer = models.TextField(
-        default='', blank=True, help_text='Data transformer to be applied on the edge specified as Jinja2 template over output schema of entry endpoint and input of exit endpoint',
+        default='',
+        blank=True,
+        help_text='Data transformer to be applied on the edge specified as Jinja2 template over output schema of entry endpoint and input of exit endpoint',
     )
 
 
@@ -85,10 +102,15 @@ class AppTemplateCategory(models.Model):
         max_length=100, help_text='Name of the app template category',
     )
     description = models.TextField(
-        default='', blank=True, help_text='Description of the app template category',
+        default='',
+        blank=True,
+        help_text='Description of the app template category',
     )
     slug = models.CharField(
-        max_length=100, unique=True, help_text='Slug of the app template category', default='',
+        max_length=100,
+        unique=True,
+        help_text='Slug of the app template category',
+        default='',
     )
 
     def __str__(self) -> str:
@@ -106,16 +128,26 @@ class AppTemplate(models.Model):
         default='', blank=True, help_text='Description of the app template',
     )
     slug = models.CharField(
-        max_length=100, unique=True, help_text='Slug of the app template', default='',
+        max_length=100,
+        unique=True,
+        help_text='Slug of the app template',
+        default='',
     )
     app_uuid = models.UUIDField(
-        default=uuid.uuid4, help_text='UUID of the app this template is based on. App is used to get the processor chain etc.,',
+        default=uuid.uuid4,
+        help_text='UUID of the app this template is based on. App is used to get the processor chain etc.,',
     )
     categories = models.ManyToManyField(
-        AppTemplateCategory, help_text='Categories of the app template', blank=True, default=None,
+        AppTemplateCategory,
+        help_text='Categories of the app template',
+        blank=True,
+        default=None,
     )
     example_app_uuid = models.CharField(
-        max_length=100, help_text='UUID of the example app for this template', default='', blank=True,
+        max_length=100,
+        help_text='UUID of the example app for this template',
+        default='',
+        blank=True,
     )
     order = models.IntegerField(
         default=0, help_text='Order of the app template in the category',
@@ -131,7 +163,11 @@ class App(models.Model):
     """
     name = models.CharField(max_length=100, help_text='Name of the app')
     published_uuid = models.UUIDField(
-        default=uuid.uuid4, help_text='Identifier for the app when published', null=True, blank=True, unique=True,
+        default=uuid.uuid4,
+        help_text='Identifier for the app when published',
+        null=True,
+        blank=True,
+        unique=True,
     )
     uuid = models.UUIDField(
         default=uuid.uuid4, help_text='Identifier for the app',
@@ -143,73 +179,138 @@ class App(models.Model):
         AppType, on_delete=models.DO_NOTHING, help_text='Type of the app',
     )
     config = models.JSONField(
-        default=dict, blank=True, help_text='Config for this app based on the app type',
+        default=dict,
+        blank=True,
+        help_text='Config for this app based on the app type',
     )
     input_schema = models.JSONField(
-        blank=True, help_text='Input fields for this app in JSON schema format', default=dict, null=True,
+        blank=True,
+        help_text='Input fields for this app in JSON schema format',
+        default=dict,
+        null=True,
     )
     input_ui_schema = models.JSONField(
-        blank=True, help_text='UI schema for input_schema', default=dict, null=True,
+        blank=True,
+        help_text='UI schema for input_schema',
+        default=dict,
+        null=True,
     )
     output_template = models.JSONField(
-        blank=True, help_text='Output template for this app in JSON format. We support markdown, JSON etc., as keys', default=dict, null=True,
+        blank=True,
+        help_text='Output template for this app in JSON format. We support markdown, JSON etc., as keys',
+        default=dict,
+        null=True,
     )
     description = models.TextField(
-        default='', blank=True, help_text='Description of the app. Support markdown.',
+        default='',
+        blank=True,
+        help_text='Description of the app. Support markdown.',
     )
     run_graph = models.ManyToManyField(
         AppRunGraphEntry, help_text='Run graph of the app',
     )
     data_transformer = models.TextField(
-        default='', blank=True, help_text='Data transformer to be applied before calling the first node of the run graph',
+        default='',
+        blank=True,
+        help_text='Data transformer to be applied before calling the first node of the run graph',
     )
     template = models.ForeignKey(
-        AppTemplate, on_delete=models.DO_NOTHING, help_text='Template used for this app', default=None, null=True, blank=True,
+        AppTemplate,
+        on_delete=models.DO_NOTHING,
+        help_text='Template used for this app',
+        default=None,
+        null=True,
+        blank=True,
     )
     template_slug = models.CharField(
-        max_length=100, help_text='Slug of the template used for this app', default=None, null=True, blank=True,
+        max_length=100,
+        help_text='Slug of the template used for this app',
+        default=None,
+        null=True,
+        blank=True,
     )
     is_public = models.BooleanField(
         default=True, help_text='Whether the app is public or not',
     )
     is_published = models.BooleanField(
-        default=False, help_text='Whether the app is published or not', blank=True,
+        default=False,
+        help_text='Whether the app is published or not',
+        blank=True,
     )
     is_cloneable = models.BooleanField(
-        default=False, help_text='Whether the app is cloneable or not', blank=False,
+        default=False,
+        help_text='Whether the app is cloneable or not',
+        blank=False,
     )
     domain = models.CharField(
-        default=None, max_length=2000, blank=True, null=True, help_text='Custom domain associated with the app',
+        default=None,
+        max_length=2000,
+        blank=True,
+        null=True,
+        help_text='Custom domain associated with the app',
     )
     visibility = models.PositiveSmallIntegerField(
-        default=AppVisibility.PUBLIC, choices=AppVisibility.choices, help_text='Visibility of the app',
+        default=AppVisibility.PUBLIC,
+        choices=AppVisibility.choices,
+        help_text='Visibility of the app',
     )
     accessible_by = PGArrayField(
-        models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can access the app', blank=True,
+        models.CharField(
+            max_length=320),
+        default=list,
+        help_text='List of user emails or domains who can access the app',
+        blank=True,
     ) if connection.vendor == 'postgresql' else ArrayField(
-        null=True, help_text='List of user emails or domains who can access the app', blank=True,
+        null=True,
+        help_text='List of user emails or domains who can access the app',
+        blank=True,
     )
     read_accessible_by = PGArrayField(
-        models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can access the app', blank=True,
+        models.CharField(
+            max_length=320),
+        default=list,
+        help_text='List of user emails or domains who can access the app',
+        blank=True,
     ) if connection.vendor == 'postgresql' else ArrayField(
-        null=True, help_text='List of user emails or domains who can access the app', blank=True,
+        null=True,
+        help_text='List of user emails or domains who can access the app',
+        blank=True,
     )
     write_accessible_by = PGArrayField(
-        models.CharField(max_length=320), default=list, help_text='List of user emails or domains who can modify the app', blank=True,
+        models.CharField(
+            max_length=320),
+        default=list,
+        help_text='List of user emails or domains who can modify the app',
+        blank=True,
     ) if connection.vendor == 'postgresql' else ArrayField(
-        null=True, help_text='List of user emails or domains who can modify the app', blank=True,
+        null=True,
+        help_text='List of user emails or domains who can modify the app',
+        blank=True,
     )
     access_permission = models.PositiveSmallIntegerField(
-        default=AppAccessPermission.READ, choices=AppAccessPermission.choices, help_text='Permission for users who can access the app',
+        default=AppAccessPermission.READ,
+        choices=AppAccessPermission.choices,
+        help_text='Permission for users who can access the app',
     )
     last_modified_by = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, help_text='Last modified by', default=None, null=True, related_name='last_modified_by',
+        User,
+        on_delete=models.DO_NOTHING,
+        help_text='Last modified by',
+        default=None,
+        null=True,
+        related_name='last_modified_by',
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, help_text='Time at which the app was created', blank=True, null=True,
+        auto_now_add=True,
+        help_text='Time at which the app was created',
+        blank=True,
+        null=True,
     )
     last_updated_at = models.DateTimeField(
-        auto_now=True, help_text='Time at which the app was last updated', blank=True, null=True,
+        auto_now=True,
+        help_text='Time at which the app was last updated',
+        blank=True,
+        null=True,
     )
     web_integration_config = models.JSONField(
         default=dict, blank=True, help_text='Embed config for this app',
@@ -227,22 +328,28 @@ class App(models.Model):
     @property
     def web_config(self):
         profile = Profile.objects.get(user=self.owner)
-        return WebIntegrationConfig().from_dict(self.web_integration_config, profile.decrypt_value) if self.web_integration_config else None
+        return WebIntegrationConfig().from_dict(self.web_integration_config,
+                                                profile.decrypt_value) if self.web_integration_config else None
 
     @property
     def slack_config(self):
         profile = Profile.objects.get(user=self.owner)
-        return SlackIntegrationConfig().from_dict(self.slack_integration_config, profile.decrypt_value) if self.slack_integration_config else None
+        return SlackIntegrationConfig().from_dict(self.slack_integration_config,
+                                                  profile.decrypt_value) if self.slack_integration_config else None
 
     @property
     def discord_config(self):
         profile = Profile.objects.get(user=self.owner)
-        return DiscordIntegrationConfig().from_dict(self.discord_integration_config, profile.decrypt_value) if self.discord_integration_config else None
+        return DiscordIntegrationConfig().from_dict(
+            self.discord_integration_config,
+            profile.decrypt_value) if self.discord_integration_config else None
 
     @property
     def twilio_config(self):
         profile = Profile.objects.get(user=self.owner)
-        return TwilioIntegrationConfig().from_dict(self.twilio_integration_config, profile.decrypt_value) if self.twilio_integration_config else None
+        return TwilioIntegrationConfig().from_dict(
+            self.twilio_integration_config,
+            profile.decrypt_value) if self.twilio_integration_config else None
 
     @discord_config.setter
     def discord_config(self, value):
@@ -255,7 +362,8 @@ class App(models.Model):
         if not user or not user.is_authenticated:
             return False
 
-        return self.owner == user or (self.is_published == True and user.email in self.write_accessible_by)
+        return self.owner == user or (
+            self.is_published and user.email in self.write_accessible_by)
 
     def __str__(self) -> str:
         return self.name + ' - ' + self.owner.username
@@ -285,11 +393,11 @@ class AppData(models.Model):
         default=False, help_text='Whether the data is dirty or not',
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, help_text='Time at which the app instance was created',
+        auto_now_add=True,
+        help_text='Time at which the app instance was created',
     )
     last_updated_at = models.DateTimeField(
-        auto_now=True, help_text='Time at which the app instance was last updated',
-    )
+        auto_now=True, help_text='Time at which the app instance was last updated', )
 
     def __str__(self) -> str:
         return f'{self.app_uuid}_{"draft" if self.is_draft else "published"}_v{self.version}'
@@ -301,7 +409,10 @@ class AppHub(models.Model):
     )
     rank = models.IntegerField(default=0, help_text='Rank of the instance')
     categories = models.ManyToManyField(
-        AppTemplateCategory, help_text='Categories of the app template', blank=True, default=None,
+        AppTemplateCategory,
+        help_text='Categories of the app template',
+        blank=True,
+        default=None,
     )
 
     def __str__(self):
@@ -327,11 +438,11 @@ class AppSession(models.Model):
         help_text='App of the app instance',
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, help_text='Time at which the app instance was created',
+        auto_now_add=True,
+        help_text='Time at which the app instance was created',
     )
     last_updated_at = models.DateTimeField(
-        auto_now=True, help_text='Time at which the app instance was last updated',
-    )
+        auto_now=True, help_text='Time at which the app instance was last updated', )
 
 
 class AppSessionData(models.Model):
@@ -349,11 +460,11 @@ class AppSessionData(models.Model):
         help_text='Data for this endpoint',
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, help_text='Time at which the app instance was created',
+        auto_now_add=True,
+        help_text='Time at which the app instance was created',
     )
     last_updated_at = models.DateTimeField(
-        auto_now=True, help_text='Time at which the app instance was last updated',
-    )
+        auto_now=True, help_text='Time at which the app instance was last updated', )
 
 
 class TestSet(models.Model):
@@ -368,11 +479,11 @@ class TestSet(models.Model):
         help_text='App of the test set',
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, help_text='Time at which the app instance was created',
+        auto_now_add=True,
+        help_text='Time at which the app instance was created',
     )
     last_updated_at = models.DateTimeField(
-        auto_now=True, help_text='Time at which the app instance was last updated',
-    )
+        auto_now=True, help_text='Time at which the app instance was last updated', )
 
 
 class TestCase(models.Model):
@@ -389,11 +500,11 @@ class TestCase(models.Model):
         default='', help_text='Expected output for the test case',
     )
     created_at = models.DateTimeField(
-        auto_now_add=True, help_text='Time at which the app instance was created',
+        auto_now_add=True,
+        help_text='Time at which the app instance was created',
     )
     last_updated_at = models.DateTimeField(
-        auto_now=True, help_text='Time at which the app instance was last updated',
-    )
+        auto_now=True, help_text='Time at which the app instance was last updated', )
 
 
 @ receiver(pre_save, sender=App)

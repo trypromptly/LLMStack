@@ -80,13 +80,18 @@ class PDFDataSource(DataSourceProcessor[PdfSchema]):
         mime_type, file_name, file_data = validate_parse_data_uri(entry.file)
 
         data_source_entry = DataSourceEntryItem(
-            name=file_name, data={'mime_type': mime_type,
-                                  'file_name': file_name, 'file_data': file_data},
+            name=file_name,
+            data={
+                'mime_type': mime_type,
+                'file_name': file_name,
+                'file_data': file_data},
         )
 
         return [data_source_entry]
 
-    def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
+    def get_data_documents(
+            self,
+            data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
         logger.info(
             f"Processing file: {data.data['file_name']} mime_type: {data.data['mime_type']}",
         )
@@ -99,13 +104,16 @@ class PDFDataSource(DataSourceProcessor[PdfSchema]):
         for element in partition_pdf(file=data_fp, include_page_breaks=True):
             if isinstance(element, PageBreak):
                 page_content += '\n\n'
-                for text_chunk in SpacyTextSplitter(chunk_size=1500).split_text(page_content):
+                for text_chunk in SpacyTextSplitter(
+                        chunk_size=1500).split_text(page_content):
                     docs.append(
                         Document(
                             page_content_key=self.get_content_key(),
                             page_content=text_chunk,
-                            metadata={'source': f"file_{data.data['file_name']}_page_{page_number}",
-                                      'page_number': page_number, 'file_name': data.data['file_name']},
+                            metadata={
+                                'source': f"file_{data.data['file_name']}_page_{page_number}",
+                                'page_number': page_number,
+                                'file_name': data.data['file_name']},
                         ),
                     )
                 page_content = ''

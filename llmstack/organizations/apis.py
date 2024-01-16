@@ -62,7 +62,9 @@ class OrganizationSettingsViewSet(viewsets.ModelViewSet):
         if organization_settings is None:
             raise Exception('Organization settings not found')
 
-        return DRFResponse(OrganizationSettingsSerializer(instance=organization_settings).data)
+        return DRFResponse(
+            OrganizationSettingsSerializer(
+                instance=organization_settings).data)
 
     def patch(self, request):
         profile = get_object_or_404(Profile, user=request.user)
@@ -103,45 +105,27 @@ class OrganizationSettingsViewSet(viewsets.ModelViewSet):
         )
 
         organization_settings.azure_openai_api_key = organization_settings.encrypt_value(
-            request.data.get(
-                'azure_openai_api_key', None,
-            ),
-        )
+            request.data.get('azure_openai_api_key', None, ), )
         organization_settings.openai_key = organization_settings.encrypt_value(
             request.data.get(
                 'openai_key', None,
             ),
         )
         organization_settings.stabilityai_key = organization_settings.encrypt_value(
-            request.data.get(
-                'stabilityai_key', None,
-            ),
-        )
+            request.data.get('stabilityai_key', None, ), )
         organization_settings.cohere_key = organization_settings.encrypt_value(
             request.data.get(
                 'cohere_key', None,
             ),
         )
         organization_settings.forefrontai_key = organization_settings.encrypt_value(
-            request.data.get(
-                'forefrontai_key', None,
-            ),
-        )
+            request.data.get('forefrontai_key', None, ), )
         organization_settings.elevenlabs_key = organization_settings.encrypt_value(
-            request.data.get(
-                'elevenlabs_key', None,
-            ),
-        )
+            request.data.get('elevenlabs_key', None, ), )
         organization_settings.aws_secret_access_key = organization_settings.encrypt_value(
-            request.data.get(
-                'aws_secret_access_key', None,
-            ),
-        )
+            request.data.get('aws_secret_access_key', None, ), )
         organization_settings.vectorstore_weaviate_api_key = organization_settings.encrypt_value(
-            request.data.get(
-                'vectorstore_weaviate_api_key', None,
-            ),
-        )
+            request.data.get('vectorstore_weaviate_api_key', None, ), )
 
         organization_settings.azure_openai_endpoint = request.data.get(
             'azure_openai_endpoint', None,
@@ -153,24 +137,17 @@ class OrganizationSettingsViewSet(viewsets.ModelViewSet):
             'aws_default_region', None,
         )
         organization_settings.localai_api_key = organization_settings.encrypt_value(
-            request.data.get(
-                'localai_api_key', None,
-            ),
-        )
+            request.data.get('localai_api_key', None, ), )
         organization_settings.localai_base_url = request.data.get(
             'localai_base_url', None,
         )
         organization_settings.anthropic_api_key = organization_settings.encrypt_value(
-            request.data.get(
-                'anthropic_api_key', None,
-            ),
-        )
+            request.data.get('anthropic_api_key', None, ), )
         organization_settings.vectorstore_weaviate_url = request.data.get(
             'vectorstore_weaviate_url', None,
         )
         organization_settings.vectorstore_weaviate_text2vec_openai_module_config = request.data.get(
-            'vectorstore_weaviate_text2vec_openai_module_config', None,
-        )
+            'vectorstore_weaviate_text2vec_openai_module_config', None, )
         organization_settings.use_own_vectorstore = request.data.get(
             'use_own_vectorstore', False,
         )
@@ -183,7 +160,9 @@ class OrganizationSettingsViewSet(viewsets.ModelViewSet):
 
         organization_settings.save()
 
-        return DRFResponse(OrganizationSettingsSerializer(instance=organization_settings).data)
+        return DRFResponse(
+            OrganizationSettingsSerializer(
+                instance=organization_settings).data)
 
 
 class OrganizationMembersViewSet(viewsets.ModelViewSet):
@@ -203,9 +182,13 @@ class OrganizationMembersViewSet(viewsets.ModelViewSet):
             raise Exception('User is not an admin of the organization')
 
         # Convert this to a serializer
-        users = [{'first_name': profile.user.first_name, 'last_name': profile.user.last_name, 'email': profile.user.email} for profile in Profile.objects.filter(
-            organization=organization,
-        )]
+        users = [
+            {
+                'first_name': profile.user.first_name,
+                'last_name': profile.user.last_name,
+                'email': profile.user.email} for profile in Profile.objects.filter(
+                organization=organization,
+            )]
 
         return DRFResponse(users)
 
@@ -224,9 +207,17 @@ class OrganizationAppsViewSet(viewsets.ModelViewSet):
             raise Exception('User is not part of an organization')
 
         # Convert this to a serializer
-        apps = [{'name': app.name, 'published_uuid': app.published_uuid, 'type': app.type.name, 'owner_email': app.owner.email} for app in App.objects.filter(
-            owner__in=Profile.objects.filter(organization=organization).values('user'), visibility__gte=AppVisibility.ORGANIZATION, is_published=True,
-        )]
+        apps = [
+            {
+                'name': app.name,
+                'published_uuid': app.published_uuid,
+                'type': app.type.name,
+                'owner_email': app.owner.email} for app in App.objects.filter(
+                owner__in=Profile.objects.filter(
+                    organization=organization).values('user'),
+                visibility__gte=AppVisibility.ORGANIZATION,
+                is_published=True,
+            )]
 
         return DRFResponse(apps)
 
@@ -253,7 +244,9 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
         ).values('user')
 
     def get_queryset(self):
-        return super().get_queryset().filter(owner__in=self._get_all_users_in_organization(), visibility=DataSourceVisibility.ORGANIZATION)
+        return super().get_queryset().filter(
+            owner__in=self._get_all_users_in_organization(),
+            visibility=DataSourceVisibility.ORGANIZATION)
 
     def _get_object_or_404(self, uid):
         datasource_object = self.get_queryset().filter(uuid=uuid.UUID(uid)).first()
@@ -265,7 +258,9 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
     def get(self, request, uid=None):
         if uid:
             datasource_object = self._get_object_or_404(uid)
-            return DRFResponse(DataSourceSerializer(instance=datasource_object).data)
+            return DRFResponse(
+                DataSourceSerializer(
+                    instance=datasource_object).data)
 
         return DRFResponse(
             DataSourceSerializer(
@@ -278,7 +273,10 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
         datasource_entries = DataSourceEntry.objects.filter(
             datasource=datasource_object,
         )
-        return DRFResponse(DataSourceEntrySerializer(instance=datasource_entries, many=True).data)
+        return DRFResponse(
+            DataSourceEntrySerializer(
+                instance=datasource_entries,
+                many=True).data)
 
     def add_entry(self, request, uid=None):
         datasource_object = get_object_or_404(DataSource, uuid=uuid.UUID(uid))
@@ -288,7 +286,9 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
         datasource_object.visibility = DataSourceVisibility.ORGANIZATION
         datasource_object.save()
 
-        return DRFResponse(DataSourceSerializer(instance=datasource_object).data)
+        return DRFResponse(
+            DataSourceSerializer(
+                instance=datasource_object).data)
 
     def delete(self, request, uid=None):
         datasource_object = datasource_object = self._get_object_or_404(uid)
@@ -297,7 +297,9 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
 
         datasource_object.visibility = DataSourceVisibility.PRIVATE
         datasource_object.save()
-        return DRFResponse(DataSourceSerializer(instance=datasource_object).data)
+        return DRFResponse(
+            DataSourceSerializer(
+                instance=datasource_object).data)
 
 
 class OrganizationDataSourceEntryViewSet(viewsets.ModelViewSet):
@@ -338,7 +340,9 @@ class OrganizationDataSourceEntryViewSet(viewsets.ModelViewSet):
             datasource_entry_object = self._get_datasource_entry_object_or_404(
                 request, uid,
             )
-            return DRFResponse(DataSourceEntrySerializer(instance=datasource_entry_object).data)
+            return DRFResponse(
+                DataSourceEntrySerializer(
+                    instance=datasource_entry_object).data)
 
         datasources = DataSource.objects.filter(
             owner__in=self._get_all_users_in_organization(
@@ -348,7 +352,10 @@ class OrganizationDataSourceEntryViewSet(viewsets.ModelViewSet):
         datasource_entries = DataSourceEntry.objects.filter(
             datasource__in=datasources,
         )
-        return DRFResponse(DataSourceEntrySerializer(instance=datasource_entries, many=True).data)
+        return DRFResponse(
+            DataSourceEntrySerializer(
+                instance=datasource_entries,
+                many=True).data)
 
     def text_content(self, request, uid):
         datasource_entry_object = self._get_datasource_entry_object_or_404(
@@ -357,8 +364,7 @@ class OrganizationDataSourceEntryViewSet(viewsets.ModelViewSet):
 
         datasource_type = datasource_entry_object.datasource.type
         datasource_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-            datasource_type,
-        )
+            datasource_type, )
         datasource_handler = datasource_handler_cls(
             datasource_entry_object.datasource,
         )

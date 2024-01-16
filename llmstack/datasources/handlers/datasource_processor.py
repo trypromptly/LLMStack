@@ -139,7 +139,8 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
     @classmethod
     def get_weaviate_schema(cls, class_name: str) -> dict:
         datasource_type_interface = cls.__orig_bases__[0]
-        return datasource_type_interface.__args__[0].get_weaviate_schema(class_name)
+        return datasource_type_interface.__args__[
+            0].get_weaviate_schema(class_name)
 
     @property
     def datasource_class_name(self):
@@ -238,7 +239,8 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
     def _get_document_embeddings(self, text: str) -> OpenAIEmbeddingOutput:
         if self.embeddings_endpoint:
-            return self.embeddings_endpoint.process(OpenAIEmbeddingInput(text=text).dict()).embeddings
+            return self.embeddings_endpoint.process(
+                OpenAIEmbeddingInput(text=text).dict()).embeddings
         else:
             return None
 
@@ -261,9 +263,19 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
             index_name=self.datasource_class_name, documents=documents,
         )
         logger.info(f'Added {len(document_ids)} documents to vectorstore.')
-        return data.copy(update={'config': {'document_ids': document_ids}, 'size': 1536 * 4 * len(document_ids)})
+        return data.copy(
+            update={
+                'config': {
+                    'document_ids': document_ids},
+                'size': 1536 *
+                4 *
+                len(document_ids)})
 
-    def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
+    def search(
+            self,
+            query: str,
+            use_hybrid_search=True,
+            **kwargs) -> List[dict]:
         if use_hybrid_search:
             return self.hybrid_search(query, **kwargs)
         else:
@@ -272,21 +284,35 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
     def similarity_search(self, query: str, **kwargs) -> List[dict]:
 
         document_query = DocumentQuery(
-            query=query, page_content_key=self.get_content_key(
-            ), limit=kwargs.get('limit', 2), metadata={'additional_properties': ['source']}, search_filters=kwargs.get('search_filters', None),
+            query=query,
+            page_content_key=self.get_content_key(),
+            limit=kwargs.get(
+                'limit',
+                2),
+            metadata={
+                'additional_properties': ['source']},
+            search_filters=kwargs.get(
+                'search_filters',
+                None),
         )
 
         return self.vectorstore.similarity_search(
-            index_name=self.datasource_class_name, document_query=document_query, **kwargs,
+            index_name=self.datasource_class_name,
+            document_query=document_query,
+            **kwargs,
         )
 
     def hybrid_search(self, query: str, **kwargs) -> List[dict]:
         document_query = DocumentQuery(
-            query=query, page_content_key=self.get_content_key(
-            ), limit=kwargs.get('limit', 2), metadata={'additional_properties': ['source']}, search_filters=kwargs.get('search_filters', None), alpha=kwargs.get('alpha', 0.75),
-        )
+            query=query, page_content_key=self.get_content_key(), limit=kwargs.get(
+                'limit', 2), metadata={
+                'additional_properties': ['source']}, search_filters=kwargs.get(
+                'search_filters', None), alpha=kwargs.get(
+                    'alpha', 0.75), )
         return self.vectorstore.hybrid_search(
-            index_name=self.datasource_class_name, document_query=document_query, **kwargs,
+            index_name=self.datasource_class_name,
+            document_query=document_query,
+            **kwargs,
         )
 
     def delete_entry(self, data: dict) -> None:
@@ -305,8 +331,7 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
             self.delete_entry(data)
         except Exception as e:
             logger.error(
-                f'Error while deleting old data for data_source_entry: {data} - {e}',
-            )
+                f'Error while deleting old data for data_source_entry: {data} - {e}', )
         # Add new data
         return self.add_entry(DataSourceEntryItem(**data["input"]))
 
@@ -321,16 +346,17 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
             for document_id in data['document_ids'][:20]:
                 content_key = self.get_content_key()
                 logger.debug(
-                    f'Fetching document {content_key} {self.datasource_class_name} from vectorstore.',
-                )
+                    f'Fetching document {content_key} {self.datasource_class_name} from vectorstore.', )
                 document = self.vectorstore.get_document_by_id(
-                    index_name=self.datasource_class_name, document_id=document_id, content_key=content_key
-                )
+                    index_name=self.datasource_class_name,
+                    document_id=document_id,
+                    content_key=content_key)
 
                 if documents is not None:
                     documents.append(document)
 
         if len(documents) > 0:
-            return documents[0].metadata, '\n'.join(list(map(lambda x: x.page_content, documents)))
+            return documents[0].metadata, '\n'.join(
+                list(map(lambda x: x.page_content, documents)))
         else:
             return {}, ''

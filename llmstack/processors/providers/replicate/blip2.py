@@ -17,8 +17,7 @@ class Blip2Input(ApiProcessorSchema):
         False, description='Generate caption for image',
     )
     query: Optional[str] = Field(
-        '', description='Question to ask about this image. Leave blank for captioning',
-    )
+        '', description='Question to ask about this image. Leave blank for captioning', )
 
 
 class Blip2Configuration(ApiProcessorSchema):
@@ -26,10 +25,12 @@ class Blip2Configuration(ApiProcessorSchema):
         False, description='Use nucleus sampling',
     )
     temperature: Optional[float] = Field(
-        0.7, description='Temperature for use with nucleus sampling (minimum: 0.5; maximum: 1)',
+        0.7,
+        description='Temperature for use with nucleus sampling (minimum: 0.5; maximum: 1)',
     )
     version: str = Field(
-        '4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608', description='Model version',
+        '4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608',
+        description='Model version',
     )
     sync_mode: Optional[bool] = Field(
         False, description='Run in synchronous mode',
@@ -45,7 +46,8 @@ class Blip2Output(ApiProcessorSchema):
     )
 
 
-class Blip2(ApiProcessorInterface[Blip2Input, Blip2Output, Blip2Configuration]):
+class Blip2(ApiProcessorInterface[Blip2Input,
+            Blip2Output, Blip2Configuration]):
     def name() -> str:
         return 'replicate/blip2'
 

@@ -48,9 +48,10 @@ class BasicHTTPAuthWithRedis():
             logger.info("BasicHTTPAuthWithRedis backend initilized (%s:%s)" %
                         (self._server, self._port))
         except ValueError:
-            logger.error("The provided --auth-source='%s' is not in the "
-                         "expected format <host>[:<port>[:<db>[:<password>]]]" %
-                         src)
+            logger.error(
+                "The provided --auth-source='%s' is not in the "
+                "expected format <host>[:<port>[:<db>[:<password>]]]" %
+                src)
             sys.exit()
 
     def authenticate(self, headers, target_host, target_port):
@@ -102,5 +103,6 @@ class BasicHTTPAuthWithRedis():
         raise AuthenticationError(response_code=403)
 
     def demand_auth(self):
-        raise AuthenticationError(response_code=401,
-                                  response_headers={'WWW-Authenticate': 'Basic realm="Websockify"'})
+        raise AuthenticationError(
+            response_code=401, response_headers={
+                'WWW-Authenticate': 'Basic realm="Websockify"'})

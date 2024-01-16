@@ -53,7 +53,8 @@ def sanitize_json(json_obj):
         for i, value in enumerate(json_obj):
             json_obj[i] = sanitize_json(value)
     elif isinstance(json_obj, str):
-        # If the object is a string, replace double quotes with escaped double quotes
+        # If the object is a string, replace double quotes with escaped double
+        # quotes
         json_obj = json_obj.replace('"', '\\"')
     return json_obj
 
@@ -98,8 +99,7 @@ class EndpointViewSet(viewsets.ViewSet):
         stream = request.data.get('stream', False)
 
         request_user_agent = request.META.get(
-            'HTTP_USER_AGENT', 'Streaming API Client' if stream else 'API Client',
-        )
+            'HTTP_USER_AGENT', 'Streaming API Client' if stream else 'API Client', )
         request_location = request.headers.get('X-Client-Geo-Location', '')
         request_ip = request_ip = request.headers.get(
             'X-Forwarded-For', request.META.get(
@@ -115,27 +115,42 @@ class EndpointViewSet(viewsets.ViewSet):
             request_user_email = request.user.username
 
         input_request = InputRequest(
-            request_endpoint_uuid=str(endpoint.uuid), request_app_uuid='',
-            request_app_session_key='', request_owner=request.user,
-            request_uuid=str(uuid.uuid4()), request_user_email=request_user_email,
-            request_ip=request_ip, request_location=request_location,
-            request_user_agent=request_user_agent, request_body=request.data,
+            request_endpoint_uuid=str(
+                endpoint.uuid),
+            request_app_uuid='',
+            request_app_session_key='',
+            request_owner=request.user,
+            request_uuid=str(
+                uuid.uuid4()),
+            request_user_email=request_user_email,
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=request_user_agent,
+            request_body=request.data,
             request_content_type=request.content_type,
         )
         try:
             invoke_result = self.run_endpoint(
-                endpoint_uuid=endpoint.uuid, run_as_user=request.user, input_request=input_request,
-                template_values=template_values, bypass_cache=bypass_cache,
-                input={**endpoint.input, **input},
-                config={**endpoint.config, **config},
-                api_backend_slug=endpoint.api_backend.slug, api_provider_slug=endpoint.api_backend.api_provider.slug,
-                app_session=None, stream=stream,
+                endpoint_uuid=endpoint.uuid,
+                run_as_user=request.user,
+                input_request=input_request,
+                template_values=template_values,
+                bypass_cache=bypass_cache,
+                input={
+                    **endpoint.input,
+                    **input},
+                config={
+                    **endpoint.config,
+                    **config},
+                api_backend_slug=endpoint.api_backend.slug,
+                api_provider_slug=endpoint.api_backend.api_provider.slug,
+                app_session=None,
+                stream=stream,
             )
 
             if stream:
                 response = StreamingHttpResponse(
-                    streaming_content=invoke_result, content_type='application/json',
-                )
+                    streaming_content=invoke_result, content_type='application/json', )
                 response.is_async = True
                 return response
         except Exception as e:
@@ -160,12 +175,11 @@ class EndpointViewSet(viewsets.ViewSet):
         api_backend_slug = request.data.get('api_backend_slug', None)
         api_provider_slug = request.data.get('api_provider_slug', None)
 
-        if api_backend_slug == None or api_provider_slug == None:
+        if api_backend_slug is None or api_provider_slug is None:
             return DRFResponse({'errors': ['Invalid API backend']}, status=500)
 
         request_user_agent = request.META.get(
-            'HTTP_USER_AGENT', 'Streaming API Client' if stream else 'API Client',
-        )
+            'HTTP_USER_AGENT', 'Streaming API Client' if stream else 'API Client', )
         request_location = request.headers.get('X-Client-Geo-Location', '')
         request_ip = request_ip = request.headers.get(
             'X-Forwarded-For', request.META.get(
@@ -174,11 +188,17 @@ class EndpointViewSet(viewsets.ViewSet):
         ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
 
         input_request = InputRequest(
-            request_endpoint_uuid=request_uuid, request_app_uuid='',
-            request_app_session_key='', request_owner=request.user,
-            request_uuid=str(uuid.uuid4()), request_user_email=request.user.email,
-            request_ip=request_ip, request_location=request_location,
-            request_user_agent=request_user_agent, request_body=request.data,
+            request_endpoint_uuid=request_uuid,
+            request_app_uuid='',
+            request_app_session_key='',
+            request_owner=request.user,
+            request_uuid=str(
+                uuid.uuid4()),
+            request_user_email=request.user.email,
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=request_user_agent,
+            request_body=request.data,
             request_content_type=request.content_type,
         )
 
@@ -186,12 +206,17 @@ class EndpointViewSet(viewsets.ViewSet):
             invoke_result = self.run_endpoint(
                 endpoint_uuid=request_uuid,
                 run_as_user=request.user,
-                input_request=input_request, template_values={},
+                input_request=input_request,
+                template_values={},
                 bypass_cache=bypass_cache,
-                input={**input},
-                config={**config},
-                api_backend_slug=api_backend_slug, api_provider_slug=api_provider_slug,
-                app_session=None, stream=False,
+                input={
+                    **input},
+                config={
+                    **config},
+                api_backend_slug=api_backend_slug,
+                api_provider_slug=api_provider_slug,
+                app_session=None,
+                stream=False,
             )
         except Exception as e:
             invoke_result = {'id': -1, 'errors': [str(e)]}
@@ -201,7 +226,20 @@ class EndpointViewSet(viewsets.ViewSet):
 
         return DRFResponse(invoke_result)
 
-    def run_endpoint(self, endpoint_uuid, run_as_user, input_request, template_values={}, bypass_cache=False, input={}, config={}, api_backend_slug='', api_provider_slug='', app_session=None, output_stream=None, stream=False):
+    def run_endpoint(
+            self,
+            endpoint_uuid,
+            run_as_user,
+            input_request,
+            template_values={},
+            bypass_cache=False,
+            input={},
+            config={},
+            api_backend_slug='',
+            api_provider_slug='',
+            app_session=None,
+            output_stream=None,
+            stream=False):
         profile = get_object_or_404(Profile, user=run_as_user)
 
         vendor_env = profile.get_vendor_env()
@@ -217,25 +255,46 @@ class EndpointViewSet(viewsets.ViewSet):
 
         actor_configs = [
             ActorConfig(
-                name=str(endpoint_uuid), template_key='processor', actor=processor_cls, dependencies=['input'], kwargs={
-                    'config': config, 'input': input, 'env': vendor_env, 'session_data': app_session_data['data'] if app_session_data and 'data' in app_session_data else {},
+                name=str(endpoint_uuid),
+                template_key='processor',
+                actor=processor_cls,
+                dependencies=['input'],
+                kwargs={
+                    'config': config,
+                    'input': input,
+                    'env': vendor_env,
+                    'session_data': app_session_data['data'] if app_session_data and 'data' in app_session_data else {},
                 },
                 output_cls=processor_cls.get_output_cls(),
             ),
             ActorConfig(
-                name='input', template_key='input', actor=InputActor, kwargs={
+                name='input',
+                template_key='input',
+                actor=InputActor,
+                kwargs={
                     'input_request': input_request,
                 },
             ),
             ActorConfig(
-                name='output', template_key='output',
-                actor=OutputActor, dependencies=['processor'], kwargs={'template': '{{ processor | tojson }}'},
+                name='output',
+                template_key='output',
+                actor=OutputActor,
+                dependencies=['processor'],
+                kwargs={
+                    'template': '{{ processor | tojson }}'},
             ),
             ActorConfig(
-                name='bookkeeping', template_key='bookkeeping', actor=BookKeepingActor, dependencies=['input', 'output'], kwargs={
+                name='bookkeeping',
+                template_key='bookkeeping',
+                actor=BookKeepingActor,
+                dependencies=[
+                    'input',
+                    'output'],
+                kwargs={
                     'processor_configs': {
                         str(endpoint_uuid): {
-                            'processor': {'uuid': str(endpoint_uuid)},
+                            'processor': {
+                                'uuid': str(endpoint_uuid)},
                             'app_session': None,
                             'app_session_data': None,
                             'template_key': 'processor',
@@ -261,7 +320,8 @@ class EndpointViewSet(viewsets.ViewSet):
                 ) if not stream else output_actor.get_output_stream().get()
 
             if stream:
-                # Return a wrapper over output_iter where we call next() on output_iter and yield the result
+                # Return a wrapper over output_iter where we call next() on
+                # output_iter and yield the result
                 async def stream_output():
                     try:
                         while True:
@@ -391,20 +451,34 @@ class HistoryViewSet(viewsets.ModelViewSet):
     def get_csv(self, queryset, brief):
         header = ['Created At', 'Session', 'Request', 'Response']
         if not brief:
-            header.extend(['Request UUID', 'Request User Email', 'Request IP',
-                          'Request Location', 'Request User Agent', 'Request Content Type'])
+            header.extend(['Request UUID',
+                           'Request User Email',
+                           'Request IP',
+                           'Request Location',
+                           'Request User Agent',
+                           'Request Content Type'])
         yield ','.join(header) + '\n'
         for entry in queryset:
-            output = [entry.created_at.strftime('%Y-%m-%d %H:%M:%S'), entry.session_key if entry.session_key else '', json.dumps(
-                entry.request_body), json.dumps(entry.response_body)]
+            output = [
+                entry.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                entry.session_key if entry.session_key else '',
+                json.dumps(
+                    entry.request_body),
+                json.dumps(
+                    entry.response_body)]
             if not brief:
-                output.extend([entry.request_uuid, entry.request_user_email, entry.request_ip,
-                               entry.request_location, entry.request_user_agent, entry.request_content_type])
+                output.extend([entry.request_uuid,
+                               entry.request_user_email,
+                               entry.request_ip,
+                               entry.request_location,
+                               entry.request_user_agent,
+                               entry.request_content_type])
             yield ','.join(output) + '\n'
 
     def download(self, request):
         if not flag_enabled('CAN_EXPORT_HISTORY', request=request):
-            return HttpResponseForbidden('You do not have permission to download history')
+            return HttpResponseForbidden(
+                'You do not have permission to download history')
 
         app_uuid = request.data.get('app_uuid', None)
         before = request.data.get('before', None)
@@ -414,11 +488,11 @@ class HistoryViewSet(viewsets.ModelViewSet):
         if count > 100:
             count = 100
 
-        queryset = RunEntry.objects.all().filter(
-            app_uuid=app_uuid, owner=request.user, created_at__lt=before).order_by('-created_at')[:count]
+        queryset = RunEntry.objects.all().filter(app_uuid=app_uuid, owner=request.user,
+                                                 created_at__lt=before).order_by('-created_at')[:count]
         response = StreamingHttpResponse(
-            streaming_content=self.get_csv(queryset, brief), content_type='text/csv',
-        )
+            streaming_content=self.get_csv(
+                queryset, brief), content_type='text/csv', )
         response['Content-Disposition'] = f'attachment; filename="history_{app_uuid}_{before}_{count}.csv"'
         return response
 
@@ -470,7 +544,9 @@ class LoginView(APIView):
                 login(request=request, user=user)
                 return DRFResponse({'message': 'Login successful'})
 
-        return DRFResponse('Error in signing in', status=status.HTTP_400_BAD_REQUEST)
+        return DRFResponse(
+            'Error in signing in',
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutAPIView(APIView):

@@ -13,15 +13,16 @@ import weaviate
 logger = logging.getLogger(__name__)
 
 
-def delete_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
+def delete_data_entry_task(
+        datasource: DataSource,
+        entry_data: DataSourceEntry):
     logger.error(f'Deleting data_source_entry: %s' % str(entry_data.uuid))
     entry_data.status = DataSourceEntryStatus.MARKED_FOR_DELETION
     entry_data.save()
 
     datasource.size -= entry_data.size
     datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-        datasource.type,
-    )
+        datasource.type, )
     datasource_entry_handler = datasource_entry_handler_cls(datasource)
     try:
         datasource_entry_items = datasource_entry_handler.delete_entry(
@@ -45,15 +46,15 @@ def delete_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
     return
 
 
-def resync_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
+def resync_data_entry_task(
+        datasource: DataSource,
+        entry_data: DataSourceEntry):
     logger.info(f'Resyncing task for data_source_entry: %s' % str(entry_data))
 
     datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-        datasource.type,
-    )
+        datasource.type, )
     datasource_entry_handler: DataSourceProcessor = datasource_entry_handler_cls(
-        datasource,
-    )
+        datasource, )
     entry_data.status = DataSourceEntryStatus.PROCESSING
     entry_data.save()
     old_size = entry_data.size
@@ -75,7 +76,6 @@ def delete_data_source_task(datasource):
     if datasource_type.is_external_datasource:
         return
     datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-        datasource_type,
-    )
+        datasource_type, )
     datasource_entry_handler = datasource_entry_handler_cls(datasource)
     datasource_entry_handler.delete_all_entries()

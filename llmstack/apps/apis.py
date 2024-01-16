@@ -77,7 +77,7 @@ class AppRunnerException(Exception):
 
 
 class AppTypeViewSet(viewsets.ViewSet):
-    @method_decorator(cache_page(60*60*24))
+    @method_decorator(cache_page(60 * 60 * 24))
     def get(self, request):
         queryset = AppType.objects.all()
         serializer = AppTypeSerializer(queryset, many=True)
@@ -127,12 +127,12 @@ class AppViewSet(viewsets.ViewSet):
 
         if uid:
             app = get_object_or_404(
-                App,
-                Q(uuid=uuid.UUID(uid), owner=request.user) |
-                Q(uuid=uuid.UUID(uid), read_accessible_by__contains=[
-                  request.user.email], is_published=True) | Q(uuid=uuid.UUID(uid), write_accessible_by__contains=[
-                      request.user.email], is_published=True),
-            )
+                App, Q(
+                    uuid=uuid.UUID(uid), owner=request.user) | Q(
+                    uuid=uuid.UUID(uid), read_accessible_by__contains=[
+                        request.user.email], is_published=True) | Q(
+                    uuid=uuid.UUID(uid), write_accessible_by__contains=[
+                        request.user.email], is_published=True), )
             serializer = AppSerializer(
                 instance=app, fields=fields, request_user=request.user,
             )
@@ -176,9 +176,14 @@ class AppViewSet(viewsets.ViewSet):
                 app_uuid=app.uuid, version=version, is_draft=draft
             ).first()
             if versioned_app_data:
-                return DRFResponse(AppDataSerializer(versioned_app_data, context={'hide_details': False}).data)
+                return DRFResponse(
+                    AppDataSerializer(
+                        versioned_app_data, context={
+                            'hide_details': False}).data)
             else:
-                return DRFResponse(status=404, data={'message': 'Version not found'})
+                return DRFResponse(
+                    status=404, data={
+                        'message': 'Version not found'})
         else:
             queryset = AppData.objects.all().filter(
                 app_uuid=app.uuid).order_by('-created_at')
@@ -194,36 +199,47 @@ class AppViewSet(viewsets.ViewSet):
             owner_profile.decrypt_value,
         ) if app.web_integration_config else None
 
-        # Only return the app if it is published and public or if the user is logged in and the owner
+        # Only return the app if it is published and public or if the user is
+        # logged in and the owner
         if app.is_published:
-            if app.owner == request.user or \
-                    (app.visibility == AppVisibility.PUBLIC or app.visibility == AppVisibility.UNLISTED) or \
-                (
-                        request.user.is_authenticated and ((app.visibility == AppVisibility.ORGANIZATION and Profile.objects.get(user=app.owner).organization == Profile.objects.get(user=request.user).organization) or
-                                                           (request.user.email in app.read_accessible_by or request.user.email in app.write_accessible_by))
-                        ):
+            if app.owner == request.user or (
+                app.visibility == AppVisibility.PUBLIC or app.visibility == AppVisibility.UNLISTED) or (
+                request.user.is_authenticated and (
+                    (app.visibility == AppVisibility.ORGANIZATION and Profile.objects.get(
+                        user=app.owner).organization == Profile.objects.get(
+                    user=request.user).organization) or (
+                        request.user.email in app.read_accessible_by or request.user.email in app.write_accessible_by))):
                 serializer = AppSerializer(
                     instance=app, request_user=request.user,
                 )
                 csp = 'frame-ancestors *'
-                if web_config and 'allowed_sites' in web_config and len(web_config['allowed_sites']) > 0 and any(web_config['allowed_sites']):
+                if web_config and 'allowed_sites' in web_config and len(
+                        web_config['allowed_sites']) > 0 and any(
+                        web_config['allowed_sites']):
                     csp = 'frame-ancestors ' + \
                         ' '.join(
                             list(
                                 filter(
-                                    lambda x: x != '' and x !=
-                                    None, web_config['allowed_sites'],
+                                    lambda x: x != '' and x is not None, web_config['allowed_sites'],
                                 ),
                             ),
                         )
-                return DRFResponse(data=serializer.data, status=200, headers={'Content-Security-Policy': csp})
+                return DRFResponse(
+                    data=serializer.data, status=200, headers={
+                        'Content-Security-Policy': csp})
 
         if app.visibility == AppVisibility.ORGANIZATION:
-            return DRFResponse(status=403, data={'message': 'Please login to your organization account to access this app.'})
+            return DRFResponse(
+                status=403, data={
+                    'message': 'Please login to your organization account to access this app.'})
         elif app.visibility == AppVisibility.PRIVATE and request.user.is_anonymous:
-            return DRFResponse(status=403, data={'message': 'Please login to access this app.'})
+            return DRFResponse(
+                status=403, data={
+                    'message': 'Please login to access this app.'})
         else:
-            return DRFResponse(status=404, data={'message': 'Nothing found here. Please check our app hub for more apps.'})
+            return DRFResponse(
+                status=404, data={
+                    'message': 'Nothing found here. Please check our app hub for more apps.'})
 
     def getCloneableApps(self, request, uid=None):
         json_data = None
@@ -272,8 +288,8 @@ class AppViewSet(viewsets.ViewSet):
                 app_template_dict = app_template.dict()
                 app_template_dict.pop('pages')
                 app = app_template_dict.pop('app')
-                json_data.append(
-                    {**app_template_dict, **{"app": {"type_slug": app["type_slug"]}}})
+                json_data.append({**app_template_dict,
+                                  **{"app": {"type_slug": app["type_slug"]}}})
 
         return DRFResponse(json_data)
 
@@ -283,7 +299,8 @@ class AppViewSet(viewsets.ViewSet):
             return DRFResponse(status=403)
 
         if 'visibility' in request.data:
-            if request.data['visibility'] == 3 and flag_enabled('CAN_PUBLISH_PUBLIC_APPS', request=request):
+            if request.data['visibility'] == 3 and flag_enabled(
+                    'CAN_PUBLISH_PUBLIC_APPS', request=request):
                 app.visibility = AppVisibility.PUBLIC
             elif request.data['visibility'] == 2 and flag_enabled('CAN_PUBLISH_UNLISTED_APPS', request=request):
                 app.visibility = AppVisibility.UNLISTED
@@ -292,7 +309,9 @@ class AppViewSet(viewsets.ViewSet):
             elif request.data['visibility'] == 0 and (flag_enabled('CAN_PUBLISH_PRIVATE_APPS', request=request) or app.visibility == AppVisibility.PRIVATE):
                 app.visibility = AppVisibility.PRIVATE
 
-        if flag_enabled('CAN_PUBLISH_PRIVATE_APPS', request=request) or app.visibility == AppVisibility.PRIVATE:
+        if flag_enabled(
+            'CAN_PUBLISH_PRIVATE_APPS',
+                request=request) or app.visibility == AppVisibility.PRIVATE:
             new_emails = []
             old_read_accessible_by = app.read_accessible_by or []
             old_write_accessible_by = app.write_accessible_by or []
@@ -333,8 +352,13 @@ class AppViewSet(viewsets.ViewSet):
                     'app_shared'
                 )
                 share_email = email_template_cls(
-                    uuid=app.uuid, published_uuid=app.published_uuid, app_name=app.name, owner_first_name=app.owner.first_name, owner_email=app.owner.email, can_edit=app.access_permission == AppAccessPermission.WRITE, share_to=new_email
-                )
+                    uuid=app.uuid,
+                    published_uuid=app.published_uuid,
+                    app_name=app.name,
+                    owner_first_name=app.owner.first_name,
+                    owner_email=app.owner.email,
+                    can_edit=app.access_permission == AppAccessPermission.WRITE,
+                    share_to=new_email)
                 share_email_sender = EmailSender(share_email)
                 share_email_sender.send()
 
@@ -348,7 +372,10 @@ class AppViewSet(viewsets.ViewSet):
                 'app_published'
             )
             app_published_email = email_template_cls(
-                app_name=app.name, owner_first_name=app.owner.first_name, owner_email=app.owner.email, published_uuid=app.published_uuid)
+                app_name=app.name,
+                owner_first_name=app.owner.first_name,
+                owner_email=app.owner.email,
+                published_uuid=app.published_uuid)
             published_email_sender = EmailSender(app_published_email)
             published_email_sender.send()
 
@@ -367,15 +394,19 @@ class AppViewSet(viewsets.ViewSet):
     def delete(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         if app.is_published:
-            return DRFResponse(status=500, errors={'message': 'Cannot delete a published app.'})
+            return DRFResponse(
+                status=500, errors={
+                    'message': 'Cannot delete a published app.'})
 
         if app.owner != request.user:
             return DRFResponse(status=404)
 
         # Cleanup app run_graph
         run_graph_entries = app.run_graph.all()
-        endpoint_entries = list(filter(lambda x: x != None, set(list(map(lambda x: x.entry_endpoint, run_graph_entries)) +
-                                                                list(map(lambda x: x.exit_endpoint, run_graph_entries)))))
+        endpoint_entries = list(filter(lambda x: x is not None,
+                                       set(list(map(lambda x: x.entry_endpoint,
+                                                    run_graph_entries)) + list(map(lambda x: x.exit_endpoint,
+                                                                                   run_graph_entries)))))
 
         # Cleanup rungraph
         # Delete all the run_graph entries
@@ -403,7 +434,7 @@ class AppViewSet(viewsets.ViewSet):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner_profile = get_object_or_404(Profile, user=app.owner)
         if app.owner != request.user and not (
-            app.is_published == True
+            app.is_published
             and request.user.email in app.write_accessible_by
         ):
             return DRFResponse(status=403)
@@ -451,8 +482,7 @@ class AppViewSet(viewsets.ViewSet):
             'config': request.data['config'] if 'config' in request.data else versioned_app_data.data['config'],
             'input_fields': request.data['input_fields'] if 'input_fields' in request.data else versioned_app_data.data['input_fields'],
             'output_template': request.data['output_template'] if 'output_template' in request.data else versioned_app_data.data['output_template'],
-            'processors': processed_processors_data
-        }
+            'processors': processed_processors_data}
 
         if versioned_app_data:
             versioned_app_data.comment = comment
@@ -464,20 +494,31 @@ class AppViewSet(viewsets.ViewSet):
             published_versions = AppData.objects.filter(
                 app_uuid=app.uuid, is_draft=False).count()
             AppData.objects.create(
-                app_uuid=app.uuid, data=app_data, comment=comment, is_draft=draft, version=published_versions,
+                app_uuid=app.uuid,
+                data=app_data,
+                comment=comment,
+                is_draft=draft,
+                version=published_versions,
             )
 
         app.last_modified_by = request.user
         app.save()
 
-        return DRFResponse(AppSerializer(instance=app, request_user=request.user).data, status=201)
+        return DRFResponse(
+            AppSerializer(
+                instance=app,
+                request_user=request.user).data,
+            status=201)
 
     def post(self, request):
         owner = request.user
         app_owner_profile = get_object_or_404(Profile, user=owner)
         app_type_slug = request.data['type_slug'] if 'type_slug' in request.data else None
-        app_type = get_object_or_404(AppType, id=request.data['app_type']) if 'app_type' in request.data else get_object_or_404(
-            AppType, slug=app_type_slug)
+        app_type = get_object_or_404(
+            AppType,
+            id=request.data['app_type']) if 'app_type' in request.data else get_object_or_404(
+            AppType,
+            slug=app_type_slug)
         app_name = request.data['name']
         app_description = request.data['description'] if 'description' in request.data else ''
         app_config = request.data['config'] if 'config' in request.data else {}
@@ -487,16 +528,20 @@ class AppViewSet(viewsets.ViewSet):
         }
         app_processors = request.data['processors'] if 'processors' in request.data else [
         ]
-        web_integration_config = WebIntegrationConfig(**request.data['web_config']).to_dict(
+        web_integration_config = WebIntegrationConfig(
+            **request.data['web_config']).to_dict(
             app_owner_profile.encrypt_value,
         ) if 'web_config' in request.data and request.data['web_config'] else {}
-        slack_integration_config = SlackIntegrationConfig(**request.data['slack_config']).to_dict(
+        slack_integration_config = SlackIntegrationConfig(
+            **request.data['slack_config']).to_dict(
             app_owner_profile.encrypt_value,
         ) if 'slack_config' in request.data and request.data['slack_config'] else {}
-        discord_integration_config = DiscordIntegrationConfig(**request.data['discord_config']).to_dict(
+        discord_integration_config = DiscordIntegrationConfig(
+            **request.data['discord_config']).to_dict(
             app_owner_profile.encrypt_value,
         ) if 'discord_config' in request.data and request.data['discord_config'] else {}
-        twilio_integration_config = TwilioIntegrationConfig(**request.data['twilio_config']).to_dict(
+        twilio_integration_config = TwilioIntegrationConfig(
+            **request.data['twilio_config']).to_dict(
             app_owner_profile.encrypt_value,
         ) if 'twilio_config' in request.data and request.data['twilio_config'] else {}
         draft = request.data['draft'] if 'draft' in request.data else True
@@ -555,7 +600,9 @@ class AppViewSet(viewsets.ViewSet):
                 return response
             response_body = {k: v for k, v in result.items() if k != 'csp'}
             response_body['_id'] = request_uuid
-            return DRFResponse(response_body, status=200, headers={'Content-Security-Policy': result['csp'] if 'csp' in result else 'frame-ancestors self'})
+            return DRFResponse(
+                response_body, status=200, headers={
+                    'Content-Security-Policy': result['csp'] if 'csp' in result else 'frame-ancestors self'})
         except AppRunnerException as e:
             logger.exception('Error while running app')
             return DRFResponse({'errors': [str(e)]}, status=e.status_code)
@@ -592,7 +639,9 @@ class AppViewSet(viewsets.ViewSet):
                 return response
             response_body = {k: v for k, v in result.items() if k != 'csp'}
             response_body['_id'] = request_uuid
-            return DRFResponse(response_body, status=200, headers={'Content-Security-Policy': result['csp'] if 'csp' in result else 'frame-ancestors self'})
+            return DRFResponse(
+                response_body, status=200, headers={
+                    'Content-Security-Policy': result['csp'] if 'csp' in result else 'frame-ancestors self'})
         except AppRunnerException as e:
             logger.exception('Error while running app')
             return DRFResponse({'errors': [str(e)]}, status=e.status_code)
@@ -603,13 +652,25 @@ class AppViewSet(viewsets.ViewSet):
     async def run_app_internal_async(self, uid, session_id, request_uuid, request, preview=False):
         return await database_sync_to_async(self.run_app_internal)(uid, session_id, request_uuid, request, preview=preview)
 
-    def run_app_internal(self, uid, session_id, request_uuid, request, platform=None, preview=False):
+    def run_app_internal(
+            self,
+            uid,
+            session_id,
+            request_uuid,
+            request,
+            platform=None,
+            preview=False):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
         stream = request.data.get('stream', False)
-        request_ip = request.headers.get('X-Forwarded-For',
-                                         request.META.get('REMOTE_ADDR', '',)
-                                         ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
+        request_ip = request.headers.get(
+            'X-Forwarded-For',
+            request.META.get(
+                'REMOTE_ADDR',
+                '',
+            )).split(',')[0].strip() or request.META.get(
+            'HTTP_X_REAL_IP',
+            '')
         request_location = request.headers.get('X-Client-Geo-Location', '')
         if not request_location:
             location = get_location(request_ip)
@@ -618,7 +679,8 @@ class AppViewSet(viewsets.ViewSet):
         request_user_agent = request.META.get('HTTP_USER_AGENT', '')
         request_content_type = request.META.get('CONTENT_TYPE', '')
 
-        if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA', request=request, user=app.owner)):
+        if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA',
+                         request=request, user=app.owner)):
             raise Exception(
                 'You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.')
 
@@ -643,23 +705,43 @@ class AppViewSet(viewsets.ViewSet):
             app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
 
         app_runner = app_runner_class(
-            app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid,
-            request=request, session_id=session_id, app_owner=app_owner, stream=stream,
-            request_ip=request_ip, request_location=request_location, request_user_agent=request_user_agent,
+            app=app,
+            app_data=app_data_obj.data if app_data_obj else None,
+            request_uuid=request_uuid,
+            request=request,
+            session_id=session_id,
+            app_owner=app_owner,
+            stream=stream,
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=request_user_agent,
             request_content_type=request_content_type,
         )
 
         return app_runner.run_app()
 
-    def run_processor_internal(self, uid, processor_id, session_id, request_uuid, request, platform=None, preview=False):
+    def run_processor_internal(
+            self,
+            uid,
+            processor_id,
+            session_id,
+            request_uuid,
+            request,
+            platform=None,
+            preview=False):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
 
         stream = request.data.get('stream', False)
 
-        request_ip = request.headers.get('X-Forwarded-For',
-                                         request.META.get('REMOTE_ADDR', '',)
-                                         ).split(',')[0].strip() or request.META.get('HTTP_X_REAL_IP', '')
+        request_ip = request.headers.get(
+            'X-Forwarded-For',
+            request.META.get(
+                'REMOTE_ADDR',
+                '',
+            )).split(',')[0].strip() or request.META.get(
+            'HTTP_X_REAL_IP',
+            '')
 
         request_location = request.headers.get('X-Client-Geo-Location', '')
 
@@ -670,7 +752,8 @@ class AppViewSet(viewsets.ViewSet):
         request_user_agent = request.META.get('HTTP_USER_AGENT', '')
         request_content_type = request.META.get('CONTENT_TYPE', '')
 
-        if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA', request=request, user=app.owner)):
+        if (flag_enabled('HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA',
+                         request=request, user=app.owner)):
             raise Exception(
                 'You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.')
 
@@ -683,9 +766,16 @@ class AppViewSet(viewsets.ViewSet):
                 app_uuid=app.uuid, is_draft=False).order_by('-created_at').first()
 
         app_runner = AppProcessorRunner(
-            app=app, app_data=app_data_obj.data if app_data_obj else None, request_uuid=request_uuid,
-            request=request, session_id=session_id, app_owner=app_owner, stream=stream,
-            request_ip=request_ip, request_location=request_location, request_user_agent=request_user_agent,
+            app=app,
+            app_data=app_data_obj.data if app_data_obj else None,
+            request_uuid=request_uuid,
+            request=request,
+            session_id=session_id,
+            app_owner=app_owner,
+            stream=stream,
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=request_user_agent,
             request_content_type=request_content_type,
         )
 
@@ -703,7 +793,9 @@ class AppViewSet(viewsets.ViewSet):
     def run_slack(self, request, uid):
         # If the request is a url verification request, return the challenge
         if request.data.get('type') == 'url_verification':
-            return DRFResponse(status=200, data={'challenge': request.data['challenge']})
+            return DRFResponse(
+                status=200, data={
+                    'challenge': request.data['challenge']})
 
         return self.run(request, uid, platform='slack')
 
@@ -746,7 +838,10 @@ class AppHubViewSet(viewsets.ViewSet):
     def list(self, request):
         apphub_objs = AppHub.objects.all().order_by('rank')
 
-        return DRFResponse(AppHubSerializer(instance=apphub_objs, many=True).data)
+        return DRFResponse(
+            AppHubSerializer(
+                instance=apphub_objs,
+                many=True).data)
 
 
 class AppTestCasesViewSet(viewsets.ViewSet):
@@ -784,14 +879,20 @@ class AppTestSetViewSet(viewsets.ModelViewSet):
             return DRFResponse(status=403)
 
         testcases = TestCase.objects.filter(testset=testset)
-        return DRFResponse(TestCaseSerializer(instance=testcases, many=True).data)
+        return DRFResponse(
+            TestCaseSerializer(
+                instance=testcases,
+                many=True).data)
 
     def post(self, request, app):
         testset_name = request.data['name']
 
         testset = TestSet.objects.create(name=testset_name, app=app)
 
-        return DRFResponse(TestSetSerializer(instance=testset).data, status=201)
+        return DRFResponse(
+            TestSetSerializer(
+                instance=testset).data,
+            status=201)
 
     def delete(self, request, uid):
         testset = get_object_or_404(TestSet, uuid=uuid.UUID(uid))
@@ -811,4 +912,7 @@ class AppTestSetViewSet(viewsets.ModelViewSet):
                 'expected_output'] if 'expected_output' in request.data else '',
         )
 
-        return DRFResponse(TestCaseSerializer(instance=testcase).data, status=201)
+        return DRFResponse(
+            TestCaseSerializer(
+                instance=testcase).data,
+            status=201)

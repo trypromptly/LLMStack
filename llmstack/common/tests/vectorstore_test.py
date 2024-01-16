@@ -64,7 +64,8 @@ class WeaviateTest(unittest.TestCase):
 
     def setUp(self):
         self.weaviate_handle = Weaviate(
-            url=os.environ.get('WEAVIATE_URL'), openai_key=os.environ.get('OPENAI_API_KEY'),
+            url=os.environ.get('WEAVIATE_URL'),
+            openai_key=os.environ.get('OPENAI_API_KEY'),
         )
 
         self.weaviate_handle.create_index(
@@ -85,9 +86,9 @@ class WeaviateTest(unittest.TestCase):
         )
         self.assertIsNotNone(result)
         result = self.weaviate_handle.similarity_search(
-            self.TEST_INDEX.capitalize(), DocumentQuery('Test content', 'content',
-                                                        1, {'additional_properties': ['source']}),
-        )
+            self.TEST_INDEX.capitalize(), DocumentQuery(
+                'Test content', 'content', 1, {
+                    'additional_properties': ['source']}), )
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].page_content, 'Test content')
         self.assertEqual(result[0].metadata['source'], 'test')
@@ -107,9 +108,9 @@ class WeaviateTest(unittest.TestCase):
         )
         self.assertIsNotNone(result)
         result = self.weaviate_handle.similarity_search(
-            self.TEST_INDEX.capitalize(), DocumentQuery('Test content', 'content',
-                                                        1, {'additional_properties': ['source']}),
-        )
+            self.TEST_INDEX.capitalize(), DocumentQuery(
+                'Test content', 'content', 1, {
+                    'additional_properties': ['source']}), )
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].page_content, 'Test content')
         self.assertEqual(result[0].metadata['source'], 'test')

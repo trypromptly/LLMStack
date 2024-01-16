@@ -82,13 +82,22 @@ def post_run_app_task(task_run_log_uuid, input_index, status, response, job):
 def run_app_sub_task_failure_callback(job, connection, type, value, traceback):
     logger.error(
         f'task_run_log_uuid: {job.meta["task_run_log_uuid"]}, type: {type}, value: {value}, Traceback: {traceback} ')
-    post_run_app_task(job.meta['task_run_log_uuid'], job.meta['input_data_index'],
-                      TaskStatus.FAILURE, f'Exception: {type}, detail: {value}', job)
+    post_run_app_task(
+        job.meta['task_run_log_uuid'],
+        job.meta['input_data_index'],
+        TaskStatus.FAILURE,
+        f'Exception: {type}, detail: {value}',
+        job)
 
 
-def run_app_sub_task_success_callback(job, connection, result, *args, **kwargs):
-    post_run_app_task(job.meta['task_run_log_uuid'], job.meta['input_data_index'],
-                      TaskStatus.SUCCESS, result, job)
+def run_app_sub_task_success_callback(
+        job, connection, result, *args, **kwargs):
+    post_run_app_task(
+        job.meta['task_run_log_uuid'],
+        job.meta['input_data_index'],
+        TaskStatus.SUCCESS,
+        result,
+        job)
 
 
 def run_app_task(app_id=None, input_data=None, *args, **kwargs):
@@ -124,7 +133,9 @@ def upsert_datasource_entry_subtask(datasource_id, input_data):
     }
     datasource = DataSource.objects.get(uuid=uuid.UUID(datasource_id))
     request = RequestFactory().post(
-        f'/api/datasource_entries/upsert', data=request_input_data, format='json')
+        f'/api/datasource_entries/upsert',
+        data=request_input_data,
+        format='json')
     request.user = datasource.owner
     request.data = request_input_data
     response = DataSourceEntryViewSet().upsert(request)
@@ -135,7 +146,12 @@ def upsert_datasource_entry_subtask(datasource_id, input_data):
     }
 
 
-def post_upsert_datasource_task(task_run_log_uuid, input_index, status, response, job):
+def post_upsert_datasource_task(
+        task_run_log_uuid,
+        input_index,
+        status,
+        response,
+        job):
     if task_run_log_uuid:
         task_run_log = TaskRunLog.objects.get(
             uuid=uuid.UUID(task_run_log_uuid))
@@ -182,19 +198,29 @@ def post_upsert_datasource_task(task_run_log_uuid, input_index, status, response
                 job.save()
 
 
-def upsert_datasource_entry_subtask_success_callback(job, connection, result, *args, **kwargs):
-    post_upsert_datasource_task(job.meta['task_run_log_uuid'], job.meta['input_data_index'],
-                                TaskStatus.SUCCESS, result, job)
+def upsert_datasource_entry_subtask_success_callback(
+        job, connection, result, *args, **kwargs):
+    post_upsert_datasource_task(
+        job.meta['task_run_log_uuid'],
+        job.meta['input_data_index'],
+        TaskStatus.SUCCESS,
+        result,
+        job)
 
 
-def upsert_datasource_entry_subtask_failure_callback(job, connection, type, value, traceback):
+def upsert_datasource_entry_subtask_failure_callback(
+        job, connection, type, value, traceback):
     logger.error(
         f'task_run_log_uuid: {job.meta["task_run_log_uuid"]}, type: {type}, value: {value}, Traceback: {traceback} ')
-    post_upsert_datasource_task(job.meta['task_run_log_uuid'], job.meta['input_data_index'],
-                                TaskStatus.FAILURE, f'Exception: {type}, detail: {value}', job)
+    post_upsert_datasource_task(
+        job.meta['task_run_log_uuid'],
+        job.meta['input_data_index'],
+        TaskStatus.FAILURE,
+        f'Exception: {type}, detail: {value}',
+        job)
 
 
-def upsert_datasource_entries_task(datasource_id, input_data,  *args, **kwargs):
+def upsert_datasource_entries_task(datasource_id, input_data, *args, **kwargs):
     job_metadata = kwargs['_job_metadata']
 
     timeout = 120

@@ -29,22 +29,33 @@ class DiscordCommandOptionInputFieldMapping(BaseSchema):
 
 class DiscordAppConfigSchema(BaseSchema):
     app_id: str = Field(
-        title='App ID', description="App ID of the Discord app. Your application's ID can be found in the URL of the your application console.", required=True,
+        title='App ID',
+        description="App ID of the Discord app. Your application's ID can be found in the URL of the your application console.",
+        required=True,
     )
     slash_command_name: str = Field(
         default='promptly',
-        title='Slash Command Name', description='The name of the slash command that will be used to trigger the app.', required=True,
+        title='Slash Command Name',
+        description='The name of the slash command that will be used to trigger the app.',
+        required=True,
     )
     slash_command_description: str = Field(
-        title='Slash Command Description', default='Promptly App',
-        description='The description of the slash command that will be used to trigger the app.', required=True,
+        title='Slash Command Description',
+        default='Promptly App',
+        description='The description of the slash command that will be used to trigger the app.',
+        required=True,
     )
     bot_token: str = Field(
-        title='Bot Token', widget='password',
-        description="Bot token of the Discord app. Your bot's token can be found in the Bot section of the your application console.", required=True,
+        title='Bot Token',
+        widget='password',
+        description="Bot token of the Discord app. Your bot's token can be found in the Bot section of the your application console.",
+        required=True,
     )
     public_key: str = Field(
-        title='Public Key', widget='password', description='Public key of the Discord app. Your public key can be found in the Bot section of the your application console.', required=True,
+        title='Public Key',
+        widget='password',
+        description='Public key of the Discord app. Your public key can be found in the Bot section of the your application console.',
+        required=True,
     )
     slash_command_id: Optional[str] = Field(widget='hidden')
 
@@ -64,14 +75,18 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
 
     @classmethod
     def pre_save(self, app: App):
-        if app.is_published and app.discord_config and app.discord_config.get('app_id') and app.discord_config.get('bot_token') and app.discord_config.get('public_key'):
+        if app.is_published and app.discord_config and app.discord_config.get(
+                'app_id') and app.discord_config.get('bot_token') and app.discord_config.get('public_key'):
 
             config = app.discord_config
 
             slash_command_name = config['slash_command_name']
             slash_command_options = []
-            app_data = AppData.objects.filter(app_uuid=app.uuid, is_draft=False).order_by(
-                '-created_at').first() or AppData.objects.filter(app_uuid=app.uuid, is_draft=True).order_by('-created_at').first()
+            app_data = AppData.objects.filter(
+                app_uuid=app.uuid,
+                is_draft=False).order_by('-created_at').first() or AppData.objects.filter(
+                app_uuid=app.uuid,
+                is_draft=True).order_by('-created_at').first()
             input_fields = app_data.data['input_fields']
 
             for input_field in input_fields:
@@ -84,14 +99,18 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
             body = {
                 'name': slash_command_name,
                 'type': 1,
-                'description': config.get('slash_command_description', 'Promptly App'),
+                'description': config.get(
+                    'slash_command_description',
+                    'Promptly App'),
                 'options': slash_command_options,
             }
 
             if config.get('slash_command_id'):
                 # Update the slash command
                 response = requests.patch(
-                    f'https://discord.com/api/v10/applications/{config.get("app_id")}/commands/{config.get("slash_command_id")}', json=body, headers={
+                    f'https://discord.com/api/v10/applications/{config.get("app_id")}/commands/{config.get("slash_command_id")}',
+                    json=body,
+                    headers={
                         'Authorization': f'Bot {config.get("bot_token")}',
                     },
                 )
@@ -103,7 +122,9 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
             else:
                 # Create the slash command
                 response = requests.post(
-                    f'https://discord.com/api/v10/applications/{config.get("app_id")}/commands', json=body, headers={
+                    f'https://discord.com/api/v10/applications/{config.get("app_id")}/commands',
+                    json=body,
+                    headers={
                         'Authorization': f'Bot {config.get("bot_token")}',
                     },
                 )
@@ -118,7 +139,11 @@ class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):
         return app
 
     @classmethod
-    def verify_request_signature(cls, app: App, headers: dict, raw_body: bytes):
+    def verify_request_signature(
+            cls,
+            app: App,
+            headers: dict,
+            raw_body: bytes):
         signature = headers.get('X-Signature-Ed25519')
         timestamp = headers.get('X-Signature-Timestamp')
 

@@ -35,8 +35,12 @@ def _build_request_from_input(post_data, scope):
         'CONTENT_TYPE': content_type,
         'PATH_INFO': path_info,
         'QUERY_STRING': query_string,
-        'HTTP_USER_AGENT': headers.get(b'user-agent', b'').decode('utf-8'),
-        'REMOTE_ADDR': headers.get(b'x-forwarded-for', b'').decode('utf-8').split(',')[0].strip(),
+        'HTTP_USER_AGENT': headers.get(
+            b'user-agent',
+            b'').decode('utf-8'),
+        'REMOTE_ADDR': headers.get(
+            b'x-forwarded-for',
+            b'').decode('utf-8').split(',')[0].strip(),
         'CONTENT_TYPE': 'application/json',
     }
     http_request.method = method

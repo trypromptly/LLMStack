@@ -22,7 +22,12 @@ class OutputResponse(NamedTuple):
 
 
 class OutputActor(Actor):
-    def __init__(self, output_stream, dependencies=[], template=None, all_dependencies=[]):
+    def __init__(
+            self,
+            output_stream,
+            dependencies=[],
+            template=None,
+            all_dependencies=[]):
         super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
         self._output_stream = output_stream
         self._data = None
@@ -42,8 +47,7 @@ class OutputActor(Actor):
                 self._data = Template(self._template).render(**message)
             except Exception as e:
                 logger.error(
-                    f'Error rendering template {self._template} with data {self._data}: {e}',
-                )
+                    f'Error rendering template {self._template} with data {self._data}: {e}', )
         else:
             self._data = message
         self._data_done = True
@@ -67,7 +71,8 @@ class OutputActor(Actor):
 
     def get_output(self):
         while True:
-            if self._error or self._stopped or (self._data_done and self._data_sent):
+            if self._error or self._stopped or (
+                    self._data_done and self._data_sent):
                 break
             if not self._data or self._data_sent:
                 continue
@@ -83,7 +88,8 @@ class OutputActor(Actor):
 
     def get_output_stream(self):
         while True:
-            if self._error or self._stopped or (self._data_done and self._data_chunk_sent):
+            if self._error or self._stopped or (
+                    self._data_done and self._data_chunk_sent):
                 break
 
             if self._data_chunks_sent < len(self._data_chunks):

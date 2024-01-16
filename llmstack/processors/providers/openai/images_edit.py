@@ -18,12 +18,15 @@ class ImagesEditInput(ApiProcessorSchema):
     image: Optional[str] = Field(
         default='',
         description='The image to edit. Must be a valid PNG file, less than 4MB, and square. If mask is not provided, image must have transparency, which will be used as the mask.',
-        accepts={'image/png': []},
+        accepts={
+            'image/png': []},
         maxSize=4000000,
         widget='file',
     )
     image_data: Optional[str] = Field(
-        default='', description='The base64 encoded data of image', pattern=r'data:(.*);name=(.*);base64,(.*)',
+        default='',
+        description='The base64 encoded data of image',
+        pattern=r'data:(.*);name=(.*);base64,(.*)',
     )
     prompt: str = Field(
         default='', description='The prompt to generate image.',
@@ -32,11 +35,15 @@ class ImagesEditInput(ApiProcessorSchema):
 
 class ImagesEditOutput(ApiProcessorSchema):
     answer: List[str] = Field(
-        default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
+        default=[],
+        description='The generated images.',
+        widget=IMAGE_WIDGET_NAME,
     )
 
 
-class ImagesEditConfiguration(OpenAIImageEditsProcessorConfiguration, ApiProcessorSchema):
+class ImagesEditConfiguration(
+        OpenAIImageEditsProcessorConfiguration,
+        ApiProcessorSchema):
     size: Optional[Size] = Field(
         '1024x1024',
         description='The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.',
@@ -51,7 +58,8 @@ class ImagesEditConfiguration(OpenAIImageEditsProcessorConfiguration, ApiProcess
     )
 
 
-class ImagesEdit(ApiProcessorInterface[ImagesEditInput, ImagesEditOutput, ImagesEditConfiguration]):
+class ImagesEdit(
+        ApiProcessorInterface[ImagesEditInput, ImagesEditOutput, ImagesEditConfiguration]):
     """
     OpenAI Images Generations API
     """

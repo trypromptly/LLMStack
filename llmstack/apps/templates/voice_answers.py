@@ -10,10 +10,15 @@ from .app_template_interface import TemplatePage
 
 class VoiceAnswersBasicSchema(BaseSchema):
     voice_id: str = Field(
-        title='Voice ID', description='Voice ID to be used, you can use https://api.elevenlabs.io/v1/voices to list all the available voices.', path='processors[2].config.voice_id',
+        title='Voice ID',
+        description='Voice ID to be used, you can use https://api.elevenlabs.io/v1/voices to list all the available voices.',
+        path='processors[2].config.voice_id',
     )
     ai_system_message: str = Field(
-        title='AI System Message', widget='textarea', description='System instructions to the ChatGPT model', path='processors[1].input.system_message',
+        title='AI System Message',
+        widget='textarea',
+        description='System instructions to the ChatGPT model',
+        path='processors[1].input.system_message',
     )
 
 

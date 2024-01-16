@@ -20,9 +20,9 @@ from llmstack.processors.providers.api_processor_interface import (
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SYSTEM_MESSAGE = '''You are a helpful assistant that browses internet using a web browser tool and accomplishes user provided task. 
-You can click on buttons, type into input fields, select options from dropdowns, copy text from elements, scroll the page and navigate to other pages. 
-You can also use the text from the page to generate the next set of instructions. For example, you can use the text from a button to click on it. 
+DEFAULT_SYSTEM_MESSAGE = '''You are a helpful assistant that browses internet using a web browser tool and accomplishes user provided task.
+You can click on buttons, type into input fields, select options from dropdowns, copy text from elements, scroll the page and navigate to other pages.
+You can also use the text from the page to generate the next set of instructions. For example, you can use the text from a button to click on it.
 You can also use the text from a link to navigate to the URL specified in the link. Please follow the instructions below to accomplish the task.
 
 - ONLY return a valid JSON object (no other text is necessary). Use doublequotes for property names and values. For example, use {"output": "Hello World"} instead of {'output': 'Hello World'}. Thinking of the output as a JSON object will help you generate the output in the correct format.
@@ -83,9 +83,13 @@ class Model(str, Enum):
 
 class WebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
-        description='Connection to use', widget='connection', advanced_parameter=False)
+        description='Connection to use',
+        widget='connection',
+        advanced_parameter=False)
     model: Model = Field(
-        description='Backing model to use', default=Model.GPT_4_V_LATEST, advanced_parameter=False)
+        description='Backing model to use',
+        default=Model.GPT_4_V_LATEST,
+        advanced_parameter=False)
     stream_video: bool = Field(
         description='Stream video of the browser', default=True)
     stream_text: bool = Field(
@@ -95,7 +99,9 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     max_steps: int = Field(
         description='Maximum number of browsing steps', default=8, ge=1, le=20)
     system_message: str = Field(
-        description='System message to use', default=DEFAULT_SYSTEM_MESSAGE, widget='textarea')
+        description='System message to use',
+        default=DEFAULT_SYSTEM_MESSAGE,
+        widget='textarea')
     seed: Optional[int] = Field(
         description='Seed to use for random number generator')
 
@@ -130,7 +136,8 @@ class WebBrowserOutput(ApiProcessorSchema):
     video: Optional[str] = Field(
         default=None, description='Video of the result')
     content: Optional[dict] = Field(
-        default=None, description='Content of the result including text, buttons, links, inputs, textareas and selects')
+        default=None,
+        description='Content of the result including text, buttons, links, inputs, textareas and selects')
 
 
 class WebBrowserInput(ApiProcessorSchema):
@@ -140,7 +147,8 @@ class WebBrowserInput(ApiProcessorSchema):
         description='Details of the task to perform', default='')
 
 
-class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBrowserConfiguration]):
+class WebBrowser(
+        ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBrowserConfiguration]):
     """
     Browse a given URL
     """
@@ -205,7 +213,8 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
 
         return output
 
-    def _request_iterator(self, start_url) -> Optional[runner_pb2.PlaywrightBrowserRequest]:
+    def _request_iterator(
+            self, start_url) -> Optional[runner_pb2.PlaywrightBrowserRequest]:
         # Our first instruction is always to goto the start_url
         playwright_start_request = runner_pb2.PlaywrightBrowserRequest()
         playwright_start_request.url = start_url
@@ -322,10 +331,11 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
                 break
             elif response.video:
                 # Send base64 encoded video
-                async_to_sync(output_stream.write)(WebBrowserOutput(
-                    text='',
-                    video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}"
-                ))
+                async_to_sync(
+                    output_stream.write)(
+                    WebBrowserOutput(
+                        text='',
+                        video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}"))
 
         if response.state == runner_pb2.TERMINATED:
             output_text = "".join([x.text for x in response.outputs])
@@ -348,7 +358,7 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
             if len(messages) > 3:
                 for message in messages[:-3]:
                     if message['role'] == 'user':
-                        if type(message['content']) == list:
+                        if isinstance(message['content'], list):
                             for content in message['content']:
                                 if content['type'] == 'image_url':
                                     message['content'].remove(content)
@@ -390,14 +400,15 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
 
                     try:
                         result = json.loads(content)
-                    except:
+                    except BaseException:
                         logger.error(f'Error parsing json: {content}')
                         result = {
                             'output': content,
                         }
 
                     # If output is json, convert that to string
-                    if 'output' in result and type(result['output']) != str:
+                    if 'output' in result and not isinstance(
+                            result['output'], str):
                         result['output'] = str(result['output'])
 
                     if 'instructions' in result:
@@ -434,14 +445,16 @@ class WebBrowser(ApiProcessorInterface[WebBrowserInput, WebBrowserOutput, WebBro
                     break
 
             try:
-                # Get the next response from the browser and generate the next set of instructions
+                # Get the next response from the browser and generate the next
+                # set of instructions
                 for response in playwright_response_iter:
                     if response.video:
                         # Send base64 encoded video
-                        async_to_sync(output_stream.write)(WebBrowserOutput(
-                            text='',
-                            video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}"
-                        ))
+                        async_to_sync(
+                            output_stream.write)(
+                            WebBrowserOutput(
+                                text='',
+                                video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}"))
                     elif response.content.text or response.content.screenshot:
                         browser_text_response = self._process_browser_content(
                             response)

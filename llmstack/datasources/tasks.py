@@ -9,7 +9,8 @@ from llmstack.jobs.models import AdhocJob, TaskRunLog
 logger = logging.getLogger(__name__)
 
 
-def process_datasource_add_entry_request(datasource_id, input_data, job_id, **kwargs):
+def process_datasource_add_entry_request(
+        datasource_id, input_data, job_id, **kwargs):
     from llmstack.jobs.jobs import upsert_datasource_entries_task
 
     job = get_current_job()

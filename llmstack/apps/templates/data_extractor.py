@@ -7,7 +7,10 @@ from .app_template_interface import TemplatePage
 
 class DataExtractorSchema(BaseSchema):
     features: str = Field(
-        title='Features to extract', description='List of features and the format to extract from input. For example, "Name and birthday of all candidates in the text"', widget='textarea', path='processors[0].input.messages[1].content',
+        title='Features to extract',
+        description='List of features and the format to extract from input. For example, "Name and birthday of all candidates in the text"',
+        widget='textarea',
+        path='processors[0].input.messages[1].content',
     )
 
 

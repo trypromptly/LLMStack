@@ -20,15 +20,18 @@ class SlackAppConfigSchema(BaseSchema):
         description="App ID of the Slack app. Your application's ID can be found in the URL of the your application console.",
     )
     bot_token: str = Field(
-        title='Bot Token', widget='password',
+        title='Bot Token',
+        widget='password',
         description='Bot token to use for sending messages to Slack. Make sure the Bot has access to app_mentions:read and chat:write scopes. This token is available at Features > OAuth & Permissions in your app page. More details https://api.slack.com/authentication/oauth-v2',
     )
     verification_token: SecretStr = Field(
-        title='Verification Token', widget='password',
+        title='Verification Token',
+        widget='password',
         description='Verification token to verify the request from Slack. This token is available at Features > Basic Information in your app page. More details https://api.slack.com/authentication/verifying-requests-from-slack',
     )
     signing_secret: SecretStr = Field(
-        title='Signing Secret', widget='password',
+        title='Signing Secret',
+        widget='password',
         description='Signing secret to verify the request from Slack. This secret is available at Features > Basic Information in your app page. More details https://api.slack.com/authentication/verifying-requests-from-slack',
     )
 
@@ -47,7 +50,11 @@ class SlackApp(AppTypeInterface[SlackAppConfigSchema]):
         return 'Slack app that can be used to send messages to Slack'
 
     @classmethod
-    def verify_request_signature(cls, app: App, headers: dict, raw_body: bytes):
+    def verify_request_signature(
+            cls,
+            app: App,
+            headers: dict,
+            raw_body: bytes):
         signature = headers.get('X-Slack-Signature')
         timestamp = headers.get('X-Slack-Request-Timestamp')
         if signature and timestamp and raw_body:
@@ -66,7 +73,6 @@ class SlackApp(AppTypeInterface[SlackAppConfigSchema]):
                 ).hexdigest()
                 if f'v0={request_hash}' != signature:
                     logger.error(
-                        f'Request signature verification failed for Slack app {app.id}',
-                    )
+                        f'Request signature verification failed for Slack app {app.id}', )
                     raise PermissionDenied()
         return True

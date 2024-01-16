@@ -53,8 +53,17 @@ class VirtualDisplay:
             logger.info(f"Terminated x11vnc process: {self.id}")
 
     def start_x11vnc(self):
-        self.x11vnc_process = subprocess.Popen(['x11vnc', '-display', f':{self.id}', '-nopw', '-listen',
-                                                'localhost', '-xkb', '-q', '-rfbport', str(self.rfb_port)], close_fds=True)
+        self.x11vnc_process = subprocess.Popen(['x11vnc',
+                                                '-display',
+                                                f':{self.id}',
+                                                '-nopw',
+                                                '-listen',
+                                                'localhost',
+                                                '-xkb',
+                                                '-q',
+                                                '-rfbport',
+                                                str(self.rfb_port)],
+                                               close_fds=True)
         logger.info(f"Started x11vnc process: {self.id}")
 
     def stop_x11vnc(self):
@@ -73,7 +82,14 @@ class VirtualDisplay:
 
 
 class VirtualDisplayPool():
-    def __init__(self, redis_client, hostname=HOSTNAME, max_displays=MAX_DISPLAYS, start_display=START_DISPLAY, display_res=DISPLAY_RES, rfb_start_port=RFB_START_PORT):
+    def __init__(
+            self,
+            redis_client,
+            hostname=HOSTNAME,
+            max_displays=MAX_DISPLAYS,
+            start_display=START_DISPLAY,
+            display_res=DISPLAY_RES,
+            rfb_start_port=RFB_START_PORT):
         self.display_queue = queue.Queue()
         self.redis_client = redis_client
         self.max_displays = max_displays
@@ -91,14 +107,25 @@ class VirtualDisplayPool():
 
         # We start noVNC if remote_control is True
         if remote_control:
-            x11vnc_process = subprocess.Popen(['x11vnc', '-display', display['DISPLAY'], '-nopw', '-listen',
-                                              f'{self.ip_address}', '-xkb', '-q', '-rfbport', str(display['rfb_port'])], close_fds=True)
+            x11vnc_process = subprocess.Popen(['x11vnc',
+                                               '-display',
+                                               display['DISPLAY'],
+                                               '-nopw',
+                                               '-listen',
+                                               f'{self.ip_address}',
+                                               '-xkb',
+                                               '-q',
+                                               '-rfbport',
+                                               str(display['rfb_port'])],
+                                              close_fds=True)
             display['x11vnc_process'] = x11vnc_process
             display['token'] = str(uuid.uuid4())
 
             # Add display to redis with a TTL of 1 minute
             self.redis_client.set(
-                display['token'], '{"host": "' + f'{self.ip_address}:{display["rfb_port"]}' + '"}', ex=60)
+                display['token'],
+                '{"host": "' + f'{self.ip_address}:{display["rfb_port"]}' + '"}',
+                ex=60)
 
             # Generate and add temp credentials to redis with a TTL of 1 minute
             username = str(uuid.uuid4())
@@ -145,11 +172,17 @@ class VirtualDisplayPool():
         })
         logger.info(f"Created display: {display_id}")
 
-    def _create_displays(self, max_displays, start_display, display_res, rfb_start_port):
+    def _create_displays(
+            self,
+            max_displays,
+            start_display,
+            display_res,
+            rfb_start_port):
         threads = []
         for i in range(max_displays):
             thread = threading.Thread(
-                target=self._create_display, args=(start_display + i, display_res, rfb_start_port + i))
+                target=self._create_display, args=(
+                    start_display + i, display_res, rfb_start_port + i))
             thread.start()
             threads.append(thread)
 
@@ -160,7 +193,8 @@ class VirtualDisplayPool():
         start_time = time.time()
         while True:
             display = self.display_queue.get(timeout=timeout)
-            if display['xvfb_process'].poll() is None:  # Check if process is still running
+            if display['xvfb_process'].poll(
+            ) is None:  # Check if process is still running
                 return display
             else:
                 display['xvfb_process'].kill()

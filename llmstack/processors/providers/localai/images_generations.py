@@ -22,7 +22,9 @@ class ImagesGenerationsInput(ApiProcessorSchema):
 
 class ImagesGenerationsOutput(ApiProcessorSchema):
     data: List[str] = Field(
-        default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
+        default=[],
+        description='The generated images.',
+        widget=IMAGE_WIDGET_NAME,
     )
 
 
@@ -38,7 +40,8 @@ class ImagesGenerationsConfiguration(ApiProcessorSchema):
         default=60, description='Timeout in seconds', advanced_parameter=False)
 
 
-class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGenerationsOutput, ImagesGenerationsConfiguration]):
+class ImagesGenerations(
+        ApiProcessorInterface[ImagesGenerationsInput, ImagesGenerationsOutput, ImagesGenerationsConfiguration]):
     """
     LocalAI Images Generations API
     """
@@ -81,7 +84,9 @@ class ImagesGenerations(ApiProcessorInterface[ImagesGenerationsInput, ImagesGene
             http_input.dict(),
         )
         # If the response is ok, return the choices
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
+        if isinstance(
+                http_response,
+                HttpAPIProcessorOutput) and http_response.is_ok:
             generations = list(
                 map(lambda entry: entry['b64_json'], http_response.content_json['data']))
         else:

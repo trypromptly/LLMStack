@@ -21,13 +21,15 @@ logger = logging.getLogger(__name__)
 
 class FileOperationsInput(ApiProcessorSchema):
     content: str = Field(
-        default='', description='The contents of the file. Skip this field if you want to create an archive of the directory')
+        default='',
+        description='The contents of the file. Skip this field if you want to create an archive of the directory')
     filename: Optional[str] = Field(
         description='The name of the file to create. If not provided, a random name will be generated')
     directory: Optional[str] = Field(
         description='The directory to create the file in. If not provided, the file will be created in a temporary directory and path is returned')
     archive: bool = Field(
-        default=False, description='If true, an archive with the contents of the directory will be created')
+        default=False,
+        description='If true, an archive with the contents of the directory will be created')
 
 
 class FileOperationsOutput(ApiProcessorSchema):
@@ -35,7 +37,8 @@ class FileOperationsOutput(ApiProcessorSchema):
     filename: str = Field(description='The name of the file created')
     url: str = Field(description='Download URL of the file created')
     archive: bool = Field(
-        default=False, description='If true, then we just created an archive with contents from directory')
+        default=False,
+        description='If true, then we just created an archive with contents from directory')
     text: str = Field(
         default='', description='Textual description of the output')
 
@@ -44,7 +47,8 @@ class FileOperationsConfiguration(ApiProcessorSchema):
     pass
 
 
-class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOperationsOutput, FileOperationsConfiguration]):
+class FileOperationsProcessor(
+        ApiProcessorInterface[FileOperationsInput, FileOperationsOutput, FileOperationsConfiguration]):
     @staticmethod
     def name() -> str:
         return 'File Operations'
@@ -69,7 +73,8 @@ class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOpe
         """
         Recursively copies the django's storage directory to a temporary directory
         """
-        if not generatedfiles_storage.exists(directory) or not os.path.exists(temp_archive_dir):
+        if not generatedfiles_storage.exists(
+                directory) or not os.path.exists(temp_archive_dir):
             return
 
         files = generatedfiles_storage.listdir(directory)[1]
@@ -86,7 +91,8 @@ class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOpe
             # Make a directory
             os.mkdir(f'{temp_archive_dir}/{subdirectory}')
             self._copy_directory(
-                f'{directory}/{subdirectory}', f'{temp_archive_dir}/{subdirectory}')
+                f'{directory}/{subdirectory}',
+                f'{temp_archive_dir}/{subdirectory}')
 
     def _create_archive(self, file):
         """
@@ -107,8 +113,8 @@ class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOpe
             temp_archive_file.close()
 
             # Copy archive to storage
-            return generatedfiles_storage.save(
-                f'{file}.zip', ContentFile(open(f'{temp_archive_file.name}.zip', 'rb').read()))
+            return generatedfiles_storage.save(f'{file}.zip', ContentFile(
+                open(f'{temp_archive_file.name}.zip', 'rb').read()))
 
     def process(self) -> dict:
         output_stream = self._output_stream
@@ -118,7 +124,8 @@ class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOpe
         directory = self._input.directory or str(uuid.uuid4())
         archive = self._input.archive
 
-        # Create an archive if directory is provided but not content with archive flag set
+        # Create an archive if directory is provided but not content with
+        # archive flag set
         if not content and archive:
             saved_path = self._create_archive(directory)
             generated_url = generatedfiles_storage.url(saved_path)

@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 
 class StaticWebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
-        description='Connection to use', widget='connection', advanced_parameter=False)
+        description='Connection to use',
+        widget='connection',
+        advanced_parameter=False)
     stream_video: bool = Field(
         description='Stream video of the browser', default=False)
     timeout: int = Field(
@@ -39,7 +41,8 @@ class StaticWebBrowserInput(ApiProcessorSchema):
         ..., description='Instructions to execute')
 
 
-class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOutput, StaticWebBrowserConfiguration]):
+class StaticWebBrowser(
+        ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOutput, StaticWebBrowserConfiguration]):
     """
     Browse a given URL
     """
@@ -67,7 +70,8 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
 {{text}}
 ''')
 
-    def _request_iterator(self) -> Optional[runner_pb2.PlaywrightBrowserRequest]:
+    def _request_iterator(
+            self) -> Optional[runner_pb2.PlaywrightBrowserRequest]:
         playwright_request = runner_pb2.PlaywrightBrowserRequest()
         for instruction in self._input.instructions:
             if instruction.type == BrowserInstructionType.GOTO:
@@ -84,10 +88,14 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
                     type=runner_pb2.COPY, selector=instruction.selector)
             elif instruction.type == BrowserInstructionType.SCROLLX:
                 input = runner_pb2.BrowserInput(
-                    type=runner_pb2.SCROLL_X, selector=instruction.selector, data=instruction.data)
+                    type=runner_pb2.SCROLL_X,
+                    selector=instruction.selector,
+                    data=instruction.data)
             elif instruction.type == BrowserInstructionType.SCROLLY:
                 input = runner_pb2.BrowserInput(
-                    type=runner_pb2.SCROLL_Y, selector=instruction.selector, data=instruction.data)
+                    type=runner_pb2.SCROLL_Y,
+                    selector=instruction.selector,
+                    data=instruction.data)
             elif instruction.type == BrowserInstructionType.TERMINATE:
                 input = runner_pb2.BrowserInput(
                     type=runner_pb2.TERMINATE)
@@ -129,10 +137,11 @@ class StaticWebBrowser(ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOu
 
                 if response.video:
                     # Send base64 encoded video
-                    async_to_sync(output_stream.write)(WebBrowserOutput(
-                        text='',
-                        video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}"
-                    ))
+                    async_to_sync(
+                        output_stream.write)(
+                        WebBrowserOutput(
+                            text='',
+                            video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}"))
         except Exception as e:
             logger.exception(e)
 

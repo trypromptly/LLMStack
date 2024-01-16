@@ -16,13 +16,20 @@ logger = logging.getLogger(__name__)
 class AudioTranslationsInput(ApiProcessorSchema):
     file: str = Field(
         default='',
-        description='The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.', accepts={'audio/*': []},  maxSize=20000000, widget='file',
+        description='The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.',
+        accepts={
+            'audio/*': []},
+        maxSize=20000000,
+        widget='file',
     )
     file_data: Optional[str] = Field(
-        default='', description='The base64 encoded data of audio file to transcribe', pattern=r'data:(.*);name=(.*);base64,(.*)',
+        default='',
+        description='The base64 encoded data of audio file to transcribe',
+        pattern=r'data:(.*);name=(.*);base64,(.*)',
     )
     prompt: Optional[str] = Field(
-        default=None, description='An optional text to guide the model\'s style or continue a previous audio segment. The prompt should match the audio language.',
+        default=None,
+        description='An optional text to guide the model\'s style or continue a previous audio segment. The prompt should match the audio language.',
     )
 
 
@@ -48,7 +55,8 @@ class AudioTranslationsConfiguration(ApiProcessorSchema):
     )
 
 
-class AudioTranslations(ApiProcessorInterface[AudioTranslationsInput, AudioTranslationsOutput, AudioTranslationsConfiguration]):
+class AudioTranslations(
+        ApiProcessorInterface[AudioTranslationsInput, AudioTranslationsOutput, AudioTranslationsConfiguration]):
 
     """
     OpenAI Audio Translations API
@@ -72,18 +80,16 @@ class AudioTranslations(ApiProcessorInterface[AudioTranslationsInput, AudioTrans
     def process(self) -> dict:
         if self._input.file and len(self._input.file) > 0:
             mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
-                self._input.file,
-            )
+                self._input.file, )
         elif self._input.file_data and len(self._input.file_data) > 0:
             mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
-                self._input.file_data,
-            )
+                self._input.file_data, )
         else:
             raise Exception('No file or file_data found in input')
 
         file_data = base64.b64decode(base64_encoded_data)
         client = openai.OpenAI(api_key=self._env['openai_api_key'])
-        
+
         translation = client.audio.translations.create(
             file=(file_name, file_data),
             model=self._config.model,
@@ -91,7 +97,7 @@ class AudioTranslations(ApiProcessorInterface[AudioTranslationsInput, AudioTrans
             response_format=self._config.response_format,
             temperature=self._config.temperature
         )
-        
+
         async_to_sync(self._output_stream.write)(
             AudioTranslationsOutput(text=translation.text),
         )

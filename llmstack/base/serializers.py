@@ -50,7 +50,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         return obj.decrypt_value(obj.anthropic_api_key)
 
     def get_avatar(self, obj):
-        return obj.user.socialaccount_set.first().get_avatar_url() if obj.user.socialaccount_set.first() else None
+        return obj.user.socialaccount_set.first().get_avatar_url(
+        ) if obj.user.socialaccount_set.first() else None
 
     def get_name(self, obj):
         return f'{obj.user.first_name} {obj.user.last_name}'
@@ -58,6 +59,20 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
-            'name', 'user_email', 'token', 'openai_key',
-            'stabilityai_key', 'cohere_key', 'forefrontai_key', 'elevenlabs_key', 'google_service_account_json_key', 'azure_openai_api_key', 'localai_api_key', 'localai_base_url', 'anthropic_api_key', 'logo', 'organization', 'avatar',
+            'name',
+            'user_email',
+            'token',
+            'openai_key',
+            'stabilityai_key',
+            'cohere_key',
+            'forefrontai_key',
+            'elevenlabs_key',
+            'google_service_account_json_key',
+            'azure_openai_api_key',
+            'localai_api_key',
+            'localai_base_url',
+            'anthropic_api_key',
+            'logo',
+            'organization',
+            'avatar',
         ]

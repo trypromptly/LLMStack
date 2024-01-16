@@ -30,7 +30,7 @@ class HuggingfaceEndpointProcessorInputEnvironment(BaseInputEnvironment):
 
 
 class HuggingfaceEndpointProcessorInput(BaseInput):
-    env:  Optional[HuggingfaceEndpointProcessorInputEnvironment] = Field(
+    env: Optional[HuggingfaceEndpointProcessorInputEnvironment] = Field(
         ..., description='Environment variables',
     )
 
@@ -51,12 +51,16 @@ class HuggingfaceEndpointProcessorConfiguration(BaseConfiguration):
     endpoint_url: str = Field(description='The endpoint to call')
 
 
-class HuggingfaceEndpointProcessor(LLMBaseProcessor[HuggingfaceEndpointProcessorInput, HuggingfaceEndpointProcessorOutput, HuggingfaceEndpointProcessorConfiguration]):
+class HuggingfaceEndpointProcessor(LLMBaseProcessor[HuggingfaceEndpointProcessorInput,
+                                   HuggingfaceEndpointProcessorOutput, HuggingfaceEndpointProcessorConfiguration]):
     @staticmethod
     def name() -> str:
         return 'huggingface_endpoint_processor'
 
-    def _process(self, input: HuggingfaceEndpointProcessorInput, configuration: HuggingfaceEndpointProcessorConfiguration) -> HuggingfaceEndpointProcessorOutput:
+    def _process(
+            self,
+            input: HuggingfaceEndpointProcessorInput,
+            configuration: HuggingfaceEndpointProcessorConfiguration) -> HuggingfaceEndpointProcessorOutput:
         huggingfacehub_api_token = input.env.huggingfacehub_api_key
         model_params = input.dict().get('model_args', {})
         request_payload = {'inputs': input.inputs, 'parameters': model_params}
@@ -73,7 +77,10 @@ class HuggingfaceEndpointProcessor(LLMBaseProcessor[HuggingfaceEndpointProcessor
             ).dict(),
         ).process(input=http_input.dict())
 
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
-            return HuggingfaceEndpointProcessorOutput(result=http_response.text)
+        if isinstance(
+                http_response,
+                HttpAPIProcessorOutput) and http_response.is_ok:
+            return HuggingfaceEndpointProcessorOutput(
+                result=http_response.text)
         else:
             raise Exception('Failed to get response from Huggingface Endpoint')

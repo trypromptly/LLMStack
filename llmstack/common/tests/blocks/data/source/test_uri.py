@@ -18,10 +18,11 @@ class UriTextLoaderTestCase(unittest.TestCase):
             base64_encoded_data = base64.encodebytes(file_data.encode('utf-8'))
             mime_type = 'text/plain'
             result = Uri().process(
-                input=UriInput(uri=f'data:{mime_type};name=sample.txt;base64,{base64_encoded_data.decode("utf-8")}', env=DataSourceEnvironmentSchema(
-                    openai_key=self.openai_api_key)),
-                configuration=UriConfiguration()
-            )
+                input=UriInput(
+                    uri=f'data:{mime_type};name=sample.txt;base64,{base64_encoded_data.decode("utf-8")}',
+                    env=DataSourceEnvironmentSchema(
+                        openai_key=self.openai_api_key)),
+                configuration=UriConfiguration())
             self.assertEqual(len(result.documents), 1)
             self.assertEqual(len(result.documents[0].content), 2854)
             self.assertTrue(result.documents[0].content.startswith('Aeque'))
@@ -38,10 +39,11 @@ class UriTextLoaderTestCase(unittest.TestCase):
             base64_encoded_data = base64.encodebytes(file_data.encode('utf-8'))
             mime_type = 'text/csv'
             result = Uri().process(
-                input=UriInput(uri=f'data:{mime_type};name=sample.csv;base64,{base64_encoded_data.decode("utf-8")}', env=DataSourceEnvironmentSchema(
-                    openai_key=self.openai_api_key)),
-                configuration=UriConfiguration()
-            )
+                input=UriInput(
+                    uri=f'data:{mime_type};name=sample.csv;base64,{base64_encoded_data.decode("utf-8")}',
+                    env=DataSourceEnvironmentSchema(
+                        openai_key=self.openai_api_key)),
+                configuration=UriConfiguration())
             self.assertEqual(len(result.documents), 1)
             self.assertEqual(len(result.documents[0].content.split("\n")), 5)
             self.assertEqual(
@@ -55,10 +57,11 @@ class UriTextLoaderTestCase(unittest.TestCase):
             base64_encoded_data = base64.encodebytes(file_data.encode('utf-8'))
             mime_type = 'text/rtf'
             result = Uri().process(
-                input=UriInput(uri=f'data:{mime_type};name=sample.rtf;base64,{base64_encoded_data.decode("utf-8")}', env=DataSourceEnvironmentSchema(
-                    openai_key=self.openai_api_key)),
-                configuration=UriConfiguration()
-            )
+                input=UriInput(
+                    uri=f'data:{mime_type};name=sample.rtf;base64,{base64_encoded_data.decode("utf-8")}',
+                    env=DataSourceEnvironmentSchema(
+                        openai_key=self.openai_api_key)),
+                configuration=UriConfiguration())
             self.assertEqual(len(result.documents), 1)
             self.assertEqual(
                 result.documents[0].metadata['mime_type'], 'text/rtf')
@@ -71,10 +74,11 @@ class UriTextLoaderTestCase(unittest.TestCase):
             base64_encoded_data = base64.encodebytes(file_data.encode('utf-8'))
             mime_type = 'application/json'
             result = Uri().process(
-                input=UriInput(uri=f'data:{mime_type};name=sample.json;base64,{base64_encoded_data.decode("utf-8")}', env=DataSourceEnvironmentSchema(
-                    openai_key=self.openai_api_key)),
-                configuration=UriConfiguration()
-            )
+                input=UriInput(
+                    uri=f'data:{mime_type};name=sample.json;base64,{base64_encoded_data.decode("utf-8")}',
+                    env=DataSourceEnvironmentSchema(
+                        openai_key=self.openai_api_key)),
+                configuration=UriConfiguration())
             self.assertEqual(len(result.documents), 1)
             self.assertEqual(json.loads(
                 result.documents[0].content), {"key": "value"})
@@ -89,10 +93,11 @@ class UriTextLoaderTestCase(unittest.TestCase):
             base64_encoded_data = base64.encodebytes(file_data)
             mime_type = 'application/pdf'
             result = Uri().process(
-                input=UriInput(uri=f'data:{mime_type};name=sample.pdf;base64,{base64_encoded_data.decode("utf-8")}', env=DataSourceEnvironmentSchema(
-                    openai_key=self.openai_api_key)),
-                configuration=UriConfiguration()
-            )
+                input=UriInput(
+                    uri=f'data:{mime_type};name=sample.pdf;base64,{base64_encoded_data.decode("utf-8")}',
+                    env=DataSourceEnvironmentSchema(
+                        openai_key=self.openai_api_key)),
+                configuration=UriConfiguration())
             self.assertEqual(len(result.documents), 1)
             self.assertTrue(result.documents[0].content.startswith('Aeque'))
             self.assertTrue(result.documents[0].content.endswith('non erit;'))
@@ -111,7 +116,8 @@ class UriTextLoaderTestCase(unittest.TestCase):
         self.assertEqual(
             result.documents[0].metadata['mime_type'], 'application/pdf')
         self.assertEqual(
-            result.documents[0].metadata['file_name'], 'https://arxiv.org/pdf/1706.03762.pdf')
+            result.documents[0].metadata['file_name'],
+            'https://arxiv.org/pdf/1706.03762.pdf')
 
     def test_http_url_process_html(self):
         result = Uri().process(

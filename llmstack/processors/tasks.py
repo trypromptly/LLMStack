@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 def persist_history_task_internal(processors, bookkeeping_data_map):
-    if not 'input' in bookkeeping_data_map or (not 'output' in bookkeeping_data_map and not 'agent' in bookkeeping_data_map):
+    if 'input' not in bookkeeping_data_map or (
+            'output' not in bookkeeping_data_map and 'agent' not in bookkeeping_data_map):
         logger.error(
             f'Could not persist history {bookkeeping_data_map} for {processors} because input or output is missing',
         )
@@ -85,18 +86,25 @@ def persist_history_task_internal(processors, bookkeeping_data_map):
         response_time = twilio_data['timestamp'] - \
             bookkeeping_data_map['input']['timestamp']
 
-    run_entry = RunEntry(
-        request_uuid=input['request_uuid'], app_uuid=input['request_app_uuid'] or None,
-        endpoint_uuid=input['request_endpoint_uuid'] or None, owner=input['request_owner'] or None,
-        session_key=input['request_app_session_key'] or None, request_user_email=request_user_email,
-        request_ip=input['request_ip'], request_location=input[
-            'request_location'
-        ], request_user_agent=input['request_user_agent'][:255],
-        request_content_type=input['request_content_type'], request_body=request_body, response_status=output['response_status'],
-        response_body=response_body, response_content_type=response_content_type,
-        response_headers=output['response_headers'], response_time=response_time, processor_runs=processor_runs,
-        platform_data=platform_data,
-    )
+    run_entry = RunEntry(request_uuid=input['request_uuid'],
+                         app_uuid=input['request_app_uuid'] or None,
+                         endpoint_uuid=input['request_endpoint_uuid'] or None,
+                         owner=input['request_owner'] or None,
+                         session_key=input['request_app_session_key'] or None,
+                         request_user_email=request_user_email,
+                         request_ip=input['request_ip'],
+                         request_location=input['request_location'],
+                         request_user_agent=input['request_user_agent'][:255],
+                         request_content_type=input['request_content_type'],
+                         request_body=request_body,
+                         response_status=output['response_status'],
+                         response_body=response_body,
+                         response_content_type=response_content_type,
+                         response_headers=output['response_headers'],
+                         response_time=response_time,
+                         processor_runs=processor_runs,
+                         platform_data=platform_data,
+                         )
 
     # Persist history
     HistoryStore.persist(

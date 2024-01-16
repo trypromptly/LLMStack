@@ -159,7 +159,9 @@ class BaseErrorOutput(Schema):
     error: Optional[HttpAPIError] = Field(None, description='Error Object')
 
 
-class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutput, HttpAPIProcessorConfiguration]):
+class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
+                                     HttpAPIProcessorOutput,
+                                     HttpAPIProcessorConfiguration]):
     """
     # HttpAPIProcessor
 
@@ -259,7 +261,16 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
     def _process_exception(self, ex: Exception) -> BaseErrorOutput:
         return BaseErrorOutput(error=HttpAPIError(code=500, message=str(ex)))
 
-    def _update_auth_headers(self, headers: Dict[str, str], authorization: Union[APIKeyAuth, BearerTokenAuth, JWTBearerAuth, BasicAuth, OAuth2, NoAuth]) -> Dict[str, str]:
+    def _update_auth_headers(self,
+                             headers: Dict[str,
+                                           str],
+                             authorization: Union[APIKeyAuth,
+                                                  BearerTokenAuth,
+                                                  JWTBearerAuth,
+                                                  BasicAuth,
+                                                  OAuth2,
+                                                  NoAuth]) -> Dict[str,
+                                                                   str]:
         auth = None
         if (isinstance(authorization, APIKeyAuth)):
             headers['Authorization'] = f'Apikey {authorization.api_key}'
@@ -279,7 +290,8 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
 
         return headers, auth
 
-    def _update_request_params(self, input: HttpAPIProcessorInput, headers: Dict[str, str]) -> Any:
+    def _update_request_params(
+            self, input: HttpAPIProcessorInput, headers: Dict[str, str]) -> Any:
         data = None
         json_body = None
         files = None
@@ -313,7 +325,11 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
 
         return (data, json_body, files, headers)
 
-    def _process_iter(self, input: HttpAPIProcessorInput, configuration: HttpAPIProcessorConfiguration) -> Generator[HttpAPIProcessorOutput, None, None]:
+    def _process_iter(self,
+                      input: HttpAPIProcessorInput,
+                      configuration: HttpAPIProcessorConfiguration) -> Generator[HttpAPIProcessorOutput,
+                                                                                 None,
+                                                                                 None]:
         response = None
         headers = input.headers.copy()
 
@@ -357,7 +373,10 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
                     elapsed=response.elapsed.total_seconds(),
                 )
 
-    def _process(self, input: HttpAPIProcessorInput, configuration: HttpAPIProcessorConfiguration) -> HttpAPIProcessorOutput:
+    def _process(
+            self,
+            input: HttpAPIProcessorInput,
+            configuration: HttpAPIProcessorConfiguration) -> HttpAPIProcessorOutput:
         response = None
         headers = input.headers.copy()
 
@@ -388,7 +407,7 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput, HttpAPIProcessorOutp
 
         try:
             json_response = response.json()
-        except:
+        except BaseException:
             json_response = None
         return HttpAPIProcessorOutput(
             code=response.status_code,

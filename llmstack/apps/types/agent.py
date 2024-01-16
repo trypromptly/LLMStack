@@ -30,16 +30,19 @@ class RendererType(str, Enum):
 class AgentConfigSchema(BaseSchema):
     model: AgentModel = Field(
         title='Model',
-        default=AgentModel.GPT_3_5_LATEST, description='The model to use for the agent.',
+        default=AgentModel.GPT_3_5_LATEST,
+        description='The model to use for the agent.',
     )
     system_message: str = Field(
         title='System Message',
-        default='You are a helpful assistant that uses provided tools to perform actions.', description='The system message to use with the Agent.',
+        default='You are a helpful assistant that uses provided tools to perform actions.',
+        description='The system message to use with the Agent.',
         widget='textarea',
     )
     max_steps: int = Field(
         title='Max Steps',
-        default=10, description='The maximum number of steps the agent can take.',
+        default=10,
+        description='The maximum number of steps the agent can take.',
         advanced_parameter=True,
     )
     split_tasks: bool = Field(
@@ -49,48 +52,69 @@ class AgentConfigSchema(BaseSchema):
     )
     renderer_type: RendererType = Field(
         title='Renderer Type',
-        default=RendererType.CHAT, description='Should the agent be rendered as a chat window or a web form.',
+        default=RendererType.CHAT,
+        description='Should the agent be rendered as a chat window or a web form.',
         advanced_parameter=True,
     )
     input_template: str = Field(
         title='Page Content',
-        default='', description='Content to show at the top of the window', widget='richtext',
+        default='',
+        description='Content to show at the top of the window',
+        widget='richtext',
         advanced_parameter=True,
     )
     welcome_message: str = Field(
         title='Welcome Message',
-        default='', description='Welcome message from assistant to show when the chat session starts',
+        default='',
+        description='Welcome message from assistant to show when the chat session starts',
         advanced_parameter=True,
     )
     assistant_image: DataUrl = Field(
         title='Assistant Image',
-        default='', description='Icon to show for the messages from assistant', accepts={'image/*': []}, widget='file',
+        default='',
+        description='Icon to show for the messages from assistant',
+        accepts={
+            'image/*': []},
+        widget='file',
         advanced_parameter=True,
     )
     window_color: str = Field(
         title='Primary Color of Chat Window',
-        default='#477195', description='Color of the chat window', widget='color',
+        default='#477195',
+        description='Color of the chat window',
+        widget='color',
         advanced_parameter=True,
     )
     chat_bubble_text: Optional[str] = Field(
         title='App Bubble Text',
-        description='Text to show in the app bubble when embedded in another page. If not provided, it shows chat bubble icon.', advanced_parameter=True,
+        description='Text to show in the app bubble when embedded in another page. If not provided, it shows chat bubble icon.',
+        advanced_parameter=True,
     )
     chat_bubble_style: Optional[str] = Field(
         title='App Bubble Style',
-        description='CSS style object to apply to the app bubble when embedded in another page', advanced_parameter=True, widget='textarea',
+        description='CSS style object to apply to the app bubble when embedded in another page',
+        advanced_parameter=True,
+        widget='textarea',
     )
     suggested_messages: List[str] = Field(
-        title='Suggested messages', default=[], description='List of upto 3 suggested messages to show to the user', advanced_parameter=True,
+        title='Suggested messages',
+        default=[],
+        description='List of upto 3 suggested messages to show to the user',
+        advanced_parameter=True,
     )
     chat_history_limit: Optional[int] = Field(
         title='Chat History Limit',
-        default=0, description='Number of messages to keep in chat history', advanced_parameter=True,
-        le=1000, ge=0,
+        default=0,
+        description='Number of messages to keep in chat history',
+        advanced_parameter=True,
+        le=1000,
+        ge=0,
     )
     seed: Optional[int] = Field(
         title='Random Seed',
-        default=None, description='Random seed to use for the agent', advanced_parameter=True,
+        default=None,
+        description='Random seed to use for the agent',
+        advanced_parameter=True,
     )
 
 

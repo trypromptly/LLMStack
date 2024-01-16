@@ -73,11 +73,14 @@ class ImageToImageInput(ApiProcessorSchema):
 
 class ImageToImageOutput(ApiProcessorSchema):
     answer: List[str] = Field(
-        default=[], description='The generated images.', widget=IMAGE_WIDGET_NAME,
+        default=[],
+        description='The generated images.',
+        widget=IMAGE_WIDGET_NAME,
     )
 
 
-class ImageToImage(ApiProcessorInterface[ImageToImageInput, ImageToImageOutput, ImageToImageConfiguration]):
+class ImageToImage(
+        ApiProcessorInterface[ImageToImageInput, ImageToImageOutput, ImageToImageConfiguration]):
     """
     StabilityAI Images Generations API
     """
@@ -100,8 +103,7 @@ class ImageToImage(ApiProcessorInterface[ImageToImageInput, ImageToImageOutput, 
     def process(self, input: dict) -> dict:
         _env = self._env
         stability_api_key = get_key_or_raise(
-            _env, 'stabilityai_api_key', 'No stabilityai_api_key found in _env',
-        )
+            _env, 'stabilityai_api_key', 'No stabilityai_api_key found in _env', )
 
         init_image = self._input.init_image
         prompt = self._input.prompt

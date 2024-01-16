@@ -31,13 +31,15 @@ class FunctionCallResponse(BaseModel):
 
 class ChatMessage(BaseModel):
     role: Optional[Role] = Field(
-        default=Role.USER, description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
+        default=Role.USER,
+        description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
     )
     content: Optional[str] = Field(
         default='', description='The message text.', widget='textarea',
     )
     name: Optional[str] = Field(
-        default='', widget='hidden',
+        default='',
+        widget='hidden',
         description='The name of the author of this message or the function name.',
     )
     function_call: Optional[FunctionCallResponse] = Field(
@@ -48,23 +50,30 @@ class ChatMessage(BaseModel):
 
 class FunctionCall(ApiProcessorSchema):
     name: str = Field(
-        default='', description='The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.',
+        default='',
+        description='The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.',
     )
     description: Optional[str] = Field(
         default=None, description='The description of what the function does.',
     )
     parameters: Optional[str] = Field(
-        title='Parameters', widget='textarea',
-        default=None, description='The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format.',
+        title='Parameters',
+        widget='textarea',
+        default=None,
+        description='The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format.',
     )
 
 
 class ChatCompletionInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
-        default='', description='A message from the system, which will be prepended to the chat history.', widget='textarea',
+        default='',
+        description='A message from the system, which will be prepended to the chat history.',
+        widget='textarea',
     )
     messages: List[ChatMessage] = Field(
-        default=[ChatMessage()], description='A list of messages, each with a role and message text.',
+        default=[
+            ChatMessage()],
+        description='A list of messages, each with a role and message text.',
     )
     functions: Optional[List[FunctionCall]] = Field(
         default=None,
@@ -83,8 +92,12 @@ class ChatCompletionsOutput(ApiProcessorSchema):
 
 class ChatCompletionsConfiguration(ApiProcessorSchema):
     base_url: Optional[str] = Field(description="Base URL")
-    model: str = Field(description="Model name", widget='customselect', advanced_parameter=False,
-                       options=['ggml-gpt4all-j'], default='ggml-gpt4all-j')
+    model: str = Field(
+        description="Model name",
+        widget='customselect',
+        advanced_parameter=False,
+        options=['ggml-gpt4all-j'],
+        default='ggml-gpt4all-j')
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(
         1024,
         description='The maximum number of tokens allowed for the generated answer. By default, the number of tokens the model can return will be (4096 - prompt tokens).\n',
@@ -104,7 +117,8 @@ class ChatCompletionsConfiguration(ApiProcessorSchema):
     )
 
 
-class ChatCompletions(ApiProcessorInterface[ChatCompletionInput, ChatCompletionsOutput, ChatCompletionsConfiguration]):
+class ChatCompletions(
+        ApiProcessorInterface[ChatCompletionInput, ChatCompletionsOutput, ChatCompletionsConfiguration]):
     @staticmethod
     def name() -> str:
         return 'Chat Completions'
@@ -134,8 +148,8 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionInput, ChatCompletions
 
         system_message = self._input.system_message
 
-        chat_messages = [
-            {"role": "system", "content": system_message}] if system_message else []
+        chat_messages = [{"role": "system",
+                          "content": system_message}] if system_message else []
         for msg_entry in self._input.messages:
             chat_messages.append(json.loads(msg_entry.json()))
 
@@ -153,7 +167,8 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionInput, ChatCompletions
                 )
 
         localai_chat_completions_api_processor_input = LocalAIChatCompletionsAPIProcessorInput(
-            env=OpenAIAPIInputEnvironment(openai_api_key=api_key),
+            env=OpenAIAPIInputEnvironment(
+                openai_api_key=api_key),
             system_message=system_message,
             chat_history=[],
             messages=self._input.messages,
@@ -183,9 +198,9 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionInput, ChatCompletions
                     max_tokens=self._config.max_tokens,
                     temperature=self._config.temperature,
                     stream=False,
-                    function_call=self._config.function_call
-                ).dict(),
-            ).process(localai_chat_completions_api_processor_input.dict())
+                    function_call=self._config.function_call).dict(),
+            ).process(
+                localai_chat_completions_api_processor_input.dict())
 
             async_to_sync(self._output_stream.write)(
                 ChatCompletionsOutput(choices=result.choices))

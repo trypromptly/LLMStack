@@ -41,7 +41,8 @@ class Provider(BaseModel):
     """
     name: str = Field(None, description='Name of the provider')
     slug: str = Field(
-        None, description='Unique slug for the provider. Must be @github username for individual contributions')
+        None,
+        description='Unique slug for the provider. Must be @github username for individual contributions')
     description: str = Field(None, description='Description of the provider')
 
 
@@ -50,7 +51,8 @@ class Processor(BaseModel):
     Processor schema
     """
     id: str = Field(
-        None, description='Unique identifier for the processor in the app run graph')
+        None,
+        description='Unique identifier for the processor in the app run graph')
     name: str = Field(None, description='Name of the processor')
     description: str = Field(None, description='Description of the processor')
     provider_slug: str = Field(

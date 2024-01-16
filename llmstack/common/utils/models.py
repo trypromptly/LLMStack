@@ -3,6 +3,7 @@ from typing import Optional
 import orjson as json
 from pydantic import BaseModel
 
+
 class Config(BaseModel):
     """
     Base class for config type models stored in the database. Supports optional encryption.

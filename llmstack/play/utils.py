@@ -90,7 +90,9 @@ def extract_jinja2_variables(input_data):
     return variables
 
 
-# A utility function to recursively convert template vars of type _inputs[0].xyz to _inputs0.xyz for backward compatibility in a dictionary with nested string values
+# A utility function to recursively convert template vars of type
+# _inputs[0].xyz to _inputs0.xyz for backward compatibility in a
+# dictionary with nested string values
 def convert_template_vars_from_legacy_format(d):
     if isinstance(d, dict):
         for key, value in d.items():

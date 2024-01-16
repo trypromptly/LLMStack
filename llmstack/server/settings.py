@@ -9,7 +9,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv(
-    'SECRET_KEY', 'django-insecure-o25+*nb2h8_f6t7_^r7r1e#_p@0b)0(i@-wr(h1@!enw^co2&m',
+    'SECRET_KEY',
+    'django-insecure-o25+*nb2h8_f6t7_^r7r1e#_p@0b)0(i@-wr(h1@!enw^co2&m',
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -327,12 +328,12 @@ PLAYWRIGHT_URL = os.getenv('PLAYWRIGHT_URL', 'ws://playwright:30000/ws')
 
 RQ_QUEUES = {
     'default': {
-        'HOST': os.getenv('REDIS_HOST', os.getenv('RUNNER_RQ_REDIS_HOST', 'redis')),
-        'PORT': os.getenv('REDIS_PORT', os.getenv('RUNNER_RQ_REDIS_PORT', 6379)),
-        'DB': os.getenv('REDIS_DB', 0),
-        'DEFAULT_TIMEOUT': 1500,
-    },
-}
+        'HOST': os.getenv(
+            'REDIS_HOST', os.getenv(
+                'RUNNER_RQ_REDIS_HOST', 'redis')), 'PORT': os.getenv(
+                    'REDIS_PORT', os.getenv(
+                        'RUNNER_RQ_REDIS_PORT', 6379)), 'DB': os.getenv(
+                            'REDIS_DB', 0), 'DEFAULT_TIMEOUT': 1500, }, }
 
 USE_REMOTE_JOB_QUEUE = os.getenv('USE_REMOTE_JOB_QUEUE', 'True') == 'True'
 # Interval between two subtask runs in seconds
@@ -352,95 +353,83 @@ HISTORY_STORE_CLASS = 'llmstack.processors.history.DefaultHistoryStore'
 FLAG_SOURCES = ['llmstack.base.flags.FlagSource']
 
 # Make sure name and slug are unique
-PROVIDERS = [
-    {
-        'name': 'Amazon',
-        'datasource_packages': ['llmstack.datasources.handlers.amazon'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-        'slug': 'amazon',
-    },
-    {
-        'name': 'Anthropic',
-        'processor_packages': ['llmstack.processors.providers.anthropic'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-        'slug': 'anthropic',
-    },
-    {
-        'name': 'Azure',
-        'processor_packages': ['llmstack.processors.providers.azure'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-        'slug': 'azure',
-    },
-    {
-        'name': 'Cohere',
-        'processor_packages': ['llmstack.processors.providers.cohere'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-        'slug': 'cohere',
-    },
-    {
-        'name': 'ElevenLabs',
-        'processor_packages': ['llmstack.processors.providers.elevenlabs'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-        'slug': 'elevenlabs',
-    },
-    {
-        'name': 'Google',
-        'processor_packages': ['llmstack.processors.providers.google'],
-        'slug': 'google',
-        'datasource_packages': ['llmstack.datasources.handlers.google'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-    },
-    {
-        'name': 'LocalAI',
-        'processor_packages': ['llmstack.processors.providers.localai'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-        'slug': 'localai',
-    },
-    {
-        'name': 'Open AI',
-        'processor_packages': ['llmstack.processors.providers.openai'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-        'slug': 'openai',
-    },
-    {
-        'name': 'Promptly',
-        'processor_packages': ['llmstack.processors.providers.promptly'],
-        'datasource_packages': ['llmstack.datasources.handlers.databases', 'llmstack.datasources.handlers.files', 'llmstack.datasources.handlers.text', 'llmstack.datasources.handlers.website'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-        'slug': 'promptly',
-    },
-    {
-        'name': 'Stability AI',
-        'processor_packages': ['llmstack.processors.providers.stabilityai'],
-        'processor_exclude': [],
-        'datasource_processors_exclude': [],
-        'slug': 'stabilityai',
-    },
-    {
-        'name': 'LinkedIn',
-        'processor_packages': ['llmstack.processors.providers.linkedin'],
-        'slug': 'linkedin',
-    },
-    {
-        'name': 'Apollo',
-        'processor_packages': ['llmstack.processors.providers.apollo'],
-        'slug': 'apollo',
-    },
-    {
-        'name': 'HeyGen',
-        'processor_packages': ['llmstack.processors.providers.heygen'],
-        'slug': 'heygen',
-    }
-]
+PROVIDERS = [{'name': 'Amazon',
+              'datasource_packages': ['llmstack.datasources.handlers.amazon'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              'slug': 'amazon',
+              },
+             {'name': 'Anthropic',
+              'processor_packages': ['llmstack.processors.providers.anthropic'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              'slug': 'anthropic',
+              },
+             {'name': 'Azure',
+              'processor_packages': ['llmstack.processors.providers.azure'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              'slug': 'azure',
+              },
+             {'name': 'Cohere',
+              'processor_packages': ['llmstack.processors.providers.cohere'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              'slug': 'cohere',
+              },
+             {'name': 'ElevenLabs',
+              'processor_packages': ['llmstack.processors.providers.elevenlabs'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              'slug': 'elevenlabs',
+              },
+             {'name': 'Google',
+              'processor_packages': ['llmstack.processors.providers.google'],
+              'slug': 'google',
+              'datasource_packages': ['llmstack.datasources.handlers.google'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              },
+             {'name': 'LocalAI',
+              'processor_packages': ['llmstack.processors.providers.localai'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              'slug': 'localai',
+              },
+             {'name': 'Open AI',
+              'processor_packages': ['llmstack.processors.providers.openai'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              'slug': 'openai',
+              },
+             {'name': 'Promptly',
+              'processor_packages': ['llmstack.processors.providers.promptly'],
+              'datasource_packages': ['llmstack.datasources.handlers.databases',
+                                      'llmstack.datasources.handlers.files',
+                                      'llmstack.datasources.handlers.text',
+                                      'llmstack.datasources.handlers.website'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              'slug': 'promptly',
+              },
+             {'name': 'Stability AI',
+              'processor_packages': ['llmstack.processors.providers.stabilityai'],
+              'processor_exclude': [],
+              'datasource_processors_exclude': [],
+              'slug': 'stabilityai',
+              },
+             {'name': 'LinkedIn',
+              'processor_packages': ['llmstack.processors.providers.linkedin'],
+              'slug': 'linkedin',
+              },
+             {'name': 'Apollo',
+              'processor_packages': ['llmstack.processors.providers.apollo'],
+              'slug': 'apollo',
+              },
+             {'name': 'HeyGen',
+              'processor_packages': ['llmstack.processors.providers.heygen'],
+              'slug': 'heygen',
+              }]
 
 # Include networking providers if they are enabled
 try:
@@ -482,9 +471,8 @@ DATASOURCE_PROCESSOR_EXCLUDE_LIST = sum(list(
 ), [])
 
 
-APP_TEMPLATES_DIR = os.getenv('APP_TEMPATES_DIR').split(',') if os.getenv('APP_TEMPATES_DIR') else [
-    os.path.join(BASE_DIR, 'contrib', 'apps', 'templates')
-]
+APP_TEMPLATES_DIR = os.getenv('APP_TEMPATES_DIR').split(',') if os.getenv(
+    'APP_TEMPATES_DIR') else [os.path.join(BASE_DIR, 'contrib', 'apps', 'templates')]
 
 SOCIALACCOUNT_PROVIDERS = {
     'connection_google': {

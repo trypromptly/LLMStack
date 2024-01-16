@@ -53,7 +53,9 @@ class TextDataSource(DataSourceProcessor[TextSchema]):
         )
         return [data_source_entry]
 
-    def get_data_documents(self, data: DataSourceEntryItem) -> DataSourceEntryItem:
+    def get_data_documents(
+            self,
+            data: DataSourceEntryItem) -> DataSourceEntryItem:
         entry = TextSchema(**data.data)
 
         data_source_entry = DataSourceEntryItem(
@@ -61,9 +63,13 @@ class TextDataSource(DataSourceProcessor[TextSchema]):
         )
 
         docs = [
-            Document(page_content_key=self.get_content_key(), page_content=t, metadata={'source': entry.name}) for t in SpacyTextSplitter(
+            Document(
+                page_content_key=self.get_content_key(),
+                page_content=t,
+                metadata={
+                    'source': entry.name}) for t in SpacyTextSplitter(
                 chunk_size=1500,
-            ).split_text(entry.content)
-        ]
+            ).split_text(
+                entry.content)]
 
         return docs

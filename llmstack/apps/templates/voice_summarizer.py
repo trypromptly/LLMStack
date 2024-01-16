@@ -7,10 +7,15 @@ from .app_template_interface import TemplatePage
 
 class VoiceSummarizerBasicSchema(BaseSchema):
     voice_id: str = Field(
-        title='Voice ID', description='Voice ID to be used, you can use https://api.elevenlabs.io/v1/voices to list all the available voices.', path='processors[2].config.voice_id',
+        title='Voice ID',
+        description='Voice ID to be used, you can use https://api.elevenlabs.io/v1/voices to list all the available voices.',
+        path='processors[2].config.voice_id',
     )
     summarize_instructions: str = Field(
-        title='Summary Instructions', widget='textarea', description='Instructions to the summarizer model', path='processors[1].input.instructions',
+        title='Summary Instructions',
+        widget='textarea',
+        description='Instructions to the summarizer model',
+        path='processors[1].input.instructions',
     )
 
 

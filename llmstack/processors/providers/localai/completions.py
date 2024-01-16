@@ -22,8 +22,12 @@ class CompletionsOutput(ApiProcessorSchema):
 
 class CompletionsConfiguration(ApiProcessorSchema):
     base_url: Optional[str] = Field(description="Base URL")
-    model: str = Field(description="Model name", widget='customselect',
-                       advanced_parameter=False, options=['ggml-gpt4all-j'], default='ggml-gpt4all-j')
+    model: str = Field(
+        description="Model name",
+        widget='customselect',
+        advanced_parameter=False,
+        options=['ggml-gpt4all-j'],
+        default='ggml-gpt4all-j')
 
     max_tokens: Optional[conint(ge=1, le=4096)] = Field(
         1024,
@@ -47,7 +51,8 @@ class CompletionsConfiguration(ApiProcessorSchema):
         default=False, description="Stream output", example=False)
 
 
-class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
+class CompletionsProcessor(
+        ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
     @staticmethod
     def name() -> str:
         return 'Completions'
@@ -103,12 +108,11 @@ class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOu
                     temperature=self._config.temperature,
                     top_p=self._config.top_p,
                     timeout=self._config.timeout,
-                    stream=False
-                ).dict()
-            ).process(LocalAICompletionsAPIProcessorInput(
-                prompt=self._input.prompt,
-                env=OpenAIAPIInputEnvironment(openai_api_key=api_key)
-            ).dict())
+                    stream=False).dict()).process(
+                LocalAICompletionsAPIProcessorInput(
+                    prompt=self._input.prompt,
+                    env=OpenAIAPIInputEnvironment(
+                        openai_api_key=api_key)).dict())
             choices = result.choices
             async_to_sync(self._output_stream.write)(
                 CompletionsOutput(choices=choices))

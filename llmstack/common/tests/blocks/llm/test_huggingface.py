@@ -20,7 +20,13 @@ class HuggingfaceEndpointProcessorTestCase(unittest.TestCase):
             configuration={
                 'endpoint_url': 'https://api-inference.huggingface.co/models/bert-base-uncased',
             },
-        ).process(input={'env': {'huggingfacehub_api_key': self.api_key}, 'inputs': json.dumps({'inputs': 'The answer to the universe is [MASK].'})})
+        ).process(
+            input={
+                'env': {
+                    'huggingfacehub_api_key': self.api_key},
+                'inputs': json.dumps(
+                    {
+                        'inputs': 'The answer to the universe is [MASK].'})})
         self.assertTrue(len(json.loads(result.result)) > 0)
 
 

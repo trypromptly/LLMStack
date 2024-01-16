@@ -70,23 +70,35 @@ class OpenAIAPIError(BaseError):
     message: str
 
 
-class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseConfigurationType]):
+class OpenAIAPIProcessor(
+        LLMBaseProcessor[BaseInputType, BaseOutputType, BaseConfigurationType]):
     BASE_URL = 'https://api.openai.com/v1'
 
     @property
     def api_url(self) -> str:
         return self._get_api_url()
 
-    def _get_api_request_payload(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: OpenAIAPIProcessorInput,
+            configuration: OpenAIAPIProcessorConfiguration) -> dict:
         raise NotImplementedError()
 
     def _get_api_url(self) -> dict:
         raise NotImplementedError()
 
-    def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> BaseOutputType:
+    def _transform_api_response(
+            self,
+            input: OpenAIAPIProcessorInput,
+            configuration: OpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> BaseOutputType:
         raise NotImplementedError()
 
-    def _process_iter(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration) -> Generator[HttpAPIProcessorOutput, None, None]:
+    def _process_iter(self,
+                      input: OpenAIAPIProcessorInput,
+                      configuration: OpenAIAPIProcessorConfiguration) -> Generator[HttpAPIProcessorOutput,
+                                                                                   None,
+                                                                                   None]:
         """
             Invokes the API processor on the input and returns output iterator
         """
@@ -128,7 +140,10 @@ class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseCon
                 ),
             )
 
-    def _process(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration) -> HttpAPIProcessorOutput:
+    def _process(
+            self,
+            input: OpenAIAPIProcessorInput,
+            configuration: OpenAIAPIProcessorConfiguration) -> HttpAPIProcessorOutput:
         """
             Invokes the API processor on the input and returns the output
         """
@@ -150,7 +165,9 @@ class OpenAIAPIProcessor(LLMBaseProcessor[BaseInputType, BaseOutputType, BaseCon
         )
 
         # If the response is ok, return the choices
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
+        if isinstance(
+                http_response,
+                HttpAPIProcessorOutput) and http_response.is_ok:
             response = self._transform_api_response(
                 input, configuration, http_response,
             )
@@ -171,7 +188,8 @@ class Role(str, Enum):
 
 class FunctionCall(Schema):
     name: str = Field(
-        default='', description='The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.',
+        default='',
+        description='The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.',
     )
     description: Optional[str] = Field(
         default=None, description='The description of what the function does.',
@@ -205,8 +223,8 @@ class OpenAIChatCompletionsAPIProcessorInput(OpenAIAPIProcessorInput):
         description='The intial system message to be set.',
     )
     chat_history: List[ChatMessage] = Field(
-        default=[
-        ], description='The chat history, in the [chat format](/docs/guides/chat/introduction).',
+        default=[],
+        description='The chat history, in the [chat format](/docs/guides/chat/introduction).',
     )
     messages: List[ChatMessage] = Field(
         default=[], description='The messages to be sent to the API.',
@@ -236,7 +254,8 @@ class ChatCompletionsModel(str, Enum):
         return self.value
 
 
-class OpenAIChatCompletionsAPIProcessorConfiguration(OpenAIAPIProcessorConfiguration):
+class OpenAIChatCompletionsAPIProcessorConfiguration(
+        OpenAIAPIProcessorConfiguration):
     model: ChatCompletionsModel = Field(
         default=ChatCompletionsModel.GPT_3_5,
         description='ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.',
@@ -280,11 +299,15 @@ class OpenAIChatCompletionsAPIProcessorConfiguration(OpenAIAPIProcessorConfigura
     stream: Optional[bool] = False
     function_call: Optional[Union[str, Dict]] = Field(
         default=None,
-        description="Controls how the model responds to function calls. \"none\" means the model does not call a function, and responds to the end-user. \"auto\" means the model can pick between an end-user or calling a function. Specifying a particular function via {\"name\":\ \"my_function\"} forces the model to call that function. \"none\" is the default when no functions are present. \"auto\" is the default if functions are present.",
+        description="Controls how the model responds to function calls. \"none\" means the model does not call a function, and responds to the end-user. \"auto\" means the model can pick between an end-user or calling a function. Specifying a particular function via {\"name\":\\ \"my_function\"} forces the model to call that function. \"none\" is the default when no functions are present. \"auto\" is the default if functions are present.",
     )
 
 
-class OpenAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[OpenAIChatCompletionsAPIProcessorInput, OpenAIChatCompletionsAPIProcessorOutput, OpenAIChatCompletionsAPIProcessorConfiguration]):
+class OpenAIChatCompletionsAPIProcessor(
+    OpenAIAPIProcessor[
+        OpenAIChatCompletionsAPIProcessorInput,
+        OpenAIChatCompletionsAPIProcessorOutput,
+        OpenAIChatCompletionsAPIProcessorConfiguration]):
     def _get_api_url(self) -> str:
         return '{}/chat/completions'.format(OpenAIAPIProcessor.BASE_URL)
 
@@ -295,14 +318,19 @@ class OpenAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[OpenAIChatCompletions
     def name() -> str:
         return 'openai_chat_completions_api_processor'
 
-    def _get_api_request_payload(self, input: OpenAIChatCompletionsAPIProcessorInput, configuration: OpenAIChatCompletionsAPIProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: OpenAIChatCompletionsAPIProcessorInput,
+            configuration: OpenAIChatCompletionsAPIProcessorConfiguration) -> dict:
         input_json = json.loads(
             input.copy(
                 exclude={'env'},
             ).json(),
         )
         configuration_json = json.loads(configuration.json())
-        if 'functions' in input_json and (input_json['functions'] is None or len(input_json['functions']) == 0):
+        if 'functions' in input_json and (
+            input_json['functions'] is None or len(
+                input_json['functions']) == 0):
             del input_json['functions']
             if 'function_call' in configuration_json:
                 del configuration_json['function_call']
@@ -317,7 +345,8 @@ class OpenAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[OpenAIChatCompletions
             if 'function_call' in message and message['function_call'] is None:
                 del message['function_call']
 
-            if 'function_call' in message and 'name' in message['function_call'] and not message['function_call']['name']:
+            if 'function_call' in message and 'name' in message[
+                    'function_call'] and not message['function_call']['name']:
                 del message['function_call']
 
         messages = []
@@ -341,7 +370,11 @@ class OpenAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[OpenAIChatCompletions
 
         return request_payload
 
-    def _transform_streaming_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput):
+    def _transform_streaming_api_response(
+            self,
+            input: OpenAIAPIProcessorInput,
+            configuration: OpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput):
         text = response.content.decode('utf-8')
         json_response = json.loads(text.split('data: ')[1])
         choices = list(
@@ -353,7 +386,11 @@ class OpenAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[OpenAIChatCompletions
                 raw_response=json_response),
         )
 
-    def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> OpenAIChatCompletionsAPIProcessorOutput:
+    def _transform_api_response(
+            self,
+            input: OpenAIAPIProcessorInput,
+            configuration: OpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> OpenAIChatCompletionsAPIProcessorOutput:
         choices = list(
             map(lambda x: ChatMessage(**x['message']),
                 json.loads(response.text)['choices']),
@@ -436,14 +473,18 @@ class OpenAIImageEditsProcessorConfiguration(OpenAIAPIProcessorConfiguration):
     )
 
 
-class OpenAIImageEditsProcessor(OpenAIAPIProcessor[OpenAIImageEditsProcessorInput, OpenAIImageEditsProcessorOutput, OpenAIImageEditsProcessorConfiguration]):
+class OpenAIImageEditsProcessor(OpenAIAPIProcessor[OpenAIImageEditsProcessorInput,
+                                OpenAIImageEditsProcessorOutput, OpenAIImageEditsProcessorConfiguration]):
     def _get_api_url(self) -> str:
         return '{}/images/edits'.format(OpenAIAPIProcessor.BASE_URL)
 
     def api_url(self) -> str:
         return self._get_api_url()
 
-    def _get_api_request_payload(self, input: OpenAIImageEditsProcessorInput, configuration: OpenAIImageEditsProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: OpenAIImageEditsProcessorInput,
+            configuration: OpenAIImageEditsProcessorConfiguration) -> dict:
         configuration_json = json.loads(configuration.json())
         return {
             'image': input.image,
@@ -453,7 +494,11 @@ class OpenAIImageEditsProcessor(OpenAIAPIProcessor[OpenAIImageEditsProcessorInpu
             **configuration_json,
         }
 
-    def _transform_api_response(self, input: OpenAIImageEditsProcessorInput, configuration: OpenAIImageEditsProcessorConfiguration, response: HttpAPIProcessorOutput) -> BaseOutputType:
+    def _transform_api_response(
+            self,
+            input: OpenAIImageEditsProcessorInput,
+            configuration: OpenAIImageEditsProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> BaseOutputType:
         def image_uri(data):
             if 'url' in data:
                 return data['url']
@@ -470,7 +515,10 @@ class OpenAIImageEditsProcessor(OpenAIAPIProcessor[OpenAIImageEditsProcessorInpu
                 raw_response=json.loads(response.text)),
         )
 
-    def _process(self, input: OpenAIImageEditsProcessorInput, configuration: OpenAIImageEditsProcessorConfiguration) -> BaseOutputType:
+    def _process(
+            self,
+            input: OpenAIImageEditsProcessorInput,
+            configuration: OpenAIImageEditsProcessorConfiguration) -> BaseOutputType:
         """
             Invokes the API processor on the input and returns the output
         """
@@ -478,7 +526,10 @@ class OpenAIImageEditsProcessor(OpenAIAPIProcessor[OpenAIImageEditsProcessorInpu
         files = []
 
         files.append(
-            ('image', (input.image.name, input.image.content, input.image.mime_type)),
+            ('image',
+             (input.image.name,
+              input.image.content,
+              input.image.mime_type)),
         )
 
         http_response = http_api_processor.process(
@@ -486,15 +537,21 @@ class OpenAIImageEditsProcessor(OpenAIAPIProcessor[OpenAIImageEditsProcessorInpu
                 url=self._get_api_url(),
                 method='POST',
                 body=RawRequestBody(
-                    data=self._get_api_request_payload(input, configuration), files=files,
+                    data=self._get_api_request_payload(
+                        input,
+                        configuration),
+                    files=files,
                 ),
                 headers={},
-                authorization=BearerTokenAuth(token=input.env.openai_api_key),
+                authorization=BearerTokenAuth(
+                    token=input.env.openai_api_key),
             ).dict(),
         )
 
         # If the response is ok, return the choices
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
+        if isinstance(
+                http_response,
+                HttpAPIProcessorOutput) and http_response.is_ok:
             response = self._transform_api_response(
                 input, configuration, http_response,
             )
@@ -516,7 +573,8 @@ class OpenAIImageVariationsProcessorOutput(OpenAIAPIProcessorOutput):
     )
 
 
-class OpenAIImageVariationsProcessorConfiguration(OpenAIAPIProcessorConfiguration):
+class OpenAIImageVariationsProcessorConfiguration(
+        OpenAIAPIProcessorConfiguration):
     n: Optional[conint(ge=1, le=10)] = Field(
         1,
         description='The number of images to generate. Must be between 1 and 10.',
@@ -534,14 +592,21 @@ class OpenAIImageVariationsProcessorConfiguration(OpenAIAPIProcessorConfiguratio
     )
 
 
-class OpenAIImageVariationsProcessor(OpenAIAPIProcessor[OpenAIImageVariationsProcessorInput, OpenAIImageVariationsProcessorOutput, OpenAIImageVariationsProcessorConfiguration]):
+class OpenAIImageVariationsProcessor(
+    OpenAIAPIProcessor[
+        OpenAIImageVariationsProcessorInput,
+        OpenAIImageVariationsProcessorOutput,
+        OpenAIImageVariationsProcessorConfiguration]):
     def _get_api_url(self) -> str:
         return '{}/images/variations'.format(OpenAIAPIProcessor.BASE_URL)
 
     def api_url(self) -> str:
         return self._get_api_url()
 
-    def _get_api_request_payload(self, input: OpenAIImageVariationsProcessorInput, configuration: OpenAIImageVariationsProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: OpenAIImageVariationsProcessorInput,
+            configuration: OpenAIImageVariationsProcessorConfiguration) -> dict:
         configuration_json = json.loads(configuration.json())
         return {
             'image': input.image,
@@ -549,7 +614,11 @@ class OpenAIImageVariationsProcessor(OpenAIAPIProcessor[OpenAIImageVariationsPro
             **configuration_json,
         }
 
-    def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput):
+    def _transform_api_response(
+            self,
+            input: OpenAIAPIProcessorInput,
+            configuration: OpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput):
         def image_uri(data):
             if 'url' in data:
                 return data['url']
@@ -566,7 +635,10 @@ class OpenAIImageVariationsProcessor(OpenAIAPIProcessor[OpenAIImageVariationsPro
                 raw_response=json.loads(response.text)),
         )
 
-    def _process(self, input: OpenAIImageVariationsProcessorInput, configuration: OpenAIImageVariationsProcessorConfiguration) -> BaseOutputType:
+    def _process(
+            self,
+            input: OpenAIImageVariationsProcessorInput,
+            configuration: OpenAIImageVariationsProcessorConfiguration) -> BaseOutputType:
         """
             Invokes the API processor on the input and returns the output
         """
@@ -574,7 +646,10 @@ class OpenAIImageVariationsProcessor(OpenAIAPIProcessor[OpenAIImageVariationsPro
 
         files = []
         files.append(
-            ('image', (input.image.name, input.image.content, 'application/octet-stream')),
+            ('image',
+             (input.image.name,
+              input.image.content,
+              'application/octet-stream')),
         )
 
         http_response = http_api_processor.process(
@@ -582,15 +657,21 @@ class OpenAIImageVariationsProcessor(OpenAIAPIProcessor[OpenAIImageVariationsPro
                 url=self._get_api_url(),
                 method='POST',
                 body=RawRequestBody(
-                    data=self._get_api_request_payload(input, configuration), files=files,
+                    data=self._get_api_request_payload(
+                        input,
+                        configuration),
+                    files=files,
                 ),
                 headers={},
-                authorization=BearerTokenAuth(token=input.env.openai_api_key),
+                authorization=BearerTokenAuth(
+                    token=input.env.openai_api_key),
             ).dict(),
         )
 
         # If the response is ok, return the choices
-        if isinstance(http_response, HttpAPIProcessorOutput) and http_response.is_ok:
+        if isinstance(
+                http_response,
+                HttpAPIProcessorOutput) and http_response.is_ok:
             response = self._transform_api_response(
                 input, configuration, http_response,
             )
@@ -607,11 +688,13 @@ class OpenAIEmbeddingsProcessorInput(OpenAIAPIProcessorInput):
     class Config:
         extra = Extra.forbid
 
-    input: Union[str, List[str], List[int], List[InputItem]] = Field(
-        ...,
-        description='Input text to get embeddings for, encoded as a string or array of tokens. To get embeddings for multiple inputs in a single request, pass an array of strings or array of token arrays. Each input must not exceed 8192 tokens in length.\n',
-        example='The quick brown fox jumped over the lazy dog',
-    )
+    input: Union[str,
+                 List[str],
+                 List[int],
+                 List[InputItem]] = Field(...,
+                                          description='Input text to get embeddings for, encoded as a string or array of tokens. To get embeddings for multiple inputs in a single request, pass an array of strings or array of token arrays. Each input must not exceed 8192 tokens in length.\n',
+                                          example='The quick brown fox jumped over the lazy dog',
+                                          )
 
 
 class Datum2(Schema):
@@ -629,14 +712,18 @@ class OpenAIEmbeddingsProcessorConfiguration(OpenAIAPIProcessorConfiguration):
     )
 
 
-class OpenAIEmbeddingsProcessor(OpenAIAPIProcessor[OpenAIEmbeddingsProcessorInput, OpenAIEmbeddingsProcessorOutput, OpenAIEmbeddingsProcessorConfiguration]):
+class OpenAIEmbeddingsProcessor(OpenAIAPIProcessor[OpenAIEmbeddingsProcessorInput,
+                                OpenAIEmbeddingsProcessorOutput, OpenAIEmbeddingsProcessorConfiguration]):
     def _get_api_url(self) -> str:
         return '{}/embeddings'.format(super()._get_api_url())
 
     def api_url(self) -> str:
         return self._get_api_url()
 
-    def _get_api_request_payload(self, input: OpenAIEmbeddingsProcessorInput, configuration: OpenAIEmbeddingsProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: OpenAIEmbeddingsProcessorInput,
+            configuration: OpenAIEmbeddingsProcessorConfiguration) -> dict:
         return {
             'model': configuration.model,
             'inputs': input.inputs,

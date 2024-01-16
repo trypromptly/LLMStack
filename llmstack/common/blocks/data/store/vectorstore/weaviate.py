@@ -99,10 +99,12 @@ class Weaviate(VectorStoreInterface):
         configuration = WeaviateConfiguration(**kwargs)
 
         DEFAULT_BATCH_SIZE = configuration.default_batch_size
-        # Rely on the retry mechanism to push through, revisit if this is not enough
+        # Rely on the retry mechanism to push through, revisit if this is not
+        # enough
         NUM_OBJECTS_PER_SECOND = (configuration.embeddings_rate_limit / 60)
 
-        def check_batch_result(results: Optional[List[Dict[str, Any]]]) -> None:
+        def check_batch_result(
+                results: Optional[List[Dict[str, Any]]]) -> None:
             """
             Check batch results for errors.
 
@@ -118,7 +120,7 @@ class Weaviate(VectorStoreInterface):
 
             time.sleep(
                 max(
-                    DEFAULT_BATCH_SIZE/NUM_OBJECTS_PER_SECOND -
+                    DEFAULT_BATCH_SIZE / NUM_OBJECTS_PER_SECOND -
                     time_took_to_create_batch, 0,
                 ),
             )
@@ -158,11 +160,13 @@ class Weaviate(VectorStoreInterface):
             self._client = weaviate.Client(
                 url=configuration.url,
                 auth_client_secret=weaviate.AuthClientPassword(
-                    username=configuration.username, password=configuration.password),
+                    username=configuration.username,
+                    password=configuration.password),
                 additional_headers=headers,
-                timeout_config=(connect_timeout, read_timeout),
-                startup_period=None
-            )
+                timeout_config=(
+                    connect_timeout,
+                    read_timeout),
+                startup_period=None)
         elif configuration.api_key is not None:
             self._client = weaviate.Client(
                 url=configuration.url,
@@ -207,7 +211,11 @@ class Weaviate(VectorStoreInterface):
             self.client.data_object.create(properties, index_name, id)
         return id
 
-    def add_texts(self, index_name: str, documents: List[Document], **kwargs: Any):
+    def add_texts(
+            self,
+            index_name: str,
+            documents: List[Document],
+            **kwargs: Any):
         with self.client.batch as batch:
             ids = []
             for document in documents:
@@ -246,19 +254,28 @@ class Weaviate(VectorStoreInterface):
             document_id, kwargs['index_name'],
         )
 
-    def get_document_by_id(self, index_name: str, document_id: str, content_key: str):
+    def get_document_by_id(
+            self,
+            index_name: str,
+            document_id: str,
+            content_key: str):
         try:
             result = self.client.data_object.get(
                 uuid=document_id, class_name=index_name)
 
-            return Document(content_key, result['properties'].get(content_key, None), {k: v for k, v in result['properties'].items() if k != content_key})
+            return Document(content_key, result['properties'].get(content_key, None), {
+                            k: v for k, v in result['properties'].items() if k != content_key})
         except weaviate.exceptions.UnexpectedStatusCodeException as e:
             if e.status_code == 404:
                 return None
             else:
                 raise e
 
-    def similarity_search(self, index_name: str, document_query: DocumentQuery, **kwargs: Any):
+    def similarity_search(
+            self,
+            index_name: str,
+            document_query: DocumentQuery,
+            **kwargs: Any):
         result = []
         nearText = {'concepts': [document_query.query]}
         whereFilter = {}
@@ -292,7 +309,8 @@ class Weaviate(VectorStoreInterface):
             logger.error('Error in similarity search: %s' % e)
             raise e
 
-        if 'data' not in query_response or 'Get' not in query_response['data'] or index_name not in query_response['data']['Get']:
+        if 'data' not in query_response or 'Get' not in query_response[
+                'data'] or index_name not in query_response['data']['Get']:
             logger.error(
                 'Invalid response from Weaviate: %s Index Name: %s' %
                 query_response, index_name,
@@ -307,7 +325,8 @@ class Weaviate(VectorStoreInterface):
 
             text = res.pop(document_query.page_content_key)
             _document_search_properties = res.pop('_additional')
-            for document_property in document_query.metadata.get('additional_properties', []):
+            for document_property in document_query.metadata.get(
+                    'additional_properties', []):
                 if document_property in res:
                     additional_properties[document_property] = res.pop(
                         document_property,
@@ -315,14 +334,21 @@ class Weaviate(VectorStoreInterface):
 
             result.append(
                 Document(
-                    page_content_key=document_query.page_content_key, page_content=text, metadata={
-                        **additional_properties, **_document_search_properties},
+                    page_content_key=document_query.page_content_key,
+                    page_content=text,
+                    metadata={
+                        **additional_properties,
+                        **_document_search_properties},
                 ),
             )
 
         return result
 
-    def hybrid_search(self, index_name: str, document_query: DocumentQuery, **kwargs: Any):
+    def hybrid_search(
+            self,
+            index_name: str,
+            document_query: DocumentQuery,
+            **kwargs: Any):
         result = []
         whereFilter = {}
         properties = [document_query.page_content_key]
@@ -343,14 +369,20 @@ class Weaviate(VectorStoreInterface):
             query_obj = self.client.query.get(index_name, properties)
             if whereFilter:
                 query_obj = query_obj.with_where(whereFilter)
-            query_response = query_obj.with_hybrid(query=document_query.query, alpha=document_query.alpha).with_limit(
+            query_response = query_obj.with_hybrid(
+                query=document_query.query,
+                alpha=document_query.alpha).with_limit(
                 document_query.limit,
-            ).with_additional(['id', 'score']).do()
+            ).with_additional(
+                [
+                    'id',
+                    'score']).do()
         except Exception as e:
             logger.error('Error in similarity search: %s' % e)
             raise e
 
-        if 'data' not in query_response or 'Get' not in query_response['data'] or index_name not in query_response['data']['Get']:
+        if 'data' not in query_response or 'Get' not in query_response[
+                'data'] or index_name not in query_response['data']['Get']:
             logger.error(
                 'Invalid response from Weaviate: %s Index Name: %s' %
                 query_response, index_name,
@@ -365,7 +397,8 @@ class Weaviate(VectorStoreInterface):
 
             text = res.pop(document_query.page_content_key)
             _document_search_properties = res.pop('_additional')
-            for document_property in document_query.metadata.get('additional_properties', []):
+            for document_property in document_query.metadata.get(
+                    'additional_properties', []):
                 if document_property in res:
                     additional_properties[document_property] = res.pop(
                         document_property,
@@ -373,8 +406,11 @@ class Weaviate(VectorStoreInterface):
 
             result.append(
                 Document(
-                    page_content_key=document_query.page_content_key, page_content=text, metadata={
-                        **additional_properties, **_document_search_properties},
+                    page_content_key=document_query.page_content_key,
+                    page_content=text,
+                    metadata={
+                        **additional_properties,
+                        **_document_search_properties},
                 ),
             )
 

@@ -74,16 +74,28 @@ class ApiProcessorSchema(_Schema):
     pass
 
 
-class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, BaseConfigurationType], Actor):
+class ApiProcessorInterface(
+        ProcessorInterface[BaseInputType, BaseOutputType, BaseConfigurationType], Actor):
     """
     Abstract class for API processors
     """
 
-    def __init__(self, input, config, env, output_stream=None, dependencies=[], all_dependencies=[], session_data=None, id=None, is_tool=False):
+    def __init__(
+            self,
+            input,
+            config,
+            env,
+            output_stream=None,
+            dependencies=[],
+            all_dependencies=[],
+            session_data=None,
+            id=None,
+            is_tool=False):
         Actor.__init__(self, dependencies=dependencies,
                        all_dependencies=all_dependencies)
 
-        # TODO: This is for backward compatibility. Remove this once all the processors are updated
+        # TODO: This is for backward compatibility. Remove this once all the
+        # processors are updated
         if 'datasource' in config and isinstance(config['datasource'], str):
             config['datasource'] = [config['datasource']]
         if 'datasources' in config and isinstance(config['datasources'], str):
@@ -184,7 +196,8 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
         None
 
     def get_dependencies(self):
-        # Iterate over string templates in values of input and config and extract dependencies
+        # Iterate over string templates in values of input and config and
+        # extract dependencies
         dependencies = []
         dependencies.extend(extract_jinja2_variables(self._input))
         dependencies.extend(extract_jinja2_variables(self._config))
@@ -218,7 +231,11 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
         bookkeeping_data = self.get_bookkeeping_data()
         if not bookkeeping_data:
             bookkeeping_data = BookKeepingData(
-                input=self._input, config=self._config, output=output or {}, session_data=self.session_data_to_persist(), timestamp=time.time(),
+                input=self._input,
+                config=self._config,
+                output=output or {},
+                session_data=self.session_data_to_persist(),
+                timestamp=time.time(),
             )
 
         self._output_stream.bookkeep(bookkeeping_data)
@@ -255,7 +272,11 @@ class ApiProcessorInterface(ProcessorInterface[BaseInputType, BaseOutputType, Ba
         bookkeeping_data = self.get_bookkeeping_data()
         if not bookkeeping_data:
             bookkeeping_data = BookKeepingData(
-                input=self._input, config=self._config, output=output or {}, session_data=self.session_data_to_persist(), timestamp=time.time(),
+                input=self._input,
+                config=self._config,
+                output=output or {},
+                session_data=self.session_data_to_persist(),
+                timestamp=time.time(),
             )
 
         self._output_stream.bookkeep(bookkeeping_data)

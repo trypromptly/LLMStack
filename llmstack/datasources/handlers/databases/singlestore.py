@@ -57,10 +57,12 @@ class SingleStoreDataSource(DataSourceProcessor[SingleStoreDatabaseSchema]):
         return 'singlestore'
 
     @staticmethod
-    def process_validate_config(config_data: dict, datasource: DataSource) -> dict:
-        return SingleStoreConnectionConfiguration(singlestore_config=config_data).to_dict(
-            encrypt_fn=datasource.profile.encrypt_value
-        )
+    def process_validate_config(
+            config_data: dict,
+            datasource: DataSource) -> dict:
+        return SingleStoreConnectionConfiguration(
+            singlestore_config=config_data).to_dict(
+            encrypt_fn=datasource.profile.encrypt_value)
 
     def validate_and_process(self, data: dict):
         raise NotImplementedError
@@ -85,13 +87,19 @@ class SingleStoreDataSource(DataSourceProcessor[SingleStoreDatabaseSchema]):
             'database': self._configuration.connection.database
         }
 
-        response = post(url, headers=headers, data=json.dumps(data), auth=(
-            self._configuration.connection.username, self._configuration.connection.password))
+        response = post(
+            url,
+            headers=headers,
+            data=json.dumps(data),
+            auth=(
+                self._configuration.connection.username,
+                self._configuration.connection.password))
         response.raise_for_status()
         # JSON to csv
         csv_result = ''
         if 'results' in response.json():
-            if len(response.json()['results']) > 0 and 'rows' in response.json()['results'][0]:
+            if len(response.json()['results']) > 0 and 'rows' in response.json()[
+                    'results'][0]:
                 rows = response.json()['results'][0]['rows']
                 if len(rows) > 0:
                     csv_result += ','.join(list(map(lambda entry: str(entry),
@@ -100,7 +108,13 @@ class SingleStoreDataSource(DataSourceProcessor[SingleStoreDatabaseSchema]):
                         csv_result += ','.join(list(map(lambda entry: str(entry),
                                                         row.values()))) + '\n'
 
-        return [Document(page_content_key='content', page_content=csv_result, metadata={'score': 0, 'source': self._source_name})]
+        return [
+            Document(
+                page_content_key='content',
+                page_content=csv_result,
+                metadata={
+                    'score': 0,
+                    'source': self._source_name})]
 
     def similarity_search(self, query: str, **kwargs) -> List[dict]:
         return self._sql_search(query, **kwargs)

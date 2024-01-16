@@ -41,7 +41,9 @@ class TextToSpeechInput(ApiProcessorSchema):
 
 class TextToSpeechOutput(ApiProcessorSchema):
     audio_content: Optional[str] = Field(
-        default=None, description='The output audio content in base64 format.', widget=AUDIO_WIDGET_NAME,
+        default=None,
+        description='The output audio content in base64 format.',
+        widget=AUDIO_WIDGET_NAME,
     )
 
 
@@ -59,7 +61,8 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
     )
 
 
-class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeechOutput, TextToSpeechConfiguration]):
+class TextToSpeechProcessor(
+        ApiProcessorInterface[TextToSpeechInput, TextToSpeechOutput, TextToSpeechConfiguration]):
     @staticmethod
     def name() -> str:
         return 'Text to Speech'
@@ -78,7 +81,7 @@ class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeec
 
     def process(self) -> dict:
         api_url = 'https://texttospeech.googleapis.com/v1/text:synthesize'
-        
+
         token = None
         project_id = None
 
@@ -86,7 +89,7 @@ class TextToSpeechProcessor(ApiProcessorInterface[TextToSpeechInput, TextToSpeec
             project_id = self._config.project_id
         else:
             project_id = get_project_id_from_env(self._env)
-           
+
         if self._config.auth_token:
             token = self._config.auth_token
             token_type = API_KEY

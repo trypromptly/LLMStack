@@ -26,9 +26,11 @@ class Chroma(VectorStoreInterface):
         configuration = ChromaConfiguration(**kwargs)
         db_settings = chromadb.config.Settings(**configuration.dict())
 
-        if db_settings.is_persistent and settings.VECTOR_DATABASES.get('default') and  settings.VECTOR_DATABASES.get('default').get('ENGINE') == 'chroma' and settings.VECTOR_DATABASES.get('default').get('NAME'):
+        if db_settings.is_persistent and settings.VECTOR_DATABASES.get('default') and settings.VECTOR_DATABASES.get(
+                'default').get('ENGINE') == 'chroma' and settings.VECTOR_DATABASES.get('default').get('NAME'):
             path = settings.VECTOR_DATABASES.get('default').get('NAME')
-            self._client = chromadb.PersistentClient(path=path, settings=db_settings)
+            self._client = chromadb.PersistentClient(
+                path=path, settings=db_settings)
         else:
             self._client = chromadb.EphemeralClient(settings=db_settings)
 
@@ -47,7 +49,11 @@ class Chroma(VectorStoreInterface):
                     properties.pop(
                         content_key,
                     ),
-                ], metadatas=[properties], ids=[id], embeddings=[properties.pop('embeddings')],
+                ],
+                metadatas=[properties],
+                ids=[id],
+                embeddings=[
+                    properties.pop('embeddings')],
             )
         else:
             collection.add(
@@ -59,7 +65,11 @@ class Chroma(VectorStoreInterface):
             )
         return id
 
-    def add_texts(self, index_name: str, documents: List[Document], **kwargs: Any):
+    def add_texts(
+            self,
+            index_name: str,
+            documents: List[Document],
+            **kwargs: Any):
         ids = []
         for document in documents:
             ids.append(self.add_text(index_name, document, kwargs=kwargs))
@@ -78,7 +88,11 @@ class Chroma(VectorStoreInterface):
         collection = self._client.get_collection(kwargs['index_name'])
         collection.delete([document_id])
 
-    def get_document_by_id(self, index_name: str, document_id: str, content_key: str):
+    def get_document_by_id(
+            self,
+            index_name: str,
+            document_id: str,
+            content_key: str):
         collection = self._client.get_collection(index_name)
         result = collection.get(
             [document_id], include=[
@@ -88,10 +102,18 @@ class Chroma(VectorStoreInterface):
         return Document(content_key, result['documents'][0] if len(result['documents']) > 0 else None, {
             **result['metadatas'][0]} if len(result['metadatas']) > 0 else None)
 
-    def hybrid_search(self, index_name: str, document_query: DocumentQuery, **kwargs) -> List[Tuple[int, float]]:
+    def hybrid_search(self,
+                      index_name: str,
+                      document_query: DocumentQuery,
+                      **kwargs) -> List[Tuple[int,
+                                              float]]:
         return self.similarity_search(index_name, document_query, **kwargs)
 
-    def similarity_search(self, index_name: str, document_query: DocumentQuery, **kwargs: Any):
+    def similarity_search(
+            self,
+            index_name: str,
+            document_query: DocumentQuery,
+            **kwargs: Any):
         result = []
         collection = self._client.get_collection(index_name)
         search_result = collection.query(

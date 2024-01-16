@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 class ProfileActivityInput(ApiProcessorSchema):
     profile_url: str = Field(description='The profile URL', default='')
     search_term: str = Field(
-        description='The search term to use when looking for a user when profile url is unavailable', default='')
+        description='The search term to use when looking for a user when profile url is unavailable',
+        default='')
 
 
 class ProfileActivityOutput(ApiProcessorSchema):
@@ -34,8 +35,11 @@ class ProfileActivityOutput(ApiProcessorSchema):
 
 
 class ProfileActivityConfiguration(ApiProcessorSchema):
-    connection_id: str = Field(description='LinkedIn login session connection to use',
-                               required=True, advanced_parameter=False, widget='connection')
+    connection_id: str = Field(
+        description='LinkedIn login session connection to use',
+        required=True,
+        advanced_parameter=False,
+        widget='connection')
     n_posts: int = Field(description='Number of posts to get',
                          default=5, ge=1, le=100)
     n_comments: int = Field(description='Number of comments to get',
@@ -44,7 +48,8 @@ class ProfileActivityConfiguration(ApiProcessorSchema):
                              default=5, ge=1, le=100)
 
 
-class ProfileActivityProcessor(ApiProcessorInterface[ProfileActivityInput, ProfileActivityOutput, ProfileActivityConfiguration]):
+class ProfileActivityProcessor(
+        ApiProcessorInterface[ProfileActivityInput, ProfileActivityOutput, ProfileActivityConfiguration]):
     @staticmethod
     def name() -> str:
         return 'Profile Activity'
@@ -99,7 +104,7 @@ class ProfileActivityProcessor(ApiProcessorInterface[ProfileActivityInput, Profi
 
                 try:
                     storage_state = json.loads(storage_state)
-                except:
+                except BaseException:
                     pass
 
                 browser = await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL) if hasattr(settings, 'PLAYWRIGHT_URL') and settings.PLAYWRIGHT_URL else await playwright.chromium.launch()
@@ -110,7 +115,8 @@ class ProfileActivityProcessor(ApiProcessorInterface[ProfileActivityInput, Profi
                     await page.wait_for_selector('div.search-results-container', timeout=5000)
                     results = await page.query_selector_all('span.entity-result__title-text')
 
-                    # Click on the first link, wait for the page to load and get the URL
+                    # Click on the first link, wait for the page to load and
+                    # get the URL
                     if len(results) > 0:
                         await results[0].click()
                     else:
@@ -147,7 +153,8 @@ class ProfileActivityProcessor(ApiProcessorInterface[ProfileActivityInput, Profi
                 )
         except Exception as e:
             logger.exception(e)
-            return ProfileActivityOutput(error=f'Error getting profile activity: {e}')
+            return ProfileActivityOutput(
+                error=f'Error getting profile activity: {e}')
 
     def process(self) -> dict:
         output_stream = self._output_stream

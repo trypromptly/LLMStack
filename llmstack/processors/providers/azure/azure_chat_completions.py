@@ -34,20 +34,27 @@ class Role(str, Enum):
 
 class ChatMessage(ApiProcessorSchema):
     role: Optional[Role] = Field(
-        default=Role.USER, description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
+        default=Role.USER,
+        description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
     )
     content: Optional[str] = Field(default='', description='The message text.')
 
 
 class AzureChatCompletionsInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
-        default='', description='A message from the system, which will be prepended to the chat history.', widget='textarea',
+        default='',
+        description='A message from the system, which will be prepended to the chat history.',
+        widget='textarea',
     )
     chat_history: List[ChatMessage] = Field(
-        default=[], description='A list of messages, each with a role and message text.', widget='hidden',
+        default=[],
+        description='A list of messages, each with a role and message text.',
+        widget='hidden',
     )
     messages: List[ChatMessage] = Field(
-        default=[ChatMessage()], description='A list of messages, each with a role and message text.',
+        default=[
+            ChatMessage()],
+        description='A list of messages, each with a role and message text.',
     )
 
 
@@ -95,37 +102,49 @@ def num_tokens_from_messages(messages, model='gpt-35-turbo'):
 
 class AzureChatCompletionsConfiguration(ApiProcessorSchema):
     temperature: Optional[float] = Field(
-        le=2.0, ge=0.0,
-        default=0.7, description='What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+        le=2.0,
+        ge=0.0,
+        default=0.7,
+        description='What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
     )
     top_p: Optional[float] = Field(
-        description='An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.', default=1.0, ge=0.0, le=1.0,
+        description='An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
+        default=1.0,
+        ge=0.0,
+        le=1.0,
     )
     max_tokens: Optional[int] = Field(
-        description='The maximum number of tokens to generate.', ge=1, default=1024, le=32000,
+        description='The maximum number of tokens to generate.',
+        ge=1,
+        default=1024,
+        le=32000,
     )
     base_url: Optional[str] = Field(
         description='This value can be found in the Keys & Endpoint section when examining your resource from the Azure portal. An example endpoint is: https://docs-test-001.openai.azure.com/.',
-        advanced_parameter=False
-    )
+        advanced_parameter=False)
     api_version: Optional[str] = Field(
         description='The API version to use', default='2023-05-15',
     )
     deployment_name: ChatCompletionsModel = Field(
         description='This value will correspond to the custom name you chose for your deployment when you deployed a model. This value can be found under Resource Management > Deployments in the Azure portal or alternatively under Management > Deployments in Azure OpenAI Studio.',
-        advanced_parameter=False, default=ChatCompletionsModel.GPT_4,
+        advanced_parameter=False,
+        default=ChatCompletionsModel.GPT_4,
     )
     retain_history: Optional[bool] = Field(
-        default=True, description='Retain and use the chat history. (Only works in apps)', advanced_parameter=False,
+        default=True,
+        description='Retain and use the chat history. (Only works in apps)',
+        advanced_parameter=False,
     )
     auto_prune_chat_history: Optional[bool] = Field(
-        default=False, description="Automatically prune chat history. This is only applicable if 'retain_history' is set to 'true'.",
+        default=False,
+        description="Automatically prune chat history. This is only applicable if 'retain_history' is set to 'true'.",
         hidden=True,
     )
     stream: Optional[bool] = Field(widget='hidden', default=True)
 
 
-class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, AzureChatCompletionsOutput, AzureChatCompletionsConfiguration]):
+class AzureChatCompletions(
+        ApiProcessorInterface[AzureChatCompletionsInput, AzureChatCompletionsOutput, AzureChatCompletionsConfiguration]):
     """
     Azure Chat Completions processor
     """
@@ -153,7 +172,10 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
     def session_data_to_persist(self) -> dict:
         if self._config.retain_history and self._config.auto_prune_chat_history:
             # Prune chat history
-            while (num_tokens_from_messages(self._chat_history) > self._config.max_tokens) and len(self._chat_history) > 1:
+            while (
+                    num_tokens_from_messages(
+                        self._chat_history) > self._config.max_tokens) and len(
+                    self._chat_history) > 1:
                 self._chat_history.pop(0)
 
             return {'chat_history': self._chat_history}
@@ -166,19 +188,19 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
     def process(self) -> dict:
         output_stream = self._output_stream
 
-        if self._config.stream != True:
+        if not self._config.stream:
             raise Exception(
-                'Azure Chat Completions processor requires stream to be enabled.',
-            )
+                'Azure Chat Completions processor requires stream to be enabled.', )
 
         chat_history = self._chat_history if self._config.retain_history else []
         azure_openai_api_key = self._env.get('azure_openai_api_key', None)
         endpoint = self._config.base_url if self._config.base_url else self._env.get(
-            'azure_openai_endpoint', None,
+            'azure_openai_endpoint', None, )
+        client = openai.AzureOpenAI(
+            azure_endpoint=endpoint if endpoint.startswith('https://') else f'https://{endpoint}.openai.azure.com',
+            api_key=azure_openai_api_key,
+            api_version=self._config.api_version,
         )
-        client = openai.AzureOpenAI(azure_endpoint=endpoint if endpoint.startswith('https://') else f'https://{endpoint}.openai.azure.com',
-                                    api_key=azure_openai_api_key,
-                                    api_version=self._config.api_version,)
 
         messages = []
         messages.append(
@@ -191,18 +213,26 @@ class AzureChatCompletions(ApiProcessorInterface[AzureChatCompletionsInput, Azur
         for message in self._input.messages:
             messages.append(json.loads(message.json()))
 
-        result_iter = client.chat.completions.create(messages=messages,
-                                                     model=self._config.deployment_name.value,
-                                                     temperature=self._config.temperature,
-                                                     max_tokens=self._config.max_tokens,
-                                                     stream=True)
+        result_iter = client.chat.completions.create(
+            messages=messages,
+            model=self._config.deployment_name.value,
+            temperature=self._config.temperature,
+            max_tokens=self._config.max_tokens,
+            stream=True)
 
         for data in result_iter:
-            if data.object == 'chat.completion.chunk' and len(data.choices) > 0 and data.choices[0].delta and data.choices[0].delta.content:
-                async_to_sync(output_stream.write)(AzureChatCompletionsOutput(
-                    choices=list(
-                        map(lambda entry: ChatMessage(role=entry.delta.role, content=entry.delta.content), data.choices)),
-                ))
+            if data.object == 'chat.completion.chunk' and len(
+                    data.choices) > 0 and data.choices[0].delta and data.choices[0].delta.content:
+                async_to_sync(
+                    output_stream.write)(
+                    AzureChatCompletionsOutput(
+                        choices=list(
+                            map(
+                                lambda entry: ChatMessage(
+                                    role=entry.delta.role,
+                                    content=entry.delta.content),
+                                data.choices)),
+                    ))
         output = self._output_stream.finalize()
 
         # Update chat history

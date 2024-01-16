@@ -7,9 +7,12 @@ def request(method, url, **kwargs):
     _connection = kwargs.pop('_connection', None)
     if _connection:
         connection = _connection
-        # connection is one of api_key, basic_auth, bearer_token, oauth2 or web_login
+        # connection is one of api_key, basic_auth, bearer_token, oauth2 or
+        # web_login
         if connection.get('base_connection_type', None) == 'credentials':
-            if connection.get('connection_type_slug', None) == 'basic_authentication':
+            if connection.get(
+                'connection_type_slug',
+                    None) == 'basic_authentication':
                 kwargs['auth'] = (connection['username'],
                                   connection['password'])
             elif connection.get('connection_type_slug', None) == 'bearer_authentication':

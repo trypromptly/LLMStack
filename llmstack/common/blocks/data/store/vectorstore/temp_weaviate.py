@@ -54,34 +54,30 @@ class TempWeaviate(Weaviate):
         index_name = 'Temp_{}'.format(str(uuid.uuid4())).replace('-', '_')
         if self.weaviate_text2vec_config is None:
             raise Exception('Vector store embedding config is not set')
-        schmea = {
-            'classes': [
-                {
-                    'class': index_name,
-                    'description': 'Text data source',
-                    'vectorizer': 'text2vec-openai',
-                    'moduleConfig': {'text2vec-openai': self.weaviate_text2vec_config},
-                    'properties': [
-                        {
-                            'name': self.CONTENT_KEY,
-                            'dataType': ['text'],
-                            'description': 'Text',
-                            'moduleConfig': {'text2vec-openai': {'skip': False, 'vectorizePropertyName': False}},
-                        },
-                        {
-                            'name': 'source', 'dataType': [
-                                'string',
-                            ], 'description': 'Document source',
-                        },
-                        {
-                            'name': 'metadata', 'dataType': [
-                                'string[]',
-                            ], 'description': 'Document metadata',
-                        },
-                    ],
-                },
-            ],
-        }
+        schmea = {'classes': [{'class': index_name,
+                               'description': 'Text data source',
+                               'vectorizer': 'text2vec-openai',
+                               'moduleConfig': {'text2vec-openai': self.weaviate_text2vec_config},
+                               'properties': [{'name': self.CONTENT_KEY,
+                                               'dataType': ['text'],
+                                               'description': 'Text',
+                                               'moduleConfig': {'text2vec-openai': {'skip': False,
+                                                                                    'vectorizePropertyName': False}},
+                                               },
+                                              {'name': 'source',
+                                               'dataType': ['string',
+                                                            ],
+                                               'description': 'Document source',
+                                               },
+                                              {'name': 'metadata',
+                                               'dataType': ['string[]',
+                                                            ],
+                                               'description': 'Document metadata',
+                                               },
+                                              ],
+                               },
+                              ],
+                  }
 
         self.create_index(json.dumps(schmea))
         return index_name
@@ -89,7 +85,5 @@ class TempWeaviate(Weaviate):
     def search_temp_index(self, index_name: str, query: str, limit: int):
         document_query = DocumentQuery(
             query=query, page_content_key=self.CONTENT_KEY, limit=limit, metadata={
-                'additional_properties': ['source'],
-            },
-        )
+                'additional_properties': ['source'], }, )
         return self.similarity_search(index_name, document_query)

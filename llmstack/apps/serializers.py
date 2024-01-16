@@ -80,7 +80,8 @@ class AppRunGraphEntrySerializer(serializers.ModelSerializer):
 class AppSerializer(DynamicFieldsModelSerializer):
 
     class AppProcessorEndpointSerializer(serializers.ModelSerializer):
-        class AppProcessorEndpointApiBackendSerializer(serializers.ModelSerializer):
+        class AppProcessorEndpointApiBackendSerializer(
+                serializers.ModelSerializer):
             api_provider = ApiProviderSerializer()
 
             class Meta:
@@ -125,7 +126,8 @@ class AppSerializer(DynamicFieldsModelSerializer):
 
     def get_logo(self, obj):
         profile = Profile.objects.get(user=obj.owner)
-        return profile.logo if (profile.is_pro_subscriber() or profile.organization) else None
+        return profile.logo if (
+            profile.is_pro_subscriber() or profile.organization) else None
 
     def get_is_shareable(self, obj):
         profile = Profile.objects.get(user=obj.owner)
@@ -136,13 +138,16 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return not profile.organization
 
     def get_last_modified_by_email(self, obj):
-        return obj.last_modified_by.email if obj.last_modified_by and obj.has_write_permission(self._request_user) else None
+        return obj.last_modified_by.email if obj.last_modified_by and obj.has_write_permission(
+            self._request_user) else None
 
     def get_owner_email(self, obj):
-        return obj.owner.email if obj.has_write_permission(self._request_user) else None
+        return obj.owner.email if obj.has_write_permission(
+            self._request_user) else None
 
     def get_output_template(self, obj):
-        return convert_template_vars_from_legacy_format(obj.output_template) if obj.output_template else None
+        return convert_template_vars_from_legacy_format(
+            obj.output_template) if obj.output_template else None
 
     def get_data(self, obj):
         app_data = AppData.objects.filter(
@@ -212,28 +217,37 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return []
 
     def get_discord_config(self, obj):
-        return obj.discord_config if obj.has_write_permission(self._request_user) else None
+        return obj.discord_config if obj.has_write_permission(
+            self._request_user) else None
 
     def get_slack_config(self, obj):
-        return obj.slack_config if obj.has_write_permission(self._request_user) else None
+        return obj.slack_config if obj.has_write_permission(
+            self._request_user) else None
 
     def get_twilio_config(self, obj):
-        return obj.twilio_config if obj.has_write_permission(self._request_user) else None
+        return obj.twilio_config if obj.has_write_permission(
+            self._request_user) else None
 
     def get_access_permission(self, obj):
-        return AppAccessPermission.WRITE if obj.has_write_permission(self._request_user) else AppAccessPermission.READ
+        return AppAccessPermission.WRITE if obj.has_write_permission(
+            self._request_user) else AppAccessPermission.READ
 
     def get_accessible_by(self, obj):
-        return obj.accessible_by if obj.has_write_permission(self._request_user) else None
+        return obj.accessible_by if obj.has_write_permission(
+            self._request_user) else None
 
     def get_read_accessible_by(self, obj):
-        return obj.read_accessible_by if obj.has_write_permission(self._request_user) else None
+        return obj.read_accessible_by if obj.has_write_permission(
+            self._request_user) else None
 
     def get_write_accessible_by(self, obj):
-        return obj.write_accessible_by if obj.has_write_permission(self._request_user) else None
+        return obj.write_accessible_by if obj.has_write_permission(
+            self._request_user) else None
 
     def get_last_modified_by_email(self, obj):
-        return obj.last_modified_by.email if (obj.last_modified_by and obj.has_write_permission(self._request_user)) else None
+        return obj.last_modified_by.email if (
+            obj.last_modified_by and obj.has_write_permission(
+                self._request_user)) else None
 
     def get_template(self, obj):
         if obj.template:
@@ -245,22 +259,50 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return None
 
     def get_web_config(self, obj):
-        return obj.web_config if obj.has_write_permission(self._request_user) else None
+        return obj.web_config if obj.has_write_permission(
+            self._request_user) else None
 
     def get_visibility(self, obj):
-        return obj.visibility if obj.has_write_permission(self._request_user) else None
+        return obj.visibility if obj.has_write_permission(
+            self._request_user) else None
 
     class Meta:
         model = App
         fields = [
-            'name', 'description', 'config', 'input_schema', 'data',
-            'type', 'uuid', 'published_uuid', 'is_published', 'unique_processors',
-            'input_ui_schema', 'output_template', 'created_at', 'last_updated_at',
-            'logo', 'is_shareable', 'has_footer', 'domain', 'visibility', 'accessible_by',
-            'access_permission', 'last_modified_by_email', 'owner_email', 'web_config',
-            'slack_config', 'discord_config', 'twilio_config', 'app_type_name', 'processors', 'template',
-            'app_type_slug', 'read_accessible_by', 'write_accessible_by', 'has_live_version'
-        ]
+            'name',
+            'description',
+            'config',
+            'input_schema',
+            'data',
+            'type',
+            'uuid',
+            'published_uuid',
+            'is_published',
+            'unique_processors',
+            'input_ui_schema',
+            'output_template',
+            'created_at',
+            'last_updated_at',
+            'logo',
+            'is_shareable',
+            'has_footer',
+            'domain',
+            'visibility',
+            'accessible_by',
+            'access_permission',
+            'last_modified_by_email',
+            'owner_email',
+            'web_config',
+            'slack_config',
+            'discord_config',
+            'twilio_config',
+            'app_type_name',
+            'processors',
+            'template',
+            'app_type_slug',
+            'read_accessible_by',
+            'write_accessible_by',
+            'has_live_version']
 
 
 class AppTemplateCategorySerializer(serializers.ModelSerializer):
@@ -333,7 +375,8 @@ class AppTemplateSerializer(serializers.ModelSerializer):
         if app_obj is None:
             return None
 
-        return AppTemplateSerializer.AppTemplateAppSerializer(instance=app_obj).data
+        return AppTemplateSerializer.AppTemplateAppSerializer(
+            instance=app_obj).data
 
     def get_pages(self, obj):
         hide_details = self.context.get('hide_details', True)
@@ -417,8 +460,20 @@ class CloneableAppSerializer(serializers.ModelSerializer):
     class Meta:
         model = App
         fields = [
-            'name', 'description', 'config', 'input_schema', 'data_transformer',
-            'type', 'input_ui_schema', 'output_template', 'run_graph', 'published_uuid', 'is_published', 'domain', 'created_at', 'last_updated_at',
+            'name',
+            'description',
+            'config',
+            'input_schema',
+            'data_transformer',
+            'type',
+            'input_ui_schema',
+            'output_template',
+            'run_graph',
+            'published_uuid',
+            'is_published',
+            'domain',
+            'created_at',
+            'last_updated_at',
         ]
 
 

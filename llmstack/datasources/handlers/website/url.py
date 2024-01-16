@@ -23,9 +23,13 @@ Entry configuration schema for url data source type
 
 class URLSchema(DataSourceSchema):
     urls: str = Field(
-        widget='webpageurls', description='URLs to scrape, List of URL can be comma or newline separated. If site.xml is present, it will be used to scrape the site.', max_length=1600,
+        widget='webpageurls',
+        description='URLs to scrape, List of URL can be comma or newline separated. If site.xml is present, it will be used to scrape the site.',
+        max_length=1600,
     )
-    connection_id: Optional[str] = Field(description='Select connection if parsing loggedin page', widget='connection')
+    connection_id: Optional[str] = Field(
+        description='Select connection if parsing loggedin page',
+        widget='connection')
 
     @staticmethod
     def get_content_key() -> str:
@@ -63,23 +67,30 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
 
     @classmethod
     def get_sync_configuration(cls) -> Optional[dict]:
-        return DataSourceSyncConfiguration(sync_type=DataSourceSyncType.FULL).dict()
+        return DataSourceSyncConfiguration(
+            sync_type=DataSourceSyncType.FULL).dict()
 
-    def get_url_data(self, url: str, connection_id = None) -> Optional[DataSourceEntryItem]:
+    def get_url_data(
+            self,
+            url: str,
+            connection_id=None) -> Optional[DataSourceEntryItem]:
         if not url.startswith('https://') and not url.startswith('http://'):
             url = f'https://{url}'
-        connection = self._env['connections'].get(connection_id, None) if connection_id else None
+        connection = self._env['connections'].get(
+            connection_id, None) if connection_id else None
 
-        text = extract_text_from_url(
-            url, extra_params=ExtraParams(openai_key=self.openai_key, connection=connection),
-        )
+        text = extract_text_from_url(url, extra_params=ExtraParams(
+            openai_key=self.openai_key, connection=connection), )
         docs = [
             Document(
-                page_content_key=self.get_content_key(), page_content=t, metadata={
+                page_content_key=self.get_content_key(),
+                page_content=t,
+                metadata={
                     'source': url,
                 },
-            ) for t in SpacyTextSplitter(chunk_size=1500, length_func=len).split_text(text)
-        ]
+            ) for t in SpacyTextSplitter(
+                chunk_size=1500,
+                length_func=len).split_text(text)]
         return docs
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
@@ -105,10 +116,15 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
                 sitmap_xml_urls = extract_urls_from_sitemap(sitemap_xml)
                 for sitmap_xml_url in sitmap_xml_urls:
                     sitemap_urls.append(sitmap_xml_url)
-        except:
+        except BaseException:
             logger.exception('Error in extracting urls from sitemap')
 
-        return list(map(lambda x: DataSourceEntryItem(name=x, data={'url': x, 'connection_id' : entry.connection_id}), urls + sitemap_urls))
+        return list(map(lambda x: DataSourceEntryItem(name=x, data={
+                    'url': x, 'connection_id': entry.connection_id}), urls + sitemap_urls))
 
-    def get_data_documents(self, data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
-        return self.get_url_data(data.data['url'], connection_id=data.data['connection_id'])
+    def get_data_documents(
+            self,
+            data: DataSourceEntryItem) -> Optional[DataSourceEntryItem]:
+        return self.get_url_data(
+            data.data['url'],
+            connection_id=data.data['connection_id'])

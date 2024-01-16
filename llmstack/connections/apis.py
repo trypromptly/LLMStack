@@ -49,7 +49,7 @@ class ConnectionsViewSet(viewsets.ViewSet):
                 connection['configuration'] = connection_type_handler.parse_config(
                     connection['configuration']).dict()
                 connections.append(connection)
-            except:
+            except BaseException:
                 logger.error(
                     f'Error parsing connection {connection["id"]}. provider_slug: {connection["provider_slug"]}, connection_type_slug: {connection["connection_type_slug"]}')
 
@@ -136,4 +136,5 @@ class ConnectionsViewSet(viewsets.ViewSet):
         new_connection = connection_type_handler.get_access_token(connection)
         profile.add_connection(new_connection.dict())
 
-        return Response({'access_token': new_connection.configuration['token']})
+        return Response(
+            {'access_token': new_connection.configuration['token']})

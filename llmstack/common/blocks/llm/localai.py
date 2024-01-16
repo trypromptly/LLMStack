@@ -17,7 +17,8 @@ class LocalAICompletionsAPIProcessorOutput(OpenAIAPIProcessorOutput):
     choices: List[str]
 
 
-class LocalAICompletionsAPIProcessorConfiguration(OpenAIAPIProcessorConfiguration):
+class LocalAICompletionsAPIProcessorConfiguration(
+        OpenAIAPIProcessorConfiguration):
     base_url: Optional[str]
     model: str
 
@@ -30,7 +31,11 @@ class LocalAICompletionsAPIProcessorConfiguration(OpenAIAPIProcessorConfiguratio
     timeout: Optional[int]
 
 
-class LocalAICompletionsAPIProcessor(OpenAIAPIProcessor[LocalAICompletionsAPIProcessorInput, LocalAICompletionsAPIProcessorOutput, LocalAICompletionsAPIProcessorConfiguration]):
+class LocalAICompletionsAPIProcessor(
+    OpenAIAPIProcessor[
+        LocalAICompletionsAPIProcessorInput,
+        LocalAICompletionsAPIProcessorOutput,
+        LocalAICompletionsAPIProcessorConfiguration]):
     @staticmethod
     def name() -> str:
         return 'localai_completions_api_processor'
@@ -41,7 +46,10 @@ class LocalAICompletionsAPIProcessor(OpenAIAPIProcessor[LocalAICompletionsAPIPro
     def api_url(self) -> str:
         return self._get_api_url()
 
-    def _get_api_request_payload(self, input: LocalAICompletionsAPIProcessorInput, configuration: LocalAICompletionsAPIProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: LocalAICompletionsAPIProcessorInput,
+            configuration: LocalAICompletionsAPIProcessorConfiguration) -> dict:
         return {
             'model': configuration.model,
             'prompt': input.prompt,
@@ -51,22 +59,32 @@ class LocalAICompletionsAPIProcessor(OpenAIAPIProcessor[LocalAICompletionsAPIPro
             'stream': configuration.stream,
         }
 
-    def _transform_streaming_api_response(self, input: LocalAICompletionsAPIProcessorInput, configuration: LocalAICompletionsAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> LocalAICompletionsAPIProcessorOutput:
+    def _transform_streaming_api_response(
+            self,
+            input: LocalAICompletionsAPIProcessorInput,
+            configuration: LocalAICompletionsAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> LocalAICompletionsAPIProcessorOutput:
         text = response.content.decode('utf-8')
         json_response = json.loads(text.split('data: ')[1])
         choices = list(
             map(lambda x: x.get('text', ''), json_response['choices']),
         )
-        return LocalAICompletionsAPIProcessorOutput(choices=choices, metadata=json_response)
+        return LocalAICompletionsAPIProcessorOutput(
+            choices=choices, metadata=json_response)
 
-    def _transform_api_response(self, input: LocalAICompletionsAPIProcessorInput, configuration: LocalAICompletionsAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> LocalAICompletionsAPIProcessorOutput:
+    def _transform_api_response(
+            self,
+            input: LocalAICompletionsAPIProcessorInput,
+            configuration: LocalAICompletionsAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> LocalAICompletionsAPIProcessorOutput:
         choices = list(
             map(lambda x: x.get('text', ''),
                 json.loads(response.text)['choices']),
         )
         json_response = json.loads(response.text)
 
-        return LocalAICompletionsAPIProcessorOutput(choices=choices, metadata=json_response)
+        return LocalAICompletionsAPIProcessorOutput(
+            choices=choices, metadata=json_response)
 
 
 class LocalAIChatCompletionsAPIProcessorInput(OpenAIAPIProcessorInput):
@@ -75,8 +93,8 @@ class LocalAIChatCompletionsAPIProcessorInput(OpenAIAPIProcessorInput):
         description='The intial system message to be set.',
     )
     chat_history: List[ChatMessage] = Field(
-        default=[
-        ], description='The chat history, in the [chat format](/docs/guides/chat/introduction).',
+        default=[],
+        description='The chat history, in the [chat format](/docs/guides/chat/introduction).',
     )
     messages: List[ChatMessage] = Field(
         default=[], description='The messages to be sent to the API.',
@@ -95,7 +113,8 @@ class LocalAIChatCompletionsAPIProcessorOutput(OpenAIAPIProcessorOutput):
     )
 
 
-class LocalAIChatCompletionsAPIProcessorConfiguration(OpenAIAPIProcessorConfiguration):
+class LocalAIChatCompletionsAPIProcessorConfiguration(
+        OpenAIAPIProcessorConfiguration):
     base_url: Optional[str]
 
     model: str = Field(description='ID of the model to use.',)
@@ -120,11 +139,15 @@ class LocalAIChatCompletionsAPIProcessorConfiguration(OpenAIAPIProcessorConfigur
     stream: Optional[bool] = False
     function_call: Optional[Union[str, Dict]] = Field(
         default=None,
-        description="Controls how the model responds to function calls. \"none\" means the model does not call a function, and responds to the end-user. \"auto\" means the model can pick between an end-user or calling a function. Specifying a particular function via {\"name\":\ \"my_function\"} forces the model to call that function. \"none\" is the default when no functions are present. \"auto\" is the default if functions are present.",
+        description="Controls how the model responds to function calls. \"none\" means the model does not call a function, and responds to the end-user. \"auto\" means the model can pick between an end-user or calling a function. Specifying a particular function via {\"name\":\\ \"my_function\"} forces the model to call that function. \"none\" is the default when no functions are present. \"auto\" is the default if functions are present.",
     )
 
 
-class LocalAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[LocalAIChatCompletionsAPIProcessorInput, LocalAIChatCompletionsAPIProcessorOutput, LocalAIChatCompletionsAPIProcessorConfiguration]):
+class LocalAIChatCompletionsAPIProcessor(
+    OpenAIAPIProcessor[
+        LocalAIChatCompletionsAPIProcessorInput,
+        LocalAIChatCompletionsAPIProcessorOutput,
+        LocalAIChatCompletionsAPIProcessorConfiguration]):
     def _get_api_url(self) -> str:
         return '{}/chat/completions'.format(self.configuration.base_url)
 
@@ -135,14 +158,19 @@ class LocalAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[LocalAIChatCompletio
     def name() -> str:
         return 'localai_chat_completions_api_processor'
 
-    def _get_api_request_payload(self, input: LocalAIChatCompletionsAPIProcessorInput, configuration: LocalAIChatCompletionsAPIProcessorConfiguration) -> dict:
+    def _get_api_request_payload(
+            self,
+            input: LocalAIChatCompletionsAPIProcessorInput,
+            configuration: LocalAIChatCompletionsAPIProcessorConfiguration) -> dict:
         input_json = json.loads(
             input.copy(
                 exclude={'env'},
             ).json(),
         )
         configuration_json = json.loads(configuration.json())
-        if 'functions' in input_json and (input_json['functions'] is None or len(input_json['functions']) == 0):
+        if 'functions' in input_json and (
+            input_json['functions'] is None or len(
+                input_json['functions']) == 0):
             del input_json['functions']
             if 'function_call' in configuration_json:
                 del configuration_json['function_call']
@@ -157,7 +185,8 @@ class LocalAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[LocalAIChatCompletio
             if 'function_call' in message and message['function_call'] is None:
                 del message['function_call']
 
-            if 'function_call' in message and 'name' in message['function_call'] and not message['function_call']['name']:
+            if 'function_call' in message and 'name' in message[
+                    'function_call'] and not message['function_call']['name']:
                 del message['function_call']
 
         messages = []
@@ -181,7 +210,11 @@ class LocalAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[LocalAIChatCompletio
 
         return request_payload
 
-    def _transform_streaming_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> LocalAIChatCompletionsAPIProcessorOutput:
+    def _transform_streaming_api_response(
+            self,
+            input: OpenAIAPIProcessorInput,
+            configuration: OpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> LocalAIChatCompletionsAPIProcessorOutput:
         text = response.content.decode('utf-8')
         json_response = json.loads(text.split('data: ')[1])
         choices = list(
@@ -193,7 +226,11 @@ class LocalAIChatCompletionsAPIProcessor(OpenAIAPIProcessor[LocalAIChatCompletio
                 raw_response=json_response),
         )
 
-    def _transform_api_response(self, input: OpenAIAPIProcessorInput, configuration: OpenAIAPIProcessorConfiguration, response: HttpAPIProcessorOutput) -> LocalAIChatCompletionsAPIProcessorOutput:
+    def _transform_api_response(
+            self,
+            input: OpenAIAPIProcessorInput,
+            configuration: OpenAIAPIProcessorConfiguration,
+            response: HttpAPIProcessorOutput) -> LocalAIChatCompletionsAPIProcessorOutput:
         choices = list(
             map(lambda x: ChatMessage(**x['message']),
                 json.loads(response.text)['choices']),

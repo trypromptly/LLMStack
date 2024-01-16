@@ -28,7 +28,8 @@ class ProfileViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['get'])
     def me(self, request):
-        return HttpResponse(json.dumps({'user': request.user.email}), content_type='application/json')
+        return HttpResponse(json.dumps(
+            {'user': request.user.email}), content_type='application/json')
 
     @action(detail=True, methods=['get'])
     def get_flags(self, request):
@@ -40,13 +41,15 @@ class ProfileViewSet(viewsets.ViewSet):
             return DRFResponse(flag_values)
         except Exception as e:
             logger.exception(e)
-            return DRFResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return DRFResponse({'error': str(e)},
+                               status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['patch'])
     def patch(self, request):
         profile = get_object_or_404(Profile, user=request.user)
         should_update = False
-        if 'openai_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'openai_key' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             openai_key = request.data.get('openai_key')
             if openai_key and len(openai_key) > 0:
@@ -55,7 +58,8 @@ class ProfileViewSet(viewsets.ViewSet):
                 ).decode('utf-8')
             else:
                 profile.openai_key = ''
-        if 'stabilityai_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'stabilityai_key' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             stabilityai_key = request.data.get('stabilityai_key')
             if stabilityai_key and len(stabilityai_key) > 0:
@@ -64,7 +68,8 @@ class ProfileViewSet(viewsets.ViewSet):
                 ).decode('utf-8')
             else:
                 profile.stabilityai_key = ''
-        if 'cohere_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'cohere_key' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             cohere_key = request.data.get('cohere_key')
             if cohere_key and len(cohere_key) > 0:
@@ -74,7 +79,8 @@ class ProfileViewSet(viewsets.ViewSet):
             else:
                 profile.cohere_key = ''
 
-        if 'forefrontai_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'forefrontai_key' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             forefrontai_key = request.data.get('forefrontai_key')
             if forefrontai_key and len(forefrontai_key) > 0:
@@ -84,7 +90,8 @@ class ProfileViewSet(viewsets.ViewSet):
             else:
                 profile.forefrontai_key = ''
 
-        if 'elevenlabs_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'elevenlabs_key' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             elevenlabs_key = request.data.get('elevenlabs_key')
             if elevenlabs_key and len(elevenlabs_key) > 0:
@@ -94,7 +101,8 @@ class ProfileViewSet(viewsets.ViewSet):
             else:
                 profile.elevenlabs_key = ''
 
-        if 'google_service_account_json_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'google_service_account_json_key' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             try:
                 google_service_account_json_key = json.loads(
@@ -105,7 +113,8 @@ class ProfileViewSet(viewsets.ViewSet):
                     ).decode().strip(),
                 )
 
-                if google_service_account_json_key and len(google_service_account_json_key.keys()) > 0:
+                if google_service_account_json_key and len(
+                        google_service_account_json_key.keys()) > 0:
                     profile.google_service_account_json_key = profile.encrypt_value(
                         json.dumps(
                             google_service_account_json_key,
@@ -124,7 +133,8 @@ class ProfileViewSet(viewsets.ViewSet):
                 else:
                     profile.google_service_account_json_key = ''
 
-        if 'azure_openai_api_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'azure_openai_api_key' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             azure_openai_api_key = request.data.get('azure_openai_api_key')
             if azure_openai_api_key and len(azure_openai_api_key) > 0:
@@ -133,7 +143,8 @@ class ProfileViewSet(viewsets.ViewSet):
                 ).decode('utf-8')
             else:
                 profile.azure_openai_api_key = ''
-        if 'localai_api_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'localai_api_key' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             localai_api_key = request.data.get('localai_api_key')
             if localai_api_key and len(localai_api_key) > 0:
@@ -143,7 +154,8 @@ class ProfileViewSet(viewsets.ViewSet):
             else:
                 profile.localai_api_key = ''
 
-        if 'localai_base_url' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'localai_base_url' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             localai_base_url = request.data.get('localai_base_url')
             if localai_base_url and len(localai_base_url) > 0:
@@ -151,7 +163,8 @@ class ProfileViewSet(viewsets.ViewSet):
             else:
                 profile.localai_base_url = ''
 
-        if 'anthropic_api_key' in request.data and flag_enabled('CAN_ADD_KEYS', request=request):
+        if 'anthropic_api_key' in request.data and flag_enabled(
+                'CAN_ADD_KEYS', request=request):
             should_update = True
             anthropic_api_key = request.data.get('anthropic_api_key')
             if anthropic_api_key and len(anthropic_api_key) > 0:
@@ -166,7 +179,8 @@ class ProfileViewSet(viewsets.ViewSet):
             logo = request.data.get('logo')
             profile.logo = logo
 
-        if 'domains' in request.data and flag_enabled('CAN_ADD_APP_DOMAIN', request=request):
+        if 'domains' in request.data and flag_enabled(
+                'CAN_ADD_APP_DOMAIN', request=request):
             user_published_apps = App.objects.filter(
                 owner=request.user, is_published=True,
             )

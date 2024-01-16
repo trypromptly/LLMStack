@@ -7,7 +7,10 @@ from .app_template_interface import TemplatePage
 
 class BrandCopyCheckerSchema(BaseSchema):
     brand_guidelines: str = Field(
-        title='Brand information', description='Add your brand guidelines, company information etc., to verify copy against', widget='textarea', path='processors[0].input.system_message',
+        title='Brand information',
+        description='Add your brand guidelines, company information etc., to verify copy against',
+        widget='textarea',
+        path='processors[0].input.system_message',
     )
 
 

@@ -39,13 +39,15 @@ class FunctionCallResponse(BaseModel):
 
 class ChatMessage(BaseModel):
     role: Optional[Role] = Field(
-        default=Role.USER, description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
+        default=Role.USER,
+        description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
     )
     content: Optional[str] = Field(
         default='', description='The message text.', widget='textarea',
     )
     name: Optional[str] = Field(
-        default='', widget='hidden',
+        default='',
+        widget='hidden',
         description='The name of the author of this message or the function name.',
     )
     function_call: Optional[FunctionCallResponse] = Field(
@@ -56,26 +58,35 @@ class ChatMessage(BaseModel):
 
 class FunctionCall(ApiProcessorSchema):
     name: str = Field(
-        default='', description='The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.',
+        default='',
+        description='The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.',
     )
     description: Optional[str] = Field(
         default=None, description='The description of what the function does.',
     )
     parameters: Optional[str] = Field(
-        title='Parameters', widget='textarea',
-        default=None, description='The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format.',
+        title='Parameters',
+        widget='textarea',
+        default=None,
+        description='The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format.',
     )
 
 
 class ChatCompletionsInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
-        default='', description='A message from the system, which will be prepended to the chat history.', widget='textarea',
+        default='',
+        description='A message from the system, which will be prepended to the chat history.',
+        widget='textarea',
     )
     chat_history: List[ChatMessage] = Field(
-        default=[], description='A list of messages, each with a role and message text.', widget='hidden',
+        default=[],
+        description='A list of messages, each with a role and message text.',
+        widget='hidden',
     )
     messages: List[ChatMessage] = Field(
-        default=[ChatMessage()], description='A list of messages, each with a role and message text.',
+        default=[
+            ChatMessage()],
+        description='A list of messages, each with a role and message text.',
     )
     functions: Optional[List[FunctionCall]] = Field(
         default=None,
@@ -95,7 +106,9 @@ class ChatCompletionsOutput(ApiProcessorSchema):
     )
 
 
-class ChatCompletionsConfiguration(OpenAIChatCompletionsAPIProcessorConfiguration, ApiProcessorSchema):
+class ChatCompletionsConfiguration(
+        OpenAIChatCompletionsAPIProcessorConfiguration,
+        ApiProcessorSchema):
     model: ChatCompletionsModel = Field(
         default=ChatCompletionsModel.GPT_3_5,
         description='ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.',
@@ -120,11 +133,14 @@ class ChatCompletionsConfiguration(OpenAIChatCompletionsAPIProcessorConfiguratio
         widget='hidden',
     )
     retain_history: Optional[bool] = Field(
-        default=False, description='Retain and use the chat history. (Only works in apps)', advanced_parameter=False,
+        default=False,
+        description='Retain and use the chat history. (Only works in apps)',
+        advanced_parameter=False,
     )
 
     auto_prune_chat_history: Optional[bool] = Field(
-        default=False, description="Automatically prune chat history. This is only applicable if 'retain_history' is set to 'true'.",
+        default=False,
+        description="Automatically prune chat history. This is only applicable if 'retain_history' is set to 'true'.",
     )
 
     stream: Optional[bool] = Field(widget='hidden', default=True)
@@ -177,7 +193,8 @@ def num_tokens_from_messages(messages, model='gpt-3.5-turbo-0613'):
     return num_tokens
 
 
-class ChatCompletions(ApiProcessorInterface[ChatCompletionsInput, ChatCompletionsOutput, ChatCompletionsConfiguration]):
+class ChatCompletions(
+        ApiProcessorInterface[ChatCompletionsInput, ChatCompletionsOutput, ChatCompletionsConfiguration]):
     """
     OpenAI Chat Completions API
     """
@@ -221,7 +238,8 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionsInput, ChatCompletion
                     raise Exception('Invalid chat history')
 
             # Prune chat history
-            while (num_tokens_from_messages(messages) > self._config.max_tokens) and len(messages) > 1:
+            while (num_tokens_from_messages(messages) >
+                   self._config.max_tokens) and len(messages) > 1:
                 messages.pop(0)
 
             return {'chat_history': messages}
@@ -231,13 +249,14 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionsInput, ChatCompletion
     def process(self) -> dict:
         _env = self._env
 
-        if self._config.stream != True:
+        if not self._config.stream:
             raise Exception('Stream must be true for this processor.')
 
         system_message = self._input.system_message
 
         if len(self._chat_history) == 0:
-            # If we don't have any older chat history in the session, use the chat history from the input
+            # If we don't have any older chat history in the session, use the
+            # chat history from the input
             self._chat_history = self._input.chat_history
 
         chat_history = self._chat_history if self._config.retain_history else self._input.chat_history
@@ -256,15 +275,19 @@ class ChatCompletions(ApiProcessorInterface[ChatCompletionsInput, ChatCompletion
                 )
 
         openai_chat_completions_api_processor_input = OpenAIChatCompletionsAPIProcessorInput(
-            env=_env, system_message=system_message, chat_history=chat_history, messages=self._input.messages, functions=openai_functions,
+            env=_env,
+            system_message=system_message,
+            chat_history=chat_history,
+            messages=self._input.messages,
+            functions=openai_functions,
         )
 
-        result_iter: Generator[OpenAIChatCompletionsAPIProcessorOutput] = OpenAIChatCompletionsAPIProcessor(self._config.dict()).process_iter(
-            openai_chat_completions_api_processor_input.dict(),
-        )
+        result_iter: Generator[OpenAIChatCompletionsAPIProcessorOutput] = OpenAIChatCompletionsAPIProcessor(
+            self._config.dict()).process_iter(openai_chat_completions_api_processor_input.dict(), )
 
         for result in result_iter:
-            if result.choices[0].role == None and result.choices[0].content == None and result.choices[0].function_call == None and result.choices[0].name == None:
+            if result.choices[0].role is None and result.choices[0].content is None and result.choices[
+                    0].function_call is None and result.choices[0].name is None:
                 continue
             async_to_sync(self._output_stream.write)(
                 ChatCompletionsOutput(choices=result.choices),

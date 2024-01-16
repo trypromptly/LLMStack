@@ -56,8 +56,9 @@ def create_app_session_data(app_session, endpoint, data):
 
 def save_app_session_data(app_session_data):
     app_session_data_store.set(
-        f'app_session_data_{app_session_data["app_session"]["uuid"]}_{app_session_data["endpoint"]}', json.dumps(
-            app_session_data), APP_SESSION_TIMEOUT,
+        f'app_session_data_{app_session_data["app_session"]["uuid"]}_{app_session_data["endpoint"]}',
+        json.dumps(app_session_data),
+        APP_SESSION_TIMEOUT,
     )
     return app_session_data
 
@@ -95,8 +96,9 @@ def create_agent_app_session_data(app_session, data):
 
 def save_agent_app_session_data(app_session_data):
     app_session_data_store.set(
-        f'app_session_data_{app_session_data["app_session"]["uuid"]}_agent', json.dumps(
-            app_session_data), APP_SESSION_TIMEOUT,
+        f'app_session_data_{app_session_data["app_session"]["uuid"]}_agent',
+        json.dumps(app_session_data),
+        APP_SESSION_TIMEOUT,
     )
     return app_session_data
 

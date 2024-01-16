@@ -14,14 +14,10 @@ class AppProcessorRunner(AppRunner):
     def _get_base_actor_configs(self, output_template, processor_configs):
         actor_configs = [
             ActorConfig(
-                name='input', template_key='_inputs0', actor=InputActor, kwargs={'input_request': self.input_actor_request},
-            ),
-            ActorConfig(
-                name='output', template_key='output',
-                actor=OutputActor,  kwargs={
-                    'template': '{{ processor | tojson }}'},
-            ),
-        ]
+                name='input', template_key='_inputs0', actor=InputActor, kwargs={
+                    'input_request': self.input_actor_request}, ), ActorConfig(
+                name='output', template_key='output', actor=OutputActor, kwargs={
+                     'template': '{{ processor | tojson }}'}, ), ]
 
         return actor_configs
 

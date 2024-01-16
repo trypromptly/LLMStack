@@ -19,11 +19,15 @@ class PromptlyAppProcessorOutput(ApiProcessorSchema):
 
 
 class PromptlyAppProcessorConfiguration(ApiProcessorSchema):
-    app_id: str = Field(description='Promptly App Id',
-                        advanced_parameter=False, widget='appselect', required=True)
+    app_id: str = Field(
+        description='Promptly App Id',
+        advanced_parameter=False,
+        widget='appselect',
+        required=True)
 
 
-class PromptlyAppProcessor(ApiProcessorInterface[PromptlyAppProcessorInput, PromptlyAppProcessorOutput, PromptlyAppProcessorConfiguration]):
+class PromptlyAppProcessor(
+        ApiProcessorInterface[PromptlyAppProcessorInput, PromptlyAppProcessorOutput, PromptlyAppProcessorConfiguration]):
     @staticmethod
     def name() -> str:
         return 'Promptly App'

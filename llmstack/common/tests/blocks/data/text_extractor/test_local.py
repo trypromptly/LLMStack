@@ -104,8 +104,9 @@ class LocalTextExtractorProcessorTestCase(unittest.TestCase):
             )
 
             self.assertTrue(len(result.documents) > 1)
-            self.assertEqual(result.documents[0].metadata['mime_type'],
-                             'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            self.assertEqual(
+                result.documents[0].metadata['mime_type'],
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
             self.assertEqual(
                 result.documents[0].metadata['file_name'], 'sample.docx')
 
@@ -120,8 +121,9 @@ class LocalTextExtractorProcessorTestCase(unittest.TestCase):
             )
             self.assertEqual(len(result.documents), 1)
             self.assertEqual(result.documents[0].content, 'Title\nSubtitle')
-            self.assertEqual(result.documents[0].metadata['mime_type'],
-                             'application/vnd.openxmlformats-officedocument.presentationml.presentation')
+            self.assertEqual(
+                result.documents[0].metadata['mime_type'],
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation')
             self.assertEqual(
                 result.documents[0].metadata['file_name'], 'sample.pptx')
 
