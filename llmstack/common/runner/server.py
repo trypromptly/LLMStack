@@ -17,19 +17,15 @@ from playwright.async_api import async_playwright
 
 from llmstack.common.runner.display import VirtualDisplayPool
 from llmstack.common.runner.playwright.browser import Playwright
-from llmstack.common.runner.proto.runner_pb2 import (
-    TERMINATE,
-    PlaywrightBrowserRequest,
-    PlaywrightBrowserResponse,
-    RemoteBrowserRequest,
-    RemoteBrowserResponse,
-    RemoteBrowserSession,
-    RemoteBrowserState,
-)
+from llmstack.common.runner.proto.runner_pb2 import (TERMINATE,
+                                                     PlaywrightBrowserRequest,
+                                                     PlaywrightBrowserResponse,
+                                                     RemoteBrowserRequest,
+                                                     RemoteBrowserResponse,
+                                                     RemoteBrowserSession,
+                                                     RemoteBrowserState)
 from llmstack.common.runner.proto.runner_pb2_grpc import (
-    RunnerServicer,
-    add_RunnerServicer_to_server,
-)
+    RunnerServicer, add_RunnerServicer_to_server)
 
 logger = logging.getLogger(__name__)
 
@@ -40,15 +36,25 @@ class Runner(RunnerServicer):
         self.display_pool = display_pool
         self.playwright = Playwright(display_pool)
 
-    async def _process_remote_browser_input_stream(self, request_iterator: Iterator[RemoteBrowserRequest], display, request: RemoteBrowserRequest):
-        os.environ['DISPLAY'] = f'{display["DISPLAY"]}.0'
+    async def _process_remote_browser_input_stream(
+        self,
+        request_iterator: Iterator[RemoteBrowserRequest],
+        display,
+        request: RemoteBrowserRequest,
+    ):
+        os.environ["DISPLAY"] = f'{display["DISPLAY"]}.0'
         logger.info(f"Using {os.environ['DISPLAY']}")
         session_data = None
         terminate = False
         async with async_playwright() as playwright:
             try:
-                session_data = json.loads(
-                    request.init_data.session_data) if request.init_data.session_data else None
+                session_data = (
+                    json.loads(
+                        request.init_data.session_data,
+                    )
+                    if request.init_data.session_data
+                    else None
+                )
                 browser = await playwright.chromium.launch(headless=False)
                 context = await browser.new_context(no_viewport=True, storage_state=session_data)
                 page = await context.new_page()
@@ -57,18 +63,21 @@ class Runner(RunnerServicer):
                 page_load_task = asyncio.create_task(
                     page.wait_for_url(
                         re.compile(
-                            request.init_data.terminate_url_pattern or 'chrome://newtab'),
-                        timeout=request.init_data.timeout *
-                        1000))
+                            request.init_data.terminate_url_pattern or "chrome://newtab",
+                        ),
+                        timeout=request.init_data.timeout * 1000,
+                    ),
+                )
 
                 # Navigate to the initial URL
-                await page.goto(request.init_data.url or 'chrome://newtab')
+                await page.goto(request.init_data.url or "chrome://newtab")
 
                 for next_request in request_iterator:
                     if next_request is not None:
                         if next_request.input.type == TERMINATE:
                             logger.info(
-                                'Terminating browser because of timeout')
+                                "Terminating browser because of timeout",
+                            )
                             page_load_task.cancel()
                             break
                     else:
@@ -94,7 +103,8 @@ class Runner(RunnerServicer):
                     page_load_task.cancel()
 
                 if request.init_data.persist_session and (
-                        page_load_task.done() or not request.init_data.terminate_url_pattern):
+                    page_load_task.done() or not request.init_data.terminate_url_pattern
+                ):
                     session_data = await context.storage_state()
 
                 # Clean up
@@ -102,20 +112,21 @@ class Runner(RunnerServicer):
                 await browser.close()
 
                 if terminate:
-                    raise Exception('Terminating browser')
+                    raise Exception("Terminating browser")
 
                 return session_data
 
     def GetRemoteBrowser(
-            self,
-            request_iterator: Iterator[RemoteBrowserRequest],
-            context: ServicerContext) -> Iterator[RemoteBrowserResponse]:
+        self,
+        request_iterator: Iterator[RemoteBrowserRequest],
+        context: ServicerContext,
+    ) -> Iterator[RemoteBrowserResponse]:
         # Get input from the client
         request = next(request_iterator)
 
         # Get a display from the pool and send its info to the client
         display = self.display_pool.get_display(remote_control=True)
-        wss_server_path = f'{self.wss_hostname}:{self.wss_port}' if '/' not in self.wss_hostname else self.wss_hostname
+        wss_server_path = f"{self.wss_hostname}:{self.wss_port}" if "/" not in self.wss_hostname else self.wss_hostname
 
         # Return the display info to the client
         yield RemoteBrowserResponse(
@@ -133,7 +144,10 @@ class Runner(RunnerServicer):
                 asyncio.set_event_loop(loop)
                 return loop.run_until_complete(
                     self._process_remote_browser_input_stream(
-                        request_iterator, display, request)
+                        request_iterator,
+                        display,
+                        request,
+                    ),
                 )
 
             # Create a new event loop that will be run in a separate thread
@@ -154,96 +168,152 @@ class Runner(RunnerServicer):
             state=RemoteBrowserState.TERMINATED,
             session=RemoteBrowserSession(
                 session_data=json.dumps(
-                    session_state) if session_state else '',
+                    session_state,
+                )
+                if session_state
+                else "",
             ),
         )
 
     def GetPlaywrightBrowser(
-            self,
-            request_iterator: Iterator[PlaywrightBrowserRequest],
-            context: ServicerContext) -> Iterator[PlaywrightBrowserResponse]:
+        self,
+        request_iterator: Iterator[PlaywrightBrowserRequest],
+        context: ServicerContext,
+    ) -> Iterator[PlaywrightBrowserResponse]:
         return self.playwright.get_browser(request_iterator=request_iterator)
 
 
 def main():
     # Parse arguments
-    parser = argparse.ArgumentParser(description='LLMStack runner service')
-    parser.add_argument('--port', type=int,
-                        help='Port to run the server on', default=50051)
-    parser.add_argument('--host', type=str,
-                        help='Host to run the server on', default='0.0.0.0')
+    parser = argparse.ArgumentParser(description="LLMStack runner service")
     parser.add_argument(
-        '--max-displays',
+        "--port",
         type=int,
-        help='Maximum number of virtual displays to use',
-        default=5)
-    parser.add_argument('--start-display', type=int,
-                        help='Start display number number', default=99)
-    parser.add_argument('--display-res', type=str,
-                        help='Display resolution', default='1024x720x24')
-    parser.add_argument('--rfb-start-port', type=int,
-                        help='RFB start port', default=12000)
-    parser.add_argument('--redis-host', type=str,
-                        help='Redis host', default='localhost')
-    parser.add_argument('--redis-port', type=int,
-                        help='Redis port', default=6379)
-    parser.add_argument('--redis-db', type=int,
-                        help='Redis DB', default=0)
-    parser.add_argument('--redis-password', type=str,
-                        help='Redis password', default=None)
+        help="Port to run the server on",
+        default=50051,
+    )
     parser.add_argument(
-        '--hostname',
+        "--host",
         type=str,
-        help='Hostname for mapping remote browser',
-        default='localhost')
+        help="Host to run the server on",
+        default="0.0.0.0",
+    )
     parser.add_argument(
-        '--wss-hostname',
-        type=str,
-        help='Hostname for remote browser websocket',
-        default='localhost')
-    parser.add_argument(
-        '--wss-port',
+        "--max-displays",
         type=int,
-        help='Port for remote browser websocket',
-        default=23100)
+        help="Maximum number of virtual displays to use",
+        default=5,
+    )
     parser.add_argument(
-        '--wss-secure',
+        "--start-display",
+        type=int,
+        help="Start display number number",
+        default=99,
+    )
+    parser.add_argument(
+        "--display-res",
+        type=str,
+        help="Display resolution",
+        default="1024x720x24",
+    )
+    parser.add_argument(
+        "--rfb-start-port",
+        type=int,
+        help="RFB start port",
+        default=12000,
+    )
+    parser.add_argument(
+        "--redis-host",
+        type=str,
+        help="Redis host",
+        default="localhost",
+    )
+    parser.add_argument(
+        "--redis-port",
+        type=int,
+        help="Redis port",
+        default=6379,
+    )
+    parser.add_argument(
+        "--redis-db",
+        type=int,
+        help="Redis DB",
+        default=0,
+    )
+    parser.add_argument(
+        "--redis-password",
+        type=str,
+        help="Redis password",
+        default=None,
+    )
+    parser.add_argument(
+        "--hostname",
+        type=str,
+        help="Hostname for mapping remote browser",
+        default="localhost",
+    )
+    parser.add_argument(
+        "--wss-hostname",
+        type=str,
+        help="Hostname for remote browser websocket",
+        default="localhost",
+    )
+    parser.add_argument(
+        "--wss-port",
+        type=int,
+        help="Port for remote browser websocket",
+        default=23100,
+    )
+    parser.add_argument(
+        "--wss-secure",
         type=bool,
         default=False,
-        help='Secure remote browser websocket',
-        action=argparse.BooleanOptionalAction)
+        help="Secure remote browser websocket",
+        action=argparse.BooleanOptionalAction,
+    )
     parser.add_argument(
-        '--playwright-port',
+        "--playwright-port",
         type=int,
-        help='Port for playwright server. Disabled by default',
-        default=-1)
+        help="Port for playwright server. Disabled by default",
+        default=-1,
+    )
     parser.add_argument
-    parser.add_argument('--log-level', type=str,
-                        help='Log level', default='INFO')
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        help="Log level",
+        default="INFO",
+    )
     args = parser.parse_args()
 
     # Read environment variables and override arguments
-    args.port = int(os.getenv('RUNNER_PORT', args.port))
-    args.host = os.getenv('RUNNER_HOST', args.host)
+    args.port = int(os.getenv("RUNNER_PORT", args.port))
+    args.host = os.getenv("RUNNER_HOST", args.host)
     args.max_displays = int(
-        os.getenv('RUNNER_MAX_DISPLAYS', args.max_displays))
+        os.getenv("RUNNER_MAX_DISPLAYS", args.max_displays),
+    )
     args.start_display = int(
-        os.getenv('RUNNER_START_DISPLAY', args.start_display))
-    args.display_res = os.getenv('RUNNER_DISPLAY_RES', args.display_res)
+        os.getenv("RUNNER_START_DISPLAY", args.start_display),
+    )
+    args.display_res = os.getenv("RUNNER_DISPLAY_RES", args.display_res)
     args.rfb_start_port = int(
-        os.getenv('RUNNER_RFB_START_PORT', args.rfb_start_port))
-    args.redis_host = os.getenv('RUNNER_REDIS_HOST', args.redis_host)
-    args.redis_port = int(os.getenv('RUNNER_REDIS_PORT', args.redis_port))
+        os.getenv("RUNNER_RFB_START_PORT", args.rfb_start_port),
+    )
+    args.redis_host = os.getenv("RUNNER_REDIS_HOST", args.redis_host)
+    args.redis_port = int(os.getenv("RUNNER_REDIS_PORT", args.redis_port))
     args.redis_password = os.getenv(
-        'RUNNER_REDIS_PASSWORD', args.redis_password)
-    args.redis_db = int(os.getenv('RUNNER_REDIS_DB', args.redis_db))
-    args.hostname = os.getenv('RUNNER_HOSTNAME', args.hostname)
-    args.wss_hostname = os.getenv('RUNNER_WSS_HOSTNAME', args.wss_hostname)
-    args.wss_port = int(os.getenv('RUNNER_WSS_PORT', args.wss_port))
-    args.wss_secure = os.getenv('RUNNER_WSS_SECURE', args.wss_secure)
-    args.log_level = os.getenv('RUNNER_LOG_LEVEL', args.log_level)
+        "RUNNER_REDIS_PASSWORD",
+        args.redis_password,
+    )
+    args.redis_db = int(os.getenv("RUNNER_REDIS_DB", args.redis_db))
+    args.hostname = os.getenv("RUNNER_HOSTNAME", args.hostname)
+    args.wss_hostname = os.getenv("RUNNER_WSS_HOSTNAME", args.wss_hostname)
+    args.wss_port = int(os.getenv("RUNNER_WSS_PORT", args.wss_port))
+    args.wss_secure = os.getenv("RUNNER_WSS_SECURE", args.wss_secure)
+    args.log_level = os.getenv("RUNNER_LOG_LEVEL", args.log_level)
     args.playwright_port = int(
-        os.getenv('RUNNER_PLAYWRIGHT_PORT', args.playwright_port))
+        os.getenv("RUNNER_PLAYWRIGHT_PORT", args.playwright_port),
+    )
 
     # Configure logger
     logging.basicConfig(level=args.log_level)
@@ -253,31 +323,48 @@ def main():
         host=args.redis_host,
         port=args.redis_port,
         db=args.redis_db,
-        password=args.redis_password)
+        password=args.redis_password,
+    )
     redis_client.ping()
 
     # Start playwright server if port is specified
     playwright_process = None
     if args.playwright_port > 0:
         playwright_process = subprocess.Popen(
-            ['playwright', 'run-server', '--port', str(args.playwright_port)])
+            ["playwright", "run-server", "--port", str(args.playwright_port)],
+        )
 
     display_pool = VirtualDisplayPool(
-        redis_client, hostname=args.hostname, max_displays=args.max_displays,
-        start_display=args.start_display, display_res=args.display_res,
-        rfb_start_port=args.rfb_start_port)
+        redis_client,
+        hostname=args.hostname,
+        max_displays=args.max_displays,
+        start_display=args.start_display,
+        display_res=args.display_res,
+        rfb_start_port=args.rfb_start_port,
+    )
 
     # Start websockify server
     websockify_process = subprocess.Popen(
-        ['websockify', f'{args.wss_port}', '--web', '/usr/share/www/html',
-         '--token-plugin=llmstack.common.runner.token.TokenRedis',
-         f'--token-source={args.redis_host}:{args.redis_port}:{args.redis_db}{f":{args.redis_password}" if args.redis_password else ""}',
-         '-v', '--auth-plugin=llmstack.common.runner.auth.BasicHTTPAuthWithRedis',
-         f'--auth-source={args.redis_host}:{args.redis_port}:{args.redis_db}{f":{args.redis_password}" if args.redis_password else ""}'],
-        close_fds=True)
+        [
+            "websockify",
+            f"{args.wss_port}",
+            "--web",
+            "/usr/share/www/html",
+            "--token-plugin=llmstack.common.runner.token.TokenRedis",
+            f'--token-source={args.redis_host}:{args.redis_port}:{args.redis_db}{f":{args.redis_password}" if args.redis_password else ""}',
+            "-v",
+            "--auth-plugin=llmstack.common.runner.auth.BasicHTTPAuthWithRedis",
+            f'--auth-source={args.redis_host}:{args.redis_port}:{args.redis_db}{f":{args.redis_password}" if args.redis_password else ""}',
+        ],
+        close_fds=True,
+    )
 
-    server = grpc_server(futures.ThreadPoolExecutor(
-        max_workers=10, thread_name_prefix='grpc_workers'))
+    server = grpc_server(
+        futures.ThreadPoolExecutor(
+            max_workers=10,
+            thread_name_prefix="grpc_workers",
+        ),
+    )
     runner = Runner(display_pool=display_pool)
     runner.wss_hostname = args.wss_hostname
     runner.wss_port = args.wss_port
@@ -290,9 +377,9 @@ def main():
     health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
 
     # Set the health status to SERVING
-    health_servicer.set('', health_pb2.HealthCheckResponse.SERVING)
+    health_servicer.set("", health_pb2.HealthCheckResponse.SERVING)
 
-    server.add_insecure_port(f'[::]:{args.port}')
+    server.add_insecure_port(f"[::]:{args.port}")
     server.start()
 
     logger.info(f"Server running at http://[::]:{args.port}")
@@ -303,5 +390,5 @@ def main():
     playwright_process.kill()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

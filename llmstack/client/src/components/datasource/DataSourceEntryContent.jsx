@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { TextareaAutosize } from "@mui/base";
 import {
   Box,
   Button,
@@ -8,7 +8,7 @@ import {
   Drawer,
   Stack,
 } from "@mui/material";
-import { TextareaAutosize } from "@mui/base";
+import { useEffect, useState } from "react";
 import { axios } from "../../data/axios";
 
 function DataSourceEntryContent({ onCancel, dataSourceEntry, open }) {

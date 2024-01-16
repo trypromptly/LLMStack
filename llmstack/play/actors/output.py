@@ -1,7 +1,6 @@
 import logging
 import time
-from typing import Any
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from jinja2 import Template
 
@@ -15,6 +14,7 @@ class OutputResponse(NamedTuple):
     """
     Output response
     """
+
     response_content_type: str
     response_status: int
     response_body: str
@@ -23,11 +23,12 @@ class OutputResponse(NamedTuple):
 
 class OutputActor(Actor):
     def __init__(
-            self,
-            output_stream,
-            dependencies=[],
-            template=None,
-            all_dependencies=[]):
+        self,
+        output_stream,
+        dependencies=[],
+        template=None,
+        all_dependencies=[],
+    ):
         super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
         self._output_stream = output_stream
         self._data = None
@@ -47,14 +48,15 @@ class OutputActor(Actor):
                 self._data = Template(self._template).render(**message)
             except Exception as e:
                 logger.error(
-                    f'Error rendering template {self._template} with data {self._data}: {e}', )
+                    f"Error rendering template {self._template} with data {self._data}: {e}",
+                )
         else:
             self._data = message
         self._data_done = True
         self._output_stream.finalize()
 
         output_response = OutputResponse(
-            response_content_type='application/json' if not self._template else 'text/markdown',
+            response_content_type="application/json" if not self._template else "text/markdown",
             response_status=200 if not self._error else 400,
             response_body=self._data if not self._error else self._error,
             response_headers={},
@@ -62,7 +64,8 @@ class OutputActor(Actor):
 
         self._output_stream.bookkeep(
             BookKeepingData(
-                run_data={**output_response._asdict()}, timestamp=time.time(),
+                run_data={**output_response._asdict()},
+                timestamp=time.time(),
             ),
         )
 
@@ -71,8 +74,7 @@ class OutputActor(Actor):
 
     def get_output(self):
         while True:
-            if self._error or self._stopped or (
-                    self._data_done and self._data_sent):
+            if self._error or self._stopped or (self._data_done and self._data_sent):
                 break
             if not self._data or self._data_sent:
                 continue
@@ -81,15 +83,14 @@ class OutputActor(Actor):
             yield self._data
 
         if self._error:
-            yield {'errors': list(self._error.values())}
+            yield {"errors": list(self._error.values())}
 
         if self._stopped:
-            yield {'errors': ['Timed out waiting for response']}
+            yield {"errors": ["Timed out waiting for response"]}
 
     def get_output_stream(self):
         while True:
-            if self._error or self._stopped or (
-                    self._data_done and self._data_chunk_sent):
+            if self._error or self._stopped or (self._data_done and self._data_chunk_sent):
                 break
 
             if self._data_chunks_sent < len(self._data_chunks):
@@ -104,7 +105,7 @@ class OutputActor(Actor):
             yield self._data_chunk
 
         if self._error:
-            yield {'errors': list(self._error.values())}
+            yield {"errors": list(self._error.values())}
 
     def on_stop(self) -> None:
         self._data_done = True
@@ -114,13 +115,13 @@ class OutputActor(Actor):
         return super().on_stop()
 
     def on_error(self, error) -> None:
-        logger.info(f'Error in output actor: {error}')
+        logger.info(f"Error in output actor: {error}")
         self._error = error
         self._data_done = True
         self._output_stream.finalize()
 
         output_response = OutputResponse(
-            response_content_type='application/json',
+            response_content_type="application/json",
             response_status=400,
             response_body=self._error,
             response_headers={},
@@ -128,7 +129,8 @@ class OutputActor(Actor):
 
         self._output_stream.bookkeep(
             BookKeepingData(
-                run_data={**output_response._asdict()}, timestamp=time.time(),
+                run_data={**output_response._asdict()},
+                timestamp=time.time(),
             ),
         )
 
@@ -136,9 +138,6 @@ class OutputActor(Actor):
         if not self._template:
             return []
 
-        dependencies = [
-            x.split('.')[0]
-            for x in extract_jinja2_variables(self._template)
-        ]
+        dependencies = [x.split(".")[0] for x in extract_jinja2_variables(self._template)]
 
         return list(set(dependencies))

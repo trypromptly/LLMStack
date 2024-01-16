@@ -1,15 +1,15 @@
 import logging
 import time
-from typing import Any
-from typing import List
-from typing import Optional
+from typing import Any, List, Optional
 
 from asgiref.sync import async_to_sync
 
-from llmstack.common.blocks.http import BearerTokenAuth, HttpAPIProcessor, HttpAPIProcessorInput, HttpMethod, JsonBody
+from llmstack.common.blocks.http import (BearerTokenAuth, HttpAPIProcessor,
+                                         HttpAPIProcessorInput, HttpMethod,
+                                         JsonBody)
 from llmstack.play.actor import BookKeepingData
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
-
+from llmstack.processors.providers.api_processor_interface import (
+    ApiProcessorInterface, ApiProcessorSchema)
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,9 @@ class DiscordSendMessageConfiguration(ApiProcessorSchema):
 
 class DiscordSendMessageProcessor(
     ApiProcessorInterface[
-        DiscordSendMessageInput, DiscordSendMessageOutput, DiscordSendMessageConfiguration,
+        DiscordSendMessageInput,
+        DiscordSendMessageOutput,
+        DiscordSendMessageConfiguration,
     ],
 ):
     """
@@ -51,32 +53,32 @@ class DiscordSendMessageProcessor(
 
     @staticmethod
     def name() -> str:
-        return 'discord/send_message'
+        return "discord/send_message"
 
     @staticmethod
     def slug() -> str:
-        return 'send_message'
+        return "send_message"
 
     @staticmethod
     def description() -> str:
-        return 'Send a message to a Discord channel'
+        return "Send a message to a Discord channel"
 
     @staticmethod
     def provider_slug() -> str:
-        return 'discord'
+        return "discord"
 
     def _send_message(self, app_id: str, message: str, token: str) -> None:
         url = f"https://discord.com/api/v10/webhooks/{app_id}/{token}"
-        http_processor = HttpAPIProcessor(configuration={'timeout': 60})
+        http_processor = HttpAPIProcessor(configuration={"timeout": 60})
         response = http_processor.process(
             HttpAPIProcessorInput(
                 url=url,
                 method=HttpMethod.POST,
-                headers={'Content-Type': 'application/json'},
+                headers={"Content-Type": "application/json"},
                 authorization=BearerTokenAuth(token=token),
                 body=JsonBody(
                     json_body={
-                        'content': message,
+                        "content": message,
                     },
                 ),
             ).dict(),
@@ -87,7 +89,10 @@ class DiscordSendMessageProcessor(
         _env = self._env
         input = self._input.dict()
         response = self._send_message(
-            input['app_id'], input['text'], input['token'])
+            input["app_id"],
+            input["text"],
+            input["token"],
+        )
 
         async_to_sync(self._output_stream.write)(
             DiscordSendMessageOutput(code=200),
@@ -97,11 +102,17 @@ class DiscordSendMessageProcessor(
 
     def on_error(self, error: Any) -> None:
         input = self._input.dict()
-        logger.error(f'Error in DiscordSendMessageProcessor: {error}')
-        error_msg = '\n'.join(error.values()) if isinstance(
-            error, dict) else 'Error in processing request'
+        logger.error(f"Error in DiscordSendMessageProcessor: {error}")
+        error_msg = (
+            "\n".join(error.values())
+            if isinstance(
+                error,
+                dict,
+            )
+            else "Error in processing request"
+        )
 
-        self._send_message(input['app_id'], error_msg, input['token'])
+        self._send_message(input["app_id"], error_msg, input["token"])
 
         async_to_sync(self._output_stream.write)(
             DiscordSendMessageOutput(code=200),
@@ -115,7 +126,10 @@ class DiscordSendMessageProcessor(
             input=self._input,
             timestamp=time.time(),
             run_data={
-                'discord': {
-                    'user': self._input.discord_user_id,
-                    'username': self._input.discord_username,
-                    'global_name': self._input.discord_global_name}})
+                "discord": {
+                    "user": self._input.discord_user_id,
+                    "username": self._input.discord_username,
+                    "global_name": self._input.discord_global_name,
+                },
+            },
+        )

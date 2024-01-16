@@ -9,10 +9,12 @@ class ApiProcessorFactory:
     """
     Factory class for API processors
     """
+
     @staticmethod
     def get_api_processor(
-            processor_slug,
-            provider_slug=None) -> ApiProcessorInterface:
+        processor_slug,
+        provider_slug=None,
+    ) -> ApiProcessorInterface:
         subclasses = ApiProcessorInterface.__subclasses__()
         for subclass in subclasses:
             # Convert to lowercase to avoid case sensitivity

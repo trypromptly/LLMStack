@@ -1,8 +1,6 @@
 import json
 import logging
-from typing import List
-from typing import Any
-from typing import Optional
+from typing import Any, List, Optional
 
 import grpc
 import stability_sdk.interfaces.gooseai.generation.generation_pb2 as generation
@@ -10,12 +8,12 @@ from google.protobuf.json_format import MessageToJson
 from pydantic import Field
 from stability_sdk import client
 
-from .utils import get_guidance_preset_enum
 from llmstack.common.utils.utils import get_key_or_raise
-from .utils import get_sampler_grpc_enum
-from .utils import GuidancePreset
-from .utils import Sampler
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema, IMAGE_WIDGET_NAME
+from llmstack.processors.providers.api_processor_interface import (
+    IMAGE_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema)
+
+from .utils import (GuidancePreset, Sampler, get_guidance_preset_enum,
+                    get_sampler_grpc_enum)
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class ImageToImageConfiguration(ApiProcessorSchema):
-    engine_id: str = 'stable-diffusion-512-v2-0'
+    engine_id: str = "stable-diffusion-512-v2-0"
     """
     Inference engine (model) to use.
     """
@@ -74,59 +72,68 @@ class ImageToImageInput(ApiProcessorSchema):
 class ImageToImageOutput(ApiProcessorSchema):
     answer: List[str] = Field(
         default=[],
-        description='The generated images.',
+        description="The generated images.",
         widget=IMAGE_WIDGET_NAME,
     )
 
 
 class ImageToImage(
-        ApiProcessorInterface[ImageToImageInput, ImageToImageOutput, ImageToImageConfiguration]):
+    ApiProcessorInterface[ImageToImageInput, ImageToImageOutput, ImageToImageConfiguration],
+):
     """
     StabilityAI Images Generations API
     """
+
     @staticmethod
     def name() -> str:
-        return 'Image2Image'
+        return "Image2Image"
 
     @staticmethod
     def slug() -> str:
-        return 'image2image'
+        return "image2image"
 
     @staticmethod
     def description() -> str:
-        return 'Generates images from images'
+        return "Generates images from images"
 
     @staticmethod
     def provider_slug() -> str:
-        return 'stabilityai'
+        return "stabilityai"
 
     def process(self, input: dict) -> dict:
         _env = self._env
         stability_api_key = get_key_or_raise(
-            _env, 'stabilityai_api_key', 'No stabilityai_api_key found in _env', )
+            _env,
+            "stabilityai_api_key",
+            "No stabilityai_api_key found in _env",
+        )
 
         init_image = self._input.init_image
         prompt = self._input.prompt
         if not prompt or not init_image:
-            raise Exception('Prompt and init_image are required')
+            raise Exception("Prompt and init_image are required")
 
         negative_prompt = self._input.negative_prompt
         prompts = []
-        for p in prompt.split(','):
+        for p in prompt.split(","):
             if p:
                 prompts.append(
                     generation.Prompt(
-                        text=p, parameters=generation.PromptParameters(
-                            weight=1),
+                        text=p,
+                        parameters=generation.PromptParameters(
+                            weight=1,
+                        ),
                     ),
                 )
 
-        for p in negative_prompt.split(','):
+        for p in negative_prompt.split(","):
             if p:
                 prompts.append(
                     generation.Prompt(
-                        text=p, parameters=generation.PromptParameters(
-                            weight=-1),
+                        text=p,
+                        parameters=generation.PromptParameters(
+                            weight=-1,
+                        ),
                     ),
                 )
 
@@ -158,18 +165,19 @@ class ImageToImage(
             logger.exception(ex)
             raise Exception(ex)
 
-        api_response = {'data': []}
+        api_response = {"data": []}
         for resp in grpc_response:
-            api_response['data'].append(json.loads(MessageToJson(resp)))
+            api_response["data"].append(json.loads(MessageToJson(resp)))
 
         result = []
-        for entry in api_response['data']:
-            if 'artifacts' in entry:
-                for image_data in entry['artifacts']:
-                    if image_data['type'] == 'ARTIFACT_IMAGE':
+        for entry in api_response["data"]:
+            if "artifacts" in entry:
+                for image_data in entry["artifacts"]:
+                    if image_data["type"] == "ARTIFACT_IMAGE":
                         result.append(
-                            'data:{};base64, {}'.format(
-                                image_data['mime'], image_data['binary'],
+                            "data:{};base64, {}".format(
+                                image_data["mime"],
+                                image_data["binary"],
                             ),
                         )
 

@@ -1,12 +1,12 @@
 import { Alert, Box, Stack } from "@mui/material";
-import { useRecoilValue } from "recoil";
-import { profileFlagsState } from "../../data/atoms";
-import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
-import { AppSaveButtons } from "./AppSaveButtons";
-import ThemedJsonForm from "../ThemedJsonForm";
-import { createRef } from "react";
 import validator from "@rjsf/validator-ajv8";
+import { createRef } from "react";
+import { useRecoilValue } from "recoil";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
+import { profileFlagsState } from "../../data/atoms";
+import ThemedJsonForm from "../ThemedJsonForm";
+import { AppSaveButtons } from "./AppSaveButtons";
+import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 
 const twilioConfigSchema = {
   type: "object",

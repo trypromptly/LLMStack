@@ -1,8 +1,3 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { axios } from "../data/axios";
-import { Ws } from "../data/ws";
-import ReactGA from "react-ga4";
 import {
   AppBar,
   Box,
@@ -13,14 +8,19 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
+import { useEffect, useState } from "react";
+import ReactGA from "react-ga4";
+import { useParams } from "react-router-dom";
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useRecoilValue } from "recoil";
-import { isMobileState, isLoggedInState } from "../data/atoms";
-import { AgentRenderer } from "../components/apps/AgentRenderer";
-import { WebChatRender } from "../components/apps/WebChatRender";
-import { WebAppRenderer } from "../components/apps/WebAppRenderer";
 import { ReactComponent as GithubIcon } from "../assets/images/icons/github.svg";
 import logo from "../assets/logo.png";
+import { AgentRenderer } from "../components/apps/AgentRenderer";
+import { WebAppRenderer } from "../components/apps/WebAppRenderer";
+import { WebChatRender } from "../components/apps/WebChatRender";
+import { isLoggedInState, isMobileState } from "../data/atoms";
+import { axios } from "../data/axios";
+import { Ws } from "../data/ws";
 
 const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
 

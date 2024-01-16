@@ -1,6 +1,7 @@
 import unittest
 
-from llmstack.common.utils.splitter import CSVTextSplitter, CharacterTextSplitter, HtmlSplitter
+from llmstack.common.utils.splitter import (CharacterTextSplitter,
+                                            CSVTextSplitter, HtmlSplitter)
 
 # Unitest for CSVTextSplitter
 
@@ -14,7 +15,8 @@ class TestCSVTextSplitter(unittest.TestCase):
         9,10,11,12,"Baz"
         """
         output = CSVTextSplitter(
-            chunk_size=100, chunk_overlap=1,
+            chunk_size=100,
+            chunk_overlap=1,
             length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
         ).split_text(csv_data)
 
@@ -27,14 +29,17 @@ class TestCharacterTextSplitter(unittest.TestCase):
         In the 3rd century BCE, the islands formed part of the Maurya Empire, during its expansion in the south, ruled by the Buddhist emperor Ashoka of Magadha.[67] The Kanheri Caves in Borivali were excavated from basalt rock in the first century CE,[68] and served as an important centre of Buddhism in Western India during ancient Times.[69] The city then was known as Heptanesia (Ancient Greek: A Cluster of Seven Islands) to the Greek geographer Ptolemy in 150 CE.[70] The Mahakali Caves in Andheri were cut out between the 1st century BCE and the 6th century CE.[71][72]
         """
         output = CharacterTextSplitter(
-            separator='.', is_regex=False,
-            chunk_size=100, chunk_overlap=0,
+            separator=".",
+            is_regex=False,
+            chunk_size=100,
+            chunk_overlap=0,
         ).split_text(text_data)
 
 
 class TestHtmlSplitter(unittest.TestCase):
     def test_html_split(self):
         import lxml.html
+
         html_data = """<!DOCTYPE html>
 <html>
 <head>
@@ -88,13 +93,17 @@ class TestHtmlSplitter(unittest.TestCase):
 </body>
 </html>"""
         output = HtmlSplitter(chunk_size=100).split_text(html_data)
-        output_str = ''.join(output)
+        output_str = "".join(output)
         # Assert html document is equal
         self.assertEquals(
             lxml.etree.tostring(
-                lxml.html.fromstring(output_str)), lxml.etree.tostring(
-                lxml.html.fromstring(html_data)))
+                lxml.html.fromstring(output_str),
+            ),
+            lxml.etree.tostring(
+                lxml.html.fromstring(html_data),
+            ),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

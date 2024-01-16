@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   Box,
   Collapse,
@@ -17,10 +16,11 @@ import {
   Typography,
 } from "@mui/material";
 import moment from "moment";
+import { useEffect, useState } from "react";
 import UAParser from "ua-parser-js";
-import { axios } from "../../data/axios";
 import { ReactComponent as DiscordIcon } from "../../assets/images/icons/discord.svg";
 import { ReactComponent as SlackIcon } from "../../assets/images/icons/slack.svg";
+import { axios } from "../../data/axios";
 
 const browserAndOSFromUACache = {};
 

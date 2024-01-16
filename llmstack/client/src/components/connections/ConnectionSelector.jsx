@@ -1,7 +1,7 @@
-import { useRecoilValue } from "recoil";
-import { connectionsState } from "../../data/atoms";
 import { Autocomplete, TextField } from "@mui/material";
 import FormControl from "@mui/material/FormControl";
+import { useRecoilValue } from "recoil";
+import { connectionsState } from "../../data/atoms";
 
 function ConnectionSelector(props) {
   const connections = useRecoilValue(connectionsState);
@@ -19,8 +19,8 @@ function ConnectionSelector(props) {
           return connection
             ? connection.name
             : option.name
-            ? option.name
-            : option;
+              ? option.name
+              : option;
         }}
         isOptionEqualToValue={(option, value) => {
           return (

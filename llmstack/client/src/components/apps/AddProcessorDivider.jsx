@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import {
   Button,
   FormControl,
@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { styled } from "@mui/system";
+import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import {
   apiBackendsState,
@@ -18,7 +19,6 @@ import {
   profileFlagsState,
 } from "../../data/atoms";
 import { ProviderIcon } from "./ProviderIcon";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 const Separator = styled("div")`
   display: flex;

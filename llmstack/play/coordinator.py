@@ -21,20 +21,19 @@ class Coordinator(ThreadingActor):
         # Make sure there are not duplicate names or template_keys in
         # actor_configs
         assert len(set([actor_config.name for actor_config in actor_configs])) == len(
-            actor_configs, )
+            actor_configs,
+        )
 
         assert len(set([actor_config.template_key for actor_config in actor_configs])) == len(
-            actor_configs, )
+            actor_configs,
+        )
 
-        self._actor_configs = {
-            actor_config.name: actor_config for actor_config in actor_configs
-        }
+        self._actor_configs = {actor_config.name: actor_config for actor_config in actor_configs}
 
         # Create output_streams
         self._output_streams = []
 
-        all_dependencies = [
-            actor_config.template_key for actor_config in actor_configs]
+        all_dependencies = [actor_config.template_key for actor_config in actor_configs]
         # Spawn actors
         self.actors = {}
         for actor_config in actor_configs:
@@ -42,25 +41,27 @@ class Coordinator(ThreadingActor):
                 OutputStream(
                     stream_id=actor_config.name,
                     coordinator_urn=self.actor_urn,
-                    output_cls=actor_config.output_cls),
+                    output_cls=actor_config.output_cls,
+                ),
             )
             actor = actor_config.actor.start(
-                output_stream=self._output_streams[-1], dependencies=actor_config.dependencies, all_dependencies=all_dependencies, **actor_config.kwargs,
+                output_stream=self._output_streams[-1],
+                dependencies=actor_config.dependencies,
+                all_dependencies=all_dependencies,
+                **actor_config.kwargs,
             )
             self.actors[actor_config.name] = actor
             logger.info(
-                f'Spawned actor {actor} for coordinator {self.actor_urn}',
+                f"Spawned actor {actor} for coordinator {self.actor_urn}",
             )
 
         # Get dependencies for each actor and build a map of actor_urn ->
         # [actor_urn]
         self._actor_dependencies = {
-            actor_config.name: set(
-            ) for actor_config in actor_configs
+            actor_config.name: set() for actor_config in actor_configs
         }  # Actors that this actor depends on
         self._actor_dependents = {
-            actor_config.name: set(
-            ) for actor_config in actor_configs
+            actor_config.name: set() for actor_config in actor_configs
         }  # Actors that depend on this actor
         for actor_config in actor_configs:
             dependencies = self.actors[actor_config.name]._actor.dependencies
@@ -73,7 +74,11 @@ class Coordinator(ThreadingActor):
                         self._actor_dependents[actor.name].add(
                             actor_config.name,
                         )
-                    elif not dependency.startswith('_inputs[') and not dependency == 'processor' and actor.template_key == '':
+                    elif (
+                        not dependency.startswith("_inputs[")
+                        and not dependency == "processor"
+                        and actor.template_key == ""
+                    ):
                         self._actor_dependencies[actor_config.name].add(
                             actor.name,
                         )
@@ -88,11 +93,16 @@ class Coordinator(ThreadingActor):
 
         for actor in self._actor_dependencies:
             if not self._actor_dependencies[actor] and actor not in [
-                    'input', 'output', 'bookkeeping']:
+                "input",
+                "output",
+                "bookkeeping",
+            ]:
                 logger.info(
-                    f'Actor {actor} has no dependencies. Sending BEGIN message')
+                    f"Actor {actor} has no dependencies. Sending BEGIN message",
+                )
                 self.actors[actor].tell(
-                    Message(message_type=MessageType.BEGIN))
+                    Message(message_type=MessageType.BEGIN),
+                )
 
     def relay(self, message: Message):
         self._idle_timer.reset()
@@ -107,13 +117,14 @@ class Coordinator(ThreadingActor):
             return
 
         logger.debug(
-            f'Relaying message {message} to {self._actor_dependents.get(message.message_from)}',
+            f"Relaying message {message} to {self._actor_dependents.get(message.message_from)}",
         )
 
         # If it is a targetted message, send it to the targetted actor
         if message.message_to and message.message_to in self.actors:
             logger.info(
-                f'Sending message {message} to {message.message_to} from {message.message_from}')
+                f"Sending message {message} to {message.message_to} from {message.message_from}",
+            )
             self.actors[message.message_to].tell(message)
             return
 
@@ -128,28 +139,35 @@ class Coordinator(ThreadingActor):
         return self.actors[name]
 
     def on_timer_expire(self) -> None:
-        logger.info(f'Coordinator {self.actor_urn} timed out')
-        output_actor_ref = self.actors.get('output')
+        logger.info(f"Coordinator {self.actor_urn} timed out")
+        output_actor_ref = self.actors.get("output")
         if output_actor_ref:
             if len(self._stream_errors.keys()) > 0:
                 # We timed out because some actor in the chain errored out
                 errors = list(
-                    map(lambda x: self._stream_errors[x], self._stream_errors))
+                    map(lambda x: self._stream_errors[x], self._stream_errors),
+                )
                 output_actor_ref.tell(
                     Message(
                         message_type=MessageType.STREAM_ERROR,
                         message={
-                            'errors': errors}))
+                            "errors": errors,
+                        },
+                    ),
+                )
             else:
                 output_actor_ref.tell(
                     Message(
                         message_type=MessageType.STREAM_ERROR,
                         message={
-                            'errors': ['Timed out waiting for response']}))
+                            "errors": ["Timed out waiting for response"],
+                        },
+                    ),
+                )
             ResettableTimer(10, self.force_stop).start()
 
     def on_stop(self) -> None:
-        logger.info(f'Coordinator {self.actor_urn} stopping')
+        logger.info(f"Coordinator {self.actor_urn} stopping")
         self._idle_timer.stop()
         for actor in self.actors.values():
             try:
@@ -157,7 +175,7 @@ class Coordinator(ThreadingActor):
             except ActorDeadError:
                 pass
             except Exception as e:
-                logger.error(f'Failed to stop actor {actor}: {e}')
+                logger.error(f"Failed to stop actor {actor}: {e}")
 
     def force_stop(self) -> None:
         try:
@@ -165,4 +183,4 @@ class Coordinator(ThreadingActor):
         except ActorDeadError:
             pass
         except Exception as e:
-            logger.error(f'Failed to stop coordinator {self}: {e}')
+            logger.error(f"Failed to stop coordinator {self}: {e}")

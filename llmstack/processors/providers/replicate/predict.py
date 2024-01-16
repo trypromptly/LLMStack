@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
+from llmstack.processors.providers.api_processor_interface import \
+    ApiProcessorInterface
 
 
 class PredictInput(BaseModel):
@@ -17,10 +18,10 @@ class PredictConfiguration(BaseModel):
 
 
 class Predict(
-        ApiProcessorInterface[PredictInput, PredictOutput, PredictConfiguration]):
-
+    ApiProcessorInterface[PredictInput, PredictOutput, PredictConfiguration],
+):
     def name() -> str:
-        return 'replicate/predict'
+        return "replicate/predict"
 
     def process(self, input: dict) -> dict:
         raise Exception()

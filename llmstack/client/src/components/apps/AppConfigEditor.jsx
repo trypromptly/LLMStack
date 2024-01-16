@@ -1,22 +1,21 @@
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  CardContent,
-  Typography,
-} from "@mui/material";
 import ComputerTwoToneIcon from "@mui/icons-material/ComputerTwoTone";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ForumTwoToneIcon from "@mui/icons-material/ForumTwoTone";
 import SmartButtonIcon from "@mui/icons-material/SmartButton";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  CardContent,
+  Typography,
+} from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
+import { useEffect, useState } from "react";
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 import ThemedJsonForm from "../ThemedJsonForm";
+import "./AppEditor.css";
 import { AppInputSchemaEditor } from "./AppInputSchemaEditor";
 import { AppStepCard } from "./AppStepCard";
-import "./AppEditor.css";
-import { useValidationErrorsForAppComponents } from "../../data/appValidation";
-
-import { useState, useEffect } from "react";
 
 export function AppConfigEditor({
   appType,

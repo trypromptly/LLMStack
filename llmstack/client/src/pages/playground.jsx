@@ -1,22 +1,19 @@
+import { Box, Button, Grid, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
-
-import { Stack, Grid, Box, Button } from "@mui/material";
-
-import ApiBackendSelector from "../components/ApiBackendSelector";
 import { useRecoilState, useRecoilValue } from "recoil";
+import ApiBackendSelector from "../components/ApiBackendSelector";
+import ConfigForm from "../components/ConfigForm";
+import InputForm from "../components/InputForm";
+import Output from "../components/Output";
 import {
   apiBackendSelectedState,
-  endpointSelectedState,
   endpointConfigValueState,
-  templateValueState,
-  isLoggedInState,
+  endpointSelectedState,
   inputValueState,
+  isLoggedInState,
+  templateValueState,
 } from "../data/atoms";
 import { axios } from "../data/axios";
-import Output from "../components/Output";
-
-import InputForm from "../components/InputForm";
-import ConfigForm from "../components/ConfigForm";
 
 export default function PlaygroundPage() {
   const isLoggedIn = useRecoilValue(isLoggedInState);

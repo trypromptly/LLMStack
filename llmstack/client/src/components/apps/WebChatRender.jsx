@@ -1,23 +1,22 @@
-import React, { useEffect, useRef, useState } from "react";
-import ReactGA from "react-ga4";
-import { Avatar, Chip, Fab, Grid, Stack, Typography } from "@mui/material";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { Liquid } from "liquidjs";
-import validator from "@rjsf/validator-ajv8";
-import Form from "@rjsf/mui";
-import { useSetRecoilState } from "recoil";
-import { get } from "lodash";
-import { streamChunksState } from "../../data/atoms";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
+import { Avatar, Chip, Fab, Grid, Stack, Typography } from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Form from "@rjsf/mui";
+import validator from "@rjsf/validator-ajv8";
+import { Liquid } from "liquidjs";
+import { get } from "lodash";
+import React, { useEffect, useRef, useState } from "react";
+import ReactGA from "react-ga4";
+import { useSetRecoilState } from "recoil";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
-import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
+import { streamChunksState } from "../../data/atoms";
 import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
-import { LexicalRenderer } from "./lexical/LexicalRenderer";
+import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { Errors } from "../Output";
-
-import "./WebChatRender.css";
+import { LexicalRenderer } from "./lexical/LexicalRenderer";
 import MarkdownRenderer from "./MarkdownRenderer";
+import "./WebChatRender.css";
 
 function CustomFileWidget(props) {
   return <FileUploadWidget {...props} />;

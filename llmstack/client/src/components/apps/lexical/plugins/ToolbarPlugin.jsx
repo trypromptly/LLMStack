@@ -1,46 +1,46 @@
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  SELECTION_CHANGE_COMMAND,
-  FORMAT_TEXT_COMMAND,
-  FORMAT_ELEMENT_COMMAND,
-  OUTDENT_CONTENT_COMMAND,
-  INDENT_CONTENT_COMMAND,
-  $getSelection,
-  $isRangeSelection,
-  $createParagraphNode,
-  $getNodeByKey,
-} from "lexical";
+  $createCodeNode,
+  $isCodeNode,
+  getCodeLanguages,
+  getDefaultCodeLanguage,
+} from "@lexical/code";
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import {
-  $isParentElementRTL,
-  $wrapNodes,
-  $isAtNodeEnd,
-  $patchStyleText,
-  $getSelectionStyleValueForProperty,
-} from "@lexical/selection";
-import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
-import {
+  $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
-  REMOVE_LIST_COMMAND,
-  $isListNode,
   ListNode,
+  REMOVE_LIST_COMMAND,
 } from "@lexical/list";
-import { createPortal } from "react-dom";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   $createHeadingNode,
   $createQuoteNode,
   $isHeadingNode,
 } from "@lexical/rich-text";
 import {
-  $createCodeNode,
-  $isCodeNode,
-  getDefaultCodeLanguage,
-  getCodeLanguages,
-} from "@lexical/code";
-import DropDown, { DropDownItem } from "./DropDown";
+  $getSelectionStyleValueForProperty,
+  $isAtNodeEnd,
+  $isParentElementRTL,
+  $patchStyleText,
+  $wrapNodes,
+} from "@lexical/selection";
+import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
+import {
+  $createParagraphNode,
+  $getNodeByKey,
+  $getSelection,
+  $isRangeSelection,
+  FORMAT_ELEMENT_COMMAND,
+  FORMAT_TEXT_COMMAND,
+  INDENT_CONTENT_COMMAND,
+  OUTDENT_CONTENT_COMMAND,
+  SELECTION_CHANGE_COMMAND,
+} from "lexical";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import ColorPicker from "./ColorPicker";
+import DropDown, { DropDownItem } from "./DropDown";
 
 const LowPriority = 1;
 

@@ -1,17 +1,13 @@
-from typing import Any
-from typing import Mapping
-from typing import Optional
-from typing import Type
+from typing import Any, Mapping, Optional, Type
 
 import orjson
 import ujson
 from django.conf import settings
 from rest_framework.exceptions import ParseError
 from rest_framework.parsers import BaseParser
-from rest_framework.renderers import BaseRenderer
-from rest_framework.renderers import JSONRenderer
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 
-__all__ = ['UJSONParser', 'ORJSONParser']
+__all__ = ["UJSONParser", "ORJSONParser"]
 
 
 class UJSONParser(BaseParser):
@@ -19,7 +15,7 @@ class UJSONParser(BaseParser):
     Parses JSON-serialized data by ujson parser.
     """
 
-    media_type: str = 'application/json'
+    media_type: str = "application/json"
     renderer_class: Type[BaseRenderer] = JSONRenderer
 
     def parse(
@@ -32,13 +28,13 @@ class UJSONParser(BaseParser):
         Parses the incoming bytestream as JSON and returns the resulting data.
         """
         parser_context = parser_context or {}
-        encoding = parser_context.get('encoding', settings.DEFAULT_CHARSET)
+        encoding = parser_context.get("encoding", settings.DEFAULT_CHARSET)
 
         try:
             data = stream.read().decode(encoding)
             return ujson.loads(data)
         except ValueError as exc:
-            raise ParseError('JSON parse error - %s' % str(exc))
+            raise ParseError("JSON parse error - %s" % str(exc))
 
 
 class ORJSONParser(BaseParser):
@@ -46,7 +42,7 @@ class ORJSONParser(BaseParser):
     Parses JSON-serialized data by orjson parser.
     """
 
-    media_type: str = 'application/json'
+    media_type: str = "application/json"
     renderer_class: Type[BaseRenderer] = JSONRenderer
 
     def parse(
@@ -59,10 +55,10 @@ class ORJSONParser(BaseParser):
         Parses the incoming bytestream as JSON and returns the resulting data.
         """
         parser_context = parser_context or {}
-        encoding = parser_context.get('encoding', settings.DEFAULT_CHARSET)
+        encoding = parser_context.get("encoding", settings.DEFAULT_CHARSET)
 
         try:
             data = stream.read().decode(encoding)
             return orjson.loads(data)
         except ValueError as exc:
-            raise ParseError('JSON parse error - %s' % str(exc))
+            raise ParseError("JSON parse error - %s" % str(exc))

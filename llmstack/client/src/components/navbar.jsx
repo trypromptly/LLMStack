@@ -1,19 +1,21 @@
-import React from "react";
+import { Menu as MenuIcon } from "@mui/icons-material";
 import {
   AppBar,
-  Toolbar,
-  Menu,
-  MenuItem,
   IconButton,
   Link,
+  Menu,
+  MenuItem,
+  Toolbar,
 } from "@mui/material";
-import { Menu as MenuIcon } from "@mui/icons-material";
+import React from "react";
 
-const icon = require(`../assets/${
-  process.env.REACT_APP_SITE_NAME
-    ? process.env.REACT_APP_SITE_NAME.toLowerCase()
-    : "llmstack"
-}-icon.png`);
+const icon = require(
+  `../assets/${
+    process.env.REACT_APP_SITE_NAME
+      ? process.env.REACT_APP_SITE_NAME.toLowerCase()
+      : "llmstack"
+  }-icon.png`,
+);
 
 const navbarStyle = {
   width: "100%",

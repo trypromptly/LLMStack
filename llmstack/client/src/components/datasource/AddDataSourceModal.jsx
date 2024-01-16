@@ -1,21 +1,21 @@
-import { useState } from "react";
 import {
   Button,
   ButtonGroup,
-  TextField,
-  Stack,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
 } from "@mui/material";
-import { useRecoilValue, useRecoilState } from "recoil";
+import validator from "@rjsf/validator-ajv8";
+import { enqueueSnackbar } from "notistack";
+import { useState } from "react";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { dataSourcesState, dataSourceTypesState } from "../../data/atoms";
 import { axios } from "../../data/axios";
-import validator from "@rjsf/validator-ajv8";
-import ThemedJsonForm from "../ThemedJsonForm";
 import { useReloadDataSourceEntries } from "../../data/init";
-import { enqueueSnackbar } from "notistack";
+import ThemedJsonForm from "../ThemedJsonForm";
 
 export function AddDataSourceModal({
   open,

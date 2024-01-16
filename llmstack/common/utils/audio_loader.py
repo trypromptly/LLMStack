@@ -10,7 +10,7 @@ from yt_dlp import YoutubeDL
 
 logger = logging.getLogger(__name__)
 
-WHISPER_MODEL = 'whisper-1'
+WHISPER_MODEL = "whisper-1"
 
 
 def split_audio_by_size(data, file_name, format, chunk_size_mb=20):
@@ -28,23 +28,24 @@ def split_audio_by_size(data, file_name, format, chunk_size_mb=20):
     return output_chunks
 
 
-def partition_audio(data, mime_type, openai_key, file_name='audio_file.mp3'):
+def partition_audio(data, mime_type, openai_key, file_name="audio_file.mp3"):
     """
     Extract text from audio data
     """
     if openai_key is None:
         raise Exception(
-            'OpenAI API key is missing, it is required for audio partitioning.', )
+            "OpenAI API key is missing, it is required for audio partitioning.",
+        )
 
-    extension = 'mp3'
-    if mime_type.endswith('mp3'):
-        extension = 'mp3'
-    elif mime_type.endswith('mpeg'):
-        extension = 'mp3'
-    elif mime_type.endswith('mp4'):
-        extension = 'mp4'
-    elif mime_type.endswith('webm'):
-        extension = 'webm'
+    extension = "mp3"
+    if mime_type.endswith("mp3"):
+        extension = "mp3"
+    elif mime_type.endswith("mpeg"):
+        extension = "mp3"
+    elif mime_type.endswith("mp4"):
+        extension = "mp4"
+    elif mime_type.endswith("webm"):
+        extension = "webm"
 
     openai_client = openai.OpenAI(
         api_key=openai_key,
@@ -57,19 +58,20 @@ def partition_audio(data, mime_type, openai_key, file_name='audio_file.mp3'):
         file_p = chunk
         file_p.name = file_name
         response = openai_client.audio.transcriptions.create(
-            model=WHISPER_MODEL, file=file_p,
+            model=WHISPER_MODEL,
+            file=file_p,
         )
         result.append(response.text)
     return result
 
 
 def extract_audio_from_video(
-        video_data: bytes,
-        video_format: str,
-        audio_format: str = 'mp3') -> bytes:
+    video_data: bytes,
+    video_format: str,
+    audio_format: str = "mp3",
+) -> bytes:
     with tempfile.TemporaryDirectory() as dir:
-        with tempfile.NamedTemporaryFile(suffix=f'.{video_format}', dir=dir) as video_temp_file:
-
+        with tempfile.NamedTemporaryFile(suffix=f".{video_format}", dir=dir) as video_temp_file:
             # Write video data to temp file
             video_temp_file.write(video_data)
             video_temp_file.flush()
@@ -77,9 +79,11 @@ def extract_audio_from_video(
             # Extract audio using FFmpeg
             stream = ffmpeg.input(video_temp_file.name)
 
-            with tempfile.NamedTemporaryFile(suffix=f'.{audio_format}', dir=dir, delete=True) as audio_temp_file:
+            with tempfile.NamedTemporaryFile(suffix=f".{audio_format}", dir=dir, delete=True) as audio_temp_file:
                 stream = ffmpeg.output(
-                    stream, audio_temp_file.name, format=audio_format,
+                    stream,
+                    audio_temp_file.name,
+                    format=audio_format,
                 ).overwrite_output()
                 ffmpeg.run(stream)
                 # Read audio data from temp file
@@ -88,42 +92,43 @@ def extract_audio_from_video(
     return audio_data
 
 
-def partition_video(data, mime_type, openai_key, file_name='video_file'):
-    extension = 'mp4'
-    if mime_type.endswith('mp4'):
-        extension = 'mp4'
-    elif mime_type.endswith('webm'):
-        extension = 'webm'
+def partition_video(data, mime_type, openai_key, file_name="video_file"):
+    extension = "mp4"
+    if mime_type.endswith("mp4"):
+        extension = "mp4"
+    elif mime_type.endswith("webm"):
+        extension = "webm"
     else:
-        raise Exception('Unsupported video format')
+        raise Exception("Unsupported video format")
 
     # Extract audio from video
     audio_data = extract_audio_from_video(data, extension)
     return partition_audio(
         audio_data,
-        'audio/mp3',
+        "audio/mp3",
         openai_key,
-        'audio_file.mp3')
+        "audio_file.mp3",
+    )
 
 
 def partition_youtube_audio(url, openai_key):
     # Create a temp directory to store the audio file
     with tempfile.TemporaryDirectory() as dir:
         ydl_opts = {
-            'format': 'bestaudio/best',
-            'paths': {'temp': dir, 'home': dir},
-            'noplaylist': True,
-            'quiet': True,
+            "format": "bestaudio/best",
+            "paths": {"temp": dir, "home": dir},
+            "noplaylist": True,
+            "quiet": True,
         }
 
         with YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(url, download=True)
-            title = info_dict['title']
-            description = info_dict['description']
+            title = info_dict["title"]
+            description = info_dict["description"]
             audio_file_name = ydl.prepare_filename(info_dict)
-            mime_type = info_dict['ext']
+            mime_type = info_dict["ext"]
 
-        with open(audio_file_name, 'rb') as audio_file:
+        with open(audio_file_name, "rb") as audio_file:
             audio_data = audio_file.read()
 
         result = partition_audio(
@@ -132,4 +137,4 @@ def partition_youtube_audio(url, openai_key):
             mime_type=mime_type,
             openai_key=openai_key,
         )
-        return [f'Description : {description}', f'Title : {title}'] + result
+        return [f"Description : {description}", f"Title : {title}"] + result

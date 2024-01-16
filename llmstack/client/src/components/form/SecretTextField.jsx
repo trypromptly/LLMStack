@@ -1,9 +1,7 @@
 // A wrapper over TextField component to show secret field
-
-import React, { useState } from "react";
-
-import { IconButton, InputAdornment, TextField } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { IconButton, InputAdornment, TextField } from "@mui/material";
+import { useState } from "react";
 
 const SecretTextField = (props) => {
   const [showSecret, setShowSecret] = useState(false);

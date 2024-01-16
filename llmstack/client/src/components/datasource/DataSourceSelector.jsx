@@ -1,10 +1,10 @@
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { Autocomplete, TextField } from "@mui/material";
+import FormControl from "@mui/material/FormControl";
 import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { dataSourcesState, orgDataSourcesState } from "../../data/atoms";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { AddDataSourceModal } from "./AddDataSourceModal";
-import { Autocomplete, TextField } from "@mui/material";
-import FormControl from "@mui/material/FormControl";
 
 export function DataSourceSelector(props) {
   const dataSources = useRecoilValue(dataSourcesState);
@@ -33,8 +33,8 @@ export function DataSourceSelector(props) {
           return dataSource
             ? dataSource.name
             : option.name
-            ? option.name
-            : option;
+              ? option.name
+              : option;
         }}
         isOptionEqualToValue={(option, value) => {
           return option.uuid === value.uuid || option.uuid === value;

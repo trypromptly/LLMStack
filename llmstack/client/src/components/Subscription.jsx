@@ -1,9 +1,7 @@
+import { Button, Paper, Stack, Typography } from "@mui/material";
 import { useState } from "react";
-
-import { Button, Paper, Typography, Stack } from "@mui/material";
-
-import { organizationState, profileFlagsState } from "../data/atoms";
 import { useRecoilValue } from "recoil";
+import { organizationState, profileFlagsState } from "../data/atoms";
 import SubscriptionUpdateModal from "./SubscriptionUpdateModal";
 
 function Subscription(props) {
@@ -38,8 +36,8 @@ function Subscription(props) {
                   {profileFlags.IS_PRO_SUBSCRIBER
                     ? "Pro"
                     : profileFlags.IS_BASIC_SUBSCRIBER
-                    ? "Basic"
-                    : "Free"}
+                      ? "Basic"
+                      : "Free"}
                 </strong>
                 &nbsp;tier. Click on the Manage Subscription button below to
                 change your plan.&nbsp;

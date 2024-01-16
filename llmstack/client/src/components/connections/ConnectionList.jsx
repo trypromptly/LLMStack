@@ -1,3 +1,4 @@
+import { DeleteForever, EditOutlined } from "@mui/icons-material";
 import {
   Alert,
   AlertTitle,
@@ -14,9 +15,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { EditOutlined, DeleteForever } from "@mui/icons-material";
-import { connectionsState } from "../../data/atoms";
 import { useRecoilValue } from "recoil";
+import { connectionsState } from "../../data/atoms";
 
 const statusChipStyle = {
   width: "10px",

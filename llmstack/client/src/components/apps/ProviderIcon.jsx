@@ -1,26 +1,28 @@
-import apolloIcon_light from "../../assets/images/apollo-icon-light.png";
-import apolloIcon_dark from "../../assets/images/apollo-icon-dark.png";
-import promptlyIcon_light from "../../assets/images/promptly-icon-light.png";
-import openAiIcon_light from "../../assets/images/openai-icon-light.png";
-import openAiIcon_dark from "../../assets/images/openai-icon-dark.png";
-import stabilityAiIcon_light from "../../assets/images/stabilityai-icon-light.png";
-import stabilityAiIcon_dark from "../../assets/images/stabilityai-icon-dark.png";
-import anthropicIcon_light from "../../assets/images/anthropic-icon-light.png";
 import anthropicIcon_dark from "../../assets/images/anthropic-icon-dark.png";
-import cohereIcon_light from "../../assets/images/cohere-icon-light.png";
+import anthropicIcon_light from "../../assets/images/anthropic-icon-light.png";
+import apolloIcon_dark from "../../assets/images/apollo-icon-dark.png";
+import apolloIcon_light from "../../assets/images/apollo-icon-light.png";
+import {
+  default as azureIcon_dark,
+  default as azureIcon_light,
+} from "../../assets/images/azure-icon-light.png";
 import cohereIcon_dark from "../../assets/images/cohere-icon-dark.png";
-import azureIcon_light from "../../assets/images/azure-icon-light.png";
-import azureIcon_dark from "../../assets/images/azure-icon-light.png";
-import elevenLabsIcon_light from "../../assets/images/elevenlabs-icon-light.png";
+import cohereIcon_light from "../../assets/images/cohere-icon-light.png";
 import elevenLabsIcon_dark from "../../assets/images/elevenlabs-icon-dark.png";
-import vertexAiIcon_light from "../../assets/images/vertexai-icon-light.png";
-import vertexAiIcon_dark from "../../assets/images/vertexai-icon-dark.png";
-import localAiIcon_light from "../../assets/images/localai-icon-light.png";
-import localAiIcon_dark from "../../assets/images/localai-icon-dark.png";
-import linkedinIcon_light from "../../assets/images/linkedin-icon-light.png";
-import linkedinIcon_dark from "../../assets/images/linkedin-icon-dark.png";
-import heygenIcon_light from "../../assets/images/heygen-icon-light.png";
+import elevenLabsIcon_light from "../../assets/images/elevenlabs-icon-light.png";
 import heygenIcon_dark from "../../assets/images/heygen-icon-dark.png";
+import heygenIcon_light from "../../assets/images/heygen-icon-light.png";
+import linkedinIcon_dark from "../../assets/images/linkedin-icon-dark.png";
+import linkedinIcon_light from "../../assets/images/linkedin-icon-light.png";
+import localAiIcon_dark from "../../assets/images/localai-icon-dark.png";
+import localAiIcon_light from "../../assets/images/localai-icon-light.png";
+import openAiIcon_dark from "../../assets/images/openai-icon-dark.png";
+import openAiIcon_light from "../../assets/images/openai-icon-light.png";
+import promptlyIcon_light from "../../assets/images/promptly-icon-light.png";
+import stabilityAiIcon_dark from "../../assets/images/stabilityai-icon-dark.png";
+import stabilityAiIcon_light from "../../assets/images/stabilityai-icon-light.png";
+import vertexAiIcon_dark from "../../assets/images/vertexai-icon-dark.png";
+import vertexAiIcon_light from "../../assets/images/vertexai-icon-light.png";
 
 const getIconImage = (icon, isActive) => {
   switch (icon?.replaceAll(" ", "").toLowerCase()) {

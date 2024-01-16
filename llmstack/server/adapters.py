@@ -1,6 +1,7 @@
+import logging
+
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-import logging
 
 logger = logging.getLogger(__name__)
 

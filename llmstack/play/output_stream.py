@@ -6,17 +6,13 @@ import logging
 from collections import defaultdict
 from enum import Enum
 from itertools import chain
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Type
+from typing import Any, Dict, List, Type
 
 import orjson
 from pydantic import BaseModel
-from pykka import ActorProxy
-from pykka import ActorRegistry
+from pykka import ActorProxy, ActorRegistry
 
-__all__ = ['OutputStream']
+__all__ = ["OutputStream"]
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +28,24 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
       The stitched object.
     """
     from llmstack.play.actors.agent import AgentOutput
+
     if isinstance(obj1, dict) and isinstance(obj2, AgentOutput):
         return {
-            **obj1, **obj2.dict(), **{
-                'content': stitch_model_objects(
+            **obj1,
+            **obj2.dict(),
+            **{
+                "content": stitch_model_objects(
                     obj1.get(
-                        'content', {}), obj2.dict().get(
-                        'content', {}))}}
+                        "content",
+                        {},
+                    ),
+                    obj2.dict().get(
+                        "content",
+                        {},
+                    ),
+                ),
+            },
+        }
 
     if isinstance(obj1, BaseModel):
         obj1 = obj1.dict()
@@ -46,7 +53,9 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
         obj2 = obj2.dict()
 
     def stitch_fields(
-            obj1_fields: Dict[str, Any], obj2_fields: Dict[str, Any]) -> Dict[str, Any]:
+        obj1_fields: Dict[str, Any],
+        obj2_fields: Dict[str, Any],
+    ) -> Dict[str, Any]:
         stitched_fields = defaultdict(Any)
         for field in set(obj1_fields).union(obj2_fields):
             stitched_fields[field] = stitch_model_objects(
@@ -75,22 +84,23 @@ class MessageType(str, Enum):
     """
     MessageType enum.
     """
-    BEGIN = 'begin'
-    BOOKKEEPING = 'bookkeeping',
-    BOOKKEEPING_DONE = 'bookkeeping_done'
-    INPUT = 'input'
-    TOOL_INVOKE = 'tool_invoke'
-    AGENT_DONE = 'agent_done'
-    STREAM = 'stream'
-    STREAM_CLOSED = 'stream_closed'
-    STREAM_ERROR = 'stream_error'
-    STREAM_DATA = 'stream_data'
-    STREAM_FINALIZED = 'stream_finalized'
-    STREAM_FINALIZED_ERROR = 'stream_finalized_error'
-    STREAM_FINALIZED_DATA = 'stream_finalized_data'
-    STREAM_FINALIZED_CLOSED = 'stream_finalized_closed'
-    STREAM_FINALIZED_CLOSED_ERROR = 'stream_finalized_closed_error'
-    STREAM_FINALIZED_CLOSED_DATA = 'stream_finalized_closed_data'
+
+    BEGIN = "begin"
+    BOOKKEEPING = ("bookkeeping",)
+    BOOKKEEPING_DONE = "bookkeeping_done"
+    INPUT = "input"
+    TOOL_INVOKE = "tool_invoke"
+    AGENT_DONE = "agent_done"
+    STREAM = "stream"
+    STREAM_CLOSED = "stream_closed"
+    STREAM_ERROR = "stream_error"
+    STREAM_DATA = "stream_data"
+    STREAM_FINALIZED = "stream_finalized"
+    STREAM_FINALIZED_ERROR = "stream_finalized_error"
+    STREAM_FINALIZED_DATA = "stream_finalized_data"
+    STREAM_FINALIZED_CLOSED = "stream_finalized_closed"
+    STREAM_FINALIZED_CLOSED_ERROR = "stream_finalized_closed_error"
+    STREAM_FINALIZED_CLOSED_DATA = "stream_finalized_closed_data"
 
     def __str__(self):
         return self.value
@@ -116,8 +126,8 @@ class OutputStream:
     """
 
     class Status:
-        OPEN = 'open'
-        CLOSED = 'closed'
+        OPEN = "open"
+        CLOSED = "closed"
 
     def __init__(
         self,
@@ -148,7 +158,7 @@ class OutputStream:
                     self._coordinator_urn,
                 ).proxy()
             except Exception as e:
-                logger.error(f'Failed to get coordinator proxy: {e}')
+                logger.error(f"Failed to get coordinator proxy: {e}")
 
         return self._coordinator_proxy
 
@@ -169,25 +179,33 @@ class OutputStream:
         Stitches fields from data to _data.
         """
         if self._status == OutputStream.Status.CLOSED:
-            raise StreamClosedException('Output stream is closed.')
+            raise StreamClosedException("Output stream is closed.")
 
         self._coordinator.relay(
             Message(
                 message_id=message_id or self._message_id,
                 message_type=MessageType.STREAM_DATA,
                 message_from=self._stream_id,
-                message=orjson.loads(data.json()) if isinstance(
-                    data, BaseModel,
-                ) else data,
+                message=orjson.loads(data.json())
+                if isinstance(
+                    data,
+                    BaseModel,
+                )
+                else data,
                 message_to=message_to,
                 response_to=response_to or self._response_to,
             ),
         )
 
         if self._data is None:
-            self._data = data.dict() if isinstance(
-                data, BaseModel,
-            ) else data
+            self._data = (
+                data.dict()
+                if isinstance(
+                    data,
+                    BaseModel,
+                )
+                else data
+            )
         else:
             self._data = stitch_model_objects(self._data, data)
         await asyncio.sleep(0.0001)
@@ -197,7 +215,7 @@ class OutputStream:
         Writes raw message to the output stream.
         """
         if self._status == OutputStream.Status.CLOSED:
-            raise StreamClosedException('Output stream is closed.')
+            raise StreamClosedException("Output stream is closed.")
 
         self._coordinator.relay(message)
 
@@ -222,10 +240,11 @@ class OutputStream:
         return self._status
 
     def finalize(
-            self,
-            message_id=None,
-            message_to=None,
-            response_to=None) -> BaseModel:
+        self,
+        message_id=None,
+        message_to=None,
+        response_to=None,
+    ) -> BaseModel:
         """
         Closes the output stream and returns stitched data.
         """
@@ -238,9 +257,12 @@ class OutputStream:
                 message_to=message_to,
                 message_type=MessageType.STREAM_CLOSED,
                 message_from=self._stream_id,
-                message=orjson.loads(output.json()) if isinstance(
-                    output, BaseModel,
-                ) else output,
+                message=orjson.loads(output.json())
+                if isinstance(
+                    output,
+                    BaseModel,
+                )
+                else output,
                 response_to=response_to or self._response_to,
             ),
         )
@@ -274,7 +296,7 @@ class OutputStream:
             )
         except Exception as e:
             # Coordinator may have already stopped
-            logger.info(f'Error sending bookkeeping done message: {e}')
+            logger.info(f"Error sending bookkeeping done message: {e}")
 
     def error(self, error: Exception) -> None:
         """

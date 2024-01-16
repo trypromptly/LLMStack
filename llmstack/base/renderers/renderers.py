@@ -1,14 +1,10 @@
-from typing import Any
-from typing import Mapping
-from typing import Optional
-from typing import Union
+from typing import Any, Mapping, Optional, Union
 
 import orjson
 import ujson
 from rest_framework.renderers import JSONRenderer
 
-
-__all__ = ['UJSONRenderer', 'ORJSONRenderer']
+__all__ = ["UJSONRenderer", "ORJSONRenderer"]
 
 
 class UJSONRenderer(JSONRenderer):
@@ -30,11 +26,10 @@ class UJSONRenderer(JSONRenderer):
         accepted_media_type: Optional[str] = None,
         renderer_context: Optional[Mapping[str, Any]] = None,
     ) -> bytes:
-
         if data is None:
             return bytes()
 
-        accepted_media_type = accepted_media_type or ''
+        accepted_media_type = accepted_media_type or ""
         renderer_context = renderer_context or {}
         indent = self.get_indent(accepted_media_type, renderer_context)
         encoder = self.encoder_class()
@@ -54,8 +49,8 @@ class UJSONRenderer(JSONRenderer):
             # that is a strict javascript subset. If bytes were returned
             # by json.dumps() then we don't have these characters in any case.
             # See: http://timelessrepo.com/json-isnt-a-javascript-subset
-            ret = ret.replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
-            return bytes(ret.encode('utf-8'))
+            ret = ret.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+            return bytes(ret.encode("utf-8"))
         return ret
 
 
@@ -65,6 +60,7 @@ class ORJSONRenderer(JSONRenderer):
     Applies JSON's backslash-u character escaping for non-ascii characters.
     Uses the blazing-fast orjson library for serialization.
     """
+
     # Controls whether forward slashes (/) are escaped.
     escape_forward_slashes: bool = False
     # Used to enable special encoding of "unsafe" HTML characters into safer
@@ -77,11 +73,10 @@ class ORJSONRenderer(JSONRenderer):
         accepted_media_type: Optional[str] = None,
         renderer_context: Optional[Mapping[str, Any]] = None,
     ) -> bytes:
-
         if data is None:
             return bytes()
 
-        accepted_media_type = accepted_media_type or ''
+        accepted_media_type = accepted_media_type or ""
         renderer_context = renderer_context or {}
         indent = self.get_indent(accepted_media_type, renderer_context)
         encoder = self.encoder_class()
@@ -97,6 +92,6 @@ class ORJSONRenderer(JSONRenderer):
             # that is a strict javascript subset. If bytes were returned
             # by json.dumps() then we don't have these characters in any case.
             # See: http://timelessrepo.com/json-isnt-a-javascript-subset
-            ret = ret.replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
-            return bytes(ret.encode('utf-8'))
+            ret = ret.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+            return bytes(ret.encode("utf-8"))
         return ret

@@ -1,7 +1,13 @@
 import unittest
+
 from pydantic import BaseModel
 
-from llmstack.common.blocks.base.processor import BaseProcessor, BaseConfiguration, BaseConfigurationType, BaseInput, BaseInputType, BaseOutput, BaseOutputType, ProcessorInterface
+from llmstack.common.blocks.base.processor import (BaseConfiguration,
+                                                   BaseConfigurationType,
+                                                   BaseInput, BaseInputType,
+                                                   BaseOutput, BaseOutputType,
+                                                   BaseProcessor,
+                                                   ProcessorInterface)
 
 
 class TestInputModel(BaseModel):
@@ -17,22 +23,23 @@ class TestConfigurationModel(BaseModel):
 
 
 class TestProcessor(
-        BaseProcessor[TestInputModel, TestOutputModel, TestConfigurationModel]):
+    BaseProcessor[TestInputModel, TestOutputModel, TestConfigurationModel],
+):
     @staticmethod
     def name() -> str:
-        return 'Test Processor'
+        return "Test Processor"
 
     @staticmethod
     def slug() -> str:
-        return 'test_processor'
+        return "test_processor"
 
     @staticmethod
     def description() -> str:
-        return 'Test Processor'
+        return "Test Processor"
 
     @staticmethod
     def provider_slug() -> str:
-        return 'promptly'
+        return "promptly"
 
     def process(self, input: dict) -> TestOutputModel:
         pass
@@ -40,10 +47,10 @@ class TestProcessor(
 
 class TestProcessorTestCase(unittest.TestCase):
     def test_name(self):
-        self.assertEqual(TestProcessor.name(), 'Test Processor')
+        self.assertEqual(TestProcessor.name(), "Test Processor")
 
     def test_slug(self):
-        self.assertEqual(TestProcessor.slug(), 'test_processor')
+        self.assertEqual(TestProcessor.slug(), "test_processor")
 
     def test_get_input_cls(self):
         self.assertEqual(TestProcessor.get_input_cls(), TestInputModel)
@@ -52,20 +59,28 @@ class TestProcessorTestCase(unittest.TestCase):
         self.assertEqual(TestProcessor.get_output_cls(), TestOutputModel)
 
     def test_get_configuration_cls(self):
-        self.assertEqual(TestProcessor.get_configuration_cls(),
-                         TestConfigurationModel)
+        self.assertEqual(
+            TestProcessor.get_configuration_cls(),
+            TestConfigurationModel,
+        )
 
     def test_get_input_schema(self):
-        self.assertEqual(TestProcessor.get_input_schema(),
-                         TestInputModel.schema_json())
+        self.assertEqual(
+            TestProcessor.get_input_schema(),
+            TestInputModel.schema_json(),
+        )
 
     def test_get_output_schema(self):
-        self.assertEqual(TestProcessor.get_output_schema(),
-                         TestOutputModel.schema_json())
+        self.assertEqual(
+            TestProcessor.get_output_schema(),
+            TestOutputModel.schema_json(),
+        )
 
     def test_get_configuration_schema(self):
-        self.assertEqual(TestProcessor.get_configuration_schema(),
-                         TestConfigurationModel.schema_json())
+        self.assertEqual(
+            TestProcessor.get_configuration_schema(),
+            TestConfigurationModel.schema_json(),
+        )
 
 
 class TestProcessor1Input(BaseInput):
@@ -81,29 +96,30 @@ class TestProcessor1Configuration(BaseConfiguration):
 
 
 class TestProcessor1(
-        ProcessorInterface[TestProcessor1Input, TestProcessor1Output, TestProcessor1Configuration]):
+    ProcessorInterface[TestProcessor1Input, TestProcessor1Output, TestProcessor1Configuration],
+):
     @staticmethod
     def name() -> str:
-        return 'TestProcessor'
+        return "TestProcessor"
 
     def process(
-            self,
-            input: TestProcessor1Input,
-            configuration: TestProcessor1Configuration) -> BaseOutputType:
-        if configuration.style == 'lower':
+        self,
+        input: TestProcessor1Input,
+        configuration: TestProcessor1Configuration,
+    ) -> BaseOutputType:
+        if configuration.style == "lower":
             return TestProcessor1Output(answer=input.name.lower())
-        elif configuration.style == 'upper':
+        elif configuration.style == "upper":
             return TestProcessor1Output(answer=input.name.upper())
-        elif configuration.style == 'capitalize':
+        elif configuration.style == "capitalize":
             return TestProcessor1Output(answer=input.name.capitalize())
         else:
-            raise Exception('Invalid style')
+            raise Exception("Invalid style")
 
 
 class ProcessorInterfaceTestCase(unittest.TestCase):
-
     def test_name(self):
-        self.assertEqual(TestProcessor1.name(), 'TestProcessor')
+        self.assertEqual(TestProcessor1.name(), "TestProcessor")
 
     def test_input_schema(self):
         schema = """{"title":"TestProcessor1Input","type":"object","properties":{"_env":{"title":" Env","description":"Environment variables (metadata) to be passed with input","allOf":[{"$ref":"#\\/definitions\\/BaseInputEnvironment"}]},"name":{"title":"Name","type":"string"}},"required":["name"],"definitions":{"BaseInputEnvironment":{"title":"BaseInputEnvironment","type":"object","properties":{"bypass_cache":{"title":"Bypass Cache","description":"Bypass cache","default":true,"type":"boolean"}}}}}"""
@@ -118,19 +134,18 @@ class ProcessorInterfaceTestCase(unittest.TestCase):
         self.assertEqual(TestProcessor1.get_configuration_schema(), schema)
 
     def test_process(self):
-        input = TestProcessor1Input(name='test')
-        configuration = TestProcessor1Configuration(style='lower')
-        output = TestProcessor1(
-        ).process(input=input, configuration=configuration)
-        expected_output = TestProcessor1Output(answer='test')
+        input = TestProcessor1Input(name="test")
+        configuration = TestProcessor1Configuration(style="lower")
+        output = TestProcessor1().process(input=input, configuration=configuration)
+        expected_output = TestProcessor1Output(answer="test")
         self.assertEqual(output.answer, expected_output.answer)
 
     def test_exception(self):
-        input = TestProcessor1Input(name='test')
-        configuration = TestProcessor1Configuration(style='invalid')
+        input = TestProcessor1Input(name="test")
+        configuration = TestProcessor1Configuration(style="invalid")
         with self.assertRaises(Exception) as context:
             output = TestProcessor1().process(input=input, configuration=configuration)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

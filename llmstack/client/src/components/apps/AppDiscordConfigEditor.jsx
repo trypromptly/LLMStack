@@ -1,11 +1,10 @@
 import { Box, Stack, TextField } from "@mui/material";
-import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
-import { AppSaveButtons } from "./AppSaveButtons";
 import validator from "@rjsf/validator-ajv8";
-import { useValidationErrorsForAppComponents } from "../../data/appValidation";
-
-import ThemedJsonForm from "../ThemedJsonForm";
 import { createRef } from "react";
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
+import ThemedJsonForm from "../ThemedJsonForm";
+import { AppSaveButtons } from "./AppSaveButtons";
+import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 
 const discordConfigSchema = {
   type: "object",

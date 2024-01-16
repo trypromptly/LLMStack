@@ -1,15 +1,14 @@
-import React from "react";
-
 import {
-  Dialog,
   Button as MuiButton,
-  DialogTitle,
-  DialogContent,
+  Dialog,
   DialogActions,
-  Stack,
-  Select as MuiSelect,
+  DialogContent,
+  DialogTitle,
   MenuItem,
+  Select as MuiSelect,
+  Stack,
 } from "@mui/material";
+import React from "react";
 import { axios } from "../../data/axios";
 
 export default function ShareDataSourceModal(props) {

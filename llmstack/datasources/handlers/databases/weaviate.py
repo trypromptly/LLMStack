@@ -1,18 +1,18 @@
 import json
 import logging
-
-from typing import Dict, List
-from typing import Optional
+from typing import Dict, List, Optional
 
 from pydantic import Field
 
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
-from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
-from llmstack.common.blocks.data.store.vectorstore.weaviate import Weaviate, WeaviateConfiguration, generate_where_filter
+from llmstack.common.blocks.data.store.vectorstore import (Document,
+                                                           DocumentQuery)
+from llmstack.common.blocks.data.store.vectorstore.weaviate import (
+    Weaviate, WeaviateConfiguration, generate_where_filter)
 from llmstack.common.utils.models import Config
-from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem, DataSourceSchema, DataSourceProcessor
+from llmstack.datasources.handlers.datasource_processor import (
+    DataSourceEntryItem, DataSourceProcessor, DataSourceSchema)
 from llmstack.datasources.models import DataSource
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +28,16 @@ logger = logging.getLogger(__name__)
 
 
 class WeaviateConnection(_Schema):
-    weaviate_url: str = Field(description='Weaviate URL')
-    username: Optional[str] = Field(description='Weaviate username')
-    password: Optional[str] = Field(description='Weaviate password')
-    api_key: Optional[str] = Field(description='Weaviate API key')
+    weaviate_url: str = Field(description="Weaviate URL")
+    username: Optional[str] = Field(description="Weaviate username")
+    password: Optional[str] = Field(description="Weaviate password")
+    api_key: Optional[str] = Field(description="Weaviate API key")
     additional_headers: Optional[str] = Field(
-        description='Weaviate headers. Please enter a JSON string.',
-        widget='textarea',
-        default='{}')
+        description="Weaviate headers. Please enter a JSON string.",
+        widget="textarea",
+        default="{}",
+    )
+
 
 # This class is a definition of the Weaviate database schema.
 # `index_name`: This is a required string attribute representing the name of the weaviate index.
@@ -48,19 +50,24 @@ class WeaviateConnection(_Schema):
 
 
 class WeaviateDatabaseSchema(DataSourceSchema):
-    index_name: str = Field(description='Weaviate index name')
+    index_name: str = Field(description="Weaviate index name")
     content_property_name: str = Field(
-        description='Weaviate content property name')
+        description="Weaviate content property name",
+    )
     additional_properties: Optional[List[str]] = Field(
-        description='Weaviate additional properties', default=[])
+        description="Weaviate additional properties",
+        default=[],
+    )
     connection: Optional[WeaviateConnection] = Field(
-        description='Weaviate connection string')
+        description="Weaviate connection string",
+    )
 
 
 class WeaviateConnectionConfiguration(Config):
-    config_type = 'weaviate_connection'
+    config_type = "weaviate_connection"
     is_encrypted = True
     weaviate_config: Optional[Dict]
+
 
 # This class helps to manage and interact with a Weaviate Data Source.
 # It inherits from the DataSourceProcessor class and operates on a
@@ -68,17 +75,19 @@ class WeaviateConnectionConfiguration(Config):
 
 
 class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
-
     # Initializer for the class.
     # It requires a datasource object as input, checks if it has a 'data'
     # configuration, and sets up Weaviate Database Configuration.
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
-        if self.datasource.config and 'data' in self.datasource.config:
+        if self.datasource.config and "data" in self.datasource.config:
             config_dict = WeaviateConnectionConfiguration().from_dict(
-                self.datasource.config, self.datasource.profile.decrypt_value)
+                self.datasource.config,
+                self.datasource.profile.decrypt_value,
+            )
             self._configuration = WeaviateDatabaseSchema(
-                **config_dict['weaviate_config'])
+                **config_dict["weaviate_config"],
+            )
             self._weviate_client = Weaviate(
                 **WeaviateConfiguration(
                     url=self._configuration.connection.weaviate_url,
@@ -86,40 +95,47 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
                     password=self._configuration.connection.password,
                     api_key=self._configuration.connection.api_key,
                     additional_headers=json.loads(
-                        self._configuration.connection.additional_headers) if self._configuration.connection.additional_headers else {},
-                ).dict())
+                        self._configuration.connection.additional_headers,
+                    )
+                    if self._configuration.connection.additional_headers
+                    else {},
+                ).dict(),
+            )
 
     # This static method returns the name of the datasource class as
     # 'Weaviate'.
     @staticmethod
     def name() -> str:
-        return 'Weaviate'
+        return "Weaviate"
 
     # This static method returns the slug for the datasource as 'weaviate'.
     @staticmethod
     def slug() -> str:
-        return 'weaviate'
+        return "weaviate"
 
     @staticmethod
     def description() -> str:
-        return 'Connect to a Weaviate database'
+        return "Connect to a Weaviate database"
 
     # This static method takes a dictionary for configuration and a DataSource object as inputs.
     # Validation of these inputs is performed and a dictionary containing the
     # Weaviate Connection Configuration is returned.
     @staticmethod
     def process_validate_config(
-            config_data: dict,
-            datasource: DataSource) -> dict:
+        config_data: dict,
+        datasource: DataSource,
+    ) -> dict:
         return WeaviateConnectionConfiguration(
-            weaviate_config=config_data).to_dict(
-            encrypt_fn=datasource.profile.encrypt_value)
+            weaviate_config=config_data,
+        ).to_dict(
+            encrypt_fn=datasource.profile.encrypt_value,
+        )
 
     # This static method returns the provider slug for the datasource
     # connector.
     @staticmethod
     def provider_slug() -> str:
-        return 'weaviate'
+        return "weaviate"
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         raise NotImplementedError
@@ -131,10 +147,11 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
         raise NotImplementedError
 
     def search(
-            self,
-            query: str,
-            use_hybrid_search=True,
-            **kwargs) -> List[dict]:
+        self,
+        query: str,
+        use_hybrid_search=True,
+        **kwargs,
+    ) -> List[dict]:
         if use_hybrid_search:
             return self.hybrid_search(query, **kwargs)
         else:
@@ -153,12 +170,14 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
             document_query=DocumentQuery(
                 query=query,
                 page_content_key=self._configuration.content_property_name,
-                limit=kwargs.get('limit', 2),
-                metadata={'additional_properties': additional_properties,
-                          'metadata_properties': ['distance']},
-                search_filters=kwargs.get('search_filters', None),
+                limit=kwargs.get("limit", 2),
+                metadata={
+                    "additional_properties": additional_properties,
+                    "metadata_properties": ["distance"],
+                },
+                search_filters=kwargs.get("search_filters", None),
             ),
-            **kwargs
+            **kwargs,
         )
         return result
 
@@ -168,15 +187,17 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
         result = self._weviate_client.hybrid_search(
             index_name=index_name,
             document_query=DocumentQuery(
-                alpha=kwargs.get('alpha', 0.75),
+                alpha=kwargs.get("alpha", 0.75),
                 query=query,
                 page_content_key=self._configuration.content_property_name,
-                limit=kwargs.get('limit', 2),
-                metadata={'additional_properties': additional_properties,
-                          'metadata_properties': ['score']},
-                search_filters=kwargs.get('search_filters', None),
+                limit=kwargs.get("limit", 2),
+                metadata={
+                    "additional_properties": additional_properties,
+                    "metadata_properties": ["score"],
+                },
+                search_filters=kwargs.get("search_filters", None),
             ),
-            **kwargs
+            **kwargs,
         )
         return result
 

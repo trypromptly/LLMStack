@@ -1,32 +1,31 @@
-import Form from "@rjsf/mui";
-import { getTemplate, getUiOptions } from "@rjsf/utils";
+import ErrorIcon from "@mui/icons-material/Error";
 import {
+  Box,
+  Chip,
   FormControl,
   FormHelperText,
+  ImageList,
+  ImageListItem,
   List,
   ListItem,
   ListItemAvatar,
-  ListItemText,
-  ImageList,
-  ImageListItem,
-  Chip,
-  Paper,
-  Box,
-  Typography,
   ListItemIcon,
+  ListItemText,
+  Paper,
+  Typography,
 } from "@mui/material";
-import ErrorIcon from "@mui/icons-material/Error";
-
+import Form from "@rjsf/mui";
+import { getTemplate, getUiOptions } from "@rjsf/utils";
 import { useState } from "react";
-import { DataSourceSelector } from "./datasource/DataSourceSelector";
-import MuiCustomSelect from "./MuiCustomSelect";
-import ConnectionSelector from "./connections/ConnectionSelector";
-import FileUploadWidget from "./form/DropzoneFileWidget";
-import SecretTextField from "./form/SecretTextField";
-import CustomObjectFieldTemplate from "./ConfigurationFormObjectFieldTemplate";
 import { TextFieldWithVars } from "./apps/TextFieldWithVars";
+import CustomObjectFieldTemplate from "./ConfigurationFormObjectFieldTemplate";
+import ConnectionSelector from "./connections/ConnectionSelector";
+import { DataSourceSelector } from "./datasource/DataSourceSelector";
+import FileUploadWidget from "./form/DropzoneFileWidget";
 import GdriveFileSelector from "./form/GdriveFileSelector";
+import SecretTextField from "./form/SecretTextField";
 import WebpageURLExtractorWidget from "./form/WebpageURLExtractorWidget";
+import MuiCustomSelect from "./MuiCustomSelect";
 
 function CustomGdriveFileWidget(props) {
   return <GdriveFileSelector {...props} />;

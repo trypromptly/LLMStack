@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState } from "react";
 import { Box, Button, ButtonGroup, Stack, Tooltip } from "@mui/material";
-import yaml from "js-yaml";
-import AceEditor from "react-ace";
-import { ProcessorEditor } from "./ProcessorEditor";
-import { AppConfigEditor } from "./AppConfigEditor";
-import { AppOutputEditor } from "./AppOutputEditor";
-import { AddProcessorDivider } from "./AddProcessorDivider";
-import { getJSONSchemaFromInputFields } from "../../data/utils";
-import { AppSaveButtons } from "./AppSaveButtons";
 import "ace-builds/src-noconflict/mode-yaml";
 import "ace-builds/src-noconflict/theme-dracula";
+import yaml from "js-yaml";
+import { useEffect, useRef, useState } from "react";
+import AceEditor from "react-ace";
+import { getJSONSchemaFromInputFields } from "../../data/utils";
+import { AddProcessorDivider } from "./AddProcessorDivider";
+import { AppConfigEditor } from "./AppConfigEditor";
+import { AppOutputEditor } from "./AppOutputEditor";
+import { AppSaveButtons } from "./AppSaveButtons";
+import { ProcessorEditor } from "./ProcessorEditor";
 
 export function AppEditor(props) {
   const {

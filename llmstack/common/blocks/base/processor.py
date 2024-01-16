@@ -1,10 +1,6 @@
 import logging
-from abc import ABC
-from abc import abstractmethod
-from typing import Generator
-from typing import Generic
-from typing import Optional
-from typing import TypeVar
+from abc import ABC, abstractmethod
+from typing import Generator, Generic, Optional, TypeVar
 
 from pydantic import Field
 
@@ -20,8 +16,8 @@ class BaseInputEnvironment(Schema):
 class BaseInput(Schema):
     env: Optional[BaseInputEnvironment] = Field(
         None,
-        description='Environment variables (metadata) to be passed with input',
-        alias='_env',
+        description="Environment variables (metadata) to be passed with input",
+        alias="_env",
     )
 
 
@@ -31,7 +27,8 @@ class BaseConfiguration(Schema):
 
 class BaseOutput(Schema):
     metadata: Optional[Schema] = Field(
-        default={}, description='Metadata',
+        default={},
+        description="Metadata",
     )
 
 
@@ -49,14 +46,19 @@ class CacheManager(ABC):
         raise NotImplementedError()
 
 
-BaseInputType = TypeVar('BaseInputType', BaseInput, dict)
-BaseOutputType = TypeVar('BaseOutputType', BaseOutput, dict)
+BaseInputType = TypeVar("BaseInputType", BaseInput, dict)
+BaseOutputType = TypeVar("BaseOutputType", BaseOutput, dict)
 BaseConfigurationType = TypeVar(
-    'BaseConfigurationType', BaseConfiguration, dict)
+    "BaseConfigurationType",
+    BaseConfiguration,
+    dict,
+)
 
 
 class ProcessorInterface(
-        Generic[BaseInputType, BaseOutputType, BaseConfigurationType], ABC):
+    Generic[BaseInputType, BaseOutputType, BaseConfigurationType],
+    ABC,
+):
     @staticmethod
     def name() -> str:
         raise NotImplementedError
@@ -159,31 +161,34 @@ class ProcessorInterface(
         return cls._get_configuration_ui_schema()
 
     def process(
-            self,
-            input: BaseInputType,
-            configuration: BaseConfigurationType) -> BaseOutputType:
+        self,
+        input: BaseInputType,
+        configuration: BaseConfigurationType,
+    ) -> BaseOutputType:
         raise NotImplementedError()
 
-    def process_iter(self,
-                     input: BaseInputType,
-                     configuration: BaseConfigurationType) -> Generator[BaseOutputType,
-                                                                        None,
-                                                                        None]:
+    def process_iter(
+        self,
+        input: BaseInputType,
+        configuration: BaseConfigurationType,
+    ) -> Generator[BaseOutputType, None, None]:
         raise NotImplementedError()
 
 
 class BaseProcessor(
-        ProcessorInterface[BaseInputType, BaseOutputType, BaseConfigurationType]):
+    ProcessorInterface[BaseInputType, BaseOutputType, BaseConfigurationType],
+):
     """
     Base class for all processors
     """
 
     def __init__(
-            self,
-            configuration: dict,
-            cache_manager: CacheManager = None,
-            input_tx_cb: callable = None,
-            output_tx_cb: callable = None):
+        self,
+        configuration: dict,
+        cache_manager: CacheManager = None,
+        input_tx_cb: callable = None,
+        output_tx_cb: callable = None,
+    ):
         self.configuration = self.parse_validate_configuration(configuration)
         self.cache_manager = cache_manager
         self._input_tx_cb = input_tx_cb
@@ -198,7 +203,9 @@ class BaseProcessor(
         return input_cls(**input)
 
     def parse_validate_configuration(
-            self, configuration) -> BaseConfigurationType:
+        self,
+        configuration,
+    ) -> BaseConfigurationType:
         configuration_cls = self.__class__.__orig_bases__[0].__args__[2]
         if isinstance(configuration_cls, type):
             return configuration
@@ -209,33 +216,37 @@ class BaseProcessor(
         return output_cls(**kwargs)
 
     def _process(
-            self,
-            input: BaseInputType,
-            configuration: BaseConfigurationType) -> BaseOutputType:
+        self,
+        input: BaseInputType,
+        configuration: BaseConfigurationType,
+    ) -> BaseOutputType:
         raise NotImplementedError()
 
     def process(self, input: dict) -> BaseOutputType:
         try:
             return self._process(
                 self.parse_validate_input(input),
-                self.configuration)
+                self.configuration,
+            )
         except Exception as ex:
-            LOGGER.exception('Exception occurred while processing')
+            LOGGER.exception("Exception occurred while processing")
             raise ex
 
     def _process_iter(
-            self,
-            input: BaseInputType,
-            configuration: BaseConfigurationType) -> BaseOutputType:
+        self,
+        input: BaseInputType,
+        configuration: BaseConfigurationType,
+    ) -> BaseOutputType:
         raise NotImplementedError()
 
     def process_iter(self, input: dict) -> BaseOutputType:
         try:
             return self._process_iter(
                 self.parse_validate_input(input),
-                self.configuration)
+                self.configuration,
+            )
         except Exception as ex:
-            LOGGER.exception('Exception occurred while processing')
+            LOGGER.exception("Exception occurred while processing")
             raise ex
 
     @property

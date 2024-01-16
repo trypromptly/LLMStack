@@ -2,8 +2,8 @@ from typing import List
 
 
 class TemplateInterface:
-    subject: str = ''
-    template_id: str = ''
+    subject: str = ""
+    template_id: str = ""
 
     # Returns the subject of the email
     def get_subject(self) -> str:
@@ -21,5 +21,5 @@ class TemplateInterface:
     # Returns the email address(es) to which the email is to be sent
     def get_to(self) -> str or List[str]:
         raise NotImplementedError(
-            'You must implement this method in your class',
+            "You must implement this method in your class",
         )

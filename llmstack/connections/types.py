@@ -8,7 +8,7 @@ from llmstack.connections.models import Connection, ConnectionActivationInput
 def get_connection_type_interface_subclasses():
     subclasses = []
     allowed_packages = [
-        'llmstack.connections.handlers',
+        "llmstack.connections.handlers",
     ]
 
     excluded_packages = []
@@ -16,11 +16,13 @@ def get_connection_type_interface_subclasses():
     try:
         import jnpr.junos
     except BaseException:
-        excluded_packages.append('llmstack.connections.handlers.junos_login')
+        excluded_packages.append("llmstack.connections.handlers.junos_login")
 
     for package in allowed_packages:
         subclasses_in_package = get_all_sub_classes(
-            package, ConnectionTypeInterface)
+            package,
+            ConnectionTypeInterface,
+        )
 
         for subclass in subclasses_in_package:
             if subclass.__module__ not in excluded_packages:
@@ -30,11 +32,13 @@ def get_connection_type_interface_subclasses():
 
 
 ConnectionConfigurationSchemaType = TypeVar(
-    'ConnectionConfigurationSchemaType')
+    "ConnectionConfigurationSchemaType",
+)
 
 
 class ConnectionTypeInterface(Generic[ConnectionConfigurationSchemaType]):
     """Interface for connection types."""
+
     @staticmethod
     def slug() -> str:
         raise NotImplementedError
@@ -87,10 +91,12 @@ class ConnectionTypeFactory:
     """
     Factory class for Data source types
     """
+
     @staticmethod
     def get_connection_type_handler(
-            connection_type_slug,
-            provider_slug) -> ConnectionTypeInterface:
+        connection_type_slug,
+        provider_slug,
+    ) -> ConnectionTypeInterface:
         subclasses = get_connection_type_interface_subclasses()
         for subclass in subclasses:
             # Convert to lowercase to avoid case sensitivity

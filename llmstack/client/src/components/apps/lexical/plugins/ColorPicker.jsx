@@ -5,12 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-
-import "./ColorPicker.css";
-
 import { useEffect, useMemo, useRef, useState } from "react";
-import * as React from "react";
-
+import "./ColorPicker.css";
 import DropDown from "./DropDown.jsx";
 import TextInput from "./TextInput";
 
@@ -268,8 +264,8 @@ function rgb2hsv({ r, g, b }) {
     ? (max === r
         ? (g - b) / d + (g < b ? 6 : 0)
         : max === g
-        ? 2 + (b - r) / d
-        : 4 + (r - g) / d) * 60
+          ? 2 + (b - r) / d
+          : 4 + (r - g) / d) * 60
     : 0;
   const s = max ? (d / max) * 100 : 0;
   const v = max * 100;

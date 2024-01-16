@@ -1,11 +1,11 @@
 import {
-  Dialog,
-  Button,
   Box,
-  DialogTitle,
+  Button,
+  Dialog,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
+  DialogTitle,
 } from "@mui/material";
 
 export function LoggedOutModal({

@@ -16,6 +16,7 @@ class BookKeepingData(BaseModel):
     """
     Bookkeeping entry
     """
+
     input: dict = {}
     config: dict = {}
     output: dict = {}
@@ -29,11 +30,12 @@ class ActorConfig(BaseModel):
     """
     Configuration for the actor
     """
+
     class Config:
         arbitrary_types_allowed = True
 
     name: str
-    template_key: str = ''  # This is used to find other actors dependent on this actor
+    template_key: str = ""  # This is used to find other actors dependent on this actor
     actor: Type
     kwargs: dict = {}
     dependencies: list = []
@@ -51,9 +53,13 @@ class Actor(ThreadingActor):
         if message.message_type == MessageType.BEGIN:
             self.input(message.message)
 
-        message_and_key = {
-            message.template_key: message.message,
-        } if message.template_key else message.message
+        message_and_key = (
+            {
+                message.template_key: message.message,
+            }
+            if message.template_key
+            else message.message
+        )
 
         if message.message_type == MessageType.STREAM_ERROR:
             self.on_error(message_and_key)
@@ -67,7 +73,8 @@ class Actor(ThreadingActor):
 
         # Call input only when all the dependencies are met
         if message.message_type == MessageType.STREAM_CLOSED and set(
-                self.dependencies) == set(self._messages.keys()):
+            self.dependencies,
+        ) == set(self._messages.keys()):
             self.input(self._messages)
 
         # If the message is for a tool, call the tool
@@ -93,8 +100,12 @@ class Actor(ThreadingActor):
 
     @property
     def dependencies(self):
-        return list(filter(lambda x: x in self._all_dependencies,
-                           list(set(self._dependencies + self.get_dependencies()))))
+        return list(
+            filter(
+                lambda x: x in self._all_dependencies,
+                list(set(self._dependencies + self.get_dependencies())),
+            ),
+        )
 
     def on_error(self, error: Any) -> None:
         # Co-ordinator calls this when any actor in the dependency chain has
@@ -105,12 +116,14 @@ class Actor(ThreadingActor):
         return super().on_stop()
 
     def on_failure(
-            self,
-            exception_type: type[BaseException],
-            exception_value: BaseException,
-            traceback: TracebackType) -> None:
+        self,
+        exception_type: type[BaseException],
+        exception_value: BaseException,
+        traceback: TracebackType,
+    ) -> None:
         logger.error(
-            f'Encountered {exception_type} in {type(self)}({self.actor_urn}): {exception_value}')
+            f"Encountered {exception_type} in {type(self)}({self.actor_urn}): {exception_value}",
+        )
 
         # Send error to output stream
         self._output_stream.error(exception_value)

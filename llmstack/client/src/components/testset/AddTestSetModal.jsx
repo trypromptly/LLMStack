@@ -1,17 +1,17 @@
-import { useState } from "react";
 import {
   Button as MuiButton,
-  TextField,
-  Stack,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
+  Stack,
+  TextField,
 } from "@mui/material";
+import validator from "@rjsf/validator-ajv8";
+import { useState } from "react";
 import { axios } from "../../data/axios";
 import { getJSONSchemaFromInputFields } from "../../data/utils";
-import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 
 const TESTCASE_UI_SCHEMA = {

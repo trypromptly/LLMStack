@@ -1,7 +1,7 @@
 import base64
-from hashlib import sha1, sha256
 import hmac
 import logging
+from hashlib import sha1, sha256
 from urllib.parse import parse_qs, urlparse
 
 from rest_framework.exceptions import PermissionDenied
@@ -126,17 +126,19 @@ class RequestValidator(object):
         if "bodySHA256" in query and isinstance(params, str):
             valid_body_hash = compare(
                 self.compute_hash(params),
-                query["bodySHA256"][0])
+                query["bodySHA256"][0],
+            )
             params = {}
 
         #  check signature of uri with and without port,
         #  since sig generation on back end is inconsistent
         valid_signature = compare(
-            self.compute_signature(uri_without_port, params), signature
+            self.compute_signature(uri_without_port, params),
+            signature,
         )
         valid_signature_with_port = compare(
-            self.compute_signature(uri_with_port, params), signature
+            self.compute_signature(uri_with_port, params),
+            signature,
         )
 
-        return valid_body_hash and (
-            valid_signature or valid_signature_with_port)
+        return valid_body_hash and (valid_signature or valid_signature_with_port)

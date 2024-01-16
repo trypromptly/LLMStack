@@ -1,10 +1,13 @@
 import os
 import re
+
 from pydantic import root_validator
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.data import DataDocument
-from llmstack.common.blocks.data.source import DataSourceInputSchema, DataSourceConfigurationSchema, DataSourceOutputSchema
+from llmstack.common.blocks.data.source import (DataSourceConfigurationSchema,
+                                                DataSourceInputSchema,
+                                                DataSourceOutputSchema)
 
 
 class DirectoryTextLoaderInputSchema(DataSourceInputSchema):
@@ -26,12 +29,13 @@ class DirectoryTextLoaderInputSchema(DataSourceInputSchema):
 
 
 class DirectoryTextLoader(
-        ProcessorInterface[DirectoryTextLoaderInputSchema, DataSourceOutputSchema, DataSourceConfigurationSchema]):
-
+    ProcessorInterface[DirectoryTextLoaderInputSchema, DataSourceOutputSchema, DataSourceConfigurationSchema],
+):
     def process(
-            self,
-            input: DirectoryTextLoaderInputSchema,
-            configuration: DataSourceConfigurationSchema) -> DataSourceOutputSchema:
+        self,
+        input: DirectoryTextLoaderInputSchema,
+        configuration: DataSourceConfigurationSchema,
+    ) -> DataSourceOutputSchema:
         result = []
         files = []
         # If recursive is true, then we need to recursively walk the directory

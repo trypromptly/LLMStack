@@ -1,17 +1,15 @@
-import React from "react";
 import {
   Box,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
+  Select,
   TextField,
 } from "@mui/material";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker, DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import moment from "moment";
-
-import { DateTimePicker, DatePicker } from "@mui/x-date-pickers";
 
 export default function FrequencyPickerWidget(props) {
   const { onChange, id, value, minStartTime, maxStartTime } = props;

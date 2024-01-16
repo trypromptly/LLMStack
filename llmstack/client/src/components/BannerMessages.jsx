@@ -1,4 +1,3 @@
-import React from "react";
 import { Alert, Stack } from "@mui/material";
 import { useRecoilValue } from "recoil";
 import { profileFlagsState } from "../data/atoms";

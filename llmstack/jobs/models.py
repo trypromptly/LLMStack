@@ -27,33 +27,41 @@ SCHEDULER_INTERVAL = 60
 
 
 class TaskStatus(str, Enum):
-    NOT_STARTED = 'not_started'
-    STARTED = 'started'
-    SUCCESS = 'success'
-    FAILURE = 'failure'
+    NOT_STARTED = "not_started"
+    STARTED = "started"
+    SUCCESS = "success"
+    FAILURE = "failure"
 
 
 class TaskRunLog(models.Model):
     TASK_TYPES = [
-        ('ScheduledJob', 'ScheduledJob'),
-        ('RepeatableJob', 'RepeatableJob'),
-        ('CronJob', 'CronJob'),
-        ('AdhocJob', 'AdhocJob')
+        ("ScheduledJob", "ScheduledJob"),
+        ("RepeatableJob", "RepeatableJob"),
+        ("CronJob", "CronJob"),
+        ("AdhocJob", "AdhocJob"),
     ]
     STATUS = [
-        ('started', 'started'),
-        ('running', 'running'),
-        ('succeeded', 'succeeded'),
-        ('failed', 'failed'),
-        ('stopped', 'stopped'),
+        ("started", "started"),
+        ("running", "running"),
+        ("succeeded", "succeeded"),
+        ("failed", "failed"),
+        ("stopped", "stopped"),
     ]
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     task_id = models.CharField(max_length=128, editable=False, null=False)
     task_type = models.CharField(
-        max_length=128, choices=TASK_TYPES, editable=False, null=False)
+        max_length=128,
+        choices=TASK_TYPES,
+        editable=False,
+        null=False,
+    )
     job_id = models.CharField(
-        max_length=128, editable=False, blank=True, null=False)
+        max_length=128,
+        editable=False,
+        blank=True,
+        null=False,
+    )
     result = models.JSONField(blank=True, null=True)
     status = models.CharField(max_length=50, null=False)
     errors = models.JSONField(blank=True, null=True)
@@ -64,60 +72,85 @@ class TaskRunLog(models.Model):
         raise NotImplementedError
 
     def task_name(self):
-        entry = apps.get_model(
-            app_label='jobs',
-            model_name=self.task_type).objects.filter(
-            id=self.task_id).first()
-        return entry.name if entry else ''
+        entry = (
+            apps.get_model(
+                app_label="jobs",
+                model_name=self.task_type,
+            )
+            .objects.filter(
+                id=self.task_id,
+            )
+            .first()
+        )
+        return entry.name if entry else ""
 
     def task_uuid(self):
-        entry = apps.get_model(
-            app_label='jobs',
-            model_name=self.task_type).objects.filter(
-            id=self.task_id).first()
-        return entry.uuid if entry else ''
+        entry = (
+            apps.get_model(
+                app_label="jobs",
+                model_name=self.task_type,
+            )
+            .objects.filter(
+                id=self.task_id,
+            )
+            .first()
+        )
+        return entry.uuid if entry else ""
 
     def user(self):
-        entry = apps.get_model(
-            app_label='jobs',
-            model_name=self.task_type).objects.filter(
-            id=self.task_id).first()
-        return entry.owner if entry else ''
+        entry = (
+            apps.get_model(
+                app_label="jobs",
+                model_name=self.task_type,
+            )
+            .objects.filter(
+                id=self.task_id,
+            )
+            .first()
+        )
+        return entry.owner if entry else ""
 
     def __str__(self) -> str:
         return self.job_id
 
     class Meta:
-        ordering = ('-created_at', )
+        ordering = ("-created_at",)
 
 
 def get_scheduled_task(task_model: str, task_id: int):
     if not task_model:
         return None
 
-    model = apps.get_model(app_label='jobs', model_name=task_model)
+    model = apps.get_model(app_label="jobs", model_name=task_model)
     task = model.objects.filter(id=task_id).first()
     if task is None:
-        raise ValueError(f'Job {task_model}:{task_id} does not exit')
+        raise ValueError(f"Job {task_model}:{task_id} does not exit")
     return task
 
 
 def failure_callback(job, connection, type, value, traceback):
-    task = get_scheduled_task(job.meta.get(
-        'task_type', None), job.meta.get('scheduled_task_id'))
+    task = get_scheduled_task(
+        job.meta.get(
+            "task_type",
+            None,
+        ),
+        job.meta.get("scheduled_task_id"),
+    )
     if task is None:
         return
 
     task_log = TaskRunLog.objects.filter(
-        job_id=job.id, task_id=task.id).first()
+        job_id=job.id,
+        task_id=task.id,
+    ).first()
     if task_log is None:
-        logger.error(f'Could not find task log for job {job.id}')
+        logger.error(f"Could not find task log for job {job.id}")
     else:
-        task_log.status = 'failed'
+        task_log.status = "failed"
         task_log.errors = {
-            'type': type,
-            'value': value,
-            'traceback': traceback,
+            "type": type,
+            "value": value,
+            "traceback": traceback,
         }
         task_log.save()
 
@@ -126,41 +159,55 @@ def failure_callback(job, connection, type, value, traceback):
 
 
 def success_callback(job, connection, result, *args, **kwargs):
-    task = get_scheduled_task(job.meta.get(
-        'task_type', None), job.meta.get('scheduled_task_id'))
+    task = get_scheduled_task(
+        job.meta.get(
+            "task_type",
+            None,
+        ),
+        job.meta.get("scheduled_task_id"),
+    )
     if task is None:
         return
 
     task_log = TaskRunLog.objects.filter(
-        job_id=job.id, task_id=task.id).first()
+        job_id=job.id,
+        task_id=task.id,
+    ).first()
     if task_log is None:
-        logger.error(f'Could not find task log for job {job.id}')
+        logger.error(f"Could not find task log for job {job.id}")
     else:
-        task_log.status = 'started'
+        task_log.status = "started"
         task_log.save()
 
     task.job_id = None
     # If task is a scehduledJob we have already ran the job no need to
     # schedule it again
-    task.save(schedule_job=False if task.TASK_TYPE == 'ScheduledJob' else True)
+    task.save(schedule_job=False if task.TASK_TYPE == "ScheduledJob" else True)
 
 
 def stopped_callback(job, connection):
-    task = get_scheduled_task(job.meta.get(
-        'task_type', None), job.meta.get('scheduled_task_id'))
+    task = get_scheduled_task(
+        job.meta.get(
+            "task_type",
+            None,
+        ),
+        job.meta.get("scheduled_task_id"),
+    )
     if task is None:
         return
 
     task_log = TaskRunLog.objects.filter(
-        job_id=job.id, task_id=task.id).first()
+        job_id=job.id,
+        task_id=task.id,
+    ).first()
     if task_log is None:
-        logger.error(f'Could not find task log for job {job.id}')
+        logger.error(f"Could not find task log for job {job.id}")
     else:
-        task_log.status = 'stopped'
+        task_log.status = "stopped"
         task_log.save()
 
     task.job_id = None
-    task.save(chedule_job=False if task.TASK_TYPE == 'ScheduledJob' else True)
+    task.save(chedule_job=False if task.TASK_TYPE == "ScheduledJob" else True)
 
 
 def run_task(task_model: str, task_id: int):
@@ -169,26 +216,29 @@ def run_task(task_model: str, task_id: int):
         task_id=task_id,
         task_type=task_model,
         job_id=job.id,
-        status='started',
+        status="started",
     )
     task = get_scheduled_task(task_model, task_id)
 
     if task is None:
-        logger.error(f'Could not find task {task_model}:{task_id}')
+        logger.error(f"Could not find task {task_model}:{task_id}")
         return False
 
-    if task.TASK_TYPE == 'ScheduledJob' and timedelta(
-            seconds=task.timeout or 600) < (
-            timezone.now() - task.scheduled_time):
+    if task.TASK_TYPE == "ScheduledJob" and timedelta(
+        seconds=task.timeout or 600,
+    ) < (timezone.now() - task.scheduled_time):
         # Task got scheduled post the end time
         results = {}
-        errors = {'detail': 'Task got scheduled post the end time'}
+        errors = {"detail": "Task got scheduled post the end time"}
     else:
         args = task.parse_args()
         kwargs = task.parse_kwargs()
-        kwargs = {**kwargs, '_job_metadata': {
-            'task_run_log_uuid': str(task_run_log.uuid)
-        }}
+        kwargs = {
+            **kwargs,
+            "_job_metadata": {
+                "task_run_log_uuid": str(task_run_log.uuid),
+            },
+        }
         results = task.callable_func()(*args, **kwargs)
 
     task_run_log.result = results
@@ -203,20 +253,21 @@ def run_task_now(task_model: str, task_id: int):
         task_id=task_id,
         task_type=task_model,
         job_id=job.id,
-        status='started',
+        status="started",
     )
     task = get_scheduled_task(task_model, task_id)
 
     if task is None:
-        logger.error(f'Could not find task {task_model}:{task_id}')
+        logger.error(f"Could not find task {task_model}:{task_id}")
         return False
 
     args = task.parse_args()
     kwargs = task.parse_kwargs()
     kwargs = {
         **kwargs,
-        '_job_metadata': {
-            'task_run_log_uuid': str(task_run_log.uuid)}
+        "_job_metadata": {
+            "task_run_log_uuid": str(task_run_log.uuid),
+        },
     }
     results = task.callable_func()(*args, **kwargs)
 
@@ -227,20 +278,20 @@ def run_task_now(task_model: str, task_id: int):
 
 
 class BaseTask(models.Model):
-    TASK_TYPE = 'BaseTask'
+    TASK_TYPE = "BaseTask"
 
     RQ_QUEUE_NAMES = [(key, key) for key in settings.RQ_QUEUES.keys()]
     TASK_STATUSES = [
-        ('queued', 'queued'),
-        ('started', 'started'),
-        ('finished', 'finished'),
-        ('failed', 'failed'),
-        ('deferred', 'deferred'),
+        ("queued", "queued"),
+        ("started", "started"),
+        ("finished", "finished"),
+        ("failed", "failed"),
+        ("deferred", "deferred"),
     ]
     TASK_CATEGORY = [
-        ('generic', 'generic'),
-        ('app_run', 'app_run'),
-        ('data_refresh', 'data_refresh'),
+        ("generic", "generic"),
+        ("app_run", "app_run"),
+        ("data_refresh", "data_refresh"),
     ]
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name = models.CharField(max_length=512, null=False)
@@ -251,35 +302,48 @@ class BaseTask(models.Model):
     repeat = models.PositiveIntegerField(
         blank=True,
         null=True,
-        help_text='Number of times to repeat the job. Blank repeats forever.')
+        help_text="Number of times to repeat the job. Blank repeats forever.",
+    )
     queue = models.CharField(choices=RQ_QUEUE_NAMES, max_length=32)
     job_id = models.CharField(
-        max_length=128, editable=False, blank=True, null=True)
+        max_length=128,
+        editable=False,
+        blank=True,
+        null=True,
+    )
     timeout = models.IntegerField(
         blank=True,
         null=True,
-        help_text='Timeout specifies the maximum runtime, in seconds, for the job '
-        'before it\'ll be considered \'lost\'. Blank uses the default timeout.')
+        help_text="Timeout specifies the maximum runtime, in seconds, for the job "
+        "before it'll be considered 'lost'. Blank uses the default timeout.",
+    )
     status = models.CharField(
-        max_length=50, null=False, choices=TASK_STATUSES, default='queued')
+        max_length=50,
+        null=False,
+        choices=TASK_STATUSES,
+        default="queued",
+    )
     result_ttl = models.IntegerField(
         blank=True,
         null=True,
-        help_text='The TTL value (in seconds) of the job result. -1: '
-        'Result never expires, you should delete jobs manually. '
-        '0: Result gets deleted immediately. >0: Result expires '
-        'after n seconds.')
+        help_text="The TTL value (in seconds) of the job result. -1: "
+        "Result never expires, you should delete jobs manually. "
+        "0: Result gets deleted immediately. >0: Result expires "
+        "after n seconds.",
+    )
     owner = models.ForeignKey(
         User,
         on_delete=models.DO_NOTHING,
-        help_text='Owner of the task',
-        null=False)
+        help_text="Owner of the task",
+        null=False,
+    )
     task_category = models.CharField(
         max_length=128,
         choices=TASK_CATEGORY,
         editable=False,
         null=False,
-        default='generic')
+        default="generic",
+    )
     metadata = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -288,8 +352,8 @@ class BaseTask(models.Model):
         return self.name
 
     def callable_func(self):
-        path = self.callable.split('.')
-        module = importlib.import_module('.'.join(path[:-1]))
+        path = self.callable.split(".")
+        module = importlib.import_module(".".join(path[:-1]))
         func = getattr(module, path[-1])
         if callable(func) is False:
             raise TypeError("'{}' is not callable".format(self.callable))
@@ -306,8 +370,13 @@ class BaseTask(models.Model):
     def parse_kwargs(self):
         kwargs = {}
         try:
-            kwargs = json.loads(
-                self.callable_kwargs) if self.callable_kwargs else {}
+            kwargs = (
+                json.loads(
+                    self.callable_kwargs,
+                )
+                if self.callable_kwargs
+                else {}
+            )
         except BaseException:
             pass
         return kwargs
@@ -318,9 +387,7 @@ class BaseTask(models.Model):
         scheduled_jobs = self.schedule_job_registry().get_job_ids()
         enqueued_jobs = self.rqueue.get_job_ids()
         active_jobs = self.active_job_registry().get_job_ids()
-        res = ((self.job_id in scheduled_jobs)
-               or (self.job_id in enqueued_jobs)
-               or (self.job_id in active_jobs))
+        res = (self.job_id in scheduled_jobs) or (self.job_id in enqueued_jobs) or (self.job_id in active_jobs)
         # If the job_id is not scheduled/enqueued/started,
         # update the job_id to None. (The job_id belongs to a previous run
         # which is completed)
@@ -330,9 +397,9 @@ class BaseTask(models.Model):
         return res
 
     def function_string(self):
-        args = self.callable_args or ''
-        kwargs = self.callable_kwargs or ''
-        return '{}({}, {})'.format(self.callable, args, kwargs)
+        args = self.callable_args or ""
+        kwargs = self.callable_kwargs or ""
+        return "{}({}, {})".format(self.callable, args, kwargs)
 
     def _next_job_id(self):
         return f"{str(uuid.uuid4())}"
@@ -358,7 +425,8 @@ class BaseTask(models.Model):
         """
         if self.is_scheduled() or not self.enabled:
             logger.debug(
-                'Task is already scheduled or disabled: {}'.format(self))
+                "Task is already scheduled or disabled: {}".format(self),
+            )
             return False
         return True
 
@@ -370,16 +438,17 @@ class BaseTask(models.Model):
             return False
 
         schedule_time = self._schedule_time()
-        job = self.rqueue.enqueue_at(schedule_time,
-                                     run_task,
-                                     args=(self.TASK_TYPE, self.id),
-                                     on_success=success_callback,
-                                     on_failure=failure_callback,
-                                     job_id=self._next_job_id(),
-                                     meta=self._get_job_meta(),
-                                     job_timeout=self.timeout,
-                                     result_ttl=self.result_ttl,
-                                     )
+        job = self.rqueue.enqueue_at(
+            schedule_time,
+            run_task,
+            args=(self.TASK_TYPE, self.id),
+            on_success=success_callback,
+            on_failure=failure_callback,
+            job_id=self._next_job_id(),
+            meta=self._get_job_meta(),
+            job_timeout=self.timeout,
+            result_ttl=self.result_ttl,
+        )
         self.job_id = job.id
         super(BaseTask, self).save()
         return True
@@ -427,8 +496,13 @@ class BaseTask(models.Model):
         return True
 
     def _schedule_time(self):
-        return utc(
-            self.scheduled_time) if settings.USE_TZ else self.scheduled_time
+        return (
+            utc(
+                self.scheduled_time,
+            )
+            if settings.USE_TZ
+            else self.scheduled_time
+        )
 
     def to_dict(self):
         res = dict(
@@ -444,21 +518,21 @@ class BaseTask(models.Model):
             repeat=self.repeat,
             timeout=self.timeout,
             result_ttl=self.result_ttl,
-            cron_string=getattr(self, 'cron_string', None),
+            cron_string=getattr(self, "cron_string", None),
             scheduled_time=self._schedule_time().isoformat(),
-            interval=getattr(self, 'interval', None),
-            interval_unit=getattr(self, 'interval_unit', None),
+            interval=getattr(self, "interval", None),
+            interval_unit=getattr(self, "interval_unit", None),
         )
         return res
 
     def __str__(self):
-        return f'{self.TASK_TYPE}:{self.name}:func={self.callable}'
+        return f"{self.TASK_TYPE}:{self.name}:func={self.callable}"
 
     def save(self, **kwargs):
-        schedule_job = kwargs.pop('schedule_job', True)
-        update_fields = kwargs.get('update_fields', None)
+        schedule_job = kwargs.pop("schedule_job", True)
+        update_fields = kwargs.get("update_fields", None)
         if update_fields:
-            kwargs['update_fields'] = set(update_fields).union({'updated_at'})
+            kwargs["update_fields"] = set(update_fields).union({"updated_at"})
         super(BaseTask, self).save(**kwargs)
         if schedule_job:
             self.schedule()
@@ -472,17 +546,27 @@ class BaseTask(models.Model):
         try:
             self.callable_func()
         except BaseException:
-            logger.error('Invalid callable: {}'.format(self.callable))
-            raise ValidationError({'callable': ValidationError(
-                'Invalid callable, must be importable', code='invalid')})
+            logger.error("Invalid callable: {}".format(self.callable))
+            raise ValidationError(
+                {
+                    "callable": ValidationError(
+                        "Invalid callable, must be importable",
+                        code="invalid",
+                    ),
+                },
+            )
 
     def _clean_queue(self):
         queue_keys = settings.RQ_QUEUES.keys()
         if self.queue not in queue_keys:
-            raise ValidationError({
-                'queue': ValidationError(
-                    'Invalid queue, must be one of: {}'.format(', '.join(queue_keys)), code='invalid')
-            })
+            raise ValidationError(
+                {
+                    "queue": ValidationError(
+                        "Invalid queue, must be one of: {}".format(", ".join(queue_keys)),
+                        code="invalid",
+                    ),
+                },
+            )
 
     def clean(self):
         self._clean_callable()
@@ -490,10 +574,12 @@ class BaseTask(models.Model):
 
     def schedule_job_registry(self):
         from rq.registry import ScheduledJobRegistry
+
         return ScheduledJobRegistry(queue=self.rqueue)
 
     def active_job_registry(self):
         from rq.registry import StartedJobRegistry
+
         return StartedJobRegistry(queue=self.rqueue)
 
     def schedule_time_utc(self):
@@ -511,36 +597,39 @@ class ScheduledTimeMixin(models.Model):
 
 
 class ScheduledJob(ScheduledTimeMixin, BaseTask):
-    TASK_TYPE = 'ScheduledJob'
+    TASK_TYPE = "ScheduledJob"
     repeat = None
 
     def can_be_scheduled(self):
         return super(ScheduledJob, self).can_be_scheduled() and (
-            self.scheduled_time is None
-            or self.scheduled_time >= timezone.now())
+            self.scheduled_time is None or self.scheduled_time >= timezone.now()
+        )
 
     class Meta:
-        verbose_name = 'Scheduled Job'
-        verbose_name_plural = 'Scheduled Jobs'
-        ordering = ('name', )
+        verbose_name = "Scheduled Job"
+        verbose_name_plural = "Scheduled Jobs"
+        ordering = ("name",)
 
 
 class RepeatableJob(ScheduledTimeMixin, BaseTask):
-    TASK_TYPE = 'RepeatableJob'
+    TASK_TYPE = "RepeatableJob"
 
     UNITS = [
-        ('minutes', 'minutes'),
-        ('hours', 'hours'),
-        ('days', 'days'),
-        ('weeks', 'weeks'),
+        ("minutes", "minutes"),
+        ("hours", "hours"),
+        ("days", "days"),
+        ("weeks", "weeks"),
     ]
 
     interval = models.PositiveIntegerField()
     interval_unit = models.CharField(
-        max_length=12, choices=UNITS, default='hours')
+        max_length=12,
+        choices=UNITS,
+        default="hours",
+    )
 
     def interval_display(self):
-        return '{} {}'.format(self.interval, self.get_interval_unit_display())
+        return "{} {}".format(self.interval, self.get_interval_unit_display())
 
     def interval_seconds(self):
         kwargs = {
@@ -556,33 +645,35 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
     def clean_interval_unit(self):
         if SCHEDULER_INTERVAL > self.interval_seconds():
             raise ValidationError(
-                "Job interval is set lower than %(queue)r queue's interval. "
-                "minimum interval is %(interval)",
-                code='invalid',
-                params={'queue': self.queue, 'interval': SCHEDULER_INTERVAL})
+                "Job interval is set lower than %(queue)r queue's interval. " "minimum interval is %(interval)",
+                code="invalid",
+                params={"queue": self.queue, "interval": SCHEDULER_INTERVAL},
+            )
         if self.interval_seconds() % SCHEDULER_INTERVAL:
             raise ValidationError(
                 "Job interval is not a multiple of rq_scheduler's interval frequency: %(interval)ss",
-                code='invalid',
+                code="invalid",
                 params={
-                    'interval': SCHEDULER_INTERVAL})
+                    "interval": SCHEDULER_INTERVAL,
+                },
+            )
 
     def clean_result_ttl(self) -> None:
         """
         Throws an error if there are repeats left to run and the result_ttl won't last until the next scheduled time.
         :return: None
         """
-        if self.result_ttl and self.result_ttl != - \
-                1 and self.result_ttl < self.interval_seconds() and self.repeat:
+        if self.result_ttl and self.result_ttl != -1 and self.result_ttl < self.interval_seconds() and self.repeat:
             raise ValidationError(
                 "Job result_ttl must be either indefinite (-1) or "
                 "longer than the interval, %(interval)s seconds, to ensure rescheduling.",
-                code='invalid',
-                params={'interval': self.interval_seconds()}, )
+                code="invalid",
+                params={"interval": self.interval_seconds()},
+            )
 
     def _get_job_meta(self):
         res = super(RepeatableJob, self)._get_job_meta()
-        res['interval'] = self.interval_seconds()
+        res["interval"] = self.interval_seconds()
         return res
 
     def _schedule_time(self):
@@ -591,14 +682,13 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
             return super(RepeatableJob, self)._schedule_time()
 
         gap = math.ceil(
-            (_now -
-             self.scheduled_time).total_seconds() /
-            self.interval_seconds())
+            (_now - self.scheduled_time).total_seconds() / self.interval_seconds(),
+        )
         if self.repeat is None or self.repeat >= gap:
             self.scheduled_time += timedelta(
-                seconds=self.interval_seconds() * gap)
-            self.repeat = (
-                self.repeat - gap) if self.repeat is not None else None
+                seconds=self.interval_seconds() * gap,
+            )
+            self.repeat = (self.repeat - gap) if self.repeat is not None else None
         return super(RepeatableJob, self)._schedule_time()
 
     def can_be_scheduled(self):
@@ -609,9 +699,9 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
         return True
 
     class Meta:
-        verbose_name = 'Repeatable Job'
-        verbose_name_plural = 'Repeatable Jobs'
-        ordering = ('name', )
+        verbose_name = "Repeatable Job"
+        verbose_name_plural = "Repeatable Jobs"
+        ordering = ("name",)
 
 
 def get_next_cron_time(cron_string) -> timezone.datetime:
@@ -624,11 +714,12 @@ def get_next_cron_time(cron_string) -> timezone.datetime:
 
 
 class CronJob(BaseTask):
-    TASK_TYPE = 'CronJob'
+    TASK_TYPE = "CronJob"
 
     cron_string = models.CharField(
         max_length=64,
-        help_text='Define the schedule in a crontab like syntax.')
+        help_text="Define the schedule in a crontab like syntax.",
+    )
 
     def clean(self):
         super(CronJob, self).clean()
@@ -638,52 +729,58 @@ class CronJob(BaseTask):
         try:
             croniter.croniter(self.cron_string)
         except ValueError as e:
-            raise ValidationError({
-                'cron_string': ValidationError(
-                    str(e), code='invalid')
-            })
+            raise ValidationError(
+                {
+                    "cron_string": ValidationError(
+                        str(e),
+                        code="invalid",
+                    ),
+                },
+            )
 
     def _schedule_time(self):
         self.scheduled_time = get_next_cron_time(self.cron_string)
         return super()._schedule_time()
 
     class Meta:
-        verbose_name = 'Cron Job'
-        verbose_name_plural = 'Cron Jobs'
-        ordering = ('name', )
+        verbose_name = "Cron Job"
+        verbose_name_plural = "Cron Jobs"
+        ordering = ("name",)
 
 
 class AdhocJob(BaseTask):
-    TASK_TYPE = 'AdhocJob'
+    TASK_TYPE = "AdhocJob"
 
     def save(self, *args, **kwargs):
-        schedule_job = kwargs.pop('schedule_job', False)
+        schedule_job = kwargs.pop("schedule_job", False)
         if schedule_job:
             func = self.callable_func()
-            func_args = kwargs.pop('func_args', [])
+            func_args = kwargs.pop("func_args", [])
             func_args = func_args + [str(self.uuid)]
-            on_success = kwargs.pop('on_success', None)
-            on_failure = kwargs.pop('on_failure', None)
-            job_meta = kwargs.pop('job_meta', None)
+            on_success = kwargs.pop("on_success", None)
+            on_failure = kwargs.pop("on_failure", None)
+            job_meta = kwargs.pop("job_meta", None)
 
-            job = self.rqueue.enqueue(func,
-                                      args=func_args,
-                                      on_success=on_success,
-                                      on_failure=on_failure,
-                                      job_id=self._next_job_id(),
-                                      meta=job_meta,
-                                      job_timeout=self.timeout,
-                                      result_ttl=self.result_ttl,
-                                      )
+            job = self.rqueue.enqueue(
+                func,
+                args=func_args,
+                on_success=on_success,
+                on_failure=on_failure,
+                job_id=self._next_job_id(),
+                meta=job_meta,
+                job_timeout=self.timeout,
+                result_ttl=self.result_ttl,
+            )
             self.job_id = job.id
 
-        update_fields = kwargs.get('update_fields', None)
+        update_fields = kwargs.get("update_fields", None)
         if update_fields:
-            kwargs['update_fields'] = set(
-                update_fields).union({'updated_at'})
+            kwargs["update_fields"] = set(
+                update_fields,
+            ).union({"updated_at"})
         super(AdhocJob, self).save(*args, **kwargs)
 
     class Meta:
-        verbose_name = 'Adhoc Job'
-        verbose_name_plural = 'Adhoc Jobs'
-        ordering = ('name', )
+        verbose_name = "Adhoc Job"
+        verbose_name_plural = "Adhoc Jobs"
+        ordering = ("name",)

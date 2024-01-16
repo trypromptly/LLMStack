@@ -1,29 +1,29 @@
-import { useState } from "react";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import {
   Alert,
   Button,
   Chip,
   Dialog,
-  DialogTitle,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
+  DialogTitle,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
-  Paper,
-  TablePagination,
 } from "@mui/material";
-import { axios } from "../../data/axios";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import AppVisibilityIcon from "./AppVisibilityIcon";
 import { useRecoilValue } from "recoil";
 import { appsBriefState } from "../../data/atoms";
+import { axios } from "../../data/axios";
+import AppVisibilityIcon from "./AppVisibilityIcon";
 
 const DeleteUnpublishedAppModal = ({ open, setOpen, appId }) => {
   const [deleteValue, setDeleteValue] = useState("");

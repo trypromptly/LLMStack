@@ -1,38 +1,27 @@
+import logging
 from datetime import datetime
+
+from allauth.socialaccount.helpers import render_authentication_error
+from allauth.socialaccount.providers.base import ProviderException
+from allauth.socialaccount.providers.base.constants import (AuthAction,
+                                                            AuthError)
+from allauth.socialaccount.providers.base.mixins import OAuthLoginMixin
+from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+from allauth.socialaccount.providers.oauth2.views import (OAuth2CallbackView,
+                                                          OAuth2LoginView,
+                                                          OAuth2View)
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.urls import path
+from requests import RequestException
 
 from llmstack.base.models import Profile
 from llmstack.connections.models import Connection, ConnectionStatus
+
 from .apis import ConnectionsViewSet
-
-from allauth.socialaccount.providers.oauth2.views import (
-    OAuth2CallbackView,
-    OAuth2LoginView,
-)
-
-from .handlers.hubspot import HubspotAdapter
 from .handlers.google import GoogleAdapter
+from .handlers.hubspot import HubspotAdapter
 
-from requests import RequestException
-
-from django.core.exceptions import PermissionDenied
-
-from allauth.socialaccount.helpers import (
-    render_authentication_error,
-)
-from allauth.socialaccount.providers.base import ProviderException
-from allauth.socialaccount.providers.base.constants import (
-    AuthError,
-    AuthAction
-)
-from allauth.socialaccount.providers.oauth2.client import (
-    OAuth2Error,
-)
-from allauth.socialaccount.providers.base.mixins import OAuthLoginMixin
-from allauth.socialaccount.providers.oauth2.views import OAuth2View
-
-import logging
 logger = logging.getLogger(__name__)
 
 # Copy of allauth.socialaccount.providers.oauth2.views.OAuth2LoginView
@@ -56,10 +45,17 @@ class CustomOAuth2LoginView(OAuth2LoginView):
         try:
             return HttpResponseRedirect(
                 client.get_redirect_url(
-                    auth_url, auth_params))
+                    auth_url,
+                    auth_params,
+                ),
+            )
         except OAuth2Error as e:
             return render_authentication_error(
-                request, provider.id, exception=e)
+                request,
+                provider.id,
+                exception=e,
+            )
+
 
 # Copy of allauth.socialaccount.providers.oauth2.views.OAuth2CallbackView
 
@@ -74,28 +70,40 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
             else:
                 error = AuthError.UNKNOWN
             return render_authentication_error(
-                request, self.adapter.provider_id, error=error
+                request,
+                self.adapter.provider_id,
+                error=error,
             )
         app = self.adapter.get_provider().get_app(self.request)
         client = self.get_client(self.request, app)
         try:
             access_token = self.adapter.get_access_token_data(
-                request, app, client)
+                request,
+                app,
+                client,
+            )
             token = self.adapter.parse_token(access_token)
             token.app = app
             result = self.adapter.complete_login(
-                request, app, token, response=access_token)
+                request,
+                app,
+                token,
+                response=access_token,
+            )
             profile = Profile.objects.get(user=request.user)
             connection_objects = profile.get_connection_by_type(
-                self.adapter.get_connection_type_slug())
+                self.adapter.get_connection_type_slug(),
+            )
 
             # Get the latest connection object for this connection type, work
             # with the assumption
             connection_objects.sort(
                 key=lambda x: datetime.strptime(
-                    x['created_at'],
-                    "%Y-%m-%dT%H:%M:%S.%f"),
-                reverse=True)
+                    x["created_at"],
+                    "%Y-%m-%dT%H:%M:%S.%f",
+                ),
+                reverse=True,
+            )
             latest_connection = connection_objects[0]
 
             connection = Connection(**latest_connection)
@@ -104,7 +112,7 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
 
             profile.add_connection(connection.dict())
 
-            return HttpResponseRedirect('/settings')
+            return HttpResponseRedirect("/settings")
         except (
             PermissionDenied,
             OAuth2Error,
@@ -112,33 +120,54 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
             ProviderException,
         ) as e:
             return render_authentication_error(
-                request, self.adapter.provider_id, exception=e
+                request,
+                self.adapter.provider_id,
+                exception=e,
             )
 
 
-urlpatterns = [path('api/connection_types',
-                    ConnectionsViewSet.as_view({'get': 'get_connection_types'})),
-               path('api/connections',
-                    ConnectionsViewSet.as_view({'get': 'list'})),
-               path('api/connections/<str:uid>/access_token',
-                    ConnectionsViewSet.as_view({'get': 'get_access_token'}),
-                    ),
-               path('api/connections/<str:uid>',
-                    ConnectionsViewSet.as_view({'get': 'get',
-                                                'post': 'post',
-                                                'patch': 'patch',
-                                                'delete': 'delete'}),
-                    ),
-               path('connections/hubspot/login/',
-                    CustomOAuth2LoginView.adapter_view(HubspotAdapter),
-                    name='hubspot_connection_login'),
-               path('connections/hubspot/login/callback/',
-                    CustomOAuth2CallbackView.adapter_view(HubspotAdapter),
-                    name='hubspot_connection_callback'),
-               path('connections/google/login/',
-                    CustomOAuth2LoginView.adapter_view(GoogleAdapter),
-                    name='google_connection_login'),
-               path('connections/google/login/callback/',
-                    CustomOAuth2CallbackView.adapter_view(GoogleAdapter),
-                    name='google_connection_callback'),
-               ]
+urlpatterns = [
+    path(
+        "api/connection_types",
+        ConnectionsViewSet.as_view({"get": "get_connection_types"}),
+    ),
+    path(
+        "api/connections",
+        ConnectionsViewSet.as_view({"get": "list"}),
+    ),
+    path(
+        "api/connections/<str:uid>/access_token",
+        ConnectionsViewSet.as_view({"get": "get_access_token"}),
+    ),
+    path(
+        "api/connections/<str:uid>",
+        ConnectionsViewSet.as_view(
+            {
+                "get": "get",
+                "post": "post",
+                "patch": "patch",
+                "delete": "delete",
+            },
+        ),
+    ),
+    path(
+        "connections/hubspot/login/",
+        CustomOAuth2LoginView.adapter_view(HubspotAdapter),
+        name="hubspot_connection_login",
+    ),
+    path(
+        "connections/hubspot/login/callback/",
+        CustomOAuth2CallbackView.adapter_view(HubspotAdapter),
+        name="hubspot_connection_callback",
+    ),
+    path(
+        "connections/google/login/",
+        CustomOAuth2LoginView.adapter_view(GoogleAdapter),
+        name="google_connection_login",
+    ),
+    path(
+        "connections/google/login/callback/",
+        CustomOAuth2CallbackView.adapter_view(GoogleAdapter),
+        name="google_connection_callback",
+    ),
+]

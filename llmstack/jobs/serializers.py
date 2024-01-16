@@ -1,7 +1,8 @@
 import orjson as json
 from rest_framework import serializers
 
-from llmstack.jobs.models import CronJob, RepeatableJob, ScheduledJob, TaskRunLog
+from llmstack.jobs.models import (CronJob, RepeatableJob, ScheduledJob,
+                                  TaskRunLog)
 
 
 class TaskRunLogSerializer(serializers.ModelSerializer):
@@ -12,21 +13,29 @@ class TaskRunLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskRunLog
-        fields = ['uuid', 'task_type', 'task_uuid', 'result',
-                  'status', 'errors', 'created_at']
+        fields = [
+            "uuid",
+            "task_type",
+            "task_uuid",
+            "result",
+            "status",
+            "errors",
+            "created_at",
+        ]
 
 
 BASE_JOB_FIELDS = [
-    'uuid',
-    'name',
-    'task_category',
-    'enabled',
-    'source_uuid',
-    'repeat',
-    'timeout',
-    'status',
-    'created_at',
-    'updated_at']
+    "uuid",
+    "name",
+    "task_category",
+    "enabled",
+    "source_uuid",
+    "repeat",
+    "timeout",
+    "status",
+    "created_at",
+    "updated_at",
+]
 
 
 class BaseJobSerializer(serializers.ModelSerializer):

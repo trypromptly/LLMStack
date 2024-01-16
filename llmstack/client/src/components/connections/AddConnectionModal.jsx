@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Alert,
   AlertTitle,
@@ -13,16 +12,15 @@ import {
   Select,
   TextField,
 } from "@mui/material";
-import { useRecoilValue } from "recoil";
 import validator from "@rjsf/validator-ajv8";
-import { Ws } from "../../data/ws";
-import { connectionTypesState } from "../../data/atoms";
 import { enqueueSnackbar } from "notistack";
+import { useEffect, useState } from "react";
+import { useRecoilCallback, useRecoilValue } from "recoil";
+import { connectionsState, connectionTypesState } from "../../data/atoms";
+import { axios } from "../../data/axios";
+import { Ws } from "../../data/ws";
 import ThemedJsonForm from "../ThemedJsonForm";
 import RemoteBrowser from "./RemoteBrowser";
-import { useRecoilCallback } from "recoil";
-import { axios } from "../../data/axios";
-import { connectionsState } from "../../data/atoms";
 
 function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
   const connectionTypes = useRecoilValue(connectionTypesState);

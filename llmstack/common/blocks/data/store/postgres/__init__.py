@@ -4,17 +4,18 @@ from tempfile import NamedTemporaryFile
 from typing import List, Optional
 
 import psycopg2
+
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
 
 
 class SSLMode(str, Enum):
-    disable = 'disable'
-    allow = 'allow'
-    prefer = 'prefer'
-    require = 'require'
-    verify_ca = 'verify-ca'
-    verify_full = 'verify-full'
+    disable = "disable"
+    allow = "allow"
+    prefer = "prefer"
+    require = "require"
+    verify_ca = "verify-ca"
+    verify_full = "verify-full"
 
 
 class PostgresConfiguration(BaseSchema):
@@ -24,7 +25,7 @@ class PostgresConfiguration(BaseSchema):
     port: int = 5432
     dbname: str
     use_ssl: bool = False
-    sslmode: SSLMode = 'prefer'
+    sslmode: SSLMode = "prefer"
     sslrootcertFile: Optional[str]
     sslcertFile: Optional[str]
     sslkeyFile: Optional[str]
@@ -63,8 +64,13 @@ def _get_ssl_config(configuration: dict):
 
 
 def get_pg_connection(configuration: dict):
-    ssl_config = _get_ssl_config(
-        configuration) if configuration.get("use_ssl") else {}
+    ssl_config = (
+        _get_ssl_config(
+            configuration,
+        )
+        if configuration.get("use_ssl")
+        else {}
+    )
     connection = psycopg2.connect(
         user=configuration.get("user"),
         password=configuration.get("password"),

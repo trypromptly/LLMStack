@@ -1,4 +1,4 @@
-import React from "react";
+import { ArrowDownward, ArrowUpward, Delete } from "@mui/icons-material";
 import {
   Button,
   Container,
@@ -13,7 +13,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { Delete, ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import React from "react";
 
 const dataTypes = [
   "string",

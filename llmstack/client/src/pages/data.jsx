@@ -1,24 +1,3 @@
-import { useEffect, useState } from "react";
-import {
-  Alert,
-  AlertTitle,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Collapse,
-  Container,
-  IconButton,
-  Grid,
-  Pagination,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from "@mui/material";
 import {
   AddOutlined,
   DeleteOutlineOutlined,
@@ -31,22 +10,43 @@ import {
   SyncOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
-import { useRecoilState, useRecoilValue } from "recoil";
 import {
-  dataSourceEntriesState,
-  orgDataSourceEntriesState,
-  dataSourceEntriesTableDataState,
-  profileFlagsState,
-} from "../data/atoms";
-import { AddDataSourceModal } from "../components/datasource/AddDataSourceModal";
-import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
-import ShareDataSourceModal from "../components/datasource/ShareDataSourceModal";
-import DataSourceEntryContent from "../components/datasource/DataSourceEntryContent";
-import { LocaleDate, FileSize } from "../components/Utils";
-import { useReloadDataSourceEntries, useReloadDataSources } from "../data/init";
-import { axios } from "../data/axios";
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Collapse,
+  Container,
+  Grid,
+  IconButton,
+  Pagination,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import moment from "moment";
 import { enqueueSnackbar } from "notistack";
+import { useEffect, useState } from "react";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { AddDataSourceModal } from "../components/datasource/AddDataSourceModal";
+import DataSourceEntryContent from "../components/datasource/DataSourceEntryContent";
+import ShareDataSourceModal from "../components/datasource/ShareDataSourceModal";
+import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
+import { FileSize, LocaleDate } from "../components/Utils";
+import {
+  dataSourceEntriesState,
+  dataSourceEntriesTableDataState,
+  orgDataSourceEntriesState,
+  profileFlagsState,
+} from "../data/atoms";
+import { axios } from "../data/axios";
+import { useReloadDataSourceEntries, useReloadDataSources } from "../data/init";
 
 function DataSourceEntries({ dataSourceEntryData }) {
   const [dataSourceEntryDrawerOpen, setDataSourceEntryDrawerOpen] =

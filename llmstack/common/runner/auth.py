@@ -6,7 +6,7 @@ from websockify.auth_plugins import AuthenticationError
 logger = logging.getLogger(__name__)
 
 
-class BasicHTTPAuthWithRedis():
+class BasicHTTPAuthWithRedis:
     """Verifies Basic Auth headers. Specify src as redis host:port:db:password"""
 
     def __init__(self, src=None):
@@ -45,20 +45,22 @@ class BasicHTTPAuthWithRedis():
                 raise ValueError
             self._port = int(self._port)
             self._db = int(self._db)
-            logger.info("BasicHTTPAuthWithRedis backend initilized (%s:%s)" %
-                        (self._server, self._port))
+            logger.info(
+                "BasicHTTPAuthWithRedis backend initilized (%s:%s)" % (self._server, self._port),
+            )
         except ValueError:
             logger.error(
                 "The provided --auth-source='%s' is not in the "
-                "expected format <host>[:<port>[:<db>[:<password>]]]" %
-                src)
+                "expected format <host>[:<port>[:<db>[:<password>]]]" % src,
+            )
             sys.exit()
 
     def authenticate(self, headers, target_host, target_port):
         import base64
-        auth_header = headers.get('Authorization')
+
+        auth_header = headers.get("Authorization")
         if auth_header:
-            if not auth_header.startswith('Basic '):
+            if not auth_header.startswith("Basic "):
                 self.auth_error()
 
             try:
@@ -68,11 +70,11 @@ class BasicHTTPAuthWithRedis():
 
             try:
                 # http://stackoverflow.com/questions/7242316/what-encoding-should-i-use-for-http-basic-authentication
-                user_pass_as_text = user_pass_raw.decode('ISO-8859-1')
+                user_pass_as_text = user_pass_raw.decode("ISO-8859-1")
             except UnicodeDecodeError:
                 self.auth_error()
 
-            user_pass = user_pass_as_text.split(':', 1)
+            user_pass = user_pass_as_text.split(":", 1)
             if len(user_pass) != 2:
                 self.auth_error()
 
@@ -87,11 +89,16 @@ class BasicHTTPAuthWithRedis():
             import redis
         except ImportError:
             logger.error(
-                "package redis not found, are you sure you've installed them correctly?")
+                "package redis not found, are you sure you've installed them correctly?",
+            )
             sys.exit()
 
-        client = redis.Redis(host=self._server, port=self._port,
-                             db=self._db, password=self._password)
+        client = redis.Redis(
+            host=self._server,
+            port=self._port,
+            db=self._db,
+            password=self._password,
+        )
         stuff = client.get(username)
 
         if stuff and stuff.decode("utf-8").strip() == password:
@@ -104,5 +111,8 @@ class BasicHTTPAuthWithRedis():
 
     def demand_auth(self):
         raise AuthenticationError(
-            response_code=401, response_headers={
-                'WWW-Authenticate': 'Basic realm="Websockify"'})
+            response_code=401,
+            response_headers={
+                "WWW-Authenticate": 'Basic realm="Websockify"',
+            },
+        )

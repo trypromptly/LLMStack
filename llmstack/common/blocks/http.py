@@ -1,66 +1,58 @@
 import json
 import logging
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import Generator
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Any, Dict, Generator, List, Optional, Union
 
 import requests
-from pydantic import Field
-from pydantic import HttpUrl
+from pydantic import Field, HttpUrl
 
-from llmstack.common.blocks.base.processor import BaseConfiguration
-from llmstack.common.blocks.base.processor import BaseInput
-from llmstack.common.blocks.base.processor import BaseOutput
-from llmstack.common.blocks.base.processor import BaseProcessor
-from llmstack.common.blocks.base.processor import Schema
+from llmstack.common.blocks.base.processor import (BaseConfiguration,
+                                                   BaseInput, BaseOutput,
+                                                   BaseProcessor, Schema)
 
 logger = logging.getLogger(__name__)
 
 
 class HttpMethod(str, Enum):
-    GET = 'GET'
-    POST = 'POST'
-    PUT = 'PUT'
-    PATCH = 'PATCH'
-    DELETE = 'DELETE'
-    OPTIONS = 'OPTIONS'
-    HEAD = 'HEAD'
+    GET = "GET"
+    POST = "POST"
+    PUT = "PUT"
+    PATCH = "PATCH"
+    DELETE = "DELETE"
+    OPTIONS = "OPTIONS"
+    HEAD = "HEAD"
 
     def __str__(self):
         return self.value
 
 
 class NoAuth(Schema):
-    _type = 'no_auth'
+    _type = "no_auth"
 
 
 class APIKeyAuth(Schema):
-    _type = 'api_key'
+    _type = "api_key"
     api_key: str
 
 
 class BearerTokenAuth(Schema):
-    _type = 'bearer_token'
+    _type = "bearer_token"
     token: str
 
 
 class JWTBearerAuth(Schema):
-    _type = 'jwt_bearer_token'
+    _type = "jwt_bearer_token"
     token: str
 
 
 class BasicAuth(Schema):
-    _type = 'basic_auth'
+    _type = "basic_auth"
     username: str
     password: str
 
 
 class OAuth2(Schema):
-    _type = 'oauth2'
+    _type = "oauth2"
     access_token: str
     token_type: Optional[str] = None
     expires_in: Optional[int] = None
@@ -68,42 +60,42 @@ class OAuth2(Schema):
 
 
 class EmptyBody(Schema):
-    _type = 'empty'
+    _type = "empty"
 
 
 class FormBody(Schema):
-    _type: str = 'form'
+    _type: str = "form"
     form_body: Dict[str, Any]
 
 
 class RawRequestBody(Schema):
-    _type: str = 'raw'
+    _type: str = "raw"
     data: Any
     files: Any
 
 
 class TextBody(Schema):
-    _type: str = 'text'
+    _type: str = "text"
     text_body: str
 
 
 class JsonBody(Schema):
-    _type: str = 'json'
+    _type: str = "json"
     json_body: Union[str, Dict]
 
 
 class XMLBody(Schema):
-    _type: str = 'xml'
+    _type: str = "xml"
     xml_body: str
 
 
 class JavascriptBody(Schema):
-    _type: str = 'javascript'
+    _type: str = "javascript"
     javascript_body: str
 
 
 class HTMLBody(Schema):
-    _type: str = 'html'
+    _type: str = "html"
     html_body: str
 
 
@@ -156,12 +148,16 @@ class HttpAPIError(Schema):
 
 
 class BaseErrorOutput(Schema):
-    error: Optional[HttpAPIError] = Field(None, description='Error Object')
+    error: Optional[HttpAPIError] = Field(None, description="Error Object")
 
 
-class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
-                                     HttpAPIProcessorOutput,
-                                     HttpAPIProcessorConfiguration]):
+class HttpAPIProcessor(
+    BaseProcessor[
+        HttpAPIProcessorInput,
+        HttpAPIProcessorOutput,
+        HttpAPIProcessorConfiguration,
+    ],
+):
     """
     # HttpAPIProcessor
 
@@ -253,30 +249,36 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
     ### HttpAPIProcessor
 
     This class inherits from `BaseProcessor` and represents the main processor for handling HTTP API requests. It uses the input, output, and configuration classes defined above, and provides methods for processing requests and handling exceptions.
-        """
+    """
+
     @staticmethod
     def name() -> str:
-        return 'http_api_processor'
+        return "http_api_processor"
 
     def _process_exception(self, ex: Exception) -> BaseErrorOutput:
         return BaseErrorOutput(error=HttpAPIError(code=500, message=str(ex)))
 
-    def _update_auth_headers(self,
-                             headers: Dict[str,
-                                           str],
-                             authorization: Union[APIKeyAuth,
-                                                  BearerTokenAuth,
-                                                  JWTBearerAuth,
-                                                  BasicAuth,
-                                                  OAuth2,
-                                                  NoAuth]) -> Dict[str,
-                                                                   str]:
+    def _update_auth_headers(
+        self,
+        headers: Dict[
+            str,
+            str,
+        ],
+        authorization: Union[
+            APIKeyAuth,
+            BearerTokenAuth,
+            JWTBearerAuth,
+            BasicAuth,
+            OAuth2,
+            NoAuth,
+        ],
+    ) -> Dict[str, str]:
         auth = None
-        if (isinstance(authorization, APIKeyAuth)):
-            headers['Authorization'] = f'Apikey {authorization.api_key}'
+        if isinstance(authorization, APIKeyAuth):
+            headers["Authorization"] = f"Apikey {authorization.api_key}"
         elif (isinstance(authorization, BearerTokenAuth)) or (isinstance(authorization, JWTBearerAuth)):
-            headers['Authorization'] = f'Bearer {authorization.token}'
-        elif (isinstance(authorization, BasicAuth)):
+            headers["Authorization"] = f"Bearer {authorization.token}"
+        elif isinstance(authorization, BasicAuth):
             auth = (
                 authorization.username,
                 authorization.password,
@@ -286,12 +288,15 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
         elif isinstance(authorization, NoAuth):
             pass
         else:
-            raise Exception('Invalid authorization type')
+            raise Exception("Invalid authorization type")
 
         return headers, auth
 
     def _update_request_params(
-            self, input: HttpAPIProcessorInput, headers: Dict[str, str]) -> Any:
+        self,
+        input: HttpAPIProcessorInput,
+        headers: Dict[str, str],
+    ) -> Any:
         data = None
         json_body = None
         files = None
@@ -304,32 +309,32 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
             files = input.body.files
         elif isinstance(input.body, TextBody):
             data = input.body.text_body
-            headers['Content-Type'] = 'text/plain'
+            headers["Content-Type"] = "text/plain"
         elif isinstance(input.body, JsonBody):
             if isinstance(input.body.json_body, str):
                 json_body = json.loads(input.body.json_body)
             else:
                 json_body = input.body.json_body
-            headers['Content-Type'] = 'application/json'
+            headers["Content-Type"] = "application/json"
         elif isinstance(input.body, XMLBody):
             data = input.body.xml_body
-            headers['Content-Type'] = 'application/xml'
+            headers["Content-Type"] = "application/xml"
         elif isinstance(input.body, JavascriptBody):
             data = input.body.javascript_body
-            headers['Content-Type'] = 'application/javascript'
+            headers["Content-Type"] = "application/javascript"
         elif isinstance(input.body, HTMLBody):
             data = input.body.html_body
-            headers['Content-Type'] = 'text/html'
+            headers["Content-Type"] = "text/html"
         else:
-            raise Exception('Unknown body type')
+            raise Exception("Unknown body type")
 
         return (data, json_body, files, headers)
 
-    def _process_iter(self,
-                      input: HttpAPIProcessorInput,
-                      configuration: HttpAPIProcessorConfiguration) -> Generator[HttpAPIProcessorOutput,
-                                                                                 None,
-                                                                                 None]:
+    def _process_iter(
+        self,
+        input: HttpAPIProcessorInput,
+        configuration: HttpAPIProcessorConfiguration,
+    ) -> Generator[HttpAPIProcessorOutput, None, None]:
         response = None
         headers = input.headers.copy()
 
@@ -337,7 +342,8 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
         method = input.method
         url = input.url
         data, json_body, files, headers = self._update_request_params(
-            input, headers,
+            input,
+            headers,
         )
         timeout = self.configuration.timeout
         allow_redirects = self.configuration.allow_redirects
@@ -355,7 +361,7 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
         )
 
         if response is None:
-            raise Exception('Response is empty')
+            raise Exception("Response is empty")
 
         iter_lines = response.iter_lines()
         for line in iter_lines:
@@ -374,9 +380,10 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
                 )
 
     def _process(
-            self,
-            input: HttpAPIProcessorInput,
-            configuration: HttpAPIProcessorConfiguration) -> HttpAPIProcessorOutput:
+        self,
+        input: HttpAPIProcessorInput,
+        configuration: HttpAPIProcessorConfiguration,
+    ) -> HttpAPIProcessorOutput:
         response = None
         headers = input.headers.copy()
 
@@ -384,7 +391,8 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
         method = input.method
         url = input.url
         data, json_body, files, headers = self._update_request_params(
-            input, headers,
+            input,
+            headers,
         )
         timeout = self.configuration.timeout
         allow_redirects = self.configuration.allow_redirects
@@ -403,7 +411,7 @@ class HttpAPIProcessor(BaseProcessor[HttpAPIProcessorInput,
         )
 
         if response is None:
-            raise Exception('Response is empty')
+            raise Exception("Response is empty")
 
         try:
             json_response = response.json()

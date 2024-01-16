@@ -5,32 +5,20 @@ from llmstack.apps.yaml_loader import get_app_template_by_slug
 from llmstack.base.models import Profile
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.processors.models import ApiBackend, Endpoint
-from llmstack.processors.serializers import (
-    ApiBackendSerializer,
-    ApiProviderSerializer,
-    EndpointSerializer,
-)
+from llmstack.processors.serializers import (ApiBackendSerializer,
+                                             ApiProviderSerializer,
+                                             EndpointSerializer)
 
-from .models import (
-    App,
-    AppAccessPermission,
-    AppData,
-    AppHub,
-    AppRunGraphEntry,
-    AppSession,
-    AppTemplate,
-    AppTemplateCategory,
-    AppType,
-    TestCase,
-    TestSet,
-)
+from .models import (App, AppAccessPermission, AppData, AppHub,
+                     AppRunGraphEntry, AppSession, AppTemplate,
+                     AppTemplateCategory, AppType, TestCase, TestSet)
 
 
 class DynamicFieldsModelSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields' arg up to the superclass
-        fields = kwargs.pop('fields', None)
-        self._request_user = kwargs.pop('request_user', None)
+        fields = kwargs.pop("fields", None)
+        self._request_user = kwargs.pop("request_user", None)
 
         # Instantiate the superclass normally
         super().__init__(*args, **kwargs)
@@ -62,8 +50,12 @@ class AppTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppType
         fields = [
-            'id', 'slug', 'name', 'description',
-            'config_schema', 'config_ui_schema',
+            "id",
+            "slug",
+            "name",
+            "description",
+            "config_schema",
+            "config_ui_schema",
         ]
 
 
@@ -73,30 +65,30 @@ class AppRunGraphEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AppRunGraphEntry
-        fields = ['id', 'entry_endpoint', 'exit_endpoint', 'data_transformer']
+        fields = ["id", "entry_endpoint", "exit_endpoint", "data_transformer"]
 
 
 class AppSerializer(DynamicFieldsModelSerializer):
-
     class AppProcessorEndpointSerializer(serializers.ModelSerializer):
         class AppProcessorEndpointApiBackendSerializer(
-                serializers.ModelSerializer):
+            serializers.ModelSerializer,
+        ):
             api_provider = ApiProviderSerializer()
 
             class Meta:
                 model = ApiBackend
-                fields = ['id', 'name', 'api_provider']
+                fields = ["id", "name", "api_provider"]
 
         api_backend = AppProcessorEndpointApiBackendSerializer()
 
         class Meta:
             model = Endpoint
-            fields = ['name', 'uuid', 'api_backend', 'description']
+            fields = ["name", "uuid", "api_backend", "description"]
 
     class AppTemplateSerializer(serializers.ModelSerializer):
         class Meta:
             model = AppTemplate
-            fields = ['name', 'slug']
+            fields = ["name", "slug"]
 
     type = AppTypeSerializer()
     data = serializers.SerializerMethodField()
@@ -125,8 +117,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
 
     def get_logo(self, obj):
         profile = Profile.objects.get(user=obj.owner)
-        return profile.logo if (
-            profile.is_pro_subscriber() or profile.organization) else None
+        return profile.logo if (profile.is_pro_subscriber() or profile.organization) else None
 
     def get_is_shareable(self, obj):
         profile = Profile.objects.get(user=obj.owner)
@@ -137,29 +128,52 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return not profile.organization
 
     def get_last_modified_by_email(self, obj):
-        return obj.last_modified_by.email if obj.last_modified_by and obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.last_modified_by.email
+            if obj.last_modified_by
+            and obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     def get_owner_email(self, obj):
-        return obj.owner.email if obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.owner.email
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     def get_output_template(self, obj):
-        return convert_template_vars_from_legacy_format(
-            obj.output_template) if obj.output_template else None
+        return (
+            convert_template_vars_from_legacy_format(
+                obj.output_template,
+            )
+            if obj.output_template
+            else None
+        )
 
     def get_data(self, obj):
-        app_data = AppData.objects.filter(
-            app_uuid=obj.uuid).order_by('-created_at').first()
+        app_data = (
+            AppData.objects.filter(
+                app_uuid=obj.uuid,
+            )
+            .order_by("-created_at")
+            .first()
+        )
         if app_data and app_data.data:
             if not obj.has_write_permission(self._request_user):
-                app_data.data.pop('processors', None)
+                app_data.data.pop("processors", None)
             return app_data.data
         return None
 
     def get_has_live_version(self, obj):
         app_datas = AppData.objects.filter(
-            app_uuid=obj.uuid, is_draft=False).first()
+            app_uuid=obj.uuid,
+            is_draft=False,
+        ).first()
         return app_datas is not None
 
     def get_app_type_name(self, obj):
@@ -179,22 +193,25 @@ class AppSerializer(DynamicFieldsModelSerializer):
 
             entry_nodes = list(
                 filter(
-                    lambda x: x.entry_endpoint is None, nodes,
+                    lambda x: x.entry_endpoint is None,
+                    nodes,
                 ),
             )
             node = entry_nodes[0].exit_endpoint if entry_nodes else None
             while node:
-                processors.append({
-                    'input': node.input,
-                    'config': node.config,
-                    'api_backend': ApiBackendSerializer(instance=node.api_backend).data,
-                    'endpoint': str(node.uuid),
-                })
+                processors.append(
+                    {
+                        "input": node.input,
+                        "config": node.config,
+                        "api_backend": ApiBackendSerializer(instance=node.api_backend).data,
+                        "endpoint": str(node.uuid),
+                    },
+                )
                 node_to_find = node
                 edge = list(
                     filter(
-                        lambda x: x.entry_endpoint
-                        == node_to_find, nodes,
+                        lambda x: x.entry_endpoint == node_to_find,
+                        nodes,
                     ),
                 )[0]
 
@@ -204,10 +221,10 @@ class AppSerializer(DynamicFieldsModelSerializer):
     def get_unique_processors(self, obj):
         if obj.has_write_permission(self._request_user):
             data = self.get_data(obj)
-            processors = data.get('processors', []) if data else []
+            processors = data.get("processors", []) if data else []
             unique_processors = []
             for processor in processors:
-                if 'provider_slug' in processor and 'processor_slug' in processor:
+                if "provider_slug" in processor and "processor_slug" in processor:
                     name = f"{processor['provider_slug']} / {processor['processor_slug']}"
                     if name not in unique_processors:
                         unique_processors.append(name)
@@ -216,37 +233,79 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return []
 
     def get_discord_config(self, obj):
-        return obj.discord_config if obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.discord_config
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     def get_slack_config(self, obj):
-        return obj.slack_config if obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.slack_config
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     def get_twilio_config(self, obj):
-        return obj.twilio_config if obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.twilio_config
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     def get_access_permission(self, obj):
-        return AppAccessPermission.WRITE if obj.has_write_permission(
-            self._request_user) else AppAccessPermission.READ
+        return (
+            AppAccessPermission.WRITE
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else AppAccessPermission.READ
+        )
 
     def get_accessible_by(self, obj):
-        return obj.accessible_by if obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.accessible_by
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     def get_read_accessible_by(self, obj):
-        return obj.read_accessible_by if obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.read_accessible_by
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     def get_write_accessible_by(self, obj):
-        return obj.write_accessible_by if obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.write_accessible_by
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     def get_last_modified_by_email(self, obj):
-        return obj.last_modified_by.email if (
-            obj.last_modified_by and obj.has_write_permission(
-                self._request_user)) else None
+        return (
+            obj.last_modified_by.email
+            if (
+                obj.last_modified_by
+                and obj.has_write_permission(
+                    self._request_user,
+                )
+            )
+            else None
+        )
 
     def get_template(self, obj):
         if obj.template:
@@ -258,64 +317,74 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return None
 
     def get_web_config(self, obj):
-        return obj.web_config if obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.web_config
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     def get_visibility(self, obj):
-        return obj.visibility if obj.has_write_permission(
-            self._request_user) else None
+        return (
+            obj.visibility
+            if obj.has_write_permission(
+                self._request_user,
+            )
+            else None
+        )
 
     class Meta:
         model = App
         fields = [
-            'name',
-            'description',
-            'config',
-            'input_schema',
-            'data',
-            'type',
-            'uuid',
-            'published_uuid',
-            'is_published',
-            'unique_processors',
-            'input_ui_schema',
-            'output_template',
-            'created_at',
-            'last_updated_at',
-            'logo',
-            'is_shareable',
-            'has_footer',
-            'domain',
-            'visibility',
-            'accessible_by',
-            'access_permission',
-            'last_modified_by_email',
-            'owner_email',
-            'web_config',
-            'slack_config',
-            'discord_config',
-            'twilio_config',
-            'app_type_name',
-            'processors',
-            'template',
-            'app_type_slug',
-            'read_accessible_by',
-            'write_accessible_by',
-            'has_live_version']
+            "name",
+            "description",
+            "config",
+            "input_schema",
+            "data",
+            "type",
+            "uuid",
+            "published_uuid",
+            "is_published",
+            "unique_processors",
+            "input_ui_schema",
+            "output_template",
+            "created_at",
+            "last_updated_at",
+            "logo",
+            "is_shareable",
+            "has_footer",
+            "domain",
+            "visibility",
+            "accessible_by",
+            "access_permission",
+            "last_modified_by_email",
+            "owner_email",
+            "web_config",
+            "slack_config",
+            "discord_config",
+            "twilio_config",
+            "app_type_name",
+            "processors",
+            "template",
+            "app_type_slug",
+            "read_accessible_by",
+            "write_accessible_by",
+            "has_live_version",
+        ]
 
 
 class AppTemplateCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = AppTemplateCategory
-        fields = ['name', 'slug']
+        fields = ["name", "slug"]
 
 
 class AppDataSerializer(serializers.ModelSerializer):
-
     data = serializers.SerializerMethodField()
 
     def get_data(self, obj):
-        hide_details = self.context.get('hide_details', True)
+        hide_details = self.context.get("hide_details", True)
         if hide_details:
             return None
 
@@ -323,8 +392,15 @@ class AppDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AppData
-        fields = ['version', 'app_uuid', 'data',
-                  'created_at', 'last_updated_at', 'is_draft', 'comment']
+        fields = [
+            "version",
+            "app_uuid",
+            "data",
+            "created_at",
+            "last_updated_at",
+            "is_draft",
+            "comment",
+        ]
 
 
 class AppHubSerializer(serializers.ModelSerializer):
@@ -344,11 +420,10 @@ class AppHubSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AppHub
-        fields = ['published_uuid', 'categories', 'name', 'description']
+        fields = ["published_uuid", "categories", "name", "description"]
 
 
 class CloneableAppSerializer(serializers.ModelSerializer):
-
     class CloneableAppRunGraphEntrySerializer(serializers.ModelSerializer):
         class CloneableAppEndpointSerializer(serializers.ModelSerializer):
             api_backend = ApiBackendSerializer()
@@ -356,15 +431,20 @@ class CloneableAppSerializer(serializers.ModelSerializer):
             class Meta:
                 model = Endpoint
                 fields = [
-                    'name', 'api_backend',
-                    'description', 'is_app', 'config', 'input',
+                    "name",
+                    "api_backend",
+                    "description",
+                    "is_app",
+                    "config",
+                    "input",
                 ]
+
         entry_endpoint = CloneableAppEndpointSerializer()
         exit_endpoint = CloneableAppEndpointSerializer()
 
         class Meta:
             model = AppRunGraphEntry
-            fields = ['id', 'entry_endpoint', 'exit_endpoint']
+            fields = ["id", "entry_endpoint", "exit_endpoint"]
 
     type = AppTypeSerializer()
     run_graph = CloneableAppRunGraphEntrySerializer(many=True)
@@ -372,20 +452,20 @@ class CloneableAppSerializer(serializers.ModelSerializer):
     class Meta:
         model = App
         fields = [
-            'name',
-            'description',
-            'config',
-            'input_schema',
-            'data_transformer',
-            'type',
-            'input_ui_schema',
-            'output_template',
-            'run_graph',
-            'published_uuid',
-            'is_published',
-            'domain',
-            'created_at',
-            'last_updated_at',
+            "name",
+            "description",
+            "config",
+            "input_schema",
+            "data_transformer",
+            "type",
+            "input_ui_schema",
+            "output_template",
+            "run_graph",
+            "published_uuid",
+            "is_published",
+            "domain",
+            "created_at",
+            "last_updated_at",
         ]
 
 
@@ -394,13 +474,13 @@ class AppSessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AppSession
-        fields = ['uuid', 'app']
+        fields = ["uuid", "app"]
 
 
 class TestSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestSet
-        fields = ['uuid', 'name', 'created_at', 'last_updated_at']
+        fields = ["uuid", "name", "created_at", "last_updated_at"]
 
 
 class TestCaseSerializer(serializers.ModelSerializer):
@@ -412,6 +492,10 @@ class TestCaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestCase
         fields = [
-            'uuid', 'input_data', 'expected_output',
-            'testset_uuid', 'created_at', 'last_updated_at',
+            "uuid",
+            "input_data",
+            "expected_output",
+            "testset_uuid",
+            "created_at",
+            "last_updated_at",
         ]

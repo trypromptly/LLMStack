@@ -3,31 +3,35 @@ from typing import Iterator
 from pydantic import Field
 
 from llmstack.common.blocks.base.schema import BaseSchema
-from llmstack.connections.models import Connection, ConnectionStatus, ConnectionType
+from llmstack.connections.models import (Connection, ConnectionStatus,
+                                         ConnectionType)
 from llmstack.connections.types import ConnectionTypeInterface
 
 
 class ApolloRESTAPIConfiguration(BaseSchema):
-    api_key: str = Field(description='API Key for Apollo REST API',
-                         default='', widget='password')
+    api_key: str = Field(
+        description="API Key for Apollo REST API",
+        default="",
+        widget="password",
+    )
 
 
 class ApolloRESTAPI(ConnectionTypeInterface[ApolloRESTAPIConfiguration]):
     @staticmethod
     def name() -> str:
-        return 'Apollo REST API'
+        return "Apollo REST API"
 
     @staticmethod
     def provider_slug() -> str:
-        return 'apollo'
+        return "apollo"
 
     @staticmethod
     def slug() -> str:
-        return 'apollo_rest_api'
+        return "apollo_rest_api"
 
     @staticmethod
     def description() -> str:
-        return 'Connect to the Apollo REST API'
+        return "Connect to the Apollo REST API"
 
     @staticmethod
     def type() -> ConnectionType:
@@ -41,18 +45,22 @@ class ApolloRESTAPI(ConnectionTypeInterface[ApolloRESTAPIConfiguration]):
             url = "https://api.apollo.io/v1/auth/health"
 
             querystring = {
-                "api_key": connection.configuration['api_key']
+                "api_key": connection.configuration["api_key"],
             }
 
             headers = {
-                'Cache-Control': 'no-cache',
-                'Content-Type': 'application/json'
+                "Cache-Control": "no-cache",
+                "Content-Type": "application/json",
             }
 
             response = requests.request(
-                "GET", url, headers=headers, params=querystring)
+                "GET",
+                url,
+                headers=headers,
+                params=querystring,
+            )
 
-            if response.status_code == 200 and response.json()['is_logged_in']:
+            if response.status_code == 200 and response.json()["is_logged_in"]:
                 connection.status = ConnectionStatus.ACTIVE
                 yield connection
             else:
@@ -61,4 +69,4 @@ class ApolloRESTAPI(ConnectionTypeInterface[ApolloRESTAPIConfiguration]):
 
         except Exception as e:
             connection.status = ConnectionStatus.FAILED
-            yield {'error': str(e), 'connection': connection}
+            yield {"error": str(e), "connection": connection}

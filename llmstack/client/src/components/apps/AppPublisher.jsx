@@ -1,16 +1,12 @@
-import React, { useState } from "react";
-import { profileFlagsState } from "../../data/atoms";
-import { axios } from "../../data/axios";
-import { useRecoilValue } from "recoil";
-import { enqueueSnackbar } from "notistack";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import {
   Box,
   Button,
   CircularProgress,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   IconButton,
   MenuItem,
@@ -22,7 +18,11 @@ import {
   TableRow,
   TextField,
 } from "@mui/material";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { enqueueSnackbar } from "notistack";
+import { useState } from "react";
+import { useRecoilValue } from "recoil";
+import { profileFlagsState } from "../../data/atoms";
+import { axios } from "../../data/axios";
 
 const shareDialogStyles = {
   width: "100%",

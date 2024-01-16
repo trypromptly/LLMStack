@@ -1,31 +1,33 @@
 from pydantic import Field
+
 from llmstack.common.blocks.base.schema import BaseSchema
-from llmstack.connections.types import ConnectionTypeInterface
 from llmstack.connections.models import ConnectionType
+from llmstack.connections.types import ConnectionTypeInterface
 
 
 class BearerAuthenticationConfiguration(BaseSchema):
-    token: str = Field(widget='textarea')
-    token_prefix: str = 'Bearer'
+    token: str = Field(widget="textarea")
+    token_prefix: str = "Bearer"
 
 
 class BearerAuthenticationBasedAPILogin(
-        ConnectionTypeInterface[BearerAuthenticationConfiguration]):
+    ConnectionTypeInterface[BearerAuthenticationConfiguration],
+):
     @staticmethod
     def name() -> str:
-        return 'Bearer Authentication'
+        return "Bearer Authentication"
 
     @staticmethod
     def provider_slug() -> str:
-        return 'promptly'
+        return "promptly"
 
     @staticmethod
     def slug() -> str:
-        return 'bearer_authentication'
+        return "bearer_authentication"
 
     @staticmethod
     def description() -> str:
-        return 'Bearer Token based API authentication'
+        return "Bearer Token based API authentication"
 
     @staticmethod
     def type() -> ConnectionType:

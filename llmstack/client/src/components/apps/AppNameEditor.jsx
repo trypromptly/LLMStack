@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { EditOutlined } from "@mui/icons-material";
 import { TextField } from "@mui/material";
+import { useState } from "react";
 
 export function AppNameEditor({ appName, setAppName }) {
   const [showInput, setShowInput] = useState(false);

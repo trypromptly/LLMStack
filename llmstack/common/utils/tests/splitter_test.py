@@ -4,10 +4,9 @@ from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 
 
 class TestSplitter(unittest.TestCase):
-
     def test_csv_splitter_valid(self):
         splitter = CSVTextSplitter(chunk_size=10, chunk_overlap=5)
-        text = 'name,age\nJohn,25\nJane,26\nJack,27\nJill,28\n'
+        text = "name,age\nJohn,25\nJane,26\nJack,27\nJill,28\n"
         chunks = splitter.split_text(text)
         assert len(chunks) == 4
 

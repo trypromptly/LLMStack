@@ -5,10 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-
 import "./Input.css";
-
-import * as React from "react";
 
 export default function TextInput({
   label,

@@ -10,11 +10,18 @@ from llmstack.processors.providers.openai.completions import Completions
 
 def test_cohere_generate():
     processor = Generate({}, {}, {})
-    assert Generate.name() == 'cohere/generate'
+    assert Generate.name() == "cohere/generate"
 
     response = processor.process(
-        {'prompt': 'Hello world!', '_env': {'cohere_api_key': os.getenv(
-            'COHERE_API_KEY', 'Qg8PfTe4Apd7spTLkaxIbO4ynLX4Xx6TfhpI5Zno')}},
+        {
+            "prompt": "Hello world!",
+            "_env": {
+                "cohere_api_key": os.getenv(
+                    "COHERE_API_KEY",
+                    "Qg8PfTe4Apd7spTLkaxIbO4ynLX4Xx6TfhpI5Zno",
+                ),
+            },
+        },
     )
     assert response.choices is not None
     assert len(response.choices) > 0
@@ -42,13 +49,14 @@ def test_cohere_generate():
         (response.schema_json(indent=2)),
     ) == json.loads(output_schema)
 
+
 # Basic test for openai processor
 
 
 def test_openai_completions():
     processor = Completions({}, {}, {})
-    assert Completions.name() == 'openai/completions'
+    assert Completions.name() == "openai/completions"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_cohere_generate()

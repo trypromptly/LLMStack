@@ -1,6 +1,3 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import validator from "@rjsf/validator-ajv8";
 import {
   Alert,
   Box,
@@ -9,13 +6,16 @@ import {
   CircularProgress,
   Stack,
   Step,
-  Stepper,
   StepLabel,
+  Stepper,
   Typography,
 } from "@mui/material";
+import validator from "@rjsf/validator-ajv8";
+import { get, set } from "lodash";
+import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { isMobileState } from "../../data/atoms";
-import { get, set } from "lodash";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { AppSaveButtons } from "./AppSaveButtons";
 

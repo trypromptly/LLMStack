@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react";
 import {
   Alert,
   Card,
@@ -7,6 +6,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { axios } from "../../data/axios";
 import { AppNameDialog } from "./AppNameDialog";

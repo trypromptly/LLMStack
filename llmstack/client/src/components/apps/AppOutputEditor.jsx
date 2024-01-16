@@ -1,10 +1,10 @@
-import { CardContent } from "@mui/material";
-import { AppStepCard } from "./AppStepCard";
-import TextField from "@mui/material/TextField";
 import WebTwoToneIcon from "@mui/icons-material/WebTwoTone";
-import { TextFieldWithVars } from "./TextFieldWithVars";
+import { CardContent } from "@mui/material";
+import TextField from "@mui/material/TextField";
 import { useEffect, useState } from "react";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
+import { AppStepCard } from "./AppStepCard";
+import { TextFieldWithVars } from "./TextFieldWithVars";
 
 export function AppOutputEditor({
   index,

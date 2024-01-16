@@ -1,21 +1,3 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useRecoilValue } from "recoil";
-import { isLoggedInState, profileState } from "../data/atoms";
-import {
-  Avatar,
-  Box,
-  Button,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  CssBaseline,
-  Divider,
-  ListItemIcon,
-  Typography,
-  SvgIcon,
-} from "@mui/material";
 import {
   AppsOutlined,
   CorporateFareOutlined,
@@ -31,13 +13,30 @@ import {
   SourceOutlined,
 } from "@mui/icons-material";
 import TwitterIcon from "@mui/icons-material/Twitter";
-import { onLogoutClick } from "./logout";
-import { ReactComponent as GithubIcon } from "../assets/images/icons/github.svg";
-import { LoggedOutModal } from "./LoggedOutModal";
-
-import * as React from "react";
-import { styled } from "@mui/material/styles";
+import {
+  Avatar,
+  Box,
+  Button,
+  CssBaseline,
+  Divider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  SvgIcon,
+  Typography,
+} from "@mui/material";
 import MuiDrawer from "@mui/material/Drawer";
+import { styled } from "@mui/material/styles";
+import * as React from "react";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useRecoilValue } from "recoil";
+import { ReactComponent as GithubIcon } from "../assets/images/icons/github.svg";
+import { isLoggedInState, profileState } from "../data/atoms";
+import { LoggedOutModal } from "./LoggedOutModal";
+import { onLogoutClick } from "./logout";
 
 const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
 
