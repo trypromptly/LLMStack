@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "google/protobuf/struct.proto";
 
 enum BrowserCommandType {
   GOTO = 0; // go to url
@@ -114,17 +115,18 @@ message PythonCodeRunnerFile {
 }
 
 message RestrictedPythonCodeRunnerRequest {
-  string code = 1; // python code to run
-  int32 timeout_secs = 2; // timeout in seconds
+  string source_code = 1; // python code to run
+  google.protobuf.Struct input_data = 2; // input data to pass to code
+  int32 timeout_secs = 3; // timeout in seconds
 }
 
 message RestrictedPythonCodeRunnerResponse {
   RemoteBrowserState state = 1; // state of runner
-  string result = 2; // result of runner
+  google.protobuf.Struct local_variables = 2; // local variable after running code
   repeated string stdout = 3; // stdout of code
   repeated string stderr = 4; // stderr of code
   int32 exit_code = 5; // exit code of code
-}c
+}
 
 // Generic runner service
 service Runner {
