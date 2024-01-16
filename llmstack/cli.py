@@ -4,6 +4,8 @@ import secrets
 import subprocess
 import sys
 from collections import defaultdict
+import argparse
+
 
 import docker
 import toml
@@ -68,6 +70,11 @@ def prepare_env():
         sys.exit(
             'ERROR: config file not found. Please create one in ~/.llmstack/config')
 
+    # reading port and host from arguments if given
+    parser = argparse.ArgumentParser(description='Process port or host arguments')
+    parser.add_argument('--port', type=int, help='Specify the port number')
+    parser.add_argument('--host', type=str, help='Specify the host address')
+    args = parser.parse_args()
     # Updates to config.toml
     config_path = os.path.join('config')
     config = {}
@@ -83,10 +90,18 @@ def prepare_env():
         if 'llmstack-runner' not in config:
             config['llmstack-runner'] = {}
 
-        if 'host' not in config['llmstack-runner']:
+        # Check if port is specified in the command line arguments
+        if args.host is not None:
+            config['llmstack-runner']['host'] = args.host
+
+        elif 'host' not in config['llmstack-runner']:
             config['llmstack-runner']['host'] = 'localhost'
 
-        if 'port' not in config['llmstack-runner']:
+        # Check if port is specified in the command line arguments
+        if args.port is not None:
+            config['llmstack-runner']['port'] = args.port
+
+        elif 'port' not in config['llmstack-runner']:
             config['llmstack-runner']['port'] = 50051
 
         if 'wss_port' not in config['llmstack-runner']:
