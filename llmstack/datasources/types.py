@@ -1,3 +1,5 @@
+from functools import cache
+
 from django.conf import settings
 
 from llmstack.common.utils.module_loader import get_all_sub_classes
@@ -29,6 +31,7 @@ class DataSourceTypeFactory:
     """
 
     @staticmethod
+    @cache
     def get_datasource_type_handler(
         datasource_type: DataSourceType,
     ) -> DataSourceProcessor:

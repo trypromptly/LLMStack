@@ -1,5 +1,9 @@
+from functools import cache
+
+
 class AppRunerFactory:
     @staticmethod
+    @cache
     def get_app_runner(app_type_slug):
         if app_type_slug == "slack":
             from llmstack.apps.handlers.slack_app import SlackAppRunner

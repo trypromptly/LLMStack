@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Generic, Iterator, TypeVar
 
 from llmstack.common.utils.module_loader import get_all_sub_classes
@@ -92,6 +93,7 @@ class ConnectionTypeFactory:
     """
 
     @staticmethod
+    @cache
     def get_connection_type_handler(
         connection_type_slug,
         provider_slug,
