@@ -199,7 +199,7 @@ class BaseProcessor(
         if self._input_tx_cb:
             input = self._input_tx_cb(input)
         if issubclass(input_cls, BaseModel):
-            input_cls(**input)
+            return input_cls(**input)
         return input
 
     def parse_validate_configuration(
