@@ -24,6 +24,7 @@ class BookKeepingData(BaseModel):
     timestamp: float = time.time()
     run_data: dict = {}
     message_id: str = None
+    disable_history: bool = False
 
 
 class ActorConfig(BaseModel):

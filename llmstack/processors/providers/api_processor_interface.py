@@ -155,6 +155,9 @@ class ApiProcessorInterface(
         # Default output_template to use in tools and playground
         return None
 
+    def disable_history(self) -> bool:
+        return False
+
     def process(self) -> dict:
         raise NotImplementedError
 
@@ -255,6 +258,7 @@ class ApiProcessorInterface(
                 output=output or {},
                 session_data=self.session_data_to_persist(),
                 timestamp=time.time(),
+                disable_history=self.disable_history(),
             )
 
         self._output_stream.bookkeep(bookkeeping_data)
@@ -311,6 +315,7 @@ class ApiProcessorInterface(
                 output=output or {},
                 session_data=self.session_data_to_persist(),
                 timestamp=time.time(),
+                disable_history=self.disable_history(),
             )
 
         self._output_stream.bookkeep(bookkeeping_data)

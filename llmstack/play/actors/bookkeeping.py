@@ -66,6 +66,22 @@ class BookKeepingActor(Actor):
     def on_stop(self) -> None:
         logger.info("Stopping BookKeepingActor")
         try:
+            # Persist only if all the values in the bookkeeping data have disable_history set to False
+            if all(
+                [
+                    "disable_history" in self._bookkeeping_data_map[x]
+                    and self._bookkeeping_data_map[x]["disable_history"]
+                    for x in self._processor_configs.keys()
+                ]
+                + [
+                    "input" in self._bookkeeping_data_map
+                    and "disable_history" in self._bookkeeping_data_map["input"]
+                    and self._bookkeeping_data_map["input"]["disable_history"]
+                ]
+            ):
+                logger.info("Not persisting history since disable_history is set to True")
+                return super().on_stop()
+
             HistoryPersistenceJob.create(
                 func=persist_history_task,
                 args=[

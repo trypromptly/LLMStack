@@ -835,6 +835,7 @@ class AppViewSet(viewsets.ViewSet):
         request_uuid = str(uuid.uuid4())
         preview = request.data.get("preview", False)
         session_id = request.data.get("session_id", None)
+        disable_history = request.data.get("disable_history", False)
 
         try:
             result = self.run_processor_internal(
@@ -845,6 +846,7 @@ class AppViewSet(viewsets.ViewSet):
                 request,
                 None,
                 preview,
+                disable_history,
             )
             if stream:
                 response = StreamingHttpResponse(
@@ -976,6 +978,7 @@ class AppViewSet(viewsets.ViewSet):
         request,
         platform=None,
         preview=False,
+        disable_history=False,
     ):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
@@ -1045,6 +1048,7 @@ class AppViewSet(viewsets.ViewSet):
             request_location=request_location,
             request_user_agent=request_user_agent,
             request_content_type=request_content_type,
+            disable_history=disable_history,
         )
 
         return app_runner.run_app(processor_id=processor_id)

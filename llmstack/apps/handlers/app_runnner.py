@@ -42,6 +42,7 @@ class AppRunner:
         request_location="",
         request_user_agent="",
         request_content_type="",
+        disable_history=False,
     ):
         self.app = app
         self.app_data = app_data
@@ -52,6 +53,7 @@ class AppRunner:
         self.app_session = self._get_or_create_app_session()
 
         self.stream = stream
+        self.disable_history = disable_history
 
         self.web_config = (
             WebIntegrationConfig().from_dict(
@@ -94,6 +96,7 @@ class AppRunner:
             request_user_agent=request_user_agent,
             request_content_type=request_content_type,
             request_body=request.data,
+            disable_history=self.disable_history,
         )
 
     def app_init(self):
@@ -447,7 +450,17 @@ class AppRunner:
         return csp
 
     def _get_base_actor_configs(self, output_template, processor_configs):
-        actor_configs = []
+        actor_configs = [
+            ActorConfig(
+                name="input",
+                template_key="_inputs0",
+                actor=InputActor,
+                kwargs={
+                    "input_request": self.input_actor_request,
+                },
+            )
+        ]
+
         if self.app.type.slug == "agent":
             agent_app_session_data = get_agent_app_session_data(
                 self.app_session,
@@ -458,64 +471,51 @@ class AppRunner:
                     {},
                 )
 
-            actor_configs = [
-                ActorConfig(
-                    name="input",
-                    template_key="_inputs0",
-                    actor=InputActor,
-                    kwargs={
-                        "input_request": self.input_actor_request,
-                    },
-                ),
-                ActorConfig(
-                    name="agent",
-                    template_key="agent",
-                    actor=AgentActor,
-                    kwargs={
-                        "processor_configs": processor_configs,
-                        "functions": self._get_processors_as_functions(),
-                        "input": self._get_input_data().get(
-                            "input",
-                            {},
-                        ),
-                        "env": self.app_owner_profile.get_vendor_env(),
-                        "config": self.app_data["config"],
-                        "agent_app_session_data": agent_app_session_data,
-                    },
-                ),
-                ActorConfig(
-                    name="output",
-                    template_key="output",
-                    dependencies=[
-                        "_inputs0",
-                        "agent",
-                    ],
-                    actor=OutputActor,
-                    kwargs={
-                        "template": self.app_data["output_template"]["markdown"],
-                    },
-                ),
-            ]
+            actor_configs.extend(
+                [
+                    ActorConfig(
+                        name="agent",
+                        template_key="agent",
+                        actor=AgentActor,
+                        kwargs={
+                            "processor_configs": processor_configs,
+                            "functions": self._get_processors_as_functions(),
+                            "input": self._get_input_data().get(
+                                "input",
+                                {},
+                            ),
+                            "env": self.app_owner_profile.get_vendor_env(),
+                            "config": self.app_data["config"],
+                            "agent_app_session_data": agent_app_session_data,
+                        },
+                    ),
+                    ActorConfig(
+                        name="output",
+                        template_key="output",
+                        dependencies=[
+                            "_inputs0",
+                            "agent",
+                        ],
+                        actor=OutputActor,
+                        kwargs={
+                            "template": self.app_data["output_template"]["markdown"],
+                        },
+                    ),
+                ]
+            )
         else:
-            # Actor configs
-            actor_configs = [
-                ActorConfig(
-                    name="input",
-                    template_key="_inputs0",
-                    actor=InputActor,
-                    kwargs={
-                        "input_request": self.input_actor_request,
-                    },
-                ),
-                ActorConfig(
-                    name="output",
-                    template_key="output",
-                    actor=OutputActor,
-                    kwargs={
-                        "template": output_template,
-                    },
-                ),
-            ]
+            actor_configs.extend(
+                [
+                    ActorConfig(
+                        name="output",
+                        template_key="output",
+                        actor=OutputActor,
+                        kwargs={
+                            "template": output_template,
+                        },
+                    ),
+                ]
+            )
         return actor_configs
 
     def _get_bookkeeping_actor_config(self, processor_configs):

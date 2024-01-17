@@ -27,6 +27,7 @@ class InputRequest(NamedTuple):
     request_user_agent: str
     request_content_type: str
     request_body: str
+    disable_history: bool = False
 
 
 class InputActor(Actor):
@@ -55,6 +56,7 @@ class InputActor(Actor):
                     **self.input_request._asdict(),
                 },
                 timestamp=time.time(),
+                disable_history=self.input_request.disable_history,
             ),
         )
 
