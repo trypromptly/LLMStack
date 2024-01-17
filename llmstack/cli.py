@@ -4,7 +4,7 @@ import secrets
 import subprocess
 import sys
 from collections import defaultdict
-
+import argparse
 import docker
 import toml
 
@@ -247,6 +247,11 @@ def main():
     # Get config file path
     env_path = prepare_env()
 
+    # Setup CLI args
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", default=None)
+    parser.add_argument("--port", default=None)
+
     # Load environment variables from config under [llmstack] section
     llmstack_environment = {}
     runner_environment = {}
@@ -262,6 +267,13 @@ def main():
             runner_environment[f"RUNNER_{key.upper()}"] = str(
                 config["llmstack-runner"][key],
             )
+
+    # Load CLI args
+    args = parser.parse_args()
+    if args.port is not None:
+        os.environ["LLMSTACK_PORT"] = args.port
+    if args.host is not None:
+        os.environ["HOST"] = args.host
 
     if len(sys.argv) > 1 and sys.argv[1] == "runserver":
         print("Starting LLMStack")
