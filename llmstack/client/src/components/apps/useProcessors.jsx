@@ -6,7 +6,7 @@ export function useProcessors(appId) {
   const [processorSessionId, setProcessorSessionId] = useState(null);
 
   const runProcessor = useCallback(
-    async (processorId, input) => {
+    async (processorId, input, disable_history = true) => {
       // Do not allow running a processor if there is no session
       if (!processorSessionId) {
         console.error("No session ID set");
@@ -19,6 +19,7 @@ export function useProcessors(appId) {
           input,
           session_id: processorSessionId,
           preview: window.location.pathname.endsWith("/preview"),
+          disable_history,
         },
       );
 

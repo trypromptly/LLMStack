@@ -123,6 +123,9 @@ class RealtimeAvatarProcessor(
     def provider_slug() -> str:
         return "heygen"
 
+    def disable_history(self) -> bool:
+        return self._disable_history
+
     def process_session_data(self, session_data):
         self._heygen_session = session_data.get("heygen_session", None)
 
@@ -135,6 +138,7 @@ class RealtimeAvatarProcessor(
 
     def process(self) -> dict:
         output_stream = self._output_stream
+        self._disable_history = True
 
         session_id = (
             self._input.session_id
@@ -200,6 +204,7 @@ class RealtimeAvatarProcessor(
             body = body = {"session_id": session_id}
 
         elif task_type == TaskType.REPEAT or task_type == TaskType.TALK:
+            self._disable_history = False
             url = "https://api.heygen.com/v1/realtime.task"
             body = {
                 "session_id": session_id,
