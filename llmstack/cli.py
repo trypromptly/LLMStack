@@ -1,10 +1,11 @@
+import argparse
 import os
 import platform
 import secrets
 import subprocess
 import sys
 from collections import defaultdict
-import argparse
+
 import docker
 import toml
 
@@ -252,6 +253,10 @@ def main():
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", default=None)
 
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.add_parser("runserver")
+    subparsers.add_parser("manage.py")
+
     # Load environment variables from config under [llmstack] section
     llmstack_environment = {}
     runner_environment = {}
@@ -275,7 +280,7 @@ def main():
     if args.host is not None:
         os.environ["HOST"] = args.host
 
-    if len(sys.argv) > 1 and sys.argv[1] == "runserver":
+    if args.command == "runserver":
         print("Starting LLMStack")
         run_server_command = [
             "manage.py",
@@ -289,7 +294,7 @@ def main():
         )
         sys.exit(0)
 
-    if len(sys.argv) > 1 and sys.argv[1] == "manage.py":
+    if args.command == "manage.py":
         run_django_command(sys.argv[1:])
         sys.exit(0)
 
