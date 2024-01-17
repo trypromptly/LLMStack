@@ -8,10 +8,8 @@ from typing import List
 from urllib.parse import urlparse
 
 import geoip2.database
-import jinja2
 import requests
 from django.conf import settings
-from pydantic import BaseModel
 
 from llmstack.common.utils.crawlers import (
     run_sitemap_spider_in_process,
@@ -173,7 +171,7 @@ def _retry_func(
     backoff=2,
     log_exception=False,
 ):
-    f"""
+    """
     Retries a function or method until it returns True.
     :param func: The function to be retried.
     :param exceptions: The exceptions to catch. Default is Exception.

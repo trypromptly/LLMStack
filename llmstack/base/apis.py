@@ -147,7 +147,7 @@ class ProfileViewSet(viewsets.ViewSet):
                     ).decode("utf-8")
                 else:
                     profile.google_service_account_json_key = ""
-            except Exception as e:
+            except Exception:
                 # This is an API key
                 encrypted_value = profile.encrypt_value(
                     request.data["google_service_account_json_key"],

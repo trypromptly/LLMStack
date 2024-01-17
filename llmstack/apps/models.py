@@ -6,7 +6,6 @@ from django.contrib.postgres.fields import ArrayField as PGArrayField
 from django.db import connection, models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from django.utils.timezone import now
 
 from llmstack.apps.integration_configs import (
     DiscordIntegrationConfig,

@@ -51,7 +51,8 @@ class CompletionsConfiguration(ApiProcessorSchema):
     )
     top_p: Optional[confloat(ge=0.0, le=1.0, multiple_of=0.1)] = Field(
         default=1,
-        description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
+        description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\n"
+        + "We generally recommend altering this or `temperature` but not both.\n",
         example=1,
     )
     timeout: Optional[int] = Field(

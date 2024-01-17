@@ -213,10 +213,7 @@ class SlackPostMessageProcessor(
         return response
 
     def process(self) -> dict:
-        _env = self._env
         input = self._input.dict()
-
-        url = "https://slack.com/api/chat.postMessage"
 
         try:
             rich_text = json.dumps(
@@ -225,7 +222,7 @@ class SlackPostMessageProcessor(
                 ),
             )
         except Exception as e:
-            logger.exception("Error in processing markdown")
+            logger.exception(f"Error in processing markdown: {e}")
             rich_text = ""
 
         self._send_message(

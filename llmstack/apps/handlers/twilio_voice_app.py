@@ -6,7 +6,6 @@ import requests
 
 from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.apps.models import AppVisibility
-from llmstack.common.utils.audio_loader import partition_audio
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
@@ -192,7 +191,7 @@ class TwilioVoiceAppRunner(AppRunner):
         # Check if the app access permissions are valid
         try:
             self._is_app_accessible()
-        except Exception as e:
+        except Exception:
             logger.exception("Error while validating app access permissions")
             return {}
 

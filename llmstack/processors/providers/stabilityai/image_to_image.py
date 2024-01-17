@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import grpc
 import stability_sdk.interfaces.gooseai.generation.generation_pb2 as generation

@@ -330,7 +330,7 @@ def main():
             break
         except Exception:
             print(
-                f"Waiting for LLMStack server to be up...",
+                "Waiting for LLMStack server to be up...",
             )
             time.sleep(1)
 

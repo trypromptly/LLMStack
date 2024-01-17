@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from llmstack.processors.providers.api_processor_interface import ApiProcessorSchema
 

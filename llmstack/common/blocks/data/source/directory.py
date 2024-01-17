@@ -20,7 +20,7 @@ class DirectoryTextLoaderInputSchema(DataSourceInputSchema):
     @classmethod
     def validate_directory(cls, field_values) -> str:
         value = field_values.get("directory")
-        recursive = field_values.get("recursive")
+        recursive = field_values.get("recursive")  # noqa
 
         # TODO: Validate that directory is a valid directory path and the
         # directory exists

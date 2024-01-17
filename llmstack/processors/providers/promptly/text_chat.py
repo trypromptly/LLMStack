@@ -1,5 +1,4 @@
 import concurrent.futures
-import importlib
 import logging
 import uuid
 from enum import Enum
@@ -191,7 +190,7 @@ Citations:
 
     def session_data_to_persist(self) -> dict:
         return {
-            "chat_history": self._chat_history[-self._config.chat_history_limit :]
+            "chat_history": self._chat_history[-self._config.chat_history_limit :]  # noqa: E203
             if self._config.chat_history_limit > 0
             else [],
             "context": self._context,
@@ -226,7 +225,10 @@ Citations:
                         search_query
                         + "\n\n"
                         + "\n\n".join(
-                            [m["content"] for m in self._chat_history[-self._config.chat_history_in_doc_search :]],
+                            [
+                                m["content"]
+                                for m in self._chat_history[-self._config.chat_history_in_doc_search :]  # noqa: E203
+                            ],
                         )
                     )
 

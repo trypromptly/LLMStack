@@ -1,5 +1,3 @@
-from typing import Optional
-
 import orjson as json
 from pydantic import BaseModel
 

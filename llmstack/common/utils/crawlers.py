@@ -3,10 +3,8 @@ import json
 import logging
 import multiprocessing as mp
 import os
-from typing import Optional
 from urllib.parse import urlparse
 
-import scrapy
 from scrapy import Selector, Spider
 from scrapy.crawler import CrawlerProcess
 from scrapy.exceptions import CloseSpider

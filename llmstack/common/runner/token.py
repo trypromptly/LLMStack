@@ -52,6 +52,6 @@ class TokenRedis:
             else:
                 raise ValueError("Unable to parse token")
             return [host, port]
-        except (ValueError, json.JSONDecodeError) as e:
+        except (ValueError, json.JSONDecodeError):
             logger.error(f"Unable to process token: {response_str}")
             return None

@@ -1,7 +1,7 @@
 import logging
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 import orjson as json
 from asgiref.sync import async_to_sync
@@ -88,7 +88,7 @@ class AgentActor(Actor):
         self._agent_messages = []
 
         if "chat_history_limit" in self._config and self._config["chat_history_limit"] > 0:
-            self._agent_messages += self._chat_history[-self._config["chat_history_limit"] :]
+            self._agent_messages += self._chat_history[-self._config["chat_history_limit"] :]  # noqa: E203
 
         self._agent_messages.append(
             {

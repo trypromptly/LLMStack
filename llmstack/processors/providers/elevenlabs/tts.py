@@ -61,7 +61,9 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
     )
     optimize_streaming_latency: int = Field(
         default=0,
-        description="You can turn on latency optimizations at some cost of quality. The best possible final latency varies by model. Possible values: 0 - default mode (no latency optimizations) 1 - normal latency optimizations, 2 - strong latency optimizations, 3 - max latency optimizations, 4 - max latency optimizations, but also with text normalizer turned off for even more latency savings (best latency, but can mispronounce eg numbers and dates).",
+        description="You can turn on latency optimizations at some cost of quality. The best possible final latency varies by model. "
+        + "Possible values: 0 - default mode (no latency optimizations) 1 - normal latency optimizations, 2 - strong latency optimizations, "
+        + "3 - max latency optimizations, 4 - max latency optimizations, but also with text normalizer turned off for even more latency savings (best latency, but can mispronounce eg numbers and dates).",
         maximum=4,
         minimum=0,
     )

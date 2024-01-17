@@ -64,12 +64,6 @@ class TextDataSource(DataSourceProcessor[TextSchema]):
     ) -> DataSourceEntryItem:
         entry = TextSchema(**data.data)
 
-        data_source_entry = DataSourceEntryItem(
-            name=entry.name,
-            config={},
-            size=0,
-        )
-
         docs = [
             Document(
                 page_content_key=self.get_content_key(),

@@ -4,9 +4,7 @@ from pydantic import BaseModel
 
 from llmstack.common.blocks.base.processor import (
     BaseConfiguration,
-    BaseConfigurationType,
     BaseInput,
-    BaseInputType,
     BaseOutput,
     BaseOutputType,
     BaseProcessor,
@@ -126,11 +124,14 @@ class ProcessorInterfaceTestCase(unittest.TestCase):
         self.assertEqual(TestProcessor1.name(), "TestProcessor")
 
     def test_input_schema(self):
-        schema = """{"title":"TestProcessor1Input","type":"object","properties":{"_env":{"title":" Env","description":"Environment variables (metadata) to be passed with input","allOf":[{"$ref":"#\\/definitions\\/BaseInputEnvironment"}]},"name":{"title":"Name","type":"string"}},"required":["name"],"definitions":{"BaseInputEnvironment":{"title":"BaseInputEnvironment","type":"object","properties":{"bypass_cache":{"title":"Bypass Cache","description":"Bypass cache","default":true,"type":"boolean"}}}}}"""
+        schema = """{"title":"TestProcessor1Input","type":"object","properties":{"_env":{"title":" Env","description":"Environment variables (metadata) to be passed with input","allOf":[{"$ref":"#\\/definitions\\/BaseInputEnvironment"}]},"""
+        +""""name":{"title":"Name","type":"string"}},"required":["name"],"""
+        +""""definitions":{"BaseInputEnvironment":{"title":"BaseInputEnvironment","type":"object","properties":{"bypass_cache":{"title":"Bypass Cache","description":"Bypass cache","default":true,"type":"boolean"}}}}}"""
         self.assertEqual(TestProcessor1.get_input_schema(), schema)
 
     def test_output_schema(self):
-        schema = """{"title":"TestProcessor1Output","type":"object","properties":{"metadata":{"title":"Metadata","description":"Metadata","default":{},"allOf":[{"$ref":"#\\/definitions\\/BaseSchema"}]},"answer":{"title":"Answer","type":"string"}},"required":["answer"],"definitions":{"BaseSchema":{"title":"BaseSchema","type":"object","properties":{}}}}"""
+        schema = """{"title":"TestProcessor1Output","type":"object","properties":{"metadata":{"title":"Metadata","description":"Metadata","default":{},"allOf":[{"$ref":"#\\/definitions\\/BaseSchema"}]},"""
+        +""""answer":{"title":"Answer","type":"string"}},"required":["answer"],"definitions":{"BaseSchema":{"title":"BaseSchema","type":"object","properties":{}}}}"""
         self.assertEqual(TestProcessor1.get_output_schema(), schema)
 
     def test_configuration_schema(self):
@@ -147,8 +148,8 @@ class ProcessorInterfaceTestCase(unittest.TestCase):
     def test_exception(self):
         input = TestProcessor1Input(name="test")
         configuration = TestProcessor1Configuration(style="invalid")
-        with self.assertRaises(Exception) as context:
-            output = TestProcessor1().process(input=input, configuration=configuration)
+        with self.assertRaises(Exception) as context:  # noqa
+            TestProcessor1().process(input=input, configuration=configuration)
 
 
 if __name__ == "__main__":

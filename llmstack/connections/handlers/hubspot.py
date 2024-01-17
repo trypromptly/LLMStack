@@ -33,7 +33,7 @@ class HubspotAdapter(HubspotOAuth2Adapter):
         response.raise_for_status()
         extra_data = response.json()
         provider = self.get_provider()
-        uid = provider.extract_uid(extra_data)
+        uid = provider.extract_uid(extra_data)  # noqa
 
         extra_data = provider.extract_extra_data(extra_data)
         return HubspotLoginConfiguration(**extra_data)

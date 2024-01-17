@@ -76,7 +76,7 @@ class SlackAppRunner(AppRunner):
                     self._slack_user_email = slack_user_email
                     user_object = User.objects.get(email=slack_user_email)
                     return user_object if user_object is not None else AnonymousUser()
-            except Exception as e:
+            except Exception:
                 logger.exception(
                     f"Error in fetching user object from slack payload {slack_request_payload}",
                 )

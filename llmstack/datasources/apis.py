@@ -210,7 +210,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
             datasource_entry_obj.status = DataSourceEntryStatus.READY
         except Exception as e:
             logger.exception(
-                f"Error adding data_source_entry: %s" % str(input_data["name"]),
+                "Error adding data_source_entry: %s" % str(input_data["name"]),
             )
 
             datasource_entry_obj.config = {"errors": {"message": str(e)}}
@@ -435,19 +435,6 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             )
 
         entry_data = request.data["entry_data"]
-        entry_metadata = (
-            dict(
-                map(
-                    lambda x: (
-                        f"md_{x}",
-                        request.data["entry_metadata"][x],
-                    ),
-                    request.data["entry_metadata"].keys(),
-                ),
-            )
-            if "entry_metadata" in request.data
-            else {}
-        )
         if not entry_data:
             return DRFResponse(
                 {"errors": ["No entry_data provided"]},

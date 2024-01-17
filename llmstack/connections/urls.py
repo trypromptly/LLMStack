@@ -4,12 +4,10 @@ from datetime import datetime
 from allauth.socialaccount.helpers import render_authentication_error
 from allauth.socialaccount.providers.base import ProviderException
 from allauth.socialaccount.providers.base.constants import AuthAction, AuthError
-from allauth.socialaccount.providers.base.mixins import OAuthLoginMixin
 from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 from allauth.socialaccount.providers.oauth2.views import (
     OAuth2CallbackView,
     OAuth2LoginView,
-    OAuth2View,
 )
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect

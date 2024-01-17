@@ -16,7 +16,6 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.processors.providers.twilio import TwilioSmsWebhookRequest
 
 logger = logging.getLogger(__name__)
 

@@ -126,7 +126,6 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
             "application/vnd.google-apps.presentation": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
         }
 
-        connection = self._env["connections"][data.data["file_data"]["connection_id"]]
         # Have some better way to get the access token
         request = RequestFactory().get(
             f'/api/connections/{data.data["file_data"]["connection_id"]}/access_token',

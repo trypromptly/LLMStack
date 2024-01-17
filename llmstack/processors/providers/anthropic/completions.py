@@ -1,6 +1,5 @@
 import logging
 from enum import Enum
-from typing import Optional
 
 from anthropic import AI_PROMPT, HUMAN_PROMPT, Anthropic
 from asgiref.sync import async_to_sync

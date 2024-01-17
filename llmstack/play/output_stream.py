@@ -5,8 +5,7 @@ import asyncio
 import logging
 from collections import defaultdict
 from enum import Enum
-from itertools import chain
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, Type
 
 import orjson
 from pydantic import BaseModel

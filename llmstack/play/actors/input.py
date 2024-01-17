@@ -4,7 +4,6 @@ from types import TracebackType
 from typing import Any, NamedTuple, Type
 
 from asgiref.sync import async_to_sync
-from pydantic import BaseModel
 
 from llmstack.play.actor import Actor, BookKeepingData
 

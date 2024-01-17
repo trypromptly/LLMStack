@@ -153,7 +153,7 @@ def upsert_datasource_entry_subtask(datasource_id, input_data):
     }
     datasource = DataSource.objects.get(uuid=uuid.UUID(datasource_id))
     request = RequestFactory().post(
-        f"/api/datasource_entries/upsert",
+        "/api/datasource_entries/upsert",
         data=request_input_data,
         format="json",
     )
@@ -197,6 +197,9 @@ def post_upsert_datasource_task(
         time_remaining_to_schedule_next_task = max(
             (settings.TASK_RUN_DELAY - time_elapsed),
             1,
+        )
+        logger.info(
+            f"Scheduling next task in {time_remaining_to_schedule_next_task} seconds",
         )
 
         django_rq.get_queue(job.meta["queue_name"]).enqueue(

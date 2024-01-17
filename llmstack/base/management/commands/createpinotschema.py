@@ -20,7 +20,7 @@ class Command(BaseCommand):
         if name not in SCHEMAS:
             self.stdout.write(self.style.ERROR("Schema not found."))
 
-        response = requests.post(
+        requests.post(
             controller_url,
             json=SCHEMAS[name],
         )

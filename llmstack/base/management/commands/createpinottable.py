@@ -20,7 +20,7 @@ class Command(BaseCommand):
         if name not in REALTIME_TABLES:
             self.stdout.write(self.style.ERROR("Table not found."))
 
-        response = requests.post(
+        requests.post(
             controller_url,
             json=REALTIME_TABLES[name],
         )

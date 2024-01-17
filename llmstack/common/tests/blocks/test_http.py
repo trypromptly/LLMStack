@@ -1,11 +1,6 @@
 import unittest
 
-from llmstack.common.blocks.http import (
-    HttpAPIProcessor,
-    HttpAPIProcessorConfiguration,
-    HttpAPIProcessorInput,
-    HttpAPIProcessorOutput,
-)
+from llmstack.common.blocks.http import HttpAPIProcessor
 
 
 class HttpAPIProcessorTestCase(unittest.TestCase):
@@ -37,8 +32,8 @@ class HttpAPIProcessorTestCase(unittest.TestCase):
             "url": "https://jsonplaceholder.typicode.io",
             "authorization": {},
         }
-        with self.assertRaises(Exception) as context:
-            output = HttpAPIProcessor(
+        with self.assertRaises(Exception) as context:  # noqa
+            HttpAPIProcessor(
                 configuration={},
             ).process(input=input)
 

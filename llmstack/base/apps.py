@@ -19,5 +19,5 @@ class BaseConfig(AppConfig):
             from .management.commands.loadfixtures import Command
 
             Command().handle()
-        except Exception as e:
+        except Exception:
             pass

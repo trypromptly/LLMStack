@@ -47,8 +47,10 @@ where <output> is your response to the user and 'instructions' is an array of in
     'Scrollx': Scroll the page horizontally by the number of pixels specified in data
     'Scrolly': Scroll the page vertically by the number of pixels specified in data
     'Terminate': Terminate the browser session if no more instructions are needed
-<tag_to_use> is the identifier to use to identify the element to perform the instruction on. Identifiers are next to the elements on the page. For example all text areas have identifier with prefix `ta=`. Similar `in=`, `b=`, `a=`, `s=` are used for input fields, buttons, links and selects respectively.
-<data_to_use> is the data to use for the instruction. For example, if type_of_instruction is 'Type', then data_to_use is the text to type into the element identified by tag_to_use. If type_of_instruction is 'ScrollX' or 'ScrollY', then data_to_use is the number of pixels to scroll the page by.
+<tag_to_use> is the identifier to use to identify the element to perform the instruction on. Identifiers are next to the elements on the page. For example all text areas have identifier with prefix `ta=`.
+Similar `in=`, `b=`, `a=`, `s=` are used for input fields, buttons, links and selects respectively.
+<data_to_use> is the data to use for the instruction. For example, if type_of_instruction is 'Type', then data_to_use is the text to type into the element identified by tag_to_use.
+If type_of_instruction is 'ScrollX' or 'ScrollY', then data_to_use is the number of pixels to scroll the page by.
 - If the task is done and no more instructions are needed, you can terminate the browser session by generating an instruction with type_of_instruction as 'Terminate'.
 
 For example, a valid output can be:
@@ -213,27 +215,27 @@ class WebBrowser(
             output += f"Text from page:\n------\n{content.text[:10000]}\n"
 
         if content.buttons:
-            output += f"\nButtons on page:\n------\n"
+            output += "\nButtons on page:\n------\n"
             for button in content.buttons:
                 output += f"selector: {button.selector}, text: {button.text}\n"
 
         if content.links:
-            output += f"\nLinks on page:\n------\n"
+            output += "\nLinks on page:\n------\n"
             for link in content.links[:100]:
                 output += f"selector: {link.selector}, text: {link.text}\n"
 
         if content.inputs:
-            output += f"\nInput fields on page:\n------\n"
+            output += "\nInput fields on page:\n------\n"
             for input_field in content.inputs:
                 output += f"selector: {input_field.selector}, text: {input_field.text}\n"
 
         if content.textareas:
-            output += f"\nTextareas on page:\n------\n"
+            output += "\nTextareas on page:\n------\n"
             for textarea in content.textareas:
                 output += f"selector: {textarea.selector}, text: {textarea.text}\n"
 
         if content.selects:
-            output += f"\nSelects on page:\n------\n"
+            output += "\nSelects on page:\n------\n"
             for select in content.selects:
                 output += f"selector: {select.selector}, text: {select.text}\n"
 

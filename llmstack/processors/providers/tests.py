@@ -55,7 +55,7 @@ def test_cohere_generate():
 
 def test_openai_completions():
     processor = Completions({}, {}, {})
-    assert Completions.name() == "openai/completions"
+    assert processor.name() == "openai/completions"
 
 
 if __name__ == "__main__":

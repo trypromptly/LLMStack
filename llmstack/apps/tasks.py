@@ -1,13 +1,8 @@
 import logging
-import uuid
-from typing import List
 
 import weaviate
 
-from llmstack.datasources.handlers.datasource_processor import (
-    DataSourceEntryItem,
-    DataSourceProcessor,
-)
+from llmstack.datasources.handlers.datasource_processor import DataSourceProcessor
 from llmstack.datasources.models import (
     DataSource,
     DataSourceEntry,
@@ -22,7 +17,7 @@ def delete_data_entry_task(
     datasource: DataSource,
     entry_data: DataSourceEntry,
 ):
-    logger.error(f"Deleting data_source_entry: %s" % str(entry_data.uuid))
+    logger.error("Deleting data_source_entry: %s" % str(entry_data.uuid))
     entry_data.status = DataSourceEntryStatus.MARKED_FOR_DELETION
     entry_data.save()
 
@@ -35,11 +30,14 @@ def delete_data_entry_task(
         datasource_entry_items = datasource_entry_handler.delete_entry(
             entry_data.config,
         )
+        logger.debug(
+            f"Deleted {len(datasource_entry_items)} items from weaviate for data_source_entry: {str(entry_data.uuid)}",
+        )
         entry_data.delete()
     except weaviate.exceptions.UnexpectedStatusCodeException:
         logger.exception("Error deleting data source entry from weaviate")
         entry_data.delete()
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Error deleting data_source_entry: %s" % str(entry_data.name),
         )
@@ -59,7 +57,7 @@ def resync_data_entry_task(
     datasource: DataSource,
     entry_data: DataSourceEntry,
 ):
-    logger.info(f"Resyncing task for data_source_entry: %s" % str(entry_data))
+    logger.info("Resyncing task for data_source_entry: %s" % str(entry_data))
 
     datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
         datasource.type,

@@ -1,15 +1,12 @@
-from typing import Any, Dict, Generic, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from pydantic import Field
 
 from llmstack.common.blocks.base.processor import (
     BaseConfiguration,
-    BaseConfigurationType,
     BaseInput,
     BaseInputEnvironment,
-    BaseInputType,
     BaseOutput,
-    BaseOutputType,
 )
 from llmstack.common.blocks.http import (
     BearerTokenAuth,

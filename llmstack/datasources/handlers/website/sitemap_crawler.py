@@ -70,7 +70,7 @@ class SitemapCrawlerDataSource(DataSourceProcessor[SitemapURLSchema]):
             sitmap_xml_urls = extract_urls_from_sitemap(entry.url)
             for sitmap_xml_url in sitmap_xml_urls:
                 sitemap_urls.append(sitmap_xml_url)
-        except Exception as e:
+        except Exception:
             logger.exception("Error in extracting urls from sitemap")
 
         return list(

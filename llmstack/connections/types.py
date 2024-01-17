@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Generic, Iterator, TypeVar
 
 from llmstack.common.utils.module_loader import get_all_sub_classes
@@ -14,7 +13,7 @@ def get_connection_type_interface_subclasses():
     excluded_packages = []
 
     try:
-        import jnpr.junos
+        import jnpr.junos  # noqa: F401
     except BaseException:
         excluded_packages.append("llmstack.connections.handlers.junos_login")
 

@@ -229,7 +229,7 @@ def run_task(task_model: str, task_id: int):
     ) < (timezone.now() - task.scheduled_time):
         # Task got scheduled post the end time
         results = {}
-        errors = {"detail": "Task got scheduled post the end time"}
+        errors = {"detail": "Task got scheduled post the end time"}  # noqa
     else:
         args = task.parse_args()
         kwargs = task.parse_kwargs()
@@ -347,9 +347,6 @@ class BaseTask(models.Model):
     metadata = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
 
     def callable_func(self):
         path = self.callable.split(".")

@@ -307,18 +307,6 @@ class AppSerializer(DynamicFieldsModelSerializer):
             else None
         )
 
-    def get_last_modified_by_email(self, obj):
-        return (
-            obj.last_modified_by.email
-            if (
-                obj.last_modified_by
-                and obj.has_write_permission(
-                    self._request_user,
-                )
-            )
-            else None
-        )
-
     def get_template(self, obj):
         if obj.template_slug is not None:
             app_template = get_app_template_by_slug(obj.template_slug)

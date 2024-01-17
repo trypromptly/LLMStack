@@ -2,7 +2,7 @@ import json
 import logging
 import random
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import grpc
 import stability_sdk.interfaces.gooseai.generation.generation_pb2 as generation

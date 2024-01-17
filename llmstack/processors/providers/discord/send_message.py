@@ -92,9 +92,8 @@ class DiscordSendMessageProcessor(
         return response
 
     def process(self) -> dict:
-        _env = self._env
         input = self._input.dict()
-        response = self._send_message(
+        self._send_message(
             input["app_id"],
             input["text"],
             input["token"],

@@ -52,7 +52,7 @@ class Generic(
             "Content-Type": "application/json",
             "Authorization": f"Bearer {replicate_api_key}",
         }
-        configuration = self._config.dict().pop("sync_mode")
+        self._config.dict().pop("sync_mode")
         api_params = {
             "version": self._input.version,
             "input": {**self._input.dict()},

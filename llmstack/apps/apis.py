@@ -628,7 +628,7 @@ class AppViewSet(viewsets.ViewSet):
                 processed_processors_data.append(
                     {**processor, **{"config": config_dict}},
                 )
-        except Exception as e:
+        except Exception:
             processed_processors_data = processors_data
 
         # Find the versioned app data and update it
@@ -1076,7 +1076,7 @@ class AppViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["post"])
     def run_twiliosms(self, request, uid):
-        result = self.run(request, uid, platform="twilio-sms")
+        self.run(request, uid, platform="twilio-sms")
         return DRFResponse(status=204, headers={"Content-Type": "text/xml"})
 
     @action(detail=True, methods=["post"])

@@ -2,13 +2,13 @@ import csv
 import io
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import croniter
 from django.http import StreamingHttpResponse
 from django.utils import timezone
 from rest_framework import viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 
 from llmstack.apps.apis import AppViewSet
@@ -275,7 +275,7 @@ class AppRunJobsViewSet(viewsets.ViewSet):
                 return DRFResponse(
                     status=400,
                     data={
-                        "message": f"run_once and repeat frequency requires a start_date and start_time",
+                        "message": "run_once and repeat frequency requires a start_date and start_time",
                     },
                 )
             if frequency.get("scheduled_time"):
@@ -322,14 +322,14 @@ class AppRunJobsViewSet(viewsets.ViewSet):
                     return DRFResponse(
                         status=400,
                         data={
-                            "message": f"repeat frequency requires an interval greater than 0",
+                            "message": "repeat frequency requires an interval greater than 0",
                         },
                     )
             except BaseException:
                 return DRFResponse(
                     status=400,
                     data={
-                        "message": f"repeat frequency requires an interval greater than 0",
+                        "message": "repeat frequency requires an interval greater than 0",
                     },
                 )
 
@@ -346,7 +346,7 @@ class AppRunJobsViewSet(viewsets.ViewSet):
                 return DRFResponse(
                     status=400,
                     data={
-                        "message": f"cron frequency requires a cron_expression",
+                        "message": "cron frequency requires a cron_expression",
                     },
                 )
             # Validate if cron expression is valid
@@ -354,7 +354,7 @@ class AppRunJobsViewSet(viewsets.ViewSet):
                 return DRFResponse(
                     status=400,
                     data={
-                        "message": f"cron expression is not valid",
+                        "message": "cron expression is not valid",
                     },
                 )
 
@@ -382,7 +382,7 @@ class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
             return DRFResponse(
                 status=400,
                 data={
-                    "message": f"datasource_entries is empty",
+                    "message": "datasource_entries is empty",
                 },
             )
 
@@ -391,7 +391,7 @@ class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
             return DRFResponse(
                 status=400,
                 data={
-                    "message": f"job_name is required",
+                    "message": "job_name is required",
                 },
             )
 
@@ -407,7 +407,7 @@ class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
             return DRFResponse(
                 status=400,
                 data={
-                    "message": f"Invalid datasource_entries",
+                    "message": "Invalid datasource_entries",
                 },
             )
 
@@ -427,7 +427,7 @@ class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
                 return DRFResponse(
                     status=400,
                     data={
-                        "message": f"Invalid datasource_entries",
+                        "message": "Invalid datasource_entries",
                     },
                 )
 
@@ -453,7 +453,7 @@ class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
                 return DRFResponse(
                     status=400,
                     data={
-                        "message": f"run_once and repeat frequency requires a start_date and start_time",
+                        "message": "run_once and repeat frequency requires a start_date and start_time",
                     },
                 )
             if frequency.get("scheduled_time"):
@@ -497,14 +497,14 @@ class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
                     return DRFResponse(
                         status=400,
                         data={
-                            "message": f"repeat frequency requires an interval greater than 0",
+                            "message": "repeat frequency requires an interval greater than 0",
                         },
                     )
             except BaseException:
                 return DRFResponse(
                     status=400,
                     data={
-                        "message": f"repeat frequency requires an interval greater than 0",
+                        "message": "repeat frequency requires an interval greater than 0",
                     },
                 )
 
@@ -521,7 +521,7 @@ class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
                 return DRFResponse(
                     status=400,
                     data={
-                        "message": f"cron frequency requires a cron_expression",
+                        "message": "cron frequency requires a cron_expression",
                     },
                 )
             # Validate if cron expression is valid
@@ -529,7 +529,7 @@ class DataSourceRefreshJobsViewSet(viewsets.ViewSet):
                 return DRFResponse(
                     status=400,
                     data={
-                        "message": f"cron expression is not valid",
+                        "message": "cron expression is not valid",
                     },
                 )
 

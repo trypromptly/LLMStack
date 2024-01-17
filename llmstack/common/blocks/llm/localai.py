@@ -150,19 +150,22 @@ class LocalAIChatCompletionsAPIProcessorConfiguration(
 
     temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
         default=0.7,
-        description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
+        description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\n"
+        + "We generally recommend altering this or `top_p` but not both.\n",
         example=1,
     )
     top_p: Optional[confloat(ge=0.0, le=1.0, multiple_of=0.1)] = Field(
         1,
-        description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
+        description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. "
+        + "So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
         example=1,
     )
 
     stream: Optional[bool] = False
     function_call: Optional[Union[str, Dict]] = Field(
         default=None,
-        description='Controls how the model responds to function calls. "none" means the model does not call a function, and responds to the end-user. "auto" means the model can pick between an end-user or calling a function. Specifying a particular function via {"name":\\ "my_function"} forces the model to call that function. "none" is the default when no functions are present. "auto" is the default if functions are present.',
+        description='Controls how the model responds to function calls. "none" means the model does not call a function, and responds to the end-user. "auto"'
+        + ' means the model can pick between an end-user or calling a function. Specifying a particular function via {"name":\\ "my_function"} forces the model to call that function. "none" is the default when no functions are present. "auto" is the default if functions are present.',
     )
 
 

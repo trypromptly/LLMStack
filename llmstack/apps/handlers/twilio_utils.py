@@ -1,10 +1,7 @@
 import base64
 import hmac
-import logging
 from hashlib import sha1, sha256
 from urllib.parse import parse_qs, urlparse
-
-from rest_framework.exceptions import PermissionDenied
 
 
 def compare(string1, string2):

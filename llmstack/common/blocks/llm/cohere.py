@@ -106,7 +106,9 @@ class CohereGenerateAPIProcessorConfiguration(BaseConfiguration):
 
     frequency_penalty: Optional[float] = Field(
         default=0.0,
-        description="Defaults to 0.0, min value of 0.0, max value of 1.0. Can be used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation.",
+        description="Defaults to 0.0, min value of 0.0, max value of 1.0. Can be used to reduce repetitiveness of generated tokens. "
+        + "The higher the value, the stronger a penalty is applied to previously "
+        + "present tokens, proportional to how many times they have already appeared in the prompt or prior generation.",
     )
 
     presence_penalty: Optional[float] = Field(
@@ -126,12 +128,14 @@ class CohereGenerateAPIProcessorConfiguration(BaseConfiguration):
 
     return_likelihoods: Optional[str] = Field(
         default="NONE",
-        description="One of GENERATION|ALL|NONE to specify how and if the token likelihoods are returned with the response. Defaults to NONE. If GENERATION is selected, the token likelihoods will only be provided for generated text. If ALL is selected, the token likelihoods will be provided both for the prompt and the generated text.",
+        description="One of GENERATION|ALL|NONE to specify how and if the token likelihoods are returned with the response. Defaults to NONE. If GENERATION is selected, the token likelihoods will only be provided "
+        + "for generated text. If ALL is selected, the token likelihoods will be provided both for the prompt and the generated text.",
     )
 
     truncate: Optional[str] = Field(
         default="END",
-        description="One of NONE|START|END to specify how the API will handle inputs longer than the maximum token length. Passing START will discard the start of the input. END will discard the end of the input. In both cases, input is discarded until the remaining input is exactly the maximum input token length for the model. If NONE is selected, when the input exceeds the maximum input token length an error will be returned.",
+        description="One of NONE|START|END to specify how the API will handle inputs longer than the maximum token length. Passing START will discard the start of the input. END will discard the end of the input. "
+        + "In both cases, input is discarded until the remaining input is exactly the maximum input token length for the model. If NONE is selected, when the input exceeds the maximum input token length an error will be returned.",
     )
 
 

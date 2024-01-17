@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
 
-from django.utils.log import DEFAULT_LOGGING
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -476,7 +474,7 @@ PROVIDERS = [
 
 # Include networking providers if they are enabled
 try:
-    import jnpr.junos
+    import jnpr.junos  # noqa: F401
 
     PROVIDERS.append(
         {

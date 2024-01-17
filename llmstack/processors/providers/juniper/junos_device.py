@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from asgiref.sync import async_to_sync
 from jnpr.junos import Device

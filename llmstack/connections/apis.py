@@ -2,7 +2,6 @@ import datetime
 import logging
 import uuid
 
-import orjson as json
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.response import Response

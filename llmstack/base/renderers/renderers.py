@@ -78,7 +78,7 @@ class ORJSONRenderer(JSONRenderer):
 
         accepted_media_type = accepted_media_type or ""
         renderer_context = renderer_context or {}
-        indent = self.get_indent(accepted_media_type, renderer_context)
+        self.get_indent(accepted_media_type, renderer_context)
         encoder = self.encoder_class()
 
         ret = orjson.dumps(

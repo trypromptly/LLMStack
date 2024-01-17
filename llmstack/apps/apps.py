@@ -3,10 +3,10 @@ import logging
 from asgiref.sync import sync_to_async
 from django.apps import AppConfig
 
-from llmstack.apps.types.agent import Agent
+from llmstack.apps.types.agent import Agent  # noqa F401
 from llmstack.apps.types.app_type_interface import AppTypeInterface
-from llmstack.apps.types.chat import ChatApp
-from llmstack.apps.types.web import WebApp
+from llmstack.apps.types.chat import ChatApp  # noqa F401
+from llmstack.apps.types.web import WebApp  # noqa F401
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def add_missing_app_types():
                     "description": subclass.description(),
                 },
             )
-        except Exception as e:
+        except Exception:
             logger.error(
                 f"Error while loading app type: {subclass.slug()}",
             )

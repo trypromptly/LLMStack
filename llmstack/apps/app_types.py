@@ -5,11 +5,11 @@ from llmstack.apps.models import App, AppType
 from .types.app_type_interface import AppTypeInterface
 
 # Import all app types here
-from .types.chat import ChatApp
-from .types.discord import DiscordApp
-from .types.slack import SlackApp
-from .types.twilio_sms import TwilioSmsApp
-from .types.web import WebApp
+from .types.chat import ChatApp  # noqa: F401
+from .types.discord import DiscordApp  # noqa: F401
+from .types.slack import SlackApp  # noqa: F401
+from .types.twilio_sms import TwilioSmsApp  # noqa: F401
+from .types.web import WebApp  # noqa: F401
 
 
 class AppTypeFactory:
