@@ -1,5 +1,7 @@
 import logging
 
+from pydantic import BaseModel
+
 from llmstack.common.blocks.base.processor import (
     BaseConfigurationType,
     BaseInputType,
@@ -34,18 +36,18 @@ class LLMBaseProcessor(
         input_cls = self.__class__.__orig_bases__[0].__args__[0]
         if self._input_tx_cb:
             input = self._input_tx_cb(input)
-        if isinstance(input_cls, type):
-            return input
-        return input_cls(**input)
+        if issubclass(input_cls, BaseModel):
+            return input_cls(**input)
+        return input
 
     def parse_validate_configuration(
         self,
         configuration,
     ) -> BaseConfigurationType:
         configuration_cls = self.__class__.__orig_bases__[0].__args__[2]
-        if isinstance(configuration_cls, type):
-            return configuration
-        return configuration_cls(**configuration)
+        if issubclass(configuration_cls, BaseModel):
+            return configuration_cls(**configuration)
+        return configuration
 
     def parse_validate_output(self, **kwargs) -> BaseOutputType:
         output_cls = self.__class__.__orig_bases__[0].__args__[1]
