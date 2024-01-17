@@ -1,7 +1,7 @@
 import logging
 import time
 from enum import Enum
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field, root_validator
@@ -10,6 +10,7 @@ from llmstack.common.utils.prequests import post
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
+    hydrate_input,
 )
 
 logger = logging.getLogger(__name__)
@@ -103,10 +104,42 @@ class RealtimeAvatarConfiguration(ApiProcessorSchema):
         description="Use your authenticated connection to make the request",
     )
 
+    input_stream: bool = Field(
+        description="Process input as a stream, one sentence at a time.",
+        default=False,
+    )
+
 
 class RealtimeAvatarProcessor(
     ApiProcessorInterface[RealtimeAvatarInput, RealtimeAvatarOutput, RealtimeAvatarConfiguration],
 ):
+    def __init__(
+        self,
+        input,
+        config,
+        env,
+        output_stream=None,
+        dependencies=[],
+        all_dependencies=[],
+        session_data=None,
+        id=None,
+        is_tool=False,
+    ):
+        super().__init__(
+            input,
+            config,
+            env,
+            output_stream,
+            dependencies,
+            all_dependencies,
+            session_data,
+            id,
+            is_tool,
+        )
+        self._messages_to_repeat = []
+        self._message_buffer = ""
+        self._messages_repeated = 0
+
     @staticmethod
     def name() -> str:
         return "Realtime Avatar"
@@ -135,6 +168,53 @@ class RealtimeAvatarProcessor(
             session_data["heygen_session"] = self._heygen_session
 
         return session_data
+
+    def input_stream(self, message: Any) -> Any:
+        if not self._config.input_stream:
+            return
+
+        input_data = (
+            hydrate_input(
+                self._input,
+                message,
+            )
+            if message
+            else self._input
+        )
+
+        session_id = (
+            input_data.session_id
+            if input_data.session_id
+            else (self._heygen_session["data"]["session_id"] if self._heygen_session else None)
+        )
+
+        connection = (
+            self._env["connections"].get(
+                self._config.connection_id,
+                None,
+            )
+            if self._config.connection_id
+            else None
+        )
+
+        # Split self._input.text sentences into multiple messages
+        if input_data.task_type == TaskType.TALK or input_data.task_type == TaskType.REPEAT:
+            self._message_buffer += input_data.text
+            self._messages_to_repeat = self._message_buffer.split(".")
+
+            if len(self._messages_to_repeat) - 1 > self._messages_repeated:
+                url = "https://api.heygen.com/v1/realtime.task"
+                body = {
+                    "session_id": session_id,
+                    "text": self._messages_to_repeat[self._messages_repeated].strip(),
+                    "task_type": input_data.task_type,
+                }
+
+                response = post(url, json=body, _connection=connection)
+                self._messages_repeated += 1
+
+                if response.status_code != 200:
+                    logger.error(f"Error creating task for input stream: {response.text}")
 
     def process(self) -> dict:
         output_stream = self._output_stream
@@ -208,7 +288,9 @@ class RealtimeAvatarProcessor(
             url = "https://api.heygen.com/v1/realtime.task"
             body = {
                 "session_id": session_id,
-                "text": self._input.text,
+                "text": self._messages_to_repeat[self._messages_repeated].strip()
+                if self._config.input_stream
+                else self._input.text,
                 "task_type": task_type,
             }
 
