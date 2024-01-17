@@ -1,6 +1,6 @@
-import React, { useRef, useEffect, useState } from "react";
-import { useRecoilValue } from "recoil";
 import { get } from "lodash";
+import { useEffect, useRef, useState } from "react";
+import { useRecoilValue } from "recoil";
 import { streamChunksState } from "../../data/atoms";
 
 function StreamingVideoPlayer({ streamKey, messageId }) {

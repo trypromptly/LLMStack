@@ -1,5 +1,5 @@
-from django.utils.module_loading import import_string
 from django.conf import settings
+from django.utils.module_loading import import_string
 
 from llmstack.processors.models import RunEntry
 
@@ -12,7 +12,7 @@ class AbstractHistoryStore:
 
 class DefaultHistoryStore(AbstractHistoryStore):
     @staticmethod
-    def persist(data: RunEntry,  **kwargs):
+    def persist(data: RunEntry, **kwargs):
         data.save()
 
 

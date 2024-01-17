@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from "react";
 import {
-  FormGroup,
   FormControlLabel,
+  FormGroup,
+  Paper,
   Switch,
   TextField,
   Typography,
-  Paper,
 } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
+import { useEffect, useRef, useState } from "react";
 
 function SlackIntegrationSnippet({ app }) {
   const inputRef = useRef(null);

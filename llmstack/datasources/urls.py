@@ -5,64 +5,65 @@ from . import apis
 urlpatterns = [
     # Data Types
     path(
-        'api/datasource_types',
-        apis.DataSourceTypeViewSet.as_view({'get': 'get'}),
+        "api/datasource_types",
+        apis.DataSourceTypeViewSet.as_view({"get": "get"}),
     ),
     path(
-        'api/datasource_types',
-        apis.DataSourceTypeViewSet.as_view({'get': 'get'}),
+        "api/datasource_types",
+        apis.DataSourceTypeViewSet.as_view({"get": "get"}),
     ),
-
     # Data sources
     path(
-        'api/datasources',
+        "api/datasources",
         apis.DataSourceViewSet.as_view(
-            {'get': 'get', 'post': 'post', 'put': 'put'}),
+            {"get": "get", "post": "post", "put": "put"},
+        ),
     ),
     path(
-        'api/datasources/url/extract_urls',
-        apis.DataSourceViewSet.as_view({'post': 'extract_urls'}),
+        "api/datasources/url/extract_urls",
+        apis.DataSourceViewSet.as_view({"post": "extract_urls"}),
     ),
     path(
-        'api/datasources/<str:uid>',
-        apis.DataSourceViewSet.as_view({'get': 'get', 'delete': 'delete'}),
+        "api/datasources/<str:uid>",
+        apis.DataSourceViewSet.as_view({"get": "get", "delete": "delete"}),
     ),
     path(
-        'api/datasources/<str:uid>/entries',
-        apis.DataSourceViewSet.as_view({'get': 'getEntries'}),
+        "api/datasources/<str:uid>/entries",
+        apis.DataSourceViewSet.as_view({"get": "getEntries"}),
     ),
     path(
-        'api/datasources/<str:uid>/add_entry',
-        apis.DataSourceViewSet.as_view({'post': 'add_entry'}),
+        "api/datasources/<str:uid>/add_entry",
+        apis.DataSourceViewSet.as_view({"post": "add_entry"}),
     ),
     path(
-        'api/datasources/<str:uid>/add_entry_async',
-        apis.DataSourceViewSet.as_view({'post': 'add_entry_async'}),
+        "api/datasources/<str:uid>/add_entry_async",
+        apis.DataSourceViewSet.as_view({"post": "add_entry_async"}),
     ),
     path(
-        'api/datasources/<str:uid>/add_entry_jobs',
-        apis.DataSourceViewSet.as_view({'get': 'add_entry_jobs'}),
+        "api/datasources/<str:uid>/add_entry_jobs",
+        apis.DataSourceViewSet.as_view({"get": "add_entry_jobs"}),
     ),
     # Data source entries
     path(
-        'api/datasource_entries',
-        apis.DataSourceEntryViewSet.as_view({'get': 'get'}),
+        "api/datasource_entries",
+        apis.DataSourceEntryViewSet.as_view({"get": "get"}),
     ),
     path(
-        'api/datasource_entries/upsert',
-        apis.DataSourceEntryViewSet.as_view({'post': 'upsert'}),
+        "api/datasource_entries/upsert",
+        apis.DataSourceEntryViewSet.as_view({"post": "upsert"}),
     ),
     path(
-        'api/datasource_entries/<str:uid>',
+        "api/datasource_entries/<str:uid>",
         apis.DataSourceEntryViewSet.as_view(
-            {'get': 'get', 'delete': 'delete'}),
+            {"get": "get", "delete": "delete"},
+        ),
     ),
     path(
-        'api/datasource_entries/<str:uid>/text_content',
-        apis.DataSourceEntryViewSet.as_view({'get': 'text_content'}),
+        "api/datasource_entries/<str:uid>/text_content",
+        apis.DataSourceEntryViewSet.as_view({"get": "text_content"}),
     ),
     path(
-        'api/datasource_entries/<str:uid>/resync',
-        apis.DataSourceEntryViewSet.as_view({'post': 'resync'}),
+        "api/datasource_entries/<str:uid>/resync",
+        apis.DataSourceEntryViewSet.as_view({"post": "resync"}),
     ),
 ]

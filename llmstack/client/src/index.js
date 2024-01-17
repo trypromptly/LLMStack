@@ -1,15 +1,13 @@
+import { Box, createTheme, ThemeProvider } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import { TourProvider } from "@reactour/tour";
 import React, { lazy } from "react";
 import { CookiesProvider } from "react-cookie";
-
 import ReactDOM from "react-dom/client";
-import "./index.css";
-
-import reportWebVitals from "./reportWebVitals";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RecoilRoot } from "recoil";
-import CircularProgress from "@mui/material/CircularProgress";
-import { Box, createTheme, ThemeProvider } from "@mui/material";
-import { TourProvider } from "@reactour/tour";
+import "./index.css";
+import reportWebVitals from "./reportWebVitals";
 
 const App = lazy(() => import("./App"));
 const ErrorPage = lazy(() => import("./pages/error"));
@@ -27,8 +25,8 @@ const DataPage = lazy(() => import("./pages/data"));
 const Discover = lazy(() => import("./pages/discover"));
 const SchedulePage = lazy(() => import("./pages/schedule"));
 const AddAppRunSchedulePage = lazy(() => import("./pages/AddAppRunSchedule"));
-const AddDatasourceRefreshSchedulePage = lazy(() =>
-  import("./pages/AddDatasourceRefreshSchedule"),
+const AddDatasourceRefreshSchedulePage = lazy(
+  () => import("./pages/AddDatasourceRefreshSchedule"),
 );
 
 const defaultTheme = createTheme({

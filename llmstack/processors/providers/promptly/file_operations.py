@@ -1,65 +1,79 @@
-import os
-import uuid
-import shutil
 import logging
+import os
+import shutil
 import tempfile
-
+import uuid
 from typing import Optional
-from pydantic import Field
+
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from django.core.files.storage import storages
 from django.core.files.base import ContentFile
+from django.core.files.storage import storages
+from pydantic import Field
 
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
+from llmstack.processors.providers.api_processor_interface import (
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
-
-generatedfiles_storage = storages['generatedfiles']
+generatedfiles_storage = storages["generatedfiles"]
 
 logger = logging.getLogger(__name__)
 
 
 class FileOperationsInput(ApiProcessorSchema):
     content: str = Field(
-        default='', description='The contents of the file. Skip this field if you want to create an archive of the directory')
+        default="",
+        description="The contents of the file. Skip this field if you want to create an archive of the directory",
+    )
     filename: Optional[str] = Field(
-        description='The name of the file to create. If not provided, a random name will be generated')
+        description="The name of the file to create. If not provided, a random name will be generated",
+    )
     directory: Optional[str] = Field(
-        description='The directory to create the file in. If not provided, the file will be created in a temporary directory and path is returned')
+        description="The directory to create the file in. If not provided, the file will be created in a temporary directory and path is returned",
+    )
     archive: bool = Field(
-        default=False, description='If true, an archive with the contents of the directory will be created')
+        default=False,
+        description="If true, an archive with the contents of the directory will be created",
+    )
 
 
 class FileOperationsOutput(ApiProcessorSchema):
-    directory: str = Field(description='The directory the file was created in')
-    filename: str = Field(description='The name of the file created')
-    url: str = Field(description='Download URL of the file created')
+    directory: str = Field(description="The directory the file was created in")
+    filename: str = Field(description="The name of the file created")
+    url: str = Field(description="Download URL of the file created")
     archive: bool = Field(
-        default=False, description='If true, then we just created an archive with contents from directory')
+        default=False,
+        description="If true, then we just created an archive with contents from directory",
+    )
     text: str = Field(
-        default='', description='Textual description of the output')
+        default="",
+        description="Textual description of the output",
+    )
 
 
 class FileOperationsConfiguration(ApiProcessorSchema):
     pass
 
 
-class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOperationsOutput, FileOperationsConfiguration]):
+class FileOperationsProcessor(
+    ApiProcessorInterface[FileOperationsInput, FileOperationsOutput, FileOperationsConfiguration],
+):
     @staticmethod
     def name() -> str:
-        return 'File Operations'
+        return "File Operations"
 
     @staticmethod
     def slug() -> str:
-        return 'file_operations'
+        return "file_operations"
 
     @staticmethod
     def description() -> str:
-        return 'Creates files, directories and archives with provided content'
+        return "Creates files, directories and archives with provided content"
 
     @staticmethod
     def provider_slug() -> str:
-        return 'promptly'
+        return "promptly"
 
     @staticmethod
     def tool_only() -> bool:
@@ -69,7 +83,9 @@ class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOpe
         """
         Recursively copies the django's storage directory to a temporary directory
         """
-        if not generatedfiles_storage.exists(directory) or not os.path.exists(temp_archive_dir):
+        if not generatedfiles_storage.exists(
+            directory,
+        ) or not os.path.exists(temp_archive_dir):
             return
 
         files = generatedfiles_storage.listdir(directory)[1]
@@ -77,16 +93,18 @@ class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOpe
 
         # Copy the files to the temporary directory by reading their contents
         for file in files:
-            with generatedfiles_storage.open(f'{directory}/{file}', 'rb') as f:
-                with open(f'{temp_archive_dir}/{file}', 'wb') as temp_file:
+            with generatedfiles_storage.open(f"{directory}/{file}", "rb") as f:
+                with open(f"{temp_archive_dir}/{file}", "wb") as temp_file:
                     temp_file.write(f.read())
 
         # Recursively copy the directories to the temporary directory
         for subdirectory in directories:
             # Make a directory
-            os.mkdir(f'{temp_archive_dir}/{subdirectory}')
+            os.mkdir(f"{temp_archive_dir}/{subdirectory}")
             self._copy_directory(
-                f'{directory}/{subdirectory}', f'{temp_archive_dir}/{subdirectory}')
+                f"{directory}/{subdirectory}",
+                f"{temp_archive_dir}/{subdirectory}",
+            )
 
     def _create_archive(self, file):
         """
@@ -101,14 +119,21 @@ class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOpe
             temp_archive_file = tempfile.NamedTemporaryFile()
 
             # Create the archive
-            shutil.make_archive(temp_archive_file.name,
-                                'zip', temp_archive_dir)
+            shutil.make_archive(
+                temp_archive_file.name,
+                "zip",
+                temp_archive_dir,
+            )
 
             temp_archive_file.close()
 
             # Copy archive to storage
             return generatedfiles_storage.save(
-                f'{file}.zip', ContentFile(open(f'{temp_archive_file.name}.zip', 'rb').read()))
+                f"{file}.zip",
+                ContentFile(
+                    open(f"{temp_archive_file.name}.zip", "rb").read(),
+                ),
+            )
 
     def process(self) -> dict:
         output_stream = self._output_stream
@@ -118,37 +143,56 @@ class FileOperationsProcessor(ApiProcessorInterface[FileOperationsInput, FileOpe
         directory = self._input.directory or str(uuid.uuid4())
         archive = self._input.archive
 
-        # Create an archive if directory is provided but not content with archive flag set
+        # Create an archive if directory is provided but not content with
+        # archive flag set
         if not content and archive:
             saved_path = self._create_archive(directory)
             generated_url = generatedfiles_storage.url(saved_path)
-            url = f'{settings.SITE_URL}{generated_url}' if generated_url.startswith(
-                '/') and settings.SITE_URL else generated_url
-            text = f'Archive created at {url} with contents from directory {directory}'
+            url = (
+                f"{settings.SITE_URL}{generated_url}"
+                if generated_url.startswith(
+                    "/",
+                )
+                and settings.SITE_URL
+                else generated_url
+            )
+            text = f"Archive created at {url} with contents from directory {directory}"
 
-            async_to_sync(output_stream.write)(FileOperationsOutput(
-                directory=directory,
-                filename=os.path.basename(saved_path),
-                url=url,
-                archive=True,
-                text=text,
-            ))
+            async_to_sync(output_stream.write)(
+                FileOperationsOutput(
+                    directory=directory,
+                    filename=os.path.basename(saved_path),
+                    url=url,
+                    archive=True,
+                    text=text,
+                ),
+            )
         elif content and not archive:
             saved_path = generatedfiles_storage.save(
-                f'{directory}/{filename}', ContentFile(content))
+                f"{directory}/{filename}",
+                ContentFile(content),
+            )
             generated_url = generatedfiles_storage.url(saved_path)
-            url = f'{settings.SITE_URL}{generated_url}' if generated_url.startswith(
-                '/') and settings.SITE_URL else generated_url
+            url = (
+                f"{settings.SITE_URL}{generated_url}"
+                if generated_url.startswith(
+                    "/",
+                )
+                and settings.SITE_URL
+                else generated_url
+            )
             filename = os.path.basename(saved_path)
-            text = f'File {filename} created at {url} in directory {directory}'
+            text = f"File {filename} created at {url} in directory {directory}"
 
-            async_to_sync(output_stream.write)(FileOperationsOutput(
-                directory=directory,
-                filename=filename,
-                url=url,
-                archive=False,
-                text=text,
-            ))
+            async_to_sync(output_stream.write)(
+                FileOperationsOutput(
+                    directory=directory,
+                    filename=filename,
+                    url=url,
+                    archive=False,
+                    text=text,
+                ),
+            )
 
         # Finalize the output stream
         output = output_stream.finalize()

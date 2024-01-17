@@ -1,3 +1,5 @@
+import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
+import TableRowsIcon from "@mui/icons-material/TableRows";
 import {
   Autocomplete,
   Box,
@@ -21,21 +23,20 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
-import TableRowsIcon from "@mui/icons-material/TableRows";
-import { useEffect, useMemo, useState } from "react";
 import moment from "moment";
+import { useEffect, useMemo, useState } from "react";
 import AceEditor from "react-ace";
+import { useRecoilValue } from "recoil";
 import UAParser from "ua-parser-js";
-import MarkdownRenderer from "./MarkdownRenderer";
-import { axios } from "../../data/axios";
 import { ReactComponent as DiscordIcon } from "../../assets/images/icons/discord.svg";
 import { ReactComponent as SlackIcon } from "../../assets/images/icons/slack.svg";
 import { ReactComponent as TwilioIcon } from "../../assets/images/icons/twilio.svg";
+import { appsBriefState } from "../../data/atoms";
+import { axios } from "../../data/axios";
+import MarkdownRenderer from "./MarkdownRenderer";
+
 import "ace-builds/src-noconflict/mode-sh";
 import "ace-builds/src-noconflict/theme-chrome";
-import { useRecoilValue } from "recoil";
-import { appsBriefState } from "../../data/atoms";
 
 const browserAndOSFromUACache = {};
 

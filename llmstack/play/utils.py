@@ -42,15 +42,15 @@ def extract_jinja2_variables(input_data):
         # Define regular expression patterns to match Jinja2 elements, including
         # - variables: {{ variable_name }} or {{ variable_name | filter }}
         # - tags: {% tag_name %}
-        variable_pattern = r'{{ *(.*?) *}}'
-        tag_pattern = r'{% *(.*?) *%}'
+        variable_pattern = r"{{ *(.*?) *}}"
+        tag_pattern = r"{% *(.*?) *%}"
 
         variables = set()
 
         # Find all variable matches
         variable_matches = re.findall(variable_pattern, s)
         for match in variable_matches:
-            variables.add(match.strip().split('|')[0].strip())
+            variables.add(match.strip().split("|")[0].strip())
 
         # Find all tag matches
         tag_matches = re.findall(tag_pattern, s)
@@ -58,13 +58,13 @@ def extract_jinja2_variables(input_data):
             # Split the tag content by space to determine its structure,
             # and add the variable depending on the tag
             split_tag = match.strip().split()
-            if split_tag[0] in {'if', 'elif'}:
+            if split_tag[0] in {"if", "elif"}:
                 # In {% if x > y %}, {% if x == y %} or {% if x != y %},
                 # extract both 'x' and 'y' as variables
-                variables.update(re.findall(r'\b\w+\b', split_tag[1]))
-            elif split_tag[0] == 'for':
+                variables.update(re.findall(r"\b\w+\b", split_tag[1]))
+            elif split_tag[0] == "for":
                 # In {% for item in items %}, extract 'items' as a variable
-                if len(split_tag) == 4 and split_tag[2] == 'in':
+                if len(split_tag) == 4 and split_tag[2] == "in":
                     variables.add(split_tag[3])
 
         return variables
@@ -90,7 +90,9 @@ def extract_jinja2_variables(input_data):
     return variables
 
 
-# A utility function to recursively convert template vars of type _inputs[0].xyz to _inputs0.xyz for backward compatibility in a dictionary with nested string values
+# A utility function to recursively convert template vars of type
+# _inputs[0].xyz to _inputs0.xyz for backward compatibility in a
+# dictionary with nested string values
 def convert_template_vars_from_legacy_format(d):
     if isinstance(d, dict):
         for key, value in d.items():
@@ -100,10 +102,10 @@ def convert_template_vars_from_legacy_format(d):
                 for item in value:
                     convert_template_vars_from_legacy_format(item)
             elif isinstance(value, str):
-                d[key] = re.sub(r'_inputs\[(\d+)\]', r'_inputs\1', value)
+                d[key] = re.sub(r"_inputs\[(\d+)\]", r"_inputs\1", value)
     elif isinstance(d, list):
         for item in d:
             convert_template_vars_from_legacy_format(item)
     elif isinstance(d, str):
-        d = re.sub(r'_inputs\[(\d+)\]', r'_inputs\1', d)
+        d = re.sub(r"_inputs\[(\d+)\]", r"_inputs\1", d)
     return d

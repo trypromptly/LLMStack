@@ -16,16 +16,31 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='app',
             name='read_accessible_by',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=320), blank=True, default=list, help_text='List of user emails or domains who can access the app', size=None) if connection.vendor == 'postgresql' else ArrayField(
-                null=True, help_text='List of user emails or domains who can access the app', blank=True,
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(
+                    max_length=320),
+                blank=True,
+                default=list,
+                help_text='List of user emails or domains who can access the app',
+                size=None) if connection.vendor == 'postgresql' else ArrayField(
+                null=True,
+                help_text='List of user emails or domains who can access the app',
+                blank=True,
             ),
         ),
         migrations.AddField(
             model_name='app',
             name='write_accessible_by',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(
-                max_length=320), blank=True, default=list, help_text='List of user emails or domains who can modify the app', size=None) if connection.vendor == 'postgresql' else ArrayField(
-                null=True, help_text='List of user emails or domains who can modify the app', blank=True,
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(
+                    max_length=320),
+                blank=True,
+                default=list,
+                help_text='List of user emails or domains who can modify the app',
+                size=None) if connection.vendor == 'postgresql' else ArrayField(
+                null=True,
+                help_text='List of user emails or domains who can modify the app',
+                blank=True,
             ),
         ),
     ]

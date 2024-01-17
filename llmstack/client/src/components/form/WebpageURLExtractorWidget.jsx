@@ -1,20 +1,18 @@
-import { useEffect, useState } from "react";
-import { axios } from "../../data/axios";
-
+import ArrowCircleDownOutlinedIcon from "@mui/icons-material/ArrowCircleDownOutlined";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { LoadingButton } from "@mui/lab";
 import {
+  IconButton,
+  InputAdornment,
+  LinearProgress,
   List,
   ListItem,
   ListItemText,
-  IconButton,
   Stack,
   TextField,
-  InputAdornment,
-  LinearProgress,
 } from "@mui/material";
-import ArrowCircleDownOutlinedIcon from "@mui/icons-material/ArrowCircleDownOutlined";
-import DeleteIcon from "@mui/icons-material/Delete";
-
-import { LoadingButton } from "@mui/lab";
+import { useEffect, useState } from "react";
+import { axios } from "../../data/axios";
 
 export default function WebpageURLExtractorWidget(props) {
   const { onChange, value, schema } = props;

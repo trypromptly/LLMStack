@@ -1,110 +1,136 @@
 import concurrent.futures
 import logging
-import time
-from typing import List
-from typing import Optional
+from typing import List, Optional
 
 from asgiref.sync import async_to_sync
-from pydantic import conint
-from pydantic import Field
+from pydantic import Field, conint
 
 from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
 from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
-from llmstack.common.utils.text_extract import extract_text_from_b64_json, ExtraParams
 from llmstack.common.utils.splitter import SpacyTextSplitter
+from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_b64_json
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, ApiProcessorSchema
+from llmstack.processors.providers.api_processor_interface import (
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class DataUriTextExtractorConfiguration(ApiProcessorSchema):
     document_limit: Optional[conint(ge=0, le=10)] = Field(
-        description='The maximum number of documents to return', default=1, advanced_parameter=True,
+        description="The maximum number of documents to return",
+        default=1,
+        advanced_parameter=True,
     )
     text_chunk_size: Optional[conint(ge=500, le=2000)] = Field(
-        description='Chunksize of document', default=1500, advanced_parameter=True,
+        description="Chunksize of document",
+        default=1500,
+        advanced_parameter=True,
     )
 
 
 class DataUriTextExtractorInput(ApiProcessorSchema):
     file: str = Field(
-        default='', description='The file to extract text from', accepts={
-            'application/pdf': [],
-            'application/rtf': [],
-            'text/plain': [],
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [],
-            'application/msword': [],
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation': [],
-            'application/vnd.ms-powerpoint': [],
-            'image/jpeg': [], 'image/png': [],
-        }, maxSize=50000000, widget='file',
+        default="",
+        description="The file to extract text from",
+        accepts={
+            "application/pdf": [],
+            "application/rtf": [],
+            "text/plain": [],
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
+            "application/msword": [],
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
+            "application/vnd.ms-powerpoint": [],
+            "image/jpeg": [],
+            "image/png": [],
+        },
+        maxSize=50000000,
+        widget="file",
     )
     file_data: Optional[str] = Field(
-        default='', description='The base64 encoded data of file', pattern=r'data:(.*);name=(.*);base64,(.*)',
+        default="",
+        description="The base64 encoded data of file",
+        pattern=r"data:(.*);name=(.*);base64,(.*)",
     )
     query: Optional[str] = Field(
-        default='', description='The query to search the document',
+        default="",
+        description="The query to search the document",
     )
 
 
 class DataUriTextExtractorOutput(ApiProcessorSchema):
     text: str = Field(
-        default='', description='The extracted text from the file', widget='textarea',
+        default="",
+        description="The extracted text from the file",
+        widget="textarea",
     )
 
 
-class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUriTextExtractorOutput, DataUriTextExtractorConfiguration]):
+class DataUriTextExtract(
+    ApiProcessorInterface[
+        DataUriTextExtractorInput,
+        DataUriTextExtractorOutput,
+        DataUriTextExtractorConfiguration,
+    ],
+):
     """
     DataUri Text Extractor processor
     """
 
     def process_session_data(self, session_data):
-        self.file_name = session_data['file_name'] if 'file_name' in session_data else ''
-        self.mime_type = session_data['mime_type'] if 'mime_type' in session_data else ''
-        self.data = session_data['data'] if 'data' in session_data else ''
-        self.extracted_text = session_data['extracted_text'] if 'extracted_text' in session_data else ''
-        self.storage_index_name = session_data['storage_index_name'] if 'storage_index_name' in session_data else ''
+        self.file_name = session_data["file_name"] if "file_name" in session_data else ""
+        self.mime_type = session_data["mime_type"] if "mime_type" in session_data else ""
+        self.data = session_data["data"] if "data" in session_data else ""
+        self.extracted_text = session_data["extracted_text"] if "extracted_text" in session_data else ""
+        self.storage_index_name = session_data["storage_index_name"] if "storage_index_name" in session_data else ""
 
     @staticmethod
     def name() -> str:
-        return 'File Extractor'
+        return "File Extractor"
 
     @staticmethod
     def slug() -> str:
-        return 'data_uri_text_extract'
+        return "data_uri_text_extract"
 
     @staticmethod
     def description() -> str:
-        return 'Extract text from file represened as data uri'
+        return "Extract text from file represened as data uri"
 
     @staticmethod
     def provider_slug() -> str:
-        return 'promptly'
+        return "promptly"
 
     def session_data_to_persist(self) -> dict:
         return {
-            'extracted_text': self.extracted_text,
-            'storage_index_name': self.storage_index_name,
-            'file_name': self.file_name,
-            'mime_type': self.mime_type,
-            'data': self.data,
+            "extracted_text": self.extracted_text,
+            "storage_index_name": self.storage_index_name,
+            "file_name": self.file_name,
+            "mime_type": self.mime_type,
+            "data": self.data,
         }
 
     def process(self) -> str:
-        openai_api_key = self._env.get('openai_api_key', None)
+        openai_api_key = self._env.get("openai_api_key", None)
         query = self._input.query
         self.temp_store = Chroma(is_persistent=False)
 
         file = self._input.file or None
-        if (file is None or file == '') and self._input.file_data:
+        if (file is None or file == "") and self._input.file_data:
             file = self._input.file_data
 
         if file is None:
-            raise Exception('No file found in input')
+            raise Exception("No file found in input")
         mime_type, file_name, data = validate_parse_data_uri(file)
 
-        if (query is None or query == '') and mime_type == self.mime_type and file_name == self.file_name and data == self.data and self.extracted_text != '':
+        if (
+            (query is None or query == "")
+            and mime_type == self.mime_type
+            and file_name == self.file_name
+            and data == self.data
+            and self.extracted_text != ""
+        ):
             async_to_sync(self._output_stream.write)(
                 DataUriTextExtractorOutput(text=self.extracted_text),
             )
@@ -113,13 +139,19 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
 
         if query and self.storage_index_name:
             documents: List[Document] = self.temp_store.hybrid_search(
-                self.storage_index_name, document_query=DocumentQuery(
-                    query=query, limit=self._config.document_limit),
+                self.storage_index_name,
+                document_query=DocumentQuery(
+                    query=query,
+                    limit=self._config.document_limit,
+                ),
             )
 
             async_to_sync(self._output_stream.write)(
-                DataUriTextExtractorOutput(text='\n'.join(
-                    [document.page_content for document in documents])),
+                DataUriTextExtractorOutput(
+                    text="\n".join(
+                        [document.page_content for document in documents],
+                    ),
+                ),
             )
             output = self._output_stream.finalize()
             return output
@@ -129,7 +161,8 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
         self.data = data
 
         text = extract_text_from_b64_json(
-            mime_type=mime_type, base64_encoded_data=data,
+            mime_type=mime_type,
+            base64_encoded_data=data,
             file_name=file_name,
             extra_params=ExtraParams(openai_key=openai_api_key),
         )
@@ -140,24 +173,39 @@ class DataUriTextExtract(ApiProcessorInterface[DataUriTextExtractorInput, DataUr
             self.storage_index_name = index_name
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 text_chunks = SpacyTextSplitter(
-                    separator='\n', pipeline='sentencizer', chunk_size=self._config.text_chunk_size,
+                    separator="\n",
+                    pipeline="sentencizer",
+                    chunk_size=self._config.text_chunk_size,
                 ).split_text(text)
                 futures = [
                     executor.submit(
                         self.temp_store.add_text,
-                        index_name, Document(page_content_key="content", page_content=text_chunk, metadata={
-                            'source': file_name}),
-                    ) for text_chunk in text_chunks
+                        index_name,
+                        Document(
+                            page_content_key="content",
+                            page_content=text_chunk,
+                            metadata={
+                                "source": file_name,
+                            },
+                        ),
+                    )
+                    for text_chunk in text_chunks
                 ]
                 concurrent.futures.wait(futures)
             documents: List[Document] = self.temp_store.hybrid_search(
-                self.storage_index_name, document_query=DocumentQuery(
-                    query=query, limit=self._config.document_limit),
+                self.storage_index_name,
+                document_query=DocumentQuery(
+                    query=query,
+                    limit=self._config.document_limit,
+                ),
             )
 
             async_to_sync(self._output_stream.write)(
-                DataUriTextExtractorOutput(text='\n'.join(
-                    [document.page_content for document in documents])),
+                DataUriTextExtractorOutput(
+                    text="\n".join(
+                        [document.page_content for document in documents],
+                    ),
+                ),
             )
             output = self._output_stream.finalize()
             return output

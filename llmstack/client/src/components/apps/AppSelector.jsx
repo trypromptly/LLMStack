@@ -1,4 +1,4 @@
-import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
 export function AppSelector(props) {
   return (

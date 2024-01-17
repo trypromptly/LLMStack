@@ -1,15 +1,15 @@
-import React, { useState, useRef } from "react";
-import {
-  ButtonGroup,
-  Button,
-  Popper,
-  Grow,
-  Paper,
-  ClickAwayListener,
-  MenuList,
-  MenuItem,
-} from "@mui/material";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import {
+  Button,
+  ButtonGroup,
+  ClickAwayListener,
+  Grow,
+  MenuItem,
+  MenuList,
+  Paper,
+  Popper,
+} from "@mui/material";
+import React, { useRef, useState } from "react";
 
 export default function SplitButton({ options, sx }) {
   const [open, setOpen] = useState(false);

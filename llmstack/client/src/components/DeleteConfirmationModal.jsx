@@ -1,11 +1,10 @@
-import React from "react";
 import {
-  Dialog,
   Button,
-  DialogTitle,
+  Dialog,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
+  DialogTitle,
 } from "@mui/material";
 
 export default function DeleteConfirmationModal(props) {

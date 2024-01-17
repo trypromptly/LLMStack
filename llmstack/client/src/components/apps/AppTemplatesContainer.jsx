@@ -1,4 +1,8 @@
-import { useState } from "react";
+import {
+  AutoFixHighOutlined,
+  QuestionAnswerOutlined,
+  WebOutlined,
+} from "@mui/icons-material";
 import {
   Box,
   Card,
@@ -14,32 +18,28 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import {
-  AutoFixHighOutlined,
-  QuestionAnswerOutlined,
-  WebOutlined,
-} from "@mui/icons-material";
 import Grid from "@mui/material/Unstable_Grid2";
-import { AppFromTemplateDialog } from "./AppFromTemplateDialog";
-import { appTemplatesState, isMobileState } from "../../data/atoms";
-import { useRecoilValue } from "recoil";
 import startCase from "lodash/startCase";
-import selectAllIcon_light from "../../assets/images/icons/templates/select-all.png";
-import blankIcon_light from "../../assets/images/icons/templates/blank.png";
+import { useState } from "react";
+import { useRecoilValue } from "recoil";
 import agentsIcon_light from "../../assets/images/icons/templates/agents.png";
+import blankIcon_light from "../../assets/images/icons/templates/blank.png";
+import botIcon_light from "../../assets/images/icons/templates/bot.png";
 import customerSupportIcon_light from "../../assets/images/icons/templates/customer-support.png";
 import entertainmentIcon_light from "../../assets/images/icons/templates/entertainment.png";
 import financeIcon_light from "../../assets/images/icons/templates/finance.png";
 import hrIcon_light from "../../assets/images/icons/templates/hr.png";
+import internetIcon_light from "../../assets/images/icons/templates/internet.png";
 import marketingIcon_light from "../../assets/images/icons/templates/marketing.png";
 import productivityIcon_light from "../../assets/images/icons/templates/productivity.png";
 import programmingIcon_light from "../../assets/images/icons/templates/programming.png";
 import salesIcon_light from "../../assets/images/icons/templates/sales.png";
-import botIcon_light from "../../assets/images/icons/templates/bot.png";
-import internetIcon_light from "../../assets/images/icons/templates/internet.png";
+import selectAllIcon_light from "../../assets/images/icons/templates/select-all.png";
 import textIcon_light from "../../assets/images/icons/templates/text.png";
 import toolIcon_light from "../../assets/images/icons/templates/tool.png";
 import voiceIcon_light from "../../assets/images/icons/templates/voice.png";
+import { appTemplatesState, isMobileState } from "../../data/atoms";
+import { AppFromTemplateDialog } from "./AppFromTemplateDialog";
 
 const AppTemplateCategoryIcon = ({ category }) => {
   switch (category) {

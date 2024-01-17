@@ -1,14 +1,9 @@
-import { useEffect, useState } from "react";
-import { axios } from "../data/axios";
-import { useNavigate, useParams } from "react-router-dom";
-import { AppNameEditor } from "../components/apps/AppNameEditor";
-import {
-  EditSharingModal,
-  PublishModal,
-  UnpublishModal,
-} from "../components/apps/AppPublisher";
+import ChangeHistoryIcon from "@mui/icons-material/ChangeHistory";
+import EditIcon from "@mui/icons-material/Edit";
+import PreviewIcon from "@mui/icons-material/Preview";
 import PublishedWithChangesIcon from "@mui/icons-material/PublishedWithChanges";
-import { enqueueSnackbar } from "notistack";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import UnpublishedIcon from "@mui/icons-material/Unpublished";
 import {
   Alert,
   AlertTitle,
@@ -23,34 +18,42 @@ import {
   SvgIcon,
   Tooltip,
 } from "@mui/material";
-import ChangeHistoryIcon from "@mui/icons-material/ChangeHistory";
-import EditIcon from "@mui/icons-material/Edit";
-import PreviewIcon from "@mui/icons-material/Preview";
-import TimelineIcon from "@mui/icons-material/Timeline";
-import UnpublishedIcon from "@mui/icons-material/Unpublished";
+import { enqueueSnackbar } from "notistack";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { profileState, profileFlagsState } from "../data/atoms";
-import AppVisibilityIcon from "../components/apps/AppVisibilityIcon";
-import AppEditorMenu from "../components/apps/AppEditorMenu";
-import { AppEditor } from "../components/apps/AppEditor";
-import { AppPreview } from "../components/apps/AppPreview";
-import { AppRunHistory } from "../components/apps/AppRunHistory";
-import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
-import { AppSlackConfigEditor } from "../components/apps/AppSlackConfigEditor";
-import { AppDiscordConfigEditor } from "../components/apps/AppDiscordConfigEditor";
-import { AppTwilioConfigEditor } from "../components/apps/AppTwilioConfigEditor";
 import { ReactComponent as CodeIcon } from "../assets/images/icons/code.svg";
 import { ReactComponent as DiscordIcon } from "../assets/images/icons/discord.svg";
 import { ReactComponent as IntegrationsIcon } from "../assets/images/icons/integrations.svg";
 import { ReactComponent as SlackIcon } from "../assets/images/icons/slack.svg";
-import { ReactComponent as TwilioIcon } from "../assets/images/icons/twilio.svg";
 import { ReactComponent as TemplateIcon } from "../assets/images/icons/template.svg";
+import { ReactComponent as TwilioIcon } from "../assets/images/icons/twilio.svg";
 import { ReactComponent as WebIcon } from "../assets/images/icons/web.svg";
 import { AppApiExamples } from "../components/apps/AppApiExamples";
+import { AppDiscordConfigEditor } from "../components/apps/AppDiscordConfigEditor";
+import { AppEditor } from "../components/apps/AppEditor";
+import AppEditorMenu from "../components/apps/AppEditorMenu";
+import { AppNameEditor } from "../components/apps/AppNameEditor";
+import { AppPreview } from "../components/apps/AppPreview";
+import {
+  EditSharingModal,
+  PublishModal,
+  UnpublishModal,
+} from "../components/apps/AppPublisher";
+import { AppRunHistory } from "../components/apps/AppRunHistory";
+import { AppSlackConfigEditor } from "../components/apps/AppSlackConfigEditor";
 import { AppTemplate } from "../components/apps/AppTemplate";
+import { AppTwilioConfigEditor } from "../components/apps/AppTwilioConfigEditor";
 import { AppVersions } from "../components/apps/AppVersions";
-import { apiBackendsState } from "../data/atoms";
+import AppVisibilityIcon from "../components/apps/AppVisibilityIcon";
+import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
 import { useValidationErrorsForAppConsole } from "../data/appValidation";
+import {
+  apiBackendsState,
+  profileFlagsState,
+  profileState,
+} from "../data/atoms";
+import { axios } from "../data/axios";
 
 const menuItems = [
   {

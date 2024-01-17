@@ -1,14 +1,11 @@
-import * as React from "react";
-
+import { TabContext, TabList, TabPanel } from "@mui/lab";
+import { Box, Tab } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
+import * as React from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { inputValueState, templateValueState } from "../data/atoms";
-import ThemedJsonForm from "./ThemedJsonForm";
-
-import { Box, Tab } from "@mui/material";
-import { TabContext, TabList, TabPanel } from "@mui/lab";
-
 import { Empty as EmptyComponent } from "./form/Empty";
+import ThemedJsonForm from "./ThemedJsonForm";
 
 const getTemplateVariables = (input) => {
   const data = typeof input === "string" ? input : JSON.stringify(input);

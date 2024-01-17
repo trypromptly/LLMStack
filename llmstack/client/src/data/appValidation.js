@@ -2,8 +2,8 @@
 // when the processor is changed.
 // ----------------------------------------------------------------------
 import { useCallback, useEffect } from "react";
-import { appEditorValidationErrorsState } from "./atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import { appEditorValidationErrorsState } from "./atoms";
 
 export const useValidationErrorsForAppComponents = (index) => {
   const setValidationErrors = useSetRecoilState(appEditorValidationErrorsState);

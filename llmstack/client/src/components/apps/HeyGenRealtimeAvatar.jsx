@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
 import { Alert, Box } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
 import promptlyLoader from "../../assets/images/promptly-loading.gif";
 
 const newSession = async (processor, runProcessor) => {

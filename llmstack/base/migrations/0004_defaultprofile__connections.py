@@ -14,6 +14,9 @@ class Migration(migrations.Migration):
             model_name='defaultprofile',
             name='_connections',
             field=models.JSONField(
-                blank=True, default=dict, help_text='Encrypted connections config to use with processors', null=True),
+                blank=True,
+                default=dict,
+                help_text='Encrypted connections config to use with processors',
+                null=True),
         ),
     ]

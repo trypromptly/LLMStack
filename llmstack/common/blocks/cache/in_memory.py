@@ -4,7 +4,7 @@ from llmstack.common.blocks.base.processor import CacheManager
 
 
 def get_hash(input: dict):
-    return hashlib.sha256(str(input).encode('utf-8')).hexdigest()
+    return hashlib.sha256(str(input).encode("utf-8")).hexdigest()
 
 
 class InMemoryCache(CacheManager):

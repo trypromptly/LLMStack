@@ -1,26 +1,26 @@
-import React, { useEffect, useRef, useState } from "react";
-import ReactGA from "react-ga4";
-import { Avatar, Box, Chip, Fab, Grid, Stack, Typography } from "@mui/material";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { Liquid } from "liquidjs";
-import validator from "@rjsf/validator-ajv8";
-import Form from "@rjsf/mui";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
-import AceEditor from "react-ace";
-import "ace-builds/src-noconflict/mode-json";
-import { useSetRecoilState } from "recoil";
+import { Avatar, Box, Chip, Fab, Grid, Stack, Typography } from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Form from "@rjsf/mui";
+import validator from "@rjsf/validator-ajv8";
+import { Liquid } from "liquidjs";
 import { get } from "lodash";
-import { streamChunksState } from "../../data/atoms";
+import React, { useEffect, useRef, useState } from "react";
+import AceEditor from "react-ace";
+import ReactGA from "react-ga4";
+import { useSetRecoilState } from "recoil";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
-import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
-import { ProviderIcon } from "./ProviderIcon";
+import { streamChunksState } from "../../data/atoms";
 import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
-import { LexicalRenderer } from "./lexical/LexicalRenderer";
+import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { Errors } from "../Output";
-
 import "./AgentRenderer.css";
+import { LexicalRenderer } from "./lexical/LexicalRenderer";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { ProviderIcon } from "./ProviderIcon";
+
+import "ace-builds/src-noconflict/mode-json";
 
 function CustomFileWidget(props) {
   return <FileUploadWidget {...props} />;
@@ -445,9 +445,9 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
                   },
                 }
               : typeof chunkedOutput.current[message.output.agent.id]
-                  ?.output === "string"
-              ? chunkedOutput.current[message.output.agent.id]
-              : chunkedOutput.current[message.output.agent.id]?.output,
+                    ?.output === "string"
+                ? chunkedOutput.current[message.output.agent.id]
+                : chunkedOutput.current[message.output.agent.id]?.output,
           )
           .then((response) => {
             if (response.trim() === "" && error === null) {
@@ -474,11 +474,11 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
                   message.output.agent.type === "step_error"
                     ? message.output.agent.content
                     : message.output.agent.type === "step"
-                    ? {
-                        ...chunkedOutput.current[message.output.agent.id],
-                        ...{ content: response },
-                      }
-                    : response,
+                      ? {
+                          ...chunkedOutput.current[message.output.agent.id],
+                          ...{ content: response },
+                        }
+                      : response,
                 error: message.output.agent.type === "step_error",
                 type: message.output.agent.type || "output",
                 id: message.output.agent.id,

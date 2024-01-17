@@ -1,16 +1,15 @@
+import { AddOutlined } from "@mui/icons-material";
+import { Button, Stack, Typography } from "@mui/material";
+import { enqueueSnackbar } from "notistack";
 import { useState } from "react";
 import ReactGA from "react-ga4";
-import { Button, Stack, Typography } from "@mui/material";
-import { AddOutlined } from "@mui/icons-material";
+import { useRecoilCallback } from "recoil";
+import { connectionsState } from "../data/atoms";
+import { axios } from "../data/axios";
+import "../index.css";
 import AddConnectionModal from "./connections/AddConnectionModal";
 import ConnectionList from "./connections/ConnectionList";
 import DeleteConnectionModal from "./connections/DeleteConnectionModal";
-import { enqueueSnackbar } from "notistack";
-
-import "../index.css";
-import { axios } from "../data/axios";
-import { connectionsState } from "../data/atoms";
-import { useRecoilCallback } from "recoil";
 
 function Connections() {
   const [openConnectionModal, setOpenConnectionModal] = useState(false);

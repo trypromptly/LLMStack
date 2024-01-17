@@ -1,13 +1,12 @@
-import { Suspense } from "react";
-import ReactGA from "react-ga4";
 import { CircularProgress, Grid, Stack } from "@mui/material";
-import BannerMessages from "./components/BannerMessages";
-import Sidebar from "./components/sidebar";
-import NavBar from "./components/navbar";
 import { SnackbarProvider } from "notistack";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
+import ReactGA from "react-ga4";
 import { useLocation } from "react-router-dom";
 import { useRecoilState, useRecoilValue } from "recoil";
+import BannerMessages from "./components/BannerMessages";
+import NavBar from "./components/navbar";
+import Sidebar from "./components/sidebar";
 import { isMobileState, profileFlagsState } from "./data/atoms";
 
 const menuItems = [

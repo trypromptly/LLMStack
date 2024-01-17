@@ -1,12 +1,9 @@
 import logging
 import time
 from types import TracebackType
-from typing import Any
-from typing import NamedTuple
-from typing import Type
+from typing import Any, NamedTuple, Type
 
 from asgiref.sync import async_to_sync
-from pydantic import BaseModel
 
 from llmstack.play.actor import Actor, BookKeepingData
 
@@ -17,6 +14,7 @@ class InputRequest(NamedTuple):
     """
     Input request
     """
+
     request_endpoint_uuid: str
     request_app_uuid: str
     request_app_session_key: str
@@ -28,10 +26,17 @@ class InputRequest(NamedTuple):
     request_user_agent: str
     request_content_type: str
     request_body: str
+    disable_history: bool = False
 
 
 class InputActor(Actor):
-    def __init__(self, output_stream, input_request, dependencies=[], all_dependencies=[]):
+    def __init__(
+        self,
+        output_stream,
+        input_request,
+        dependencies=[],
+        all_dependencies=[],
+    ):
         super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
         self.input_request = input_request
         self.data = None
@@ -45,7 +50,12 @@ class InputActor(Actor):
         self.output_stream.finalize()
         self.output_stream.bookkeep(
             BookKeepingData(
-                input=message, run_data={**self.input_request._asdict()}, timestamp=time.time(),
+                input=message,
+                run_data={
+                    **self.input_request._asdict(),
+                },
+                timestamp=time.time(),
+                disable_history=self.input_request.disable_history,
             ),
         )
 
@@ -65,7 +75,12 @@ class InputActor(Actor):
     def on_stop(self) -> None:
         pass
 
-    def on_failure(self, exception_type: Type[BaseException], exception_value: BaseException, traceback: TracebackType) -> None:
+    def on_failure(
+        self,
+        exception_type: Type[BaseException],
+        exception_value: BaseException,
+        traceback: TracebackType,
+    ) -> None:
         logger.error(
-            f'IOActor failed: {exception_type} {exception_value} {traceback}',
+            f"IOActor failed: {exception_type} {exception_value} {traceback}",
         )

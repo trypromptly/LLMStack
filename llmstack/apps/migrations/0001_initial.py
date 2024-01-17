@@ -12,13 +12,16 @@ from llmstack.common.utils.db_models import ArrayField
 class Migration(migrations.Migration):
 
     if connection.vendor == 'postgresql':
-        accessible_by_field = ('accessible_by', django.contrib.postgres.fields.ArrayField(
-            base_field=models.CharField(max_length=320),
-            blank=True,
-            default=list,
-            help_text='List of user emails or domains who can access the app',
-            size=None,
-        ))
+        accessible_by_field = (
+            'accessible_by',
+            django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(
+                    max_length=320),
+                blank=True,
+                default=list,
+                help_text='List of user emails or domains who can access the app',
+                size=None,
+            ))
     else:
         accessible_by_field = ('accessible_by', ArrayField(
             null=True,

@@ -1,23 +1,22 @@
-import { axios } from "../data/axios";
-import { organizationState, profileFlagsState } from "../data/atoms";
-import { useEffect, useState } from "react";
+import SearchIcon from "@mui/icons-material/Search";
 import {
   Box,
   Card,
   CardActions,
   CardContent,
   CardHeader,
-  Typography,
   Chip,
-  TextField,
   InputAdornment,
+  TextField,
   Toolbar,
+  Typography,
 } from "@mui/material";
-import { useSearchParams } from "react-router-dom";
-import SearchIcon from "@mui/icons-material/Search";
-
 import Grid from "@mui/material/Unstable_Grid2";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
+import { organizationState, profileFlagsState } from "../data/atoms";
+import { axios } from "../data/axios";
 
 class DiscoverCard {
   constructor(type, title, description, tags, link) {

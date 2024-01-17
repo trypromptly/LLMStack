@@ -10,10 +10,10 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
-import { axios } from "../../data/axios";
 import { useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { appTemplateState } from "../../data/atoms";
+import { axios } from "../../data/axios";
 
 export function AppFromTemplateDialog({ open, setOpen, appTemplateSlug }) {
   const [appName, setAppName] = useState("Untitled");

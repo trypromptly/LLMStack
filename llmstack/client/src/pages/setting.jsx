@@ -1,33 +1,30 @@
+import ContentCopy from "@mui/icons-material/ContentCopy";
+import FileUpload from "@mui/icons-material/FileUpload";
 import {
   Box,
-  TextField,
   Button,
   CircularProgress,
-  Grid,
-  Tooltip,
   Divider,
+  Grid,
   IconButton,
-  Typography,
   InputLabel,
   Paper,
   Stack,
+  TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
-
 import { styled } from "@mui/material/styles";
-import FileUpload from "@mui/icons-material/FileUpload";
-import ContentCopy from "@mui/icons-material/ContentCopy";
-import { useEffect, useState } from "react";
+import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
+import { createRef, useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
 import Connections from "../components/Connections";
 import Subscription from "../components/Subscription";
-import { fetchData, patchData } from "./dataUtil";
-import { profileFlagsState } from "../data/atoms";
-import { useRecoilValue } from "recoil";
-import "../index.css";
 import ThemedJsonForm from "../components/ThemedJsonForm";
-import validator from "@rjsf/validator-ajv8";
-
-import { createRef } from "react";
+import { profileFlagsState } from "../data/atoms";
+import "../index.css";
+import { fetchData, patchData } from "./dataUtil";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",

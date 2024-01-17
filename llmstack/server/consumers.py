@@ -20,24 +20,33 @@ logger = logging.getLogger(__name__)
 
 @database_sync_to_async
 def _build_request_from_input(post_data, scope):
-    headers = dict(scope['headers'])
+    headers = dict(scope["headers"])
     content_type = headers.get(
-        b'content-type', b'application/json',
-    ).decode('utf-8')
-    path_info = scope.get('path', '')
-    method = scope.get('method', '')
-    query_string = scope.get('query_string', b'').decode('utf-8')
+        b"content-type",
+        b"application/json",
+    ).decode("utf-8")
+    path_info = scope.get("path", "")
+    method = scope.get("method", "")
+    query_string = scope.get("query_string", b"").decode("utf-8")
     query_params = QueryDict(query_string)
-    user = scope.get('user')
+    user = scope.get("user")
 
     http_request = HttpRequest()
     http_request.META = {
-        'CONTENT_TYPE': content_type,
-        'PATH_INFO': path_info,
-        'QUERY_STRING': query_string,
-        'HTTP_USER_AGENT': headers.get(b'user-agent', b'').decode('utf-8'),
-        'REMOTE_ADDR': headers.get(b'x-forwarded-for', b'').decode('utf-8').split(',')[0].strip(),
-        'CONTENT_TYPE': 'application/json',
+        "CONTENT_TYPE": content_type,
+        "PATH_INFO": path_info,
+        "QUERY_STRING": query_string,
+        "HTTP_USER_AGENT": headers.get(
+            b"user-agent",
+            b"",
+        ).decode("utf-8"),
+        "REMOTE_ADDR": headers.get(
+            b"x-forwarded-for",
+            b"",
+        )
+        .decode("utf-8")
+        .split(",")[0]
+        .strip(),
     }
     http_request.method = method
     http_request.GET = query_params
@@ -50,8 +59,8 @@ def _build_request_from_input(post_data, scope):
 
 class AppConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.app_id = self.scope['url_route']['kwargs']['app_id']
-        self.preview = True if 'preview' in self.scope['url_route']['kwargs'] else False
+        self.app_id = self.scope["url_route"]["kwargs"]["app_id"]
+        self.preview = True if "preview" in self.scope["url_route"]["kwargs"] else False
         self._session_id = None
         await self.accept()
 
@@ -63,35 +72,43 @@ class AppConsumer(AsyncWebsocketConsumer):
         from llmstack.apps.apis import AppViewSet
 
         json_data = json.loads(text_data)
-        input = json_data.get('input', {})
-        event = json_data.get('event', None)
+        input = json_data.get("input", {})
+        event = json_data.get("event", None)
         self._session_id = self._session_id or json_data.get(
-            'session_id', None)
+            "session_id",
+            None,
+        )
 
-        if event == 'run':
+        if event == "run":
             try:
                 request_uuid = str(uuid.uuid4())
-                request = await _build_request_from_input({'input': input, 'stream': True}, self.scope)
-                output_stream = await AppViewSet().run_app_internal_async(self.app_id, self._session_id, request_uuid, request, self.preview)
+                request = await _build_request_from_input({"input": input, "stream": True}, self.scope)
+                output_stream = await AppViewSet().run_app_internal_async(
+                    self.app_id,
+                    self._session_id,
+                    request_uuid,
+                    request,
+                    self.preview,
+                )
                 async for output in output_stream:
-                    if 'errors' in output or 'session' in output:
-                        if 'session' in output:
-                            self._session_id = output['session']['id']
+                    if "errors" in output or "session" in output:
+                        if "session" in output:
+                            self._session_id = output["session"]["id"]
                         await self.send(text_data=json.dumps(output))
                     else:
-                        await self.send(text_data=json.dumps({'output': output}))
+                        await self.send(text_data=json.dumps({"output": output}))
 
-                await self.send(text_data=json.dumps({'event': 'done'}))
+                await self.send(text_data=json.dumps({"event": "done"}))
             except Exception as e:
                 logger.exception(e)
-                await self.send(text_data=json.dumps({'errors': [str(e)]}))
+                await self.send(text_data=json.dumps({"errors": [str(e)]}))
 
-        if event == 'init':
+        if event == "init":
             # Create a new session and return the session id
             self._session_id = await AppViewSet().init_app_async(self.app_id)
-            await self.send(text_data=json.dumps({'session': {'id': self._session_id}}))
+            await self.send(text_data=json.dumps({"session": {"id": self._session_id}}))
 
-        if event == 'stop':
+        if event == "stop":
             if self._output_stream is not None:
                 self._output_stream.close()
 
@@ -104,16 +121,17 @@ class AppConsumer(AsyncWebsocketConsumer):
 
 class ConnectionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.user = self.scope['user']
+        self.user = self.scope["user"]
         self._activation_task = None
 
         if self.user.is_anonymous:
             await self.close()
             return
 
-        self.connection_id = self.scope['url_route']['kwargs']['conn_id']
+        self.connection_id = self.scope["url_route"]["kwargs"]["conn_id"]
         self.connection_activation_actor = ConnectionActivationActor.start(
-            self.user, self.connection_id,
+            self.user,
+            self.connection_id,
         ).proxy()
         await self.accept()
 
@@ -130,19 +148,28 @@ class ConnectionConsumer(AsyncWebsocketConsumer):
                 if isinstance(c, Connection):
                     if c.status == ConnectionStatus.ACTIVE:
                         await self.connection_activation_actor.set_connection(c)
-                    await self.send(text_data=json.dumps(
-                        {'event': 'success' if c.status == ConnectionStatus.ACTIVE else 'error'}))
+                    await self.send(
+                        text_data=json.dumps(
+                            {"event": "success" if c.status == ConnectionStatus.ACTIVE else "error"},
+                        ),
+                    )
                     self.connection_activation_actor.stop()
                 elif isinstance(c, ConnectionActivationOutput):
-                    await self.send(text_data=json.dumps(
-                        {'event': 'output', 'output': c.data}))
+                    await self.send(
+                        text_data=json.dumps(
+                            {"event": "output", "output": c.data},
+                        ),
+                    )
                 elif isinstance(c, dict):
-                    connection = c.get('connection', None)
+                    connection = c.get("connection", None)
                     if connection:
                         await self.connection_activation_actor.set_connection(connection)
-                    if c.get('error', None):
-                        await self.send(text_data=json.dumps(
-                            {'event': 'error', 'error': c.get('error')}))
+                    if c.get("error", None):
+                        await self.send(
+                            text_data=json.dumps(
+                                {"event": "error", "error": c.get("error")},
+                            ),
+                        )
                 await asyncio.sleep(0.01)
         except Exception as e:
             logger.exception(e)
@@ -155,20 +182,21 @@ class ConnectionConsumer(AsyncWebsocketConsumer):
             logger.exception(e)
 
     async def receive(self, text_data=None, bytes_data=None):
-        json_data = json.loads(text_data or '{}')
-        input = json_data.get('input', {})
-        event = json_data.get('event', None)
+        json_data = json.loads(text_data or "{}")
+        input = json_data.get("input", {})
+        event = json_data.get("event", None)
 
-        if event == 'activate':
+        if event == "activate":
             loop = asyncio.get_running_loop()
             self._activation_task = loop.create_task(
                 self._activate_connection(),
             )
 
-        if event == 'input' and input == 'terminate':
+        if event == "input" and input == "terminate":
             try:
                 self.connection_activation_actor.input(
-                    ConnectionActivationInput(data=input))
+                    ConnectionActivationInput(data=input),
+                )
             except Exception:
                 pass
             finally:

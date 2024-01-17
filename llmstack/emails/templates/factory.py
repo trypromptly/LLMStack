@@ -1,6 +1,7 @@
-from llmstack.emails.templates.template_interface import TemplateInterface
 from django.conf import settings
 from django.utils.module_loading import import_string
+
+from llmstack.emails.templates.template_interface import TemplateInterface
 
 
 class DefaultTemplate(TemplateInterface):

@@ -166,7 +166,8 @@ cython_debug/
 #.idea/
 
 # Vscode 
-.vscode 
+.vscode/*
+!.vscode/settings.json
 
 # LLMStack
 static/css

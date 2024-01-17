@@ -1,9 +1,9 @@
+import { Box, Button, TextField } from "@mui/material";
 import { useEffect } from "react";
-import ConnectionSelector from "../connections/ConnectionSelector";
-import { connectionsState } from "../../data/atoms";
 import { useRecoilValue } from "recoil";
-import { Button, Box, TextField } from "@mui/material";
+import { connectionsState } from "../../data/atoms";
 import { axios } from "../../data/axios";
+import ConnectionSelector from "../connections/ConnectionSelector";
 
 function GdriveFilePicker(props) {
   useEffect(() => {

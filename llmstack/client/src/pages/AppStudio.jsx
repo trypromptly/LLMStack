@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
-import { useTour } from "@reactour/tour";
-import { useCookies } from "react-cookie";
 import { Box, Typography } from "@mui/material";
+import { useTour } from "@reactour/tour";
+import { useEffect, useRef } from "react";
+import { useCookies } from "react-cookie";
 import { AppList } from "../components/apps/AppList";
-import { SharedAppList } from "../components/apps/SharedAppList";
 import AppTemplatesContainer from "../components/apps/AppTemplatesContainer";
+import { SharedAppList } from "../components/apps/SharedAppList";
 import "../index.css";
 
 const AppStudioPage = () => {

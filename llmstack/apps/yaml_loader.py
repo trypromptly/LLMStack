@@ -13,7 +13,10 @@ from llmstack.apps.schemas import AppTemplate
 from llmstack.common.blocks.base.schema import get_ui_schema_from_json_schema
 
 
-def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseModel']:
+def get_input_model_from_fields(
+    name: str,
+    input_fields: list,
+) -> Type["BaseModel"]:
     """
     Dynamically creates a Pydantic model from a list of input fields.
 
@@ -25,61 +28,72 @@ def get_input_model_from_fields(name: str, input_fields: list) -> Type['BaseMode
         Type['BaseModel']: The dynamically created Pydantic model.
     """
     datatype_map = {
-        'int': int,
-        'string': str,
-        'bool': bool,
-        'float': float,
-        'dict': dict,
-        'list': list,
-        'file': str,
-        'image': str,
-        'text': str,
-        'richtext': str,
-        'datasource': list,
-        'color': str,
-        'voice': str,
+        "int": int,
+        "string": str,
+        "bool": bool,
+        "float": float,
+        "dict": dict,
+        "list": list,
+        "file": str,
+        "image": str,
+        "text": str,
+        "richtext": str,
+        "datasource": list,
+        "color": str,
+        "voice": str,
     }
 
     fields = {}
     for field in input_fields:
-        field_type = field['type'] if 'type' in field else 'string'
+        field_type = field["type"] if "type" in field else "string"
         datatype = datatype_map[field_type] if field_type in datatype_map else str
 
-        if field_type == 'file':
-            field['widget'] = 'file'
-            field['format'] = 'data-url'
-            field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
-        elif field_type == 'image':
-            field['widget'] = 'file'
-            field['format'] = 'data-url'
-            field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
-        elif field_type == 'text':
-            field['widget'] = 'textarea'
-        elif field_type == 'richtext':
-            field['widget'] = 'richtext'
-        elif field_type == 'datasource':
-            field['widget'] = 'datasource'
-            if 'default' not in field:
-                field['default'] = []
-        elif field_type == 'connection':
-            field['widget'] = 'connection'
-        elif field_type == 'color':
-            field['widget'] = 'color'
-        elif field_type == 'voice':
-            field['widget'] = 'voice'
-            field['format'] = 'data-url'
-            field['pattern'] = "data:(.*);name=(.*);base64,(.*)"
+        if field_type == "file":
+            field["widget"] = "file"
+            field["format"] = "data-url"
+            field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
+        elif field_type == "image":
+            field["widget"] = "file"
+            field["format"] = "data-url"
+            field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
+        elif field_type == "text":
+            field["widget"] = "textarea"
+        elif field_type == "richtext":
+            field["widget"] = "richtext"
+        elif field_type == "datasource":
+            field["widget"] = "datasource"
+            if "default" not in field:
+                field["default"] = []
+        elif field_type == "connection":
+            field["widget"] = "connection"
+        elif field_type == "color":
+            field["widget"] = "color"
+        elif field_type == "voice":
+            field["widget"] = "voice"
+            field["format"] = "data-url"
+            field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
 
-        if field_type == 'select' and 'options' in field and len(field['options']) > 0:
-            field['widget'] = 'select'
+        if (
+            field_type == "select"
+            and "options" in field
+            and len(
+                field["options"],
+            )
+            > 0
+        ):
+            field["widget"] = "select"
 
             # For select fields, the datatype is the type of the first option
-            datatype = type(field['options'][0]['value'])
+            datatype = type(field["options"][0]["value"])
 
-        fields[field['name']] = (datatype, Field(
-            **{k: field[k] for k in field}))
+        fields[field["name"]] = (
+            datatype,
+            Field(
+                **{k: field[k] for k in field},
+            ),
+        )
 
-    return create_model(f'{name}', **fields)
+    return create_model(f"{name}", **fields)
 
 
 def get_app_template_from_yaml(yaml_file: str) -> dict:
@@ -92,19 +106,22 @@ def get_app_template_from_yaml(yaml_file: str) -> dict:
     Returns:
         dict: A dictionary containing the app template.
     """
-    with open(yaml_file, 'r') as f:
+    with open(yaml_file, "r") as f:
         yaml_dict = yaml.safe_load(f)
 
         # Construct dynamic models for app template page input and app input
-        pages = yaml_dict.get('pages', [])
+        pages = yaml_dict.get("pages", [])
         for page in pages:
-            input_fields = page.get('input_fields', [])
+            input_fields = page.get("input_fields", [])
             input_model = get_input_model_from_fields(
-                page["title"], input_fields)
-            page['input_schema'] = input_model.schema()
-            page['input_ui_schema'] = get_ui_schema_from_json_schema(
-                input_model.schema())
-            page.pop('input_fields')
+                page["title"],
+                input_fields,
+            )
+            page["input_schema"] = input_model.schema()
+            page["input_ui_schema"] = get_ui_schema_from_json_schema(
+                input_model.schema(),
+            )
+            page.pop("input_fields")
 
         return AppTemplate(**yaml_dict)
 
@@ -113,19 +130,20 @@ def get_app_templates_from_contrib() -> List[AppTemplate]:
     """
     Loads app templates from yaml files in settings.APP_TEMPLATES_DIR and caches them in memory.
     """
-    app_templates = cache.get('app_templates')
+    app_templates = cache.get("app_templates")
     if app_templates:
         return app_templates
 
     app_templates = []
-    if not hasattr(settings, 'APP_TEMPLATES_DIR'):
+    if not hasattr(settings, "APP_TEMPLATES_DIR"):
         return app_templates
 
     if isinstance(settings.APP_TEMPLATES_DIR, str):
         for file in os.listdir(settings.APP_TEMPLATES_DIR):
-            if file.endswith('.yml'):
+            if file.endswith(".yml"):
                 app_template = get_app_template_from_yaml(
-                    os.path.join(settings.APP_TEMPLATES_DIR, file))
+                    os.path.join(settings.APP_TEMPLATES_DIR, file),
+                )
                 if app_template:
                     app_templates.append(app_template)
 
@@ -134,13 +152,14 @@ def get_app_templates_from_contrib() -> List[AppTemplate]:
             if not os.path.isdir(dir) or not os.path.exists(dir):
                 continue
             for file in os.listdir(dir):
-                if file.endswith('.yml'):
+                if file.endswith(".yml"):
                     app_template = get_app_template_from_yaml(
-                        os.path.join(dir, file))
+                        os.path.join(dir, file),
+                    )
                     if app_template:
                         app_templates.append(app_template)
 
-    cache.set('app_templates', app_templates)
+    cache.set("app_templates", app_templates)
 
     return app_templates
 

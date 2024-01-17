@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Box, Typography } from "@mui/material";
-import { TreeItem, TreeView } from "@mui/x-tree-view";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Box, Typography } from "@mui/material";
+import { TreeItem, TreeView } from "@mui/x-tree-view";
+import { useEffect, useRef, useState } from "react";
 import {
-  LexicalEditor,
   INSERT_TEMPLATE_VARIABLE_COMMAND,
+  LexicalEditor,
 } from "./lexical/LexicalEditor";
 
 const StackLabel = ({ name, apiBackend = null }) => {

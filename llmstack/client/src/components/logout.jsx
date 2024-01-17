@@ -1,5 +1,5 @@
-import { postData } from "../pages/dataUtil";
 import { LogoutOutlined } from "@mui/icons-material";
+import { postData } from "../pages/dataUtil";
 
 export const onLogoutClick = async () => {
   postData(

@@ -1,41 +1,44 @@
 import logging
-from typing import Any
-from typing import List
 from typing import Optional
 
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
-from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface, TEXT_WIDGET_NAME
-
+from llmstack.processors.providers.api_processor_interface import (
+    TEXT_WIDGET_NAME,
+    ApiProcessorInterface,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class CompletionsConfiguration(BaseModel):
     model: str = Field(
-        default='', description='The model to use for completion.',
+        default="",
+        description="The model to use for completion.",
     )
 
     class Config:
-        title = 'CompletionsConfiguration'
+        title = "CompletionsConfiguration"
 
 
 class CompletionsInput(BaseModel):
-    prompt: str = Field(default='', description='The prompt to complete.')
+    prompt: str = Field(default="", description="The prompt to complete.")
 
     class Config:
-        title = 'CompletionsInput'
+        title = "CompletionsInput"
 
 
 class CompletionsOutput(BaseModel):
-    result: str = Field(default='', widget=TEXT_WIDGET_NAME)
+    result: str = Field(default="", widget=TEXT_WIDGET_NAME)
     _api_response: Optional[dict] = Field(
-        default={}, description='Raw processor output.',
+        default={},
+        description="Raw processor output.",
     )
 
 
-class Completions(ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
+class Completions(
+    ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration],
+):
     """
     Forefront Completions
     """
@@ -44,7 +47,7 @@ class Completions(ApiProcessorInterface[CompletionsInput, CompletionsOutput, Com
         super().__init__(configuration, session_data)
 
     def name() -> str:
-        return 'forefront ai/completions'
+        return "forefront ai/completions"
 
     def process(self, input: dict) -> dict:
-        raise Exception('Not implemented')
+        raise Exception("Not implemented")

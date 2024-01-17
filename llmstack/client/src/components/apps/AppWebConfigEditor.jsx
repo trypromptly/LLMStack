@@ -1,9 +1,9 @@
 import { Box, Stack } from "@mui/material";
-import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
-import { AppSaveButtons } from "./AppSaveButtons";
 import validator from "@rjsf/validator-ajv8";
-import ThemedJsonForm from "../ThemedJsonForm";
 import { createRef } from "react";
+import ThemedJsonForm from "../ThemedJsonForm";
+import { AppSaveButtons } from "./AppSaveButtons";
+import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
 
 const webConfigSchema = {
   type: "object",

@@ -1,13 +1,21 @@
 import logging
-
-from typing import Generator, List
-from typing import Optional
-from pydantic import Field, confloat, conint
-from llmstack.common.blocks.llm.localai import LocalAICompletionsAPIProcessor, LocalAICompletionsAPIProcessorConfiguration, LocalAICompletionsAPIProcessorInput, LocalAICompletionsAPIProcessorOutput
-from llmstack.common.blocks.llm.openai import OpenAIAPIInputEnvironment
-from llmstack.processors.providers.api_processor_interface import TEXT_WIDGET_NAME, ApiProcessorInterface, ApiProcessorSchema
+from typing import Generator, List, Optional
 
 from asgiref.sync import async_to_sync
+from pydantic import Field, confloat, conint
+
+from llmstack.common.blocks.llm.localai import (
+    LocalAICompletionsAPIProcessor,
+    LocalAICompletionsAPIProcessorConfiguration,
+    LocalAICompletionsAPIProcessorInput,
+    LocalAICompletionsAPIProcessorOutput,
+)
+from llmstack.common.blocks.llm.openai import OpenAIAPIInputEnvironment
+from llmstack.processors.providers.api_processor_interface import (
+    TEXT_WIDGET_NAME,
+    ApiProcessorInterface,
+    ApiProcessorSchema,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +30,13 @@ class CompletionsOutput(ApiProcessorSchema):
 
 class CompletionsConfiguration(ApiProcessorSchema):
     base_url: Optional[str] = Field(description="Base URL")
-    model: str = Field(description="Model name", widget='customselect',
-                       advanced_parameter=False, options=['ggml-gpt4all-j'], default='ggml-gpt4all-j')
+    model: str = Field(
+        description="Model name",
+        widget="customselect",
+        advanced_parameter=False,
+        options=["ggml-gpt4all-j"],
+        default="ggml-gpt4all-j",
+    )
 
     max_tokens: Optional[conint(ge=1, le=4096)] = Field(
         1024,
@@ -32,37 +45,46 @@ class CompletionsConfiguration(ApiProcessorSchema):
     )
     temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
         default=0.7,
-        description='What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n',
+        description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
         example=1,
-        advanced_parameter=False
+        advanced_parameter=False,
     )
     top_p: Optional[confloat(ge=0.0, le=1.0, multiple_of=0.1)] = Field(
         default=1,
-        description='An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n',
+        description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\n"
+        + "We generally recommend altering this or `temperature` but not both.\n",
         example=1,
     )
     timeout: Optional[int] = Field(
-        default=60, description="Timeout in seconds", example=60)
+        default=60,
+        description="Timeout in seconds",
+        example=60,
+    )
     stream: Optional[bool] = Field(
-        default=False, description="Stream output", example=False)
+        default=False,
+        description="Stream output",
+        example=False,
+    )
 
 
-class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration]):
+class CompletionsProcessor(
+    ApiProcessorInterface[CompletionsInput, CompletionsOutput, CompletionsConfiguration],
+):
     @staticmethod
     def name() -> str:
-        return 'Completions'
+        return "Completions"
 
     @staticmethod
     def slug() -> str:
-        return 'completions'
+        return "completions"
 
     @staticmethod
     def description() -> str:
-        return 'Text completions from LocalAI'
+        return "Text completions from LocalAI"
 
     @staticmethod
     def provider_slug() -> str:
-        return 'localai'
+        return "localai"
 
     def process(self) -> dict:
         env = self._env
@@ -84,15 +106,18 @@ class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOu
                     temperature=self._config.temperature,
                     top_p=self._config.top_p,
                     timeout=self._config.timeout,
-                    stream=True
-                ).dict()
-            ).process_iter(LocalAICompletionsAPIProcessorInput(
-                prompt=self._input.prompt,
-                env=OpenAIAPIInputEnvironment(openai_api_key=api_key)
-            ).dict())
+                    stream=True,
+                ).dict(),
+            ).process_iter(
+                LocalAICompletionsAPIProcessorInput(
+                    prompt=self._input.prompt,
+                    env=OpenAIAPIInputEnvironment(openai_api_key=api_key),
+                ).dict(),
+            )
             for result in result_iter:
                 async_to_sync(self._output_stream.write)(
-                    CompletionsOutput(choices=result.choices))
+                    CompletionsOutput(choices=result.choices),
+                )
 
         else:
             result: LocalAICompletionsAPIProcessorOutput = LocalAICompletionsAPIProcessor(
@@ -103,15 +128,20 @@ class CompletionsProcessor(ApiProcessorInterface[CompletionsInput, CompletionsOu
                     temperature=self._config.temperature,
                     top_p=self._config.top_p,
                     timeout=self._config.timeout,
-                    stream=False
-                ).dict()
-            ).process(LocalAICompletionsAPIProcessorInput(
-                prompt=self._input.prompt,
-                env=OpenAIAPIInputEnvironment(openai_api_key=api_key)
-            ).dict())
+                    stream=False,
+                ).dict(),
+            ).process(
+                LocalAICompletionsAPIProcessorInput(
+                    prompt=self._input.prompt,
+                    env=OpenAIAPIInputEnvironment(
+                        openai_api_key=api_key,
+                    ),
+                ).dict(),
+            )
             choices = result.choices
             async_to_sync(self._output_stream.write)(
-                CompletionsOutput(choices=choices))
+                CompletionsOutput(choices=choices),
+            )
 
         output = self._output_stream.finalize()
         return output

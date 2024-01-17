@@ -1,16 +1,30 @@
 import logging
 
-from llmstack.common.blocks.base.processor import ProcessorInterface, CacheManager, BaseInputType, BaseOutputType, BaseConfigurationType
+from llmstack.common.blocks.base.processor import (
+    BaseConfigurationType,
+    BaseInputType,
+    BaseOutputType,
+    CacheManager,
+    ProcessorInterface,
+)
 
 LOGGER = logging.getLogger(__name__)
 
 
-class LLMBaseProcessor(ProcessorInterface[BaseInputType, BaseOutputType, BaseConfigurationType]):
+class LLMBaseProcessor(
+    ProcessorInterface[BaseInputType, BaseOutputType, BaseConfigurationType],
+):
     """
     Base class for all processors
     """
 
-    def __init__(self, configuration: dict, cache_manager: CacheManager = None, input_tx_cb: callable = None, output_tx_cb: callable = None):
+    def __init__(
+        self,
+        configuration: dict,
+        cache_manager: CacheManager = None,
+        input_tx_cb: callable = None,
+        output_tx_cb: callable = None,
+    ):
         self.configuration = self.parse_validate_configuration(configuration)
         self.cache_manager = cache_manager
         self._input_tx_cb = input_tx_cb
@@ -20,13 +34,16 @@ class LLMBaseProcessor(ProcessorInterface[BaseInputType, BaseOutputType, BaseCon
         input_cls = self.__class__.__orig_bases__[0].__args__[0]
         if self._input_tx_cb:
             input = self._input_tx_cb(input)
-        if type(input_cls) == type:
+        if isinstance(input_cls, type):
             return input
         return input_cls(**input)
 
-    def parse_validate_configuration(self, configuration) -> BaseConfigurationType:
+    def parse_validate_configuration(
+        self,
+        configuration,
+    ) -> BaseConfigurationType:
         configuration_cls = self.__class__.__orig_bases__[0].__args__[2]
-        if type(configuration_cls) == type:
+        if isinstance(configuration_cls, type):
             return configuration
         return configuration_cls(**configuration)
 
@@ -34,24 +51,38 @@ class LLMBaseProcessor(ProcessorInterface[BaseInputType, BaseOutputType, BaseCon
         output_cls = self.__class__.__orig_bases__[0].__args__[1]
         return output_cls(**kwargs)
 
-    def _process(self, input: BaseInputType, configuration: BaseConfigurationType) -> BaseOutputType:
+    def _process(
+        self,
+        input: BaseInputType,
+        configuration: BaseConfigurationType,
+    ) -> BaseOutputType:
         raise NotImplementedError()
 
     def process(self, input: dict) -> BaseOutputType:
         try:
-            return self._process(self.parse_validate_input(input), self.configuration)
+            return self._process(
+                self.parse_validate_input(input),
+                self.configuration,
+            )
         except Exception as ex:
-            LOGGER.exception('Exception occurred while processing')
+            LOGGER.exception("Exception occurred while processing")
             raise ex
 
-    def _process_iter(self, input: BaseInputType, configuration: BaseConfigurationType) -> BaseOutputType:
+    def _process_iter(
+        self,
+        input: BaseInputType,
+        configuration: BaseConfigurationType,
+    ) -> BaseOutputType:
         raise NotImplementedError()
 
     def process_iter(self, input: dict) -> BaseOutputType:
         try:
-            return self._process_iter(self.parse_validate_input(input), self.configuration)
+            return self._process_iter(
+                self.parse_validate_input(input),
+                self.configuration,
+            )
         except Exception as ex:
-            LOGGER.exception('Exception occurred while processing')
+            LOGGER.exception("Exception occurred while processing")
             raise ex
 
     @property

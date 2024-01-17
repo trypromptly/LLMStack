@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { EditOutlined } from "@mui/icons-material";
 import {
   Card,
   CardHeader,
@@ -6,7 +6,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { EditOutlined } from "@mui/icons-material";
+import { useState } from "react";
 import { ProviderIcon } from "./ProviderIcon";
 
 export function AppStepCard({

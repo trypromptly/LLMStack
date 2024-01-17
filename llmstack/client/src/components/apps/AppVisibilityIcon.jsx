@@ -1,9 +1,8 @@
-import React from "react";
-import { IconButton, Tooltip } from "@mui/material";
-import PublicIcon from "@mui/icons-material/Public";
-import PublicOffIcon from "@mui/icons-material/PublicOff";
 import CorporateFareIcon from "@mui/icons-material/CorporateFare";
 import PeopleIcon from "@mui/icons-material/People";
+import PublicIcon from "@mui/icons-material/Public";
+import PublicOffIcon from "@mui/icons-material/PublicOff";
+import { IconButton, Tooltip } from "@mui/material";
 
 export default function AppVisibilityIcon({
   visibility,

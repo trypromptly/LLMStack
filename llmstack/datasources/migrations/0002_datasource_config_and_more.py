@@ -13,11 +13,15 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='datasource',
             name='config',
-            field=models.JSONField(default=dict, help_text='Config for the data source'),
+            field=models.JSONField(
+                default=dict,
+                help_text='Config for the data source'),
         ),
         migrations.AddField(
             model_name='datasourcetype',
             name='is_external_datasource',
-            field=models.BooleanField(default=False, help_text='Is this an external data source?'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Is this an external data source?'),
         ),
     ]

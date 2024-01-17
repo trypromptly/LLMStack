@@ -7,20 +7,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0002_organizationsettings_localai_api_key_and_more'),
-    ]
+        ('organizations', '0002_organizationsettings_localai_api_key_and_more'), ]
 
     operations = [
         migrations.AddField(
             model_name='organizationsettings',
             name='anthropic_api_key',
             field=models.CharField(
-                blank=True, default=None, help_text='Anthropic API key to use with Anthropic models like Claude', max_length=256, null=True),
+                blank=True,
+                default=None,
+                help_text='Anthropic API key to use with Anthropic models like Claude',
+                max_length=256,
+                null=True),
         ),
         migrations.AlterField(
             model_name='organization',
             name='domains',
             field=llmstack.common.utils.db_models.ArrayField(
-                help_text='List of allowed domains of the organization', null=True),
+                help_text='List of allowed domains of the organization',
+                null=True),
         ),
     ]

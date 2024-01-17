@@ -1,23 +1,22 @@
-import React, { useEffect, useState } from "react";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Accordion,
-  AccordionSummary,
   AccordionDetails,
+  AccordionSummary,
   CardContent,
   Typography,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import validator from "@rjsf/validator-ajv8";
+import { useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
+import { useValidationErrorsForAppComponents } from "../../data/appValidation";
+import { appsState } from "../../data/atoms";
 import ThemedJsonForm from "../ThemedJsonForm";
-import { TextFieldWithVars } from "./TextFieldWithVars";
+import "./AppEditor.css";
 import { AppSelector } from "./AppSelector";
 import { AppStepCard } from "./AppStepCard";
-import { appsState } from "../../data/atoms";
-import { useRecoilValue } from "recoil";
-import "./AppEditor.css";
-
-import { useValidationErrorsForAppComponents } from "../../data/appValidation";
+import { TextFieldWithVars } from "./TextFieldWithVars";
 
 function PromptlyAppStepCard({
   appId,

@@ -1,8 +1,10 @@
-from allauth.account.adapter import DefaultAccountAdapter
-from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 import logging
 
+from allauth.account.adapter import DefaultAccountAdapter
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+
 logger = logging.getLogger(__name__)
+
 
 class CustomAccountAdapter(DefaultAccountAdapter):
     def save_user(self, request, user, form, commit=True):
@@ -10,7 +12,8 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         if not user.username:
             user.username = user.email
 
-        # Apple login doesn't seem to provide email, so we use username as email
+        # Apple login doesn't seem to provide email, so we use username as
+        # email
         if not user.email:
             user.email = user.username
 
@@ -26,7 +29,8 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         if not user.username:
             user.username = user.email
 
-        # Apple login doesn't seem to provide email, so we use username as email
+        # Apple login doesn't seem to provide email, so we use username as
+        # email
         if not user.email:
             user.email = user.username
 

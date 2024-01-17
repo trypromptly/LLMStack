@@ -1,16 +1,15 @@
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
-import loadingImage from "../../assets/images/loading.gif";
-import ThemedJsonForm from "../ThemedJsonForm";
+import { ContentCopyOutlined } from "@mui/icons-material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
 import { useState } from "react";
 import AceEditor from "react-ace";
-
-import { Box, Button, Stack, Typography } from "@mui/material";
-import { ContentCopyOutlined } from "@mui/icons-material";
-import StreamingVideoPlayer from "./StreamingVideoPlayer";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
+import loadingImage from "../../assets/images/loading.gif";
+import ThemedJsonForm from "../ThemedJsonForm";
 import { HeyGenRealtimeAvatar } from "./HeyGenRealtimeAvatar";
+import StreamingVideoPlayer from "./StreamingVideoPlayer";
 
 function FunctionFormComponent(props) {
   // Render a form component with submit button

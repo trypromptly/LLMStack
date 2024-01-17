@@ -8,7 +8,7 @@ import redis
 logger = logging.getLogger(__name__)
 
 
-class TokenRedis():
+class TokenRedis:
     def __init__(self, src):
         try:
             # Split parts and use defaults for missing fields
@@ -19,22 +19,27 @@ class TokenRedis():
             self._password = parts[3] if len(parts) > 3 else None
 
             logger.info(
-                f'TokenRedis initialized ({self._server}:{self._port})')
+                f"TokenRedis initialized ({self._server}:{self._port})",
+            )
         except (ValueError, IndexError):
-            logger.error(f'Invalid format: {src}')
+            logger.error(f"Invalid format: {src}")
             sys.exit()
 
     def lookup(self, token):
         logger.info(f'resolving token "{token}"')
-        client = redis.Redis(host=self._server, port=self._port,
-                             db=self._db, password=self._password)
+        client = redis.Redis(
+            host=self._server,
+            port=self._port,
+            db=self._db,
+            password=self._password,
+        )
 
         stuff = client.get(token)
         if stuff is None:
             return None
 
         response_str = stuff.decode("utf-8").strip()
-        logger.debug(f'response from redis: {response_str}')
+        logger.debug(f"response from redis: {response_str}")
 
         try:
             # Attempt to load JSON
@@ -42,11 +47,11 @@ class TokenRedis():
                 data = json.loads(response_str)
                 host, port = data["host"].split(":")
             # Or parse simple format
-            elif re.match(r'\S+:\S+', response_str):
+            elif re.match(r"\S+:\S+", response_str):
                 host, port = response_str.split(":")
             else:
-                raise ValueError('Unable to parse token')
+                raise ValueError("Unable to parse token")
             return [host, port]
-        except (ValueError, json.JSONDecodeError) as e:
-            logger.error(f'Unable to process token: {response_str}')
+        except (ValueError, json.JSONDecodeError):
+            logger.error(f"Unable to process token: {response_str}")
             return None

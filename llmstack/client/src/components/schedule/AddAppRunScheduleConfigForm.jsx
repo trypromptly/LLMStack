@@ -1,10 +1,10 @@
+import { Box } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
-import ThemedJsonForm from "../ThemedJsonForm";
-import { AppSelector } from "../apps/AppSelector";
-import FrequencyPickerWidget from "./FrequencyPickerWidget";
 import { useRecoilValue } from "recoil";
 import { appsState } from "../../data/atoms";
-import { Box } from "@mui/material";
+import { AppSelector } from "../apps/AppSelector";
+import ThemedJsonForm from "../ThemedJsonForm";
+import FrequencyPickerWidget from "./FrequencyPickerWidget";
 
 const SCHEMA = {
   properties: {

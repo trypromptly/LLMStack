@@ -16,6 +16,7 @@ class BookKeepingData(BaseModel):
     """
     Bookkeeping entry
     """
+
     input: dict = {}
     config: dict = {}
     output: dict = {}
@@ -23,17 +24,19 @@ class BookKeepingData(BaseModel):
     timestamp: float = time.time()
     run_data: dict = {}
     message_id: str = None
+    disable_history: bool = False
 
 
 class ActorConfig(BaseModel):
     """
     Configuration for the actor
     """
+
     class Config:
         arbitrary_types_allowed = True
 
     name: str
-    template_key: str = ''  # This is used to find other actors dependent on this actor
+    template_key: str = ""  # This is used to find other actors dependent on this actor
     actor: Type
     kwargs: dict = {}
     dependencies: list = []
@@ -51,9 +54,13 @@ class Actor(ThreadingActor):
         if message.message_type == MessageType.BEGIN:
             self.input(message.message)
 
-        message_and_key = {
-            message.template_key: message.message,
-        } if message.template_key else message.message
+        message_and_key = (
+            {
+                message.template_key: message.message,
+            }
+            if message.template_key
+            else message.message
+        )
 
         if message.message_type == MessageType.STREAM_ERROR:
             self.on_error(message_and_key)
@@ -66,7 +73,9 @@ class Actor(ThreadingActor):
             self._messages = {**self._messages, **message_and_key}
 
         # Call input only when all the dependencies are met
-        if message.message_type == MessageType.STREAM_CLOSED and set(self.dependencies) == set(self._messages.keys()):
+        if message.message_type == MessageType.STREAM_CLOSED and set(
+            self.dependencies,
+        ) == set(self._messages.keys()):
             self.input(self._messages)
 
         # If the message is for a tool, call the tool
@@ -76,11 +85,13 @@ class Actor(ThreadingActor):
             self.invoke(message.message)
 
     def input(self, message: Any) -> Any:
-        # Co-ordinator calls this when all the dependencies are met. This should be called only once whether input_stream is used or not
+        # Co-ordinator calls this when all the dependencies are met. This
+        # should be called only once whether input_stream is used or not
         raise NotImplementedError
 
     def input_stream(self, message: Any) -> Any:
-        # Co-ordinator calls this when any actor in the dependency chain has data
+        # Co-ordinator calls this when any actor in the dependency chain has
+        # data
         raise NotImplementedError
 
     def get_dependencies(self):
@@ -90,18 +101,30 @@ class Actor(ThreadingActor):
 
     @property
     def dependencies(self):
-        return list(filter(lambda x: x in self._all_dependencies, list(set(self._dependencies + self.get_dependencies()))))
+        return list(
+            filter(
+                lambda x: x in self._all_dependencies,
+                list(set(self._dependencies + self.get_dependencies())),
+            ),
+        )
 
     def on_error(self, error: Any) -> None:
-        # Co-ordinator calls this when any actor in the dependency chain has error
+        # Co-ordinator calls this when any actor in the dependency chain has
+        # error
         pass
 
     def on_stop(self) -> None:
         return super().on_stop()
 
-    def on_failure(self, exception_type: type[BaseException], exception_value: BaseException, traceback: TracebackType) -> None:
+    def on_failure(
+        self,
+        exception_type: type[BaseException],
+        exception_value: BaseException,
+        traceback: TracebackType,
+    ) -> None:
         logger.error(
-            f'Encountered {exception_type} in {type(self)}({self.actor_urn}): {exception_value}')
+            f"Encountered {exception_type} in {type(self)}({self.actor_urn}): {exception_value}",
+        )
 
         # Send error to output stream
         self._output_stream.error(exception_value)

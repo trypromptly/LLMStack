@@ -1,9 +1,8 @@
-import { useState } from "react";
-
-import { IconButton, Stack, Typography, Box } from "@mui/material";
-import StopCircleIcon from "@mui/icons-material/StopCircle";
-import MicIcon from "@mui/icons-material/Mic";
 import DeleteIcon from "@mui/icons-material/Delete";
+import MicIcon from "@mui/icons-material/Mic";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
+import { Box, IconButton, Stack, Typography } from "@mui/material";
+import { useState } from "react";
 
 const VoiceRecorderWidget = (props) => {
   const [isRecording, setIsRecording] = useState(false);

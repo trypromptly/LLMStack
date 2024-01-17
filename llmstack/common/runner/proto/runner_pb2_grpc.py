@@ -79,11 +79,20 @@ class Runner(object):
                          wait_for_ready=None,
                          timeout=None,
                          metadata=None):
-        return grpc.experimental.stream_stream(request_iterator, target, '/Runner/GetRemoteBrowser',
-                                               runner__pb2.RemoteBrowserRequest.SerializeToString,
-                                               runner__pb2.RemoteBrowserResponse.FromString,
-                                               options, channel_credentials,
-                                               insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+        return grpc.experimental.stream_stream(
+            request_iterator,
+            target,
+            '/Runner/GetRemoteBrowser',
+            runner__pb2.RemoteBrowserRequest.SerializeToString,
+            runner__pb2.RemoteBrowserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata)
 
     @staticmethod
     def GetPlaywrightBrowser(request_iterator,
@@ -96,8 +105,17 @@ class Runner(object):
                              wait_for_ready=None,
                              timeout=None,
                              metadata=None):
-        return grpc.experimental.stream_stream(request_iterator, target, '/Runner/GetPlaywrightBrowser',
-                                               runner__pb2.PlaywrightBrowserRequest.SerializeToString,
-                                               runner__pb2.PlaywrightBrowserResponse.FromString,
-                                               options, channel_credentials,
-                                               insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+        return grpc.experimental.stream_stream(
+            request_iterator,
+            target,
+            '/Runner/GetPlaywrightBrowser',
+            runner__pb2.PlaywrightBrowserRequest.SerializeToString,
+            runner__pb2.PlaywrightBrowserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata)

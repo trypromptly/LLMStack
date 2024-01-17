@@ -1,11 +1,11 @@
+import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { Box } from "@mui/material";
-import { Ws } from "../../data/ws";
 import { isMobileState } from "../../data/atoms";
+import { Ws } from "../../data/ws";
 import { AgentRenderer } from "./AgentRenderer";
-import { WebChatRender } from "./WebChatRender";
 import { WebAppRenderer } from "./WebAppRenderer";
+import { WebChatRender } from "./WebChatRender";
 
 export function AppPreview(props) {
   const { app } = props;

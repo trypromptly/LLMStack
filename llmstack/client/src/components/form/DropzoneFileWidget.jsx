@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from "react";
-import { useDropzone } from "react-dropzone";
-import { dataURItoBlob } from "@rjsf/utils";
 import { Chip } from "@mui/material";
+import { dataURItoBlob } from "@rjsf/utils";
 import prettyBytes from "pretty-bytes";
+import { useMemo, useState } from "react";
+import { useDropzone } from "react-dropzone";
 
 const baseStyle = {
   flex: 1,

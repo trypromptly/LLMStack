@@ -1,13 +1,13 @@
-import React, { useRef, useCallback, useEffect, useState } from "react";
 import {
   Button,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
   Typography,
 } from "@mui/material";
 import RFB from "@novnc/novnc/core/rfb";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 function RemoteBrowser({ wsUrl, timeout, onClose }) {
   const screenRef = useRef(null);

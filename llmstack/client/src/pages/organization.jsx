@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from "react";
-import validator from "@rjsf/validator-ajv8";
-import ThemedJsonForm from "../components/ThemedJsonForm";
-import { Button, Grid, Typography } from "@mui/material";
 import {
+  Button,
+  Grid,
   Table,
   TableBody,
   TableCell,
@@ -10,8 +8,12 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Typography,
 } from "@mui/material";
+import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
+import { useEffect, useState } from "react";
+import ThemedJsonForm from "../components/ThemedJsonForm";
 import { axios } from "../data/axios";
 
 const pageHeaderStyle = {

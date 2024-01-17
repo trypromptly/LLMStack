@@ -9,16 +9,21 @@ from llmstack.common.utils.db_models import ArrayField
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('organizations', '0003_organizationsettings_anthropic_api_key_and_more'),
-    ]
+        ('organizations', '0003_organizationsettings_anthropic_api_key_and_more'), ]
 
     operations = [
         migrations.AlterField(
             model_name='organization',
             name='domains',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(
-                max_length=100), default=list, help_text='List of allowed domains of the organization', size=None) if connection.vendor == 'postgresql' else ArrayField(
-                null=True, help_text='List of allowed domains of the organization', blank=True,
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(
+                    max_length=100),
+                default=list,
+                help_text='List of allowed domains of the organization',
+                size=None) if connection.vendor == 'postgresql' else ArrayField(
+                null=True,
+                help_text='List of allowed domains of the organization',
+                blank=True,
             ),
         ),
     ]

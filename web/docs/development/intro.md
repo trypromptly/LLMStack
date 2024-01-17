@@ -11,9 +11,15 @@ cd LLMStack/client
 npm install
 npm run build
 cd ..
-docker compose -f docker-compose.dev.yml --env-file .env.dev up --build
+pip install poetry
+poetry shell
+poetry install
+pre-commit install
+llmstack
 ```
 
 The client will be available at [http://localhost:3000](http://localhost:3000) and the server will be available at [http://localhost:9000](http://localhost:9000).
 
-Modify the environment variables in `.env.dev` to suit your needs. Refer to the [configuration](/docs/getting-started/config) section for more information.
+> You can skip running `npm install` and `npm run build` if you have already built the client before
+
+For frontend development, you can use `REACT_APP_API_SERVER=localhost:3000 npm start` to start the development server in client directory. You can also use `npm run build` to build the frontend and serve it from the backend server.

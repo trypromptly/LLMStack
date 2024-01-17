@@ -1,20 +1,23 @@
 import logging
-import uuid
-from typing import List
 
-from llmstack.datasources.handlers.datasource_processor import DataSourceEntryItem
-from llmstack.datasources.handlers.datasource_processor import DataSourceProcessor
-from llmstack.datasources.models import DataSource
-from llmstack.datasources.models import DataSourceEntry
-from llmstack.datasources.models import DataSourceEntryStatus
-from llmstack.datasources.types import DataSourceTypeFactory
 import weaviate
+
+from llmstack.datasources.handlers.datasource_processor import DataSourceProcessor
+from llmstack.datasources.models import (
+    DataSource,
+    DataSourceEntry,
+    DataSourceEntryStatus,
+)
+from llmstack.datasources.types import DataSourceTypeFactory
 
 logger = logging.getLogger(__name__)
 
 
-def delete_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
-    logger.error(f'Deleting data_source_entry: %s' % str(entry_data.uuid))
+def delete_data_entry_task(
+    datasource: DataSource,
+    entry_data: DataSourceEntry,
+):
+    logger.error("Deleting data_source_entry: %s" % str(entry_data.uuid))
     entry_data.status = DataSourceEntryStatus.MARKED_FOR_DELETION
     entry_data.save()
 
@@ -27,26 +30,34 @@ def delete_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
         datasource_entry_items = datasource_entry_handler.delete_entry(
             entry_data.config,
         )
+        logger.debug(
+            f"Deleted {len(datasource_entry_items)} items from weaviate for data_source_entry: {str(entry_data.uuid)}",
+        )
         entry_data.delete()
     except weaviate.exceptions.UnexpectedStatusCodeException:
         logger.exception("Error deleting data source entry from weaviate")
         entry_data.delete()
-    except Exception as e:
+    except Exception:
         logger.exception(
-            f'Error deleting data_source_entry: %s' %
-            str(entry_data.name),
+            "Error deleting data_source_entry: %s" % str(entry_data.name),
         )
         entry_data.status = DataSourceEntryStatus.FAILED
-        entry_data.config = {'errors': {
-            'message': "Error in deleting data source entry"}}
+        entry_data.config = {
+            "errors": {
+                "message": "Error in deleting data source entry",
+            },
+        }
         entry_data.save()
 
     datasource.save()
     return
 
 
-def resync_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
-    logger.info(f'Resyncing task for data_source_entry: %s' % str(entry_data))
+def resync_data_entry_task(
+    datasource: DataSource,
+    entry_data: DataSourceEntry,
+):
+    logger.info("Resyncing task for data_source_entry: %s" % str(entry_data))
 
     datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
         datasource.type,

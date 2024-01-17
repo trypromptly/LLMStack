@@ -1,6 +1,6 @@
-import { Box, IconButton, Card, CardMedia } from "@mui/material";
 import { CloseOutlined, VideoCameraBackOutlined } from "@mui/icons-material";
-import { useState, useCallback } from "react";
+import { Box, Card, CardMedia, IconButton } from "@mui/material";
+import { useCallback, useState } from "react";
 
 const FloatingVideoIcon = ({ onClick }) => {
   return (

@@ -19,45 +19,75 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='request',
             name='app_session',
-            field=models.ForeignKey(blank=True, default=None, help_text='App session this request was made for', null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='apps.appsession'),
+            field=models.ForeignKey(
+                blank=True,
+                default=None,
+                help_text='App session this request was made for',
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to='apps.appsession'),
         ),
         migrations.AddField(
             model_name='request',
             name='endpoint',
-            field=models.ForeignKey(help_text='Version of endpoint this request made for', on_delete=django.db.models.deletion.DO_NOTHING, to='apiabstractor.endpoint'),
+            field=models.ForeignKey(
+                help_text='Version of endpoint this request made for',
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to='apiabstractor.endpoint'),
         ),
         migrations.AddField(
             model_name='prompthub',
             name='share',
-            field=models.ForeignKey(help_text='User prompt shared by user', on_delete=django.db.models.deletion.DO_NOTHING, to='apiabstractor.share'),
+            field=models.ForeignKey(
+                help_text='User prompt shared by user',
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to='apiabstractor.share'),
         ),
         migrations.AddField(
             model_name='feedback',
             name='request',
-            field=models.ForeignKey(help_text='Request object this feedback is collected against', on_delete=django.db.models.deletion.DO_NOTHING, to='apiabstractor.request'),
+            field=models.ForeignKey(
+                help_text='Request object this feedback is collected against',
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to='apiabstractor.request'),
         ),
         migrations.AddField(
             model_name='endpointinvocationcount',
             name='user',
-            field=models.ForeignKey(help_text='User this count is for', on_delete=django.db.models.deletion.DO_NOTHING, to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                help_text='User this count is for',
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name='endpoint',
             name='api_backend',
-            field=models.ForeignKey(help_text='Backend endpoint this eventually calls', on_delete=django.db.models.deletion.PROTECT, to='apiabstractor.apibackend'),
+            field=models.ForeignKey(
+                help_text='Backend endpoint this eventually calls',
+                on_delete=django.db.models.deletion.PROTECT,
+                to='apiabstractor.apibackend'),
         ),
         migrations.AddField(
             model_name='endpoint',
             name='owner',
-            field=models.ForeignKey(help_text='Owner of this endpoint', on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                help_text='Owner of this endpoint',
+                on_delete=django.db.models.deletion.PROTECT,
+                to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name='apibackend',
             name='api_provider',
-            field=models.ForeignKey(help_text='API Group this endpoint belongs to', on_delete=django.db.models.deletion.PROTECT, to='apiabstractor.apiprovider'),
+            field=models.ForeignKey(
+                help_text='API Group this endpoint belongs to',
+                on_delete=django.db.models.deletion.PROTECT,
+                to='apiabstractor.apiprovider'),
         ),
         migrations.AlterUniqueTogether(
             name='apibackend',
-            unique_together={('api_provider', 'name')},
+            unique_together={
+                (
+                    'api_provider',
+                    'name')},
         ),
     ]

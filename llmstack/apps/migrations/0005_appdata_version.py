@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='appdata',
             name='version',
-            field=models.IntegerField(default=0, help_text='Version of the app'),
+            field=models.IntegerField(
+                default=0,
+                help_text='Version of the app'),
         ),
     ]

@@ -13,6 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='defaultprofile',
             name='anthropic_api_key',
-            field=models.CharField(blank=True, default=None, help_text='Anthropic API key to use with Anthropic models like Claude', max_length=256, null=True),
+            field=models.CharField(
+                blank=True,
+                default=None,
+                help_text='Anthropic API key to use with Anthropic models like Claude',
+                max_length=256,
+                null=True),
         ),
     ]

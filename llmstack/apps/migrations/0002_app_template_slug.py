@@ -13,6 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='app',
             name='template_slug',
-            field=models.CharField(blank=True, default=None, help_text='Slug of the template used for this app', max_length=100, null=True),
+            field=models.CharField(
+                blank=True,
+                default=None,
+                help_text='Slug of the template used for this app',
+                max_length=100,
+                null=True),
         ),
     ]

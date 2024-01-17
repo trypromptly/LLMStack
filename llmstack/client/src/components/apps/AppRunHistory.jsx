@@ -1,28 +1,28 @@
-import { useState } from "react";
+import DownloadIcon from "@mui/icons-material/Download";
 import {
   Box,
   Button,
   Checkbox,
   Dialog,
   DialogActions,
-  DialogTitle,
   DialogContent,
+  DialogTitle,
   MenuItem,
   Select,
-  Tabs,
   Tab,
+  Tabs,
   Typography,
 } from "@mui/material";
-import DownloadIcon from "@mui/icons-material/Download";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
-import { useRecoilValue } from "recoil";
+import moment from "moment";
 import { enqueueSnackbar } from "notistack";
+import { useState } from "react";
+import { useRecoilValue } from "recoil";
+import { profileFlagsState } from "../../data/atoms";
+import { axios } from "../../data/axios";
 import { AppRunHistorySessions } from "./AppRunHistorySessions";
 import { AppRunHistoryTimeline } from "./AppRunHistoryTimeline";
-import { axios } from "../../data/axios";
-import { profileFlagsState } from "../../data/atoms";
-import moment from "moment";
 
 const RunHistoryDownloadModal = ({ open, setOpen, appUuid }) => {
   const [beforeDateTime, setBeforeDateTime] = useState(moment());

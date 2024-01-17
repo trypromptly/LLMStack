@@ -1,14 +1,14 @@
-import { useState } from "react";
 import {
   Alert,
+  Button,
   Dialog,
-  DialogTitle,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
-  Button,
+  DialogTitle,
   TextField,
 } from "@mui/material";
+import { useState } from "react";
 
 function DeleteConnectionModal({ open, onCancelCb, onDeleteCb, connection }) {
   const [deleteValue, setDeleteValue] = useState("");

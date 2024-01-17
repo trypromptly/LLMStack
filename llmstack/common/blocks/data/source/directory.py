@@ -1,10 +1,15 @@
 import os
 import re
+
 from pydantic import root_validator
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.data import DataDocument
-from llmstack.common.blocks.data.source import DataSourceInputSchema, DataSourceConfigurationSchema, DataSourceOutputSchema
+from llmstack.common.blocks.data.source import (
+    DataSourceConfigurationSchema,
+    DataSourceInputSchema,
+    DataSourceOutputSchema,
+)
 
 
 class DirectoryTextLoaderInputSchema(DataSourceInputSchema):
@@ -15,18 +20,24 @@ class DirectoryTextLoaderInputSchema(DataSourceInputSchema):
     @classmethod
     def validate_directory(cls, field_values) -> str:
         value = field_values.get("directory")
-        recursive = field_values.get("recursive")
+        recursive = field_values.get("recursive")  # noqa
 
-        # TODO: Validate that directory is a valid directory path and the directory exists
+        # TODO: Validate that directory is a valid directory path and the
+        # directory exists
         if not re.match(r"^[a-zA-Z0-9_\-\.\/]+$", value):
             raise ValueError("Directory must be a valid string")
 
         return value
 
 
-class DirectoryTextLoader(ProcessorInterface[DirectoryTextLoaderInputSchema, DataSourceOutputSchema, DataSourceConfigurationSchema]):
-
-    def process(self, input: DirectoryTextLoaderInputSchema, configuration: DataSourceConfigurationSchema) -> DataSourceOutputSchema:
+class DirectoryTextLoader(
+    ProcessorInterface[DirectoryTextLoaderInputSchema, DataSourceOutputSchema, DataSourceConfigurationSchema],
+):
+    def process(
+        self,
+        input: DirectoryTextLoaderInputSchema,
+        configuration: DataSourceConfigurationSchema,
+    ) -> DataSourceOutputSchema:
         result = []
         files = []
         # If recursive is true, then we need to recursively walk the directory

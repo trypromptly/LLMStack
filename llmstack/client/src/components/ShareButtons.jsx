@@ -1,14 +1,14 @@
 import {
-  EmailShareButton,
   EmailIcon,
-  LinkedinShareButton,
+  EmailShareButton,
   LinkedinIcon,
-  TelegramShareButton,
+  LinkedinShareButton,
   TelegramIcon,
-  TwitterShareButton,
+  TelegramShareButton,
   TwitterIcon,
-  WhatsappShareButton,
+  TwitterShareButton,
   WhatsappIcon,
+  WhatsappShareButton,
 } from "react-share";
 
 export default function ShareButtons({ url, title }) {

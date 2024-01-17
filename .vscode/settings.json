@@ -1,0 +1,14 @@
+{
+  "[python]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+  "isort.args": ["--profile", "black"],
+  "editor.formatOnSave": true,
+  "black-formatter.args": ["--line-length", "120"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}
