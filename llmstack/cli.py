@@ -1,4 +1,5 @@
 import os
+import argparse
 import platform
 import secrets
 import subprocess
@@ -234,6 +235,11 @@ def stop_runner():
 
 def main():
     """Main entry point for the application script"""
+    parser = argparse.ArgumentParser(description='LLMStack CLI')
+    parser.add_argument('--host', dest='host', default='None', help='LLMStack host')
+    parser.add_argument('--port', dest='port', default='None', help='LLMStack port')
+
+    args, _ = parser.parse_known_args()
 
     def signal_handler(sig, frame):
         stop_runner()
@@ -262,6 +268,13 @@ def main():
             runner_environment[f"RUNNER_{key.upper()}"] = str(
                 config["llmstack-runner"][key],
             )
+
+    if args.host:
+        os.environ["RUNNER_HOST"] = args.host
+        runner_environment["RUNNER_HOST"] = args.host
+    if args.port:
+        os.environ["RUNNER_PORT"] = str(args.port)
+        runner_environment["RUNNER_PORT"] = str(args.port)
 
     if len(sys.argv) > 1 and sys.argv[1] == "runserver":
         print("Starting LLMStack")
