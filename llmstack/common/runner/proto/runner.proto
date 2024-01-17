@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "google/protobuf/struct.proto";
 
 enum BrowserCommandType {
   GOTO = 0; // go to url
@@ -108,6 +109,25 @@ message PlaywrightBrowserResponse {
   BrowserContent content = 5; // content of page
 }
 
+message PythonCodeRunnerFile {
+  string name = 1; // name of file
+  bytes content = 2; // content of file
+}
+
+message RestrictedPythonCodeRunnerRequest {
+  string source_code = 1; // python code to run
+  google.protobuf.Struct input_data = 2; // input data to pass to code
+  int32 timeout_secs = 3; // timeout in seconds
+}
+
+message RestrictedPythonCodeRunnerResponse {
+  RemoteBrowserState state = 1; // state of runner
+  google.protobuf.Struct local_variables = 2; // local variable after running code
+  repeated string stdout = 3; // stdout of code
+  string stderr = 4; // stderr of code
+  int32 exit_code = 5; // exit code of code
+}
+
 // Generic runner service
 service Runner {
 
@@ -115,4 +135,5 @@ service Runner {
 
   rpc GetPlaywrightBrowser (stream PlaywrightBrowserRequest) returns (stream PlaywrightBrowserResponse) {}
 
+  rpc GetRestrictedPythonCodeRunner (RestrictedPythonCodeRunnerRequest) returns (stream RestrictedPythonCodeRunnerResponse) {}
 }

@@ -1,3 +1,4 @@
+from google.protobuf import struct_pb2 as _struct_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
@@ -146,6 +147,14 @@ class PlaywrightBrowserResponse(_message.Message):
     video: bytes
     def __init__(self, session: _Optional[_Union[RemoteBrowserSession, _Mapping]] = ..., video: _Optional[bytes] = ..., state: _Optional[_Union[RemoteBrowserState, str]] = ..., outputs: _Optional[_Iterable[_Union[BrowserOutput, _Mapping]]] = ..., content: _Optional[_Union[BrowserContent, _Mapping]] = ...) -> None: ...
 
+class PythonCodeRunnerFile(_message.Message):
+    __slots__ = ["content", "name"]
+    CONTENT_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    content: bytes
+    name: str
+    def __init__(self, name: _Optional[str] = ..., content: _Optional[bytes] = ...) -> None: ...
+
 class RemoteBrowserRequest(_message.Message):
     __slots__ = ["init_data", "input"]
     INIT_DATA_FIELD_NUMBER: _ClassVar[int]
@@ -169,6 +178,30 @@ class RemoteBrowserSession(_message.Message):
     session_data: str
     ws_url: str
     def __init__(self, ws_url: _Optional[str] = ..., session_data: _Optional[str] = ...) -> None: ...
+
+class RestrictedPythonCodeRunnerRequest(_message.Message):
+    __slots__ = ["input_data", "source_code", "timeout_secs"]
+    INPUT_DATA_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_CODE_FIELD_NUMBER: _ClassVar[int]
+    TIMEOUT_SECS_FIELD_NUMBER: _ClassVar[int]
+    input_data: _struct_pb2.Struct
+    source_code: str
+    timeout_secs: int
+    def __init__(self, source_code: _Optional[str] = ..., input_data: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., timeout_secs: _Optional[int] = ...) -> None: ...
+
+class RestrictedPythonCodeRunnerResponse(_message.Message):
+    __slots__ = ["exit_code", "local_variables", "state", "stderr", "stdout"]
+    EXIT_CODE_FIELD_NUMBER: _ClassVar[int]
+    LOCAL_VARIABLES_FIELD_NUMBER: _ClassVar[int]
+    STATE_FIELD_NUMBER: _ClassVar[int]
+    STDERR_FIELD_NUMBER: _ClassVar[int]
+    STDOUT_FIELD_NUMBER: _ClassVar[int]
+    exit_code: int
+    local_variables: _struct_pb2.Struct
+    state: RemoteBrowserState
+    stderr: str
+    stdout: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, state: _Optional[_Union[RemoteBrowserState, str]] = ..., local_variables: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., stdout: _Optional[_Iterable[str]] = ..., stderr: _Optional[str] = ..., exit_code: _Optional[int] = ...) -> None: ...
 
 class BrowserCommandType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = []
