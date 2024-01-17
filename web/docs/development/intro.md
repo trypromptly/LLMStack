@@ -12,8 +12,9 @@ npm install
 npm run build
 cd ..
 pip install poetry
-poetry install
 poetry shell
+poetry install
+pre-commit install
 llmstack
 ```
 

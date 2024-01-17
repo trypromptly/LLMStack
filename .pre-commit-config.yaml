@@ -47,10 +47,3 @@ repos:
     hooks:
       - id: prettier
         types_or: [css, javascript, jsx, markdown, yaml]
-
-  - repo: local
-    hooks:
-      - id: client-formatter
-        name: client-formatter
-        entry: bash -c 'cd llmstack/client && npm run format'
-        language: system
