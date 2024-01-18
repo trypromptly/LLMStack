@@ -1,0 +1,119 @@
+name: "Realtime Avatar Chat"
+slug: "realtime-avatar-chat"
+icon: "voice"
+category_slugs: ["customer-support", "marketing", "sales"]
+description: "Use your HeyGen's Avatar to answer questions in real time directly from your data."
+provider_slug: "promptly"
+pages:
+  - title: "Avatar Information"
+    description: "Provide information about the avatar"
+    input_fields:
+      - name: "avatar_name"
+        title: "Avatar Name"
+        type: "string"
+        description: "Name of the avatar to use. You can find this in your Heygen account"
+        path: "processors[1].config.avatar_name"
+      - name: "voice_id"
+        title: "Voice ID"
+        type: "string"
+        description: "Voice ID of the avatar to use. You can find this in your Heygen account"
+        path: "processors[1].config.voice_id"
+      - name: "connection_id"
+        title: "Connection ID"
+        type: "connection"
+        description: "API Key Authentication connection to use with your HeyGen key"
+        path: "processors[1].config.connection_id"
+  - title: "Data"
+    description: "Provide data for the avatar to answer from"
+    input_fields:
+      - name: "datasource"
+        title: "Datasource"
+        type: "datasource"
+        description: "Select the data for the avatar to answer from. Click on the icon to the right to add new data"
+        path: "processors[0].config.datasource"
+app:
+  name: Realtime Avatar Chat
+  type_slug: web
+  description: "Chat with an avatar in real time"
+  config:
+    input_template: ""
+    allowed_sites: []
+    layout: <promptly-heygen-realtime-avatar processor="_inputs2" />
+  input_fields:
+    - name: input
+      title: Input
+      description: "Ask your question"
+      type: string
+      required: true
+  output_template:
+    markdown: |
+      {{_inputs1.answer}}
+  processors:
+    - id: _inputs1
+      name: Text-Chat
+      description: Conversation style question and answering from provided data
+      provider_slug: promptly
+      processor_slug: text_chat
+      config:
+        model: gpt-3.5-turbo
+        system_message_prefix: You are a helpful chat assistant
+        instructions: >-
+          You are a chatbot that uses the provided context to answer the user's
+          question.
+
+          If you cannot answer the question based on the provided context, say you
+          don't know the answer.
+
+          No answer should go out of the provided input. If the provided input is
+          empty, return saying you don't know the answer.
+
+          Keep the answers terse.
+        show_citations: false
+        citation_instructions: >-
+          Use source value to provide citations for the answer. Citations must be
+          in a new line after the answer.
+        k: 5
+        chat_history_limit: 20
+        temperature: 0.7
+        use_azure_if_available: true
+        use_localai_if_available: false
+        chat_history_in_doc_search: 0
+        hybrid_semantic_search_ratio: 0.75
+        seed: null
+      input:
+        search_filters: ""
+        question: "{{_inputs0.input}} "
+      output_template:
+        markdown: |-
+          {{answer}}
+          {% if citations %}
+
+          Citations:
+          {% for citation in citations %}
+
+          {{citation.text}}
+          {{citation.source}}
+          {% endfor %}
+          {% endif %}
+    - id: _inputs2
+      name: Realtime Avatar
+      description: Bring digital avatars to life in real time.
+      provider_slug: heygen
+      processor_slug: realtime_avatar
+      config:
+        reuse_session: true
+        quality: medium
+        avatar_name: ""
+        voice_id: ""
+        connection_id: ""
+        input_stream: true
+      input:
+        task_type: repeat
+        session_id: ""
+        text: "{{_inputs1.answer}}"
+      output_template: {}
+  is_published: true
+  web_config: null
+  twilio_config: null
+  slack_config: null
+  discord_config: null
