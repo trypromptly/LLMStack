@@ -1,4 +1,4 @@
-import { Alert, Box } from "@mui/material";
+import { Alert, Box, Button } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import promptlyLoader from "../../assets/images/promptly-loading.gif";
 
@@ -161,13 +161,13 @@ const createNewSession = async (
 const videoStyle = {
   width: "100%",
   height: "100%",
-  maxHeight: "440px",
   objectFit: "cover",
 };
 
 export const HeyGenRealtimeAvatar = (props) => {
   const { processor, runProcessor } = props;
   const [error, setError] = useState(null);
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const videoRef = useRef(null);
   const sessionRef = useRef(null);
   const createSessionRef = useRef(null);
@@ -196,7 +196,11 @@ export const HeyGenRealtimeAvatar = (props) => {
   }, [processor, runProcessor]);
 
   return (
-    <Box>
+    <Box
+      sx={{ position: "relative" }}
+      onMouseEnter={() => setOverlayOpen(true)}
+      onMouseLeave={() => setOverlayOpen(false)}
+    >
       {error && (
         <Alert severity="error">{`${error.message}. Please refresh the app.`}</Alert>
       )}
@@ -204,9 +208,21 @@ export const HeyGenRealtimeAvatar = (props) => {
         ref={videoRef}
         autoPlay
         muted
-        style={videoStyle}
         poster={promptlyLoader}
+        style={{
+          ...videoStyle,
+          ...{ opacity: overlayOpen ? 0.5 : 1 },
+        }}
       />
+      {overlayOpen && (
+        <Button
+          sx={{ position: "absolute", left: "45%", top: "50%" }}
+          variant="contained"
+          onClick={() => closeSession(processor, runProcessor)}
+        >
+          Close Session
+        </Button>
+      )}
     </Box>
   );
 };
