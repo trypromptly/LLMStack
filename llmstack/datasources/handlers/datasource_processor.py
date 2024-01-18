@@ -247,7 +247,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
             return None
 
     def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
-        logger.info(f"Adding data_source_entry: {data}")
         documents = self.get_data_documents(data)
 
         documents = map(
