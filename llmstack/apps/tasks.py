@@ -30,9 +30,10 @@ def delete_data_entry_task(
         datasource_entry_items = datasource_entry_handler.delete_entry(
             entry_data.config,
         )
-        logger.debug(
-            f"Deleted {len(datasource_entry_items)} items from weaviate for data_source_entry: {str(entry_data.uuid)}",
-        )
+        if datasource_entry_items:
+            logger.debug(
+                f"Deleted {len(datasource_entry_items)} items from weaviate for data_source_entry: {str(entry_data.uuid)}",
+            )
         entry_data.delete()
     except weaviate.exceptions.UnexpectedStatusCodeException:
         logger.exception("Error deleting data source entry from weaviate")

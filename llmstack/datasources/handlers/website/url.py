@@ -7,7 +7,6 @@ from llmstack.base.models import Profile
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
-from llmstack.common.utils.utils import extract_urls_from_sitemap
 from llmstack.datasources.handlers.datasource_processor import (
     WEAVIATE_SCHEMA,
     DataSourceEntryItem,
@@ -116,25 +115,13 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         entry = URLSchema(**data)
-        sitemap_urls = []
         # Split urls by newline and then by comma
         urls = entry.urls.split("\n")
         urls = [url.strip().rstrip() for url_list in [url.split(",") for url in urls] for url in url_list]
         # Filter out empty urls
         urls = list(set(list(filter(lambda url: url != "", urls))))
-        sitemap_xmls = list(
-            filter(lambda url: url.endswith(".xml"), urls),
-        )
         # Filter out sitemap.xml
         urls = list(filter(lambda url: not url.endswith(".xml"), urls))
-        # If sitemap.xml is present, scrape the site to extract urls
-        try:
-            for sitemap_xml in sitemap_xmls:
-                sitmap_xml_urls = extract_urls_from_sitemap(sitemap_xml)
-                for sitmap_xml_url in sitmap_xml_urls:
-                    sitemap_urls.append(sitmap_xml_url)
-        except BaseException:
-            logger.exception("Error in extracting urls from sitemap")
 
         return list(
             map(
@@ -145,7 +132,7 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
                         "connection_id": entry.connection_id,
                     },
                 ),
-                urls + sitemap_urls,
+                urls,
             ),
         )
 

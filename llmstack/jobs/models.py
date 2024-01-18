@@ -758,6 +758,15 @@ class AdhocJob(BaseTask):
             on_failure = kwargs.pop("on_failure", None)
             job_meta = kwargs.pop("job_meta", None)
 
+        update_fields = kwargs.get("update_fields", None)
+        if update_fields:
+            kwargs["update_fields"] = set(
+                update_fields,
+            ).union({"updated_at"})
+
+        super(AdhocJob, self).save(*args, **kwargs)
+
+        if schedule_job:
             job = self.rqueue.enqueue(
                 func,
                 args=func_args,
@@ -769,13 +778,6 @@ class AdhocJob(BaseTask):
                 result_ttl=self.result_ttl,
             )
             self.job_id = job.id
-
-        update_fields = kwargs.get("update_fields", None)
-        if update_fields:
-            kwargs["update_fields"] = set(
-                update_fields,
-            ).union({"updated_at"})
-        super(AdhocJob, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Adhoc Job"
