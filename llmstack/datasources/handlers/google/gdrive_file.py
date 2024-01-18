@@ -177,9 +177,6 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
         self,
         data: DataSourceEntryItem,
     ) -> Optional[DataSourceEntryItem]:
-        logger.info(
-            f"Processing file: {data.data['file_name']} mime_type: {data.data['mime_type']}",
-        )
         mime_type, file_data = self.export_gdrive_file(data)
         file_text = "\n\n".join(
             [

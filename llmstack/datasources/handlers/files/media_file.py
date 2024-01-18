@@ -91,10 +91,6 @@ class MediaFileDataSource(DataSourceProcessor[MediaFileSchema]):
     ) -> Optional[DataSourceEntryItem]:
         openai_key = self.profile.get_vendor_key("openai_key")
 
-        logger.info(
-            f"Processing file: {data.data['file_name']} mime_type: {data.data['mime_type']}",
-        )
-
         file_text = extract_text_from_b64_json(
             mime_type=data.data["mime_type"],
             base64_encoded_data=data.data["file_data"],

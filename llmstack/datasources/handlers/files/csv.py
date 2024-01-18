@@ -81,9 +81,6 @@ class CSVFileDataSource(DataSourceProcessor[CSVFileSchema]):
         self,
         data: DataSourceEntryItem,
     ) -> Optional[DataSourceEntryItem]:
-        logger.info(
-            f"Processing file: {data.data['file_name']} mime_type: {data.data['mime_type']}",
-        )
         data_uri = f"data:{data.data['mime_type']};name={data.data['file_name']};base64,{data.data['file_data']}"
 
         result = Uri().process(

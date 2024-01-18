@@ -100,10 +100,6 @@ class PDFDataSource(DataSourceProcessor[PdfSchema]):
         self,
         data: DataSourceEntryItem,
     ) -> Optional[DataSourceEntryItem]:
-        logger.info(
-            f"Processing file: {data.data['file_name']} mime_type: {data.data['mime_type']}",
-        )
-
         decoded_data = base64.b64decode(data.data["file_data"])
         data_fp = BytesIO(decoded_data)
         page_content = ""
