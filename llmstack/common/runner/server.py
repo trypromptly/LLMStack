@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import subprocess
+import time
 from concurrent import futures
 from typing import Iterator
 
@@ -20,6 +21,8 @@ from llmstack.common.runner.display import VirtualDisplayPool
 from llmstack.common.runner.playwright.browser import Playwright
 from llmstack.common.runner.proto.runner_pb2 import (
     TERMINATE,
+    Content,
+    ContentMimeType,
     PlaywrightBrowserRequest,
     PlaywrightBrowserResponse,
     RemoteBrowserRequest,
@@ -194,13 +197,13 @@ class Runner(RunnerServicer):
     ) -> Iterator[RestrictedPythonCodeRunnerResponse]:
         from google.protobuf.json_format import MessageToDict, ParseDict
         from google.protobuf.struct_pb2 import Struct, Value
-        from RestrictedPython import compile_restricted, safe_builtins
+        from RestrictedPython import compile_restricted
         from RestrictedPython.Guards import (
             guarded_iter_unpack_sequence,
             guarded_unpack_sequence,
             safe_builtins,
         )
-        from RestrictedPython.PrintCollector import PrintCollector
+        from RestrictedPython.transformer import IOPERATOR_TO_STR
 
         class CustomPrint(object):
             def __init__(self):
@@ -211,7 +214,12 @@ class Runner(RunnerServicer):
                 if self.enabled:
                     if text and text.strip():
                         log_line = "{0}".format(text)
-                        self.lines.append(log_line)
+                        self.lines.append(
+                            (
+                                time.time(),
+                                Content(data=bytes(log_line.encode("utf-8")), mime_type=ContentMimeType.TEXT),
+                            )
+                        )
 
             def enable(self):
                 self.enabled = True
@@ -256,7 +264,6 @@ class Runner(RunnerServicer):
             mathplot_lib_display = []
 
             def custom_pyplot_show():
-                import base64
                 import io
 
                 from matplotlib.backends.backend_agg import (
@@ -284,17 +291,10 @@ class Runner(RunnerServicer):
                 # Rewind the buffer to start
                 buf.seek(0)
 
-                # Encode the buffer contents to base64
-                encoded = base64.b64encode(buf.read())
-
-                # Convert to string for a cleaner return format
-                encoded_string = encoded.decode("utf-8")
+                mathplot_lib_display.append((time.time(), Content(data=buf.read(), mime_type=ContentMimeType.PNG)))
 
                 # Cleanup by closing the buffer
                 buf.close()
-                mathplot_lib_display.append(f"data:image/png;base64,{encoded_string}")
-                # Return the base64 string
-                return encoded_string
 
             def custom_import(name, globals=None, locals=None, fromlist=(), level=0):
                 module = __import__(name, globals, locals, fromlist, level)
@@ -341,7 +341,11 @@ class Runner(RunnerServicer):
                 if isinstance(v, (int, float, str, bool, list, dict, tuple, type(None), Value, Struct))
             }
             # Return the result and any printed output
-            return {**local_variables, **{"display": mathplot_lib_display}}, custom_print.lines, errors
+            return (
+                local_variables,
+                [x[1] for x in sorted(custom_print.lines + mathplot_lib_display, key=lambda x: x[0])],
+                errors,
+            )
 
         yield RestrictedPythonCodeRunnerResponse(state=RemoteBrowserState.RUNNING)
 

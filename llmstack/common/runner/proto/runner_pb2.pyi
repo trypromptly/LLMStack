@@ -10,11 +10,19 @@ COPY: BrowserCommandType
 DESCRIPTOR: _descriptor.FileDescriptor
 ENTER: BrowserCommandType
 GOTO: BrowserCommandType
+HTML: ContentMimeType
+JPEG: ContentMimeType
+JSON: ContentMimeType
+LATEX: ContentMimeType
+PDF: ContentMimeType
+PNG: ContentMimeType
 RUNNING: RemoteBrowserState
 SCROLL_X: BrowserCommandType
 SCROLL_Y: BrowserCommandType
+SVG: ContentMimeType
 TERMINATE: BrowserCommandType
 TERMINATED: RemoteBrowserState
+TEXT: ContentMimeType
 TIMEOUT: RemoteBrowserState
 TYPE: BrowserCommandType
 WAIT: BrowserCommandType
@@ -119,6 +127,14 @@ class BrowserTextAreaField(_message.Message):
     text: str
     def __init__(self, selector: _Optional[str] = ..., text: _Optional[str] = ...) -> None: ...
 
+class Content(_message.Message):
+    __slots__ = ["data", "mime_type"]
+    DATA_FIELD_NUMBER: _ClassVar[int]
+    MIME_TYPE_FIELD_NUMBER: _ClassVar[int]
+    data: bytes
+    mime_type: ContentMimeType
+    def __init__(self, mime_type: _Optional[_Union[ContentMimeType, str]] = ..., data: _Optional[bytes] = ...) -> None: ...
+
 class PlaywrightBrowserRequest(_message.Message):
     __slots__ = ["session_data", "steps", "stream_video", "timeout", "url"]
     SESSION_DATA_FIELD_NUMBER: _ClassVar[int]
@@ -200,8 +216,11 @@ class RestrictedPythonCodeRunnerResponse(_message.Message):
     local_variables: _struct_pb2.Struct
     state: RemoteBrowserState
     stderr: str
-    stdout: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, state: _Optional[_Union[RemoteBrowserState, str]] = ..., local_variables: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., stdout: _Optional[_Iterable[str]] = ..., stderr: _Optional[str] = ..., exit_code: _Optional[int] = ...) -> None: ...
+    stdout: _containers.RepeatedCompositeFieldContainer[Content]
+    def __init__(self, state: _Optional[_Union[RemoteBrowserState, str]] = ..., local_variables: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., stdout: _Optional[_Iterable[_Union[Content, _Mapping]]] = ..., stderr: _Optional[str] = ..., exit_code: _Optional[int] = ...) -> None: ...
+
+class ContentMimeType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = []
 
 class BrowserCommandType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = []

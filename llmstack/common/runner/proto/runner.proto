@@ -1,6 +1,22 @@
 syntax = "proto3";
 import "google/protobuf/struct.proto";
 
+enum ContentMimeType {
+  TEXT = 0; // text
+  JSON = 1; // json
+  HTML = 2; // html
+  PNG = 3; // png
+  JPEG = 4; // jpeg
+  SVG = 5; // svg
+  PDF = 6; // pdf
+  LATEX = 7; // latex
+}
+
+message Content {
+  ContentMimeType mime_type = 1; // mime type of content
+  bytes data = 2; // data of content
+}
+
 enum BrowserCommandType {
   GOTO = 0; // go to url
   TERMINATE = 1; // terminate session
@@ -123,7 +139,7 @@ message RestrictedPythonCodeRunnerRequest {
 message RestrictedPythonCodeRunnerResponse {
   RemoteBrowserState state = 1; // state of runner
   google.protobuf.Struct local_variables = 2; // local variable after running code
-  repeated string stdout = 3; // stdout of code
+  repeated Content stdout = 3; // stdout of code
   string stderr = 4; // stderr of code
   int32 exit_code = 5; // exit code of code
 }
