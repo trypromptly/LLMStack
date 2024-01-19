@@ -297,12 +297,26 @@ class Runner(RunnerServicer):
                 buf.close()
 
             def custom_import(name, globals=None, locals=None, fromlist=(), level=0):
+                unsafe_modules = [
+                    "os",
+                    "sys",
+                    "subprocess",
+                    "shutil",
+                    "importlib",
+                    "imp",
+                    "importlib",
+                    "importlib.util",
+                    "socket",
+                ]
                 module = __import__(name, globals, locals, fromlist, level)
                 if module.__name__ == "matplotlib":
                     pyplot_attr = getattr(module, "pyplot")
                     if pyplot_attr and hasattr(pyplot_attr, "show"):
                         # Override pyplot.show() to route to our custom show function
                         pyplot_attr.show = custom_pyplot_show
+
+                elif module.__name__ in unsafe_modules:
+                    raise Exception("Module {} is not allowed".format(module.__name__))
 
                 if fromlist:
                     safe_attrs = {attr: getattr(module, attr) for attr in fromlist}
