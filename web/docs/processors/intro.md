@@ -18,6 +18,7 @@ Let's take a look at the providers and their processors that are available in th
 | [Cohere](/docs/processors/cohere)         | Generate                                                                                                                                         |
 | [ElevenLabs](/docs/processors/elevenlabs) | Text to Speech                                                                                                                                   |
 | [Google](/docs/processors/google)         | Gemini, Text to Speech                                                                                                                           |
+| [HeyGen](/docs/processors/heygen)         | Realtime Avatar                                                                                                                                  |
 | [LinkedIn](/docs/processors/linkedin)     | Profile Extractor                                                                                                                                |
 | [LocalAI](/docs/processors/localai)       | Audio Transcription, Audio Translation, ChatGPT, ChatGPT with Vision, Completions, Image generation, Image variation, Image edit, Text to Speech |
 | [OpenAI](/docs/processors/openai)         | Audio Transcription, Audio Translation, ChatGPT, ChatGPT with Vision, Completions, Image generation, Image variation, Image edit, Text to Speech |
