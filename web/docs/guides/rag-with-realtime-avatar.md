@@ -44,7 +44,7 @@ To make it easy to build your own avatar chatbot, we now include a `Realtime Ava
 Use the [cloud version of LLMStack at Promptly](https://trypromptly.com) to follow this guide without having to install LLMStack locally.
 :::
 
-- [LLMStack](/docs/getting-started/installation) installed and running
+- [LLMStack](/docs/getting-started/introduction) installed and running
 - [HeyGen](https://heygen.com) account with [API access](https://docs.heygen.com/docs/quick-start)
 
 ### Get your HeyGen API Key
