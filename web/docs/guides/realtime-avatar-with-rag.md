@@ -1,6 +1,6 @@
 ---
-id: rag-with-realtime-avatar
-title: Retrieval Augmented Generation with Realtime Avatar
+id: realtime-avatar-with-rag
+title: Realtime Avatars with Retrieval Augmented Generation
 description: Use HeyGen's Realtime Avatars and LLMStack / Promptly's retrieval augmented generation (RAG) to generate videos with your avatar repeating the answer in realtime.
 ---
 

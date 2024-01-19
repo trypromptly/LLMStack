@@ -109,7 +109,7 @@ const sidebars = {
         "guides/contributing",
         "guides/add-custom-processor",
         "guides/add-external-datasource",
-        "guides/rag-with-realtime-avatar",
+        "guides/realtime-avatar-with-rag",
       ],
     },
     "promptly",

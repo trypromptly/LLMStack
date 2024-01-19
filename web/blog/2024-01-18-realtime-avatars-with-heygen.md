@@ -16,7 +16,7 @@ Today we are excited to announce that we are adding support for HeyGen's Realtim
 <img src={realtimeAvatarChatAppImage} alt="Realtime Avatar Chat App" style={{ maxWidth: "600px", margin: "0 auto", display: "flex", paddingTop: "20px", paddingBottom: "20px" }} />
 
 :::info
-Check out our easy to follow [guide](/docs/guides/rag-with-realtime-avatar) to build your own avatar chatbot with built-in RAG pipeline.
+Check out our easy to follow [guide](/docs/guides/realtime-avatar-with-rag) to build your own avatar chatbot with built-in RAG pipeline.
 :::
 
 Combined with LLMStack's [RAG](/blog/retrieval-augmented-generation) pipeline and no-code app builder, you can now build apps with a realtime video avatar of you answering questions from your documents, all in realtime.
