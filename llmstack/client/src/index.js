@@ -28,6 +28,7 @@ const AddAppRunSchedulePage = lazy(() => import("./pages/AddAppRunSchedule"));
 const AddDatasourceRefreshSchedulePage = lazy(
   () => import("./pages/AddDatasourceRefreshSchedule"),
 );
+const SessionExpiredPage = lazy(() => import("./pages/SessionExpired"));
 
 const defaultTheme = createTheme({
   spacing: 4,
@@ -521,6 +522,10 @@ router = createBrowserRouter([
   {
     path: "/signup",
     element: <SignupPage />,
+  },
+  {
+    path: "/session-expired",
+    element: <SessionExpiredPage />,
   },
 ]);
 
