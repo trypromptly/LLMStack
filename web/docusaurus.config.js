@@ -85,10 +85,14 @@ const config = {
         },
         items: [
           {
-            type: "docSidebar",
-            sidebarId: "docSidebar",
+            href: "https://docs.trypromptly.com/llmstack/introduction",
             position: "left",
             label: "Docs",
+          },
+          {
+            href: "https://trypromptly.com",
+            position: "left",
+            label: "Promptly",
           },
           {
             label: "Blog",
@@ -109,19 +113,19 @@ const config = {
             items: [
               {
                 label: "LLMStack UI",
-                to: "/docs/getting-started/ui",
+                href: "https://docs.trypromptly.com/getting-started/ui",
               },
               {
                 label: "Processors",
-                to: "/docs/processors/introduction",
+                href: "https://docs.trypromptly.com/processors/introduction",
               },
               {
                 label: "Apps",
-                to: "/docs/apps/introduction",
+                href: "https://docs.trypromptly.com/apps/introduction",
               },
               {
                 label: "Datasources",
-                to: "/docs/datasources/introduction",
+                href: "https://docs.trypromptly.com/datasources/introduction",
               },
             ],
           },

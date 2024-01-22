@@ -105,7 +105,7 @@ Check out our cloud offering at [Promptly](https://trypromptly.com). You can sig
 
 ## Documentation
 
-Check out our documentation at [llmstack.ai/docs](https://llmstack.ai/docs/) to learn more about LLMStack.
+Check out our documentation at [docs.trypromptly.com/llmstack](https://docs.trypromptly.com/llmstack/introduction) to learn more about LLMStack.
 
 ## Development
 

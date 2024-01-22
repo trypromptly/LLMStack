@@ -81,7 +81,7 @@ Following are some techniques across the different stages of RAG pipeline that c
 
 ## RAG in LLMStack
 
-RAG pipeline comes out of the box with LLMStack. When you create a datasource and upload data, LLMStack takes care of chunking the data, generating embeddings and storing them in the vector store. When you create an app that uses [Text-Chat](/docs/processors/promptly#text-chat) processor, LLMStack takes care of retrieving the relevant data from the vector store and passing it to the LLM for generation. Templates like `Website Chatbot`, `AI Augmented Search`, `Brand Copy Checker` etc., are all using RAG pipeline in LLMStack.
+RAG pipeline comes out of the box with LLMStack. When you create a datasource and upload data, LLMStack takes care of chunking the data, generating embeddings and storing them in the vector store. When you create an app that uses [Text-Chat](https://docs.trypromptly.com/processors/promptly#text-chat) processor, LLMStack takes care of retrieving the relevant data from the vector store and passing it to the LLM for generation. Templates like `Website Chatbot`, `AI Augmented Search`, `Brand Copy Checker` etc., are all using RAG pipeline in LLMStack.
 
 ![RAG in LLMStack](/img/ui/text-chat-processor.png)
 
