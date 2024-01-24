@@ -254,6 +254,11 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         app_id = app_detail.get("uuid")
         frequency = data.get("frequency")
         frequency_type = frequency.get("type")
+        batch_size = data.get("batch_size", 1)
+        use_session = data.get("use_session", False)
+
+        if batch_size > len(data["app_run_data"]):
+            return DRFResponse(status=400, data={"message": "Batch size cannot be greater than total rows"})
 
         if frequency_type not in ["run_once", "repeat", "cron"]:
             return DRFResponse(
@@ -302,7 +307,7 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             ),
             "callable": "llmstack.jobs.jobs.run_app_task",
             "callable_args": json.dumps([app_id, data["app_run_data"]]),
-            "callable_kwargs": json.dumps({}),
+            "callable_kwargs": json.dumps({"batch_size": batch_size, "use_session": use_session}),
             "enabled": True,
             "queue": "default",
             "result_ttl": 86400,
