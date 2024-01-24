@@ -42,11 +42,6 @@ def run_app_subtask(app_id, input_data, session_id=None):
 
 
 def run_batched_app_tasks(input_data, batch_start_index, job, batch_size, task_run_log_uuid, session_id):
-    time_remaining_to_schedule_next_task = max(
-        (settings.TASK_RUN_DELAY - (job.ended_at - job.started_at).total_seconds()),
-        1,
-    )
-
     for index in range(1, batch_size):
         input_data_idx = batch_start_index + index
 
@@ -69,7 +64,7 @@ def run_batched_app_tasks(input_data, batch_start_index, job, batch_size, task_r
 
             task_run_log.save()
 
-        time.sleep(time_remaining_to_schedule_next_task)
+        time.sleep(2)
 
 
 def post_run_app_task(task_run_log_uuid, input_index, status, response, job):

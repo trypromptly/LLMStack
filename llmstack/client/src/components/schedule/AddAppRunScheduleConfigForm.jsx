@@ -27,7 +27,7 @@ const SCHEMA = {
       title: "Batch Size",
       default: 1,
       minimum: 1,
-      maximum: 100,
+      maximum: 10,
     },
     use_session: {
       type: "boolean",
