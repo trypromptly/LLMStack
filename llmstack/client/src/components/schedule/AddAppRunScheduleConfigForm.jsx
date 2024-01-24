@@ -22,33 +22,62 @@ const SCHEMA = {
       title: "Frequency",
       widget: "frequencyPicker",
     },
+    batch_size: {
+      type: "number",
+      title: "Batch Size",
+      default: 1,
+      minimum: 1,
+      maximum: 10,
+    },
+    use_session: {
+      type: "boolean",
+      title: "Use Session",
+      default: false,
+    },
   },
 };
 
 const UI_SCHEMA = {
-  "ui:order": ["job_name", "application", "frequency"],
+  "ui:order": [
+    "job_name",
+    "application",
+    "frequency",
+    "batch_size",
+    "use_session",
+  ],
   job_name: {
     "ui:description": "Enter a name for this job.",
+    "ui:advanced": false,
   },
   application: {
     "ui:description": "Application to run with this job.",
     "ui:widget": "appselect",
+    "ui:advanced": false,
   },
   frequency: {
     "ui:description": "Select a frequency to run the application.",
     "ui:widget": "frequencyPicker",
+    "ui:advanced": false,
+  },
+  batch_size: {
+    "ui:description": "Select a batch size to run the application.",
+    "ui:advanced": true,
+  },
+  use_session: {
+    "ui:description": "Use session in batch run.",
+    "ui:advanced": true,
   },
 };
 
 export default function AddAppRunScheduleConfigForm(props) {
   const publishedApps = (useRecoilValue(appsState) || []).filter(
-    (app) => app.published_uuid,
+    (app) => app.is_published,
   );
 
   return (
     <Box sx={{ width: "95%", margin: "5px" }}>
       <ThemedJsonForm
-        disableAdvanced={true}
+        disableAdvanced={false}
         schema={SCHEMA}
         validator={validator}
         uiSchema={{

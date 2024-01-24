@@ -82,6 +82,9 @@ export default function AddAppRunScheduleModal(props) {
         )}
       </Grid>
       <DialogActions>
+        <Button variant="contained" onClick={props.onClose}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           color="primary"
@@ -106,6 +109,8 @@ export default function AddAppRunScheduleModal(props) {
                 job_name: configuration?.job_name,
                 app_uuid: configuration?.appDetail?.uuid,
                 frequency: configuration?.frequencyObj,
+                use_session: configuration?.use_session,
+                batch_size: configuration?.batch_size,
                 app_run_data: appFormData,
               })
               .then((response) => {
