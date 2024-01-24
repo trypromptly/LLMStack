@@ -1,5 +1,6 @@
 import datetime
 import logging
+import time
 import uuid
 from typing import Any, Optional
 
@@ -23,7 +24,7 @@ class SubTaskResult(BaseModel):
     error: Optional[Any] = None
 
 
-def run_app_subtask(app_id, input_data):
+def run_app_subtask(app_id, input_data, session_id=None):
     app = App.objects.get(uuid=app_id)
     request_input_data = {"input": input_data, "stream": False}
     request = RequestFactory().post(
@@ -33,11 +34,42 @@ def run_app_subtask(app_id, input_data):
     )
     request.user = app.owner
     request.data = request_input_data
-    response = AppViewSet().run(request=request, uid=app_id)
+    response = AppViewSet().run(request=request, uid=app_id, session_id=session_id)
     return {
         "status_code": response.status_code,
         "data": response.data,
     }
+
+
+def run_batched_app_tasks(input_data, batch_start_index, job, batch_size, task_run_log_uuid, session_id):
+    time_remaining_to_schedule_next_task = max(
+        (settings.TASK_RUN_DELAY - (job.ended_at - job.started_at).total_seconds()),
+        1,
+    )
+
+    for index in range(1, batch_size):
+        input_data_idx = batch_start_index + index
+
+        if not input_data_idx < len(input_data):
+            break
+
+        app_run_result = run_app_subtask(job.meta["app_id"], input_data[input_data_idx], session_id=session_id)
+
+        if task_run_log_uuid:
+            task_run_log = TaskRunLog.objects.get(uuid=uuid.UUID(task_run_log_uuid))
+
+            if app_run_result["status_code"] == 200:
+                task_run_log.result[input_data_idx] = SubTaskResult(
+                    status=TaskStatus.SUCCESS, output=app_run_result["data"]
+                ).dict()
+            else:
+                task_run_log.result[input_data_idx] = SubTaskResult(
+                    status=TaskStatus.FAILURE, error=app_run_result
+                ).dict()
+
+            task_run_log.save()
+
+        time.sleep(time_remaining_to_schedule_next_task)
 
 
 def post_run_app_task(task_run_log_uuid, input_index, status, response, job):
@@ -60,30 +92,42 @@ def post_run_app_task(task_run_log_uuid, input_index, status, response, job):
 
     # If there are more input data to process, schedule the next task
     input_data = job.meta["input_data"]
-    if input_index + 1 < len(input_data):
-        time_elapsed = (job.ended_at - job.started_at).total_seconds()
+    batch_size = job.meta.get("batch_size", 1)
+
+    if batch_size > 1 and input_index % batch_size == 0:
+        session_id = None
+        if job.meta.get("use_session", False):
+            if "data" in response and "session" in response["data"]:
+                session_id = response["data"]["session"]["id"]
+
+        run_batched_app_tasks(input_data, input_index, job, batch_size, task_run_log_uuid, session_id)
+
+    # If we have any more tasks to run, schedule the next task
+    if input_index + batch_size < len(input_data):
         time_remaining_to_schedule_next_task = max(
-            (settings.TASK_RUN_DELAY - time_elapsed),
+            (settings.TASK_RUN_DELAY - (job.ended_at - job.started_at).total_seconds()),
             1,
         )
-        logger.info(
+        logger.debug(
             f"Scheduling next task in {time_remaining_to_schedule_next_task} seconds",
         )
 
         django_rq.get_queue(job.meta["queue_name"]).enqueue_in(
-            datetime.timedelta(seconds=time_remaining_to_schedule_next_task),
+            datetime.timedelta(seconds=5),
             run_app_subtask,
-            args=(job.meta["app_id"], input_data[input_index + 1]),
+            args=(job.meta["app_id"], input_data[input_index + batch_size]),
             on_success=run_app_sub_task_success_callback,
             on_failure=run_app_sub_task_failure_callback,
             meta={
                 "app_id": job.meta["app_id"],
                 "task_run_log_uuid": task_run_log_uuid,
                 "input_data": input_data,
-                "input_data_index": input_index + 1,
+                "input_data_index": input_index + batch_size,
                 "queue_name": job.meta["queue_name"],
                 "timeout": job.meta["timeout"],
                 "result_ttl": job.meta["result_ttl"],
+                "use_session": job.meta.get("use_session", False),
+                "batch_size": job.meta.get("batch_size", 1),
             },
             timeout=job.meta["timeout"],
             result_ttl=job.meta["result_ttl"],
@@ -138,6 +182,8 @@ def run_app_task(app_id=None, input_data=None, *args, **kwargs):
             "queue_name": "default",
             "timeout": timeout,
             "result_ttl": result_ttl,
+            "use_session": kwargs.get("use_session", False),
+            "batch_size": kwargs.get("batch_size", 1),
         },
         timeout=timeout,
         result_ttl=result_ttl,
