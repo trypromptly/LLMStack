@@ -418,6 +418,43 @@ export const appTemplateState = atomFamily({
   },
 });
 
+export const embedDatasourceState = atomFamily({
+  key: "embedDatasourceState",
+  default: async (datasourceUUID) => {
+    if (!datasourceUUID) {
+      return {};
+    }
+
+    try {
+      const embedDatasource = await axios().get(
+        `/api/datasources/${datasourceUUID}`,
+      );
+      return embedDatasource.data;
+    } catch (error) {
+      return {};
+    }
+  },
+});
+
+export const embedDatasourceEntriesState = atomFamily({
+  key: "embedDatasourceEntriesState",
+  default: async (datasourceUUID) => {
+    console.log("embedDatasourceEntriesState", datasourceUUID);
+    if (!datasourceUUID) {
+      return [];
+    }
+
+    try {
+      const embedDatasource = await axios().get(
+        `/api/datasources/${datasourceUUID}/entries`,
+      );
+      return embedDatasource.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
 export const appDebugState = atom({
   key: "appDebugState",
   default: {},

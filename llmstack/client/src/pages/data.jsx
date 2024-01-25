@@ -48,7 +48,10 @@ import {
 import { axios } from "../data/axios";
 import { useReloadDataSourceEntries, useReloadDataSources } from "../data/init";
 
-function DataSourceEntries({ dataSourceEntryData }) {
+export function DataSourceEntries({
+  dataSourceEntryData,
+  onDatasourceEntryDelete = () => {},
+}) {
   const [dataSourceEntryDrawerOpen, setDataSourceEntryDrawerOpen] =
     useState(false);
   const [dataSourceEntry, setDataSourceEntry] = useState(null);
@@ -231,8 +234,9 @@ function DataSourceEntries({ dataSourceEntryData }) {
         open={deleteConfirmationModalOpen}
         onOk={(param) => {
           axios()
-            .delete(`api/datasource_entries/${param.uuid}`)
+            .delete(`/api/datasource_entries/${param.uuid}`)
             .then((res) => {
+              onDatasourceEntryDelete();
               reloadDataSourceEntries();
               setDeleteConfirmationModalOpen(false);
             });

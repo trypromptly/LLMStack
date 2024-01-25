@@ -19,6 +19,7 @@ const HistoryPage = lazy(() => import("./pages/history"));
 const SettingPage = lazy(() => import("./pages/setting"));
 const OrganizationPage = lazy(() => import("./pages/organization"));
 const AppRenderPage = lazy(() => import("./pages/AppRender"));
+const DatasourceRenderPage = lazy(() => import("./pages/DatasourceRender"));
 const AppStudioPage = lazy(() => import("./pages/AppStudio"));
 const AppConsolePage = lazy(() => import("./pages/AppConsole"));
 const DataPage = lazy(() => import("./pages/data"));
@@ -514,6 +515,11 @@ router = createBrowserRouter([
         <DataPage />
       </App>
     ),
+  },
+  {
+    path: "/datasources/:datasourceId/:embed?",
+    element: <DatasourceRenderPage headless={true} />,
+    errorElement: <ErrorPage />,
   },
   {
     path: "/login",
