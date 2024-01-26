@@ -16,7 +16,7 @@ export const axios = () => {
 
     if (signature) {
       caxios.defaults.headers.common["Authorization"] =
-        "X-Embed-Signature " + signature;
+        "Signature " + signature;
     }
     caxios.interceptors.response.use(
       (response) => response,
