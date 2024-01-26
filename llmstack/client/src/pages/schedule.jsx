@@ -608,7 +608,7 @@ export default function Schedule() {
                                               onClick={() => {
                                                 axios()
                                                   .post(
-                                                    `/api/jobs/${task.job_uuid}/tasks/${task.uuid}/cancel`,
+                                                    `/api/jobs/${row.uuid}/tasks/${task.uuid}/cancel`,
                                                   )
                                                   .then((res) => {
                                                     window.location.reload();

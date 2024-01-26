@@ -41,6 +41,6 @@ urlpatterns = [
     ),
     path(
         "api/jobs/<str:uid>/tasks/<str:task_uid>/cancel",
-        apis.JobsViewSet.as_view({"get": "cancel_task"}),
+        apis.JobsViewSet.as_view({"post": "cancel_task"}),
     ),
 ]
