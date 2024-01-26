@@ -114,7 +114,6 @@ class DataUriTextExtract(
     def process(self) -> str:
         openai_api_key = self._env.get("openai_api_key", None)
         query = self._input.query
-        self.temp_store = Chroma(is_persistent=False)
 
         file = self._input.file or None
         if (file is None or file == "") and self._input.file_data:
@@ -169,6 +168,7 @@ class DataUriTextExtract(
         self.extracted_text = text
 
         if query:
+            self.temp_store = Chroma(is_persistent=False)
             index_name = self.temp_store.create_temp_index()
             self.storage_index_name = index_name
             with concurrent.futures.ThreadPoolExecutor() as executor:
