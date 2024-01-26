@@ -8,6 +8,8 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import PauseCircleOutlinedIcon from "@mui/icons-material/PauseCircleOutlined";
 import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined";
 import RefreshOutlinedIcon from "@mui/icons-material/RefreshOutlined";
+import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
+
 import {
   Box,
   Button,
@@ -28,6 +30,7 @@ import {
   TableRow,
   Tooltip,
   Typography,
+  Stack,
 } from "@mui/material";
 import moment from "moment";
 import { enqueueSnackbar } from "notistack";
@@ -583,20 +586,43 @@ export default function Schedule() {
                                       </Tooltip>
                                     </TableCell>
                                     <TableCell>
-                                      <Button
-                                        variant="outlined"
-                                        size="small"
-                                        startIcon={<DownloadOutlinedIcon />}
-                                        disabled={task.status === "failed"}
-                                        onClick={() => {
-                                          window.open(
-                                            `/api/jobs/${row.uuid}/tasks/${task.uuid}/download`,
-                                          );
-                                        }}
-                                        sx={{ textTransform: "none" }}
-                                      >
-                                        Download
-                                      </Button>
+                                      <Stack direction="row" spacing={2}>
+                                        <Button
+                                          variant="outlined"
+                                          size="small"
+                                          startIcon={<DownloadOutlinedIcon />}
+                                          disabled={task.status === "failed"}
+                                          onClick={() => {
+                                            window.open(
+                                              `/api/jobs/${row.uuid}/tasks/${task.uuid}/download`,
+                                            );
+                                          }}
+                                          sx={{ textTransform: "none" }}
+                                        >
+                                          Download
+                                        </Button>
+                                        {task.status == "started" && (
+                                          <IconButton
+                                            color="secondary"
+                                            onClick={() => {
+                                              axios()
+                                                .post(
+                                                  `/api/jobs/${task.job_uuid}/tasks/${task.uuid}/cancel`,
+                                                )
+                                                .then((res) => {
+                                                  window.location.reload();
+                                                })
+                                                .catch((err) => {
+                                                  enqueueSnackbar(err.message, {
+                                                    variant: "error",
+                                                  });
+                                                });
+                                            }}
+                                          >
+                                            <CancelOutlinedIcon />
+                                          </IconButton>
+                                        )}
+                                      </Stack>
                                     </TableCell>
                                   </TableRow>
                                 );

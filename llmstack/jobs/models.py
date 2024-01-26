@@ -46,6 +46,7 @@ class TaskRunLog(models.Model):
         ("succeeded", "succeeded"),
         ("failed", "failed"),
         ("stopped", "stopped"),
+        ("cancelled", "cancelled"),
     ]
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
