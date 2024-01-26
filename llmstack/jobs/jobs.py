@@ -85,6 +85,14 @@ def post_run_app_task(task_run_log_uuid, input_index, status, response, job):
 
         task_run_log.save()
 
+        if task_run_log.status == "cancelled":
+            for i in range(input_index + 1, len(task_run_log.result)):
+                task_run_log.result[i] = SubTaskResult(
+                    status=TaskStatus.FAILURE, output="Task cancelled by user"
+                ).dict()
+            task_run_log.save()
+            return
+
     # If there are more input data to process, schedule the next task
     input_data = job.meta["input_data"]
     batch_size = job.meta.get("batch_size", 1)
@@ -127,6 +135,13 @@ def post_run_app_task(task_run_log_uuid, input_index, status, response, job):
             timeout=job.meta["timeout"],
             result_ttl=job.meta["result_ttl"],
         )
+
+    else:
+        # All tasks are completed. Update the task status to completed
+        if task_run_log_uuid:
+            task_run_log = TaskRunLog.objects.get(uuid=uuid.UUID(task_run_log_uuid))
+            task_run_log.status = "succeeded"
+            task_run_log.save()
 
 
 def run_app_sub_task_failure_callback(job, connection, type, value, traceback):

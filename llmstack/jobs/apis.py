@@ -156,7 +156,8 @@ class JobsViewSet(viewsets.ViewSet):
                 },
             )
 
-        tasks = TaskRunLog.objects.filter(task_id=job.id).order_by("-id")
+        task_run_logs = TaskRunLog.objects.filter(task_id=job.id).order_by("-id")
+        tasks = filter(lambda task: task.task_uuid() == job.uuid, task_run_logs)
         serializer = TaskRunLogSerializer(tasks, many=True)
         return DRFResponse(status=200, data=serializer.data)
 
@@ -223,6 +224,13 @@ class JobsViewSet(viewsets.ViewSet):
                     "message": f"No task found with uuid: {task_uid}",
                 },
             )
+        if not task.task_uuid == job.uuid:
+            return DRFResponse(
+                status=400,
+                data={
+                    "message": f"Task {task_uid} does not belong to job {uid}",
+                },
+            )
 
         response = StreamingHttpResponse(
             content_type="text/csv",
@@ -236,6 +244,36 @@ class JobsViewSet(viewsets.ViewSet):
         ] = f'attachment; filename="{job.name}_{task.created_at.strftime("%Y-%m-%d_%H-%M-%S")}.csv"'
 
         return response
+
+    def cancel_task(self, request, uid, task_uid):
+        job = self._get_job_by_uuid(uid, request=request)
+        if not job:
+            return DRFResponse(
+                status=404,
+                data={
+                    "message": f"No job found with uuid: {uid}",
+                },
+            )
+
+        task = TaskRunLog.objects.filter(task_id=job.id, uuid=task_uid).first()
+        if not task:
+            return DRFResponse(
+                status=404,
+                data={
+                    "message": f"No task found with uuid: {task_uid}",
+                },
+            )
+        if not task.task_uuid == job.uuid:
+            return DRFResponse(
+                status=400,
+                data={
+                    "message": f"Task {task_uid} does not belong to job {uid}",
+                },
+            )
+        task.status = "cancelled"
+        task.save()
+
+        return DRFResponse(status=204)
 
 
 class AppRunJobsViewSet(viewsets.ViewSet):

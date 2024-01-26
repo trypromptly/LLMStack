@@ -39,4 +39,8 @@ urlpatterns = [
         "api/jobs/<str:uid>/tasks/<str:task_uid>/download",
         apis.JobsViewSet.as_view({"get": "download_task"}),
     ),
+    path(
+        "api/jobs/<str:uid>/tasks/<str:task_uid>/cancel",
+        apis.JobsViewSet.as_view({"get": "cancel_task"}),
+    ),
 ]
