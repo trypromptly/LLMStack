@@ -84,6 +84,7 @@ class HttpUriTextExtract(
         return {
             "url": self.url,
             "extracted_text": self.extracted_text,
+            "storage_index_name": self.storage_index_name,
         }
 
     def process(self) -> HttpUriTextExtractorOutput:
@@ -100,8 +101,6 @@ class HttpUriTextExtract(
             return output
 
         if query and self.storage_index_name and url == self.url:
-            self.temp_store = Chroma(is_persistent=False)
-
             documents: List[Document] = self.temp_store.hybrid_search(
                 self.storage_index_name,
                 document_query=DocumentQuery(
@@ -128,6 +127,7 @@ class HttpUriTextExtract(
         self.url = url
 
         if query:
+            self.temp_store = Chroma(is_persistent=False)
             index_name = self.temp_store.create_temp_index()
             self.storage_index_name = index_name
             for text_chunk in SpacyTextSplitter(
