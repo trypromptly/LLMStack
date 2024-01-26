@@ -587,40 +587,45 @@ export default function Schedule() {
                                     </TableCell>
                                     <TableCell>
                                       <Stack direction="row" spacing={2}>
-                                        <Button
-                                          variant="outlined"
-                                          size="small"
-                                          startIcon={<DownloadOutlinedIcon />}
-                                          disabled={task.status === "failed"}
-                                          onClick={() => {
-                                            window.open(
-                                              `/api/jobs/${row.uuid}/tasks/${task.uuid}/download`,
-                                            );
-                                          }}
-                                          sx={{ textTransform: "none" }}
-                                        >
-                                          Download
-                                        </Button>
-                                        {task.status === "started" && (
+                                        <Tooltip title="Download results">
                                           <IconButton
-                                            color="secondary"
+                                            variant="outlined"
+                                            size="small"
+                                            disabled={task.status === "failed"}
                                             onClick={() => {
-                                              axios()
-                                                .post(
-                                                  `/api/jobs/${task.job_uuid}/tasks/${task.uuid}/cancel`,
-                                                )
-                                                .then((res) => {
-                                                  window.location.reload();
-                                                })
-                                                .catch((err) => {
-                                                  enqueueSnackbar(err.message, {
-                                                    variant: "error",
-                                                  });
-                                                });
+                                              window.open(
+                                                `/api/jobs/${row.uuid}/tasks/${task.uuid}/download`,
+                                              );
                                             }}
+                                            sx={{ textTransform: "none" }}
                                           >
-                                            <CancelOutlinedIcon />
+                                            <DownloadOutlinedIcon />
                                           </IconButton>
+                                        </Tooltip>
+                                        {task.status === "started" && (
+                                          <Tooltip title="Cancel running job">
+                                            <IconButton
+                                              onClick={() => {
+                                                axios()
+                                                  .post(
+                                                    `/api/jobs/${task.job_uuid}/tasks/${task.uuid}/cancel`,
+                                                  )
+                                                  .then((res) => {
+                                                    window.location.reload();
+                                                  })
+                                                  .catch((err) => {
+                                                    enqueueSnackbar(
+                                                      err.message,
+                                                      {
+                                                        variant: "error",
+                                                      },
+                                                    );
+                                                  });
+                                              }}
+                                            >
+                                              <CancelOutlinedIcon />
+                                            </IconButton>
+                                          </Tooltip>
                                         )}
                                       </Stack>
                                     </TableCell>

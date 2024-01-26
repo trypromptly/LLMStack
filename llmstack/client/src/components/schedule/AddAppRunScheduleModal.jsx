@@ -82,7 +82,7 @@ export default function AddAppRunScheduleModal(props) {
         )}
       </Grid>
       <DialogActions>
-        <Button variant="contained" onClick={props.onClose}>
+        <Button variant="outlined" onClick={props.onClose}>
           Cancel
         </Button>
         <Button
