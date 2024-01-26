@@ -224,7 +224,7 @@ class JobsViewSet(viewsets.ViewSet):
                     "message": f"No task found with uuid: {task_uid}",
                 },
             )
-        if not task.task_uuid == job.uuid:
+        if not task.task_uuid() == job.uuid:
             return DRFResponse(
                 status=400,
                 data={
@@ -263,7 +263,7 @@ class JobsViewSet(viewsets.ViewSet):
                     "message": f"No task found with uuid: {task_uid}",
                 },
             )
-        if not task.task_uuid == job.uuid:
+        if not task.task_uuid() == job.uuid:
             return DRFResponse(
                 status=400,
                 data={
