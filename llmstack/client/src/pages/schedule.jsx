@@ -601,7 +601,7 @@ export default function Schedule() {
                                         >
                                           Download
                                         </Button>
-                                        {task.status == "started" && (
+                                        {task.status === "started" && (
                                           <IconButton
                                             color="secondary"
                                             onClick={() => {
