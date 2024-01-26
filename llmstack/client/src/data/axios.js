@@ -7,13 +7,16 @@ export const axios = () => {
     xsrfHeaderName: "X-CSRFToken",
   });
 
-  if (window.location.pathname.endsWith("/embed")) {
+  if (
+    window.location.pathname.endsWith("/embed") &&
+    window.location.search.includes("_signature")
+  ) {
     const searchParams = new URLSearchParams(window.location.search);
     const signature = searchParams.get("_signature");
 
     if (signature) {
       caxios.defaults.headers.common["Authorization"] =
-        "X-Embed-Signature " + signature;
+        "Signature " + signature;
     }
     caxios.interceptors.response.use(
       (response) => response,
