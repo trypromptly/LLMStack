@@ -561,7 +561,8 @@ export default function Schedule() {
                                       <Tooltip
                                         title={getTaskStatusTooltip(task)}
                                       >
-                                        {task.status === "started" &&
+                                        {(task.status === "started" ||
+                                          task.status === "succeeded") &&
                                         task.result?.filter(
                                           (r) => r.status === "success",
                                         )?.length === task.result?.length ? (
