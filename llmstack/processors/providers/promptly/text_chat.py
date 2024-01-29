@@ -309,7 +309,7 @@ Citations:
         if model == "gpt-3.5-turbo-latest":
             model = "gpt-3.5-turbo-1106"
         elif model == "gpt-4-turbo-latest":
-            model = "gpt-4-1106-preview"
+            model = "gpt-4-0125-preview"
 
         if self._env["azure_openai_api_key"] and self._config.use_azure_if_available:
             if model == "gpt-3.5-turbo":
