@@ -148,13 +148,14 @@ class Chroma(VectorStoreInterface):
             query_texts=[document_query.query],
             n_results=document_query.limit,
         )
-        for index in range(len(search_result["documents"])):
-            document_content = search_result["documents"][index][0]
-            metadata = search_result["metadatas"][index][0]
+
+        for index in range(len(search_result["documents"][0])):
+            document_content = search_result["documents"][0][index]
+            metadata = search_result["metadatas"][0][index]
             metadata["distance"] = (
-                search_result["distances"][index][0]
+                search_result["distances"][0][index]
                 if len(
-                    search_result["distances"],
+                    search_result["distances"][0],
                 )
                 > 0
                 else -1
