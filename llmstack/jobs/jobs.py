@@ -107,12 +107,10 @@ def post_run_app_task(task_run_log_uuid, input_index, status, response, job):
                 "input_data": input_data,
                 "input_data_index": input_index + batch_size,
                 "queue_name": job.meta["queue_name"],
-                "timeout": job.meta["timeout"],
                 "result_ttl": job.meta["result_ttl"],
                 "use_session": job.meta.get("use_session", False),
                 "batch_size": job.meta.get("batch_size", 1),
             },
-            job_timeout=job.meta["timeout"],
             result_ttl=job.meta["result_ttl"],
         )
 
@@ -156,7 +154,6 @@ def run_app_sub_task_success_callback(
 def run_app_task(app_id=None, input_data=None, *args, **kwargs):
     job_metadata = kwargs["_job_metadata"]
 
-    timeout = 120
     result_ttl = 86400
 
     django_rq.get_queue("default").enqueue(
@@ -170,12 +167,10 @@ def run_app_task(app_id=None, input_data=None, *args, **kwargs):
             "input_data": input_data,
             "input_data_index": 0,
             "queue_name": "default",
-            "timeout": timeout,
             "result_ttl": result_ttl,
             "use_session": kwargs.get("use_session", False),
             "batch_size": kwargs.get("batch_size", 1),
         },
-        job_timeout=timeout,
         result_ttl=result_ttl,
     )
 
@@ -250,10 +245,8 @@ def post_upsert_datasource_task(
                 "input_data": input_data,
                 "input_data_index": input_index + 1,
                 "queue_name": job.meta["queue_name"],
-                "timeout": job.meta["timeout"],
                 "result_ttl": job.meta["result_ttl"],
             },
-            job_timeout=job.meta["timeout"],
             result_ttl=job.meta["result_ttl"],
         )
     else:
@@ -304,7 +297,6 @@ def upsert_datasource_entry_subtask_failure_callback(
 def upsert_datasource_entries_task(datasource_id, input_data, *args, **kwargs):
     job_metadata = kwargs["_job_metadata"]
 
-    timeout = 120
     result_ttl = 86400
 
     django_rq.get_queue("default").enqueue(
@@ -319,10 +311,8 @@ def upsert_datasource_entries_task(datasource_id, input_data, *args, **kwargs):
             "input_data": input_data,
             "input_data_index": 0,
             "queue_name": "default",
-            "timeout": timeout,
             "result_ttl": result_ttl,
         },
-        job_timeout=timeout,
         result_ttl=result_ttl,
     )
 
