@@ -191,7 +191,7 @@ class JobsViewSet(viewsets.ViewSet):
             try:
                 input_row = [str(input_data[i][key]).strip() for key in headers]
                 if not output_data[i]["output"]:
-                    output_data[i]["output"] = {"output": ""}
+                    output_data[i]["output"] = {"output": "Error occurred"}
                 csv_writer.writerow(
                     input_row + [output_data[i]["output"]["output"]],
                 )

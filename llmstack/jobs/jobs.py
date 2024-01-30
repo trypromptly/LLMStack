@@ -138,8 +138,7 @@ def _schedule_next_batch(task_run_log_uuid, input_data, input_data_index, batch_
     # If we have any more tasks to run, schedule the next task
     if input_data_index + batch_size < len(input_data):
         time_remaining_to_schedule_next_task = max(
-            (settings.TASK_RUN_DELAY - (job.ended_at - job.started_at).total_seconds()),
-            1,
+            (settings.TASK_RUN_DELAY - (job.ended_at - job.started_at).total_seconds()), 1
         )
 
         task_run_type = job.meta.get("task_run_type", None)
@@ -153,9 +152,7 @@ def _schedule_next_batch(task_run_log_uuid, input_data, input_data_index, batch_
 
 
 def on_success_callback(job, connection, result, *args, **kwargs):
-    job_metadata = job.meta["task_run_log_uuid"]
-
-    task_run_log = TaskRunLog.objects.get(uuid=uuid.UUID(job_metadata))
+    task_run_log = TaskRunLog.objects.get(uuid=uuid.UUID(job.meta["task_run_log_uuid"]))
     for idx in range(len(result)):
         task_run_log.result[job.meta["input_data_index"] + idx] = result[idx]
     task_run_log.save()
@@ -170,7 +167,7 @@ def on_failure_callback(job, connection, type, value, traceback):
         f'task_run_log_uuid: {job.meta["task_run_log_uuid"]}, type: {type}, value: {value}, Traceback: {traceback} ',
     )
     task_run_log = TaskRunLog.objects.get(uuid=uuid.UUID(job.meta["task_run_log_uuid"]))
-    for i in range(job.meta["input_data_index"], job.meta["batch_size"]):
+    for i in range(job.meta["input_data_index"], job.meta["input_data_index"] + job.meta["batch_size"]):
         task_run_log.result[i] = SubTaskResult(
             status=TaskStatus.FAILURE, error=f"Exception: {type}, detail: {value}"
         ).dict()
