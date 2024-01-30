@@ -193,7 +193,7 @@ class JobsViewSet(viewsets.ViewSet):
                 if not output_data[i]["output"]:
                     output_data[i]["output"] = {"output": "Error occurred"}
                 csv_writer.writerow(
-                    input_row + [output_data[i]["output"]["output"]],
+                    input_row + [output_data[i]["output"]],
                 )
             except Exception as e:
                 logger.error(

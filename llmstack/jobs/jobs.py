@@ -36,8 +36,16 @@ class TaskRunner:
     def get_input_data_batch(input_data, input_data_index, batch_size):
         return input_data[input_data_index : input_data_index + batch_size]
 
+    @staticmethod
+    def update_task_run_log_results(task_run_log_uuid, start_index, results):
+        task_run_log = TaskRunLog.objects.get(uuid=uuid.UUID(task_run_log_uuid))
+        for idx in range(len(results)):
+            logger.info(f"Type: {type(results[idx])}, Result: {results[idx]}")
+            task_run_log.result[start_index + idx] = results[idx]
+        task_run_log.save()
 
-class TaskRunJobMetadata(BaseModel):
+
+class TaskRunJobMeta(BaseModel):
     task_run_type: str
     task_run_log_uuid: str
     input_data: List[Any]
@@ -48,7 +56,7 @@ class TaskRunJobMetadata(BaseModel):
 
 
 class AppRunTaskRunner(TaskRunner):
-    class JobMetadata(TaskRunJobMetadata):
+    class JobMetadata(TaskRunJobMeta):
         app_id: str
         use_session: bool
 
@@ -86,43 +94,31 @@ class AppRunTaskRunner(TaskRunner):
         return result
 
     @staticmethod
-    def schedule_next_batch(job, task_run_log_uuid, start_after_secs, *args, **kwargs):
-        queue_name = job.meta["queue_name"]
-        input_data = job.meta["input_data"]
-        input_index = job.meta["input_data_index"]
-        batch_size = job.meta["batch_size"]
-        app_id = job.meta["app_id"]
-        result_ttl = job.meta["result_ttl"]
-        use_session = job.meta["use_session"]
+    def schedule_next_batch(job, start_after_secs):
+        job_meta = AppRunTaskRunner.JobMetadata(**job.meta)
 
-        django_rq.get_queue(queue_name).enqueue_in(
+        django_rq.get_queue(job_meta.queue_name).enqueue_in(
             datetime.timedelta(seconds=start_after_secs),
             run_subtask,
             args=(
                 "app_run",
-                task_run_log_uuid,
-                input_index,
-                batch_size,
-                TaskRunner.get_input_data_batch(input_data, input_index + batch_size, batch_size),
+                job_meta.task_run_log_uuid,
+                job_meta.input_data_index + job_meta.batch_size,
+                job_meta.batch_size,
+                TaskRunner.get_input_data_batch(
+                    job_meta.input_data, job_meta.input_data_index + job_meta.batch_size, job_meta.batch_size
+                ),
             ),
             kwargs=AppRunTaskRunner.SubTaskArgs(
-                app_id=app_id,
-                use_session=use_session,
+                app_id=job_meta.app_id,
+                use_session=job_meta.use_session,
             ).dict(),
             on_success=on_success_callback,
             on_failure=on_failure_callback,
-            meta=AppRunTaskRunner.JobMetadata(
-                task_run_type="app_run",
-                task_run_log_uuid=task_run_log_uuid,
-                input_data=input_data,
-                input_data_index=input_index + batch_size,
-                batch_size=batch_size,
-                queue_name=queue_name,
-                result_ttl=result_ttl,
-                app_id=app_id,
-                use_session=use_session,
+            meta=job_meta.copy(
+                deep=True, update={"input_data_index": job_meta.input_data_index + job_meta.batch_size}
             ).dict(),
-            result_ttl=result_ttl,
+            result_ttl=job_meta.result_ttl,
         )
 
 
@@ -130,9 +126,14 @@ def _schedule_next_batch(task_run_log_uuid, input_data, input_data_index, batch_
     task_run_log = TaskRunLog.objects.get(uuid=uuid.UUID(task_run_log_uuid))
 
     if task_run_log.status == "cancelled":
-        for i in range(input_data_index, len(task_run_log.result)):
-            task_run_log.result[i] = SubTaskResult(status=TaskStatus.FAILURE, output="Task cancelled by user").dict()
-        task_run_log.save()
+        TaskRunner.update_task_run_log_results(
+            task_run_log_uuid,
+            input_data_index,
+            [
+                SubTaskResult(status=TaskStatus.FAILURE, output="Task cancelled by user").dict()
+                for _ in range(input_data_index, len(input_data))
+            ],
+        )
         return
 
     # If we have any more tasks to run, schedule the next task
@@ -143,7 +144,7 @@ def _schedule_next_batch(task_run_log_uuid, input_data, input_data_index, batch_
 
         task_run_type = job.meta.get("task_run_type", None)
         if task_run_type == "app_run":
-            AppRunTaskRunner.schedule_next_batch(job, task_run_log_uuid, time_remaining_to_schedule_next_task)
+            AppRunTaskRunner.schedule_next_batch(job, time_remaining_to_schedule_next_task)
 
     else:
         # All tasks are completed. Update the task status to completed
@@ -152,10 +153,7 @@ def _schedule_next_batch(task_run_log_uuid, input_data, input_data_index, batch_
 
 
 def on_success_callback(job, connection, result, *args, **kwargs):
-    task_run_log = TaskRunLog.objects.get(uuid=uuid.UUID(job.meta["task_run_log_uuid"]))
-    for idx in range(len(result)):
-        task_run_log.result[job.meta["input_data_index"] + idx] = result[idx]
-    task_run_log.save()
+    TaskRunner.update_task_run_log_results(job.meta["task_run_log_uuid"], job.meta["input_data_index"], result)
 
     _schedule_next_batch(
         job.meta["task_run_log_uuid"], job.meta["input_data"], job.meta["input_data_index"], job.meta["batch_size"], job
@@ -166,12 +164,14 @@ def on_failure_callback(job, connection, type, value, traceback):
     logger.error(
         f'task_run_log_uuid: {job.meta["task_run_log_uuid"]}, type: {type}, value: {value}, Traceback: {traceback} ',
     )
-    task_run_log = TaskRunLog.objects.get(uuid=uuid.UUID(job.meta["task_run_log_uuid"]))
-    for i in range(job.meta["input_data_index"], job.meta["input_data_index"] + job.meta["batch_size"]):
-        task_run_log.result[i] = SubTaskResult(
-            status=TaskStatus.FAILURE, error=f"Exception: {type}, detail: {value}"
-        ).dict()
-    task_run_log.save()
+    TaskRunner.update_task_run_log_results(
+        job.meta["task_run_log_uuid"],
+        job.meta["input_data_index"],
+        [
+            SubTaskResult(status=TaskStatus.FAILURE, error=f"Exception: {type}, detail: {value}").dict()
+            for _ in range(job.meta["batch_size"])
+        ],
+    )
 
     _schedule_next_batch(
         job.meta["task_run_log_uuid"], job.meta["input_data"], job.meta["input_data_index"], job.meta["batch_size"], job
