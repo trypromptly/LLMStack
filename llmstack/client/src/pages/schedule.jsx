@@ -628,6 +628,32 @@ export default function Schedule() {
                                             </IconButton>
                                           </Tooltip>
                                         )}
+                                        {(task.status === "succeeded" ||
+                                          task.status == "cancelled") && (
+                                          <Tooltip title="Delete task log">
+                                            <IconButton
+                                              onClick={() => {
+                                                axios()
+                                                  .delete(
+                                                    `/api/jobs/${row.uuid}/tasks/${task.uuid}`,
+                                                  )
+                                                  .then((res) => {
+                                                    window.location.reload();
+                                                  })
+                                                  .catch((err) => {
+                                                    enqueueSnackbar(
+                                                      err.message,
+                                                      {
+                                                        variant: "error",
+                                                      },
+                                                    );
+                                                  });
+                                              }}
+                                            >
+                                              <DeleteOutlineOutlinedIcon />
+                                            </IconButton>
+                                          </Tooltip>
+                                        )}
                                       </Stack>
                                     </TableCell>
                                   </TableRow>
