@@ -191,9 +191,9 @@ class JobsViewSet(viewsets.ViewSet):
             try:
                 input_row = [str(input_data[i][key]).strip() for key in headers]
                 if not output_data[i]["output"]:
-                    output_data[i]["output"] = {"output": ""}
+                    output_data[i]["output"] = {"output": "Error occurred"}
                 csv_writer.writerow(
-                    input_row + [output_data[i]["output"]["output"]],
+                    input_row + [output_data[i]["output"]],
                 )
             except Exception as e:
                 logger.error(
@@ -272,6 +272,42 @@ class JobsViewSet(viewsets.ViewSet):
             )
         task.status = "cancelled"
         task.save()
+
+        return DRFResponse(status=204)
+
+    def delete_task(self, request, uid, task_uid):
+        job = self._get_job_by_uuid(uid, request=request)
+        if not job:
+            return DRFResponse(
+                status=404,
+                data={
+                    "message": f"No job found with uuid: {uid}",
+                },
+            )
+
+        task = TaskRunLog.objects.filter(task_id=job.id, uuid=task_uid).first()
+        if not task:
+            return DRFResponse(
+                status=404,
+                data={
+                    "message": f"No task found with uuid: {task_uid}",
+                },
+            )
+        if not task.task_uuid() == job.uuid:
+            return DRFResponse(
+                status=400,
+                data={
+                    "message": f"Task {task_uid} does not belong to job {uid}",
+                },
+            )
+        if task.status not in ["succeeded", "cancelled", "failed"]:
+            return DRFResponse(
+                status=400,
+                data={
+                    "message": f"Task {task_uid} is not in succeeded state",
+                },
+            )
+        task.delete()
 
         return DRFResponse(status=204)
 
