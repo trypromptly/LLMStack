@@ -629,7 +629,7 @@ export default function Schedule() {
                                           </Tooltip>
                                         )}
                                         {(task.status === "succeeded" ||
-                                          task.status == "cancelled") && (
+                                          task.status === "cancelled") && (
                                           <Tooltip title="Delete task log">
                                             <IconButton
                                               onClick={() => {
