@@ -10,7 +10,6 @@ import {
   Stack,
   SvgIcon,
   Toolbar,
-  Typography,
   Card,
   CardHeader,
   Dialog,
@@ -34,20 +33,6 @@ import ThemedJsonForm from "../components/ThemedJsonForm";
 import { axios } from "../data/axios";
 
 const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
-
-function getFileSize(value) {
-  let size = value;
-  const units = ["", "K", "M", "G", "T", "P", "E", "Z", "Y"];
-  let unit = 0;
-  while (size >= 1024) {
-    size /= 1024;
-    unit += 1;
-  }
-
-  return size > 0
-    ? size.toFixed(2) + " " + units[unit]
-    : size + " " + units[unit];
-}
 
 function useReloadDataSourceEntries(datasourceId) {
   const setDataSourceEntries = useSetRecoilState(

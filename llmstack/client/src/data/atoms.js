@@ -439,7 +439,6 @@ export const embedDatasourceState = atomFamily({
 export const embedDatasourceEntriesState = atomFamily({
   key: "embedDatasourceEntriesState",
   default: async (datasourceUUID) => {
-    console.log("embedDatasourceEntriesState", datasourceUUID);
     if (!datasourceUUID) {
       return [];
     }
