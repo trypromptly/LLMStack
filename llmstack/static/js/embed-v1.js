@@ -125,10 +125,18 @@
       if (this.getAttribute("style")) {
         iframe.setAttribute("style", this.getAttribute("style"));
       }
-      iframe.style.maxHeight = maxHeight;
-      iframe.style.maxWidth = maxWidth;
-      iframe.style.minHeight = minHeight;
-      iframe.style.minWidth = minWidth;
+      if (maxHeight) {
+        iframe.style.maxHeight = maxHeight;
+      }
+      if (maxWidth) {
+        iframe.style.maxWidth = maxWidth;
+      }
+      if (minHeight) {
+        iframe.style.minHeight = minHeight;
+      }
+      if (minWidth) {
+        iframe.style.minWidth = minWidth;
+      }
 
       // Attach the iframe to the custom element
       this.appendChild(iframe);
