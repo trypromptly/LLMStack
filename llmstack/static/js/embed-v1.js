@@ -125,52 +125,13 @@
       if (this.getAttribute("style")) {
         iframe.setAttribute("style", this.getAttribute("style"));
       }
+      iframe.style.maxHeight = maxHeight;
+      iframe.style.maxWidth = maxWidth;
+      iframe.style.minHeight = minHeight;
+      iframe.style.minWidth = minWidth;
 
       // Attach the iframe to the custom element
       this.appendChild(iframe);
-
-      console.log("iframe", iframe);
-      // Add a listener to the iframe to listen for messages
-      window.addEventListener("message", (event) => {
-        if (
-          event.data.type === "promptly-embed-open" &&
-          event.data.width &&
-          event.data.height
-        ) {
-          iframe.style.width = event.data.width;
-          iframe.style.height = event.data.height;
-
-          if (minWidth) {
-            iframe.style.width = minWidth;
-          }
-
-          if (minHeight) {
-            iframe.style.height = minHeight;
-          }
-
-          if (maxWidth) {
-            iframe.style.maxWidth = maxWidth;
-          }
-
-          if (maxHeight) {
-            iframe.style.maxHeight = maxHeight;
-          }
-        } else if (
-          event.data.type === "promptly-embed-resize" &&
-          event.data.width &&
-          event.data.height
-        ) {
-          iframe.width = event.data.width;
-          iframe.height = event.data.width;
-          iframe.style.width = event.data.width + 20 + "px";
-          iframe.style.height = event.data.height + 20 + "px";
-        } else if (event.data.type === "promptly-embed-close") {
-          setTimeout(() => {
-            iframe.style.width = "auto";
-            iframe.style.height = "auto";
-          }, 300);
-        }
-      });
     }
   }
 
