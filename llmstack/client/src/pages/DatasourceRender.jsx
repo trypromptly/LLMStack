@@ -140,91 +140,29 @@ function DatasourceRenderPage({ headless = false }) {
           </Container>
         </AppBar>
       )}
-      <Box sx={{ justifyContent: "center" }}>{headless && <p></p>}</Box>
-      <Box>
-        <Card
-          sx={{
-            width: "90%",
-            margin: 10,
-            textAlign: "left",
-            cursor: "default",
-            boxShadow: "0 0 10px #449",
+
+      <Card>
+        <CardHeader
+          title={
+            <Button
+              size="small"
+              variant="contained"
+              onClick={(e) => {
+                setAddDataModal(true);
+              }}
+            >
+              Add Data
+            </Button>
+          }
+        ></CardHeader>
+        <DataSourceEntries
+          dataSourceEntryData={datasourceEntries}
+          onDatasourceEntryDelete={() => {
+            reloadDataSourceEntries();
+            reloadDataSource();
           }}
-          elevation={2}
-        >
-          <CardHeader
-            title={
-              <Stack direction="row" spacing={2}>
-                <Typography
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    fontFamily: "Lato, sans-serif",
-                    marginTop: "8px",
-                  }}
-                >
-                  {`Datasource Name: ${datasource.name}`}
-                </Typography>
-                <Button
-                  variant="contained"
-                  onClick={(e) => {
-                    setAddDataModal(true);
-                  }}
-                >
-                  Add Data
-                </Button>
-              </Stack>
-            }
-            subheader={
-              <Stack direction="row" spacing={4}>
-                <Typography
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    fontFamily: "Lato, sans-serif",
-                    marginTop: "8px",
-                  }}
-                >
-                  {`Datasource Type: ${datasource?.type?.name}`}
-                </Typography>
-                <Typography
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    fontFamily: "Lato, sans-serif",
-                    marginTop: "8px",
-                  }}
-                >{`Size: ${getFileSize(datasource.size)}`}</Typography>
-              </Stack>
-            }
-          ></CardHeader>
-          <DataSourceEntries
-            dataSourceEntryData={datasourceEntries}
-            onDatasourceEntryDelete={() => {
-              reloadDataSourceEntries();
-              reloadDataSource();
-            }}
-          />
-        </Card>
-      </Box>
-      <Box
-        sx={{
-          justifyContent: "center",
-          textAlign: "center",
-          bottom: "0px",
-          margin: "0 auto",
-          paddingTop: "10px",
-        }}
-      >
-        {headless && !process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT && (
-          <Typography sx={{ textAlign: "center" }} variant="caption">
-            Powered by{" "}
-            <a href="https://trypromptly.com" target="_blank" rel="noreferrer">
-              Promptly
-            </a>
-          </Typography>
-        )}
-      </Box>
+        />
+      </Card>
 
       {addDataModal && (
         <Dialog open={addDataModal} onClose={() => {}} sx={{ zIndex: 900 }}>
