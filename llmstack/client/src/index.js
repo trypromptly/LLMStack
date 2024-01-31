@@ -545,8 +545,8 @@ root.render(
               sx={{
                 minHeight: "100vh",
                 background:
-                  window.location.href.endsWith("/embed") ||
-                  window.location.href.endsWith("/embed/chatBubble")
+                  window.location.pathname.endsWith("/embed") ||
+                  window.location.pathname.endsWith("/embed/chatBubble")
                     ? "transparent"
                     : "#f5f5f5",
               }}
