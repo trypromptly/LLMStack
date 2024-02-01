@@ -291,6 +291,7 @@ class ChatCompletionsModel(str, Enum):
     GPT_3_5 = "gpt-3.5-turbo"
     GPT_3_5_16K = "gpt-3.5-turbo-16k"
     GPT_4_LATEST = "gpt-4-0125-preview"
+    GPT_4_1106_PREVIEW = "gpt-4-1106-preview"
 
     def __str__(self):
         return self.value
