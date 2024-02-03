@@ -144,7 +144,7 @@ class AgentActor(Actor):
     def on_receive(self, message: Message) -> Any:
         max_steps = self._config.get("max_steps", 10) + 2
 
-        if len(self._agent_messages) > max_steps:
+        if len(self._agent_messages) > max_steps + self._config.get("chat_history_limit", 0):
             output_response = OutputResponse(
                 response_content_type="text/markdown",
                 response_status=200,
