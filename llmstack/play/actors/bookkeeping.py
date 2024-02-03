@@ -71,7 +71,7 @@ class BookKeepingActor(Actor):
                 [
                     "disable_history" in self._bookkeeping_data_map[x]
                     and self._bookkeeping_data_map[x]["disable_history"]
-                    for x in self._processor_configs.keys()
+                    for x in list(filter(lambda x: x in self._bookkeeping_data_map, self._processor_configs.keys()))
                 ]
                 + [
                     "input" in self._bookkeeping_data_map
