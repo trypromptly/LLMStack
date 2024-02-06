@@ -93,37 +93,12 @@ class HttpUriTextExtract(
         query = self._input.query
         url = self._input.url.strip().rstrip()
 
-        if (query is None or query == "") and url == self.url and self.extracted_text is not None:
-            async_to_sync(self._output_stream.write)(
-                HttpUriTextExtractorOutput(text=self.extracted_text),
+        if url != self.url:
+            self.extracted_text = extract_text_from_url(
+                url,
+                extra_params=ExtraParams(openai_key=openai_api_key),
             )
-            output = self._output_stream.finalize()
-            return output
 
-        if query and self.storage_index_name and url == self.url:
-            documents: List[Document] = self.temp_store.hybrid_search(
-                self.storage_index_name,
-                document_query=DocumentQuery(
-                    query=query,
-                    limit=self._config.document_limit,
-                ),
-            )
-            for document in documents:
-                async_to_sync(self._output_stream.write)(
-                    HttpUriTextExtractorOutput(text=document.page_content),
-                )
-                async_to_sync(self._output_stream.write)(
-                    HttpUriTextExtractorOutput(text="\n"),
-                )
-
-            output = self._output_stream.finalize()
-            return output
-
-        text = extract_text_from_url(
-            url,
-            extra_params=ExtraParams(openai_key=openai_api_key),
-        )
-        self.extracted_text = text
         self.url = url
 
         if query:
@@ -133,7 +108,7 @@ class HttpUriTextExtract(
             for text_chunk in SpacyTextSplitter(
                 separator="\n",
                 chunk_size=self._config.text_chunk_size,
-            ).split_text(text):
+            ).split_text(self.extracted_text):
                 self.temp_store.add_text(
                     index_name,
                     Document(
@@ -164,7 +139,7 @@ class HttpUriTextExtract(
             return output
 
         async_to_sync(self._output_stream.write)(
-            HttpUriTextExtractorOutput(text=text),
+            HttpUriTextExtractorOutput(text=self.extracted_text),
         )
         output = self._output_stream.finalize()
 

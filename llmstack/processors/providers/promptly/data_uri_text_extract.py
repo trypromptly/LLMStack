@@ -123,49 +123,13 @@ class DataUriTextExtract(
             raise Exception("No file found in input")
         mime_type, file_name, data = validate_parse_data_uri(file)
 
-        if (
-            (query is None or query == "")
-            and mime_type == self.mime_type
-            and file_name == self.file_name
-            and data == self.data
-            and self.extracted_text != ""
-        ):
-            async_to_sync(self._output_stream.write)(
-                DataUriTextExtractorOutput(text=self.extracted_text),
+        if not self.extracted_text:
+            self.extracted_text = extract_text_from_b64_json(
+                mime_type=mime_type,
+                base64_encoded_data=data,
+                file_name=file_name,
+                extra_params=ExtraParams(openai_key=openai_api_key),
             )
-            output = self._output_stream.finalize()
-            return output
-
-        if query and self.storage_index_name:
-            documents: List[Document] = self.temp_store.hybrid_search(
-                self.storage_index_name,
-                document_query=DocumentQuery(
-                    query=query,
-                    limit=self._config.document_limit,
-                ),
-            )
-
-            async_to_sync(self._output_stream.write)(
-                DataUriTextExtractorOutput(
-                    text="\n".join(
-                        [document.page_content for document in documents],
-                    ),
-                ),
-            )
-            output = self._output_stream.finalize()
-            return output
-
-        self.mime_type = mime_type
-        self.file_name = file_name
-        self.data = data
-
-        text = extract_text_from_b64_json(
-            mime_type=mime_type,
-            base64_encoded_data=data,
-            file_name=file_name,
-            extra_params=ExtraParams(openai_key=openai_api_key),
-        )
-        self.extracted_text = text
 
         if query:
             self.temp_store = Chroma(is_persistent=False)
@@ -176,7 +140,7 @@ class DataUriTextExtract(
                     separator="\n",
                     pipeline="sentencizer",
                     chunk_size=self._config.text_chunk_size,
-                ).split_text(text)
+                ).split_text(self.extracted_text)
                 futures = [
                     executor.submit(
                         self.temp_store.add_text,
@@ -211,7 +175,7 @@ class DataUriTextExtract(
             return output
 
         async_to_sync(self._output_stream.write)(
-            DataUriTextExtractorOutput(text=text),
+            DataUriTextExtractorOutput(text=self.extracted_text),
         )
         output = self._output_stream.finalize()
         return output
