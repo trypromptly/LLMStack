@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 import os
+import random
 import re
 import subprocess
 import time
@@ -18,7 +19,11 @@ from playwright._impl._api_types import TimeoutError
 from playwright.async_api import async_playwright
 
 from llmstack.common.runner.display import VirtualDisplayPool
-from llmstack.common.runner.playwright.browser import Playwright
+from llmstack.common.runner.playwright.browser import (
+    BROWSER_INIT_SCRIPT,
+    USER_AGENTS,
+    Playwright,
+)
 from llmstack.common.runner.proto.runner_pb2 import (
     TERMINATE,
     Content,
@@ -65,8 +70,15 @@ class Runner(RunnerServicer):
                     if request.init_data.session_data
                     else None
                 )
-                browser = await playwright.chromium.launch(headless=False)
-                context = await browser.new_context(no_viewport=True, storage_state=session_data)
+                browser = await playwright.chromium.launch(
+                    headless=False, args=["--disable-blink-features=AutomationControlled"]
+                )
+                context = await browser.new_context(
+                    no_viewport=True,
+                    storage_state=session_data,
+                    user_agent=USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
+                )
+                await context.add_init_script(BROWSER_INIT_SCRIPT)
                 page = await context.new_page()
 
                 # Create an async task for waiting for the URL pattern
@@ -177,11 +189,13 @@ class Runner(RunnerServicer):
         yield RemoteBrowserResponse(
             state=RemoteBrowserState.TERMINATED,
             session=RemoteBrowserSession(
-                session_data=json.dumps(
-                    session_state,
-                )
-                if session_state
-                else "",
+                session_data=(
+                    json.dumps(
+                        session_state,
+                    )
+                    if session_state
+                    else ""
+                ),
             ),
         )
 
@@ -391,9 +405,11 @@ class Runner(RunnerServicer):
             exit_code=0,
             stdout=stdout,
             stderr=stderr,
-            local_variables=ParseDict(result, Struct())
-            if (result and isinstance(result, dict) and len(result.keys()) > 0)
-            else None,
+            local_variables=(
+                ParseDict(result, Struct())
+                if (result and isinstance(result, dict) and len(result.keys()) > 0)
+                else None
+            ),
             state=RemoteBrowserState.TERMINATED,
         )
 

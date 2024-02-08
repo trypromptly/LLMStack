@@ -135,7 +135,7 @@ class ProfileActivityProcessor(
                 browser = (
                     await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL)
                     if hasattr(settings, "PLAYWRIGHT_URL") and settings.PLAYWRIGHT_URL
-                    else await playwright.chromium.launch()
+                    else await playwright.chromium.launch(args=["--disable-blink-features=AutomationControlled"])
                 )
                 context = await browser.new_context(storage_state=storage_state)
                 page = await context.new_page()

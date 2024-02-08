@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import random
 from concurrent import futures
 from typing import Iterator
 
@@ -23,6 +24,34 @@ from llmstack.common.runner.proto.runner_pb2 import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36 Edg/99.0.1150.46",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 12.0; rv:99.0) Gecko/20100101 Firefox/99.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36 Edg/99.0.1150.36",
+]
+
+# Script to disable webdriver flag
+BROWSER_INIT_SCRIPT = """
+Object.defineProperty(Object.getPrototypeOf(navigator), 'webdriver', {
+    set: undefined,
+    enumerable: true,
+    configurable: true,
+    get: new Proxy(
+        Object.getOwnPropertyDescriptor(Object.getPrototypeOf(navigator), 'webdriver').get,
+        { apply: (target, thisArg, args) => {
+            // emulate getter call validation
+            Reflect.apply(target, thisArg, args);
+            return false;
+        }}
+    )
+});
+"""
 
 
 class Playwright:
@@ -238,8 +267,15 @@ class Playwright:
                     if session_data
                     else None
                 )
-                browser = await playwright.chromium.launch(headless=False)
-                context = await browser.new_context(no_viewport=True, storage_state=session_data)
+                browser = await playwright.chromium.launch(
+                    headless=False, args=["--disable-blink-features=AutomationControlled"]
+                )
+                context = await browser.new_context(
+                    no_viewport=True,
+                    storage_state=session_data,
+                    user_agent=USER_AGENTS[random.randint(0, len(USER_AGENTS) - 1)],
+                )
+                await context.add_init_script(BROWSER_INIT_SCRIPT)
                 page = await context.new_page()
 
                 url = initial_request.url
@@ -345,7 +381,7 @@ class Playwright:
             video_queue = asyncio.Queue()
 
             async def collect_browser_content():
-                async for (outputs, content) in self._process_playwright_input_stream(
+                async for outputs, content in self._process_playwright_input_stream(
                     initial_request,
                     request_iterator,
                     display,

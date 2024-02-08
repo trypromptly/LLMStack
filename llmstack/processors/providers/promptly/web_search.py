@@ -98,7 +98,7 @@ class WebSearch(
             browser = (
                 await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL)
                 if hasattr(settings, "PLAYWRIGHT_URL") and settings.PLAYWRIGHT_URL
-                else await playwright.chromium.launch()
+                else await playwright.chromium.launch(args=["--disable-blink-features=AutomationControlled"])
             )
             page = await browser.new_page()
             await page.goto(search_url)
