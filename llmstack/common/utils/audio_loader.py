@@ -5,6 +5,7 @@ from io import BytesIO
 
 import ffmpeg
 import openai
+import requests
 from pydub import AudioSegment
 from yt_dlp import YoutubeDL
 
@@ -112,9 +113,24 @@ def partition_video(data, mime_type, openai_key, file_name="video_file"):
 
 
 def partition_youtube_audio(url, openai_key):
+    def _get_caption_text(caption_data, caption_ext):
+        if caption_ext == "json3":
+            events = caption_data["events"]
+            return "\n".join([event["segs"]["utf8"] for event in events])
+        elif caption_ext == "srv1":
+            # Load xml data
+            import xml.etree.ElementTree as ET
+
+            root = ET.fromstring(caption_data)
+            all_text = [p.text.strip() for p in root.findall(".//text")]
+            return all_text
+
     # Create a temp directory to store the audio file
     with tempfile.TemporaryDirectory() as dir:
         ydl_opts = {
+            "writesubtitles": False,
+            "writeautomaticsubs": False,
+            "subtitleslangs": ["all"],
             "format": "bestaudio/best",
             "paths": {"temp": dir, "home": dir},
             "noplaylist": True,
@@ -122,12 +138,29 @@ def partition_youtube_audio(url, openai_key):
         }
 
         with YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=True)
+            info_dict = ydl.extract_info(url, download=False)
             title = info_dict["title"]
             description = info_dict["description"]
             audio_file_name = ydl.prepare_filename(info_dict)
             mime_type = info_dict["ext"]
 
+            subtitle_files = []
+            if "en" in info_dict["subtitles"]:
+                subtitle_files += info_dict["subtitles"]["en"]
+
+            if "en" in info_dict["automatic_captions"]:
+                subtitle_files += info_dict["automatic_captions"]["en"]
+
+            for entry in subtitle_files:
+                if "ext" in entry:
+                    if entry["ext"] == "srv1":
+                        data = requests.get(entry["url"]).content.decode("utf-8")
+                        caption_text = _get_caption_text(data, "srv1")
+                        return [f"Description : {description}", f"Title : {title}"] + caption_text
+
+        logger.info(f"Downloading audio from {url}")
+
+        info_dict = ydl.extract_info(url, download=True)
         with open(audio_file_name, "rb") as audio_file:
             audio_data = audio_file.read()
 
