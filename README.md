@@ -5,7 +5,7 @@
     <em>LLMStack is a no-code platform for building generative AI agents, workflows and chatbots, connecting them to your data and business processes.</em>
 </p>
 <p align="center">
-    <a href="https://docs.trypromptly.com/llmstack/introduction" target="_blank">Quickstart</a> | <a href="https://docs.trypromptly.com" target="_blank">Documentation</a> | <a href="trypromptly.com" target="_blank">Promptly</a>
+    <a href="https://docs.trypromptly.com/llmstack/introduction" target="_blank">Quickstart</a> | <a href="https://docs.trypromptly.com" target="_blank">Documentation</a> | <a href="https://trypromptly.com" target="_blank">Promptly</a>
 </p>
 
 ## Overview
