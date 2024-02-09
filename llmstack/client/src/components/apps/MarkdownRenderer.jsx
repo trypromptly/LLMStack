@@ -10,6 +10,7 @@ import loadingImage from "../../assets/images/loading.gif";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { HeyGenRealtimeAvatar } from "./HeyGenRealtimeAvatar";
 import StreamingVideoPlayer from "./StreamingVideoPlayer";
+import { RemoteBrowserEmbed } from "../connections/RemoteBrowser";
 
 function FunctionFormComponent(props) {
   // Render a form component with submit button
@@ -50,6 +51,9 @@ export default function MarkdownRenderer(props) {
               runProcessor={runProcessor}
             />
           );
+        },
+        "promptly-web-browser": ({ node, ...props }) => {
+          return <RemoteBrowserEmbed wsUrl={props.wsurl} />;
         },
         img: ({ node, ...props }) => {
           const { alt, src } = props;

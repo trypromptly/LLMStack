@@ -40,7 +40,7 @@ class Runner(RunnerServicer):
         self.wss_hostname = wss_hostname
         self.wss_port = wss_port
 
-        self.playwright = Playwright(display_pool)
+        self.playwright = Playwright(display_pool, wss_secure, wss_hostname, wss_port)
         self.remote_browser = RemoteBrowser(display_pool, wss_secure, wss_hostname, wss_port)
         self.code_interpreter = CodeInterpreter()
 

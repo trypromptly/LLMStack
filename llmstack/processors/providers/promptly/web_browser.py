@@ -124,6 +124,12 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     )
 
 
+class BrowserRemoteSessionData(BaseModel):
+    ws_url: str = Field(
+        description="Websocket URL to connect to",
+    )
+
+
 class BrowserInstructionType(str, Enum):
     CLICK = "Click"
     TYPE = "Type"
@@ -158,6 +164,10 @@ class WebBrowserOutput(ApiProcessorSchema):
     content: Optional[dict] = Field(
         default=None,
         description="Content of the result including text, buttons, links, inputs, textareas and selects",
+    )
+    session: Optional[BrowserRemoteSessionData] = Field(
+        default=None,
+        description="Session data from the browser",
     )
 
 
@@ -416,6 +426,17 @@ class WebBrowser(
                         video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}",
                     ),
                 )
+            elif response.session and response.session.ws_url:
+                # Send session info to the client
+                async_to_sync(
+                    output_stream.write,
+                )(
+                    WebBrowserOutput(
+                        session=BrowserRemoteSessionData(
+                            ws_url=response.session.ws_url,
+                        ),
+                    ),
+                )
 
         if response.state == runner_pb2.TERMINATED:
             output_text = "".join([x.text for x in response.outputs])
@@ -502,11 +523,13 @@ class WebBrowser(
                             steps.append(
                                 BrowserInstruction(
                                     type=instruction_type,
-                                    selector=instruction["selector"]
-                                    if "selector" in instruction
-                                    else instruction["tag"]
-                                    if "tag" in instruction
-                                    else None,
+                                    selector=(
+                                        instruction["selector"]
+                                        if "selector" in instruction
+                                        else instruction["tag"]
+                                        if "tag" in instruction
+                                        else None
+                                    ),
                                     data=instruction["data"] if "data" in instruction else None,
                                 ),
                             )

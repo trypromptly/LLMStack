@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -7,9 +8,10 @@ import {
   Typography,
 } from "@mui/material";
 import RFB from "@novnc/novnc/core/rfb";
+import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-function RemoteBrowser({ wsUrl, timeout, onClose }) {
+export function RemoteBrowser({ wsUrl, timeout, onClose }) {
   const screenRef = useRef(null);
   const rfbRef = useRef(null);
   const [connected, setConnected] = useState(false);
@@ -151,4 +153,97 @@ function RemoteBrowser({ wsUrl, timeout, onClose }) {
   );
 }
 
-export default RemoteBrowser;
+export function RemoteBrowserEmbed({ wsUrl }) {
+  const screenRef = useRef(null);
+  const rfbRef = useRef(null);
+  const [connected, setConnected] = useState(false);
+  const [closedConnection, setClosedConnection] = useState(false);
+
+  const setupRFB = useCallback(() => {
+    if (screenRef.current && !rfbRef.current) {
+      const credentials = wsUrl.split("@")[0].split("://")[1];
+
+      rfbRef.current = new RFB(screenRef.current, wsUrl, {
+        credentials: {
+          username: credentials.split(":")[0],
+          password: credentials.split(":")[1],
+        },
+        scaleViewport: true,
+      });
+
+      rfbRef.current.addEventListener("connect", () => {
+        console.log("Connected");
+        setConnected(true);
+      });
+
+      rfbRef.current.addEventListener("disconnect", () => {
+        setConnected(false);
+        setClosedConnection(true);
+      });
+
+      rfbRef.current.addEventListener("credentialsrequired", () => {
+        console.log("Credentials required");
+      });
+
+      rfbRef.current.addEventListener("securityfailure", () => {
+        console.log("Security failure");
+      });
+
+      rfbRef.current.addEventListener("capabilities", () => {
+        console.log("Capabilities");
+      });
+
+      rfbRef.current.addEventListener("clipboard", (e) => {
+        if (e.detail.text) {
+          navigator.clipboard.writeText(e.detail.text);
+        }
+      });
+
+      rfbRef.current.addEventListener("bell", () => {
+        console.log("Bell");
+      });
+
+      rfbRef.current.addEventListener("desktopname", () => {
+        console.log("Desktop name");
+      });
+
+      rfbRef.current.addEventListener("resize", () => {
+        console.log("Resize");
+      });
+
+      rfbRef.current.addEventListener("focus", () => {
+        console.log("Focus");
+      });
+
+      rfbRef.current.addEventListener("blur", () => {
+        console.log("Blur");
+      });
+    }
+  }, [wsUrl]);
+
+  useEffect(() => {
+    if (!wsUrl || rfbRef.current) {
+      return;
+    }
+
+    // Try to setup RFB every second until it works with a timeout of 10 seconds
+    let tries = 0;
+    const interval = setInterval(() => {
+      if (!rfbRef.current) {
+        setupRFB();
+        tries++;
+      }
+
+      if (tries >= 10 || rfbRef.current) {
+        clearInterval(interval);
+      }
+    }, 1000);
+  }, [wsUrl, setupRFB]);
+
+  return (
+    <Box>
+      <div ref={screenRef}></div>
+      {!connected && !closedConnection && "Connecting..."}
+    </Box>
+  );
+}

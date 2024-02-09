@@ -20,7 +20,7 @@ import { connectionsState, connectionTypesState } from "../../data/atoms";
 import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
 import ThemedJsonForm from "../ThemedJsonForm";
-import RemoteBrowser from "./RemoteBrowser";
+import { RemoteBrowser } from "./RemoteBrowser";
 
 function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
   const connectionTypes = useRecoilValue(connectionTypesState);

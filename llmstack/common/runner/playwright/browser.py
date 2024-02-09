@@ -20,6 +20,7 @@ from llmstack.common.runner.proto.runner_pb2 import (
     BrowserTextAreaField,
     PlaywrightBrowserRequest,
     PlaywrightBrowserResponse,
+    RemoteBrowserSession,
     RemoteBrowserState,
 )
 
@@ -55,8 +56,11 @@ Object.defineProperty(Object.getPrototypeOf(navigator), 'webdriver', {
 
 
 class Playwright:
-    def __init__(self, display_pool):
+    def __init__(self, display_pool, wss_secure, wss_hostname, wss_port):
         self.display_pool = display_pool
+        self.wss_secure = wss_secure
+        self.wss_hostname = wss_hostname
+        self.wss_port = wss_port
 
         # Load utils script
         with open(os.path.join(os.path.dirname(__file__), "utils.js")) as f:
@@ -336,6 +340,19 @@ class Playwright:
         if not display:
             yield PlaywrightBrowserResponse(state=RemoteBrowserState.TERMINATED)
             return
+
+        # Return the display info to the client
+        wss_server_path = f"{self.wss_hostname}:{self.wss_port}" if "/" not in self.wss_hostname else self.wss_hostname
+        yield PlaywrightBrowserResponse(
+            session=RemoteBrowserSession(
+                ws_url=(
+                    f"{'wss' if self.wss_secure else 'ws'}://{display['username']}:{display['password']}@{wss_server_path}?token={display['token']}"
+                    if "username" in display
+                    else None
+                ),
+            ),
+            state=RemoteBrowserState.RUNNING,
+        )
 
         # Start ffmpeg in a separate process to stream the display
         ffmpeg_process = (
