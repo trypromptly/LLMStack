@@ -202,6 +202,9 @@ const defaultTheme = createTheme({
             "&:hover > fieldset": { border: "1px solid #0f477e" },
             "&.Mui-error > fieldset": { border: "1px solid #fcc" },
           },
+          "& .MuiInputBase-inputMultiline": {
+            resize: "both",
+          },
         },
       },
     },

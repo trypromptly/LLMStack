@@ -1,16 +1,19 @@
-import { Box, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import { useTour } from "@reactour/tour";
-import { useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useCookies } from "react-cookie";
 import { AppList } from "../components/apps/AppList";
 import AppTemplatesContainer from "../components/apps/AppTemplatesContainer";
 import { SharedAppList } from "../components/apps/SharedAppList";
 import "../index.css";
+import GetAppOutlinedIcon from "@mui/icons-material/GetAppOutlined";
+import { AppImportModal } from "../components/apps/AppImporter";
 
 const AppStudioPage = () => {
   const { steps, setSteps, setIsOpen } = useTour();
   const [cookies, setCookie] = useCookies(["app-studio-tour"]);
   const containerRef = useRef(null);
+  const [appImportModalOpen, setAppImportModalOpen] = useState(false);
 
   // Tour
   useEffect(() => {
@@ -72,7 +75,21 @@ const AppStudioPage = () => {
         </Typography>
         <AppTemplatesContainer />
       </Box>
+      <AppImportModal
+        isOpen={appImportModalOpen}
+        setIsOpen={setAppImportModalOpen}
+      />
       <Box style={{ marginBottom: "20px" }} className="your-apps">
+        <Tooltip arrow={true} title={"Import an app from YAML configuration."}>
+          <IconButton
+            style={{ float: "right", margin: "0.5em", color: "#1c3c5a" }}
+            onClick={() => {
+              setAppImportModalOpen(true);
+            }}
+          >
+            <GetAppOutlinedIcon />
+          </IconButton>
+        </Tooltip>
         <Typography variant="h5" className="section-header">
           Your Apps
           <br />

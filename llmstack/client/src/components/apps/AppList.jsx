@@ -51,12 +51,11 @@ const DeleteUnpublishedAppModal = ({ open, setOpen, appId }) => {
       >
         <DialogTitle id="alert-dialog-title">{"Delete App"}</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            <Alert severity="warning">
-              Are you sure you want to delete this app? This action cannot be
-              undone.
-            </Alert>
-          </DialogContentText>
+          <Alert severity="warning">
+            Are you sure you want to delete this app? This action cannot be
+            undone.
+          </Alert>
+          <br />
           <TextField
             autoFocus
             margin="dense"
