@@ -38,7 +38,7 @@ export function AppImportModal(props) {
 
   return (
     <Dialog open={isOpen} onCancel={() => setIsOpen(false)} fullWidth>
-      <DialogTitle>Import an app</DialogTitle>
+      <DialogTitle>Import App</DialogTitle>
       <DialogContent>
         <Typography variant="body2" gutterBottom>
           Paste the YAML of the app you want to import here.
