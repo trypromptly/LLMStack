@@ -128,4 +128,4 @@ To update documentation, make changes to `web/docs` directory and run `npm run b
 
 ## Contributing
 
-We welcome contributions to LLMStack. Please check out our [contributing guide]https://docs.trypromptly.com/llmstack/contributing) to learn more about how you can contribute to LLMStack.
+We welcome contributions to LLMStack. Please check out our [contributing guide](https://docs.trypromptly.com/llmstack/contributing) to learn more about how you can contribute to LLMStack.
