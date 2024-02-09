@@ -205,7 +205,7 @@ export default function Sidebar({ menuItems }) {
                 px: 2.5,
               }}
               component={"a"}
-              href={"https://llmstack.ai/docs"}
+              href={"https://docs.trypromptly.com"}
               target="_blank"
             >
               <ListItemIcon

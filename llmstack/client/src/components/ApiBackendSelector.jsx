@@ -182,7 +182,7 @@ export default function ApiBackendSelector() {
             }}
           >
             <a
-              href={`https://llmstack.ai/docs/processors/${apiBackendSelected?.api_provider?.slug}`}
+              href={`https://docs.trypromptly.com/processors/${apiBackendSelected?.api_provider?.slug}`}
               target="_blank"
               aria-label="Learn more about this API Backend"
               rel="noreferrer"

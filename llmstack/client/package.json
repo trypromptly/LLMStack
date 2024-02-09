@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "proxy": "http://localhost:9000",
-  "homepage": "https://llmstack.ai",
+  "homepage": "https://llmstack.trypromptly.com",
   "dependencies": {
     "@jsonforms/material-renderers": "^3.1.0",
     "@jsonforms/react": "^3.0.0",

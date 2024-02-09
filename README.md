@@ -1,11 +1,11 @@
 <p align="center">
-  <a href="https://llmstack.ai"><img src="https://llmstack.ai/img/llmstack-logo-light-white-bg.svg" alt="LLMStack" width="500px"></a>
+  <a href="https://llmstack.trypromptly.com/"><img src="https://docs.trypromptly.com/img/llmstack-logo-light-white-bg.svg" alt="LLMStack" width="500px"></a>
 </p>
 <p align="center">
     <em>LLMStack is a no-code platform for building generative AI agents, workflows and chatbots, connecting them to your data and business processes.</em>
 </p>
 <p align="center">
-    <a href="https://llmstack.ai/docs/getting-started/introduction#quickstart" target="_blank">Quickstart</a> | <a href="https://llmstack.ai/docs/" target="_blank">Documentation</a> | <a href="trypromptly.com" target="_blank">Promptly</a>
+    <a href="https://docs.trypromptly.com/llmstack/introduction" target="_blank">Quickstart</a> | <a href="https://docs.trypromptly.com" target="_blank">Documentation</a> | <a href="trypromptly.com" target="_blank">Promptly</a>
 </p>
 
 ## Overview
@@ -128,4 +128,4 @@ To update documentation, make changes to `web/docs` directory and run `npm run b
 
 ## Contributing
 
-We welcome contributions to LLMStack. Please check out our [contributing guide](https://llmstack.ai/docs/guides/contributing) to learn more about how you can contribute to LLMStack.
+We welcome contributions to LLMStack. Please check out our [contributing guide]https://docs.trypromptly.com/llmstack/contributing) to learn more about how you can contribute to LLMStack.
