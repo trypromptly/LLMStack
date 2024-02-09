@@ -26,7 +26,10 @@ function HomepageHeader() {
           >
             Try Cloud Offering
           </Link>
-          <Link className="button button--primary button--lg" to="/docs/">
+          <Link
+            className="button button--primary button--lg"
+            href="https://docs.trypromptly.com/llmstack/introduction"
+          >
             Deploy LLMStack
           </Link>
         </div>
