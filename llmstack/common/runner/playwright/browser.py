@@ -334,7 +334,7 @@ class Playwright:
     ) -> Iterator[PlaywrightBrowserResponse]:
         # Get the first request from the client
         initial_request = next(request_iterator)
-        display = self.display_pool.get_display(remote_control=False)
+        display = self.display_pool.get_display(remote_control=initial_request.stream_video)
         SENTINAL = object()
 
         if not display:

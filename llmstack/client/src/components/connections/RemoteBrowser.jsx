@@ -9,6 +9,8 @@ import {
 } from "@mui/material";
 import RFB from "@novnc/novnc/core/rfb";
 import React from "react";
+import { isMobileState } from "../../data/atoms";
+import { useRecoilValue } from "recoil";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export function RemoteBrowser({ wsUrl, timeout, onClose }) {
@@ -155,9 +157,11 @@ export function RemoteBrowser({ wsUrl, timeout, onClose }) {
 
 export function RemoteBrowserEmbed({ wsUrl }) {
   const screenRef = useRef(null);
+  const boxRef = useRef(null);
   const rfbRef = useRef(null);
   const [connected, setConnected] = useState(false);
   const [closedConnection, setClosedConnection] = useState(false);
+  const isMobile = useRecoilValue(isMobileState);
 
   const setupRFB = useCallback(() => {
     if (screenRef.current && !rfbRef.current) {
@@ -235,15 +239,38 @@ export function RemoteBrowserEmbed({ wsUrl }) {
       }
 
       if (tries >= 10 || rfbRef.current) {
+        if (rfbRef.current) {
+          rfbRef.current.viewOnly = true;
+
+          // Get width of screenRef parent and set it to the screenRef
+          const width =
+            isMobile || screenRef.current.clientWidth > 800
+              ? screenRef.current.clientWidth
+              : 800;
+          screenRef.current.style.width = `${width}px`;
+          screenRef.current.style.height = `${(width * 720) / 1024}px`;
+
+          rfbRef.current.scaleViewport = true;
+          rfbRef.current.showDotCursor = true;
+        }
         clearInterval(interval);
       }
     }, 1000);
-  }, [wsUrl, setupRFB]);
+  }, [wsUrl, setupRFB, isMobile]);
+
+  useEffect(() => {
+    if (closedConnection && rfbRef.current) {
+      screenRef.current.innerHTML = "Video stream ended";
+      screenRef.current.style.height = "100px";
+    }
+  }, [closedConnection]);
 
   return (
-    <Box>
+    <Box ref={boxRef} sx={{ width: "100%" }}>
       <div ref={screenRef}></div>
-      {!connected && !closedConnection && "Connecting..."}
+      {!connected &&
+        !closedConnection &&
+        "Loading video stream. Make sure you have stream video option set."}
     </Box>
   );
 }
