@@ -52,7 +52,7 @@ export default function MarkdownRenderer(props) {
             />
           );
         },
-        "promptly-web-browser": ({ node, ...props }) => {
+        "promptly-web-browser-embed": ({ node, ...props }) => {
           return <RemoteBrowserEmbed wsUrl={props.wsurl} />;
         },
         img: ({ node, ...props }) => {

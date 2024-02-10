@@ -261,7 +261,7 @@ export function RemoteBrowserEmbed({ wsUrl }) {
   useEffect(() => {
     if (closedConnection && rfbRef.current) {
       screenRef.current.innerHTML = "Video stream ended";
-      screenRef.current.style.height = "100px";
+      screenRef.current.style.height = "30px";
     }
   }, [closedConnection]);
 
