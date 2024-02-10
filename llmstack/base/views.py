@@ -2,6 +2,7 @@ import logging
 import os
 import uuid
 
+from allauth.account.views import LogoutView
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import Context, Template
@@ -9,6 +10,10 @@ from django.template import Context, Template
 from llmstack.apps.models import App
 
 logger = logging.getLogger(__name__)
+
+
+class LLMStackLogoutView(LogoutView):
+    pass
 
 
 def index(request):
