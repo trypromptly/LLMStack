@@ -6,7 +6,6 @@ import random
 from concurrent import futures
 from typing import Iterator
 
-import ffmpeg
 from playwright.async_api import Page, async_playwright
 
 from llmstack.common.runner.proto import runner_pb2
@@ -255,7 +254,7 @@ class Playwright:
 
         return outputs, error
 
-    async def _process_playwright_input_stream(self, initial_request, request_iterator, display, ffmpeg_process):
+    async def _process_playwright_input_stream(self, initial_request, request_iterator, display):
         os.environ["DISPLAY"] = f'{display["DISPLAY"]}.0'
         logger.info(f"Using {os.environ['DISPLAY']}")
         outputs = []
@@ -321,11 +320,6 @@ class Playwright:
                 # Clean up
                 await browser.close()
 
-                if ffmpeg_process:
-                    # Wait for 5 seconds before killing ffmpeg
-                    await asyncio.sleep(5)
-                    ffmpeg_process.kill()
-
                 yield (outputs, content)
 
     def get_browser(
@@ -354,38 +348,12 @@ class Playwright:
             state=RemoteBrowserState.RUNNING,
         )
 
-        # Start ffmpeg in a separate process to stream the display
-        ffmpeg_process = (
-            ffmpeg.input(
-                f"{display['DISPLAY']}.0",
-                format="x11grab",
-                framerate=10,
-                video_size=(
-                    1024,
-                    720,
-                ),
-            )
-            .output(
-                "pipe:",
-                format="mp4",
-                vcodec="h264",
-                movflags="faststart+frag_keyframe+empty_moov+default_base_moof",
-                g=25,
-                y=None,
-            )
-            .run_async(
-                pipe_stdout=True,
-                pipe_stderr=True,
-            )
-        )
-
         # Use ThreadPoolExecutor to run the async function in a separate thread
         with futures.ThreadPoolExecutor(thread_name_prefix="async_tasks") as executor:
             browser_done = False
-            video_done = False
-            # Wrap the coroutine in a function that gets the current event loop
-            # or creates a new one
 
+            # Wrap the coroutine in a function that gets the current event loop
+            # or creates a new one and runs the coroutine in it
             def run_async_code(loop, fn):
                 asyncio.set_event_loop(loop)
 
@@ -394,37 +362,14 @@ class Playwright:
             # Create a queue to store the browser output
             content_queue = asyncio.Queue()
 
-            # Create a queue to store browser video output
-            video_queue = asyncio.Queue()
-
             async def collect_browser_content():
                 async for outputs, content in self._process_playwright_input_stream(
                     initial_request,
                     request_iterator,
                     display,
-                    ffmpeg_process,
                 ):
                     await content_queue.put((outputs, content))
                 await content_queue.put(SENTINAL)
-
-            async def read_video_output():
-                while True and ffmpeg_process:
-                    try:
-                        chunk = ffmpeg_process.stdout.read(1024 * 3)
-                        if len(chunk) == 0:
-                            break
-                        await video_queue.put(chunk)
-                    except Exception as e:
-                        logger.error(e)
-                        break
-                await video_queue.put(SENTINAL)
-
-            # Start a task to read the video output from ffmpeg
-            video_future = executor.submit(
-                run_async_code,
-                asyncio.new_event_loop(),
-                read_video_output,
-            )
 
             # Submit the function to the executor and get a Future object
             content_future = executor.submit(
@@ -437,7 +382,7 @@ class Playwright:
             try:
                 yield PlaywrightBrowserResponse(state=RemoteBrowserState.RUNNING)
 
-                while not browser_done and not video_done:
+                while not browser_done:
                     try:
                         item = content_queue.get_nowait()
                         if item is SENTINAL:
@@ -462,27 +407,8 @@ class Playwright:
                     except asyncio.QueueEmpty:
                         pass
 
-                    try:
-                        chunk = video_queue.get_nowait()
-                        if chunk is SENTINAL:
-                            video_done = True
-                            break
-                        if initial_request.stream_video:
-                            yield PlaywrightBrowserResponse(video=chunk)
-                    except asyncio.QueueEmpty:
-                        pass
-
-                    if content_future.done() or video_future.done() or browser_done or video_done:
+                    if content_future.done() or browser_done:
                         break
-
-                # Check if we have any data left in the video queue
-                while not video_queue.empty():
-                    chunk = video_queue.get_nowait()
-                    if chunk is SENTINAL:
-                        video_done = True
-                        break
-                    if initial_request.stream_video:
-                        yield PlaywrightBrowserResponse(video=chunk)
 
                 yield PlaywrightBrowserResponse(
                     state=RemoteBrowserState.TERMINATED,
