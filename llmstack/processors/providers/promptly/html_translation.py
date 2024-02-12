@@ -1,3 +1,4 @@
+import concurrent.futures
 import json
 import logging
 import uuid
@@ -21,42 +22,6 @@ ELEMENT_WITH_ATTRIBUTE = namedtuple("ElementWithAttribute", ["id", "element", "a
 logger = logging.getLogger(__name__)
 
 
-def are_htmls_equal(html1, html2):
-    from bs4 import BeautifulSoup
-
-    # Parse HTML documents using BeautifulSoup
-    soup1 = BeautifulSoup(html1, "html.parser")
-    soup2 = BeautifulSoup(html2, "html.parser")
-
-    # Extract HTML content
-    content1 = soup1.prettify()
-    content2 = soup2.prettify()
-
-    # Compare HTML content
-    return content1 == content2
-
-
-def print_html_diff(html1, html2):
-    from difflib import unified_diff
-
-    from bs4 import BeautifulSoup
-
-    # Parse HTML documents using BeautifulSoup
-    soup1 = BeautifulSoup(html1, "html.parser")
-    soup2 = BeautifulSoup(html2, "html.parser")
-
-    # Extract HTML content
-    content1 = soup1.prettify()
-    content2 = soup2.prettify()
-
-    # Get the unified diff between the two HTML contents
-    diff = unified_diff(content1.splitlines(), content2.splitlines())
-
-    # Print the differences
-    for line in diff:
-        print(line)
-
-
 def has_non_text_nodes(element):
     return any(child for child in element.contents if child.name is not None)
 
@@ -73,6 +38,8 @@ class HTMLTranslationInput(ApiProcessorSchema):
 
 class HTMLTranslationOutput(ApiProcessorSchema):
     translated_html: Optional[str] = Field(description="Translated HTML", widget="textarea")
+    total_extracted_strings: Optional[int] = Field(description="Total extracted strings")
+    total_translated_strings: Optional[int] = Field(description="Total translated strings")
 
 
 class HTMLSelectorAttribute(BaseSchema):
@@ -81,12 +48,12 @@ class HTMLSelectorAttribute(BaseSchema):
 
 
 class HTMLTranslationConfiguration(ApiProcessorSchema):
-    system_message: str = Field(description="System message to use for LLM", default="You are a language translator.")
-
-    chunk_size: int = Field(
-        description="Chunk size for translation",
-        default=5000,
+    system_message: str = Field(
+        description="System message to use for LLM", default="You are a language translator.", advanced_parameter=False
     )
+
+    chunk_size: int = Field(description="Chunk size for translation", default=1000, advanced_parameter=False)
+
     html_selectors: List[str] = Field(
         description="List of HTML selectors to translate",
         default=["p", "h1", "h2", "h3", "h4", "h5", "h6", "a", "span", "li", "td", "th", "caption", "label"],
@@ -100,6 +67,12 @@ class HTMLTranslationConfiguration(ApiProcessorSchema):
         description="Placeholder variable to replace in the processed text",
         default="<CHUNK_PLACEHOLDER>",
         advanced_parameter=True,
+    )
+    max_parallel_requests: int = Field(
+        description="Max parallel requests to make to the translation provider",
+        default=4,
+        advanced_parameter=True,
+        le=10,
     )
 
 
@@ -149,7 +122,6 @@ class HTMLTranslationProcessor(
             max_tokens=3000,
             response_format={"type": "json_object"},
         )
-        logger.info(result)
         return json.loads(result.choices[0].message.content)
 
     def _get_elements_with_text(self, html_element: BeautifulSoup) -> List[str]:
@@ -182,6 +154,8 @@ class HTMLTranslationProcessor(
         return result
 
     def process(self) -> dict:
+        total_extracted_strings = 0
+        total_translated_strings = 0
         output_stream = self._output_stream
         html_input = self._input.html
 
@@ -198,17 +172,33 @@ class HTMLTranslationProcessor(
         orignal_text = dict((str(element.id), element.text) for element in selector_elements)
         nodes = dict((str(element.id), element) for element in selector_elements)
         processed_text = {}
+        total_extracted_strings += len(orignal_text)
+
+        async_to_sync(output_stream.write)(
+            HTMLTranslationOutput(total_extracted_strings=total_extracted_strings),
+        )
 
         orignal_text_chunks = self._split_element_text_dict(orignal_text)
 
-        for chunk in orignal_text_chunks:
-            processed_chunk = self._translate_with_provider(json.dumps(chunk))
-            for key, value in chunk.items():
-                processed_text[key] = processed_chunk[key] if key in processed_chunk else value
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self._config.max_parallel_requests) as executor:
+            futures = [
+                executor.submit(self._translate_with_provider, json.dumps(chunk)) for chunk in orignal_text_chunks
+            ]
 
-        logger.info(f"Processed text: {processed_text}")
+            for future_result in concurrent.futures.as_completed(futures):
+                try:
+                    total_translated_strings += len(future_result.result())
+                    async_to_sync(output_stream.write)(
+                        HTMLTranslationOutput(total_translated_strings=total_translated_strings),
+                    )
+                    for key, value in future_result.result().items():
+                        processed_text[key] = value
+                except Exception as e:
+                    logger.error(f"Error: {e}")
 
         assert len(processed_text) == len(orignal_text)
+        logger.info(f"Processed text: {len(processed_text)}, original text: {len(orignal_text)}")
+
         for id, value in processed_text.items():
             if id in nodes:
                 if nodes[id].element.parent and len(nodes[id].element.parent.contents) == 1:
@@ -220,6 +210,12 @@ class HTMLTranslationProcessor(
 
                 else:
                     nodes[id].element.string = value
+
+        async_to_sync(output_stream.write)(
+            HTMLTranslationOutput(
+                text_translations=list(processed_text.values()), text_translations_length=len(processed_text)
+            ),
+        )
 
         #  Translate attributes
 
@@ -240,12 +236,28 @@ class HTMLTranslationProcessor(
         orignal_text = dict((str(element.id), element.text) for element in selector_elements_with_attribute_text)
         nodes = dict((str(element.id), element) for element in selector_elements_with_attribute_text)
         processed_text = {}
+        total_extracted_strings += len(orignal_text)
+
+        async_to_sync(output_stream.write)(
+            HTMLTranslationOutput(total_extracted_strings=total_extracted_strings),
+        )
 
         orignal_text_chunks = self._split_element_text_dict(orignal_text)
-        for chunk in orignal_text_chunks:
-            processed_chunk = self._translate_with_provider(json.dumps(chunk))
-            for key, value in chunk.items():
-                processed_text[key] = processed_chunk[key] if key in processed_chunk else value
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self._config.max_parallel_requests) as executor:
+            futures = [
+                executor.submit(self._translate_with_provider, json.dumps(chunk)) for chunk in orignal_text_chunks
+            ]
+
+            for future_result in concurrent.futures.as_completed(futures):
+                try:
+                    total_translated_strings += len(future_result.result())
+                    async_to_sync(output_stream.write)(
+                        HTMLTranslationOutput(total_translated_strings=total_translated_strings),
+                    )
+                    for key, value in future_result.result().items():
+                        processed_text[key] = value
+                except Exception as e:
+                    logger.error(f"Error: {e}")
 
         assert len(processed_text) == len(orignal_text)
 
