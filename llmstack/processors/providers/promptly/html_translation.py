@@ -197,7 +197,6 @@ class HTMLTranslationProcessor(
                     logger.error(f"Error: {e}")
 
         assert len(processed_text) == len(orignal_text)
-        logger.info(f"Processed text: {len(processed_text)}, original text: {len(orignal_text)}")
 
         for id, value in processed_text.items():
             if id in nodes:
