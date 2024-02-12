@@ -171,101 +171,48 @@ class HtmlSplitter(TextSplitter):
         self,
         chunk_size: int = 500,
         length_function: Any = len,
+        non_breaking_tags=["ul", "ol", "a", "li", "p", "h1", "h2", "h3", "h4", "h5", "h6", "img"],
         **kwargs,
     ):
         self._keep_script = kwargs.get("keep_script", True)
-        self._is_html_fragment = kwargs.get("is_html_fragment", False)
+        self._non_breaking_tags = non_breaking_tags
         super().__init__(chunk_size, chunk_overlap=0, length_function=length_function)
 
-    def _merge_list_elements(self, elements, n):
-        # Merge elements into chunks of size n or less
+    def _split_html(self, element):
+        from bs4 import Comment
+
+        if self._length_function(str(element)) <= self._chunk_size:
+            return [str(element)]
+
+        if element.name in self._non_breaking_tags:
+            return [str(element)]
+
+        if isinstance(element, Comment):
+            return [str(element)]
+
         chunks = []
-        current_chunk = ""
-        for element in elements:
-            if len(current_chunk) + len(element) <= n:
-                current_chunk += element
+        parent_tags = None
+
+        if len(list(element.children)):
+            parent_tags = str(element).split("".join([str(child) for child in element.children]))
+            if len(parent_tags) != 2:
+                raise Exception("Error in processing HTML")
+            chunks.append(parent_tags[0])
+
+        for child in element.children:
+            if child.name:
+                chunks.extend(self._split_html(child))
             else:
-                chunks.append(current_chunk)
-                current_chunk = element
-        if len(current_chunk) > 0:
-            chunks.append(current_chunk)
+                chunks.append(str(child))
+
+        if parent_tags:
+            chunks.append(parent_tags[1])
 
         return chunks
 
-    def _get_html_elements_recursive(self, element, max_length):
-        import lxml
-
-        if element.tag == lxml.etree.Comment:
-            return [lxml.html.tostring(element).decode("utf-8")]
-
-        if len(lxml.html.tostring(element).decode("utf-8")) <= max_length:
-            return [lxml.html.tostring(element).decode("utf-8")]
-
-        if element.tag == "p":
-            return [lxml.html.tostring(element).decode("utf-8")]
-
-        # If string representation of element is less than max_length, return
-        # it
-        attribute_list = []
-        for k, v in element.items():
-            if '"' in v:
-                attribute_list.append(f"{k}={v}")
-            else:
-                attribute_list.append(f'{k}="{v}"')
-
-        # Append opening tag with attributes
-        attributes = " ".join(attribute_list)
-
-        html_elements = (
-            [f"<{element.tag} {attributes}>"]
-            if len(attributes) > 0
-            else [
-                f"<{element.tag}>",
-            ]
-        )
-
-        html_elements.append(element.text or "")
-        # Recursively iterate through children
-        child_html_elements = []
-        for child in element.iterchildren():
-            child_elements = self._get_html_elements_recursive(
-                child,
-                max_length,
-            )
-            if len("".join(child_elements)) <= max_length:
-                child_elements = ["".join(child_elements)]
-            child_html_elements += child_elements
-
-        if len("".join(child_html_elements)) <= max_length:
-            html_elements = [
-                html_elements[0],
-                html_elements[1],
-                "".join(child_html_elements),
-            ]
-        else:
-            for e in child_html_elements:
-                html_elements.append(e)
-        html_elements.append(f"</{element.tag}>")
-        html_elements.append(element.tail or "")
-        return html_elements
-
     def split_text(self, text: str) -> List[str]:
-        import lxml.etree
-        import lxml.html
+        from bs4 import BeautifulSoup
 
-        if self._is_html_fragment:
-            result = []
-            for fragment in lxml.html.fragments_fromstring(text):
-                result.extend(
-                    self._get_html_elements_recursive(
-                        fragment,
-                        self._chunk_size,
-                    ),
-                )
-
-            return self._merge_list_elements(result, self._chunk_size)
-        else:
-            return self._get_html_elements_recursive(
-                lxml.html.fromstring(text),
-                self._chunk_size,
-            )
+        soup = BeautifulSoup(text, "html.parser")
+        html_chunks = self._split_html(soup)
+        return self._merge_chunks(html_chunks, separator="")
