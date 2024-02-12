@@ -70,9 +70,7 @@ class ReduceProcessor(
         if self._input.input_list:
             input_list = self._input.input_list
         elif self._input.input:
-            if not isinstance(self._input.input, list):
-                input_list = [self._input.input]
-            input_list = self._input.input
+            input_list = eval(self._input.input)
 
         if isinstance(reducer, PythonLambdaFn):
             output = None
@@ -87,7 +85,6 @@ class ReduceProcessor(
             output = None
             env = jinja2.Environment()
             template_str = "{{ input_list | " + reducer.jinja_expression + " }}"
-            logger.info(f"template_str: {template_str}")
             template = env.from_string(template_str)
             output = template.render(input_list=input_list)
 

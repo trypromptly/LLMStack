@@ -14,11 +14,6 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class PromptlyApp(BaseModel):
-    mapper_type: Literal["promptly_app"] = "promptly_app"
-    published_app_id: str
-
-
 class PythonLambdaFn(BaseModel):
     mapper_type: Literal["python_lambda"] = "python_lambda"
     lambda_expr: str = Field(default="lambda x: x.upper()")
@@ -40,9 +35,7 @@ class MapProcessorOutput(ApiProcessorSchema):
 
 
 class MapProcessorConfiguration(ApiProcessorSchema):
-    mapper: Union[JinjaMapperFilter, PythonLambdaFn, PromptlyApp] = Field(
-        discriminator="mapper_type", advanced_parameter=False
-    )
+    mapper: Union[JinjaMapperFilter, PythonLambdaFn] = Field(discriminator="mapper_type", advanced_parameter=False)
 
 
 class MapProcessor(
@@ -76,9 +69,7 @@ class MapProcessor(
         if self._input.input_list:
             input_list = self._input.input_list
         elif self._input.input:
-            if not isinstance(self._input.input, list):
-                input_list = [self._input.input]
-            input_list = self._input.input
+            input_list = eval(self._input.input)
 
         if isinstance(mapper, PythonLambdaFn):
             output_list = []
@@ -96,24 +87,6 @@ class MapProcessor(
 
             output_list = eval(template.render(input_list=input_list))
             output_list = [str(x) for x in output_list]
-        elif isinstance(mapper, PromptlyApp):
-            import requests
-
-            promptly_token = self._env["promptly_token"]
-            url = f"https://www.trypromptly.com/api/apps/{mapper.published_app_id}/run"
-
-            headers = {
-                "Authorization": f"Bearer {promptly_token}",
-                "Content-Type": "application/json",
-            }
-            if self._input.input:
-                input_list = self._input.input
-            else:
-                input_list = self._input.input_list
-            for item in input_list:
-                payload = {"input": item, "stream": False}
-                response = requests.post(url, headers=headers, json=payload)
-                output_list.append(response.json())
 
         else:
             raise ValueError("Invalid mapper type")
