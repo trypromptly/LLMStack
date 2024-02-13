@@ -208,7 +208,7 @@ class WebBrowser(
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
-            markdown="""![video](data:videostream/output._video)
+            markdown="""<promptly-web-browser-embed wsUrl="{{session.ws_url}}" />
 
 {{text}}
 """,
@@ -416,16 +416,6 @@ class WebBrowser(
                     },
                 )
                 break
-            elif response.video:
-                # Send base64 encoded video
-                async_to_sync(
-                    output_stream.write,
-                )(
-                    WebBrowserOutput(
-                        text="",
-                        video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}",
-                    ),
-                )
             elif response.session and response.session.ws_url:
                 # Send session info to the client
                 async_to_sync(
@@ -569,17 +559,7 @@ class WebBrowser(
                 # Get the next response from the browser and generate the next
                 # set of instructions
                 for response in playwright_response_iter:
-                    if response.video:
-                        # Send base64 encoded video
-                        async_to_sync(
-                            output_stream.write,
-                        )(
-                            WebBrowserOutput(
-                                text="",
-                                video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}",
-                            ),
-                        )
-                    elif response.content.text or response.content.screenshot:
+                    if response.content.text or response.content.screenshot:
                         browser_text_response = self._process_browser_content(
                             response,
                         )
@@ -608,10 +588,6 @@ class WebBrowser(
                         )
                         break
                     else:
-                        self._terminated = True
-                        break
-
-                    if response.state == runner_pb2.TERMINATED:
                         output_text = "".join(
                             [x.text for x in response.outputs],
                         )

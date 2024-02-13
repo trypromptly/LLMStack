@@ -1,4 +1,3 @@
-import base64
 import logging
 from typing import List, Optional
 
@@ -17,6 +16,7 @@ from llmstack.processors.providers.api_processor_interface import (
 from llmstack.processors.providers.promptly.web_browser import (
     BrowserInstruction,
     BrowserInstructionType,
+    BrowserRemoteSessionData,
     WebBrowserOutput,
 )
 
@@ -77,7 +77,7 @@ class StaticWebBrowser(
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
-            markdown="""![video](data:videostream/output._video)
+            markdown="""<promptly-web-browser-embed wsUrl="{{session.ws_url}}" />
 
 {{text}}
 """,
@@ -159,6 +159,17 @@ class StaticWebBrowser(
                 self._request_iterator(),
             )
             for response in playwright_response_iter:
+                if response.session and response.session.ws_url:
+                    # Send session info to the client
+                    async_to_sync(
+                        output_stream.write,
+                    )(
+                        WebBrowserOutput(
+                            session=BrowserRemoteSessionData(
+                                ws_url=response.session.ws_url,
+                            ),
+                        ),
+                    )
                 if response.content:
                     response_content = MessageToDict(response.content)
                     if response_content:
@@ -170,16 +181,6 @@ class StaticWebBrowser(
                         output_text = response.content.text
                     break
 
-                if response.video:
-                    # Send base64 encoded video
-                    async_to_sync(
-                        output_stream.write,
-                    )(
-                        WebBrowserOutput(
-                            text="",
-                            video=f"data:videostream;name=browser;base64,{base64.b64encode(response.video).decode('utf-8')}",
-                        ),
-                    )
         except Exception as e:
             logger.exception(e)
 
