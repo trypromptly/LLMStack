@@ -588,11 +588,6 @@ class WebBrowser(
                         )
                         break
                     else:
-                        output_text = "".join(
-                            [x.text for x in response.outputs],
-                        )
-                        if not output_text:
-                            output_text = response.content.text
                         self._terminated = True
                         break
 
