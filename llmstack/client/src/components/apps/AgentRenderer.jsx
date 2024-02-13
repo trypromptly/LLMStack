@@ -75,7 +75,7 @@ const StepMessageContent = React.memo(({ messageId, step, app }) => {
         <AceEditor
           mode="json"
           theme="dracula"
-          value={step.arguments}
+          value={step.arguments.replaceAll("\\n", "\n")}
           editorProps={{ $blockScrolling: true }}
           setOptions={{
             useWorker: false,
