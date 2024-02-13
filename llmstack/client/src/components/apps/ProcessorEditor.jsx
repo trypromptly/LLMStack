@@ -388,8 +388,9 @@ export function ProcessorEditor({
               aria-controls="config-content"
               id="config-header"
               style={{ backgroundColor: "#dce8fb" }}
+              className="app-editor-section-header"
             >
-              <Typography>Output Template</Typography>
+              Output Template
             </AccordionSummary>
             <AccordionDetails>
               <TextFieldWithVars

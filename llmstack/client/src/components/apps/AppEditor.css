@@ -1,4 +1,5 @@
 .app-editor-section-header {
-  background-color: #dce8fb;
-  padding-left: 16px;
+  background-color: #edeff7 !important;
+  padding-left: 16px !important;
+  font-weight: 600;
 }
