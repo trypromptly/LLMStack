@@ -214,6 +214,7 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
   const [appSessionId, setAppSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [errors, setErrors] = useState(null);
+  const [autoScroll, setAutoScroll] = useState(true);
   const [showChat, setShowChat] = useState(!embed);
   const [chatBubbleStyle, setChatBubbleStyle] = useState({
     backgroundColor: app?.data?.config?.window_color || "#0f477e",
@@ -498,6 +499,7 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
 
   const runApp = (input) => {
     setErrors(null);
+    setAutoScroll(true);
     setMessages([...messages, { role: "user", content: input }]);
 
     chunkedOutput.current = {};
@@ -524,8 +526,31 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
 
   useEffect(() => {
     const messagesDiv = document.getElementById("messages");
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }, [messages]);
+
+    if (autoScroll) {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  }, [messages, autoScroll]);
+
+  // Figure out the direction of the scroll. If the user has scrolled up, disable auto scroll
+  useEffect(() => {
+    const messagesDiv = document.getElementById("messages");
+    const handleScroll = () => {
+      if (
+        messagesDiv.scrollTop + messagesDiv.clientHeight + 5 <
+        messagesDiv.scrollHeight
+      ) {
+        setAutoScroll(false);
+      } else {
+        setAutoScroll(true);
+      }
+    };
+
+    messagesDiv.addEventListener("scroll", handleScroll);
+    return () => {
+      messagesDiv.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   return (
     <>

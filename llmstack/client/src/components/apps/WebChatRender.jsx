@@ -10,7 +10,7 @@ import React, { useEffect, useRef, useState } from "react";
 import ReactGA from "react-ga4";
 import { useSetRecoilState } from "recoil";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
-import { streamChunksState } from "../../data/atoms";
+import { isLoggedInState, streamChunksState } from "../../data/atoms";
 import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { Errors } from "../Output";
@@ -121,6 +121,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
     right: 16,
     bottom: 16,
   });
+  const [autoScroll, setAutoScroll] = useState(true);
   const setStreamChunks = useSetRecoilState(streamChunksState);
   const templateEngine = new Liquid();
   const outputTemplate = templateEngine.parse(
@@ -308,6 +309,7 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
 
   const runApp = (input) => {
     setErrors(null);
+    setAutoScroll(true);
     setMessages([...messages, { role: "user", content: input }]);
 
     streamStarted.current = false;
@@ -335,8 +337,31 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
 
   useEffect(() => {
     const messagesDiv = document.getElementById("messages");
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }, [messages]);
+
+    if (autoScroll) {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  }, [messages, autoScroll]);
+
+  // Figure out the direction of the scroll. If the user has scrolled up, disable auto scroll
+  useEffect(() => {
+    const messagesDiv = document.getElementById("messages");
+    const handleScroll = () => {
+      if (
+        messagesDiv.scrollTop + messagesDiv.clientHeight + 5 <
+        messagesDiv.scrollHeight
+      ) {
+        setAutoScroll(false);
+      } else {
+        setAutoScroll(true);
+      }
+    };
+
+    messagesDiv.addEventListener("scroll", handleScroll);
+    return () => {
+      messagesDiv.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   return (
     <>
