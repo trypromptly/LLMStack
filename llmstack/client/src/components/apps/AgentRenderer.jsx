@@ -46,6 +46,15 @@ const getProcessorInfoFromId = (app, id) => {
   };
 };
 
+// A util function to format incomplete JSON strings
+const formatJSON = (jsonString) => {
+  try {
+    return JSON.stringify(JSON.parse(jsonString), null, 2);
+  } catch (e) {
+    return jsonString;
+  }
+};
+
 const StepMessageContent = React.memo(({ messageId, step, app }) => {
   if (!step) {
     return null;
@@ -75,12 +84,13 @@ const StepMessageContent = React.memo(({ messageId, step, app }) => {
         <AceEditor
           mode="json"
           theme="dracula"
-          value={step.arguments.replaceAll("\\n", "\n")}
-          editorProps={{ $blockScrolling: true }}
+          value={formatJSON(step.arguments.replaceAll("\\n", "\n"))}
+          editorProps={{ $blockScrolling: true, $onChangeWrapLimit: 80 }}
           setOptions={{
             useWorker: false,
             showGutter: false,
             maxLines: Infinity,
+            wrap: true,
           }}
           style={{
             marginBottom: 10,
