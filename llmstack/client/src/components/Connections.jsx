@@ -2,7 +2,6 @@ import { AddOutlined } from "@mui/icons-material";
 import { Button, Stack, Typography } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
 import { useState } from "react";
-import ReactGA from "react-ga4";
 import { useRecoilCallback } from "recoil";
 import { connectionsState } from "../data/atoms";
 import { axios } from "../data/axios";
@@ -28,62 +27,6 @@ function Connections() {
         });
       });
   });
-
-  const saveConnection = (conn) => {
-    return new Promise((resolve, reject) => {
-      if (!conn || Object.keys(conn).length === 0) {
-        enqueueSnackbar("Invalid connection information provided", {
-          variant: "error",
-        });
-        reject(new Error("Invalid connection information provided"));
-        return;
-      }
-
-      if (conn.id) {
-        // Update existing connection
-        axios()
-          .patch(`/api/connections/${conn.id}`, conn)
-          .then((res) => {
-            enqueueSnackbar("Connection updated successfully", {
-              variant: "success",
-            });
-            reloadConnections();
-            resolve(res.data);
-          })
-          .catch((err) => {
-            enqueueSnackbar("Error updating connection", {
-              variant: "error",
-            });
-            reject(err);
-          });
-      } else {
-        // Create new connection
-        axios()
-          .post("/api/connections", conn)
-          .then((res) => {
-            enqueueSnackbar("Connection created successfully", {
-              variant: "success",
-            });
-            reloadConnections();
-            resolve(res.data);
-          })
-          .catch((err) => {
-            console.log(err);
-            enqueueSnackbar("Error creating connection", {
-              variant: "error",
-            });
-            reject(err);
-          });
-
-        ReactGA.event({
-          category: "Connections",
-          action: "Create Connection",
-          label: conn.connection_type_slug,
-          transport: "beacon",
-        });
-      }
-    });
-  };
 
   const deleteConnection = (conn) => {
     return new Promise((resolve, reject) => {
@@ -147,7 +90,6 @@ function Connections() {
           setOpenConnectionModal(false);
           setConnection(null);
         }}
-        onSaveCb={(conn) => saveConnection(conn)}
       />
       <DeleteConnectionModal
         open={deleteConnectionModal}

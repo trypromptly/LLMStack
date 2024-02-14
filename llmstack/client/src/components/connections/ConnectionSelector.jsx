@@ -1,15 +1,20 @@
-import { Autocomplete, TextField } from "@mui/material";
+import { useState } from "react";
+import { Autocomplete, Button, TextField } from "@mui/material";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import FormControl from "@mui/material/FormControl";
 import { useRecoilValue } from "recoil";
 import { connectionsState } from "../../data/atoms";
+import AddConnectionModal from "./AddConnectionModal";
 
 function ConnectionSelector(props) {
   const connections = useRecoilValue(connectionsState);
+  const [showAddConnectionModal, setShowAddConnectionModal] = useState(false);
 
   return (
-    <FormControl fullWidth>
+    <FormControl fullWidth sx={{ display: "flex", flexFlow: "nowrap" }}>
       <Autocomplete
         id="connection-selector"
+        sx={{ width: "100%" }}
         options={connections}
         getOptionLabel={(option) => {
           const connection = connections.find(
@@ -38,6 +43,24 @@ function ConnectionSelector(props) {
         )}
         onChange={(event, value) => {
           props.onChange(value?.id);
+        }}
+      />
+      <Button
+        onClick={() => setShowAddConnectionModal(true)}
+        variant="contained"
+        sx={{
+          marginLeft: "5px",
+          height: "40px",
+          margin: "auto",
+        }}
+      >
+        <AddCircleOutlineIcon />
+      </Button>
+      <AddConnectionModal
+        open={showAddConnectionModal}
+        connection={null}
+        onCancelCb={() => {
+          setShowAddConnectionModal(false);
         }}
       />
     </FormControl>

@@ -11,18 +11,20 @@ import {
   MenuItem,
   Select,
   TextField,
+  Typography,
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useRecoilCallback, useRecoilValue } from "recoil";
 import { connectionsState, connectionTypesState } from "../../data/atoms";
+import ReactGA from "react-ga4";
 import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { RemoteBrowser } from "./RemoteBrowser";
 
-function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
+function AddConnectionModal({ open, onCancelCb, connection }) {
   const connectionTypes = useRecoilValue(connectionTypesState);
   const [connectionType, setConnectionType] = useState(
     connectionTypes[0] || "",
@@ -54,6 +56,62 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
         });
       });
   });
+
+  const saveConnection = (conn) => {
+    return new Promise((resolve, reject) => {
+      if (!conn || Object.keys(conn).length === 0) {
+        enqueueSnackbar("Invalid connection information provided", {
+          variant: "error",
+        });
+        reject(new Error("Invalid connection information provided"));
+        return;
+      }
+
+      if (conn.id) {
+        // Update existing connection
+        axios()
+          .patch(`/api/connections/${conn.id}`, conn)
+          .then((res) => {
+            enqueueSnackbar("Connection updated successfully", {
+              variant: "success",
+            });
+            reloadConnections();
+            resolve(res.data);
+          })
+          .catch((err) => {
+            enqueueSnackbar("Error updating connection", {
+              variant: "error",
+            });
+            reject(err);
+          });
+      } else {
+        // Create new connection
+        axios()
+          .post("/api/connections", conn)
+          .then((res) => {
+            enqueueSnackbar("Connection created successfully", {
+              variant: "success",
+            });
+            reloadConnections();
+            resolve(res.data);
+          })
+          .catch((err) => {
+            console.log(err);
+            enqueueSnackbar("Error creating connection", {
+              variant: "error",
+            });
+            reject(err);
+          });
+
+        ReactGA.event({
+          category: "Connections",
+          action: "Create Connection",
+          label: conn.connection_type_slug,
+          transport: "beacon",
+        });
+      }
+    });
+  };
 
   const validateForm = () => {
     let errors = [];
@@ -92,7 +150,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
       return;
     }
 
-    onSaveCb(conn).then((res) => {
+    saveConnection(conn).then((res) => {
       setConnectionName("");
       setConnectionDescription("");
       setConfigFormData({});
@@ -108,7 +166,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
     }
 
     // Save connection before testing
-    onSaveCb(conn).then((res) => {
+    saveConnection(conn).then((res) => {
       setLocalConnection(res);
 
       if (res.id) {
@@ -214,7 +272,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
                 if (!validateForm()) {
                   return;
                 }
-                onSaveCb({
+                saveConnection({
                   ...connection,
                   ...localConnection,
                   ...{
@@ -240,7 +298,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
                 if (!validateForm()) {
                   return;
                 }
-                onSaveCb({
+                saveConnection({
                   ...connection,
                   ...localConnection,
                   ...{
@@ -324,7 +382,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
                 if (!validateForm()) {
                   return;
                 }
-                onSaveCb({
+                saveConnection({
                   ...connection,
                   ...localConnection,
                   ...{
@@ -336,9 +394,11 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
                 }).then((conn) => {
                   setLocalConnection(conn);
                   if (conn.id) {
-                    onSaveCb({ ...conn, ...{ status: "Active" } }).then(() => {
-                      onCancelCb();
-                    });
+                    saveConnection({ ...conn, ...{ status: "Active" } }).then(
+                      () => {
+                        onCancelCb();
+                      },
+                    );
                   }
                 });
               }}
@@ -427,7 +487,7 @@ function AddConnectionModal({ open, onCancelCb, onSaveCb, connection }) {
               ))}
           </Select>
         </FormControl>
-        <InputLabel>Configuration</InputLabel>
+        <Typography variant="h5">Configuration</Typography>
         {connectionType?.base_connection_type === "oauth2" ? (
           <div>
             <TextField
