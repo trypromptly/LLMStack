@@ -208,9 +208,10 @@ class WebBrowser(
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
-            markdown="""<promptly-web-browser-embed wsUrl="{{session.ws_url}}" />
-
+            markdown="""
 {{text}}
+
+<promptly-web-browser-embed wsUrl="{{session.ws_url}}" />
 """,
         )
 
