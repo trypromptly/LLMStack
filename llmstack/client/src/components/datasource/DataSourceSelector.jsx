@@ -1,5 +1,5 @@
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import { Autocomplete, TextField } from "@mui/material";
+import { Autocomplete, Button, TextField } from "@mui/material";
 import FormControl from "@mui/material/FormControl";
 import { useState } from "react";
 import { useRecoilValue } from "recoil";
@@ -20,10 +20,11 @@ export function DataSourceSelector(props) {
   );
 
   return (
-    <FormControl fullWidth>
+    <FormControl fullWidth sx={{ display: "flex", flexFlow: "nowrap" }}>
       <Autocomplete
         multiple={props.multiple === undefined ? true : props.multiple}
         id="datasource-selector"
+        sx={{ width: "100%" }}
         options={[...uniqueDataSources]}
         getOptionLabel={(option) => {
           const dataSource = uniqueDataSources.find(
@@ -49,7 +50,7 @@ export function DataSourceSelector(props) {
         renderInput={(params) => (
           <TextField
             {...params}
-            variant="standard"
+            variant="outlined"
             label="Data Sources"
             placeholder="Data Sources"
           />
@@ -68,12 +69,17 @@ export function DataSourceSelector(props) {
           }
         }}
       />
-      <button
+      <Button
         onClick={() => setShowAddDataSourceModal(true)}
-        style={{ backgroundColor: "#6287ac", color: "#fed766" }}
+        variant="contained"
+        sx={{
+          marginLeft: "5px",
+          height: "40px",
+          margin: "auto",
+        }}
       >
         <AddCircleOutlineIcon />
-      </button>
+      </Button>
       <AddDataSourceModal
         open={showAddDataSourceModal}
         handleCancelCb={() => setShowAddDataSourceModal(false)}
