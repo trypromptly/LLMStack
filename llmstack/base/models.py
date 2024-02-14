@@ -509,6 +509,19 @@ class AbstractProfile(models.Model):
         cipher = Profile.get_cipher(str(self.uuid), self.salt())
         return cipher.decrypt(value).decode()
 
+    @property
+    def encrypted_uuid(self):
+        salt_key = settings.CIPHER_KEY_SALT.encode("utf-8")
+        cipher = Profile.get_cipher("", salt_key)
+        return cipher.encrypt(str(self.uuid).encode()).decode()
+
+    @classmethod
+    def get_by_encrypted_uuid(cls, encrypted_uuid):
+        salt_key = settings.CIPHER_KEY_SALT.encode("utf-8")
+        cipher = Profile.get_cipher("", salt_key)
+        uuid = cipher.decrypt(encrypted_uuid.encode()).decode()
+        return cls.objects.get(uuid=uuid)
+
 
 class DefaultProfile(AbstractProfile):
     class Meta:
