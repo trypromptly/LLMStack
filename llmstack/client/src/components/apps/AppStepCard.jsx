@@ -111,7 +111,6 @@ export function AppStepCard({
               value={descriptionInput}
               onChange={(e) => {
                 setDescriptionInput(e.target.value);
-                setDescription(e.target.value);
               }}
               sx={{
                 width: "100%",
@@ -125,6 +124,7 @@ export function AppStepCard({
               onBlur={() => setShowDescriptionEditor(false)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
+                  setDescription(e.target.value);
                   setShowDescriptionEditor(false);
                 }
               }}
