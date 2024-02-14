@@ -10,7 +10,7 @@ import React, { useEffect, useRef, useState } from "react";
 import ReactGA from "react-ga4";
 import { useSetRecoilState } from "recoil";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
-import { isLoggedInState, streamChunksState } from "../../data/atoms";
+import { streamChunksState } from "../../data/atoms";
 import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { Errors } from "../Output";
