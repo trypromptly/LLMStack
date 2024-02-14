@@ -45,6 +45,8 @@ class AgentConfigSchema(BaseSchema):
         default=10,
         description="The maximum number of steps the agent can take.",
         advanced_parameter=True,
+        le=100,
+        ge=1,
     )
     split_tasks: bool = Field(
         title="Split Tasks",
