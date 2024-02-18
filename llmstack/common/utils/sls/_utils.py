@@ -1,5 +1,46 @@
 import copy
+import json as jsonlib
 from typing import Any, Dict, Literal
+
+from openai._utils import is_mapping  # type: ignore # noqa: F401
+
+
+class LLMHttpResponse:
+    def __init__(self, response, json):
+        self._response = response
+        self.elapsed = response.elapsed
+        self.request = response.request
+        self.http_version = response.http_version
+        self.reason_phrase = response.reason_phrase
+        self.url = response.url
+
+        self.text = jsonlib.dumps(json)
+        self.content = self.text.encode(response.encoding)
+        self._json = json
+
+        self.encoding = response.encoding
+        self.charset_encoding = response.charset_encoding
+        self.is_informational = response.is_informational
+        self.is_success = response.is_success
+        self.is_redirect = response.is_redirect
+        self.is_client_error = response.is_client_error
+        self.is_server_error = response.is_server_error
+        self.is_error = response.is_error
+        self.has_redirect_location = response.has_redirect_location
+        self.raise_for_status = response.raise_for_status
+        self.cookies = response.cookies
+        self.links = response.links
+        self.num_bytes_downloaded = response.num_bytes_downloaded
+        self.headers = response.headers
+
+    def __repr__(self):
+        return f"<LLMResponse [{self.response.status_code}]>"
+
+    def json(self):
+        return self._json
+
+    def read(self):
+        return self.content
 
 
 def _convert_schema_dict_to_gapic(schema_dict: Dict[str, Any]):
