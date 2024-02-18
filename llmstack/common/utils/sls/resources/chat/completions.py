@@ -6,14 +6,15 @@ from openai._compat import cached_property
 from openai._streaming import Stream as Stream
 from openai._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from openai._utils import maybe_transform
-from openai.resources import AsyncCompletions as OpenAIAsyncCompletions
-from openai.resources import Completions as OpenAICompletions
+from openai.resources.chat import AsyncCompletions as OpenAIAsyncCompletions
+from openai.resources.chat import Completions as OpenAICompletions
 from openai.resources.chat import (
     CompletionsWithRawResponse,
     CompletionsWithStreamingResponse,
 )
 from openai.types import chat, completion_create_params
 
+from ..._utils import required_args
 from ...types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
 __all__ = ["Completions", "AsyncCompletions"]
@@ -28,6 +29,7 @@ class Completions(OpenAICompletions):
     def with_streaming_response(self) -> CompletionsWithStreamingResponse:
         return CompletionsWithStreamingResponse(self)
 
+    @required_args(["messages", "model"], ["messages", "model", "stream"])
     def create(
         self,
         *,
@@ -35,6 +37,10 @@ class Completions(OpenAICompletions):
         model: Union[
             str,
             Literal[
+                "gpt-4-0125-preview",
+                "gpt-4-turbo-preview",
+                "gpt-4-1106-preview",
+                "gpt-4-vision-preview",
                 "gpt-4",
                 "gpt-4-0314",
                 "gpt-4-0613",
@@ -45,6 +51,8 @@ class Completions(OpenAICompletions):
                 "gpt-3.5-turbo-16k",
                 "gpt-3.5-turbo-0301",
                 "gpt-3.5-turbo-0613",
+                "gpt-3.5-turbo-1106",
+                "gpt-3.5-turbo-0125",
                 "gpt-3.5-turbo-16k-0613",
             ],
         ],

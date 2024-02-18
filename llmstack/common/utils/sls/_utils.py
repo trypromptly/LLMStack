@@ -2,7 +2,7 @@ import copy
 import json as jsonlib
 from typing import Any, Dict, Literal
 
-from openai._utils import is_mapping  # type: ignore # noqa: F401
+from openai._utils import is_mapping, required_args  # type: ignore # noqa: F401
 
 
 class LLMHttpResponse:
