@@ -5,6 +5,17 @@ from typing import Any, Dict, Literal
 from openai._utils import is_mapping, required_args  # type: ignore # noqa: F401
 
 
+def generate_uuid(_str: str = None):
+    import hashlib
+    import uuid
+
+    if _str:
+        input_hash = hashlib.sha256(b"your_data_here").hexdigest()
+        return str(uuid.uuid5(uuid.NAMESPACE_DNS, input_hash))
+
+    return str(uuid.uuid4())
+
+
 class LLMHttpResponse:
     def __init__(self, response, json):
         self._response = response
@@ -41,6 +52,13 @@ class LLMHttpResponse:
 
     def read(self):
         return self.content
+
+
+def convert_google_function_call_args_map_to_dict(args):
+    result = {}
+    for i in args:
+        result[str(i)] = str(args[i])
+    return result
 
 
 def _convert_schema_dict_to_gapic(schema_dict: Dict[str, Any]):
