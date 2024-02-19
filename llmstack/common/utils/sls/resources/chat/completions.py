@@ -183,29 +183,38 @@ class Completions(OpenAICompletions):
                 content = entry.content
                 finish_reason = google_finish_reason_to_literal(entry.finish_reason)
                 outupt_token_count += entry.token_count
-                parts = content.parts
-                text = ""
-                tool_calls = []
-                for part in parts:
+                parts = []
+                for part in content.parts:
                     if part.text:
-                        text += part.text
+                        parts.append(
+                            {
+                                "type": "text",
+                                "data": part.text,
+                                "mime_type": "text/plain",
+                            }
+                        )
                     elif part.inline_data:
-                        # Add a data url to text
-                        text += f"data:{part.inline_data.mime_type};base64,{part.inline_data.data}"
+                        parts.append(
+                            {
+                                "type": "blob",
+                                "data": part.inline_data.data,
+                                "mime_type": part.inline_data.mime_type,
+                            }
+                        )
                     elif part.function_call:
-                        tool_calls.append(
-                            chat.chat_completion_message.FunctionCall(
-                                arguments=part.function_call.args, name=part.function_call.name
-                            )
+                        parts.apppend(
+                            {
+                                "type": "tool_call",
+                                "tool_name": part.function_call.name,
+                                "tool_args": part.function_call.args,
+                            }
                         )
 
                 choices.append(
                     chat.chat_completion.Choice(
                         index=index,
                         finish_reason=finish_reason,
-                        message=_chat.chat_completion.ChatCompletionMessage(
-                            content=text, role="assistant", tool_calls=tool_calls
-                        ),
+                        message=_chat.chat_completion.ChatCompletionMessage(content=parts, role="assistant"),
                     )
                 )
 
@@ -223,34 +232,40 @@ class Completions(OpenAICompletions):
                 index = entry.index
                 content = entry.content
                 finish_reason = google_finish_reason_to_literal(entry.finish_reason)
-                parts = content.parts
-                text = ""
-                tool_calls = []
+                parts = []
                 idx = 0
-                for part in parts:
+                for part in content.parts:
                     if part.text:
-                        text += part.text
-                    elif part.inline_data:
-                        # Add a data url to text
-                        text += f"data:{part.inline_data.mime_type};base64,{part.inline_data.data}"
-                    elif part.function_call:
-                        tool_calls.append(
-                            chat.chat_completion_chunk.ChoiceDeltaToolCall(
-                                index=idx,
-                                function=chat.chat_completion_chunk.ChoiceDeltaToolCallFunction(
-                                    arguments=part.function_call.args, name=part.function_call.name
-                                ),
-                                type="function",
-                            )
+                        parts.append(
+                            {
+                                "type": "text",
+                                "data": part.text,
+                                "mime_type": "text/plain",
+                            }
                         )
+                    elif part.inline_data:
+                        parts.append(
+                            {
+                                "type": "blob",
+                                "data": part.inline_data.data,
+                                "mime_type": part.inline_data.mime_type,
+                            }
+                        )
+                    elif part.function_call:
+                        parts.apppend(
+                            {
+                                "type": "tool_call",
+                                "tool_name": part.function_call.name,
+                                "tool_args": part.function_call.args,
+                            }
+                        )
+
                     idx += 1
                 choices.append(
                     _chat.chat_completion_chunk.Choice(
                         index=index,
                         finish_reason=finish_reason,
-                        delta=chat.chat_completion_chunk.ChoiceDelta(
-                            content=text, role="assistant", tool_calls=tool_calls
-                        ),
+                        delta=chat.chat_completion_chunk.ChoiceDelta(content=parts, role="assistant"),
                     )
                 )
                 return _chat.ChatCompletionChunk(
