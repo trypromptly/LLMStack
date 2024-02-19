@@ -6,19 +6,19 @@ from enum import Enum
 from typing import Iterable, Optional, Union
 
 from openai.types.chat.chat_completion_assistant_message_param import (
-    ChatCompletionAssistantMessageParam,
+    ChatCompletionAssistantMessageParam as OpenAIChatCompletionAssistantMessageParam,
 )
 from openai.types.chat.chat_completion_content_part_param import (
-    ChatCompletionContentPartParam,
+    ChatCompletionContentPartParam as OpenAIChatCompletionContentPartParam,
 )
 from openai.types.chat.chat_completion_function_message_param import (
-    ChatCompletionFunctionMessageParam,
+    ChatCompletionFunctionMessageParam as OpenAIChatCompletionFunctionMessageParam,
 )
 from openai.types.chat.chat_completion_system_message_param import (
-    ChatCompletionSystemMessageParam,
+    ChatCompletionSystemMessageParam as OpenAIChatCompletionSystemMessageParam,
 )
 from openai.types.chat.chat_completion_tool_message_param import (
-    ChatCompletionToolMessageParam,
+    ChatCompletionToolMessageParam as OpenAIChatCompletionToolMessageParam,
 )
 from typing_extensions import Literal, Required, TypedDict
 
@@ -56,12 +56,14 @@ class ContentPartFileParam(TypedDict, total=False):
     type: Required[Literal["file"]] = "file"
     mime_type: Optional[str]
     data: Required[str]
+    resolution: Optional[str] = None
 
 
 class ContentPartBlobParam(TypedDict, total=False):
     type: Required[Literal["blob"]] = "blob"
     mime_type: Optional[str]
     data: Required[bytes]
+    resolution: Optional[str] = None
 
 
 class ContentPartToolCallParam(TypedDict, total=False):
@@ -80,14 +82,14 @@ ContentPartParam = Union[
 
 
 class ChatCompletionUserMessageParam(TypedDict, total=False):
-    content: Required[Union[str, Iterable[ChatCompletionContentPartParam], Iterable[ContentPartParam], None]]
+    content: Required[Union[str, Iterable[OpenAIChatCompletionContentPartParam], Iterable[ContentPartParam], None]]
     role: Required[Literal["user"]]
 
 
 ChatCompletionMessageParam = Union[
-    ChatCompletionSystemMessageParam,
+    OpenAIChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
-    ChatCompletionAssistantMessageParam,
-    ChatCompletionToolMessageParam,
-    ChatCompletionFunctionMessageParam,
+    OpenAIChatCompletionAssistantMessageParam,
+    OpenAIChatCompletionToolMessageParam,
+    OpenAIChatCompletionFunctionMessageParam,
 ]
