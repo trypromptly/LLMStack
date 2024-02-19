@@ -68,6 +68,7 @@ class ContentPartBlobParam(TypedDict, total=False):
 
 class ContentPartToolCallParam(TypedDict, total=False):
     type: Required[Literal["tool_call"]] = "tool_call"
+    id: Optional[str]
     tool_name: Required[str]
     tool_args: Required[str]
 

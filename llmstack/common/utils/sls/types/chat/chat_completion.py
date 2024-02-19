@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Union
 
 from openai.types.chat import ChatCompletion as _ChatCompletion
 from openai.types.chat.chat_completion import (
@@ -9,7 +9,6 @@ from openai.types.chat.chat_completion_message_tool_call import (
     ChatCompletionMessageToolCall as _ChatCompletionMessageToolCall,
 )
 from openai.types.chat.chat_completion_message_tool_call import Function as _Function
-from pydantic import root_validator
 
 from llmstack.common.utils.sls.types.chat.chat_completion_message_param import (
     ContentPartParam,
@@ -18,35 +17,45 @@ from llmstack.common.utils.sls.types.chat.chat_completion_message_param import (
 
 class ChatCompletionMessage(_ChatCompletionMessage):
     content: Union[str, List[ContentPartParam]]
-    content_str: Optional[str]
 
-    @root_validator
-    def validate_content_str(cls, values):
-        if "content" in values and isinstance(values["content"], str):
-            values["content_str"] = values["content"]
-        elif "content" in values and isinstance(values["content"], list):
-            content_str = ""
-            tool_calls = []
-            values["content_str"] = ""
-            for part in values["content"]:
+    @property
+    def content_str(self):
+        content_str = ""
+        if isinstance(self.content, str):
+            content_str = self.content
+
+        elif isinstance(self.content, list):
+            for part in self.content:
                 if part["type"] == "text":
                     content_str += part["data"]
                 elif part["type"] == "blob":
                     content_str += f"data:{part['mime_type']};base64,{part['data']}"
                 elif part["type"] == "file":
                     content_str += f"{part['data']}"
-                elif part["type"] == "tool_call":
+
+        return content_str
+
+    @property
+    def tool_calls_list(self):
+        tool_calls = []
+
+        if isinstance(self.content, list):
+            for part in self.content:
+                if part["type"] == "tool_call":
                     tool_calls.append(
                         _ChatCompletionMessageToolCall(
-                            type="function", function=_Function(name=part["tool_name"], arguments=part["tool_args"])
+                            id=part["id"],
+                            type="function",
+                            function=_Function(name=part["tool_name"], arguments=part["tool_args"]),
                         )
                     )
+        return self.tool_calls or tool_calls
 
-            values["content_str"] = content_str
-            if tool_calls:
-                values["tool_calls"] = tool_calls
-
-        return values
+    @property
+    def content_parts(self):
+        if isinstance(self.content, list):
+            return self.content
+        return None
 
 
 class Choice(_Choice):
@@ -54,4 +63,4 @@ class Choice(_Choice):
 
 
 class ChatCompletion(_ChatCompletion):
-    choices: List[_Choice]
+    choices: List[Choice]

@@ -1,4 +1,5 @@
 import base64
+import json
 import uuid
 from typing import Dict, List, Literal, Optional, Union
 
@@ -19,6 +20,8 @@ from openai.types import chat, completion_create_params
 from ..._streaming import LLMGRPCStream
 from ..._utils import (
     _convert_schema_dict_to_gapic,
+    convert_google_function_call_args_map_to_dict,
+    generate_uuid,
     google_finish_reason_to_literal,
     required_args,
 )
@@ -92,7 +95,16 @@ class Completions(OpenAICompletions):
             return self._invoke_google_rpc(
                 model=model,
                 messages=messages,
+                max_tokens=max_tokens,
+                n=n,
+                seed=seed,
+                stop=stop,
                 stream=stream,
+                temperature=temperature,
+                tool_choice=tool_choice,
+                tools=tools,
+                top_p=top_p,
+                user=user,
             )
 
         messages_openai_format = []
@@ -202,16 +214,23 @@ class Completions(OpenAICompletions):
                             }
                         )
                     elif part.function_call:
-                        parts.apppend(
+                        call_id = generate_uuid(
+                            f"""{part.function_call.name}_{
+                            json.dumps(convert_google_function_call_args_map_to_dict(part.function_call.args))}"""
+                        )
+                        parts.append(
                             {
                                 "type": "tool_call",
                                 "tool_name": part.function_call.name,
-                                "tool_args": part.function_call.args,
+                                "tool_args": json.dumps(
+                                    convert_google_function_call_args_map_to_dict(part.function_call.args)
+                                ),
+                                "id": f"google_call_{call_id}",
                             }
                         )
 
                 choices.append(
-                    chat.chat_completion.Choice(
+                    _chat.chat_completion.Choice(
                         index=index,
                         finish_reason=finish_reason,
                         message=_chat.chat_completion.ChatCompletionMessage(content=parts, role="assistant"),
@@ -252,11 +271,18 @@ class Completions(OpenAICompletions):
                             }
                         )
                     elif part.function_call:
-                        parts.apppend(
+                        call_id = generate_uuid(
+                            f"""{part.function_call.name}_{
+                            json.dumps(convert_google_function_call_args_map_to_dict(part.function_call.args))}"""
+                        )
+                        parts.append(
                             {
                                 "type": "tool_call",
                                 "tool_name": part.function_call.name,
-                                "tool_args": part.function_call.args,
+                                "tool_args": json.dumps(
+                                    convert_google_function_call_args_map_to_dict(part.function_call.args)
+                                ),
+                                "id": f"google_call_{call_id}",
                             }
                         )
 
@@ -265,7 +291,7 @@ class Completions(OpenAICompletions):
                     _chat.chat_completion_chunk.Choice(
                         index=index,
                         finish_reason=finish_reason,
-                        delta=chat.chat_completion_chunk.ChoiceDelta(content=parts, role="assistant"),
+                        delta=_chat.chat_completion_chunk.ChoiceDelta(content=parts, role="assistant"),
                     )
                 )
                 return _chat.ChatCompletionChunk(
@@ -290,14 +316,8 @@ class Completions(OpenAICompletions):
         self,
         model: str,
         messages: List[ChatCompletionMessageParam],
-        frequency_penalty: Union[Optional[float], NotGiven] = NOT_GIVEN,
-        function_call: Union[chat.completion_create_params.FunctionCall, NotGiven] = NOT_GIVEN,
-        functions: Union[List[chat.completion_create_params.Function], NotGiven] = NOT_GIVEN,
-        logit_bias: Union[Optional[Dict[str, int]], NotGiven] = NOT_GIVEN,
         max_tokens: Union[Optional[int], NotGiven] = NOT_GIVEN,
         n: Union[Optional[int], NotGiven] = NOT_GIVEN,
-        presence_penalty: Union[Optional[float], NotGiven] = NOT_GIVEN,
-        response_format: Union[chat.completion_create_params.ResponseFormat, NotGiven] = NOT_GIVEN,
         seed: Union[Optional[int], NotGiven] = NOT_GIVEN,
         stop: Union[Optional[str], List[str], NotGiven] = NOT_GIVEN,
         stream: Union[Literal[False], Literal[True], NotGiven] = NOT_GIVEN,
