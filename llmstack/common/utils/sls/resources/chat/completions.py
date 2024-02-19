@@ -23,6 +23,7 @@ from ..._utils import (
     required_args,
 )
 from ...constants import PROVIDER_GOOGLE
+from ...types import chat as _chat
 from ...types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
 __all__ = ["Completions", "AsyncCompletions"]
@@ -86,7 +87,7 @@ class Completions(OpenAICompletions):
         extra_query: Optional[Query] = None,
         extra_body: Optional[Body] = None,
         timeout: Union[float, httpx.Timeout, None, NotGiven] = NOT_GIVEN,
-    ) -> Union[chat.ChatCompletion, Stream[chat.ChatCompletionChunk]]:
+    ) -> Union[_chat.ChatCompletion, Stream[_chat.ChatCompletionChunk]]:
         if self._client._llm_router_provider == PROVIDER_GOOGLE:
             return self._invoke_google_rpc(
                 model=model,
@@ -168,9 +169,9 @@ class Completions(OpenAICompletions):
             options=make_request_options(
                 extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
             ),
-            cast_to=chat.ChatCompletion,
+            cast_to=_chat.ChatCompletion,
             stream=stream or False,
-            stream_cls=Stream[chat.ChatCompletionChunk],
+            stream_cls=Stream[_chat.ChatCompletionChunk],
         )
 
     def _process_rpc_response(self, response, model, stream):
@@ -202,13 +203,13 @@ class Completions(OpenAICompletions):
                     chat.chat_completion.Choice(
                         index=index,
                         finish_reason=finish_reason,
-                        message=chat.chat_completion_message.ChatCompletionMessage(
+                        message=_chat.chat_completion.ChatCompletionMessage(
                             content=text, role="assistant", tool_calls=tool_calls
                         ),
                     )
                 )
 
-            return chat.ChatCompletion(
+            return _chat.ChatCompletion(
                 id=str(uuid.uuid4()),
                 choices=choices,
                 model=model,
@@ -244,7 +245,7 @@ class Completions(OpenAICompletions):
                         )
                     idx += 1
                 choices.append(
-                    chat.chat_completion_chunk.Choice(
+                    _chat.chat_completion_chunk.Choice(
                         index=index,
                         finish_reason=finish_reason,
                         delta=chat.chat_completion_chunk.ChoiceDelta(
@@ -252,7 +253,7 @@ class Completions(OpenAICompletions):
                         ),
                     )
                 )
-                return chat.ChatCompletionChunk(
+                return _chat.ChatCompletionChunk(
                     id=str(uuid.uuid4()),
                     choices=choices,
                     model=model,
@@ -262,7 +263,7 @@ class Completions(OpenAICompletions):
 
         if stream:
             return LLMGRPCStream(
-                cast_to=chat.ChatCompletionChunk,
+                cast_to=_chat.ChatCompletionChunk,
                 response=response,
                 client=self._client,
                 process_data=_transform_streaming_grpc_response,
@@ -273,7 +274,7 @@ class Completions(OpenAICompletions):
     def _invoke_google_rpc(
         self,
         model: str,
-        messages: List[chat.ChatCompletionMessage],
+        messages: List[ChatCompletionMessageParam],
         frequency_penalty: Union[Optional[float], NotGiven] = NOT_GIVEN,
         function_call: Union[chat.completion_create_params.FunctionCall, NotGiven] = NOT_GIVEN,
         functions: Union[List[chat.completion_create_params.Function], NotGiven] = NOT_GIVEN,
