@@ -1,8 +1,8 @@
 import os
 import unittest
 
-from llmstack.common.utils.sls import LLM
-from llmstack.common.utils.sls.constants import (
+from llmstack.common.utils.sslr import LLM
+from llmstack.common.utils.sslr.constants import (
     PROVIDER_GOOGLE,
     PROVIDER_OPENAI,
     PROVIDER_STABILITYAI,

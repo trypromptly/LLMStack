@@ -12,7 +12,7 @@ from openai.types.chat.chat_completion_message_tool_call import (  # noqa F401
     Function as _Function,
 )
 
-from llmstack.common.utils.sls.types.chat.chat_completion_message_param import (
+from llmstack.common.utils.sslr.types.chat.chat_completion_message_param import (
     ContentPartParam,
 )
 
