@@ -1,5 +1,5 @@
 import os
-from typing import Any, Literal, Mapping, Optional, Type, Union, cast, overload
+from typing import Any, Literal, Mapping, Optional, Type, Union, overload
 
 import httpx
 from openai import OpenAI
@@ -21,7 +21,6 @@ from .constants import (
     PROVIDER_LOCALAI,
     PROVIDER_OPENAI,
     PROVIDER_STABILITYAI,
-    RAW_RESPONSE_HEADER,
 )
 from .resources import Audio, Chat, Completions, Embeddings, Images, Models
 
@@ -72,20 +71,15 @@ class LLMClient(SyncAPIClient):
                     stream_cls=stream_cls,
                     options=options,
                 )
+                return api_response.parse()
 
-        else:
-            api_response = LLMResponse(
-                raw=response,
-                client=self,
-                cast_to=cast_to,
-                stream=stream,
-                stream_cls=stream_cls,
-                options=options,
-            )
-        if response.request.headers.get(RAW_RESPONSE_HEADER) == "true":
-            return cast(ResponseT, api_response)
-
-        return api_response.parse()
+        return super()._process_response(
+            cast_to=cast_to,
+            options=options,
+            response=response,
+            stream=stream,
+            stream_cls=stream_cls,
+        )
 
 
 class LLM(LLMClient, OpenAI):
