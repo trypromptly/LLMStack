@@ -5,10 +5,12 @@ from openai.types.chat.chat_completion import (
     ChatCompletionMessage as _ChatCompletionMessage,
 )
 from openai.types.chat.chat_completion import Choice as _Choice
-from openai.types.chat.chat_completion_message_tool_call import (
+from openai.types.chat.chat_completion_message_tool_call import (  # noqa F401
     ChatCompletionMessageToolCall as _ChatCompletionMessageToolCall,
 )
-from openai.types.chat.chat_completion_message_tool_call import Function as _Function
+from openai.types.chat.chat_completion_message_tool_call import (  # noqa F401
+    Function as _Function,
+)
 
 from llmstack.common.utils.sls.types.chat.chat_completion_message_param import (
     ContentPartParam,
@@ -34,22 +36,6 @@ class ChatCompletionMessage(_ChatCompletionMessage):
                     content_str += f"{part['data']}"
 
         return content_str
-
-    @property
-    def tool_calls_list(self):
-        tool_calls = []
-
-        if isinstance(self.content, list):
-            for part in self.content:
-                if part["type"] == "tool_call":
-                    tool_calls.append(
-                        _ChatCompletionMessageToolCall(
-                            id=part["id"],
-                            type="function",
-                            function=_Function(name=part["tool_name"], arguments=part["tool_args"]),
-                        )
-                    )
-        return self.tool_calls or tool_calls
 
     @property
     def content_parts(self):

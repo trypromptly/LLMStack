@@ -196,6 +196,8 @@ class Completions(OpenAICompletions):
                 finish_reason = google_finish_reason_to_literal(entry.finish_reason)
                 outupt_token_count += entry.token_count
                 parts = []
+                tool_calls = []
+                tool_call_idx = 0
                 for part in content.parts:
                     if part.text:
                         parts.append(
@@ -228,12 +230,28 @@ class Completions(OpenAICompletions):
                                 "id": f"google_call_{call_id}",
                             }
                         )
+                        tool_calls.append(
+                            _chat.chat_completion_chunk._ChoiceDeltaToolCall(
+                                index=tool_call_idx,
+                                id=f"google_call_{call_id}",
+                                function=chat.chat_completion_chunk.ChoiceDeltaToolCallFunction(
+                                    arguments=json.dumps(
+                                        convert_google_function_call_args_map_to_dict(part.function_call.args)
+                                    ),
+                                    name=part.function_call.name,
+                                    type="function",
+                                ),
+                            )
+                        )
+                        tool_call_idx += 1
 
                 choices.append(
                     _chat.chat_completion.Choice(
                         index=index,
                         finish_reason=finish_reason,
-                        message=_chat.chat_completion.ChatCompletionMessage(content=parts, role="assistant"),
+                        message=_chat.chat_completion.ChatCompletionMessage(
+                            content=parts, role="assistant", tool_calls=tool_calls if tool_calls else None
+                        ),
                     )
                 )
 
@@ -252,7 +270,9 @@ class Completions(OpenAICompletions):
                 content = entry.content
                 finish_reason = google_finish_reason_to_literal(entry.finish_reason)
                 parts = []
+                tool_calls = []
                 idx = 0
+                tool_call_idx = 0
                 for part in content.parts:
                     if part.text:
                         parts.append(
@@ -285,13 +305,29 @@ class Completions(OpenAICompletions):
                                 "id": f"google_call_{call_id}",
                             }
                         )
+                        tool_calls.append(
+                            _chat.chat_completion_chunk._ChoiceDeltaToolCall(
+                                index=tool_call_idx,
+                                id=f"google_call_{call_id}",
+                                function=chat.chat_completion_chunk.ChoiceDeltaToolCallFunction(
+                                    arguments=json.dumps(
+                                        convert_google_function_call_args_map_to_dict(part.function_call.args)
+                                    ),
+                                    name=part.function_call.name,
+                                    type="function",
+                                ),
+                            )
+                        )
+                        tool_call_idx += 1
 
                     idx += 1
                 choices.append(
                     _chat.chat_completion_chunk.Choice(
                         index=index,
-                        finish_reason=finish_reason,
-                        delta=_chat.chat_completion_chunk.ChoiceDelta(content=parts, role="assistant"),
+                        finish_reason="tool_calls" if tool_calls else finish_reason,
+                        delta=_chat.chat_completion_chunk.ChoiceDelta(
+                            content=parts, role="assistant", tool_calls=tool_calls if tool_calls else None
+                        ),
                     )
                 )
                 return _chat.ChatCompletionChunk(
