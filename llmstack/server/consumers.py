@@ -73,6 +73,7 @@ class AppConsumer(AsyncWebsocketConsumer):
 
         json_data = json.loads(text_data)
         input = json_data.get("input", {})
+        id = json_data.get("id", None)
         event = json_data.get("event", None)
         self._session_id = self._session_id or json_data.get(
             "session_id",
@@ -90,18 +91,21 @@ class AppConsumer(AsyncWebsocketConsumer):
                     request,
                     self.preview,
                 )
+                # Generate a uuid for the response
+                response_id = str(uuid.uuid4())
+
                 async for output in output_stream:
                     if "errors" in output or "session" in output:
                         if "session" in output:
                             self._session_id = output["session"]["id"]
-                        await self.send(text_data=json.dumps(output))
+                        await self.send(text_data=json.dumps({**output, **{"reply_to": id}}))
                     else:
-                        await self.send(text_data=json.dumps({"output": output}))
+                        await self.send(text_data=json.dumps({"output": output, "reply_to": id, "id": response_id}))
 
-                await self.send(text_data=json.dumps({"event": "done"}))
+                await self.send(text_data=json.dumps({"event": "done", "reply_to": id, "id": response_id}))
             except Exception as e:
                 logger.exception(e)
-                await self.send(text_data=json.dumps({"errors": [str(e)]}))
+                await self.send(text_data=json.dumps({"errors": [str(e)], "reply_to": id}))
 
         if event == "init":
             # Create a new session and return the session id
