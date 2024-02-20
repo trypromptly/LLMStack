@@ -16,6 +16,7 @@
   animation: revealWords 2s steps(100);
   display: flex;
   align-items: flex-start;
+  flex-direction: column;
 }
 
 .layout-chat_message_from_app img {
