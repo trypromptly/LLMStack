@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ContentCopyOutlined } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 import {
@@ -12,7 +12,6 @@ import {
   Typography,
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
-import { useState } from "react";
 import AceEditor from "react-ace";
 import ReactMarkdown from "react-markdown";
 import Form from "@rjsf/mui";
@@ -172,13 +171,50 @@ function PromptlyAppOutputHeader(props) {
 }
 
 function PromptlyAppChatOutput(props) {
-  const { app, minHeight, maxHeight } = props;
-  const messages = app?._messages || [];
+  const { app, minHeight, maxHeight, enableAutoScroll = true } = props;
+  const messages = useMemo(() => app?._messages || [], [app?._messages]);
+  const messagesContainerRef = useRef(null);
+  const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
+
+  useEffect(() => {
+    if (messagesContainerRef.current && autoScroll) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages, autoScroll]);
+
+  useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+
+    const handleScroll = () => {
+      if (
+        messagesContainer &&
+        messagesContainer.scrollTop + messagesContainer.clientHeight + 5 <
+          messagesContainer.scrollHeight
+      ) {
+        setAutoScroll(false);
+      } else {
+        setAutoScroll(true);
+      }
+    };
+
+    messagesContainer.addEventListener("scroll", handleScroll);
+    return () => {
+      messagesContainer.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (app?._state?.isRunning && !app?._state?.isStreaming) {
+      setAutoScroll(true);
+    }
+  }, [app?._state?.isRunning, app?._state?.isStreaming]);
 
   return (
     <Box
       className="layout-chat-container"
       sx={{ maxHeight, minHeight, overflow: "scroll" }}
+      ref={messagesContainerRef}
     >
       {messages.map((message) => {
         if (message.type === "user") {
@@ -200,11 +236,44 @@ function PromptlyAppChatOutput(props) {
 }
 
 function PromptlyAppWorkflowOutput(props) {
-  const { app, showHeader, placeholder } = props;
-  const messages = app?._messages || [];
+  const { app, showHeader, placeholder, enableAutoScroll = true } = props;
+  const messages = useMemo(() => app?._messages || [], [app?._messages]);
+  const messagesContainerRef = useRef(null);
+  const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
+  const [lastScrollY, setLastScrollY] = useState(window.scrollY);
+
+  useEffect(() => {
+    if (autoScroll && messagesContainerRef.current) {
+      window.scrollTo(0, messagesContainerRef.current.scrollHeight);
+    }
+  }, [messages, autoScroll]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (
+        app?._state?.isRunning &&
+        !app?._state?.isStreaming &&
+        lastScrollY > currentScrollY
+      ) {
+        setAutoScroll(false);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    // Add the event listener
+    window.addEventListener("scroll", handleScroll);
+
+    // Clean up function
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [lastScrollY, app?._state?.isRunning, app?._state?.isStreaming]);
 
   return (
-    <Box>
+    <Box ref={messagesContainerRef}>
       {showHeader && <PromptlyAppOutputHeader app={app} />}
       {!app?._state?.isStreaming &&
         app?._state?.isRunning &&
