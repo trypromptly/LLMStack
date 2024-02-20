@@ -12,11 +12,12 @@ from typing_extensions import override
 
 from ._exceptions import LLMError
 from ._response import LLMResponse
-from ._streaming import AsyncStream, LLMGRPCStream, LLMRestStream
+from ._streaming import AsyncStream, LLMAnthropicStream, LLMGRPCStream, LLMRestStream
 from ._types import NOT_GIVEN, NotGiven, ResponseT, Timeout
 from ._utils import LLMHttpResponse, is_mapping
 from .constants import (
     DEFAULT_MAX_RETRIES,
+    PROVIDER_ANTHROPIC,
     PROVIDER_AZURE_OPENAI,
     PROVIDER_GOOGLE,
     PROVIDER_LOCALAI,
@@ -47,6 +48,9 @@ class LLMClient(SyncAPIClient):
                 if model is not None and "/deployments" not in str(self.base_url):
                     options.url = f"/deployments/{model}{options.url}"
 
+        elif self._llm_router_provider == PROVIDER_ANTHROPIC:
+            pass
+
         return super()._build_request(options)
 
     @override
@@ -74,6 +78,44 @@ class LLMClient(SyncAPIClient):
                 )
                 return api_response.parse()
 
+        elif self._llm_router_provider == PROVIDER_ANTHROPIC and response.request.url.path.endswith("/messages"):
+            if not stream:
+                json_response = response.json()
+                result = {
+                    "id": json_response["id"],
+                    "object": "'chat.completion",
+                    "created": 0,
+                    "model": json_response["model"],
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {
+                                "role": "assistant",
+                                "content": json_response["content"],
+                            },
+                            "finish_reason": json_response["stop_reason"],
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": json_response["usage"]["input_tokens"],
+                        "completion_tokens": json_response["usage"]["output_tokens"],
+                        "total_tokens": json_response["usage"]["input_tokens"]
+                        + json_response["usage"]["output_tokens"],
+                    },
+                }
+                modified_response = LLMHttpResponse(response=response, json=result)
+                api_response = LLMResponse(
+                    raw=modified_response,
+                    client=self,
+                    cast_to=cast_to,
+                    stream=stream,
+                    stream_cls=stream_cls,
+                    options=options,
+                )
+                return api_response.parse()
+            else:
+                stream_cls = LLMAnthropicStream
+
         return super()._process_response(
             cast_to=cast_to,
             options=options,
@@ -90,6 +132,23 @@ class LLM(LLMClient, OpenAI):
     images: Images
     audio: Audio
     models: Models
+
+    # Stability AI options
+    @overload
+    def __init__(
+        self,
+        *,
+        anthropic_api_key: str,
+        base_url: str,
+        organization: Optional[str] = None,
+        timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        default_headers: Optional[Mapping[str, str]] = None,
+        default_query: Optional[Mapping[str, object]] = None,
+        http_client: Optional[httpx.Client] = None,
+        _strict_response_validation: bool = False,
+    ) -> None:
+        ...
 
     # Stability AI options
     @overload
@@ -202,6 +261,7 @@ class LLM(LLMClient, OpenAI):
         azure_api_key: Optional[str] = None,
         google_api_key: Optional[str] = None,
         stabilityai_api_key: Optional[str] = None,
+        anthropic_api_key: Optional[str] = None,
         azure_ad_token: Optional[str] = None,
         azure_ad_token_provider: Optional[AzureADTokenProvider] = None,
         organization: Optional[str] = None,
@@ -277,6 +337,12 @@ class LLM(LLMClient, OpenAI):
         elif provider == PROVIDER_GOOGLE:
             api_key = google_api_key
 
+        elif provider == PROVIDER_ANTHROPIC:
+            api_key = anthropic_api_key
+            self.auth_token = None
+            if base_url is None:
+                base_url = "https://api.anthropic.com"
+
         if api_key is None:
             # define a sentinel value to avoid any typing issues
             raise ValueError("api_key is required")
@@ -299,6 +365,8 @@ class LLM(LLMClient, OpenAI):
         self._default_stream_cls = LLMRestStream
         if provider == PROVIDER_GOOGLE:
             self._default_stream_cls = LLMGRPCStream
+        elif provider == PROVIDER_ANTHROPIC:
+            self._default_stream_cls = LLMAnthropicStream
 
         self.chat = Chat(self)
         self.embeddings = Embeddings(self)
@@ -345,3 +413,32 @@ class LLM(LLMClient, OpenAI):
             raise ValueError("Unable to handle auth")
 
         return super()._prepare_options(options)
+
+    @property
+    @override
+    def auth_headers(self) -> dict[str, str]:
+        if self._llm_router_provider == PROVIDER_ANTHROPIC:
+            if self.api_key:
+                return {"X-Api-Key": self.api_key}
+            if self.auth_token:
+                return {"Authorization": f"Bearer {self.auth_token}"}
+
+        api_key = self.api_key
+        return {"Authorization": f"Bearer {api_key}"}
+
+    @property
+    @override
+    def default_headers(self) -> dict[str, str]:
+        headers = {
+            **super().default_headers,
+            "X-Stainless-Async": "false",
+        }
+        if self._llm_router_provider == PROVIDER_OPENAI:
+            headers["OpenAI-Organization"] = self.organization if self.organization is not None else ""
+
+        headers = {**headers, **self._custom_headers}
+
+        if self._llm_router_provider == PROVIDER_ANTHROPIC:
+            headers["anthropic-version"] = "2023-06-01"
+
+        return headers
