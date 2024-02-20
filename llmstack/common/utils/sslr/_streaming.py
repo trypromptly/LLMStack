@@ -1,15 +1,95 @@
 from typing import Any, Iterator, Optional, TypeVar, cast
 
 import httpx
-from openai import AsyncStream, Stream
+from openai import APIError, AsyncStream, Stream
 from openai._streaming import ServerSentEvent, SSEDecoder
-from openai._utils import is_dict
+from openai._utils import is_dict, is_mapping
+
+from ._utils import num_tokens_from_messages
 
 _T = TypeVar("_T")
 
 
-class LLMRestStream(Stream):
-    pass
+class LLMRestStream(Stream[_T]):
+    def __stream__(self) -> Iterator[_T]:
+        cast_to = cast(Any, self._cast_to)
+        response = self.response
+        process_data = self._client._process_response_data
+        iterator = self._iter_events()
+        collect_choices = [None] * 100
+        id = None
+        model = None
+        output_tokens = 0
+        created = 0
+        for sse in iterator:
+            if sse.data.startswith("[DONE]"):
+                collect_choices = [
+                    list(map(lambda entry: entry["delta"], choice)) for choice in collect_choices if choice is not None
+                ]
+                collect_choices = [delta for delta in collect_choices if delta != {}]
+                stitched_choices = []
+                for idx, choice in enumerate(collect_choices):
+                    result = {}
+                    for entry in choice:
+                        for key, value in entry.items():
+                            if key not in result:
+                                result[key] = value
+                            else:
+                                result[key] += value
+                    stitched_choices.append(result)
+                output_tokens = num_tokens_from_messages(stitched_choices, model)
+
+                yield process_data(
+                    data={
+                        "id": id,
+                        "object": "chat.completion.chunk",
+                        "created": created,
+                        "model": model,
+                        "choices": list(
+                            map(
+                                lambda entry: {
+                                    "delta": {},
+                                    "index": idx,
+                                    "logprobs": None,
+                                    "finish_reason": "usage",
+                                },
+                                stitched_choices,
+                            )
+                        ),
+                        "usage": {"input_tokens": 0, "output_tokens": output_tokens},
+                    },
+                    cast_to=cast_to,
+                    response=response,
+                )
+                break
+
+            if sse.event is None:
+                data = sse.json()
+                if is_mapping(data) and data.get("error"):
+                    raise APIError(
+                        message="An error occurred during streaming",
+                        request=self.response.request,
+                        body=data["error"],
+                    )
+                if "id" in data:
+                    id = data["id"]
+                if "model" in data:
+                    model = data["model"]
+                if "created" in data:
+                    created = data["created"]
+                if "choices" in data:
+                    for choice in data["choices"]:
+                        if choice["index"] is not None:
+                            if collect_choices[choice["index"]] is None:
+                                collect_choices[choice["index"]] = [choice]
+                            else:
+                                collect_choices[choice["index"]].append(choice)
+
+                yield process_data(data=data, cast_to=cast_to, response=response)
+
+        # Ensure the entire stream is consumed
+        for _sse in iterator:
+            ...
 
 
 class LLMAnthropicStream(Stream[_T]):
@@ -125,7 +205,7 @@ class LLMAnthropicStream(Stream[_T]):
                                 "index": 0,
                                 "delta": {},
                                 "logprobs": None,
-                                "finish_reason": "stop",
+                                "finish_reason": "usage",
                             }
                         ],
                         "usage": {

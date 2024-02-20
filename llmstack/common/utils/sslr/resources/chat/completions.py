@@ -13,7 +13,7 @@ from openai.resources.chat import (
 from openai.types import chat, completion_create_params
 
 from ..._client import make_request_options
-from ..._streaming import LLMAnthropicStream, LLMGRPCStream, Stream
+from ..._streaming import LLMAnthropicStream, LLMGRPCStream, LLMRestStream, Stream
 from ..._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from ..._utils import (
     _convert_schema_dict_to_gapic,
@@ -91,7 +91,7 @@ class Completions(OpenAICompletions):
         timeout: Union[float, httpx.Timeout, None, NotGiven] = NOT_GIVEN,
     ) -> Union[_chat.ChatCompletion, Stream[_chat.ChatCompletionChunk]]:
         path = "/chat/completions"
-        stream_cls = Stream[_chat.ChatCompletionChunk]
+        stream_cls = LLMRestStream[_chat.ChatCompletionChunk]
 
         if self._client._llm_router_provider == PROVIDER_GOOGLE:
             return self._invoke_google_rpc(
