@@ -134,6 +134,9 @@ def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613"):
         return num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613")
     elif "gpt-4" in model:
         return num_tokens_from_messages(messages, model="gpt-4-0613")
+    # Approximation for Googles gemini models
+    elif "gemini-pro" in model:
+        return int(num_tokens_from_messages(messages, model="gpt-4-0613") * 1.15)
     else:
         return num_tokens_from_messages(messages, model="gpt-4-0613")
     num_tokens = 0
