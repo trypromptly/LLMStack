@@ -25,14 +25,27 @@ import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 import "./LayoutRenderer.css";
 
 function PromptlyAppInputForm(props) {
-  const { app } = props;
+  const { app, submitButtonOptions } = props;
   const { schema, uiSchema } = getJSONSchemaFromInputFields(app?.input_fields);
   const [userFormData, setUserFormData] = useState({});
 
   return (
     <Form
       schema={schema}
-      uiSchema={uiSchema}
+      uiSchema={{
+        ...uiSchema,
+        "ui:submitButtonOptions": {
+          norender:
+            Object.keys(schema?.properties).length <= 1 &&
+            !submitButtonOptions &&
+            Object.keys(uiSchema)
+              .map((key) => uiSchema[key]?.["ui:widget"])
+              .filter((x) => x === "voice").length === 0
+              ? true
+              : false,
+          ...submitButtonOptions,
+        },
+      }}
       validator={validator}
       formData={userFormData}
       onSubmit={({ formData }) => {
@@ -263,7 +276,12 @@ export default function LayoutRenderer(props) {
           return <Paper {...props}>{props.children}</Paper>;
         },
         "pa-input-form": ({ node, ...props }) => {
-          return <PromptlyAppInputForm app={app} />;
+          return (
+            <PromptlyAppInputForm
+              app={app}
+              submitButtonOptions={props.submitbuttonoption}
+            />
+          );
         },
         "pa-workflow-output": ({ node, ...props }) => {
           return (
