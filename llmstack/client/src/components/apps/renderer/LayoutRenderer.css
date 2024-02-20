@@ -76,6 +76,7 @@
 .typing-indicator {
   display: flex;
   height: 30px;
+  flex-direction: row;
 }
 
 .typing-indicator span {
