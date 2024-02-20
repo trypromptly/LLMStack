@@ -26,7 +26,7 @@ class Model(str, Enum):
         return self.value
 
 
-class Provide(str, Enum):
+class Provider(str, Enum):
     OPENAI = "openai"
     GOOGLE = "google"
     ANTHROPIC = "anthropic"
@@ -47,8 +47,15 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         description="The system message for the LLM", widget="textarea", advanced_parameter=False
     )
-    provider: Provide = Field(description="The provider for the LLM", widget="select", advanced_parameter=False)
-    model: str = Field(description="The model for the LLM", widget="customselect", advanced_parameter=False)
+    provider: Provider = Field(
+        default=Provider.OPENAI, description="The provider for the LLM", widget="select", advanced_parameter=False
+    )
+    model: Model = Field(
+        default=Model.GPT_3_5_TURBO,
+        description="The model for the LLM",
+        widget="customselect",
+        advanced_parameter=False,
+    )
     max_tokens: Optional[int] = Field(
         default=100,
         description="The maximum number of tokens to generate before stopping.",
