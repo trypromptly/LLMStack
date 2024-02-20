@@ -1,9 +1,9 @@
 import logging
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional, Union
 
 from asgiref.sync import async_to_sync
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from llmstack.common.utils.sslr import LLM
 from llmstack.processors.providers.api_processor_interface import (
@@ -43,19 +43,54 @@ class LLMProcessorOutput(ApiProcessorSchema):
     output_str: str = ""
 
 
+class OpenAIModel(str, Enum):
+    GPT_3_5_TURBO = "gpt-3.5-turbo"
+    GPT_4 = "gpt-4"
+    GPT_4_TURBO_PREVIEW = "gpt-4-turbo-preview"
+
+    def __str__(self):
+        return self.value
+
+
+class OpenAIModelConfig(BaseModel):
+    provider: Literal["openai"] = "openai"
+    model: OpenAIModel = Field(default=OpenAIModel.GPT_3_5_TURBO, description="The model for the LLM")
+
+
+class GoogleModel(str, Enum):
+    GEMINI_PRO = "gemini-pro"
+
+    def __str__(self):
+        return self.value
+
+
+class GoogleModelConfig(BaseModel):
+    provider: Literal["google"] = "google"
+    model: GoogleModel = Field(default=GoogleModel.GEMINI_PRO, description="The model for the LLM")
+
+
+class AnthropicModel(str, Enum):
+    CLAUDE_2_1 = "claude-2.1"
+
+    def __str__(self):
+        return self.value
+
+
+class AnthropicModelConfig(BaseModel):
+    provider: Literal["anthropic"] = "anthropic"
+    model: AnthropicModel = Field(default=AnthropicModel.CLAUDE_2_1, description="The model for the LLM")
+
+
 class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         description="The system message for the LLM", widget="textarea", advanced_parameter=False
     )
-    provider: Provider = Field(
-        default=Provider.OPENAI, description="The provider for the LLM", widget="select", advanced_parameter=False
-    )
-    model: Model = Field(
-        default=Model.GPT_3_5_TURBO,
-        description="The model for the LLM",
-        widget="customselect",
+
+    provider_config: Union[OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig] = Field(
+        descrmination_field="provider",
         advanced_parameter=False,
     )
+
     max_tokens: Optional[int] = Field(
         default=100,
         description="The maximum number of tokens to generate before stopping.",
@@ -103,7 +138,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
         google_api_key, token_type = get_google_credential_from_env(self._env)
 
         client = LLM(
-            provider=self._config.provider,
+            provider=self._config.provider_config.provider,
             openai_api_key=self._env.get("openai_api_key"),
             stabilityai_api_key=self._env.get("stabilityai_api_key"),
             google_api_key=google_api_key,
@@ -118,7 +153,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
         result = client.chat.completions.create(
             messages=messages,
-            model=self._config.model,
+            model=self._config.provider_config.model.value,
             max_tokens=self._config.max_tokens,
             stream=True,
             seed=self._config.seed,
