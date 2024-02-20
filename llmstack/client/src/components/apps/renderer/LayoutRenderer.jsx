@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { ContentCopyOutlined } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 import {
@@ -22,38 +22,6 @@ import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 
 import "./LayoutRenderer.css";
-
-function PromptlyAppInputForm(props) {
-  const { app, submitButtonOptions } = props;
-  const { schema, uiSchema } = getJSONSchemaFromInputFields(app?.input_fields);
-  const [userFormData, setUserFormData] = useState({});
-
-  return (
-    <Form
-      schema={schema}
-      uiSchema={{
-        ...uiSchema,
-        "ui:submitButtonOptions": {
-          norender:
-            Object.keys(schema?.properties).length <= 1 &&
-            !submitButtonOptions &&
-            Object.keys(uiSchema)
-              .map((key) => uiSchema[key]?.["ui:widget"])
-              .filter((x) => x === "voice").length === 0
-              ? true
-              : false,
-          ...submitButtonOptions,
-        },
-      }}
-      validator={validator}
-      formData={userFormData}
-      onSubmit={({ formData }) => {
-        app._runApp(formData);
-        setUserFormData(formData);
-      }}
-    />
-  );
-}
 
 const getContentFromMessage = ({ message, inputFields }) => {
   try {
@@ -88,218 +56,288 @@ const getContentFromMessage = ({ message, inputFields }) => {
   }
 };
 
-function AppTypingIndicator({ assistantImage }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        textAlign: "left",
-        fontSize: 16,
-        padding: 3,
-      }}
-    >
-      {assistantImage && (
-        <Avatar
-          src={assistantImage}
-          alt="Assistant"
-          style={{ margin: "16px 8px 16px 0px" }}
-        />
-      )}
-      <div className="layout-chat_message_from_app typing-indicator">
-        <span></span>
-        <span></span>
-        <span></span>
+const PromptlyAppInputForm = memo(
+  (props) => {
+    const { app, submitButtonOptions } = props;
+    const { schema, uiSchema } = getJSONSchemaFromInputFields(
+      app?.input_fields,
+    );
+    const [userFormData, setUserFormData] = useState({});
+
+    return (
+      <Form
+        schema={schema}
+        uiSchema={{
+          ...uiSchema,
+          "ui:submitButtonOptions": {
+            norender:
+              Object.keys(schema?.properties).length <= 1 &&
+              !submitButtonOptions &&
+              Object.keys(uiSchema)
+                .map((key) => uiSchema[key]?.["ui:widget"])
+                .filter((x) => x === "voice").length === 0
+                ? true
+                : false,
+            ...submitButtonOptions,
+          },
+        }}
+        validator={validator}
+        formData={userFormData}
+        onSubmit={({ formData }) => {
+          app._runApp(formData);
+          setUserFormData(formData);
+        }}
+      />
+    );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
+
+const AppTypingIndicator = memo(
+  ({ assistantImage }) => {
+    return (
+      <div
+        style={{
+          display: "flex",
+          textAlign: "left",
+          fontSize: 16,
+          padding: 3,
+        }}
+      >
+        {assistantImage && (
+          <Avatar
+            src={assistantImage}
+            alt="Assistant"
+            style={{ margin: "16px 8px 16px 0px" }}
+          />
+        )}
+        <div className="layout-chat_message_from_app typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
 
-function RenderUserMessage(props) {
-  const { message, inputFields } = props;
+const RenderUserMessage = memo(
+  (props) => {
+    const { message, inputFields } = props;
 
-  return (
-    <Box className="layout-chat_message_from_user">
-      <LayoutRenderer>
-        {getContentFromMessage({ message, inputFields })}
-      </LayoutRenderer>
-    </Box>
-  );
-}
+    return (
+      <Box className="layout-chat_message_from_user">
+        <LayoutRenderer>
+          {getContentFromMessage({ message, inputFields })}
+        </LayoutRenderer>
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
 
-function RenderAppMessage(props) {
-  const { message, workflow } = props;
-  return (
-    <Box
-      className={
-        workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
-      }
-    >
-      <LayoutRenderer>{message.content}</LayoutRenderer>
-    </Box>
-  );
-}
-
-function PromptlyAppOutputHeader(props) {
-  const { app } = props;
-
-  return (
-    <Typography
-      variant="h6"
-      sx={{ marginBottom: 2 }}
-      className="section-header"
-    >
-      Output
-      {app?._messages?.length > 1 && !app?._state.isRunning && (
-        <Button
-          startIcon={<ContentCopyOutlined />}
-          onClick={() =>
-            navigator.clipboard.writeText(
-              app?._messages[app?._messages.length - 1].content,
-            )
-          }
-          sx={{
-            textTransform: "none",
-            float: "right",
-            margin: "auto",
-          }}
-        >
-          Copy
-        </Button>
-      )}
-    </Typography>
-  );
-}
-
-function PromptlyAppChatOutput(props) {
-  const { app, minHeight, maxHeight, enableAutoScroll = true } = props;
-  const messages = useMemo(() => app?._messages || [], [app?._messages]);
-  const messagesContainerRef = useRef(null);
-  const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
-
-  useEffect(() => {
-    if (messagesContainerRef.current && autoScroll) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages, autoScroll]);
-
-  useEffect(() => {
-    const messagesContainer = messagesContainerRef.current;
-
-    const handleScroll = () => {
-      if (
-        messagesContainer &&
-        messagesContainer.scrollTop + messagesContainer.clientHeight + 5 <
-          messagesContainer.scrollHeight
-      ) {
-        setAutoScroll(false);
-      } else {
-        setAutoScroll(true);
-      }
-    };
-
-    messagesContainer.addEventListener("scroll", handleScroll);
-    return () => {
-      messagesContainer.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (app?._state?.isRunning && !app?._state?.isStreaming) {
-      setAutoScroll(true);
-    }
-  }, [app?._state?.isRunning, app?._state?.isStreaming]);
-
-  return (
-    <Box
-      className="layout-chat-container"
-      sx={{ maxHeight, minHeight, overflow: "scroll" }}
-      ref={messagesContainerRef}
-    >
-      {messages.map((message) => {
-        if (message.type === "user") {
-          return (
-            <RenderUserMessage
-              message={message}
-              inputFields={app?.input_fields}
-              key={message.id}
-            />
-          );
+const RenderAppMessage = memo(
+  (props) => {
+    const { message, workflow } = props;
+    return (
+      <Box
+        className={
+          workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
         }
-        return <RenderAppMessage message={message} key={message.id} />;
-      })}
-      {app?._state?.isRunning && !app?._state?.isStreaming && (
-        <AppTypingIndicator />
-      )}
-    </Box>
-  );
-}
+      >
+        <LayoutRenderer>{message.content}</LayoutRenderer>
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
 
-function PromptlyAppWorkflowOutput(props) {
-  const { app, showHeader, placeholder, enableAutoScroll = true } = props;
-  const messages = useMemo(() => app?._messages || [], [app?._messages]);
-  const messagesContainerRef = useRef(null);
-  const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
-  const [lastScrollY, setLastScrollY] = useState(window.scrollY);
+const PromptlyAppOutputHeader = memo(
+  (props) => {
+    const { app } = props;
 
-  useEffect(() => {
-    if (autoScroll && messagesContainerRef.current) {
-      window.scrollTo(0, messagesContainerRef.current.scrollHeight);
-    }
-  }, [messages, autoScroll]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (
-        app?._state?.isRunning &&
-        !app?._state?.isStreaming &&
-        lastScrollY > currentScrollY
-      ) {
-        setAutoScroll(false);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    // Add the event listener
-    window.addEventListener("scroll", handleScroll);
-
-    // Clean up function
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [lastScrollY, app?._state?.isRunning, app?._state?.isStreaming]);
-
-  return (
-    <Box ref={messagesContainerRef}>
-      {showHeader && <PromptlyAppOutputHeader app={app} />}
-      {!app?._state?.isStreaming &&
-        app?._state?.isRunning &&
-        !app?._state?.errors && (
-          <Box
+    return (
+      <Typography
+        variant="h6"
+        sx={{ marginBottom: 2 }}
+        className="section-header"
+      >
+        Output
+        {app?._messages?.length > 1 && !app?._state.isRunning && (
+          <Button
+            startIcon={<ContentCopyOutlined />}
+            onClick={() =>
+              navigator.clipboard.writeText(
+                app?._messages[app?._messages.length - 1].content,
+              )
+            }
             sx={{
+              textTransform: "none",
+              float: "right",
               margin: "auto",
-              textAlign: "center",
             }}
           >
-            <CircularProgress />
-          </Box>
+            Copy
+          </Button>
         )}
-      {!app?._state.isRunning &&
-        !app?._state.errors &&
-        messages.length === 0 &&
-        placeholder}
-      {messages.length > 0 && messages[messages.length - 1].type === "app" && (
-        <RenderAppMessage
-          message={messages[messages.length - 1]}
-          workflow={true}
-        />
-      )}
-    </Box>
-  );
-}
+      </Typography>
+    );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
+
+const PromptlyAppChatOutput = memo(
+  (props) => {
+    const { app, minHeight, maxHeight, enableAutoScroll = true } = props;
+    const messages = useMemo(() => app?._messages || [], [app?._messages]);
+    const messagesContainerRef = useRef(null);
+    const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
+
+    useEffect(() => {
+      if (messagesContainerRef.current && autoScroll) {
+        messagesContainerRef.current.scrollTop =
+          messagesContainerRef.current.scrollHeight;
+      }
+    }, [messages, autoScroll]);
+
+    useEffect(() => {
+      const messagesContainer = messagesContainerRef.current;
+
+      const handleScroll = () => {
+        if (
+          messagesContainer &&
+          messagesContainer.scrollTop + messagesContainer.clientHeight + 5 <
+            messagesContainer.scrollHeight
+        ) {
+          setAutoScroll(false);
+        } else {
+          setAutoScroll(true);
+        }
+      };
+
+      messagesContainer.addEventListener("scroll", handleScroll);
+      return () => {
+        messagesContainer.removeEventListener("scroll", handleScroll);
+      };
+    }, []);
+
+    useEffect(() => {
+      if (app?._state?.isRunning && !app?._state?.isStreaming) {
+        setAutoScroll(true);
+      }
+    }, [app?._state?.isRunning, app?._state?.isStreaming]);
+
+    return (
+      <Box
+        className="layout-chat-container"
+        sx={{ maxHeight, minHeight, overflow: "scroll" }}
+        ref={messagesContainerRef}
+      >
+        {messages.map((message) => {
+          if (message.type === "user") {
+            return (
+              <RenderUserMessage
+                message={message}
+                inputFields={app?.input_fields}
+                key={message.id}
+              />
+            );
+          }
+          return <RenderAppMessage message={message} key={message.id} />;
+        })}
+        {app?._state?.isRunning && !app?._state?.isStreaming && (
+          <AppTypingIndicator />
+        )}
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
+
+const PromptlyAppWorkflowOutput = memo(
+  (props) => {
+    const { app, showHeader, placeholder, enableAutoScroll = true } = props;
+    const messages = useMemo(() => app?._messages || [], [app?._messages]);
+    const messagesContainerRef = useRef(null);
+    const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
+    const [lastScrollY, setLastScrollY] = useState(window.scrollY);
+
+    useEffect(() => {
+      if (autoScroll && messagesContainerRef.current) {
+        window.scrollTo(0, messagesContainerRef.current.scrollHeight);
+      }
+    }, [messages, autoScroll]);
+
+    useEffect(() => {
+      const handleScroll = () => {
+        const currentScrollY = window.scrollY;
+
+        if (
+          app?._state?.isRunning &&
+          !app?._state?.isStreaming &&
+          lastScrollY > currentScrollY
+        ) {
+          setAutoScroll(false);
+        }
+
+        setLastScrollY(currentScrollY);
+      };
+
+      // Add the event listener
+      window.addEventListener("scroll", handleScroll);
+
+      // Clean up function
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }, [lastScrollY, app?._state?.isRunning, app?._state?.isStreaming]);
+
+    return (
+      <Box ref={messagesContainerRef}>
+        {showHeader && <PromptlyAppOutputHeader app={app} />}
+        {!app?._state?.isStreaming &&
+          app?._state?.isRunning &&
+          !app?._state?.errors && (
+            <Box
+              sx={{
+                margin: "auto",
+                textAlign: "center",
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          )}
+        {!app?._state.isRunning &&
+          !app?._state.errors &&
+          messages.length === 0 &&
+          placeholder}
+        {messages.length > 0 &&
+          messages[messages.length - 1].type === "app" && (
+            <RenderAppMessage
+              message={messages[messages.length - 1]}
+              workflow={true}
+            />
+          )}
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
 
 export default function LayoutRenderer(props) {
   const runProcessor = props.runProcessor;
