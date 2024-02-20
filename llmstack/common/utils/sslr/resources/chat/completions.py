@@ -90,6 +90,7 @@ class Completions(OpenAICompletions):
         extra_body: Optional[Body] = None,
         timeout: Union[float, httpx.Timeout, None, NotGiven] = NOT_GIVEN,
     ) -> Union[_chat.ChatCompletion, Stream[_chat.ChatCompletionChunk]]:
+        system = None
         path = "/chat/completions"
         stream_cls = LLMRestStream[_chat.ChatCompletionChunk]
 
@@ -155,33 +156,41 @@ class Completions(OpenAICompletions):
             else:
                 messages_openai_format.append(message)
 
+        post_body_data = {
+            "messages": messages_openai_format,
+            "model": model,
+            "frequency_penalty": frequency_penalty,
+            "function_call": function_call,
+            "functions": functions,
+            "logit_bias": logit_bias,
+            "max_tokens": max_tokens,
+            "n": n,
+            "presence_penalty": presence_penalty,
+            "response_format": response_format,
+            "seed": seed,
+            "stop": stop,
+            "stream": stream,
+            "temperature": temperature,
+            "tool_choice": tool_choice,
+            "tools": tools,
+            "top_p": top_p,
+            "user": user,
+        }
         if self._client._llm_router_provider == PROVIDER_ANTHROPIC:
             path = "/v1/messages"
             stream_cls = LLMAnthropicStream[_chat.ChatCompletionChunk]
+            user_messages = list(filter(lambda message: message["role"] == "user", messages_openai_format))
+            system_messages = list(filter(lambda message: message["role"] == "system", messages_openai_format))
+            if system_messages and "content" in system_messages[0] and isinstance(system_messages[0]["content"], str):
+                system = system_messages[0]["content"]
+                if system:
+                    post_body_data["system"] = system
+                    post_body_data["messages"] = user_messages
 
         return self._post(
             path=path,
             body=maybe_transform(
-                {
-                    "messages": messages_openai_format,
-                    "model": model,
-                    "frequency_penalty": frequency_penalty,
-                    "function_call": function_call,
-                    "functions": functions,
-                    "logit_bias": logit_bias,
-                    "max_tokens": max_tokens,
-                    "n": n,
-                    "presence_penalty": presence_penalty,
-                    "response_format": response_format,
-                    "seed": seed,
-                    "stop": stop,
-                    "stream": stream,
-                    "temperature": temperature,
-                    "tool_choice": tool_choice,
-                    "tools": tools,
-                    "top_p": top_p,
-                    "user": user,
-                },
+                post_body_data,
                 completion_create_params.CompletionCreateParams,
             ),
             options=make_request_options(
@@ -421,17 +430,30 @@ class Completions(OpenAICompletions):
                         elif part["type"] == "blob":
                             parts.append(glm.Part(inline_data=glm.Blob(mime_type=part["mime_type"], data=part["data"])))
 
-                messages_google_format.append(
-                    glm.Content(role="user" if message["role"] == "user" else "model", parts=parts)
-                )
+                if message["role"] == "user":
+                    messages_google_format.append(
+                        glm.Content(role="user", parts=parts),
+                    )
+                elif message["role"] == "assistant":
+                    messages_google_format.append(
+                        glm.Content(role="model", parts=parts),
+                    )
 
             elif isinstance(message["content"], str):
-                messages_google_format.append(
-                    glm.Content(
-                        role="user" if message["role"] == "user" else "model",
-                        parts=[glm.Part(text=message["content"])],
+                if message["role"] == "user":
+                    messages_google_format.append(
+                        glm.Content(
+                            role="user",
+                            parts=[glm.Part(text=message["content"])],
+                        )
                     )
-                )
+                elif message["role"] == "assistant":
+                    messages_google_format.append(
+                        glm.Content(
+                            role="model",
+                            parts=[glm.Part(text=message["content"])],
+                        )
+                    )
             else:
                 raise ValueError("Invalid message content")
 
