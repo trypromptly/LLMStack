@@ -116,6 +116,8 @@ export function stitchObjects(obj1, obj2, pathPrefix = "", streamPaths = []) {
           streamPaths.push(`${pathPrefix}_${key}_base64_chunks`);
         }
       }
+    } else if (typeof value === "number") {
+      newObj[key] = value;
     } else {
       newObj[key] = newObj[key] + value;
     }
