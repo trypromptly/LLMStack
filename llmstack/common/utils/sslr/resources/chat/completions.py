@@ -24,7 +24,7 @@ from ..._utils import (
     maybe_transform,
     required_args,
 )
-from ...constants import PROVIDER_GOOGLE
+from ...constants import PROVIDER_ANTHROPIC, PROVIDER_GOOGLE
 from ...types import chat as _chat
 from ...types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
@@ -90,6 +90,8 @@ class Completions(OpenAICompletions):
         extra_body: Optional[Body] = None,
         timeout: Union[float, httpx.Timeout, None, NotGiven] = NOT_GIVEN,
     ) -> Union[_chat.ChatCompletion, Stream[_chat.ChatCompletionChunk]]:
+        path = "/chat/completions"
+
         if self._client._llm_router_provider == PROVIDER_GOOGLE:
             return self._invoke_google_rpc(
                 model=model,
@@ -152,8 +154,11 @@ class Completions(OpenAICompletions):
             else:
                 messages_openai_format.append(message)
 
+        if self._client._llm_router_provider == PROVIDER_ANTHROPIC:
+            path = "/v1/messages"
+
         return self._post(
-            "/chat/completions",
+            path=path,
             body=maybe_transform(
                 {
                     "messages": messages_openai_format,
