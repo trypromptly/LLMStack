@@ -4,11 +4,6 @@ import uuid
 from typing import Dict, List, Literal, Optional, Union
 
 import httpx
-from openai._base_client import make_request_options
-from openai._compat import cached_property
-from openai._streaming import Stream as Stream
-from openai._types import NOT_GIVEN, Body, Headers, NotGiven, Query
-from openai._utils import maybe_transform
 from openai.resources.chat import AsyncCompletions as OpenAIAsyncCompletions
 from openai.resources.chat import Completions as OpenAICompletions
 from openai.resources.chat import (
@@ -17,12 +12,16 @@ from openai.resources.chat import (
 )
 from openai.types import chat, completion_create_params
 
-from ..._streaming import LLMGRPCStream
+from ..._client import make_request_options
+from ..._streaming import LLMGRPCStream, Stream
+from ..._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from ..._utils import (
     _convert_schema_dict_to_gapic,
+    cached_property,
     convert_google_function_call_args_map_to_dict,
     generate_uuid,
     google_finish_reason_to_literal,
+    maybe_transform,
     required_args,
 )
 from ...constants import PROVIDER_GOOGLE
@@ -231,20 +230,20 @@ class Completions(OpenAICompletions):
                             }
                         )
                         tool_calls.append(
-                            _chat.chat_completion_chunk._ChoiceDeltaToolCall(
+                            chat.chat_completion_message_tool_call.ChatCompletionMessageToolCall(
                                 index=tool_call_idx,
                                 id=f"google_call_{call_id}",
-                                function=chat.chat_completion_chunk.ChoiceDeltaToolCallFunction(
+                                function=chat.chat_completion_message_tool_call.Function(
                                     arguments=json.dumps(
                                         convert_google_function_call_args_map_to_dict(part.function_call.args)
                                     ),
                                     name=part.function_call.name,
                                     type="function",
                                 ),
+                                type="function",
                             )
                         )
                         tool_call_idx += 1
-
                 choices.append(
                     _chat.chat_completion.Choice(
                         index=index,

@@ -1,11 +1,11 @@
 from typing import Optional, Union
 
 import httpx
-from openai._base_client import make_request_options
-from openai._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from openai.pagination import SyncPage
 from openai.resources import Models as OpenAIModels
 
+from .._client import make_request_options
+from .._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from ..constants import PROVIDER_GOOGLE, PROVIDER_STABILITYAI
 from ..types import Model
 
@@ -42,7 +42,7 @@ class Models(OpenAIModels):
             models = list(
                 map(
                     lambda entry: Model(
-                        id=entry.name, object="model", created=0, owned_by="", extra_data=entry.__dict__
+                        id=entry.name.split("/")[1], object="model", created=0, owned_by="", extra_data=entry.__dict__
                     ),
                     list(genai.list_models()),
                 )

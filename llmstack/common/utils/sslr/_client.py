@@ -3,6 +3,7 @@ from typing import Any, Literal, Mapping, Optional, Type, Union, overload
 
 import httpx
 from openai import OpenAI
+from openai._base_client import make_request_options  # type: ignore # noqa: F401
 from openai._client import SyncAPIClient
 from openai._models import FinalRequestOptions
 from openai._utils import is_given

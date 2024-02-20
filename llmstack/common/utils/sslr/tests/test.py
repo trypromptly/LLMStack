@@ -26,7 +26,8 @@ class TestLLM(unittest.TestCase):
     def test_models(self):
         for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI, PROVIDER_STABILITYAI]:
             client = self._initialize_client(provider)
-            print(client.models.list())
+            model_ids = [model.id for model in client.models.list()]
+            self.assertTrue(len(model_ids) > 0)
 
     def test_chat_completions_single_text(self):
         for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI]:
@@ -144,9 +145,9 @@ class TestLLM(unittest.TestCase):
                 max_tokens=200,
             )
 
-            for choice in result.choices:
-                self.assertIsNotNone(choice.message.tool_calls_list)
-                self.assertEqual(len(choice.message.tool_calls_list), 1)
+            self.assertEqual(len(result.choices[0].message.tool_calls), 1)
+            self.assertEqual(result.choices[0].message.tool_calls[0].function.name, "get_current_weather")
+            self.assertGreater(len(result.choices[0].message.tool_calls[0].function.arguments), 1)
 
     def test_completions_function_calling_streaming(self):
         import openai

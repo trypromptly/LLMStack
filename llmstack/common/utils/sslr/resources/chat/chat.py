@@ -1,8 +1,8 @@
-from openai._compat import cached_property
 from openai.resources import AsyncChat as OpenAIAsyncChat
 from openai.resources import Chat as OpenAIChat
 from openai.resources.chat import ChatWithRawResponse, ChatWithStreamingResponse
 
+from ..._utils import cached_property
 from .completions import Completions
 
 __all__ = ["Chat", "AsyncChat"]
