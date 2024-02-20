@@ -3,15 +3,13 @@ import unittest
 
 from llmstack.common.utils.sslr import LLM
 from llmstack.common.utils.sslr.constants import (
+    PROVIDER_ANTHROPIC,
     PROVIDER_GOOGLE,
     PROVIDER_OPENAI,
     PROVIDER_STABILITYAI,
 )
 
-PROVIDER_MODEL_MAP = {
-    PROVIDER_GOOGLE: "gemini-pro",
-    PROVIDER_OPENAI: "gpt-3.5-turbo",
-}
+PROVIDER_MODEL_MAP = {PROVIDER_GOOGLE: "gemini-pro", PROVIDER_OPENAI: "gpt-3.5-turbo", PROVIDER_ANTHROPIC: "claude-2.1"}
 
 
 class TestLLM(unittest.TestCase):
@@ -21,6 +19,7 @@ class TestLLM(unittest.TestCase):
             openai_api_key=os.environ.get("DEFAULT_OPENAI_KEY"),
             stabilityai_api_key=os.environ.get("DEFAULT_STABILITYAI_KEY"),
             google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
+            anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
         )
 
     def test_models(self):
@@ -30,7 +29,7 @@ class TestLLM(unittest.TestCase):
             self.assertTrue(len(model_ids) > 0)
 
     def test_chat_completions_single_text(self):
-        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI]:
+        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI, PROVIDER_ANTHROPIC]:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -46,7 +45,7 @@ class TestLLM(unittest.TestCase):
                 self.assertIsNotNone(choice.message.content_str)
 
     def test_chat_completions_multiple_parts(self):
-        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI]:
+        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI, PROVIDER_ANTHROPIC]:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -67,7 +66,7 @@ class TestLLM(unittest.TestCase):
     def test_chat_completions_single_text_streaming(self):
         import openai
 
-        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI]:
+        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI, PROVIDER_ANTHROPIC]:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -88,7 +87,7 @@ class TestLLM(unittest.TestCase):
     def test_chat_completions_multiple_parts_streaming(self):
         import openai
 
-        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI]:
+        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI, PROVIDER_ANTHROPIC]:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[

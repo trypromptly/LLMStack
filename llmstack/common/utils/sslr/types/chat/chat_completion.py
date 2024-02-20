@@ -29,7 +29,7 @@ class ChatCompletionMessage(_ChatCompletionMessage):
         elif isinstance(self.content, list):
             for part in self.content:
                 if part["type"] == "text":
-                    content_str += part["data"]
+                    content_str += part["data"] if "data" in part else part["text"]
                 elif part["type"] == "blob":
                     content_str += f"data:{part['mime_type']};base64,{part['data']}"
                 elif part["type"] == "file":

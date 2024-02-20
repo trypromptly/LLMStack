@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from openai.types.chat import ChatCompletionChunk as _ChatCompletionChunk
 from openai.types.chat.chat_completion_chunk import Choice as _Choice
@@ -9,6 +9,7 @@ from openai.types.chat.chat_completion_chunk import (  # noqa F401
 from openai.types.chat.chat_completion_chunk import (  # noqa F401
     ChoiceDeltaToolCallFunction as _ChoiceDeltaToolCallFunction,
 )
+from openai.types.completion_usage import CompletionUsage
 
 from llmstack.common.utils.sslr.types.chat.chat_completion_message_param import (
     ContentPartParam,
@@ -48,3 +49,4 @@ class Choice(_Choice):
 
 class ChatCompletionChunk(_ChatCompletionChunk):
     choices: List[Choice]
+    usage: Optional[CompletionUsage] = None
