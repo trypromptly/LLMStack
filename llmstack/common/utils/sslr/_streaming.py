@@ -1,3 +1,4 @@
+from itertools import groupby
 from typing import Any, Iterator, Optional, TypeVar, cast
 
 import httpx
@@ -8,6 +9,17 @@ from openai._utils import is_dict, is_mapping
 from ._utils import num_tokens_from_messages
 
 _T = TypeVar("_T")
+
+
+def _stitch_list_deltas(deltas):
+    result = {}
+    for entry in deltas:
+        for key, value in entry.items():
+            if key not in result:
+                result[key] = value
+            else:
+                result[key] += value
+    return result
 
 
 class LLMRestStream(Stream[_T]):
@@ -29,13 +41,21 @@ class LLMRestStream(Stream[_T]):
                 collect_choices = [delta for delta in collect_choices if delta != {}]
                 stitched_choices = []
                 for idx, choice in enumerate(collect_choices):
-                    result = {}
-                    for entry in choice:
-                        for key, value in entry.items():
-                            if key not in result:
-                                result[key] = value
-                            else:
-                                result[key] += value
+                    tool_calls = [None] * 100
+                    result = _stitch_list_deltas(choice)
+                    if "tool_calls" in result:
+                        for key, value in {
+                            key: list(group) for key, group in groupby(result["tool_calls"], key=lambda e: e["index"])
+                        }.items():
+                            tool_calls[key] = value
+                        tool_calls = [
+                            list(map(lambda entry: entry["function"], entry))
+                            for entry in tool_calls
+                            if entry is not None
+                        ]
+                        tool_calls = [_stitch_list_deltas(entry) for entry in tool_calls]
+                        result["tool_calls"] = tool_calls
+
                     stitched_choices.append(result)
                 output_tokens = num_tokens_from_messages(stitched_choices, model)
 
