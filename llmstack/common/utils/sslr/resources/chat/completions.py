@@ -186,6 +186,7 @@ class Completions(OpenAICompletions):
                 if system:
                     post_body_data["system"] = system
                     post_body_data["messages"] = user_messages
+                    post_body_data.pop("seed")
 
         return self._post(
             path=path,
