@@ -5,8 +5,6 @@ from openai import AsyncStream, Stream
 from openai._streaming import ServerSentEvent, SSEDecoder
 from openai._utils import is_dict
 
-from .types.chat.chat_completion_chunk import ChatCompletionChunk
-
 _T = TypeVar("_T")
 
 
@@ -14,7 +12,7 @@ class LLMRestStream(Stream):
     pass
 
 
-class LLMAnthropicStream(Stream[ChatCompletionChunk]):
+class LLMAnthropicStream(Stream[_T]):
     def __init__(
         self,
         *,

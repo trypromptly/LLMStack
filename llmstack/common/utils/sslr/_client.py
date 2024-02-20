@@ -113,8 +113,6 @@ class LLMClient(SyncAPIClient):
                     options=options,
                 )
                 return api_response.parse()
-            else:
-                stream_cls = LLMAnthropicStream
 
         return super()._process_response(
             cast_to=cast_to,
