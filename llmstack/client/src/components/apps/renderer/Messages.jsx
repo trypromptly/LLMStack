@@ -11,10 +11,29 @@ export class Message {
     this.type = null;
     this.content = null;
     this.timestamp = new Date();
+    this.hash = null;
 
     if (content) {
       this.content = content;
     }
+
+    if (this.content && !this.hash) {
+      this.hash = this._buildHash();
+    }
+  }
+
+  _buildHash() {
+    const stringified = JSON.stringify(
+      this.content,
+      Object.keys(this.content).sort(),
+    );
+    let hash = 0;
+    for (let i = 0; i < stringified.length; i++) {
+      const char = stringified.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash.toString();
   }
 }
 
@@ -43,6 +62,9 @@ export class Messages {
       if (this.messages.hasOwnProperty(message.id)) {
         // If the message already exists, update the content
         this.messages[message.id].content = message.content;
+
+        // Update the hash
+        this.messages[message.id].hash = this.messages[message.id]._buildHash();
       }
 
       this.messages[message.id] = message;
