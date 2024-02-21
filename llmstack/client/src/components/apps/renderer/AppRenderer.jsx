@@ -1,5 +1,5 @@
 import { Liquid } from "liquidjs";
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import ReactGA from "react-ga4";
 import { stitchObjects } from "../../../data/utils";
 import LayoutRenderer from "./LayoutRenderer";
@@ -59,45 +59,46 @@ export function AppRenderer({ app, ws }) {
     });
   }
 
-  const runApp = (input) => {
-    setErrors(null);
-    setIsRunning(true);
-    setIsStreaming(false);
-    chunkedOutput.current = {};
-    const request_id = Math.random().toString(36).substring(2);
+  const runApp = useCallback(
+    (input) => {
+      setErrors(null);
+      setIsRunning(true);
+      setIsStreaming(false);
+      chunkedOutput.current = {};
+      const request_id = Math.random().toString(36).substring(2);
 
-    messagesRef.current.add(new UserMessage(request_id, input));
-    setMessages(messagesRef.current.get());
+      messagesRef.current.add(new UserMessage(request_id, input));
+      setMessages(messagesRef.current.get());
 
-    ws.send(
-      JSON.stringify({
-        event: "run",
-        input,
-        id: request_id,
-        session_id: appSessionId,
-      }),
-    );
+      ws.send(
+        JSON.stringify({
+          event: "run",
+          input,
+          id: request_id,
+          session_id: appSessionId,
+        }),
+      );
 
-    ReactGA.event({
-      category: "App",
-      action: "Run App",
-      label: app?.name,
-      transport: "beacon",
-    });
-  };
+      ReactGA.event({
+        category: "App",
+        action: "Run App",
+        label: app?.name,
+        transport: "beacon",
+      });
+    },
+    [appSessionId, ws, app],
+  );
 
   return (
     <LayoutRenderer
-      app={{
-        ...app.data,
-        _runApp: runApp,
-        _messages: messages,
-        _state: {
-          isRunning,
-          isStreaming,
-          errors,
-        },
+      appInputFields={app?.data?.input_fields}
+      appMessages={messages}
+      appState={{
+        isRunning,
+        isStreaming,
+        errors,
       }}
+      runApp={runApp}
       ws={ws}
     >
       {app.data?.config?.layout}

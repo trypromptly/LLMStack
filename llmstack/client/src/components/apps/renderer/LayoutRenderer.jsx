@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContentCopyOutlined } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 import {
@@ -23,45 +23,9 @@ import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 
 import "./LayoutRenderer.css";
 
-const getContentFromMessage = ({ message, inputFields }) => {
-  try {
-    if (message.type === "app") {
-      return message.content;
-    } else {
-      return Object.keys(message.content).length === 1
-        ? Object.keys(message.content)
-            .map((key) => message.content[key])
-            .join("\n\n")
-        : Object.keys(message.content)
-            .map((key) => {
-              const inputField = inputFields?.find(
-                (input_field) => input_field.name === key,
-              );
-              return `**${key}**: ${
-                inputField &&
-                (inputField.type === "file" ||
-                  inputField.type === "voice" ||
-                  inputField.type === "image")
-                  ? message.content[key]
-                      .split(",")[0]
-                      .split(";")[1]
-                      .split("=")[1]
-                  : message.content[key]
-              }`;
-            })
-            .join("\n\n");
-    }
-  } catch (e) {
-    return "";
-  }
-};
-
 const PromptlyAppInputForm = memo(
-  (props) => {
-    const { app, submitButtonOptions } = props;
-    const { schema, uiSchema } = getJSONSchemaFromInputFields(
-      app?.input_fields,
-    );
+  ({ appInputFields, runApp, submitButtonOptions }) => {
+    const { schema, uiSchema } = getJSONSchemaFromInputFields(appInputFields);
     const [userFormData, setUserFormData] = useState({});
 
     return (
@@ -84,7 +48,7 @@ const PromptlyAppInputForm = memo(
         validator={validator}
         formData={userFormData}
         onSubmit={({ formData }) => {
-          app._runApp(formData);
+          runApp(formData);
           setUserFormData(formData);
         }}
       />
@@ -127,19 +91,46 @@ const AppTypingIndicator = memo(
 );
 
 const RenderUserMessage = memo(
-  (props) => {
-    const { message, inputFields } = props;
+  ({ message, inputFields }) => {
+    const getContentFromMessage = useCallback((messageContent, inputFields) => {
+      try {
+        return Object.keys(messageContent).length === 1
+          ? Object.keys(messageContent)
+              .map((key) => messageContent[key])
+              .join("\n\n")
+          : Object.keys(messageContent)
+              .map((key) => {
+                const inputField = inputFields?.find(
+                  (input_field) => input_field.name === key,
+                );
+                return `**${key}**: ${
+                  inputField &&
+                  (inputField.type === "file" ||
+                    inputField.type === "voice" ||
+                    inputField.type === "image")
+                    ? messageContent[key]
+                        .split(",")[0]
+                        .split(";")[1]
+                        .split("=")[1]
+                    : messageContent[key]
+                }`;
+              })
+              .join("\n\n");
+      } catch (e) {
+        return "";
+      }
+    }, []);
 
     return (
       <Box className="layout-chat_message_from_user">
         <LayoutRenderer>
-          {getContentFromMessage({ message, inputFields })}
+          {getContentFromMessage(message.content, inputFields)}
         </LayoutRenderer>
       </Box>
     );
   },
   (prev, next) => {
-    return prev === next;
+    return prev.message?.hash === next.message?.hash;
   },
 );
 
@@ -162,9 +153,7 @@ const RenderAppMessage = memo(
 );
 
 const PromptlyAppOutputHeader = memo(
-  (props) => {
-    const { app } = props;
-
+  ({ appMessages, appState }) => {
     return (
       <Typography
         variant="h6"
@@ -172,12 +161,12 @@ const PromptlyAppOutputHeader = memo(
         className="section-header"
       >
         Output
-        {app?._messages?.length > 1 && !app?._state.isRunning && (
+        {appMessages?.length > 1 && !appState.isRunning && (
           <Button
             startIcon={<ContentCopyOutlined />}
             onClick={() =>
               navigator.clipboard.writeText(
-                app?._messages[app?._messages.length - 1].content,
+                appMessages[appMessages.length - 1].content,
               )
             }
             sx={{
@@ -198,10 +187,20 @@ const PromptlyAppOutputHeader = memo(
 );
 
 const PromptlyAppChatOutput = memo(
-  (props) => {
-    const { app, minHeight, maxHeight, enableAutoScroll = true } = props;
-    const messages = useMemo(() => app?._messages || [], [app?._messages]);
+  ({
+    appInputFields,
+    appMessages,
+    appState,
+    minHeight,
+    maxHeight,
+    enableAutoScroll = true,
+  }) => {
+    const messages = useMemo(() => appMessages || [], [appMessages]);
     const messagesContainerRef = useRef(null);
+    const memoizedAppInputFields = useMemo(
+      () => appInputFields,
+      [appInputFields],
+    );
     const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
 
     useEffect(() => {
@@ -233,10 +232,10 @@ const PromptlyAppChatOutput = memo(
     }, []);
 
     useEffect(() => {
-      if (app?._state?.isRunning && !app?._state?.isStreaming) {
+      if (appState?.isRunning && !appState?.isStreaming) {
         setAutoScroll(true);
       }
-    }, [app?._state?.isRunning, app?._state?.isStreaming]);
+    }, [appState?.isRunning, appState?.isStreaming]);
 
     return (
       <Box
@@ -249,28 +248,33 @@ const PromptlyAppChatOutput = memo(
             return (
               <RenderUserMessage
                 message={message}
-                inputFields={app?.input_fields}
+                inputFields={memoizedAppInputFields}
                 key={message.id}
               />
             );
           }
           return <RenderAppMessage message={message} key={message.id} />;
         })}
-        {app?._state?.isRunning && !app?._state?.isStreaming && (
+        {appState?.isRunning && !appState?.isStreaming && (
           <AppTypingIndicator />
         )}
       </Box>
     );
   },
   (prev, next) => {
-    return prev === next;
+    return prev.appMessages === next.appMessages;
   },
 );
 
 const PromptlyAppWorkflowOutput = memo(
-  (props) => {
-    const { app, showHeader, placeholder, enableAutoScroll = true } = props;
-    const messages = useMemo(() => app?._messages || [], [app?._messages]);
+  ({
+    appMessages,
+    appState,
+    showHeader,
+    placeholder,
+    enableAutoScroll = true,
+  }) => {
+    const messages = useMemo(() => appMessages || [], [appMessages]);
     const messagesContainerRef = useRef(null);
     const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
     const [lastScrollY, setLastScrollY] = useState(window.scrollY);
@@ -286,8 +290,8 @@ const PromptlyAppWorkflowOutput = memo(
         const currentScrollY = window.scrollY;
 
         if (
-          app?._state?.isRunning &&
-          !app?._state?.isStreaming &&
+          appState?.isRunning &&
+          !appState?.isStreaming &&
           lastScrollY > currentScrollY
         ) {
           setAutoScroll(false);
@@ -303,25 +307,28 @@ const PromptlyAppWorkflowOutput = memo(
       return () => {
         window.removeEventListener("scroll", handleScroll);
       };
-    }, [lastScrollY, app?._state?.isRunning, app?._state?.isStreaming]);
+    }, [lastScrollY, appState?.isRunning, appState?.isStreaming]);
 
     return (
       <Box ref={messagesContainerRef}>
-        {showHeader && <PromptlyAppOutputHeader app={app} />}
-        {!app?._state?.isStreaming &&
-          app?._state?.isRunning &&
-          !app?._state?.errors && (
-            <Box
-              sx={{
-                margin: "auto",
-                textAlign: "center",
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          )}
-        {!app?._state.isRunning &&
-          !app?._state.errors &&
+        {showHeader && (
+          <PromptlyAppOutputHeader
+            appMessages={appMessages}
+            appState={appState}
+          />
+        )}
+        {!appState?.isStreaming && appState?.isRunning && !appState?.errors && (
+          <Box
+            sx={{
+              margin: "auto",
+              textAlign: "center",
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        )}
+        {!appState.isRunning &&
+          !appState.errors &&
           messages.length === 0 &&
           placeholder}
         {messages.length > 0 &&
@@ -339,23 +346,22 @@ const PromptlyAppWorkflowOutput = memo(
   },
 );
 
-export default function LayoutRenderer(props) {
-  const runProcessor = props.runProcessor;
-  const app = props.app;
-
+export default function LayoutRenderer({
+  appInputFields,
+  appMessages,
+  appState,
+  runApp,
+  runProcessor,
+  children,
+}) {
   return (
     <ReactMarkdown
-      {...props}
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw]}
       components={{
         "promptly-heygen-realtime-avatar": ({ node, ...props }) => {
           return (
-            <HeyGenRealtimeAvatar
-              node={node}
-              {...props}
-              runProcessor={runProcessor}
-            />
+            <HeyGenRealtimeAvatar node={node} runProcessor={runProcessor} />
           );
         },
         "promptly-web-browser-embed": ({ node, ...props }) => {
@@ -385,7 +391,8 @@ export default function LayoutRenderer(props) {
         "pa-input-form": ({ node, ...props }) => {
           return (
             <PromptlyAppInputForm
-              app={app}
+              appInputFields={appInputFields}
+              runApp={runApp}
               submitButtonOptions={props.submitbuttonoption}
             />
           );
@@ -393,7 +400,8 @@ export default function LayoutRenderer(props) {
         "pa-workflow-output": ({ node, ...props }) => {
           return (
             <PromptlyAppWorkflowOutput
-              app={app}
+              appMessages={appMessages}
+              appState={appState}
               showHeader={props?.showheader}
               placeholder={props.placeholder}
             />
@@ -402,7 +410,9 @@ export default function LayoutRenderer(props) {
         "pa-chat-output": ({ node, ...props }) => {
           return (
             <PromptlyAppChatOutput
-              app={app}
+              appInputFields={appInputFields}
+              appMessages={appMessages}
+              appState={appState}
               maxHeight={props.maxheight || "400px"}
               minHeight={props.minheight || "200px"}
             />
@@ -519,7 +529,7 @@ export default function LayoutRenderer(props) {
         },
       }}
     >
-      {props.children || ""}
+      {children || ""}
     </ReactMarkdown>
   );
 }
