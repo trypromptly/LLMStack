@@ -100,29 +100,41 @@ class HTMLTranslationProcessor(
         return "promptly"
 
     def _translate_with_provider(self, chunk: str) -> str:
-        from openai import OpenAI
+        try:
+            from openai import OpenAI
 
-        openai_client = OpenAI(api_key=self._env["openai_api_key"])
-        system_message = {
-            "role": "system",
-            "content": self._config.system_message,
-        }
+            json_input = json.loads(chunk)
 
-        if self._config.placeholder_variable in self._input.instructions:
-            message = f"{self._input.instructions.replace(self._config.placeholder_variable, chunk)}"
-        else:
-            message = f"{self._input.instructions}{chunk}"
+            openai_client = OpenAI(api_key=self._env["openai_api_key"])
+            system_message = {
+                "role": "system",
+                "content": self._config.system_message,
+            }
 
-        result = openai_client.chat.completions.create(
-            model="gpt-4-turbo-preview",
-            messages=[system_message] + [{"role": "user", "content": message}],
-            temperature=0.5,
-            stream=False,
-            seed=10,
-            max_tokens=3000,
-            response_format={"type": "json_object"},
-        )
-        return json.loads(result.choices[0].message.content)
+            if self._config.placeholder_variable in self._input.instructions:
+                message = f"{self._input.instructions.replace(self._config.placeholder_variable, chunk)}"
+            else:
+                message = f"{self._input.instructions}{chunk}"
+
+            result = openai_client.chat.completions.create(
+                model="gpt-4-turbo-preview",
+                messages=[system_message] + [{"role": "user", "content": message}],
+                temperature=0.5,
+                stream=False,
+                seed=10,
+                max_tokens=3000,
+                response_format={"type": "json_object"},
+            )
+
+            json_result = json.loads(result.choices[0].message.content)
+
+            for entry in json_input:
+                if entry not in json_result:
+                    json_result[entry] = json_input[entry]
+            return json_result
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            return {}
 
     def _get_elements_with_text(self, html_element: BeautifulSoup) -> List[str]:
         if html_element.name is None:
@@ -196,8 +208,6 @@ class HTMLTranslationProcessor(
                 except Exception as e:
                     logger.error(f"Error: {e}")
 
-        assert len(processed_text) == len(orignal_text)
-
         for id, value in processed_text.items():
             if id in nodes:
                 if nodes[id].element.parent and len(nodes[id].element.parent.contents) == 1:
@@ -209,12 +219,6 @@ class HTMLTranslationProcessor(
 
                 else:
                     nodes[id].element.string = value
-
-        async_to_sync(output_stream.write)(
-            HTMLTranslationOutput(
-                text_translations=list(processed_text.values()), text_translations_length=len(processed_text)
-            ),
-        )
 
         #  Translate attributes
 
@@ -257,8 +261,6 @@ class HTMLTranslationProcessor(
                         processed_text[key] = value
                 except Exception as e:
                     logger.error(f"Error: {e}")
-
-        assert len(processed_text) == len(orignal_text)
 
         for id, value in processed_text.items():
             if id in nodes:
