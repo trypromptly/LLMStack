@@ -20,12 +20,19 @@ import remarkGfm from "remark-gfm";
 import { getJSONSchemaFromInputFields } from "../../../data/utils";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
+import { appRunDataState } from "../../../data/atoms";
+import { useRecoilValue } from "recoil";
+
+import loadingImage from "../../../assets/images/loading.gif";
 
 import "./LayoutRenderer.css";
 
 const PromptlyAppInputForm = memo(
-  ({ appInputFields, runApp, submitButtonOptions }) => {
-    const { schema, uiSchema } = getJSONSchemaFromInputFields(appInputFields);
+  ({ runApp, submitButtonOptions }) => {
+    const appRunData = useRecoilValue(appRunDataState);
+    const { schema, uiSchema } = getJSONSchemaFromInputFields(
+      appRunData?.inputFields,
+    );
     const [userFormData, setUserFormData] = useState({});
 
     return (
@@ -148,12 +155,12 @@ const RenderAppMessage = memo(
     );
   },
   (prev, next) => {
-    return prev === next;
+    return prev?.message?.hash === next?.message?.hash;
   },
 );
 
 const PromptlyAppOutputHeader = memo(
-  ({ appMessages, appState }) => {
+  ({ appMessages, isRunning }) => {
     return (
       <Typography
         variant="h6"
@@ -161,7 +168,7 @@ const PromptlyAppOutputHeader = memo(
         className="section-header"
       >
         Output
-        {appMessages?.length > 1 && !appState.isRunning && (
+        {appMessages?.length > 1 && !isRunning && (
           <Button
             startIcon={<ContentCopyOutlined />}
             onClick={() =>
@@ -187,20 +194,13 @@ const PromptlyAppOutputHeader = memo(
 );
 
 const PromptlyAppChatOutput = memo(
-  ({
-    appInputFields,
-    appMessages,
-    appState,
-    minHeight,
-    maxHeight,
-    enableAutoScroll = true,
-  }) => {
-    const messages = useMemo(() => appMessages || [], [appMessages]);
-    const messagesContainerRef = useRef(null);
-    const memoizedAppInputFields = useMemo(
-      () => appInputFields,
-      [appInputFields],
+  ({ minHeight, maxHeight, enableAutoScroll = true }) => {
+    const appRunData = useRecoilValue(appRunDataState);
+    const appMessages = useMemo(
+      () => appRunData?.messages || [],
+      [appRunData?.messages],
     );
+    const messagesContainerRef = useRef(null);
     const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
 
     useEffect(() => {
@@ -208,7 +208,7 @@ const PromptlyAppChatOutput = memo(
         messagesContainerRef.current.scrollTop =
           messagesContainerRef.current.scrollHeight;
       }
-    }, [messages, autoScroll]);
+    }, [appMessages, autoScroll]);
 
     useEffect(() => {
       const messagesContainer = messagesContainerRef.current;
@@ -232,10 +232,10 @@ const PromptlyAppChatOutput = memo(
     }, []);
 
     useEffect(() => {
-      if (appState?.isRunning && !appState?.isStreaming) {
+      if (appRunData?.isRunning && !appRunData?.isStreaming) {
         setAutoScroll(true);
       }
-    }, [appState?.isRunning, appState?.isStreaming]);
+    }, [appRunData?.isRunning, appRunData?.isStreaming]);
 
     return (
       <Box
@@ -243,19 +243,19 @@ const PromptlyAppChatOutput = memo(
         sx={{ maxHeight, minHeight, overflow: "scroll" }}
         ref={messagesContainerRef}
       >
-        {messages.map((message) => {
+        {appMessages.map((message) => {
           if (message.type === "user") {
             return (
               <RenderUserMessage
                 message={message}
-                inputFields={memoizedAppInputFields}
+                inputFields={appRunData?.inputFields}
                 key={message.id}
               />
             );
           }
           return <RenderAppMessage message={message} key={message.id} />;
         })}
-        {appState?.isRunning && !appState?.isStreaming && (
+        {appRunData?.isRunning && !appRunData?.isStreaming && (
           <AppTypingIndicator />
         )}
       </Box>
@@ -267,14 +267,12 @@ const PromptlyAppChatOutput = memo(
 );
 
 const PromptlyAppWorkflowOutput = memo(
-  ({
-    appMessages,
-    appState,
-    showHeader,
-    placeholder,
-    enableAutoScroll = true,
-  }) => {
-    const messages = useMemo(() => appMessages || [], [appMessages]);
+  ({ showHeader, placeholder, enableAutoScroll = true }) => {
+    const appRunData = useRecoilValue(appRunDataState);
+    const appMessages = useMemo(
+      () => appRunData?.messages || [],
+      [appRunData?.messages],
+    );
     const messagesContainerRef = useRef(null);
     const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
     const [lastScrollY, setLastScrollY] = useState(window.scrollY);
@@ -283,15 +281,15 @@ const PromptlyAppWorkflowOutput = memo(
       if (autoScroll && messagesContainerRef.current) {
         window.scrollTo(0, messagesContainerRef.current.scrollHeight);
       }
-    }, [messages, autoScroll]);
+    }, [appMessages, autoScroll]);
 
     useEffect(() => {
       const handleScroll = () => {
         const currentScrollY = window.scrollY;
 
         if (
-          appState?.isRunning &&
-          !appState?.isStreaming &&
+          appRunData?.isRunning &&
+          !appRunData?.isStreaming &&
           lastScrollY > currentScrollY
         ) {
           setAutoScroll(false);
@@ -307,34 +305,36 @@ const PromptlyAppWorkflowOutput = memo(
       return () => {
         window.removeEventListener("scroll", handleScroll);
       };
-    }, [lastScrollY, appState?.isRunning, appState?.isStreaming]);
+    }, [lastScrollY, appRunData?.isRunning, appRunData?.isStreaming]);
 
     return (
       <Box ref={messagesContainerRef}>
         {showHeader && (
           <PromptlyAppOutputHeader
             appMessages={appMessages}
-            appState={appState}
+            isRunning={appRunData?.isRunning}
           />
         )}
-        {!appState?.isStreaming && appState?.isRunning && !appState?.errors && (
-          <Box
-            sx={{
-              margin: "auto",
-              textAlign: "center",
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        )}
-        {!appState.isRunning &&
-          !appState.errors &&
-          messages.length === 0 &&
+        {!appRunData?.isStreaming &&
+          appRunData?.isRunning &&
+          !appRunData?.errors && (
+            <Box
+              sx={{
+                margin: "auto",
+                textAlign: "center",
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          )}
+        {!appRunData.isRunning &&
+          !appRunData.errors &&
+          appMessages.length === 0 &&
           placeholder}
-        {messages.length > 0 &&
-          messages[messages.length - 1].type === "app" && (
+        {appMessages.length > 0 &&
+          appMessages[appMessages.length - 1].type === "app" && (
             <RenderAppMessage
-              message={messages[messages.length - 1]}
+              message={appMessages[appMessages.length - 1]}
               workflow={true}
             />
           )}
@@ -347,85 +347,113 @@ const PromptlyAppWorkflowOutput = memo(
 );
 
 export default function LayoutRenderer({
-  appInputFields,
-  appMessages,
-  appState,
+  processor,
   runApp,
   runProcessor,
   children,
 }) {
-  return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeRaw]}
-      components={{
-        "promptly-heygen-realtime-avatar": ({ node, ...props }) => {
+  const memoizedRemarkPlugins = useMemo(() => [remarkGfm], []);
+  const memoizedRehypePlugins = useMemo(() => [rehypeRaw], []);
+  const memoizedProcessor = useMemo(() => processor, [processor]);
+  const memoizedRunApp = useCallback(runApp, [runApp]);
+  const memoizedRunProcessor = useCallback(runProcessor, [runProcessor]);
+  const memoizedComponents = useMemo(() => {
+    return {
+      "promptly-heygen-realtime-avatar": memo(
+        ({ node, ...props }) => {
           return (
-            <HeyGenRealtimeAvatar node={node} runProcessor={runProcessor} />
+            <HeyGenRealtimeAvatar
+              processor={memoizedProcessor}
+              runProcessor={memoizedRunProcessor}
+            />
           );
         },
-        "promptly-web-browser-embed": ({ node, ...props }) => {
+        (prev, next) => prev.props === next.props,
+      ),
+      "promptly-web-browser-embed": memo(
+        ({ node, ...props }) => {
           return <RemoteBrowserEmbed wsUrl={props.wsurl} />;
         },
-        "pa-layout": ({ node, ...props }) => {
+        (prev, next) => prev.props.wsUrl === next.props.wsUrl,
+      ),
+      "pa-layout": memo(
+        ({ node, ...props }) => {
           return <Box {...props}>{props.children}</Box>;
         },
-        "pa-container": ({ node, ...props }) => {
+        (prev, next) => prev.props === next.props,
+      ),
+      "pa-container": memo(
+        ({ node, ...props }) => {
           return <Container {...props}>{props.children}</Container>;
         },
-        "pa-typography": ({ node, ...props }) => {
+        (prev, next) => prev.props === next.props,
+      ),
+      "pa-typography": memo(
+        ({ node, ...props }) => {
           return <Typography {...props}>{props.children}</Typography>;
         },
-        "pa-button": ({ node, ...props }) => {
+        (prev, next) => prev.props === next.props,
+      ),
+      "pa-button": memo(
+        ({ node, ...props }) => {
           return <Button {...props}>{props.children}</Button>;
         },
-        "pa-stack": ({ node, ...props }) => {
+        (prev, next) => prev.props === next.props,
+      ),
+      "pa-stack": memo(
+        ({ node, ...props }) => {
           return <Stack {...props}>{props.children}</Stack>;
         },
-        "pa-grid": ({ node, ...props }) => {
+        (prev, next) => prev.props === next.props,
+      ),
+      "pa-grid": memo(
+        ({ node, ...props }) => {
           return <Grid {...props}>{props.children}</Grid>;
         },
-        "pa-paper": ({ node, ...props }) => {
+        (prev, next) => prev.props === next.props,
+      ),
+      "pa-paper": memo(
+        ({ node, ...props }) => {
           return <Paper {...props}>{props.children}</Paper>;
         },
-        "pa-input-form": ({ node, ...props }) => {
-          return (
-            <PromptlyAppInputForm
-              appInputFields={appInputFields}
-              runApp={runApp}
-              submitButtonOptions={props.submitbuttonoption}
-            />
-          );
-        },
-        "pa-workflow-output": ({ node, ...props }) => {
-          return (
-            <PromptlyAppWorkflowOutput
-              appMessages={appMessages}
-              appState={appState}
-              showHeader={props?.showheader}
-              placeholder={props.placeholder}
-            />
-          );
-        },
-        "pa-chat-output": ({ node, ...props }) => {
-          return (
-            <PromptlyAppChatOutput
-              appInputFields={appInputFields}
-              appMessages={appMessages}
-              appState={appState}
-              maxHeight={props.maxheight || "400px"}
-              minHeight={props.minheight || "200px"}
-            />
-          );
-        },
-        a: ({ node, ...props }) => {
+        (prev, next) => prev.props === next.props,
+      ),
+      "pa-input-form": ({ node, ...props }) => {
+        return (
+          <PromptlyAppInputForm
+            runApp={memoizedRunApp}
+            submitButtonOptions={props.submitbuttonoption}
+          />
+        );
+      },
+      "pa-workflow-output": ({ node, ...props }) => {
+        return (
+          <PromptlyAppWorkflowOutput
+            showHeader={props?.showheader}
+            placeholder={props.placeholder}
+          />
+        );
+      },
+      "pa-chat-output": ({ node, ...props }) => {
+        return (
+          <PromptlyAppChatOutput
+            maxHeight={props.maxheight || "400px"}
+            minHeight={props.minheight || "200px"}
+          />
+        );
+      },
+      a: memo(
+        ({ node, ...props }) => {
           return (
             <a {...props} target="_blank" rel="noreferrer nofollow">
               {props.children}
             </a>
           );
         },
-        table: ({ node, ...props }) => {
+        (prev, next) => prev.props === next.props,
+      ),
+      table: memo(
+        ({ node, ...props }) => {
           return (
             <table
               style={{
@@ -438,7 +466,10 @@ export default function LayoutRenderer({
             </table>
           );
         },
-        tr: ({ node, ...props }) => {
+        (prev, next) => prev === next,
+      ),
+      tr: memo(
+        ({ node, ...props }) => {
           return (
             <tr
               {...props}
@@ -450,7 +481,10 @@ export default function LayoutRenderer({
             </tr>
           );
         },
-        th: ({ node, ...props }) => {
+        (prev, next) => prev === next,
+      ),
+      th: memo(
+        ({ node, ...props }) => {
           return (
             <th
               {...props}
@@ -462,7 +496,10 @@ export default function LayoutRenderer({
             </th>
           );
         },
-        td: ({ node, ...props }) => {
+        (prev, next) => prev === next,
+      ),
+      td: memo(
+        ({ node, ...props }) => {
           return (
             <td
               {...props}
@@ -474,7 +511,39 @@ export default function LayoutRenderer({
             </td>
           );
         },
-        code: ({ node, ...codeProps }) => {
+        (prev, next) => prev === next,
+      ),
+      img: memo(
+        ({ node, ...props }) => {
+          const { alt, src } = props;
+          // We provide alt text and style as altText|style where style is a string
+          const [altText, style] = alt.split("|");
+          let styleJson = {};
+          try {
+            styleJson = JSON.parse(style);
+          } catch (e) {
+            // Do nothing
+          }
+
+          return (
+            <img
+              src={src || loadingImage}
+              alt={altText}
+              style={{
+                ...{
+                  display: "block",
+                  maxWidth: "100%",
+                  boxShadow: "0px 0px 10px 1px #7d7d7d",
+                },
+                ...styleJson,
+              }}
+            />
+          );
+        },
+        (prev, next) => prev.props === next.props,
+      ),
+      code: memo(
+        ({ node, ...codeProps }) => {
           const language = codeProps.className;
           return language ? (
             <Stack sx={{ maxWidth: "90%" }}>
@@ -527,7 +596,16 @@ export default function LayoutRenderer({
             <code {...codeProps}>{codeProps.children}</code>
           );
         },
-      }}
+        (prev, next) => prev.props === next.props,
+      ),
+    };
+  }, [memoizedProcessor, memoizedRunApp, memoizedRunProcessor]);
+
+  return (
+    <ReactMarkdown
+      remarkPlugins={memoizedRemarkPlugins}
+      rehypePlugins={memoizedRehypePlugins}
+      components={memoizedComponents}
     >
       {children || ""}
     </ReactMarkdown>

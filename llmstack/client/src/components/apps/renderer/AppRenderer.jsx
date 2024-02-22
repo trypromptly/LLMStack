@@ -1,22 +1,36 @@
 import { Liquid } from "liquidjs";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactGA from "react-ga4";
 import { stitchObjects } from "../../../data/utils";
 import LayoutRenderer from "./LayoutRenderer";
 import { Messages, UserMessage, AppMessage } from "./Messages";
+import { appRunDataState } from "../../../data/atoms";
+import { useSetRecoilState } from "recoil";
 
 export function AppRenderer({ app, ws }) {
   const [appSessionId, setAppSessionId] = useState(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [errors, setErrors] = useState(null);
   const templateEngine = new Liquid();
   const outputTemplate = templateEngine.parse(
     app?.data?.output_template?.markdown || "",
   );
   const chunkedOutput = useRef({});
   const messagesRef = useRef(new Messages());
-  const [messages, setMessages] = useState(messagesRef.current.get());
+  const setAppRunData = useSetRecoilState(appRunDataState);
+
+  useEffect(() => {
+    setAppRunData((prevState) => ({
+      ...prevState,
+      isStreaming: false,
+      isRunning: false,
+      errors: null,
+      inputFields: app?.data?.input_fields,
+      messages: messagesRef.current.get(),
+    }));
+
+    return () => {
+      setAppRunData({});
+    };
+  });
 
   if (ws) {
     ws.setOnMessage((evt) => {
@@ -28,7 +42,10 @@ export function AppRenderer({ app, ws }) {
           message.output,
         );
         chunkedOutput.current = newChunkedOutput;
-        setIsStreaming(true);
+        setAppRunData((prevState) => ({
+          ...prevState,
+          isStreaming: true,
+        }));
       }
 
       if (message.session) {
@@ -36,14 +53,20 @@ export function AppRenderer({ app, ws }) {
       }
 
       if (message.event && message.event === "done") {
-        setIsRunning(false);
-        setIsStreaming(false);
+        setAppRunData((prevState) => ({
+          ...prevState,
+          isRunning: false,
+          isStreaming: false,
+        }));
       }
 
       if (message.errors && message.errors.length > 0) {
-        setErrors({ errors: message.errors });
-        setIsRunning(false);
-        setIsStreaming(false);
+        setAppRunData((prevState) => ({
+          ...prevState,
+          isRunning: false,
+          isStreaming: false,
+          errors: message.errors,
+        }));
       }
 
       templateEngine
@@ -53,7 +76,11 @@ export function AppRenderer({ app, ws }) {
             messagesRef.current.add(
               new AppMessage(message.id, response, message.reply_to),
             );
-            setMessages(messagesRef.current.get());
+
+            setAppRunData((prevState) => ({
+              ...prevState,
+              messages: messagesRef.current.get(),
+            }));
           }
         });
     });
@@ -61,20 +88,23 @@ export function AppRenderer({ app, ws }) {
 
   const runApp = useCallback(
     (input) => {
-      setErrors(null);
-      setIsRunning(true);
-      setIsStreaming(false);
       chunkedOutput.current = {};
-      const request_id = Math.random().toString(36).substring(2);
+      const requestId = Math.random().toString(36).substring(2);
 
-      messagesRef.current.add(new UserMessage(request_id, input));
-      setMessages(messagesRef.current.get());
+      messagesRef.current.add(new UserMessage(requestId, input));
+      setAppRunData((prevState) => ({
+        ...prevState,
+        isRunning: true,
+        isStreaming: false,
+        errors: null,
+        messages: messagesRef.current.get(),
+      }));
 
       ws.send(
         JSON.stringify({
           event: "run",
           input,
-          id: request_id,
+          id: requestId,
           session_id: appSessionId,
         }),
       );
@@ -86,22 +116,10 @@ export function AppRenderer({ app, ws }) {
         transport: "beacon",
       });
     },
-    [appSessionId, ws, app],
+    [appSessionId, ws, app, setAppRunData],
   );
 
   return (
-    <LayoutRenderer
-      appInputFields={app?.data?.input_fields}
-      appMessages={messages}
-      appState={{
-        isRunning,
-        isStreaming,
-        errors,
-      }}
-      runApp={runApp}
-      ws={ws}
-    >
-      {app.data?.config?.layout}
-    </LayoutRenderer>
+    <LayoutRenderer runApp={runApp}>{app.data?.config?.layout}</LayoutRenderer>
   );
 }

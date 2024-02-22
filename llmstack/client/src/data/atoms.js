@@ -572,3 +572,9 @@ export const appEditorValidationErrorsState = atom({
   key: "appEditorValidationErrorsState",
   default: {},
 });
+
+// Maintains runtime information for the app being used
+export const appRunDataState = atom({
+  key: "appRunData",
+  default: {},
+});
