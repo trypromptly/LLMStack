@@ -17,6 +17,7 @@
   display: flex;
   align-items: flex-start;
   flex-direction: column;
+  align-self: baseline;
 }
 
 .layout-chat_message_from_app img {
