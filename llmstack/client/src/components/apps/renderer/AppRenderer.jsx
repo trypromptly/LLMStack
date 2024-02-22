@@ -119,7 +119,41 @@ export function AppRenderer({ app, ws }) {
     [appSessionId, ws, app, setAppRunData],
   );
 
-  return (
-    <LayoutRenderer runApp={runApp}>{app.data?.config?.layout}</LayoutRenderer>
-  );
+  let layout = app.data?.config?.layout;
+
+  if (!layout) {
+    const typeSlug = app?.data?.type_slug;
+    if (typeSlug === "text-chat" || typeSlug === "agent") {
+      layout = `<pa-layout>
+      <pa-paper style="padding: 10px;">
+      <pa-grid container="true" spacing="2" style="width: 100%">
+        <pa-grid item="true" xs="12">
+          <pa-chat-output sx='{"height": "70vh", "minHeight": "90%"}'/>
+        </pa-grid>
+        <pa-grid item="true" xs="12">
+          <pa-input-form clearonsubmit="true" />
+        </pa-grid>
+      </pa-grid>
+      </pa-paper>
+      </pa-layout>`;
+    } else {
+      layout = `<pa-layout>
+      <pa-paper style="padding: 10px;">
+      <pa-grid container="true" spacing="2" style="width: 100%">
+        <pa-grid item="true" xs="12">
+          <pa-input-form />
+        </pa-grid>
+        <pa-grid item="true" xs="12">
+          <br/>
+        </pa-grid>
+        <pa-grid item="true" xs="12">
+          <pa-workflow-output showHeader="true" />
+        </pa-grid>
+      </pa-grid>
+      </pa-paper>
+      </pa-layout>`;
+    }
+  }
+
+  return <LayoutRenderer runApp={runApp}>{layout}</LayoutRenderer>;
 }
