@@ -97,7 +97,7 @@ const AppTypingIndicator = memo(
   },
 );
 
-const RenderUserMessage = memo(
+const UserMessage = memo(
   ({ message, inputFields }) => {
     const getContentFromMessage = useCallback((messageContent, inputFields) => {
       try {
@@ -141,7 +141,7 @@ const RenderUserMessage = memo(
   },
 );
 
-const RenderAppMessage = memo(
+const AppMessage = memo(
   (props) => {
     const { message, workflow } = props;
     return (
@@ -246,14 +246,14 @@ const PromptlyAppChatOutput = memo(
         {appMessages.map((message) => {
           if (message.type === "user") {
             return (
-              <RenderUserMessage
+              <UserMessage
                 message={message}
                 inputFields={appRunData?.inputFields}
                 key={message.id}
               />
             );
           }
-          return <RenderAppMessage message={message} key={message.id} />;
+          return <AppMessage message={message} key={message.id} />;
         })}
         {appRunData?.isRunning && !appRunData?.isStreaming && (
           <AppTypingIndicator />
@@ -333,7 +333,7 @@ const PromptlyAppWorkflowOutput = memo(
           placeholder}
         {appMessages.length > 0 &&
           appMessages[appMessages.length - 1].type === "app" && (
-            <RenderAppMessage
+            <AppMessage
               message={appMessages[appMessages.length - 1]}
               workflow={true}
             />
