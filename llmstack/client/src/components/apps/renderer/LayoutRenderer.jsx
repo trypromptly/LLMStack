@@ -197,7 +197,7 @@ const PromptlyAppOutputHeader = memo(
 );
 
 const PromptlyAppChatOutput = memo(
-  ({ minHeight, maxHeight, enableAutoScroll = true }) => {
+  ({ minHeight, maxHeight, sx, enableAutoScroll = true }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const appMessages = useMemo(
       () => appRunData?.messages || [],
@@ -243,7 +243,7 @@ const PromptlyAppChatOutput = memo(
     return (
       <Box
         className="layout-chat-container"
-        sx={{ maxHeight, minHeight, overflow: "scroll" }}
+        sx={{ maxHeight, minHeight, overflow: "scroll", ...sx }}
         ref={messagesContainerRef}
       >
         {appMessages.map((message) => {
@@ -270,7 +270,7 @@ const PromptlyAppChatOutput = memo(
 );
 
 const PromptlyAppWorkflowOutput = memo(
-  ({ showHeader, placeholder, enableAutoScroll = true }) => {
+  ({ showHeader, placeholder, sx, enableAutoScroll = true }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const appMessages = useMemo(
       () => appRunData?.messages || [],
@@ -311,7 +311,7 @@ const PromptlyAppWorkflowOutput = memo(
     }, [lastScrollY, appRunData?.isRunning, appRunData?.isStreaming]);
 
     return (
-      <Box ref={messagesContainerRef}>
+      <Box ref={messagesContainerRef} sx={sx}>
         {showHeader && (
           <PromptlyAppOutputHeader
             appMessages={appMessages}
@@ -348,6 +348,20 @@ const PromptlyAppWorkflowOutput = memo(
     return prev === next;
   },
 );
+
+const parseSxFromProps = (sxString) => {
+  let sx = {};
+
+  if (!sxString) return sx;
+
+  try {
+    sx = JSON.parse(sxString);
+  } catch (e) {
+    console.error("Failed to parse sx from props", e, sxString);
+  }
+
+  return sx;
+};
 
 export default function LayoutRenderer({
   processor,
@@ -431,18 +445,24 @@ export default function LayoutRenderer({
         );
       },
       "pa-workflow-output": ({ node, ...props }) => {
+        let sx = parseSxFromProps(props.sx);
+
         return (
           <PromptlyAppWorkflowOutput
             showHeader={props?.showheader}
             placeholder={props.placeholder}
+            sx={sx}
           />
         );
       },
       "pa-chat-output": ({ node, ...props }) => {
+        let sx = parseSxFromProps(props.sx);
+
         return (
           <PromptlyAppChatOutput
-            maxHeight={props.maxheight || "400px"}
+            maxHeight={props.maxheight || "100%"}
             minHeight={props.minheight || "200px"}
+            sx={sx}
           />
         );
       },
