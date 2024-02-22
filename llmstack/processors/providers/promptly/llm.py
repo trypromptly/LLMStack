@@ -5,7 +5,6 @@ from typing import Literal, Optional, Union
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
-from llmstack.common.utils.sslr import LLM
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -134,6 +133,8 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
         return "promptly"
 
     def process(self) -> dict:
+        from llmstack.common.utils.sslr import LLM
+
         output_stream = self._output_stream
         google_api_key, token_type = get_google_credential_from_env(self._env)
 

@@ -10,7 +10,6 @@ import uuid
 from datetime import timedelta
 from enum import Enum
 
-import croniter
 import django_rq
 from django.apps import apps
 from django.conf import settings
@@ -703,6 +702,8 @@ class RepeatableJob(ScheduledTimeMixin, BaseTask):
 
 
 def get_next_cron_time(cron_string) -> timezone.datetime:
+    import croniter
+
     """Calculate the next scheduled time by creating a crontab object
     with a cron string"""
     now = timezone.now()
@@ -724,6 +725,8 @@ class CronJob(BaseTask):
         self.clean_cron_string()
 
     def clean_cron_string(self):
+        import croniter
+
         try:
             croniter.croniter(self.cron_string)
         except ValueError as e:
