@@ -50,6 +50,12 @@ class ChatAppConfigSchema(BaseSchema):
         description="List of upto 3 suggested messages to show to the user",
         advanced_parameter=True,
     )
+    layout: Optional[str] = Field(
+        title="Layout",
+        description="Layout to use for the app page",
+        widget="textarea",
+        advanced_parameter=True,
+    )
 
 
 class ChatApp(AppTypeInterface[ChatAppConfigSchema]):

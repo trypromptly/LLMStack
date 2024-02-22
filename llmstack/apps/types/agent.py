@@ -121,6 +121,12 @@ class AgentConfigSchema(BaseSchema):
         description="Random seed to use for the agent",
         advanced_parameter=True,
     )
+    layout: Optional[str] = Field(
+        title="Layout",
+        description="Layout to use for the app page",
+        widget="textarea",
+        advanced_parameter=True,
+    )
 
 
 class Agent(AppTypeInterface[AgentConfigSchema]):
