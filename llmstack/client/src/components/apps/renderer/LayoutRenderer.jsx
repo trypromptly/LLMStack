@@ -28,7 +28,7 @@ import loadingImage from "../../../assets/images/loading.gif";
 import "./LayoutRenderer.css";
 
 const PromptlyAppInputForm = memo(
-  ({ runApp, submitButtonOptions }) => {
+  ({ runApp, submitButtonOptions, clearOnSubmit = false }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const { schema, uiSchema } = getJSONSchemaFromInputFields(
       appRunData?.inputFields,
@@ -56,7 +56,10 @@ const PromptlyAppInputForm = memo(
         formData={userFormData}
         onSubmit={({ formData }) => {
           runApp(formData);
-          setUserFormData(formData);
+
+          if (!clearOnSubmit) {
+            setUserFormData(formData);
+          }
         }}
       />
     );
@@ -423,6 +426,7 @@ export default function LayoutRenderer({
           <PromptlyAppInputForm
             runApp={memoizedRunApp}
             submitButtonOptions={props.submitbuttonoption}
+            clearOnSubmit={props.clearonsubmit}
           />
         );
       },
