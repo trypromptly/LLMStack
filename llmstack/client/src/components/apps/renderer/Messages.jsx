@@ -60,14 +60,15 @@ export class Messages {
   add(message) {
     if (message.id) {
       if (this.messages.hasOwnProperty(message.id)) {
-        // If the message already exists, update the content
-        this.messages[message.id].content = message.content;
-
-        // Update the hash
-        this.messages[message.id].hash = this.messages[message.id]._buildHash();
+        // Create a new message with updated content instead of mutating
+        const updatedMessage =
+          message.type === "user"
+            ? new UserMessage(message.id, message.content)
+            : new AppMessage(message.id, message.content, message.replyTo);
+        this.messages[message.id] = updatedMessage;
+      } else {
+        this.messages[message.id] = message;
       }
-
-      this.messages[message.id] = message;
     }
   }
 
