@@ -499,12 +499,9 @@ export default function LayoutRenderer({
         },
         (prev, next) => prev.props === next.props,
       ),
-      "promptly-web-browser-embed": memo(
-        ({ node, ...props }) => {
-          return <RemoteBrowserEmbed wsUrl={props.wsurl} />;
-        },
-        (prev, next) => prev.props.wsUrl === next.props.wsUrl,
-      ),
+      "promptly-web-browser-embed": ({ node, ...props }) => {
+        return <RemoteBrowserEmbed wsUrl={props?.wsurl} />;
+      },
       "pa-layout": memo(
         ({ node, ...props }) => {
           return <Box {...props}>{props.children}</Box>;
@@ -742,8 +739,7 @@ export default function LayoutRenderer({
       remarkPlugins={memoizedRemarkPlugins}
       rehypePlugins={memoizedRehypePlugins}
       components={memoizedComponents}
-    >
-      {children || ""}
-    </ReactMarkdown>
+      children={children || ""}
+    />
   );
 }
