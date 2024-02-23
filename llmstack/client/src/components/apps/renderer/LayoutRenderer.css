@@ -1,6 +1,6 @@
 .layout-workflow-output {
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.7;
   text-align: left;
 }
 
@@ -9,7 +9,7 @@
   font-size: 16px;
   padding: 0 10px;
   background-color: #f3f3f3;
-  line-height: 1.4em;
+  line-height: 1.7em;
   border-radius: 8px;
   max-width: 75%;
   color: #222;
@@ -60,6 +60,26 @@
   padding: 0;
   text-align: left;
   transition: max-height 0.5s ease-in-out;
+}
+
+.layout-chat_message_type_step {
+  display: inline-block;
+  background-color: transparent;
+  color: #999;
+  font-size: 12px;
+  margin: 8px;
+}
+
+.layout-chat_message_type_step_header {
+  display: inline-block;
+  background-color: #f3f3f3;
+  color: #559;
+  font-size: 12px;
+  font-weight: 600;
+  max-width: fit-content;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 6px;
 }
 
 .error {

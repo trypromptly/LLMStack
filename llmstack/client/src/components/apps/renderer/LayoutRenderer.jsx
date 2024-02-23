@@ -17,6 +17,7 @@ import ReactMarkdown from "react-markdown";
 import Form from "@rjsf/mui";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
+import { ProviderIcon } from "../ProviderIcon";
 import { getJSONSchemaFromInputFields } from "../../../data/utils";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
@@ -162,6 +163,98 @@ const AppMessage = memo(
   },
 );
 
+const AgentMessage = memo(
+  (props) => {
+    const { message, workflow } = props;
+    return (
+      <Box
+        className={
+          workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
+        }
+      >
+        <LayoutRenderer>{message.content}</LayoutRenderer>
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev?.message?.hash === next?.message?.hash;
+  },
+);
+
+const AgentStepToolHeader = memo(
+  ({ processor, isRunning = true }) => {
+    const icon = (
+      <ProviderIcon
+        provider_slug={processor?.provider_slug}
+        style={{ width: "15px", height: "15px" }}
+      />
+    );
+
+    return (
+      <Box className={"layout-chat_message_type_step_header"}>
+        Using&nbsp;&nbsp;{icon}&nbsp;
+        <i>{processor?.name || processor?.processor_slug}</i>
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
+
+const AgentStepMessage = memo(
+  (props) => {
+    const { message, processors } = props;
+
+    // A util function to format incomplete JSON strings
+    const formatJSON = useCallback((jsonString) => {
+      try {
+        return JSON.stringify(JSON.parse(jsonString), null, 2);
+      } catch (e) {
+        return jsonString;
+      }
+    }, []);
+
+    return (
+      <Box className="layout-chat_message_type_step">
+        {message.content.name && (
+          <AgentStepToolHeader
+            processor={processors.find(
+              (processor) => processor.id === message.content.name,
+            )}
+          />
+        )}
+        {message.content.arguments && (
+          <AceEditor
+            mode="json"
+            theme="dracula"
+            value={formatJSON(
+              message.content.arguments.replaceAll("\\n", "\n"),
+            )}
+            editorProps={{ $blockScrolling: true, $onChangeWrapLimit: 80 }}
+            setOptions={{
+              useWorker: false,
+              showGutter: false,
+              maxLines: Infinity,
+              wrap: true,
+            }}
+            style={{
+              marginBottom: 10,
+              borderRadius: "5px",
+              wordWrap: "break-word",
+              maxWidth: "75%",
+            }}
+          />
+        )}
+        <LayoutRenderer>{message.content.output}</LayoutRenderer>
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev?.message?.hash === next?.message?.hash;
+  },
+);
+
 const PromptlyAppOutputHeader = memo(
   ({ appMessages, isRunning }) => {
     return (
@@ -255,7 +348,26 @@ const PromptlyAppChatOutput = memo(
                 key={message.id}
               />
             );
+          } else if (message.subType === "agent") {
+            return <AgentMessage message={message} key={message.id} />;
+          } else if (message.subType === "agent-step") {
+            return (
+              <AgentStepMessage
+                message={message}
+                key={message.id}
+                processors={appRunData?.processors}
+              />
+            );
+          } else if (message.subType === "agent-step-error") {
+            return (
+              <AgentStepMessage
+                message={message}
+                key={message.id}
+                processors={appRunData?.processors}
+              />
+            );
           }
+
           return <AppMessage message={message} key={message.id} />;
         })}
         {appRunData?.isRunning && !appRunData?.isStreaming && (
