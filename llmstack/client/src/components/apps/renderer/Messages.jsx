@@ -35,6 +35,11 @@ export class Message {
     }
     return hash.toString();
   }
+
+  // Clone the message retaining the instance type
+  clone() {
+    return new this.constructor(this.id, this.content);
+  }
 }
 
 export class UserMessage extends Message {
@@ -52,6 +57,27 @@ export class AppMessage extends Message {
   }
 }
 
+export class AgentMessage extends AppMessage {
+  constructor(id, content, replyTo) {
+    super(id, content, replyTo);
+    this.subType = "agent";
+  }
+}
+
+export class AgentStepMessage extends AppMessage {
+  constructor(id, content, replyTo) {
+    super(id, content, replyTo);
+    this.subType = "agent-step";
+  }
+}
+
+export class AgentStepErrorMessage extends AppMessage {
+  constructor(id, content, replyTo) {
+    super(id, content, replyTo);
+    this.subType = "agent-step-error";
+  }
+}
+
 export class Messages {
   constructor() {
     this.messages = {}; // Dictionary of message id to message
@@ -60,11 +86,9 @@ export class Messages {
   add(message) {
     if (message.id) {
       if (this.messages.hasOwnProperty(message.id)) {
-        // Create a new message with updated content instead of mutating
-        const updatedMessage =
-          message.type === "user"
-            ? new UserMessage(message.id, message.content)
-            : new AppMessage(message.id, message.content, message.replyTo);
+        let updatedMessage = this.messages[message.id].clone();
+        updatedMessage.content = message.content;
+
         this.messages[message.id] = updatedMessage;
       } else {
         this.messages[message.id] = message;
