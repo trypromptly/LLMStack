@@ -499,9 +499,12 @@ export default function LayoutRenderer({
         },
         (prev, next) => prev.props === next.props,
       ),
-      "promptly-web-browser-embed": ({ node, ...props }) => {
-        return <RemoteBrowserEmbed wsUrl={props?.wsurl} />;
-      },
+      "promptly-web-browser-embed": memo(
+        ({ node, ...props }) => {
+          return <RemoteBrowserEmbed wsUrl={props?.wsurl} />;
+        },
+        (prev, next) => prev.props?.wsurl === next.props?.wsurl,
+      ),
       "pa-layout": memo(
         ({ node, ...props }) => {
           return <Box {...props}>{props.children}</Box>;
