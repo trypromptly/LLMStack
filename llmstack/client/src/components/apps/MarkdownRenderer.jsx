@@ -9,7 +9,6 @@ import remarkGfm from "remark-gfm";
 import loadingImage from "../../assets/images/loading.gif";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { HeyGenRealtimeAvatar } from "./HeyGenRealtimeAvatar";
-import StreamingVideoPlayer from "./StreamingVideoPlayer";
 import { RemoteBrowserEmbed } from "../connections/RemoteBrowser";
 
 function FunctionFormComponent(props) {
@@ -34,7 +33,6 @@ function FunctionFormComponent(props) {
 }
 
 export default function MarkdownRenderer(props) {
-  const messageId = props.messageId;
   const runProcessor = props.runProcessor;
 
   return (
@@ -99,15 +97,6 @@ export default function MarkdownRenderer(props) {
               >
                 Unable to load video
               </video>
-            );
-          }
-
-          if (src.startsWith("data:videostream/")) {
-            return (
-              <StreamingVideoPlayer
-                streamKey={src.replace("data:videostream/", "")}
-                messageId={messageId}
-              />
             );
           }
 

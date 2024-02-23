@@ -5,13 +5,10 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Form from "@rjsf/mui";
 import validator from "@rjsf/validator-ajv8";
 import { Liquid } from "liquidjs";
-import { get } from "lodash";
 import React, { useEffect, useRef, useState } from "react";
 import AceEditor from "react-ace";
 import ReactGA from "react-ga4";
-import { useSetRecoilState } from "recoil";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
-import { streamChunksState } from "../../data/atoms";
 import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { Errors } from "../Output";
@@ -233,7 +230,6 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
     right: 16,
     bottom: 16,
   });
-  const setStreamChunks = useSetRecoilState(streamChunksState);
   const templateEngine = new Liquid();
   const templates = useRef({});
   const chunkedOutput = useRef({});
@@ -365,41 +361,18 @@ export function AgentRenderer({ app, isMobile, embed = false, ws }) {
       // Merge chunks of output
       if (message.output) {
         let newChunkedOutput = {};
-        let streamPaths = [];
         if (message.output.agent) {
-          [newChunkedOutput, streamPaths] = stitchObjects(
-            chunkedOutput.current,
-            {
-              [message.output.agent.id]: message.output.agent.content,
-            },
-          );
-
-          // Update streamPaths with message.output.agent.id prefix
-          streamPaths = streamPaths.map((path) => {
-            return `${message.output.agent.id}.${path}`;
+          newChunkedOutput = stitchObjects(chunkedOutput.current, {
+            [message.output.agent.id]: message.output.agent.content,
           });
         } else {
-          [newChunkedOutput, streamPaths] = stitchObjects(
+          newChunkedOutput = stitchObjects(
             chunkedOutput.current,
             message.output,
           );
         }
 
         chunkedOutput.current = newChunkedOutput;
-
-        // Update streamChunks recoil state
-        for (const path of streamPaths) {
-          setStreamChunks((prevChunks) => {
-            return {
-              ...prevChunks,
-              [path.replace(/_base64_chunks$/g, "")]: get(
-                chunkedOutput.current,
-                path,
-                null,
-              ),
-            };
-          });
-        }
       }
 
       if (message.event && message.event === "done") {

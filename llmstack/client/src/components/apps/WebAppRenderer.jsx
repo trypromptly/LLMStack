@@ -9,11 +9,8 @@ import {
 import Form from "@rjsf/mui";
 import validator from "@rjsf/validator-ajv8";
 import { Liquid } from "liquidjs";
-import { get } from "lodash";
 import React, { useEffect, useRef, useState } from "react";
 import ReactGA from "react-ga4";
-import { useSetRecoilState } from "recoil";
-import { streamChunksState } from "../../data/atoms";
 import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
 import "../../index.css";
 import FileUploadWidget from "../form/DropzoneFileWidget";
@@ -50,7 +47,6 @@ export function WebAppRenderer({ app, ws }) {
   const outputTemplate = templateEngine.parse(
     app?.data?.output_template?.markdown || "",
   );
-  const setStreamChunks = useSetRecoilState(streamChunksState);
   const [runProcessor, processorSessionId, setProcessorSessionId] =
     useProcessors(app?.uuid);
   const chunkedOutput = useRef({});
@@ -109,25 +105,11 @@ export function WebAppRenderer({ app, ws }) {
       // Merge the new output with the existing output
       if (message.output) {
         // Set the streamStarted flag if the output has more than input data
-        const [newChunkedOutput, streamPaths] = stitchObjects(
+        const newChunkedOutput = stitchObjects(
           chunkedOutput.current,
           message.output,
         );
         chunkedOutput.current = newChunkedOutput;
-
-        // Update streamChunks recoil state
-        for (const path of streamPaths) {
-          setStreamChunks((prevChunks) => {
-            return {
-              ...prevChunks,
-              [path.replace(/_base64_chunks$/g, "")]: get(
-                chunkedOutput.current,
-                path,
-                null,
-              ),
-            };
-          });
-        }
       }
 
       // If we get session info, that means the stream has started

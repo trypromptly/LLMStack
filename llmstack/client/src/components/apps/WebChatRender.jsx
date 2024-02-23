@@ -5,12 +5,9 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Form from "@rjsf/mui";
 import validator from "@rjsf/validator-ajv8";
 import { Liquid } from "liquidjs";
-import { get } from "lodash";
 import React, { useEffect, useRef, useState } from "react";
 import ReactGA from "react-ga4";
-import { useSetRecoilState } from "recoil";
 import FileUploadWidget from "../../components/form/DropzoneFileWidget";
-import { streamChunksState } from "../../data/atoms";
 import { getJSONSchemaFromInputFields, stitchObjects } from "../../data/utils";
 import VoiceRecorderWidget from "../form/VoiceRecorderWidget";
 import { Errors } from "../Output";
@@ -122,7 +119,6 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
     bottom: 16,
   });
   const [autoScroll, setAutoScroll] = useState(true);
-  const setStreamChunks = useSetRecoilState(streamChunksState);
   const templateEngine = new Liquid();
   const outputTemplate = templateEngine.parse(
     app?.data?.output_template?.markdown || "",
@@ -244,25 +240,11 @@ export function WebChatRender({ app, isMobile, embed = false, ws }) {
       const message = JSON.parse(evt.data);
       // Merge the new output with the existing output
       if (message.output) {
-        const [newChunkedOutput, streamPaths] = stitchObjects(
+        const newChunkedOutput = stitchObjects(
           chunkedOutput.current,
           message.output,
         );
         chunkedOutput.current = newChunkedOutput;
-
-        // Update streamChunks recoil state
-        for (const path of streamPaths) {
-          setStreamChunks((prevChunks) => {
-            return {
-              ...prevChunks,
-              [path.replace(/_base64_chunks$/g, "")]: get(
-                chunkedOutput.current,
-                path,
-                null,
-              ),
-            };
-          });
-        }
       }
 
       if (message.event && message.event === "done") {
