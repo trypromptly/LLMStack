@@ -3,9 +3,7 @@ import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { isMobileState } from "../../data/atoms";
 import { Ws } from "../../data/ws";
-import { AgentRenderer } from "./AgentRenderer";
-import { WebAppRenderer } from "./WebAppRenderer";
-import { WebChatRender } from "./WebChatRender";
+import { AppRenderer } from "./renderer/AppRenderer";
 
 export function AppPreview(props) {
   const { app } = props;
@@ -27,13 +25,7 @@ export function AppPreview(props) {
 
   return (
     <Box>
-      {app?.type?.slug === "web" && <WebAppRenderer app={app} ws={ws} />}
-      {app?.type?.slug === "text-chat" && (
-        <WebChatRender app={app} isMobile={isMobile} ws={ws} />
-      )}
-      {app?.type?.slug === "agent" && (
-        <AgentRenderer app={app} isMobile={isMobile} ws={ws} />
-      )}
+      <AppRenderer isMobile={isMobile} app={app} ws={ws} />
     </Box>
   );
 }
