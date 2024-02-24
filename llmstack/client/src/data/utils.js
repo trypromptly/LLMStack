@@ -1,20 +1,5 @@
 // Helper function to optionally stitch base64 string together
 function stitchStringsTogether(string1, string2) {
-  if (
-    string1.match(/^data:(.*);name=(.*);base64,(.*)/i) &&
-    string2.match(/^data:(.*);name=(.*);base64,(.*)/i)
-  ) {
-    let base64String1 = string1.split(",")[1];
-    let base64String2 = string2.split(",")[1];
-    let binaryString1 = atob(base64String1);
-    let binaryString2 = atob(base64String2);
-    let binaryString = binaryString1 + binaryString2;
-    let base64String = btoa(binaryString);
-    return (
-      string1.split(",")[0] + "," + string1.split(",")[1] + "," + base64String
-    );
-  }
-
   return string1 + string2;
 }
 
