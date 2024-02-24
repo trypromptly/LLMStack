@@ -255,6 +255,7 @@ export function AppRenderer({ app, ws }) {
         isStreaming: false,
         errors: null,
         messages: messagesRef.current.get(),
+        input,
       }));
 
       ws.send(
