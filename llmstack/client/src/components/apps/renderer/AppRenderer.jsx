@@ -1,5 +1,11 @@
 import { Liquid } from "liquidjs";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import ReactGA from "react-ga4";
 import { stitchObjects } from "../../../data/utils";
 import LayoutRenderer from "./LayoutRenderer";
@@ -14,9 +20,40 @@ import {
 import { appRunDataState } from "../../../data/atoms";
 import { useSetRecoilState } from "recoil";
 
+const defaultWorkflowLayout = `<pa-layout>
+<pa-paper style="padding: 10px;">
+<pa-grid container="true" spacing="2" style="width: 100%">
+  <pa-grid item="true" xs="12">
+    <pa-input-form />
+  </pa-grid>
+  <pa-grid item="true" xs="12">
+    <br/>
+  </pa-grid>
+  <pa-grid item="true" xs="12">
+    <pa-workflow-output showHeader="true" />
+  </pa-grid>
+</pa-grid>
+</pa-paper>
+</pa-layout>`;
+
+const defaultChatLayout = `<pa-layout>
+<pa-paper style="padding: 10px;">
+<pa-grid container="true" spacing="2" style="width: 100%">
+  <pa-grid item="true" xs="12">
+    <pa-chat-output sx='{"height": "70vh", "minHeight": "90%"}'/>
+  </pa-grid>
+  <pa-grid item="true" xs="12">
+    <pa-input-form clearonsubmit="true" />
+  </pa-grid>
+</pa-grid>
+</pa-paper>
+</pa-layout>`;
+
 export function AppRenderer({ app, ws }) {
   const [appSessionId, setAppSessionId] = useState(null);
-  const templateEngine = new Liquid();
+  const [layout, setLayout] = useState("");
+  const templateEngine = useMemo(() => new Liquid(), []);
+
   const outputTemplate = templateEngine.parse(
     app?.data?.output_template?.markdown || "",
   );
@@ -93,6 +130,18 @@ export function AppRenderer({ app, ws }) {
       }
     });
   };
+
+  useEffect(() => {
+    if (app?.data?.config?.layout) {
+      setLayout(app?.data?.config?.layout);
+    } else {
+      setLayout(
+        app?.data?.type_slug === "web"
+          ? defaultWorkflowLayout
+          : defaultChatLayout,
+      );
+    }
+  }, [app?.data?.config?.layout, app?.data?.type_slug]);
 
   useEffect(() => {
     setAppRunData((prevState) => ({
@@ -226,42 +275,6 @@ export function AppRenderer({ app, ws }) {
     },
     [appSessionId, ws, app, setAppRunData],
   );
-
-  let layout = app.data?.config?.layout;
-
-  if (!layout) {
-    const typeSlug = app?.data?.type_slug;
-    if (typeSlug === "text-chat" || typeSlug === "agent") {
-      layout = `<pa-layout>
-      <pa-paper style="padding: 10px;">
-      <pa-grid container="true" spacing="2" style="width: 100%">
-        <pa-grid item="true" xs="12">
-          <pa-chat-output sx='{"height": "70vh", "minHeight": "90%"}'/>
-        </pa-grid>
-        <pa-grid item="true" xs="12">
-          <pa-input-form clearonsubmit="true" />
-        </pa-grid>
-      </pa-grid>
-      </pa-paper>
-      </pa-layout>`;
-    } else {
-      layout = `<pa-layout>
-      <pa-paper style="padding: 10px;">
-      <pa-grid container="true" spacing="2" style="width: 100%">
-        <pa-grid item="true" xs="12">
-          <pa-input-form />
-        </pa-grid>
-        <pa-grid item="true" xs="12">
-          <br/>
-        </pa-grid>
-        <pa-grid item="true" xs="12">
-          <pa-workflow-output showHeader="true" />
-        </pa-grid>
-      </pa-grid>
-      </pa-paper>
-      </pa-layout>`;
-    }
-  }
 
   return <LayoutRenderer runApp={runApp}>{layout}</LayoutRenderer>;
 }
