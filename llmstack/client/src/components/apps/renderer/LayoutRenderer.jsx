@@ -217,8 +217,6 @@ const AgentStepMessage = memo(
       }
     }, []);
 
-    console.log(message);
-
     return (
       <Box className="layout-chat_message_type_step">
         {message.content.name && (
