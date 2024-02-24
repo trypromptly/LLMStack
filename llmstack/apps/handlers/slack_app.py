@@ -60,7 +60,7 @@ class SlackAppRunner(AppRunner):
         self.app_run_request_user = self._get_app_request_user(
             self.request.data,
         )
-        self.session_id = self._get_slack_app_seession_id(self.request.data)
+        self.session_id = self._get_slack_app_session_id(self.request.data)
         self.app_session = self._get_or_create_app_session()
 
     def _get_app_request_user(self, slack_request_payload):
@@ -83,7 +83,7 @@ class SlackAppRunner(AppRunner):
 
         return AnonymousUser()
 
-    def _get_slack_app_seession_id(self, slack_request_payload):
+    def _get_slack_app_session_id(self, slack_request_payload):
         if slack_request_payload["type"] == "event_callback" and "event" in slack_request_payload:
             thread_ts = None
             session_identifier = None
