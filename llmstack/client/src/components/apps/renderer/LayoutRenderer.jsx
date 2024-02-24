@@ -23,8 +23,8 @@ import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 import { appRunDataState } from "../../../data/atoms";
 import { useRecoilValue } from "recoil";
-
 import loadingImage from "../../../assets/images/loading.gif";
+import "ace-builds/src-noconflict/mode-json";
 
 import "./LayoutRenderer.css";
 
