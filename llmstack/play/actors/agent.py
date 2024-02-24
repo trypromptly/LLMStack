@@ -46,6 +46,7 @@ class AgentOutput(BaseModel):
     content: Any = ""  # Content of the output
     from_id: str = ""  # ID of the actor that produced the output
     type: str = "step"  # Type of output
+    done: bool = False  # Whether the output is done
 
 
 class AgentActor(Actor):
@@ -330,6 +331,7 @@ class AgentActor(Actor):
                         from_id=message.message_from,
                         id=message.response_to,
                         type="step",
+                        done=True,
                     ),
                 )
 

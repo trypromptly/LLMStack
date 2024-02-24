@@ -60,6 +60,7 @@ export function AppRenderer({ app, ws }) {
                   output: response,
                 },
                 message.reply_to,
+                !agentMessage.done,
               );
             } else if (agentMessage.type === "step_error") {
               newMessage = new AgentStepErrorMessage(

@@ -181,26 +181,28 @@ const AgentMessage = memo(
   },
 );
 
-const AgentStepToolHeader = memo(
-  ({ processor, isRunning = true }) => {
-    const icon = (
-      <ProviderIcon
-        provider_slug={processor?.provider_slug}
-        style={{ width: "15px", height: "15px" }}
-      />
-    );
+const AgentStepToolHeader = memo(({ processor, isRunning = true }) => {
+  const icon = (
+    <ProviderIcon
+      provider_slug={processor?.provider_slug}
+      style={{ width: "15px", height: "15px" }}
+    />
+  );
 
-    return (
-      <Box className={"layout-chat_message_type_step_header"}>
-        Using&nbsp;&nbsp;{icon}&nbsp;
-        <i>{processor?.name || processor?.processor_slug}</i>
-      </Box>
-    );
-  },
-  (prev, next) => {
-    return prev === next;
-  },
-);
+  return (
+    <Box className={"layout-chat_message_type_step_header"}>
+      Using&nbsp;&nbsp;{icon}&nbsp;
+      <i>{processor?.name || processor?.processor_slug}</i>
+      {isRunning && (
+        <div className="layout-chat_message_from_app step-runner-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      )}
+    </Box>
+  );
+});
 
 const AgentStepMessage = memo(
   (props) => {
@@ -215,6 +217,8 @@ const AgentStepMessage = memo(
       }
     }, []);
 
+    console.log(message);
+
     return (
       <Box className="layout-chat_message_type_step">
         {message.content.name && (
@@ -222,6 +226,7 @@ const AgentStepMessage = memo(
             processor={processors.find(
               (processor) => processor.id === message.content.name,
             )}
+            isRunning={message.isRunning}
           />
         )}
         {message.content.arguments && (
@@ -499,12 +504,9 @@ export default function LayoutRenderer({
         },
         (prev, next) => prev.props === next.props,
       ),
-      "promptly-web-browser-embed": memo(
-        ({ node, ...props }) => {
-          return <RemoteBrowserEmbed wsUrl={props?.wsurl} />;
-        },
-        (prev, next) => prev.props?.wsurl === next.props?.wsurl,
-      ),
+      "promptly-web-browser-embed": memo(({ node, ...props }) => {
+        return <RemoteBrowserEmbed wsUrl={props?.wsurl} />;
+      }),
       "pa-layout": memo(
         ({ node, ...props }) => {
           return <Box {...props}>{props.children}</Box>;

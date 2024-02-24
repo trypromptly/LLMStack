@@ -65,9 +65,10 @@ export class AgentMessage extends AppMessage {
 }
 
 export class AgentStepMessage extends AppMessage {
-  constructor(id, content, replyTo) {
+  constructor(id, content, replyTo, isRunning = true) {
     super(id, content, replyTo);
     this.subType = "agent-step";
+    this.isRunning = isRunning;
   }
 }
 
@@ -88,6 +89,11 @@ export class Messages {
       if (this.messages.hasOwnProperty(message.id)) {
         let updatedMessage = this.messages[message.id].clone();
         updatedMessage.content = message.content;
+        updatedMessage.hash = message.hash;
+
+        if (message.hasOwnProperty("isRunning")) {
+          updatedMessage.isRunning = message.isRunning;
+        }
 
         this.messages[message.id] = updatedMessage;
       } else {
