@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContentCopyOutlined } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
+import { Liquid } from "liquidjs";
 import {
   Avatar,
   Box,
@@ -11,6 +12,9 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { visit } from "unist-util-visit";
+import { isElement } from "hast-util-is-element";
+import { toHtml } from "hast-util-to-html";
 import validator from "@rjsf/validator-ajv8";
 import AceEditor from "react-ace";
 import ReactMarkdown from "react-markdown";
@@ -27,6 +31,8 @@ import loadingImage from "../../../assets/images/loading.gif";
 import "ace-builds/src-noconflict/mode-json";
 
 import "./LayoutRenderer.css";
+
+const liquidEngine = new Liquid();
 
 const PromptlyAppInputForm = memo(
   ({ runApp, submitButtonOptions, clearOnSubmit = false }) => {
@@ -469,6 +475,8 @@ const parseSxFromProps = (sxString) => {
 
   if (!sxString) return sx;
 
+  if (typeof sxString === "object") return sxString;
+
   try {
     sx = JSON.parse(sxString);
   } catch (e) {
@@ -478,6 +486,38 @@ const parseSxFromProps = (sxString) => {
   return sx;
 };
 
+// A rephype plugin to parse all the props in the tree and rebuild the props
+// If the props contain a `sx` prop and it is a string, parse it to JSON
+const parseAndRebuildSxProps = () => {
+  return (tree) => {
+    visit(tree, (node) => {
+      if (node && isElement(node) && node.properties) {
+        for (const prop in node.properties) {
+          // Checking if prop has a `sx` key and if it's a string
+          if (prop === "sx" && typeof node.properties[prop] === "string") {
+            node.properties[prop] = parseSxFromProps(node.properties[prop]);
+          }
+        }
+      }
+    });
+  };
+};
+
+// A rephype plugin to replace children of pa-data element with raw html for the liquid engine to parse
+const parseAndRebuildDataProps = () => {
+  return (tree) => {
+    visit(tree, (node) => {
+      if (node && isElement(node) && node.tagName === "pa-data") {
+        if (node.children && node.children.length > 0) {
+          node.properties["content"] = node.children
+            .map((child) => toHtml(child))
+            .join("");
+        }
+      }
+    });
+  };
+};
+
 export default function LayoutRenderer({
   processor,
   runApp,
@@ -485,7 +525,10 @@ export default function LayoutRenderer({
   children,
 }) {
   const memoizedRemarkPlugins = useMemo(() => [remarkGfm], []);
-  const memoizedRehypePlugins = useMemo(() => [rehypeRaw], []);
+  const memoizedRehypePlugins = useMemo(
+    () => [rehypeRaw, parseAndRebuildSxProps, parseAndRebuildDataProps],
+    [],
+  );
   const memoizedProcessor = useMemo(() => processor, [processor]);
   const memoizedRunApp = useCallback(runApp, [runApp]);
   const memoizedRunProcessor = useCallback(runProcessor, [runProcessor]);
@@ -517,18 +560,12 @@ export default function LayoutRenderer({
         },
         (prev, next) => prev.props === next.props,
       ),
-      "pa-typography": memo(
-        ({ node, ...props }) => {
-          return <Typography {...props}>{props.children}</Typography>;
-        },
-        (prev, next) => prev.props === next.props,
-      ),
-      "pa-button": memo(
-        ({ node, ...props }) => {
-          return <Button {...props}>{props.children}</Button>;
-        },
-        (prev, next) => prev.props === next.props,
-      ),
+      "pa-typography": memo(({ node, ...props }) => {
+        return <Typography {...props}>{props.children}</Typography>;
+      }),
+      "pa-button": memo(({ node, ...props }) => {
+        return <Button {...props}>{props.children}</Button>;
+      }),
       "pa-stack": memo(
         ({ node, ...props }) => {
           return <Stack {...props}>{props.children}</Stack>;
@@ -568,16 +605,26 @@ export default function LayoutRenderer({
         );
       },
       "pa-chat-output": ({ node, ...props }) => {
-        let sx = parseSxFromProps(props.sx);
-
         return (
           <PromptlyAppChatOutput
             maxHeight={props.maxheight || "100%"}
             minHeight={props.minheight || "200px"}
-            sx={sx}
+            sx={props.sx || {}}
           />
         );
       },
+      "pa-data": memo(
+        ({ node, ...props }) => {
+          const appRunData = useRecoilValue(appRunDataState);
+
+          return (
+            <LayoutRenderer>
+              {liquidEngine.parseAndRenderSync(props.content, appRunData)}
+            </LayoutRenderer>
+          );
+        },
+        (prev, next) => prev.node === next.node,
+      ),
       a: memo(
         ({ node, ...props }) => {
           return (
