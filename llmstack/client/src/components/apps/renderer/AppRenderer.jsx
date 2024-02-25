@@ -303,9 +303,9 @@ export function AppRenderer({ app, ws }) {
   );
 
   const runProcessor = useCallback(
-    async (processorId, input, disable_history = true) => {
+    async (sessionId, processorId, input, disable_history = true) => {
       // Do not allow running a processor if there is no session
-      if (!appSessionId) {
+      if (!sessionId) {
         console.error("No session ID set");
         return;
       }
@@ -314,7 +314,7 @@ export function AppRenderer({ app, ws }) {
         `/api/apps/${app?.uuid}/processors/${processorId}/run`,
         {
           input,
-          session_id: appSessionId,
+          session_id: sessionId,
           preview: window.location.pathname.endsWith("/preview"),
           disable_history,
         },
@@ -332,7 +332,7 @@ export function AppRenderer({ app, ws }) {
 
       return output;
     },
-    [appSessionId, app?.uuid],
+    [app?.uuid],
   );
 
   return (
