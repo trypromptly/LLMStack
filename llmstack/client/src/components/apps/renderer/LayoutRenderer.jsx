@@ -141,7 +141,7 @@ const UserMessage = memo(
     return (
       <Box className="layout-chat_message_from_user">
         <LayoutRenderer>
-          {getContentFromMessage(message.content, inputFields)}
+          {getContentFromMessage(message.content, inputFields) || ""}
         </LayoutRenderer>
       </Box>
     );
@@ -160,7 +160,7 @@ const AppMessage = memo(
           workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
         }
       >
-        <LayoutRenderer>{message.content}</LayoutRenderer>
+        <LayoutRenderer>{message.content || ""}</LayoutRenderer>
       </Box>
     );
   },
@@ -178,7 +178,7 @@ const AgentMessage = memo(
           workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
         }
       >
-        <LayoutRenderer>{message.content}</LayoutRenderer>
+        <LayoutRenderer>{message.content || ""}</LayoutRenderer>
       </Box>
     );
   },
@@ -255,7 +255,7 @@ const AgentStepMessage = memo(
             }}
           />
         )}
-        <LayoutRenderer>{message.content.output}</LayoutRenderer>
+        <LayoutRenderer>{message.content.output || ""}</LayoutRenderer>
       </Box>
     );
   },
@@ -783,6 +783,10 @@ export default function LayoutRenderer({
       ),
     };
   }, [memoizedProcessor, memoizedRunApp, memoizedRunProcessor]);
+
+  if (typeof children !== "string") {
+    console.trace("LayoutRenderer: children must be a string", children);
+  }
 
   return (
     <ReactMarkdown
