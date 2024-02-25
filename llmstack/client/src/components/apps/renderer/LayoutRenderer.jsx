@@ -62,7 +62,7 @@ const PromptlyAppInputForm = memo(
         validator={validator}
         formData={userFormData}
         onSubmit={({ formData }) => {
-          runApp(formData);
+          runApp(appRunData?.sessionId, formData);
 
           if (!clearOnSubmit) {
             setUserFormData(formData);

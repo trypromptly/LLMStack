@@ -186,6 +186,10 @@ export function AppRenderer({ app, ws }) {
 
       if (message.session) {
         setAppSessionId(message.session.id);
+        setAppRunData((prevState) => ({
+          ...prevState,
+          sessionId: message.session.id,
+        }));
       }
 
       // If we get a templates message, parse it and save the templates
@@ -265,7 +269,7 @@ export function AppRenderer({ app, ws }) {
   }
 
   const runApp = useCallback(
-    (input) => {
+    (appSessionId, input) => {
       chunkedOutput.current = {};
       const requestId = Math.random().toString(36).substring(2);
 
@@ -295,7 +299,7 @@ export function AppRenderer({ app, ws }) {
         transport: "beacon",
       });
     },
-    [appSessionId, ws, app, setAppRunData],
+    [ws, app, setAppRunData],
   );
 
   const runProcessor = useCallback(
