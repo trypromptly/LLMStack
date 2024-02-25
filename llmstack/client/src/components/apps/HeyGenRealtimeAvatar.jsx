@@ -1,5 +1,7 @@
 import { Alert, Box, Button } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRecoilValue } from "recoil";
+import { appRunDataState } from "../../data/atoms";
 import promptlyLoader from "../../assets/images/promptly-loading.gif";
 
 const newSession = async (processor, runProcessor) => {
@@ -7,6 +9,8 @@ const newSession = async (processor, runProcessor) => {
     const response = await runProcessor(processor, {
       task_type: "create_session",
     });
+
+    if (!response) return;
 
     if (response?.task_response_json?.data?.session_id) {
       return response?.task_response_json?.data;
@@ -171,29 +175,46 @@ export const HeyGenRealtimeAvatar = (props) => {
   const videoRef = useRef(null);
   const sessionRef = useRef(null);
   const createSessionRef = useRef(null);
+  const appRunData = useRecoilValue(appRunDataState);
+
+  const memoizedRunProcessor = useCallback(
+    async (processorId, input, disable_history = true) => {
+      return runProcessor(
+        appRunData?.sessionId,
+        processorId,
+        input,
+        disable_history,
+      );
+    },
+    [runProcessor, appRunData?.sessionId],
+  );
 
   useEffect(() => {
     if (
       processor &&
-      runProcessor &&
+      appRunData?.sessionId &&
+      memoizedRunProcessor &&
       !sessionRef.current &&
       videoRef.current &&
       !createSessionRef.current
     ) {
       createSessionRef.current = true;
 
-      createNewSession(videoRef, sessionRef, processor, runProcessor).catch(
-        (e) => {
-          setError(e);
-          console.error(e);
-        },
-      );
+      createNewSession(
+        videoRef,
+        sessionRef,
+        processor,
+        memoizedRunProcessor,
+      ).catch((e) => {
+        setError(e);
+        console.error(e);
+      });
     }
 
     return () => {
-      closeSession(processor, runProcessor);
+      closeSession(processor, memoizedRunProcessor);
     };
-  }, [processor, runProcessor]);
+  }, [processor, runProcessor, memoizedRunProcessor, appRunData?.sessionId]);
 
   return (
     <Box
@@ -218,7 +239,7 @@ export const HeyGenRealtimeAvatar = (props) => {
         <Button
           sx={{ position: "absolute", left: "45%", top: "50%" }}
           variant="contained"
-          onClick={() => closeSession(processor, runProcessor)}
+          onClick={() => closeSession(processor, memoizedRunProcessor)}
         >
           Close Session
         </Button>
