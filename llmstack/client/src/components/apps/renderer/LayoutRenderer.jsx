@@ -24,6 +24,7 @@ import remarkGfm from "remark-gfm";
 import { ProviderIcon } from "../ProviderIcon";
 import { getJSONSchemaFromInputFields } from "../../../data/utils";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
+import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 import { appRunDataState } from "../../../data/atoms";
 import { useRecoilValue } from "recoil";
@@ -606,6 +607,9 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
             sx={props.sx || {}}
           />
         );
+      },
+      "pa-pdf-viewer": ({ node, ...props }) => {
+        return <PDFViewer file={props.file} sx={props.sx || {}} />;
       },
       "pa-data": memo(
         ({ node, ...props }) => {
