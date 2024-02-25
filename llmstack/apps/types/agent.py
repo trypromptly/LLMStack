@@ -127,6 +127,12 @@ class AgentConfigSchema(BaseSchema):
         widget="textarea",
         advanced_parameter=True,
     )
+    init_on_load: Optional[bool] = Field(
+        title="Initialize processors on load. Use this for apps like realtime avatars.",
+        description="If checked, the app will be initialized when the page is loaded. This is useful for apps that need to be initialized before the user interacts with them.",
+        advanced_parameter=True,
+        hidden=True,
+    )
 
 
 class Agent(AppTypeInterface[AgentConfigSchema]):
