@@ -38,7 +38,24 @@ app:
   config:
     input_template: ""
     allowed_sites: []
-    layout: <promptly-heygen-realtime-avatar processor="_inputs2" />
+    layout: |-
+      <pa-layout>
+      <pa-paper style="padding: 10px;">
+      <pa-grid container="true" spacing="2" style="width: 100%">
+        <pa-grid item="true" xs="12">
+          <promptly-heygen-realtime-avatar processor="_inputs2"></promptly-heygen-realtime-avatar>
+          <pa-input-form></pa-input-form>
+        </pa-grid>
+        <pa-grid item="true" xs="12">
+          <br/>
+        </pa-grid>
+        <pa-grid item="true" xs="12">
+          <pa-workflow-output showHeader="true" />
+        </pa-grid>
+      </pa-grid>
+      </pa-paper>
+      </pa-layout>
+    init_on_load: true
   input_fields:
     - name: input
       title: Input
