@@ -554,9 +554,17 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
         },
         (prev, next) => prev.props === next.props,
       ),
-      "pa-typography": memo(({ node, ...props }) => {
-        return <Typography {...props}>{props.children}</Typography>;
-      }),
+      "pa-typography": memo(
+        ({ node, ...props }) => {
+          return <Typography {...props}>{props.children}</Typography>;
+        },
+        (prev, next) =>
+          prev.node?.children &&
+          next.node?.children &&
+          prev.node.children.length > 0 &&
+          next.node.children.length > 0 &&
+          prev.node.children[0].value === next.node.children[0].value,
+      ),
       "pa-button": memo(({ node, ...props }) => {
         return <Button {...props}>{props.children}</Button>;
       }),
