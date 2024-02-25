@@ -518,18 +518,12 @@ const parseAndRebuildDataProps = () => {
   };
 };
 
-export default function LayoutRenderer({
-  processor,
-  runApp,
-  runProcessor,
-  children,
-}) {
+export default function LayoutRenderer({ runApp, runProcessor, children }) {
   const memoizedRemarkPlugins = useMemo(() => [remarkGfm], []);
   const memoizedRehypePlugins = useMemo(
     () => [rehypeRaw, parseAndRebuildSxProps, parseAndRebuildDataProps],
     [],
   );
-  const memoizedProcessor = useMemo(() => processor, [processor]);
   const memoizedRunApp = useCallback(runApp, [runApp]);
   const memoizedRunProcessor = useCallback(runProcessor, [runProcessor]);
   const memoizedComponents = useMemo(() => {
@@ -538,7 +532,7 @@ export default function LayoutRenderer({
         ({ node, ...props }) => {
           return (
             <HeyGenRealtimeAvatar
-              processor={memoizedProcessor}
+              processor={props?.processor}
               runProcessor={memoizedRunProcessor}
             />
           );
@@ -782,7 +776,7 @@ export default function LayoutRenderer({
         (prev, next) => prev.props === next.props,
       ),
     };
-  }, [memoizedProcessor, memoizedRunApp, memoizedRunProcessor]);
+  }, [memoizedRunApp, memoizedRunProcessor]);
 
   if (typeof children !== "string") {
     console.trace("LayoutRenderer: children must be a string", children);
