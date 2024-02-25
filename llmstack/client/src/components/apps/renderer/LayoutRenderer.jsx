@@ -613,7 +613,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
 
           return (
             <LayoutRenderer>
-              {liquidEngine.parseAndRenderSync(props.content, appRunData)}
+              {liquidEngine.parseAndRenderSync(props.content, appRunData || {})}
             </LayoutRenderer>
           );
         },

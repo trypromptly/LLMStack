@@ -1,5 +1,6 @@
 import { Liquid } from "liquidjs";
 import React, {
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -51,7 +52,7 @@ const defaultChatLayout = `<pa-layout>
 </pa-layout>`;
 
 export function AppRenderer({ app, ws }) {
-  const [appSessionId, setAppSessionId] = useState(null);
+  const appSessionId = useRef(null);
   const [layout, setLayout] = useState("");
   const templateEngine = useMemo(() => new Liquid(), []);
 
@@ -164,7 +165,7 @@ export function AppRenderer({ app, ws }) {
     if (
       ws &&
       app?.data?.config?.layout &&
-      !appSessionId &&
+      !appSessionId.current &&
       app?.data?.config?.init_on_load
     ) {
       ws.send(
@@ -173,19 +174,14 @@ export function AppRenderer({ app, ws }) {
         }),
       );
     }
-  }, [
-    ws,
-    appSessionId,
-    app?.data?.config?.layout,
-    app?.data?.config?.init_on_load,
-  ]);
+  }, [ws, app?.data?.config?.layout, app?.data?.config?.init_on_load]);
 
   if (ws) {
     ws.setOnMessage((evt) => {
       const message = JSON.parse(evt.data);
 
       if (message.session) {
-        setAppSessionId(message.session.id);
+        appSessionId.current = message.session.id;
         setAppRunData((prevState) => ({
           ...prevState,
           sessionId: message.session.id,
@@ -269,7 +265,7 @@ export function AppRenderer({ app, ws }) {
   }
 
   const runApp = useCallback(
-    (appSessionId, input) => {
+    (sessionId, input) => {
       chunkedOutput.current = {};
       const requestId = Math.random().toString(36).substring(2);
 
@@ -288,7 +284,7 @@ export function AppRenderer({ app, ws }) {
           event: "run",
           input,
           id: requestId,
-          session_id: appSessionId,
+          session_id: sessionId,
         }),
       );
 
@@ -335,9 +331,20 @@ export function AppRenderer({ app, ws }) {
     [app?.uuid],
   );
 
+  const MemoizedLayoutRenderer = memo(
+    LayoutRenderer,
+    (prevProps, nextProps) => {
+      return (
+        prevProps.runApp === nextProps.runApp &&
+        prevProps.runProcessor === nextProps.runProcessor &&
+        prevProps.children === nextProps.children
+      );
+    },
+  );
+
   return (
-    <LayoutRenderer runApp={runApp} runProcessor={runProcessor}>
+    <MemoizedLayoutRenderer runApp={runApp} runProcessor={runProcessor}>
       {layout}
-    </LayoutRenderer>
+    </MemoizedLayoutRenderer>
   );
 }
