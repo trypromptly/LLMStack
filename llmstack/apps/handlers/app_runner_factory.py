@@ -1,7 +1,7 @@
 from functools import cache
 
 
-class AppRunerFactory:
+class AppRunnerFactory:
     @staticmethod
     @cache
     def get_app_runner(app_type_slug):
