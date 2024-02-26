@@ -18,19 +18,19 @@ import { toHtml } from "hast-util-to-html";
 import validator from "@rjsf/validator-ajv8";
 import AceEditor from "react-ace";
 import ReactMarkdown from "react-markdown";
-import Form from "@rjsf/mui";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
+import { useRecoilValue } from "recoil";
 import { ProviderIcon } from "../ProviderIcon";
 import { getJSONSchemaFromInputFields } from "../../../data/utils";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 import { appRunDataState } from "../../../data/atoms";
-import { useRecoilValue } from "recoil";
+import ThemedJsonForm from "../../ThemedJsonForm";
 import loadingImage from "../../../assets/images/loading.gif";
-import "ace-builds/src-noconflict/mode-json";
 
+import "ace-builds/src-noconflict/mode-json";
 import "./LayoutRenderer.css";
 
 const liquidEngine = new Liquid();
@@ -44,7 +44,8 @@ const PromptlyAppInputForm = memo(
     const [userFormData, setUserFormData] = useState({});
 
     return (
-      <Form
+      <ThemedJsonForm
+        disableAdvanced={true}
         schema={schema}
         uiSchema={{
           ...uiSchema,
