@@ -36,7 +36,7 @@ import "./LayoutRenderer.css";
 const liquidEngine = new Liquid();
 
 const PromptlyAppInputForm = memo(
-  ({ runApp, submitButtonOptions, clearOnSubmit = false }) => {
+  ({ runApp, submitButtonOptions, sx, clearOnSubmit = false }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const { schema, uiSchema } = getJSONSchemaFromInputFields(
       appRunData?.inputFields,
@@ -69,6 +69,7 @@ const PromptlyAppInputForm = memo(
             setUserFormData(formData);
           }
         }}
+        sx={sx}
       />
     );
   },
@@ -593,6 +594,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
             runApp={memoizedRunApp}
             submitButtonOptions={props.submitbuttonoption}
             clearOnSubmit={props.clearonsubmit}
+            sx={props.sx || {}}
           />
         );
       },
