@@ -120,6 +120,10 @@ export function getJSONSchemaFromInputFields(inputFields) {
           "data:(.*);name=(.*);base64,(.*)";
       }
 
+      if (field["ui:options"]) {
+        uiSchema[field.name]["ui:options"] = field["ui:options"];
+      }
+
       if (field.type === "voice") {
         uiSchema[field.name] = {
           "ui:widget": "voice",
