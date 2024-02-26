@@ -26,8 +26,8 @@ import { getJSONSchemaFromInputFields } from "../../../data/utils";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
-import { appRunDataState } from "../../../data/atoms";
-import { useRecoilValue } from "recoil";
+import { appRunDataState, appFormSubmitDataState } from "../../../data/atoms";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import loadingImage from "../../../assets/images/loading.gif";
 import "ace-builds/src-noconflict/mode-json";
 
@@ -35,9 +35,43 @@ import "./LayoutRenderer.css";
 
 const liquidEngine = new Liquid();
 
+function filterDictionary(obj, predicate) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key, value]) => predicate(key, value)),
+  );
+}
+
+function areObjectsEqual(obj1, obj2) {
+  // Get the keys of both objects
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+
+  // Check if the number of keys is the same
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+
+  // Iterate through the keys and compare values
+  for (let key of keys1) {
+    // Check if the key exists in both objects
+    if (!keys2.includes(key)) {
+      return false;
+    }
+
+    // Compare the values
+    if (obj1[key] !== obj2[key]) {
+      return false;
+    }
+  }
+
+  // If all keys and values match, the objects are equal
+  return true;
+}
+
 const PromptlyAppInputForm = memo(
   ({ runApp, submitButtonOptions, clearOnSubmit = false }) => {
     const appRunData = useRecoilValue(appRunDataState);
+    const setAppFormSubmitDataState = useSetRecoilState(appFormSubmitDataState);
     const { schema, uiSchema } = getJSONSchemaFromInputFields(
       appRunData?.inputFields,
     );
@@ -63,6 +97,7 @@ const PromptlyAppInputForm = memo(
         validator={validator}
         formData={userFormData}
         onSubmit={({ formData }) => {
+          setAppFormSubmitDataState(formData);
           runApp(appRunData?.sessionId, formData);
 
           if (!clearOnSubmit) {
@@ -508,7 +543,11 @@ const parseAndRebuildSxProps = () => {
 const parseAndRebuildDataProps = () => {
   return (tree) => {
     visit(tree, (node) => {
-      if (node && isElement(node) && node.tagName === "pa-data") {
+      if (
+        node &&
+        isElement(node) &&
+        (node.tagName === "pa-data" || node.tagName === "pa-data-input")
+      ) {
         if (node.children && node.children.length > 0) {
           node.properties["content"] = node.children
             .map((child) => toHtml(child))
@@ -619,6 +658,45 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
       "pa-pdf-viewer": ({ node, ...props }) => {
         return <PDFViewer file={props.file} sx={props.sx || {}} />;
       },
+      "pa-data-input": memo(
+        ({ node, ...props }) => {
+          const prevMemoizedRef = useRef(null);
+          const appInputFormData = useRecoilValue(appFormSubmitDataState);
+          const templateVariables = (
+            props.content.match(/{{(.*?)}}/g) || []
+          ).map((x) => x.replace(/{{|}}/g, ""));
+
+          const layout = useMemo(() => {
+            if (!props.content) return "";
+
+            const prevTemplateValues = filterDictionary(
+              prevMemoizedRef.current?.appInputFormData || {},
+              (x) => templateVariables.includes(x),
+            );
+            const currentTemplateValues = filterDictionary(
+              appInputFormData || {},
+              (x) => templateVariables.includes(x),
+            );
+
+            if (areObjectsEqual(prevTemplateValues, currentTemplateValues)) {
+              return prevMemoizedRef.current?.layout;
+            }
+
+            return liquidEngine.parseAndRenderSync(
+              props.content,
+              appInputFormData,
+            );
+          }, [props.content, appInputFormData]);
+
+          useEffect(() => {
+            prevMemoizedRef.current = { layout, appInputFormData };
+          }, [layout, appInputFormData]);
+
+          return <LayoutRenderer>{layout}</LayoutRenderer>;
+        },
+
+        (prev, next) => prev.node === next.node,
+      ),
       "pa-data": memo(
         ({ node, ...props }) => {
           const appRunData = useRecoilValue(appRunDataState);

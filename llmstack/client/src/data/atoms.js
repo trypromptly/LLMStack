@@ -573,3 +573,8 @@ export const appRunDataState = atom({
   key: "appRunData",
   default: {},
 });
+
+export const appFormSubmitDataState = atom({
+  key: "appFormSubmitData",
+  default: {},
+});
