@@ -26,8 +26,8 @@ import { getJSONSchemaFromInputFields } from "../../../data/utils";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
-import { appRunDataState, appFormSubmitDataState } from "../../../data/atoms";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { appRunDataState } from "../../../data/atoms";
+import { useRecoilValue } from "recoil";
 import loadingImage from "../../../assets/images/loading.gif";
 import "ace-builds/src-noconflict/mode-json";
 
@@ -71,7 +71,6 @@ function areObjectsEqual(obj1, obj2) {
 const PromptlyAppInputForm = memo(
   ({ runApp, submitButtonOptions, clearOnSubmit = false }) => {
     const appRunData = useRecoilValue(appRunDataState);
-    const setAppFormSubmitDataState = useSetRecoilState(appFormSubmitDataState);
     const { schema, uiSchema } = getJSONSchemaFromInputFields(
       appRunData?.inputFields,
     );
@@ -97,7 +96,6 @@ const PromptlyAppInputForm = memo(
         validator={validator}
         formData={userFormData}
         onSubmit={({ formData }) => {
-          setAppFormSubmitDataState(formData);
           runApp(appRunData?.sessionId, formData);
 
           if (!clearOnSubmit) {
@@ -661,38 +659,49 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
       "pa-data-input": memo(
         ({ node, ...props }) => {
           const prevMemoizedRef = useRef(null);
-          const appInputFormData = useRecoilValue(appFormSubmitDataState);
-          const templateVariables = (
-            props.content.match(/{{(.*?)}}/g) || []
-          ).map((x) => x.replace(/{{|}}/g, ""));
+          const appRunData = useRecoilValue(appRunDataState);
 
           const layout = useMemo(() => {
             if (!props.content) return "";
+
+            const templateVariables = (
+              props.content.match(/{{(.*?)}}/g) || []
+            ).map((x) => x.replace(/{{|}}/g, ""));
 
             const prevTemplateValues = filterDictionary(
               prevMemoizedRef.current?.appInputFormData || {},
               (x) => templateVariables.includes(x),
             );
             const currentTemplateValues = filterDictionary(
-              appInputFormData || {},
+              appRunData?.input || {},
               (x) => templateVariables.includes(x),
             );
 
             if (areObjectsEqual(prevTemplateValues, currentTemplateValues)) {
+              console.log("Using memoized layout");
               return prevMemoizedRef.current?.layout;
             }
 
+            console.log("Rendering layout");
             return liquidEngine.parseAndRenderSync(
               props.content,
-              appInputFormData,
+              appRunData?.input,
             );
-          }, [props.content, appInputFormData]);
+          }, [props.content, appRunData?.input]);
 
           useEffect(() => {
-            prevMemoizedRef.current = { layout, appInputFormData };
-          }, [layout, appInputFormData]);
+            prevMemoizedRef.current = {
+              layout,
+              appInputFormData: appRunData?.input || {},
+            };
+          }, [layout, appRunData]);
 
-          return <LayoutRenderer>{layout}</LayoutRenderer>;
+          const memoizedLayoutRenderer = useMemo(
+            () => <LayoutRenderer>{layout}</LayoutRenderer>,
+            [layout],
+          );
+
+          return memoizedLayoutRenderer;
         },
 
         (prev, next) => prev.node === next.node,
