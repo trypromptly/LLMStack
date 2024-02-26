@@ -678,11 +678,9 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
             );
 
             if (areObjectsEqual(prevTemplateValues, currentTemplateValues)) {
-              console.log("Using memoized layout");
               return prevMemoizedRef.current?.layout;
             }
 
-            console.log("Rendering layout");
             return liquidEngine.parseAndRenderSync(
               props.content,
               appRunData?.input,
