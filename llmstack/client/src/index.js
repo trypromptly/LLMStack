@@ -434,7 +434,7 @@ router = createBrowserRouter([
   },
   {
     path: "/app/:publishedAppId/:embed?/:chatBubble?",
-    element: <AppRenderPage headless={true} />,
+    element: <AppRenderPage />,
     errorElement: <ErrorPage />,
   },
   {
