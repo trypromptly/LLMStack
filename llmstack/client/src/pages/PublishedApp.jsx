@@ -9,10 +9,10 @@ import {
   PublishedApp,
   PublishedAppChatEmbed,
   PublishedAppWebEmbed,
-} from "../components/apps/PublishedApp";
+} from "../components/apps/Published";
 import { isLoggedInState, isMobileState } from "../data/atoms";
 
-function AppRenderPage() {
+function PublishedAppPage() {
   const { publishedAppId, embed, chatBubble } = useParams();
   const [app, setApp] = useState({});
   const [wsUrl, setWsUrl] = useState(null);
@@ -107,4 +107,4 @@ function AppRenderPage() {
   );
 }
 
-export default AppRenderPage;
+export default PublishedAppPage;

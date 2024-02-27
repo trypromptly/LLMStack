@@ -18,7 +18,7 @@ const DashboardPage = lazy(() => import("./pages/dashboard"));
 const HistoryPage = lazy(() => import("./pages/history"));
 const SettingPage = lazy(() => import("./pages/setting"));
 const OrganizationPage = lazy(() => import("./pages/organization"));
-const AppRenderPage = lazy(() => import("./pages/AppRender"));
+const PublishedAppPage = lazy(() => import("./pages/PublishedApp"));
 const DatasourceRenderPage = lazy(() => import("./pages/DatasourceRender"));
 const AppStudioPage = lazy(() => import("./pages/AppStudio"));
 const AppConsolePage = lazy(() => import("./pages/AppConsole"));
@@ -434,7 +434,7 @@ router = createBrowserRouter([
   },
   {
     path: "/app/:publishedAppId/:embed?/:chatBubble?",
-    element: <AppRenderPage />,
+    element: <PublishedAppPage />,
     errorElement: <ErrorPage />,
   },
   {
