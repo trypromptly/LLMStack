@@ -1,30 +1,18 @@
-import {
-  AppBar,
-  Box,
-  Button,
-  Container,
-  Stack,
-  SvgIcon,
-  Toolbar,
-  Typography,
-} from "@mui/material";
-import { useEffect, useState } from "react";
 import ReactGA from "react-ga4";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { TwitterIcon, TwitterShareButton } from "react-share";
 import { useRecoilValue } from "recoil";
-import { ReactComponent as GithubIcon } from "../assets/images/icons/github.svg";
-import logo from "../assets/logo.png";
-import { AgentRenderer } from "../components/apps/AgentRenderer";
-import { WebAppRenderer } from "../components/apps/WebAppRenderer";
-import { WebChatRender } from "../components/apps/WebChatRender";
-import { isLoggedInState, isMobileState } from "../data/atoms";
 import { axios } from "../data/axios";
 import { Ws } from "../data/ws";
 
-const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
+import {
+  PublishedApp,
+  PublishedAppChatEmbed,
+  PublishedAppWebEmbed,
+} from "../components/apps/PublishedApp";
+import { isLoggedInState, isMobileState } from "../data/atoms";
 
-function AppRenderPage({ headless = false }) {
+function AppRenderPage() {
   const { publishedAppId, embed, chatBubble } = useParams();
   const [app, setApp] = useState({});
   const [wsUrl, setWsUrl] = useState(null);
@@ -86,127 +74,36 @@ function AppRenderPage({ headless = false }) {
     }
   }, [ws, wsUrl]);
 
-  return app?.type?.slug === "text-chat" && embed && chatBubble ? (
-    <WebChatRender app={app} isMobile={isMobile} embed={embed} ws={ws} />
-  ) : app?.type?.slug === "agent" && embed && chatBubble ? (
-    <AgentRenderer app={app} isMobile={isMobile} embed={embed} ws={ws} />
-  ) : (
-    <Stack container spacing={2}>
-      {!embed && (
-        <AppBar
-          position="static"
-          sx={{
-            backgroundColor: "#fff",
-            color: "#000",
-          }}
-        >
-          <Container maxWidth="xl">
-            <Toolbar
-              disableGutters
-              sx={{
-                width: "100%",
-                margin: "0 auto",
-              }}
-            >
-              <a
-                href={app.logo ? "/" : "https://trypromptly.com"}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src={app.logo || logo}
-                  alt="Promptly"
-                  style={{ height: 30 }}
-                />
-              </a>
-              <Box sx={{ flexGrow: 1 }} />
-              {SITE_NAME === "LLMStack" && (
-                <SvgIcon
-                  component={GithubIcon}
-                  sx={{ width: "54px", height: "54px" }}
-                  viewBox="-10 -4 28 26"
-                  onClick={() => {
-                    window.location.href =
-                      "https://github.com/trypromptly/llmstack";
-                  }}
-                />
-              )}
-              {app.is_shareable && (
-                <TwitterShareButton
-                  url={window.location.href}
-                  title={`Check out ${app?.name} on Promptly!\n\n`}
-                  via={"TryPromptly"}
-                  hashtags={["NoCodeAI"]}
-                >
-                  <TwitterIcon size={30} round={true} />
-                </TwitterShareButton>
-              )}
-            </Toolbar>
-          </Container>
-        </AppBar>
-      )}
-      <Box sx={{ justifyContent: "center" }}>{headless && <p></p>}</Box>
-      {error && (
-        <Box
-          style={{
-            justifyContent: "center",
-            paddingTop: 50,
-            display: "flex",
-            flexDirection: "column",
-            textAlign: "center",
-            maxWidth: 600,
-            margin: "0 auto",
-            gap: 10,
-          }}
-        >
-          <h4>{error}</h4>
-          <Button
-            variant="contained"
-            sx={{ textTransform: "none", margin: "auto" }}
-            onClick={() => {
-              window.location.href = isLoggedIn
-                ? "/hub"
-                : `/login?redirectUrl=${window.location.pathname}`;
-            }}
-          >
-            {isLoggedIn ? "Go To Hub" : "Login"}
-          </Button>
-        </Box>
-      )}
-      <Box>
-        {app?.type?.slug === "web" && <WebAppRenderer app={app} ws={ws} />}
-        {app?.type?.slug === "text-chat" && (
-          <WebChatRender app={app} isMobile={isMobile} ws={ws} />
-        )}
-        {app?.type?.slug === "agent" && (
-          <AgentRenderer app={app} isMobile={isMobile} ws={ws} />
-        )}
-      </Box>
-      <Box
-        sx={{
-          justifyContent: "center",
-          textAlign: "center",
-          bottom: "0px",
-          margin: "0 auto",
-          paddingTop: "10px",
-        }}
-      >
-        {headless &&
-          (app.has_footer ||
-            !process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT) && (
-            <Typography sx={{ textAlign: "center" }} variant="caption">
-              Powered by{" "}
-              <a
-                href="https://trypromptly.com"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Promptly
-              </a>
-            </Typography>
-          )}
-      </Box>
-    </Stack>
+  if (embed && chatBubble) {
+    return (
+      <PublishedAppChatEmbed
+        ws={ws}
+        app={app}
+        error={error}
+        isLoggedIn={isLoggedIn}
+        isMobile={isMobile}
+      />
+    );
+  } else if (embed) {
+    return (
+      <PublishedAppWebEmbed
+        ws={ws}
+        app={app}
+        error={error}
+        isLoggedIn={isLoggedIn}
+        isMobile={isMobile}
+      />
+    );
+  }
+
+  return (
+    <PublishedApp
+      ws={ws}
+      app={app}
+      error={error}
+      isLoggedIn={isLoggedIn}
+      isMobile={isMobile}
+    />
   );
 }
 
