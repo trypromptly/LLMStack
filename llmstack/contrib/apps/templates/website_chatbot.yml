@@ -52,6 +52,19 @@ app:
   slug: "website-chatbot"
   description: "A chatbot that can answer user's questions based on your own content and can easily be embedded into your website."
   type_slug: "text-chat"
+  config:
+    layout: >-
+      <pa-layout sx='{"maxWidth": "900px", "margin": "0 auto", "padding":
+      "10px"}'>
+        <pa-grid container="true" spacing="2" style="width: 100%">
+          <pa-grid item="true" xs="12">
+            <pa-chat-output sx='{"height": "70vh", "minHeight": "90%"}'/>
+          </pa-grid>
+          <pa-grid item="true" xs="12">
+                  <pa-input-form clearonsubmit="true" />
+          </pa-grid>
+        </pa-grid>
+      </pa-layout>
   input_fields:
     - name: "question"
       title: "Question"
