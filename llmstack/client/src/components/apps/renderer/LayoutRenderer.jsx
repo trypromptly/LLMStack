@@ -30,7 +30,7 @@ import { appRunDataState } from "../../../data/atoms";
 import { useRecoilValue } from "recoil";
 import loadingImage from "../../../assets/images/loading.gif";
 import "ace-builds/src-noconflict/mode-json";
-import { isEqual, pickBy } from "lodash";
+import { isEqual, get } from "lodash";
 
 import "./LayoutRenderer.css";
 
@@ -509,11 +509,7 @@ const parseAndRebuildSxProps = () => {
 const parseAndRebuildDataProps = () => {
   return (tree) => {
     visit(tree, (node) => {
-      if (
-        node &&
-        isElement(node) &&
-        (node.tagName === "pa-data" || node.tagName === "pa-data-input")
-      ) {
+      if (node && isElement(node) && node.tagName === "pa-data") {
         if (node.children && node.children.length > 0) {
           node.properties["content"] = node.children
             .map((child) => toHtml(child))
@@ -624,7 +620,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
       "pa-pdf-viewer": ({ node, ...props }) => {
         return <PDFViewer file={props.file} sx={props.sx || {}} />;
       },
-      "pa-data-input": memo(
+      "pa-data": memo(
         ({ node, ...props }) => {
           const prevMemoizedRef = useRef(null);
           const appRunData = useRecoilValue(appRunDataState);
@@ -636,29 +632,28 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
               props.content.match(/{{(.*?)}}/g) || []
             ).map((x) => x.replace(/{{|}}/g, ""));
 
-            const prevTemplateValues = pickBy(
-              prevMemoizedRef.current?.appInputFormData,
-              (value, key) => templateVariables.includes(key),
-            );
-            const currentTemplateValues = pickBy(
-              appRunData?.input,
-              (value, key) => templateVariables.includes(key),
-            );
+            let prevTemplateValues = {};
+            let currentTemplateValues = {};
+
+            templateVariables.forEach((variable) => {
+              prevTemplateValues[variable] = get(
+                prevMemoizedRef.current?.appRunData,
+                variable,
+                "",
+              );
+              currentTemplateValues[variable] = get(appRunData, variable, "");
+            });
 
             if (isEqual(prevTemplateValues, currentTemplateValues)) {
               return prevMemoizedRef.current?.layout || "";
             }
-
-            return liquidEngine.parseAndRenderSync(
-              props.content,
-              appRunData?.input,
-            );
-          }, [props.content, appRunData?.input]);
+            return liquidEngine.parseAndRenderSync(props.content, appRunData);
+          }, [props.content, appRunData]);
 
           useEffect(() => {
             prevMemoizedRef.current = {
               layout,
-              appInputFormData: appRunData?.input || {},
+              appRunData,
             };
           }, [layout, appRunData]);
 
@@ -668,19 +663,6 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
           );
 
           return memoizedLayoutRenderer;
-        },
-
-        (prev, next) => prev.node === next.node,
-      ),
-      "pa-data": memo(
-        ({ node, ...props }) => {
-          const appRunData = useRecoilValue(appRunDataState);
-
-          return (
-            <LayoutRenderer>
-              {liquidEngine.parseAndRenderSync(props.content, appRunData || {})}
-            </LayoutRenderer>
-          );
         },
         (prev, next) => prev.node === next.node,
       ),
