@@ -146,6 +146,14 @@ export function AppRenderer({ app, ws }) {
   }, [app?.data?.config?.layout, app?.data?.type_slug]);
 
   useEffect(() => {
+    if (app?.data?.config?.welcome_message) {
+      const welcomeMessage = new AppMessage(
+        "welcome",
+        app?.data?.config?.welcome_message,
+      );
+      messagesRef.current.add(welcomeMessage);
+    }
+
     setAppRunData((prevState) => ({
       ...prevState,
       isStreaming: false,
