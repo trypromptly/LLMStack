@@ -6,6 +6,7 @@ import {
   Avatar,
   Box,
   Button,
+  Chip,
   Container,
   Grid,
   Paper,
@@ -338,7 +339,7 @@ const PromptlyAppOutputHeader = memo(
 );
 
 const PromptlyAppChatOutput = memo(
-  ({ minHeight, maxHeight, sx, enableAutoScroll = true }) => {
+  ({ runApp, minHeight, maxHeight, sx, enableAutoScroll = true }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const assistantImage = useMemo(
       () => appRunData?.assistantImage,
@@ -437,6 +438,32 @@ const PromptlyAppChatOutput = memo(
         {appRunData?.isRunning && !appRunData?.isStreaming && (
           <AppTypingIndicator assistantImage={assistantImage} />
         )}
+        {appMessages.filter((message) => message.type === "user").length ===
+          0 &&
+          appRunData?.suggestedMessages &&
+          appRunData?.suggestedMessages?.length > 0 && (
+            <Grid
+              sx={{
+                alignSelf: "flex-end",
+                textAlign: "right",
+                marginTop: "auto",
+              }}
+            >
+              {appRunData.suggestedMessages.map((message, index) => (
+                <Chip
+                  key={index}
+                  label={message}
+                  sx={{ margin: "5px 2px" }}
+                  onClick={() =>
+                    appRunData?.inputFields?.length > 0 &&
+                    runApp(appRunData?.sessionId, {
+                      [appRunData?.inputFields[0].name]: message,
+                    })
+                  }
+                />
+              ))}
+            </Grid>
+          )}
       </Box>
     );
   },
@@ -670,6 +697,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
       "pa-chat-output": ({ node, ...props }) => {
         return (
           <PromptlyAppChatOutput
+            runApp={memoizedRunApp}
             maxHeight={props.maxheight || "100%"}
             minHeight={props.minheight || "200px"}
             sx={props.sx || {}}

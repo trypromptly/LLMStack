@@ -163,6 +163,7 @@ export function AppRenderer({ app, ws }) {
       messages: messagesRef.current.get(),
       processors: app?.data?.processors || [],
       assistantImage: app?.data?.config?.assistant_image,
+      suggestedMessages: app?.data?.config?.suggested_messages || [],
     }));
 
     return () => {
