@@ -98,6 +98,7 @@
   display: flex;
   height: 30px;
   flex-direction: row;
+  align-self: center;
 }
 
 .typing-indicator span {

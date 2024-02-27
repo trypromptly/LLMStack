@@ -83,28 +83,37 @@ const PromptlyAppInputForm = memo(
 const AppTypingIndicator = memo(
   ({ assistantImage }) => {
     return (
-      <div
-        style={{
+      <Box
+        sx={{
           display: "flex",
           textAlign: "left",
           fontSize: 16,
           padding: 3,
         }}
       >
-        {assistantImage && (
-          <Avatar
-            src={assistantImage}
-            alt="Assistant"
-            style={{ margin: "16px 8px 16px 0px" }}
-          />
-        )}
+        <AppAvatar assistantImage={assistantImage} />
         <div className="layout-chat_message_from_app typing-indicator">
           <span></span>
           <span></span>
           <span></span>
         </div>
-      </div>
+      </Box>
     );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
+
+const AppAvatar = memo(
+  ({ assistantImage }) => {
+    return assistantImage ? (
+      <Avatar
+        src={assistantImage}
+        alt="Assistant"
+        style={{ margin: "10px 8px" }}
+      />
+    ) : null;
   },
   (prev, next) => {
     return prev === next;
@@ -157,14 +166,24 @@ const UserMessage = memo(
 
 const AppMessage = memo(
   (props) => {
-    const { message, workflow } = props;
+    const { message, workflow, assistantImage } = props;
     return (
       <Box
-        className={
-          workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
-        }
+        sx={{
+          display: "flex",
+          textAlign: "left",
+          fontSize: 16,
+          padding: 3,
+        }}
       >
-        <LayoutRenderer>{message.content || ""}</LayoutRenderer>
+        <AppAvatar assistantImage={assistantImage} />
+        <Box
+          className={
+            workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
+          }
+        >
+          <LayoutRenderer>{message.content || ""}</LayoutRenderer>
+        </Box>
       </Box>
     );
   },
@@ -175,14 +194,24 @@ const AppMessage = memo(
 
 const AgentMessage = memo(
   (props) => {
-    const { message, workflow } = props;
+    const { message, workflow, assistantImage } = props;
     return (
       <Box
-        className={
-          workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
-        }
+        sx={{
+          display: "flex",
+          textAlign: "left",
+          fontSize: 16,
+          padding: 3,
+        }}
       >
-        <LayoutRenderer>{message.content || ""}</LayoutRenderer>
+        <AppAvatar assistantImage={assistantImage} />
+        <Box
+          className={
+            workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
+          }
+        >
+          <LayoutRenderer>{message.content || ""}</LayoutRenderer>
+        </Box>
       </Box>
     );
   },
@@ -305,6 +334,10 @@ const PromptlyAppOutputHeader = memo(
 const PromptlyAppChatOutput = memo(
   ({ minHeight, maxHeight, sx, enableAutoScroll = true }) => {
     const appRunData = useRecoilValue(appRunDataState);
+    const assistantImage = useMemo(
+      () => appRunData?.assistantImage,
+      [appRunData?.assistantImage],
+    );
     const appMessages = useMemo(
       () => appRunData?.messages || [],
       [appRunData?.messages],
@@ -362,7 +395,13 @@ const PromptlyAppChatOutput = memo(
               />
             );
           } else if (message.subType === "agent") {
-            return <AgentMessage message={message} key={message.id} />;
+            return (
+              <AgentMessage
+                message={message}
+                key={message.id}
+                assistantImage={assistantImage}
+              />
+            );
           } else if (message.subType === "agent-step") {
             return (
               <AgentStepMessage
@@ -379,12 +418,18 @@ const PromptlyAppChatOutput = memo(
                 processors={appRunData?.processors}
               />
             );
+          } else {
+            return (
+              <AppMessage
+                message={message}
+                key={message.id}
+                assistantImage={assistantImage}
+              />
+            );
           }
-
-          return <AppMessage message={message} key={message.id} />;
         })}
         {appRunData?.isRunning && !appRunData?.isStreaming && (
-          <AppTypingIndicator />
+          <AppTypingIndicator assistantImage={assistantImage} />
         )}
       </Box>
     );
@@ -397,6 +442,10 @@ const PromptlyAppChatOutput = memo(
 const PromptlyAppWorkflowOutput = memo(
   ({ showHeader, placeholder, sx, enableAutoScroll = true }) => {
     const appRunData = useRecoilValue(appRunDataState);
+    const assistantImage = useMemo(
+      () => appRunData?.assistantImage,
+      [appRunData?.assistantImage],
+    );
     const appMessages = useMemo(
       () => appRunData?.messages || [],
       [appRunData?.messages],
@@ -464,6 +513,7 @@ const PromptlyAppWorkflowOutput = memo(
             <AppMessage
               message={appMessages[appMessages.length - 1]}
               workflow={true}
+              assistantImage={assistantImage}
             />
           )}
       </Box>

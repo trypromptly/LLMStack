@@ -154,6 +154,7 @@ export function AppRenderer({ app, ws }) {
       inputFields: app?.data?.input_fields,
       messages: messagesRef.current.get(),
       processors: app?.data?.processors || [],
+      assistantImage: app?.data?.config?.assistant_image,
     }));
 
     return () => {
