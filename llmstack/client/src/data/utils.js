@@ -99,6 +99,10 @@ export function getJSONSchemaFromInputFields(inputFields) {
         schema.properties[field.name].default = field.default;
       }
 
+      if (field["ui:options"]) {
+        uiSchema[field.name]["ui:options"] = field["ui:options"];
+      }
+
       if (field.type === "text") {
         uiSchema[field.name] = {
           "ui:widget": "textarea",

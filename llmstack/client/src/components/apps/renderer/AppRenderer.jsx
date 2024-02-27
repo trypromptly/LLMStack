@@ -22,33 +22,33 @@ import { axios } from "../../../data/axios";
 import { appRunDataState } from "../../../data/atoms";
 import { useSetRecoilState } from "recoil";
 
-const defaultWorkflowLayout = `<pa-layout>
-<pa-paper style="padding: 10px;">
-<pa-grid container="true" spacing="2" style="width: 100%">
-  <pa-grid item="true" xs="12">
-    <pa-input-form />
-  </pa-grid>
-  <pa-grid item="true" xs="12">
-    <br/>
-  </pa-grid>
-  <pa-grid item="true" xs="12">
-    <pa-workflow-output showHeader="true" />
-  </pa-grid>
-</pa-grid>
-</pa-paper>
+const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto"}'>
+  <pa-paper style="padding: 10px;">
+    <pa-grid container="true" spacing="2" style="width: 100%">
+      <pa-grid item="true" xs="12">
+        <pa-input-form></pa-input-form>
+      </pa-grid>
+      <pa-grid item="true" xs="12">
+        <br/>
+      </pa-grid>
+      <pa-grid item="true" xs="12">
+        <pa-workflow-output showHeader="true"></pa-workflow-output>
+      </pa-grid>
+    </pa-grid>
+  </pa-paper>
 </pa-layout>`;
 
-const defaultChatLayout = `<pa-layout>
-<pa-paper style="padding: 10px;">
-<pa-grid container="true" spacing="2" style="width: 100%">
-  <pa-grid item="true" xs="12">
-    <pa-chat-output sx='{"height": "70vh", "minHeight": "90%"}'/>
-  </pa-grid>
-  <pa-grid item="true" xs="12">
-    <pa-input-form clearonsubmit="true" />
-  </pa-grid>
-</pa-grid>
-</pa-paper>
+const defaultChatLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto"}'>
+  <pa-paper style="padding: 10px;">
+    <pa-grid container="true" spacing="2" style="width: 100%">
+      <pa-grid item="true" xs="12">
+        <pa-chat-output sx='{"height": "70vh", "minHeight": "90%"}'></pa-chat-output>
+      </pa-grid>
+      <pa-grid item="true" xs="12">
+        <pa-input-form clearonsubmit="true"></pa-input-form>
+      </pa-grid>
+    </pa-grid>
+  </pa-paper>
 </pa-layout>`;
 
 export function AppRenderer({ app, ws }) {
