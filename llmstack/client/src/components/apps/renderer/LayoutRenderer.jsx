@@ -30,43 +30,11 @@ import { appRunDataState } from "../../../data/atoms";
 import { useRecoilValue } from "recoil";
 import loadingImage from "../../../assets/images/loading.gif";
 import "ace-builds/src-noconflict/mode-json";
+import { isEqual, pickBy } from "lodash";
 
 import "./LayoutRenderer.css";
 
 const liquidEngine = new Liquid();
-
-function filterDictionary(obj, predicate) {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([key, value]) => predicate(key, value)),
-  );
-}
-
-function areObjectsEqual(obj1, obj2) {
-  // Get the keys of both objects
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
-
-  // Check if the number of keys is the same
-  if (keys1.length !== keys2.length) {
-    return false;
-  }
-
-  // Iterate through the keys and compare values
-  for (let key of keys1) {
-    // Check if the key exists in both objects
-    if (!keys2.includes(key)) {
-      return false;
-    }
-
-    // Compare the values
-    if (obj1[key] !== obj2[key]) {
-      return false;
-    }
-  }
-
-  // If all keys and values match, the objects are equal
-  return true;
-}
 
 const PromptlyAppInputForm = memo(
   ({ runApp, submitButtonOptions, clearOnSubmit = false }) => {
@@ -668,17 +636,17 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
               props.content.match(/{{(.*?)}}/g) || []
             ).map((x) => x.replace(/{{|}}/g, ""));
 
-            const prevTemplateValues = filterDictionary(
-              prevMemoizedRef.current?.appInputFormData || {},
-              (x) => templateVariables.includes(x),
+            const prevTemplateValues = pickBy(
+              prevMemoizedRef.current?.appInputFormData,
+              (value, key) => templateVariables.includes(key),
             );
-            const currentTemplateValues = filterDictionary(
-              appRunData?.input || {},
-              (x) => templateVariables.includes(x),
+            const currentTemplateValues = pickBy(
+              appRunData?.input,
+              (value, key) => templateVariables.includes(key),
             );
 
-            if (areObjectsEqual(prevTemplateValues, currentTemplateValues)) {
-              return prevMemoizedRef.current?.layout;
+            if (isEqual(prevTemplateValues, currentTemplateValues)) {
+              return prevMemoizedRef.current?.layout || "";
             }
 
             return liquidEngine.parseAndRenderSync(
