@@ -29,6 +29,7 @@ import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 import { appRunDataState } from "../../../data/atoms";
 import ThemedJsonForm from "../../ThemedJsonForm";
 import loadingImage from "../../../assets/images/loading.gif";
+import { isEqual, get } from "lodash";
 
 import "ace-builds/src-noconflict/mode-json";
 import "./LayoutRenderer.css";
@@ -624,13 +625,47 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
       },
       "pa-data": memo(
         ({ node, ...props }) => {
+          const prevMemoizedRef = useRef(null);
           const appRunData = useRecoilValue(appRunDataState);
 
-          return (
-            <LayoutRenderer>
-              {liquidEngine.parseAndRenderSync(props.content, appRunData || {})}
-            </LayoutRenderer>
+          const layout = useMemo(() => {
+            if (!props.content) return "";
+
+            const templateVariables = (
+              props.content.match(/{{(.*?)}}/g) || []
+            ).map((x) => x.replace(/{{|}}/g, ""));
+
+            let prevTemplateValues = {};
+            let currentTemplateValues = {};
+
+            templateVariables.forEach((variable) => {
+              prevTemplateValues[variable] = get(
+                prevMemoizedRef.current?.appRunData,
+                variable,
+                "",
+              );
+              currentTemplateValues[variable] = get(appRunData, variable, "");
+            });
+
+            if (isEqual(prevTemplateValues, currentTemplateValues)) {
+              return prevMemoizedRef.current?.layout || "";
+            }
+            return liquidEngine.parseAndRenderSync(props.content, appRunData);
+          }, [props.content, appRunData]);
+
+          useEffect(() => {
+            prevMemoizedRef.current = {
+              layout,
+              appRunData,
+            };
+          }, [layout, appRunData]);
+
+          const memoizedLayoutRenderer = useMemo(
+            () => <LayoutRenderer>{layout}</LayoutRenderer>,
+            [layout],
           );
+
+          return memoizedLayoutRenderer;
         },
         (prev, next) => prev.node === next.node,
       ),

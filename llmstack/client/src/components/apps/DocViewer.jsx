@@ -1,125 +1,111 @@
-import { pdfjs } from "react-pdf";
-import { Document, Page } from "react-pdf";
+import { Worker, Viewer } from "@react-pdf-viewer/core";
 
-import React, { useMemo, useState, memo } from "react";
-import {
-  CircularProgress,
-  Box,
-  TextField,
-  IconButton,
-  Stack,
-} from "@mui/material";
-import ZoomInIcon from "@mui/icons-material/ZoomIn";
-import ZoomOutIcon from "@mui/icons-material/ZoomOut";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { toolbarPlugin } from "@react-pdf-viewer/toolbar";
+import "@react-pdf-viewer/toolbar/lib/styles/index.css";
+import "@react-pdf-viewer/core/lib/styles/index.css";
+import "@react-pdf-viewer/default-layout/lib/styles/index.css";
+import React, { useMemo, memo, useRef } from "react";
+import { Box } from "@mui/material";
 
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
-
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.js",
-  import.meta.url,
-).toString();
-
-const ZOOM_FACTOR = 1.2; // Adjust this value for finer control over zoom level changes.
+const PDFViewerToolbarSlots = (props) => {
+  const {
+    CurrentPageInput,
+    GoToNextPage,
+    GoToPreviousPage,
+    NumberOfPages,
+    ZoomIn,
+    ZoomOut,
+  } = props;
+  return (
+    <>
+      <div style={{ padding: "0px 2px" }}>
+        <ZoomOut />
+      </div>
+      <div style={{ padding: "0px 2px" }}>
+        <ZoomIn />
+      </div>
+      <div style={{ padding: "0px 2px", marginLeft: "auto" }}>
+        <GoToPreviousPage />
+      </div>
+      <div style={{ padding: "0px 2px", width: "4rem" }}>
+        <CurrentPageInput />
+      </div>
+      <div style={{ padding: "0px 2px" }}>
+        / <NumberOfPages />
+      </div>
+      <div style={{ padding: "0px 2px" }}>
+        <GoToNextPage />
+      </div>
+    </>
+  );
+};
 
 export const PDFViewer = memo(
   (props) => {
+    const viewerRef = useRef(null);
+
     const { file, ...sxProps } = props;
-    const memoizedFileObject = useMemo(() => ({ url: file }), [file]);
+    const memoizedFileObject = useMemo(() => ({ fileUrl: file }), [file]);
+    const toolbarPluginInstance = toolbarPlugin();
+    const { Toolbar } = toolbarPluginInstance;
 
-    const [numPages, setNumPages] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [zoom, setZoom] = useState(1); // Setting initial zoom level to 1.
-
-    const nextPage = () => {
-      setCurrentPage((prevPage) => Math.min(prevPage + 1, numPages));
-    };
-
-    const prevPage = () => {
-      setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-    };
-
-    const zoomIn = () => {
-      setZoom((prevZoom) => prevZoom * ZOOM_FACTOR);
-    };
-
-    const zoomOut = () => {
-      setZoom((prevZoom) => prevZoom / ZOOM_FACTOR);
-    };
-
-    console.log("Rendring PDFViewer");
-    return memoizedFileObject?.url ? (
-      <Stack
-        sx={{
-          width: "100%",
-          height: "400px",
-          position: "relative",
-          ...sxProps,
-        }}
-      >
+    return memoizedFileObject?.fileUrl ? (
+      <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "10px",
+            height: "300px",
+            overflow: "scroll",
+            position: "relative",
+            ...sxProps,
           }}
+          ref={viewerRef}
+          id="pdf-viewer-container"
         >
-          <Stack direction="row" spacing={2}>
-            <IconButton
-              variant="contained"
-              onClick={prevPage}
-              disabled={currentPage === 1}
-            >
-              <ArrowBackIcon />
-            </IconButton>
-            <TextField
-              sx={{ width: "50px" }}
-              variant="outlined"
-              size="small"
-              value={currentPage}
-              onChange={(e) => {
-                const page = parseInt(e.target.value, 10);
-                if (page >= 1 && page <= numPages) {
-                  setCurrentPage(page);
-                }
-              }}
-            />
-            <IconButton
-              variant="contained"
-              onClick={nextPage}
-              disabled={currentPage === numPages}
-            >
-              <ArrowForwardIcon />
-            </IconButton>
-          </Stack>
-          <Stack direction="row" spacing={2}>
-            <IconButton onClick={zoomIn} color="primary" aria-label="zoom in">
-              <ZoomInIcon />
-            </IconButton>
-            <IconButton onClick={zoomOut} color="primary" aria-label="zoom out">
-              <ZoomOutIcon />
-            </IconButton>
-          </Stack>
-        </Box>
-        <Box sx={{ width: "100%", height: "100%", overflow: "auto" }}>
-          <Document
-            file={memoizedFileObject}
-            loading={<CircularProgress />}
-            onLoadSuccess={({ numPages }) => {
-              setNumPages(numPages);
+          <div
+            style={{
+              alignItems: "center",
+              backgroundColor: "#eeeeee",
+              border: "1px solid rgba(0, 0, 0, 0.2)",
+              borderRadius: "2px",
+              bottom: "16px",
+              display: "flex",
+              left: "50%",
+              padding: "4px",
+              position: "absolute",
+              transform: "translate(-50%, 0)",
+              zIndex: 1,
             }}
           >
-            <Page
-              key={`page_${currentPage}`}
-              className={`page_${currentPage}`}
-              pageNumber={currentPage}
-              scale={zoom}
-            />
-          </Document>
+            <Toolbar>
+              {(toolbarSlot) => {
+                const {
+                  CurrentPageInput,
+                  GoToNextPage,
+                  GoToPreviousPage,
+                  NumberOfPages,
+                  ZoomIn,
+                  ZoomOut,
+                } = toolbarSlot;
+                return (
+                  <PDFViewerToolbarSlots
+                    CurrentPageInput={CurrentPageInput}
+                    GoToNextPage={GoToNextPage}
+                    GoToPreviousPage={GoToPreviousPage}
+                    NumberOfPages={NumberOfPages}
+                    ZoomIn={ZoomIn}
+                    ZoomOut={ZoomOut}
+                  />
+                );
+              }}
+            </Toolbar>
+          </div>
+
+          <Viewer
+            fileUrl={memoizedFileObject.fileUrl}
+            plugins={[toolbarPluginInstance]}
+          />
         </Box>
-      </Stack>
+      </Worker>
     ) : null;
   },
   (prev, next) => {
