@@ -99,10 +99,6 @@ export function getJSONSchemaFromInputFields(inputFields) {
         schema.properties[field.name].default = field.default;
       }
 
-      if (field["ui:options"]) {
-        uiSchema[field.name]["ui:options"] = field["ui:options"];
-      }
-
       if (field.type === "text") {
         uiSchema[field.name] = {
           "ui:widget": "textarea",
@@ -143,6 +139,10 @@ export function getJSONSchemaFromInputFields(inputFields) {
         schema.properties[field.name].enumNames = field.options?.map(
           (option) => option.label,
         );
+
+        if (field["ui:options"] && uiSchema[field.name]) {
+          uiSchema[field.name]["ui:options"] = field["ui:options"];
+        }
       }
     });
 
