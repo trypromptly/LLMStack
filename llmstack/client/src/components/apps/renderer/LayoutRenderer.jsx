@@ -43,6 +43,12 @@ const PromptlyAppInputForm = memo(
       appRunData?.inputFields,
     );
     const [userFormData, setUserFormData] = useState({});
+    const noSubmitRender =
+      Object.keys(schema?.properties).length <= 1 &&
+      !submitButtonOptions &&
+      Object.keys(uiSchema)
+        .map((key) => uiSchema[key]?.["ui:widget"])
+        .filter((x) => x === "voice").length === 0;
 
     return (
       <ThemedJsonForm
@@ -51,17 +57,17 @@ const PromptlyAppInputForm = memo(
         uiSchema={{
           ...uiSchema,
           "ui:submitButtonOptions": {
-            norender:
-              Object.keys(schema?.properties).length <= 1 &&
-              !submitButtonOptions &&
-              Object.keys(uiSchema)
-                .map((key) => uiSchema[key]?.["ui:widget"])
-                .filter((x) => x === "voice").length === 0
-                ? true
-                : false,
+            norender: noSubmitRender,
             ...submitButtonOptions,
           },
         }}
+        submitBtn={
+          noSubmitRender ? null : (
+            <Button variant="contained" type="submit">
+              Submit
+            </Button>
+          )
+        }
         validator={validator}
         formData={userFormData}
         onSubmit={({ formData }) => {
