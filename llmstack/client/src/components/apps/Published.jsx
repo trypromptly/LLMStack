@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   AppBar,
+  Avatar,
   Box,
   Button,
   Container,
@@ -18,6 +19,7 @@ import { ReactComponent as GithubIcon } from "../../assets/images/icons/github.s
 import { TwitterIcon, TwitterShareButton } from "react-share";
 import { AppRenderer } from "./renderer/AppRenderer";
 import logo from "../../assets/logo.png";
+import "./Published.css";
 
 const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
 
@@ -109,7 +111,8 @@ export const PublishedAppFooter = () => {
         textAlign: "center",
         bottom: "0px",
         margin: "0 auto",
-        paddingTop: "10px",
+        marginTop: "0 !important",
+        padding: "5px",
       }}
     >
       <Typography sx={{ textAlign: "center" }} variant="caption">
@@ -184,14 +187,58 @@ export const PublishedAppChatEmbed = ({
   });
 
   useEffect(() => {
-    setChatBubbleStyle({
-      ...chatBubbleStyle,
-      backgroundColor: app?.data?.config?.window_color || "#0f477e",
-    });
-  }, [app?.data?.config?.window_color, chatBubbleStyle]);
+    if (
+      app?.data?.config?.chat_bubble_text &&
+      app?.data?.config?.chat_bubble_style
+    ) {
+      try {
+        const style = JSON.parse(app?.data?.config?.chat_bubble_style);
+        setChatBubbleStyle((prevBubbleStyle) => ({
+          ...prevBubbleStyle,
+          ...style,
+        }));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [
+    app?.data?.config?.chat_bubble_style,
+    app?.data?.config?.chat_bubble_text,
+  ]);
+
+  useEffect(() => {
+    document.body.style = "background: transparent";
+    document.getElementsByClassName("root").style = "background: transparent";
+
+    if (showChat) {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          userAgent,
+        );
+      const width = isMobile ? "100%" : "400px";
+      const height = isMobile ? "90vh" : "700px";
+      window.parent.postMessage(
+        { width, height, type: "promptly-embed-open" },
+        "*",
+      );
+    } else {
+      setTimeout(() => {
+        window.parent.postMessage(
+          {
+            type: "promptly-embed-resize",
+            width: chatBubbleRef?.current?.clientWidth || "auto",
+            height: chatBubbleRef?.current?.clientHeight || "auto",
+          },
+          "*",
+        );
+      }, 500);
+      window.parent.postMessage({ type: "promptly-embed-close" }, "*");
+    }
+  }, [showChat]);
 
   return (
-    <Stack container spacing={2}>
+    <>
       <Fab
         style={chatBubbleStyle}
         onClick={() => setShowChat(!showChat)}
@@ -206,14 +253,52 @@ export const PublishedAppChatEmbed = ({
           <QuestionAnswerIcon />
         )}
       </Fab>
-      {error && <PublishedAppError error={error} isLoggedIn={isLoggedIn} />}
-      <Box>
-        <AppRenderer app={app} isMobile={isMobile} ws={ws} />
-      </Box>
-      {(app.has_footer ||
-        !process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT) && (
-        <PublishedAppFooter />
+      {showChat && (
+        <div
+          className={`chat-container embedded ${
+            showChat ? "maximized" : "minimized"
+          }`}
+          style={{
+            width: isMobile ? "90%" : "100%",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              backgroundColor: app?.data?.config.window_color || "#0f477e",
+              borderRadius: "8px 8px 0px 0px",
+            }}
+          >
+            {app?.data?.config?.assistant_image && (
+              <Avatar
+                src={app.data?.config?.assistant_image}
+                alt="Bot"
+                style={{ margin: "10px 8px", border: "solid 1px #ccc" }}
+              />
+            )}
+            <span
+              style={{
+                margin: "auto 0px",
+                fontWeight: 600,
+                fontSize: "18px",
+                color: "white",
+                padding: app?.data?.config?.assistant_image
+                  ? "inherit"
+                  : "16px",
+              }}
+            >
+              {app?.name}
+            </span>
+          </div>
+          <PublishedAppWebEmbed
+            ws={ws}
+            app={app}
+            error={error}
+            isLoggedIn={isLoggedIn}
+            isMobile={isMobile}
+          />
+        </div>
       )}
-    </Stack>
+    </>
   );
 };
