@@ -433,57 +433,59 @@ const PromptlyAppChatOutput = memo(
             <LexicalRenderer text={appRunData?.appIntroText} />
           </Box>
         )}
-        {appMessages.map((message) => {
-          if (message.type === "user") {
-            return (
-              <UserMessage
-                message={message}
-                inputFields={appRunData?.inputFields}
-                key={message.id}
-              />
-            );
-          } else if (message.subType === "agent") {
-            return (
-              <AgentMessage
-                message={message}
-                key={message.id}
-                assistantImage={assistantImage}
-              />
-            );
-          } else if (message.subType === "agent-step") {
-            return (
-              <AgentStepMessage
-                message={message}
-                key={message.id}
-                processors={appRunData?.processors}
-              />
-            );
-          } else if (message.subType === "agent-step-error") {
-            return (
-              <AgentStepMessage
-                message={message}
-                key={message.id}
-                processors={appRunData?.processors}
-              />
-            );
-          } else if (message.type === "error") {
-            return (
-              <ErrorMessage
-                message={message}
-                key={message.id}
-                assistantImage={assistantImage}
-              />
-            );
-          } else {
-            return (
-              <AppMessage
-                message={message}
-                key={message.id}
-                assistantImage={assistantImage}
-              />
-            );
-          }
-        })}
+        {appMessages
+          .filter((message) => message.content)
+          .map((message) => {
+            if (message.type === "user") {
+              return (
+                <UserMessage
+                  message={message}
+                  inputFields={appRunData?.inputFields}
+                  key={message.id}
+                />
+              );
+            } else if (message.subType === "agent") {
+              return (
+                <AgentMessage
+                  message={message}
+                  key={message.id}
+                  assistantImage={assistantImage}
+                />
+              );
+            } else if (message.subType === "agent-step") {
+              return (
+                <AgentStepMessage
+                  message={message}
+                  key={message.id}
+                  processors={appRunData?.processors}
+                />
+              );
+            } else if (message.subType === "agent-step-error") {
+              return (
+                <AgentStepMessage
+                  message={message}
+                  key={message.id}
+                  processors={appRunData?.processors}
+                />
+              );
+            } else if (message.type === "error") {
+              return (
+                <ErrorMessage
+                  message={message}
+                  key={message.id}
+                  assistantImage={assistantImage}
+                />
+              );
+            } else {
+              return (
+                <AppMessage
+                  message={message}
+                  key={message.id}
+                  assistantImage={assistantImage}
+                />
+              );
+            }
+          })}
         {appRunData?.isRunning && !appRunData?.isStreaming && (
           <AppTypingIndicator assistantImage={assistantImage} />
         )}
