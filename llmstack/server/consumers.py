@@ -21,7 +21,7 @@ from llmstack.connections.models import (
 
 logger = logging.getLogger(__name__)
 
-usage_limiter_module = importlib.import_module(settings.USAGE_LIMITER_MODULE)
+usage_limiter_module = importlib.import_module(settings.LIMITER_MODULE)
 is_ratelimited_fn = getattr(usage_limiter_module, "is_ratelimited", None)
 is_usage_limited_fn = getattr(usage_limiter_module, "is_usage_limited", None)
 
