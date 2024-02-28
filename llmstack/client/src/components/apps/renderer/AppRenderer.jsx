@@ -256,11 +256,6 @@ export function AppRenderer({ app, ws }) {
 
       // Merge the new output with the existing output
       if (message.output) {
-        setAppRunData((prevState) => ({
-          ...prevState,
-          isStreaming: true,
-        }));
-
         let newChunkedOutput = {};
 
         if (message.output.agent) {
@@ -290,6 +285,7 @@ export function AppRenderer({ app, ws }) {
             setAppRunData((prevState) => ({
               ...prevState,
               messages: messagesRef.current.get(),
+              isStreaming: newMessage.content !== null,
             }));
           })
           .catch((error) => {
