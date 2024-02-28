@@ -25,6 +25,7 @@ import FileUploadWidget from "./form/DropzoneFileWidget";
 import GdriveFileSelector from "./form/GdriveFileSelector";
 import SecretTextField from "./form/SecretTextField";
 import WebpageURLExtractorWidget from "./form/WebpageURLExtractorWidget";
+import VoiceRecorderWidget from "./form/VoiceRecorderWidget";
 import MuiCustomSelect from "./MuiCustomSelect";
 
 function CustomGdriveFileWidget(props) {
@@ -139,6 +140,10 @@ function CustomselectWidget(props) {
 
 function CustomFileWidget(props) {
   return <FileUploadWidget {...props} />;
+}
+
+function CustomVoiceRecorderWidget(props) {
+  return <VoiceRecorderWidget {...props} />;
 }
 
 function ChatWidgetResponse({ chat_message }) {
@@ -332,6 +337,7 @@ const ThemedJsonForm = ({
           password: PasswordWidget,
           connection: ConnectionSelectorWidget,
           richtext: RichTextWidget,
+          voice: CustomVoiceRecorderWidget,
         },
         ...widgets,
       }}
