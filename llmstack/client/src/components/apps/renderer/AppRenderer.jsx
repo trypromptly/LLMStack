@@ -38,8 +38,7 @@ const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0
   </pa-paper>
 </pa-layout>`;
 
-const defaultChatLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto"}'>
-  <pa-paper style="padding: 10px;">
+const defaultChatLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto", "padding": "10px"}'>
     <pa-grid container="true" spacing="2" style="width: 100%">
       <pa-grid item="true" xs="12">
         <pa-chat-output sx='{"height": "calc(100vh - 300px)", "minHeight": "90%"}'></pa-chat-output>
@@ -48,7 +47,6 @@ const defaultChatLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 aut
         <pa-input-form clearonsubmit="true"></pa-input-form>
       </pa-grid>
     </pa-grid>
-  </pa-paper>
 </pa-layout>`;
 
 export function AppRenderer({ app, ws }) {
