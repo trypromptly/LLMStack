@@ -5,7 +5,11 @@ import uuid
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django.conf import settings
 from django.http import HttpRequest, QueryDict
+from django_ratelimit import ALL
+from django_ratelimit.core import is_ratelimited
+from django_ratelimit.exceptions import Ratelimited
 
 from llmstack.connections.actors import ConnectionActivationActor
 from llmstack.connections.models import (
@@ -18,8 +22,31 @@ from llmstack.connections.models import (
 logger = logging.getLogger(__name__)
 
 
+def _is_ratelimited(request, fn, group=None, method=ALL):
+    if request.user.is_authenticated:
+        return False
+
+    def _key(group, request):
+        if request.user.is_authenticated:
+            return str(request.user.id)
+        return request.META.get("_prid", "")
+
+    def _rate(group, request):
+        if request.user.is_authenticated:
+            return None
+        else:
+            return settings.ANNONYMOUS_USER_RATELIMIT
+
+    return (
+        is_ratelimited(request=request, group=None, fn=fn, key=_key, rate=_rate, method=method, increment=True)
+        if request.META.get("_prid")
+        else settings.RATELIMIT_ENABLE
+    )
+
+
 @database_sync_to_async
 def _build_request_from_input(post_data, scope):
+    session = dict(scope["session"])
     headers = dict(scope["headers"])
     content_type = headers.get(
         b"content-type",
@@ -40,13 +67,8 @@ def _build_request_from_input(post_data, scope):
             b"user-agent",
             b"",
         ).decode("utf-8"),
-        "REMOTE_ADDR": headers.get(
-            b"x-forwarded-for",
-            b"",
-        )
-        .decode("utf-8")
-        .split(",")[0]
-        .strip(),
+        "REMOTE_ADDR": headers.get(b"x-forwarded-for", b"").decode("utf-8").split(",")[0].strip(),
+        "_prid": session.get("_prid", ""),
     }
     http_request.method = method
     http_request.GET = query_params
@@ -84,6 +106,9 @@ class AppConsumer(AsyncWebsocketConsumer):
             try:
                 request_uuid = str(uuid.uuid4())
                 request = await _build_request_from_input({"input": input, "stream": True}, self.scope)
+                if _is_ratelimited(request, self._respond_to_event):
+                    raise Ratelimited("Rate limit reached.")
+
                 output_stream = await AppViewSet().run_app_internal_async(
                     self.app_id,
                     self._session_id,
@@ -103,6 +128,8 @@ class AppConsumer(AsyncWebsocketConsumer):
                         await self.send(text_data=json.dumps({"output": output, "reply_to": id, "id": response_id}))
 
                 await self.send(text_data=json.dumps({"event": "done", "reply_to": id, "id": response_id}))
+            except Ratelimited:
+                await self.send(text_data=json.dumps({"event": "ratelimited", "reply_to": id}))
             except Exception as e:
                 logger.exception(e)
                 await self.send(text_data=json.dumps({"errors": [str(e)], "reply_to": id}))
