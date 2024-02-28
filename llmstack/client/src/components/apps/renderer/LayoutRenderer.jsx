@@ -816,7 +816,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
             </a>
           );
         },
-        (prev, next) => prev.props === next.props,
+        (prev, next) => prev.node === next.node,
       ),
       table: memo(
         ({ node, ...props }) => {
