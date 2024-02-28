@@ -886,7 +886,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
         ({ node, ...props }) => {
           const { alt, src } = props;
           // We provide alt text and style as altText|style where style is a string
-          const [altText, style] = alt.split("|");
+          const [altText, style] = alt?.split("|");
           let styleJson = {};
           try {
             styleJson = JSON.parse(style);
