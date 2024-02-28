@@ -85,7 +85,9 @@ function WebIntegrationSnippet({ app }) {
   const [embedChatBubble, setEmbedChatBubble] = useState(textChatApp);
   const embedCode = app?.is_published
     ? `<script async src="${
-        process.env.PUBLIC_URL || window.location.origin
+        process.env.REACT_APP_SITE_NAME === "Promptly"
+          ? "https://storage.googleapis.com/trypromptly-static"
+          : window.location.origin
       }/static/js/embed-v1.js"></script>
 <promptly-app-embed published-app-id="${app?.published_uuid}"${
         embedChatBubble ? ' chat-bubble="true"' : ""
