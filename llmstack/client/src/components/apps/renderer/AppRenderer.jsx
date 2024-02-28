@@ -61,8 +61,17 @@ export function AppRenderer({ app, ws }) {
   );
   const outputTemplates = useRef([]);
   const chunkedOutput = useRef({});
-  const messagesRef = useRef(new Messages());
+  const messagesRef = useRef(null);
   const setAppRunData = useSetRecoilState(appRunDataState);
+
+  if (ws) {
+    messagesRef.current = ws.messageRef;
+
+    if (!messagesRef.current) {
+      messagesRef.current = new Messages();
+      ws.messageRef = messagesRef.current;
+    }
+  }
 
   // A Promise that resolves with Message when the template is rendered with incoming data
   const parseIncomingMessage = (
@@ -168,6 +177,7 @@ export function AppRenderer({ app, ws }) {
 
     return () => {
       setAppRunData({});
+      chunkedOutput.current = {};
     };
   });
 
@@ -192,10 +202,18 @@ export function AppRenderer({ app, ws }) {
 
       if (message.session) {
         appSessionId.current = message.session.id;
-        setAppRunData((prevState) => ({
-          ...prevState,
-          sessionId: message.session.id,
-        }));
+
+        // Add messages from the session to the message list
+        setAppRunData((prevState) => {
+          prevState?.messages?.forEach((message) => {
+            messagesRef.current.add(message);
+          });
+
+          return {
+            ...prevState,
+            sessionId: message.session.id,
+          };
+        });
       }
 
       // If we get a templates message, parse it and save the templates
@@ -218,6 +236,7 @@ export function AppRenderer({ app, ws }) {
           isRunning: false,
           isStreaming: false,
         }));
+        chunkedOutput.current = {};
       }
 
       if (message.errors && message.errors.length > 0) {
@@ -227,6 +246,7 @@ export function AppRenderer({ app, ws }) {
           isStreaming: false,
           errors: message.errors,
         }));
+        chunkedOutput.current = {};
       }
 
       // Merge the new output with the existing output
