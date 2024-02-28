@@ -232,7 +232,7 @@ export const PublishedAppChatEmbed = ({
           },
           "*",
         );
-      }, 500);
+      }, 300);
       window.parent.postMessage({ type: "promptly-embed-close" }, "*");
     }
   }, [showChat]);

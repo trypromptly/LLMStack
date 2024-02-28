@@ -42,7 +42,7 @@ const defaultChatLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 aut
   <pa-paper style="padding: 10px;">
     <pa-grid container="true" spacing="2" style="width: 100%">
       <pa-grid item="true" xs="12">
-        <pa-chat-output sx='{"height": "70vh", "minHeight": "90%"}'></pa-chat-output>
+        <pa-chat-output sx='{"height": "calc(70vh - 100px)", "minHeight": "90%"}'></pa-chat-output>
       </pa-grid>
       <pa-grid item="true" xs="12">
         <pa-input-form clearonsubmit="true"></pa-input-form>
