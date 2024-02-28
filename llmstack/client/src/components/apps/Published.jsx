@@ -240,7 +240,6 @@ export const PublishedAppChatEmbed = ({
           "*",
         );
       }, 300);
-      window.parent.postMessage({ type: "promptly-embed-close" }, "*");
     }
   }, [showChat]);
 
