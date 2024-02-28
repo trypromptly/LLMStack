@@ -187,35 +187,19 @@ export const PublishedAppChatEmbed = ({
   });
 
   useEffect(() => {
-    setChatBubbleStyle((prevBubbleStyle) => ({
-      ...prevBubbleStyle,
-      backgroundColor: app?.data?.config?.window_color || "#0f477e",
-    }));
-  }, [app?.data?.config?.window_color]);
-
-  useEffect(() => {
-    if (
-      app?.data?.config?.chat_bubble_text &&
-      app?.data?.config?.chat_bubble_style
-    ) {
-      try {
-        const style = JSON.parse(app?.data?.config?.chat_bubble_style);
-        setChatBubbleStyle((prevBubbleStyle) => ({
-          ...prevBubbleStyle,
-          ...style,
-        }));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, [
-    app?.data?.config?.chat_bubble_style,
-    app?.data?.config?.chat_bubble_text,
-  ]);
-
-  useEffect(() => {
     document.body.style = "background: transparent";
     document.getElementsByClassName("root").style = "background: transparent";
+
+    try {
+      const style = JSON.parse(app?.data?.config?.chat_bubble_style || "{}");
+      setChatBubbleStyle((prevBubbleStyle) => ({
+        ...prevBubbleStyle,
+        backgroundColor: app?.data?.config?.window_color || "#0f477e",
+        ...style,
+      }));
+    } catch (e) {
+      console.error(e);
+    }
 
     if (showChat) {
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -239,9 +223,13 @@ export const PublishedAppChatEmbed = ({
           },
           "*",
         );
-      }, 300);
+      }, 200);
     }
-  }, [showChat]);
+  }, [
+    showChat,
+    app?.data?.config?.chat_bubble_style,
+    app?.data?.config?.window_color,
+  ]);
 
   return (
     <>
