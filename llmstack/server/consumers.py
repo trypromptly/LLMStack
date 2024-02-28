@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import json
 import logging
 import uuid
@@ -6,9 +7,8 @@ import uuid
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, QueryDict
-from django_ratelimit import ALL
-from django_ratelimit.core import is_ratelimited
 from django_ratelimit.exceptions import Ratelimited
 
 from llmstack.connections.actors import ConnectionActivationActor
@@ -21,27 +21,13 @@ from llmstack.connections.models import (
 
 logger = logging.getLogger(__name__)
 
+usage_limiter_module = importlib.import_module(settings.USAGE_LIMITER_MODULE)
+is_ratelimited_fn = getattr(usage_limiter_module, "is_ratelimited", None)
+is_usage_limited_fn = getattr(usage_limiter_module, "is_usage_limited", None)
 
-def _is_ratelimited(request, fn, group=None, method=ALL):
-    if request.user.is_authenticated:
-        return False
 
-    def _key(group, request):
-        if request.user.is_authenticated:
-            return str(request.user.id)
-        return request.META.get("_prid", "")
-
-    def _rate(group, request):
-        if request.user.is_authenticated:
-            return None
-        else:
-            return settings.ANNONYMOUS_USER_RATELIMIT
-
-    return (
-        is_ratelimited(request=request, group=None, fn=fn, key=_key, rate=_rate, method=method, increment=True)
-        if request.META.get("_prid")
-        else settings.RATELIMIT_ENABLE
-    )
+class UsageLimitReached(PermissionDenied):
+    pass
 
 
 @database_sync_to_async
@@ -106,8 +92,10 @@ class AppConsumer(AsyncWebsocketConsumer):
             try:
                 request_uuid = str(uuid.uuid4())
                 request = await _build_request_from_input({"input": input, "stream": True}, self.scope)
-                if _is_ratelimited(request, self._respond_to_event):
+                if is_ratelimited_fn(request, self._respond_to_event):
                     raise Ratelimited("Rate limit reached.")
+                if is_usage_limited_fn(request, self._respond_to_event):
+                    raise UsageLimitReached("Usage limit reached.")
 
                 output_stream = await AppViewSet().run_app_internal_async(
                     self.app_id,
