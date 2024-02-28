@@ -35,6 +35,9 @@ import loadingImage from "../../../assets/images/loading.gif";
 import { isEqual, get } from "lodash";
 
 import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/mode-python";
+import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/theme-dracula";
 import "./LayoutRenderer.css";
 
 const liquidEngine = new Liquid();
