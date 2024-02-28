@@ -567,3 +567,7 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     },
 }
+
+ANONYMOUS_USER_RATELIMIT = os.getenv("ANONYMOUS_USER_RATELIMIT", None)
+
+LIMITER_MODULE = "llmstack.server.limiter"

@@ -239,6 +239,26 @@ export function AppRenderer({ app, ws }) {
         chunkedOutput.current = {};
       }
 
+      if (message.event && message.event === "ratelimited") {
+        setAppRunData((prevState) => ({
+          ...prevState,
+          isRunning: false,
+          isStreaming: false,
+          isRateLimited: true,
+          errors: ["Rate limit exceeded"],
+        }));
+      }
+
+      if (message.event && message.event === "usagelimited") {
+        setAppRunData((prevState) => ({
+          ...prevState,
+          isRunning: false,
+          isStreaming: false,
+          isUsageLimited: true,
+          errors: ["Usage limit exceeded"],
+        }));
+      }
+
       if (message.errors && message.errors.length > 0) {
         message.errors.forEach((error) => {
           messagesRef.current.add(new AppErrorMessage(null, error));
