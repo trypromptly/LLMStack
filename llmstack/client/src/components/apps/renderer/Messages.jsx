@@ -38,7 +38,11 @@ export class Message {
 
   // Clone the message retaining the instance type
   clone() {
-    return new this.constructor(this.id, this.content);
+    const oldTimestamp = this.timestamp;
+    const newMessage = new this.constructor(this.id, this.content);
+    newMessage.timestamp = oldTimestamp;
+
+    return newMessage;
   }
 }
 
