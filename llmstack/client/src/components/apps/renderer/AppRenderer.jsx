@@ -244,7 +244,18 @@ export function AppRenderer({ app, ws }) {
           ...prevState,
           isRunning: false,
           isStreaming: false,
+          isRateLimited: true,
           errors: ["Rate limit exceeded"],
+        }));
+      }
+
+      if (message.event && message.event === "usagelimited") {
+        setAppRunData((prevState) => ({
+          ...prevState,
+          isRunning: false,
+          isStreaming: false,
+          isUsageLimited: true,
+          errors: ["Usage limit exceeded"],
         }));
       }
 

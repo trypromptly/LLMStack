@@ -573,3 +573,14 @@ export const appRunDataState = atom({
   key: "appRunData",
   default: {},
 });
+
+export const isUsageLimitReachedState = selector({
+  key: "isUsageLimitReached",
+  get: ({ get }) => {
+    try {
+      return get(appRunDataState)?.isUsageLimited;
+    } catch (error) {
+      return false;
+    }
+  },
+});
