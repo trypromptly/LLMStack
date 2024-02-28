@@ -61,6 +61,14 @@ export class AppMessage extends Message {
   }
 }
 
+export class AppErrorMessage extends Message {
+  constructor(id, content, replyTo) {
+    super(id, content);
+    this.type = "error";
+    this.replyTo = replyTo;
+  }
+}
+
 export class AgentMessage extends AppMessage {
   constructor(id, content, replyTo) {
     super(id, content, replyTo);

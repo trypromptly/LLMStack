@@ -11,12 +11,13 @@ import ReactGA from "react-ga4";
 import { stitchObjects } from "../../../data/utils";
 import LayoutRenderer from "./LayoutRenderer";
 import {
-  Messages,
-  UserMessage,
   AppMessage,
+  AppErrorMessage,
   AgentMessage,
   AgentStepMessage,
   AgentStepErrorMessage,
+  Messages,
+  UserMessage,
 } from "./Messages";
 import { axios } from "../../../data/axios";
 import { appRunDataState } from "../../../data/atoms";
@@ -239,11 +240,16 @@ export function AppRenderer({ app, ws }) {
       }
 
       if (message.errors && message.errors.length > 0) {
+        message.errors.forEach((error) => {
+          messagesRef.current.add(new AppErrorMessage(null, error));
+        });
+
         setAppRunData((prevState) => ({
           ...prevState,
           isRunning: false,
           isStreaming: false,
           errors: message.errors,
+          messages: messagesRef.current.get(),
         }));
         chunkedOutput.current = {};
       }

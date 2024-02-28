@@ -3,6 +3,7 @@ import { ContentCopyOutlined } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 import { Liquid } from "liquidjs";
 import {
+  Alert,
   Avatar,
   Box,
   Button,
@@ -132,6 +133,33 @@ const AppAvatar = memo(
   },
   (prev, next) => {
     return prev === next;
+  },
+);
+
+const ErrorMessage = memo(
+  (props) => {
+    const { message, assistantImage } = props;
+
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          textAlign: "left",
+          fontSize: 16,
+          padding: "3px 0",
+        }}
+      >
+        <AppAvatar assistantImage={assistantImage} />
+        <Box className="layout-chat_message_from_app">
+          <Typography variant="body1" sx={{ color: "red", margin: "16px 0" }}>
+            {message.content}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev?.message?.hash === next?.message?.hash;
   },
 );
 
@@ -438,6 +466,14 @@ const PromptlyAppChatOutput = memo(
                 processors={appRunData?.processors}
               />
             );
+          } else if (message.type === "error") {
+            return (
+              <ErrorMessage
+                message={message}
+                key={message.id}
+                assistantImage={assistantImage}
+              />
+            );
           } else {
             return (
               <AppMessage
@@ -562,6 +598,9 @@ const PromptlyAppWorkflowOutput = memo(
               assistantImage={assistantImage}
             />
           )}
+        {appRunData?.errors && (
+          <Alert severity="error">{appRunData?.errors.join("\n")}</Alert>
+        )}
       </Box>
     );
   },
