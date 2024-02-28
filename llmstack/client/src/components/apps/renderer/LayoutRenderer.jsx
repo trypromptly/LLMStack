@@ -66,7 +66,7 @@ const PromptlyAppInputForm = memo(
           uiSchema={{
             ...uiSchema,
             "ui:submitButtonOptions": {
-              norender: noSubmitRender,
+              norender: !workflow && noSubmitRender,
               ...submitButtonOptions,
             },
           }}
