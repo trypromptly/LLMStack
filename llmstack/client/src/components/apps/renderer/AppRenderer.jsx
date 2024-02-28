@@ -61,16 +61,13 @@ export function AppRenderer({ app, ws }) {
   );
   const outputTemplates = useRef([]);
   const chunkedOutput = useRef({});
-  const messagesRef = useRef(null);
+  const messagesRef = useRef(new Messages());
   const setAppRunData = useSetRecoilState(appRunDataState);
 
-  if (ws) {
+  if (ws && ws.messageRef) {
     messagesRef.current = ws.messageRef;
-
-    if (!messagesRef.current) {
-      messagesRef.current = new Messages();
-      ws.messageRef = messagesRef.current;
-    }
+  } else if (ws) {
+    ws.messageRef = messagesRef.current;
   }
 
   // A Promise that resolves with Message when the template is rendered with incoming data
