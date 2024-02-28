@@ -118,6 +118,8 @@ class AppConsumer(AsyncWebsocketConsumer):
                 await self.send(text_data=json.dumps({"event": "done", "reply_to": id, "id": response_id}))
             except Ratelimited:
                 await self.send(text_data=json.dumps({"event": "ratelimited", "reply_to": id}))
+            except UsageLimitReached:
+                await self.send(text_data=json.dumps({"event": "usagelimited", "reply_to": id}))
             except Exception as e:
                 logger.exception(e)
                 await self.send(text_data=json.dumps({"errors": [str(e)], "reply_to": id}))
