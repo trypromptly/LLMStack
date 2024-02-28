@@ -28,6 +28,7 @@ import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 import { appRunDataState } from "../../../data/atoms";
+import { LexicalRenderer } from "../lexical/LexicalRenderer";
 import ThemedJsonForm from "../../ThemedJsonForm";
 import loadingImage from "../../../assets/images/loading.gif";
 import { isEqual, get } from "lodash";
@@ -38,7 +39,7 @@ import "./LayoutRenderer.css";
 const liquidEngine = new Liquid();
 
 const PromptlyAppInputForm = memo(
-  ({ runApp, submitButtonOptions, sx, clearOnSubmit = false }) => {
+  ({ workflow, runApp, submitButtonOptions, sx, clearOnSubmit = false }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const { schema, uiSchema } = getJSONSchemaFromInputFields(
       appRunData?.inputFields,
@@ -52,34 +53,41 @@ const PromptlyAppInputForm = memo(
         .filter((x) => x === "voice").length === 0;
 
     return (
-      <ThemedJsonForm
-        disableAdvanced={true}
-        schema={schema}
-        uiSchema={{
-          ...uiSchema,
-          "ui:submitButtonOptions": {
-            norender: noSubmitRender,
-            ...submitButtonOptions,
-          },
-        }}
-        submitBtn={
-          noSubmitRender ? null : (
-            <Button variant="contained" type="submit">
-              Submit
-            </Button>
-          )
-        }
-        validator={validator}
-        formData={userFormData}
-        onSubmit={({ formData }) => {
-          runApp(appRunData?.sessionId, formData);
-
-          if (!clearOnSubmit) {
-            setUserFormData(formData);
+      <Box>
+        {workflow && appRunData?.appIntroText && (
+          <Box sx={{ padding: "10px 0px", textAlign: "left" }}>
+            <LexicalRenderer text={appRunData?.appIntroText} />
+          </Box>
+        )}
+        <ThemedJsonForm
+          disableAdvanced={true}
+          schema={schema}
+          uiSchema={{
+            ...uiSchema,
+            "ui:submitButtonOptions": {
+              norender: noSubmitRender,
+              ...submitButtonOptions,
+            },
+          }}
+          submitBtn={
+            noSubmitRender ? null : (
+              <Button variant="contained" type="submit">
+                Submit
+              </Button>
+            )
           }
-        }}
-        sx={sx}
-      />
+          validator={validator}
+          formData={userFormData}
+          onSubmit={({ formData }) => {
+            runApp(appRunData?.sessionId, formData);
+
+            if (!clearOnSubmit) {
+              setUserFormData(formData);
+            }
+          }}
+          sx={sx}
+        />
+      </Box>
     );
   },
   (prev, next) => {
@@ -392,6 +400,11 @@ const PromptlyAppChatOutput = memo(
         sx={{ maxHeight, minHeight, overflow: "scroll", ...sx }}
         ref={messagesContainerRef}
       >
+        {appRunData?.appIntroText && (
+          <Box sx={{ padding: "10px 0px" }}>
+            <LexicalRenderer text={appRunData?.appIntroText} />
+          </Box>
+        )}
         {appMessages.map((message) => {
           if (message.type === "user") {
             return (
@@ -680,6 +693,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
             submitButtonOptions={props.submitbuttonoption}
             clearOnSubmit={props.clearonsubmit}
             sx={props.sx || {}}
+            workflow={props.workflow}
           />
         );
       },

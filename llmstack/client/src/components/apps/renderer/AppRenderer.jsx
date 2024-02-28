@@ -26,7 +26,7 @@ const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0
   <pa-paper style="padding: 10px;">
     <pa-grid container="true" spacing="2" style="width: 100%">
       <pa-grid item="true" xs="12">
-        <pa-input-form></pa-input-form>
+        <pa-input-form workflow="true"></pa-input-form>
       </pa-grid>
       <pa-grid item="true" xs="12">
         <br/>
@@ -166,6 +166,10 @@ export function AppRenderer({ app, ws }) {
       isRunning: false,
       errors: null,
       inputFields: app?.data?.input_fields,
+      appIntroText: app.data?.config?.input_template?.replaceAll(
+        "<a href",
+        "<a target='_blank' href",
+      ),
       messages: messagesRef.current.get(),
       processors: app?.data?.processors || [],
       assistantImage: app?.data?.config?.assistant_image,
