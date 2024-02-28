@@ -187,6 +187,13 @@ export const PublishedAppChatEmbed = ({
   });
 
   useEffect(() => {
+    setChatBubbleStyle((prevBubbleStyle) => ({
+      ...prevBubbleStyle,
+      backgroundColor: app?.data?.config?.window_color || "#0f477e",
+    }));
+  }, [app?.data?.config?.window_color]);
+
+  useEffect(() => {
     if (
       app?.data?.config?.chat_bubble_text &&
       app?.data?.config?.chat_bubble_style
