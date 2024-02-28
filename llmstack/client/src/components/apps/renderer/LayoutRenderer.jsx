@@ -95,7 +95,7 @@ const AppTypingIndicator = memo(
           display: "flex",
           textAlign: "left",
           fontSize: 16,
-          padding: 3,
+          padding: "3px 0",
         }}
       >
         <AppAvatar assistantImage={assistantImage} />
@@ -180,7 +180,7 @@ const AppMessage = memo(
           display: "flex",
           textAlign: "left",
           fontSize: 16,
-          padding: 3,
+          padding: "3px 0",
         }}
       >
         <AppAvatar assistantImage={assistantImage} />
@@ -208,7 +208,7 @@ const AgentMessage = memo(
           display: "flex",
           textAlign: "left",
           fontSize: 16,
-          padding: 3,
+          padding: "3px 0",
         }}
       >
         <AppAvatar assistantImage={assistantImage} />

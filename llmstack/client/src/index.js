@@ -145,7 +145,7 @@ const defaultTheme = createTheme({
     MuiFormControl: {
       styleOverrides: {
         root: {
-          padding: "2px",
+          padding: "1px",
 
           "& .MuiFormHelperText-root": {
             overflow: "hidden",
