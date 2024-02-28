@@ -78,9 +78,9 @@ class StaticWebBrowser(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""
-{{text}}
+<promptly-web-browser-embed wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
 
-<promptly-web-browser-embed wsUrl="{{session.ws_url}}" />
+{{text}}
 """,
         )
 
