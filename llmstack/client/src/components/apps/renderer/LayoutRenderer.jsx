@@ -910,9 +910,29 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
       ),
       code: memo(
         ({ node, ...codeProps }) => {
+          const containerRef = useRef(null);
           const language = codeProps.className;
+
+          // Get the width of the parent container and set the width of container
+          useEffect(() => {
+            console.log(containerRef.current);
+            if (
+              containerRef.current &&
+              containerRef.current.parentElement?.parentElement
+            ) {
+              const parentWidth = Math.min(
+                Math.abs(
+                  containerRef.current.parentElement?.parentElement
+                    ?.clientWidth - 20,
+                ),
+                500,
+              );
+              containerRef.current.style.width = `${parentWidth}px`;
+            }
+          });
+
           return language ? (
-            <Stack sx={{ maxWidth: "90%" }}>
+            <Stack ref={containerRef}>
               <Box
                 sx={{
                   backgroundColor: "#CCC",
@@ -962,7 +982,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
             <code {...codeProps}>{codeProps.children}</code>
           );
         },
-        (prev, next) => prev.props === next.props,
+        (prev, next) => isEqual(prev, next),
       ),
     };
   }, [memoizedRunApp, memoizedRunProcessor]);
