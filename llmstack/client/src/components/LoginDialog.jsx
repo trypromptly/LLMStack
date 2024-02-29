@@ -34,11 +34,13 @@ function LoginDialog({ open, handleClose, redirectPath }) {
               <Link
                 underline="none"
                 href={
-                  redirectPath ? `/login?redirectUrl=${redirectPath}` : "/login"
+                  redirectPath
+                    ? `/api/provider/login?provider_id=google&redirectUrl=${redirectPath}`
+                    : "/api/provider/login?provider_id=google"
                 }
               >
                 <Button variant="contained" autoFocus>
-                  Login
+                  Login With Google
                 </Button>
               </Link>
             </Stack>
