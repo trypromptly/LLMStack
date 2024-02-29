@@ -257,6 +257,12 @@ const AgentMessage = memo(
           className={
             workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
           }
+          sx={{
+            color:
+              message?.subType === "agent-step-error"
+                ? "red !important"
+                : "inherit",
+          }}
         >
           <LayoutRenderer>{message.content || ""}</LayoutRenderer>
         </Box>
@@ -467,7 +473,7 @@ const PromptlyAppChatOutput = memo(
               );
             } else if (message.subType === "agent-step-error") {
               return (
-                <AgentStepMessage
+                <AgentMessage
                   message={message}
                   key={message.id}
                   processors={appRunData?.processors}

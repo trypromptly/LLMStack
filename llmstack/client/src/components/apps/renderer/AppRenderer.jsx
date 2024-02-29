@@ -83,6 +83,18 @@ export function AppRenderer({ app, ws }) {
         const template = outputTemplates[agentMessage.from_id];
         let newMessage;
 
+        if (agentMessage.type === "step_error") {
+          resolve(
+            new AgentStepErrorMessage(
+              `${message.id}/${agentMessage.id}`,
+              agentMessage.content,
+              message.reply_to,
+            ),
+          );
+
+          return;
+        }
+
         templateEngine
           .render(
             template,
@@ -105,12 +117,6 @@ export function AppRenderer({ app, ws }) {
                 },
                 message.reply_to,
                 !agentMessage.done,
-              );
-            } else if (agentMessage.type === "step_error") {
-              newMessage = new AgentStepErrorMessage(
-                `${message.id}/${agentMessage.id}`,
-                response,
-                message.reply_to,
               );
             } else {
               newMessage = new AgentMessage(
