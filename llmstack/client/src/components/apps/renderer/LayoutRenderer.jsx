@@ -476,7 +476,7 @@ const PromptlyAppChatOutput = memo(
                 <AgentMessage
                   message={message}
                   key={message.id}
-                  processors={appRunData?.processors}
+                  assistantImage={assistantImage}
                 />
               );
             } else if (message.type === "error") {
