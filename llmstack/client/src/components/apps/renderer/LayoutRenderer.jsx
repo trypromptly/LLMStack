@@ -15,6 +15,7 @@ import {
   Collapse,
   Container,
   Grid,
+  IconButton,
   Paper,
   Stack,
   Typography,
@@ -48,6 +49,29 @@ import "ace-builds/src-noconflict/theme-dracula";
 import "./LayoutRenderer.css";
 
 const liquidEngine = new Liquid();
+
+const AppMessageToolbar = ({ message }) => {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "3px 0",
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+      }}
+    >
+      <IconButton
+        onClick={() => navigator.clipboard.writeText(message.content)}
+        sx={{ color: "#999" }}
+      >
+        <ContentCopyOutlined fontSize="small" />
+      </IconButton>
+    </Box>
+  );
+};
 
 const PromptlyAppInputForm = memo(
   ({ workflow, runApp, submitButtonOptions, sx, clearOnSubmit = false }) => {
@@ -221,34 +245,8 @@ const UserMessage = memo(
 const AppMessage = memo(
   (props) => {
     const { message, workflow, assistantImage } = props;
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          textAlign: "left",
-          fontSize: 16,
-          padding: "3px 0",
-        }}
-      >
-        <AppAvatar assistantImage={assistantImage} />
-        <Box
-          className={
-            workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
-          }
-        >
-          <LayoutRenderer>{message.content || ""}</LayoutRenderer>
-        </Box>
-      </Box>
-    );
-  },
-  (prev, next) => {
-    return prev?.message?.hash === next?.message?.hash;
-  },
-);
+    const [showToolbar, setShowToolbar] = useState(false);
 
-const AgentMessage = memo(
-  (props) => {
-    const { message, workflow, assistantImage } = props;
     return (
       <Box
         sx={{
@@ -264,12 +262,52 @@ const AgentMessage = memo(
             workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
           }
           sx={{
+            position: "relative",
+          }}
+          onMouseEnter={() => setShowToolbar(true)}
+          onMouseLeave={() => setShowToolbar(false)}
+        >
+          {showToolbar && <AppMessageToolbar message={message} />}
+          <LayoutRenderer>{message.content || ""}</LayoutRenderer>
+        </Box>
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev?.message?.hash === next?.message?.hash;
+  },
+);
+
+const AgentMessage = memo(
+  (props) => {
+    const { message, workflow, assistantImage } = props;
+    const [showToolbar, setShowToolbar] = useState(false);
+
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          textAlign: "left",
+          fontSize: 16,
+          padding: "3px 0",
+        }}
+      >
+        <AppAvatar assistantImage={assistantImage} />
+        <Box
+          className={
+            workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
+          }
+          sx={{
+            position: "relative",
             color:
               message?.subType === "agent-step-error"
                 ? "red !important"
                 : "inherit",
           }}
+          onMouseEnter={() => setShowToolbar(true)}
+          onMouseLeave={() => setShowToolbar(false)}
         >
+          {showToolbar && <AppMessageToolbar message={message} />}
           <LayoutRenderer>{message.content || ""}</LayoutRenderer>
         </Box>
       </Box>
