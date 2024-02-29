@@ -22,6 +22,7 @@ import {
 import { axios } from "../../../data/axios";
 import { isLoggedInState, appRunDataState } from "../../../data/atoms";
 import { useSetRecoilState, useRecoilValue } from "recoil";
+import LoginDialog from "../../LoginDialog";
 
 const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto"}'>
   <pa-paper style="padding: 10px;">
@@ -53,6 +54,7 @@ const defaultChatLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 aut
 export function AppRenderer({ app, ws }) {
   const appSessionId = useRef(null);
   const [layout, setLayout] = useState("");
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const templateEngine = useMemo(() => new Liquid(), []);
 
   const outputTemplate = templateEngine.parse(
@@ -282,6 +284,11 @@ export function AppRenderer({ app, ws }) {
           errors: ["Usage limit exceeded"],
           messages: messagesRef.current.get(),
         }));
+
+        // If the user is not logged in, show the login dialog
+        if (!isLoggedIn) {
+          setShowLoginDialog(true);
+        }
       }
 
       if (message.errors && message.errors.length > 0) {
@@ -419,8 +426,17 @@ export function AppRenderer({ app, ws }) {
   );
 
   return (
-    <MemoizedLayoutRenderer runApp={runApp} runProcessor={runProcessor}>
-      {layout}
-    </MemoizedLayoutRenderer>
+    <>
+      {showLoginDialog && (
+        <LoginDialog
+          open={showLoginDialog}
+          handleClose={() => setShowLoginDialog(false)}
+          redirectPath={window.location.pathname}
+        />
+      )}
+      <MemoizedLayoutRenderer runApp={runApp} runProcessor={runProcessor}>
+        {layout}
+      </MemoizedLayoutRenderer>
+    </>
   );
 }
