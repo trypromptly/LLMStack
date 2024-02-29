@@ -911,7 +911,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
             />
           );
         },
-        (prev, next) => prev.props === next.props,
+        (prev, next) => isEqual(prev, next),
       ),
       code: memo(
         ({ node, ...codeProps }) => {
