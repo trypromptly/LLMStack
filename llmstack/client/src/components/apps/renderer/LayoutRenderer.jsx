@@ -34,9 +34,11 @@ import ThemedJsonForm from "../../ThemedJsonForm";
 import loadingImage from "../../../assets/images/loading.gif";
 import { isEqual, get } from "lodash";
 
+import "ace-builds/src-noconflict/mode-html";
+import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-python";
-import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/theme-dracula";
 import "./LayoutRenderer.css";
 
@@ -915,10 +917,10 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
         ({ node, ...codeProps }) => {
           const containerRef = useRef(null);
           const language = codeProps.className;
+          const editorMode = language?.split("-")[1] || "text";
 
           // Get the width of the parent container and set the width of container
           useEffect(() => {
-            console.log(containerRef.current);
             if (
               containerRef.current &&
               containerRef.current.parentElement?.parentElement
@@ -947,8 +949,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
                 }}
               >
                 <Typography sx={{ textTransform: "none" }}>
-                  {language?.split("-")[1].charAt(0).toUpperCase() +
-                    language?.split("-")[1].slice(1)}
+                  {language?.split("-")[1]}
                   <Button
                     startIcon={<ContentCopyOutlined />}
                     sx={{
@@ -966,7 +967,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
                 </Typography>
               </Box>
               <AceEditor
-                mode={language?.split("-")[1] || "text"}
+                mode={editorMode}
                 theme="dracula"
                 value={codeProps.children[0]}
                 editorProps={{ $blockScrolling: true }}
