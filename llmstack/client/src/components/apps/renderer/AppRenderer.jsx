@@ -20,8 +20,8 @@ import {
   UserMessage,
 } from "./Messages";
 import { axios } from "../../../data/axios";
-import { appRunDataState } from "../../../data/atoms";
-import { useSetRecoilState } from "recoil";
+import { isLoggedInState, appRunDataState } from "../../../data/atoms";
+import { useSetRecoilState, useRecoilValue } from "recoil";
 
 const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto"}'>
   <pa-paper style="padding: 10px;">
@@ -61,6 +61,7 @@ export function AppRenderer({ app, ws }) {
   const outputTemplates = useRef([]);
   const chunkedOutput = useRef({});
   const messagesRef = useRef(new Messages());
+  const isLoggedIn = useRecoilValue(isLoggedInState);
   const setAppRunData = useSetRecoilState(appRunDataState);
 
   if (ws && ws.messageRef) {
@@ -246,22 +247,40 @@ export function AppRenderer({ app, ws }) {
       }
 
       if (message.event && message.event === "ratelimited") {
+        messagesRef.current.add(
+          new AppErrorMessage(
+            null,
+            "Rate limit exceeded. Please try after sometime.",
+          ),
+        );
+
         setAppRunData((prevState) => ({
           ...prevState,
           isRunning: false,
           isStreaming: false,
           isRateLimited: true,
           errors: ["Rate limit exceeded"],
+          messages: messagesRef.current.get(),
         }));
       }
 
       if (message.event && message.event === "usagelimited") {
+        messagesRef.current.add(
+          new AppErrorMessage(
+            null,
+            isLoggedIn
+              ? "Usage limit exceeded. Please try after adding more credits."
+              : "Usage limit exceeded. Please login to continue.",
+          ),
+        );
+
         setAppRunData((prevState) => ({
           ...prevState,
           isRunning: false,
           isStreaming: false,
           isUsageLimited: true,
           errors: ["Usage limit exceeded"],
+          messages: messagesRef.current.get(),
         }));
       }
 
