@@ -7,6 +7,21 @@ logger = logging.getLogger(__name__)
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
+    def post_login(self, request, user, *, email_verification, signal_kwargs, email, signup, redirect_url):
+        if "redirectUrl" in request.session:
+            redirect_url = request.session["redirectUrl"]
+            del request.session["redirectUrl"]
+
+        return super().post_login(
+            request,
+            user,
+            email_verification=email_verification,
+            signal_kwargs=signal_kwargs,
+            email=email,
+            signup=signup,
+            redirect_url=redirect_url,
+        )
+
     def save_user(self, request, user, form, commit=True):
         user = super().save_user(request, user, form, False)
         if not user.username:
