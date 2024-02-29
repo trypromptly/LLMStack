@@ -5,7 +5,7 @@ body {
   margin: 0;
   font-family: "Lato", sans-serif;
   font-optical-sizing: auto;
-  -webkit-font-smoothing: auto;
+  -webkit-font-smoothing: subpixel-antialiased;
   -moz-osx-font-smoothing: auto;
 }
 
