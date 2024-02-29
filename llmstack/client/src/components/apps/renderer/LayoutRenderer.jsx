@@ -1,5 +1,9 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ContentCopyOutlined } from "@mui/icons-material";
+import {
+  ContentCopyOutlined,
+  KeyboardArrowDownOutlined,
+  KeyboardArrowRightOutlined,
+} from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 import { Liquid } from "liquidjs";
 import {
@@ -8,6 +12,7 @@ import {
   Box,
   Button,
   Chip,
+  Collapse,
   Container,
   Grid,
   Paper,
@@ -127,12 +132,13 @@ const AppTypingIndicator = memo(
 );
 
 const AppAvatar = memo(
-  ({ assistantImage }) => {
+  ({ assistantImage, sx = {} }) => {
     return assistantImage ? (
       <Avatar
         src={assistantImage}
         alt="Assistant"
         style={{ margin: "10px 8px" }}
+        sx={sx}
       />
     ) : null;
   },
@@ -274,32 +280,44 @@ const AgentMessage = memo(
   },
 );
 
-const AgentStepToolHeader = memo(({ processor, isRunning = true }) => {
-  const icon = (
-    <ProviderIcon
-      provider_slug={processor?.provider_slug}
-      style={{ width: "15px", height: "15px" }}
-    />
-  );
+const AgentStepToolHeader = memo(
+  ({ processor, isExpanded, onClick, isRunning = true }) => {
+    const icon = (
+      <ProviderIcon
+        provider_slug={processor?.provider_slug}
+        style={{ width: "12px", height: "12px" }}
+      />
+    );
 
-  return (
-    <Box className={"layout-chat_message_type_step_header"}>
-      Using&nbsp;&nbsp;{icon}&nbsp;
-      <i>{processor?.name || processor?.processor_slug}</i>
-      {isRunning && (
-        <div className="layout-chat_message_from_app step-runner-indicator">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      )}
-    </Box>
-  );
-});
+    return (
+      <Box className={"layout-chat_message_type_step_header"} onClick={onClick}>
+        Using&nbsp;&nbsp;{icon}&nbsp;
+        <i>{processor?.name || processor?.processor_slug}</i>
+        {isRunning && (
+          <div className="layout-chat_message_from_app step-runner-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        )}
+        {isExpanded ? (
+          <KeyboardArrowDownOutlined
+            sx={{ color: "#999", cursor: "pointer", fontSize: "1.2rem" }}
+          />
+        ) : (
+          <KeyboardArrowRightOutlined
+            sx={{ color: "#999", cursor: "pointer", fontSize: "1.2rem" }}
+          />
+        )}
+      </Box>
+    );
+  },
+);
 
 const AgentStepMessage = memo(
   (props) => {
-    const { message, processors } = props;
+    const { message, processors, assistantImage } = props;
+    const [expanded, setExpanded] = useState(true);
 
     // A util function to format incomplete JSON strings
     const formatJSON = useCallback((jsonString) => {
@@ -311,38 +329,50 @@ const AgentStepMessage = memo(
     }, []);
 
     return (
-      <Box className="layout-chat_message_type_step">
+      <Box
+        className="layout-chat_message_type_step"
+        style={assistantImage ? { marginLeft: "56px" } : {}}
+      >
         {message.content.name && (
           <AgentStepToolHeader
             processor={processors.find(
               (processor) => processor.id === message.content.name,
             )}
             isRunning={message.isRunning}
+            onClick={() => setExpanded(!expanded)}
+            isExpanded={expanded}
           />
         )}
-        {message.content.arguments && (
-          <AceEditor
-            mode="json"
-            theme="dracula"
-            value={formatJSON(
-              message.content.arguments.replaceAll("\\n", "\n"),
+        <Collapse in={expanded}>
+          <Box>
+            {message.content.arguments && (
+              <AceEditor
+                mode="json"
+                theme="dracula"
+                value={formatJSON(
+                  message.content.arguments.replaceAll("\\n", "\n"),
+                )}
+                editorProps={{
+                  $blockScrolling: true,
+                  $onChangeWrapLimit: 80,
+                }}
+                setOptions={{
+                  useWorker: false,
+                  showGutter: false,
+                  maxLines: Infinity,
+                  wrap: true,
+                }}
+                style={{
+                  marginBottom: 10,
+                  borderRadius: "5px",
+                  wordWrap: "break-word",
+                  maxWidth: "75%",
+                }}
+              />
             )}
-            editorProps={{ $blockScrolling: true, $onChangeWrapLimit: 80 }}
-            setOptions={{
-              useWorker: false,
-              showGutter: false,
-              maxLines: Infinity,
-              wrap: true,
-            }}
-            style={{
-              marginBottom: 10,
-              borderRadius: "5px",
-              wordWrap: "break-word",
-              maxWidth: "75%",
-            }}
-          />
-        )}
-        <LayoutRenderer>{message.content.output || ""}</LayoutRenderer>
+            <LayoutRenderer>{message.content.output || ""}</LayoutRenderer>
+          </Box>
+        </Collapse>
       </Box>
     );
   },
@@ -469,6 +499,7 @@ const PromptlyAppChatOutput = memo(
                   message={message}
                   key={message.id}
                   processors={appRunData?.processors}
+                  assistantImage={assistantImage}
                 />
               );
             } else if (message.subType === "agent-step-error") {
