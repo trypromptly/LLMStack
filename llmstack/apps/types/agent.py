@@ -20,14 +20,6 @@ class AgentModel(str, Enum):
         return self.value
 
 
-class RendererType(str, Enum):
-    CHAT = "Chat"
-    WEB = "Web"
-
-    def __str__(self):
-        return self.value
-
-
 class AgentConfigSchema(BaseSchema):
     model: AgentModel = Field(
         title="Model",
@@ -52,12 +44,6 @@ class AgentConfigSchema(BaseSchema):
         title="Split Tasks",
         default=True,
         description="Whether to split tasks into subtasks.",
-        advanced_parameter=True,
-    )
-    renderer_type: RendererType = Field(
-        title="Renderer Type",
-        default=RendererType.CHAT,
-        description="Should the agent be rendered as a chat window or a web form.",
         advanced_parameter=True,
     )
     input_template: str = Field(
