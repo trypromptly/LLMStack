@@ -50,7 +50,3 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             user.email = user.username
 
         return user
-
-    def get_connect_redirect_url(self, request, socialaccount):
-        logger.debug(f"get_connect_redirect_url: params: {request.GET}")
-        return request.GET.get("redirectUrl", "/")
