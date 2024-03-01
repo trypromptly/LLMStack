@@ -30,7 +30,7 @@ def process_slack_message_text(text):
     return re.sub(r"<@.*>(\|)?", "", text).strip()
 
 
-def get_slack_user_email(slack_user_id, slack_bot_token):
+def get_slack_user(slack_user_id, slack_bot_token):
     http_request = requests.get(
         "https://slack.com/api/users.info",
         params={
@@ -40,13 +40,20 @@ def get_slack_user_email(slack_user_id, slack_bot_token):
             "Authorization": f"Bearer {slack_bot_token}",
         },
     )
+
+    slack_user = None
     if http_request.status_code == 200:
-        return http_request.json()["user"]["profile"]["email"]
-    else:
-        return None
+        http_response = http_request.json()
+        slack_user = http_response["user"]["profile"]
+    return slack_user
 
 
 class SlackAppRunner(AppRunner):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._slack_user = None
+        self._slack_user_email = ""
+
     def app_init(self):
         self.slack_config = (
             SlackIntegrationConfig().from_dict(
@@ -66,24 +73,35 @@ class SlackAppRunner(AppRunner):
         self.app_session = self._get_or_create_app_session()
 
     def _get_app_request_user(self, slack_request_payload):
-        self._slack_user_email = ""
-        if "event" in slack_request_payload and "user" in slack_request_payload["event"]:
+        request_user = AnonymousUser()
+
+        is_valid_event_request = "event" in slack_request_payload and "user" in slack_request_payload["event"]
+        is_valid_command_request = "command" in slack_request_payload and "user" in slack_request_payload
+
+        slack_user_id = None
+        if is_valid_event_request:
+            slack_user_id = slack_request_payload["event"]["user"]
+        elif is_valid_command_request:
+            slack_user_id = slack_request_payload["user_id"]
+
+        if slack_user_id:
             try:
-                slack_user_id = slack_request_payload["event"]["user"]
-                slack_user_email = get_slack_user_email(
+                self._slack_user = get_slack_user(
                     slack_user_id,
                     self.slack_bot_token,
                 )
-                if slack_user_email is not None:
-                    self._slack_user_email = slack_user_email
-                    user_object = User.objects.filter(email=slack_user_email).first()
-                    return user_object if user_object is not None else AnonymousUser()
-            except Exception:
+                self._slack_user_email = self._slack_user.get("email") or ""
+                user_object = (
+                    User.objects.filter(email=self._slack_user_email).first() if self._slack_user_email else None
+                )
+                if user_object:
+                    request_user = user_object
+            except Exception as e:
                 logger.exception(
-                    f"Error in fetching user object from slack payload {slack_request_payload}",
+                    f"Error in fetching user object from slack payload {slack_request_payload}: {e}",
                 )
 
-        return AnonymousUser()
+        return request_user
 
     def _get_slack_app_session_id(self, slack_request_payload):
         if slack_request_payload.get("type") == "event_callback" and "event" in slack_request_payload:
@@ -106,7 +124,6 @@ class SlackAppRunner(AppRunner):
 
     def _get_input_data(self):
         slack_request_payload = self.request.data
-
         slack_message_event_type = slack_request_payload.get("type")
         if slack_message_event_type == "url_verification":
             return {"input": {"challenge": slack_request_payload["challenge"]}}
@@ -126,6 +143,31 @@ class SlackAppRunner(AppRunner):
                     "channel": slack_request_payload["event"]["channel"],
                     "text-type": slack_request_payload["event"]["type"],
                     "ts": slack_request_payload["event"]["ts"],
+                    **dict(
+                        zip(
+                            list(map(lambda x: x["name"], self.app_data["input_fields"])),
+                            [payload] * len(self.app_data["input_fields"]),
+                        ),
+                    ),
+                },
+            }
+
+        elif slack_request_payload.get("command"):
+            payload = process_slack_message_text(
+                slack_request_payload["text"],
+            )
+            return {
+                "input": {
+                    "text": slack_request_payload["text"],
+                    "user": slack_request_payload["user_id"],
+                    "slack_user_email": self._slack_user_email,
+                    "token": slack_request_payload["token"],
+                    "team_id": slack_request_payload["team_id"],
+                    "api_app_id": slack_request_payload["api_app_id"],
+                    # "team": slack_request_payload["team"],
+                    "channel": slack_request_payload["channel_id"],
+                    # "text-type": slack_request_payload["type"],
+                    "ts": "",
                     **dict(
                         zip(
                             list(map(lambda x: x["name"], self.app_data["input_fields"])),
@@ -182,15 +224,6 @@ class SlackAppRunner(AppRunner):
         ):
             raise Exception("Invalid Slack request")
 
-        is_valid_app_token = self.request.data.get("token") == self.slack_config.get("verification_token")
-        is_valid_app_id = self.request.data.get("api_app_id") == self.slack_config.get("app_id")
-
-        # check if the slack request is a slash command request
-        is_valid_command_request = self.request.data.get("command") and is_valid_app_token and is_valid_app_id
-
-        if is_valid_command_request:
-            return True
-
         # Verify the request type is either url_verification or event_callback
         if self.request.data.get("type") not in [
             "event_callback",
@@ -198,16 +231,28 @@ class SlackAppRunner(AppRunner):
         ]:
             raise Exception("Invalid Slack request")
 
-        # Verify the request is coming from the app we expect and the event
-        # type is app_mention
-        if self.request.data.get("type") == "event_callback" and (
-            not is_valid_app_id or self.request.data.get("event").get("type") != "app_mention"
-        ):
+        is_valid_app_token = self.request.data.get("token") == self.slack_config.get("verification_token")
+        is_valid_app_id = self.request.data.get("api_app_id") == self.slack_config.get("app_id")
+
+        if not is_valid_app_token or not is_valid_app_id:
             raise Exception("Invalid Slack request")
+
+        # check if the slack request is a slash command request
+        is_valid_command_request = self.request.data.get("command") and is_valid_app_token and is_valid_app_id
+
+        if is_valid_command_request:
+            return True
 
         # URL verification is allowed without any further checks
         if self.request.data.get("type") == "url_verification":
             return True
+
+        # Verify the request is coming from the app we expect and the event
+        # type is app_mention
+        if self.request.data.get("type") == "event_callback" and (
+            self.request.data.get.get("data", {}).get("type") not in ["app_mention"]
+        ):
+            raise Exception("Invalid Slack request")
 
         return super()._is_app_accessible()
 
