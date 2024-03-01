@@ -94,8 +94,8 @@ class AppConsumer(AsyncWebsocketConsumer):
                 request = await _build_request_from_input({"input": input, "stream": True}, self.scope)
                 if is_ratelimited_fn(request, self._respond_to_event):
                     raise Ratelimited("Rate limit reached.")
-                if is_usage_limited_fn(request, self._respond_to_event):
-                    raise UsageLimitReached("Usage limit reached.")
+                # if is_usage_limited_fn(request, self._respond_to_event):
+                #     raise UsageLimitReached("Usage limit reached.")
 
                 output_stream = await AppViewSet().run_app_internal_async(
                     self.app_id,
