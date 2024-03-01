@@ -140,7 +140,7 @@ optional = false
 
 [tool.poetry.group.server.dependencies]
 django = "5.0"
-django-allauth = {version = "^0.52.0", allow-prereleases = true}
+django-allauth = {version = "^0.61.1", allow-prereleases = true}
 django-environ = {version = "^0.10.0", allow-prereleases = true}
 django-picklefield = {version = "^3.1", allow-prereleases = true}
 django-redis = {version = "^5.2.0", allow-prereleases = true}
@@ -151,7 +151,7 @@ psycopg2-binary = {version = "^2.9.5", allow-prereleases = true}
 ujson = {version = "^5.7.0", allow-prereleases = true}
 pykka = {version = "^3.1.1", allow-prereleases = true}
 orjson = {version = "^3.8.14", allow-prereleases = true}
-openai = "^1.1.1"
+openai = "^1.13.3"
 
 [tool.poetry-dynamic-versioning]
 enable = true

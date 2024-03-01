@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class CustomOAuth2LoginView(OAuth2LoginView):
     def login(self, request, *args, **kwargs):
         provider = self.adapter.get_provider()
-        app = provider.get_app(self.request)
+        app = provider.app
         client = self.get_client(request, app)
         action = request.GET.get("action", AuthAction.AUTHENTICATE)
         auth_url = self.adapter.authorize_url
@@ -61,6 +61,7 @@ class CustomOAuth2LoginView(OAuth2LoginView):
 
 class CustomOAuth2CallbackView(OAuth2CallbackView):
     def dispatch(self, request, *args, **kwargs):
+        provider = self.adapter.get_provider()
         if "error" in request.GET or "code" not in request.GET:
             # Distinguish cancel from error
             auth_error = request.GET.get("error", None)
@@ -70,7 +71,7 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
                 error = AuthError.UNKNOWN
             return render_authentication_error(
                 request,
-                self.adapter.provider_id,
+                provider,
                 error=error,
             )
         app = self.adapter.get_provider().get_app(self.request)
@@ -82,7 +83,8 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
                 client,
             )
             token = self.adapter.parse_token(access_token)
-            token.app = app
+            if app.pk:
+                token.app = app
             result = self.adapter.complete_login(
                 request,
                 app,
