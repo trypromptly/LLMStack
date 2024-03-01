@@ -53,6 +53,11 @@ class ProfileViewSet(viewsets.ViewSet):
     def patch(self, request):
         profile = get_object_or_404(Profile, user=request.user)
         should_update = False
+        if "username" in request.data and request.data["username"] != profile.user.username:
+            user = profile.user
+            user.username = request.data.get("username")
+            user.save(update_fields=["username"])
+            should_update = False
         if "openai_key" in request.data and flag_enabled(
             "CAN_ADD_KEYS",
             request=request,
