@@ -61,11 +61,14 @@ class SlackAppRunner(AppRunner):
         self._is_valid_app_id = self.request.data.get("api_app_id") == self.slack_config.get("app_id")
 
         self._request_slash_command = self.request.data.get("command")
+        self._request_slash_command_text = self.request.data.get("text")
         self._configured_slash_command = self.slack_config.get("slash_command_name")
 
         is_valid_slash_command = False
         if self._request_slash_command and self._configured_slash_command:
-            is_valid_slash_command = self._request_slash_command == self._configured_slash_command
+            is_valid_slash_command = (
+                self._request_slash_command == self._configured_slash_command and self._request_slash_command_text
+            )
 
         self._is_valid_slash_command = is_valid_slash_command
 
@@ -226,6 +229,8 @@ class SlackAppRunner(AppRunner):
         )
 
     def _is_app_accessible(self):
+        error_message = ""
+
         if (
             self.request.headers.get(
                 "X-Slack-Request-Timestamp",
@@ -233,19 +238,25 @@ class SlackAppRunner(AppRunner):
             is None
             or self.request.headers.get("X-Slack-Signature") is None
         ):
-            raise Exception("Invalid Slack request")
+            error_message = "Invalid Slack request"
 
-        if not self._is_valid_app_token:
-            raise Exception("Invalid App Token")
+        elif not self._is_valid_app_token:
+            error_message = "Invalid App Token"
 
         elif not self._is_valid_app_id:
-            raise Exception("Invalid App ID")
+            error_message = "Invalid App ID"
 
         elif self._request_slash_command and not self._is_valid_slash_command:
-            raise Exception("Invalid Slash Command")
+            error_message = f"Invalid Slack Command - `{self.request.data.get('command')}`"
 
         elif self._request_type and not self._is_valid_request_type:
-            raise Exception("Invalid Slack request type. Only url_verification and event_callback are allowed.")
+            error_message = "Invalid Slack request type. Only url_verification and event_callback are allowed."
+
+        if self._request_slash_command and not self._request_slash_command_text:
+            error_message = f"Invalid Slash Command arguments. Command: `{self.request.data.get('command')}`. Arguments: `{self.request.data.get('text') or '-'}`"
+
+        elif self._request_type and not self._is_valid_request_type:
+            error_message = f"Invalid Slack event request type - `{self._request_type}`"
 
         # Validate that the app token, app ID and the request type are all valid.
         elif not (
@@ -253,7 +264,10 @@ class SlackAppRunner(AppRunner):
             and self._is_valid_app_id
             and (self._is_valid_request_type or self._is_valid_slash_command)
         ):
-            raise Exception("Invalid Slack request")
+            error_message = "Invalid Slack request"
+
+        if error_message:
+            raise Exception(error_message)
 
         # URL verification is allowed without any further checks
         if self._request_type == "url_verification":
@@ -422,7 +436,11 @@ class SlackAppRunner(AppRunner):
 
     def run_app(self):
         # Check if the app access permissions are valid
-        self._is_app_accessible()
+
+        try:
+            self._is_app_accessible()
+        except Exception as e:
+            return {"message": f"{str(e)}"}
 
         csp = self._get_csp()
 
@@ -462,12 +480,6 @@ class SlackAppRunner(AppRunner):
                 template,
             )
 
-        message = ""
-        if self._is_valid_slash_command:
-            message = f"Processing the Command - `{self.request.data.get('command')} {self.request.data.get('text')}`"
-        elif self._request_slash_command and not self._is_valid_slash_command:
-            message = f"Invalid Slack Command - `{self.request.data.get('command')}`"
-
         return {
-            "message": message,
+            "message": f"Processing the Command - `{self.request.data.get('command')} {self.request.data.get('text')}`",
         }
