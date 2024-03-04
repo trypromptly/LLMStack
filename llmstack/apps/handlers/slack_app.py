@@ -480,6 +480,10 @@ class SlackAppRunner(AppRunner):
                 template,
             )
 
+        message = ""
+        if self._is_valid_slash_command:
+            message = f"Processing your command - `{self.request.data.get('command')} {self.request.data.get('text')}`"
+
         return {
-            "message": f"Processing the Command - `{self.request.data.get('command')} {self.request.data.get('text')}`",
+            "message": message,
         }
