@@ -807,9 +807,12 @@ class AppViewSet(viewsets.ViewSet):
                 )
                 response.is_async = True
                 return response
-            if request.data.get("command"):
+            if platform == "slack" and request.data.get("command"):
                 return DRFResponse(
-                    result["message"],
+                    data={
+                        "response_type": "in_channel",
+                        "text": result["message"],
+                    },
                     status=200,
                     headers={
                         "Content-Security-Policy": result["csp"] if "csp" in result else "frame-ancestors self",

@@ -66,9 +66,7 @@ class SlackAppRunner(AppRunner):
 
         is_valid_slash_command = False
         if self._request_slash_command and self._configured_slash_command:
-            is_valid_slash_command = (
-                self._request_slash_command == self._configured_slash_command and self._request_slash_command_text
-            )
+            is_valid_slash_command = self._request_slash_command == self._configured_slash_command
 
         self._is_valid_slash_command = is_valid_slash_command
 
@@ -252,8 +250,8 @@ class SlackAppRunner(AppRunner):
         elif self._request_type and not self._is_valid_request_type:
             error_message = "Invalid Slack request type. Only url_verification and event_callback are allowed."
 
-        if self._request_slash_command and not self._request_slash_command_text:
-            error_message = f"Invalid Slash Command arguments. Command: `{self.request.data.get('command')}`. Arguments: `{self.request.data.get('text') or '-'}`"
+        # elif self._request_slash_command and not self._request_slash_command_text:
+        #     error_message = f"Invalid Slash Command arguments. Command: `{self.request.data.get('command')}`. Arguments: `{self.request.data.get('text') or '-'}`"
 
         elif self._request_type and not self._is_valid_request_type:
             error_message = f"Invalid Slack event request type - `{self._request_type}`"
