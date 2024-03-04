@@ -54,6 +54,21 @@ class SlackAppRunner(AppRunner):
         self._slack_user = {}
         self._slack_user_email = ""
 
+        # the request type should be either url_verification or event_callback
+        self._request_type = self.request.data.get("type")
+        self._is_valid_request_type = self._request_type in ["url_verification", "event_callback"]
+        self._is_valid_app_token = self.request.data.get("token") == self.slack_config.get("verification_token")
+        self._is_valid_app_id = self.request.data.get("api_app_id") == self.slack_config.get("app_id")
+
+        self._request_slash_command = self.request.data.get("command")
+        self._configured_slash_command = self.slack_config.get("slash_command_name")
+
+        is_valid_slash_command = False
+        if self._request_slash_command and self._configured_slash_command:
+            is_valid_slash_command = self._request_slash_command == self._configured_slash_command
+
+        self._is_valid_slash_command = is_valid_slash_command
+
     def app_init(self):
         self.slack_config = (
             SlackIntegrationConfig().from_dict(
@@ -220,30 +235,33 @@ class SlackAppRunner(AppRunner):
         ):
             raise Exception("Invalid Slack request")
 
-        request_type = self.request.data.get("type")
+        if not self._is_valid_app_token:
+            raise Exception("Invalid App Token")
 
-        # the request type should be either url_verification or event_callback
-        is_valid_request_type = request_type in ["url_verification", "event_callback"]
-        is_valid_app_token = self.request.data.get("token") == self.slack_config.get("verification_token")
-        is_valid_app_id = self.request.data.get("api_app_id") == self.slack_config.get("app_id")
+        elif not self._is_valid_app_id:
+            raise Exception("Invalid App ID")
 
-        is_valid_slash_command = False
-        if self.request.data.get("command") and self.slack_config.get("slash_command_name"):
-            request_slash_command = self.request.data.get("command")
-            configured_slash_command = self.slack_config.get("slash_command_name")
-            is_valid_slash_command = request_slash_command == configured_slash_command
+        elif self._request_slash_command and not self._is_valid_slash_command:
+            raise Exception("Invalid Slash Command")
+
+        elif self._request_type and not self._is_valid_request_type:
+            raise Exception("Invalid Slack request type. Only url_verification and event_callback are allowed.")
 
         # Validate that the app token, app ID and the request type are all valid.
-        if not (is_valid_app_token and is_valid_app_id and (is_valid_request_type or is_valid_slash_command)):
+        elif not (
+            self._is_valid_app_token
+            and self._is_valid_app_id
+            and (self._is_valid_request_type or self._is_valid_slash_command)
+        ):
             raise Exception("Invalid Slack request")
 
         # URL verification is allowed without any further checks
-        if request_type == "url_verification":
+        if self._request_type == "url_verification":
             return True
 
         # Verify the request is coming from the app we expect and the event
         # type is app_mention
-        elif request_type == "event_callback":
+        elif self._request_type == "event_callback":
             event_data = self.request.data.get("event") or {}
             event_type = event_data.get("type")
             channel_type = event_data.get("channel_type")
@@ -255,7 +273,7 @@ class SlackAppRunner(AppRunner):
                 # Only allow direct messages from users and not from bots
                 if channel_type == "im" and "subtype" not in event_data and "bot_id" not in event_data:
                     return True
-            raise Exception("Invalid Slack request")
+            raise Exception("Invalid Slack event_callback request")
 
         return super()._is_app_accessible()
 
@@ -401,3 +419,55 @@ class SlackAppRunner(AppRunner):
             self._get_bookkeeping_actor_config(processor_configs),
         )
         return actor_configs
+
+    def run_app(self):
+        # Check if the app access permissions are valid
+        self._is_app_accessible()
+
+        csp = self._get_csp()
+
+        template = convert_template_vars_from_legacy_format(
+            self.app_data["output_template"].get(
+                "markdown",
+                "",
+            )
+            if self.app_data and "output_template" in self.app_data
+            else self.app.output_template.get(
+                "markdown",
+                "",
+            ),
+        )
+        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        actor_configs = self._get_actor_configs(
+            template,
+            processor_configs,
+            processor_actor_configs,
+        )
+
+        if self.app.type.slug == "agent":
+            self._start_agent(
+                self._get_input_data(),
+                self.app_session,
+                actor_configs,
+                csp,
+                template,
+                processor_configs,
+            )
+        else:
+            self._start(
+                self._get_input_data(),
+                self.app_session,
+                actor_configs,
+                csp,
+                template,
+            )
+
+        message = ""
+        if self._is_valid_slash_command:
+            message = f"Processing the Command - `{self.request.data.get('command')} {self.request.data.get('text')}`"
+        elif self._request_slash_command and not self._is_valid_slash_command:
+            message = f"Invalid Slack Command - `{self.request.data.get('command')}`"
+
+        return {
+            "message": message,
+        }

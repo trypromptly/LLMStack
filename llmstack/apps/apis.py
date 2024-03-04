@@ -807,6 +807,15 @@ class AppViewSet(viewsets.ViewSet):
                 )
                 response.is_async = True
                 return response
+            if request.data.get("command"):
+                return DRFResponse(
+                    result["message"],
+                    status=200,
+                    headers={
+                        "Content-Security-Policy": result["csp"] if "csp" in result else "frame-ancestors self",
+                    },
+                )
+
             response_body = {k: v for k, v in result.items() if k != "csp"}
             response_body["_id"] = request_uuid
             return DRFResponse(
