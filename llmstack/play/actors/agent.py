@@ -89,7 +89,10 @@ class AgentActor(Actor):
         self._agent_messages = []
 
         if "chat_history_limit" in self._config and self._config["chat_history_limit"] > 0:
-            self._agent_messages += self._chat_history[-self._config["chat_history_limit"] :]  # noqa: E203
+            self._chat_history_limit = self._config["chat_history_limit"]
+            self._agent_messages += self._chat_history[-self._chat_history_limit :]  # noqa: E203
+        else:
+            self._chat_history_limit = 0
 
         self._agent_messages.append(
             {
@@ -305,7 +308,7 @@ class AgentActor(Actor):
                 )
                 # Persist session data
                 self._agent_app_session_data["data"] = {
-                    "chat_history": self._chat_history
+                    "chat_history": self._chat_history[: -self._chat_history_limit]
                     + self._agent_messages
                     + [{"role": "assistant", "content": full_content}],
                 }
