@@ -22,7 +22,7 @@ from rest_framework.response import Response as DRFResponse
 
 from llmstack.apps.app_session_utils import create_app_session
 from llmstack.apps.handlers.app_processor_runner import AppProcessorRunner
-from llmstack.apps.handlers.app_runner_factory import AppRunerFactory
+from llmstack.apps.handlers.app_runner_factory import AppRunnerFactory
 from llmstack.apps.integration_configs import (
     DiscordIntegrationConfig,
     SlackIntegrationConfig,
@@ -943,15 +943,15 @@ class AppViewSet(viewsets.ViewSet):
 
         app_runner_class = None
         if platform == "discord":
-            app_runner_class = AppRunerFactory.get_app_runner("discord")
+            app_runner_class = AppRunnerFactory.get_app_runner("discord")
         elif platform == "slack":
-            app_runner_class = AppRunerFactory.get_app_runner("slack")
+            app_runner_class = AppRunnerFactory.get_app_runner("slack")
         elif platform == "twilio-sms":
-            app_runner_class = AppRunerFactory.get_app_runner("twilio-sms")
+            app_runner_class = AppRunnerFactory.get_app_runner("twilio-sms")
         elif platform == "twilio-voice":
-            app_runner_class = AppRunerFactory.get_app_runner("twilio-voice")
+            app_runner_class = AppRunnerFactory.get_app_runner("twilio-voice")
         else:
-            app_runner_class = AppRunerFactory.get_app_runner(app.type.slug)
+            app_runner_class = AppRunnerFactory.get_app_runner(app.type.slug)
 
         app_runner = app_runner_class(
             app=app,
