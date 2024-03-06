@@ -6,6 +6,7 @@ from llmstack.base.models import Profile
 class ProfileSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source="user.email")
     name = serializers.SerializerMethodField()
+    username = serializers.CharField(source="user.username")
     openai_key = serializers.SerializerMethodField()
     stabilityai_key = serializers.SerializerMethodField()
     cohere_key = serializers.SerializerMethodField()
@@ -60,6 +61,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             "name",
             "user_email",
+            "username",
             "token",
             "openai_key",
             "stabilityai_key",

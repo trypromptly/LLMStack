@@ -41,6 +41,10 @@ const VisuallyHiddenInput = styled("input")({
 const settingsSchema = {
   type: "object",
   properties: {
+    username: {
+      type: "string",
+      title: "Username",
+    },
     openai_key: {
       type: "string",
       title: "OpenAI API Key",
@@ -81,6 +85,9 @@ const settingsSchema = {
 };
 
 const settingsUiSchema = {
+  username: {
+    "ui:default": null,
+  },
   openai_key: {
     "ui:widget": "password",
     "ui:default": "",
@@ -125,6 +132,7 @@ const settingsUiSchema = {
 
 const SettingPage = () => {
   const [formData, setFormData] = useState({
+    username: "",
     token: "",
     openai_key: "",
     stabilityai_key: "",
@@ -149,6 +157,7 @@ const SettingPage = () => {
       () => {},
       (profile) => {
         setFormData({
+          username: profile.username,
           token: profile.token,
           openai_key: profile.openai_key,
           stabilityai_key: profile.stabilityai_key,

@@ -76,6 +76,17 @@ class AppConsumer(AsyncWebsocketConsumer):
         # TODO: Close the stream
         pass
 
+    def _run_app(self, request_uuid, request, **kwargs):
+        from llmstack.apps.apis import AppViewSet
+
+        return AppViewSet().run_app_internal_async(
+            uid=self.app_id,
+            session_id=self._session_id,
+            request_uuid=request_uuid,
+            request=request,
+            preview=self.preview,
+        )
+
     async def _respond_to_event(self, text_data):
         from llmstack.apps.apis import AppViewSet
 
@@ -94,16 +105,8 @@ class AppConsumer(AsyncWebsocketConsumer):
                 request = await _build_request_from_input({"input": input, "stream": True}, self.scope)
                 if is_ratelimited_fn(request, self._respond_to_event):
                     raise Ratelimited("Rate limit reached.")
-                # if is_usage_limited_fn(request, self._respond_to_event):
-                #     raise UsageLimitReached("Usage limit reached.")
 
-                output_stream = await AppViewSet().run_app_internal_async(
-                    self.app_id,
-                    self._session_id,
-                    request_uuid,
-                    request,
-                    self.preview,
-                )
+                output_stream = await self._run_app(request_uuid=request_uuid, request=request)
                 # Generate a uuid for the response
                 response_id = str(uuid.uuid4())
 
