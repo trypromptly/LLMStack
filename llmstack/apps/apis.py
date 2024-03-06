@@ -634,19 +634,23 @@ class AppViewSet(viewsets.ViewSet):
         # Find the versioned app data and update it
         app_data = {
             "name": request.data["name"] if "name" in request.data else versioned_app_data.data["name"],
-            "type_slug": request.data["type_slug"]
-            if "type_slug" in request.data
-            else versioned_app_data.data["type_slug"],
-            "description": request.data["description"]
-            if "description" in request.data
-            else versioned_app_data.data["description"],
+            "type_slug": (
+                request.data["type_slug"] if "type_slug" in request.data else versioned_app_data.data["type_slug"]
+            ),
+            "description": (
+                request.data["description"] if "description" in request.data else versioned_app_data.data["description"]
+            ),
             "config": request.data["config"] if "config" in request.data else versioned_app_data.data["config"],
-            "input_fields": request.data["input_fields"]
-            if "input_fields" in request.data
-            else versioned_app_data.data["input_fields"],
-            "output_template": request.data["output_template"]
-            if "output_template" in request.data
-            else versioned_app_data.data["output_template"],
+            "input_fields": (
+                request.data["input_fields"]
+                if "input_fields" in request.data
+                else versioned_app_data.data["input_fields"]
+            ),
+            "output_template": (
+                request.data["output_template"]
+                if "output_template" in request.data
+                else versioned_app_data.data["output_template"]
+            ),
             "processors": processed_processors_data,
         }
 
@@ -888,6 +892,7 @@ class AppViewSet(viewsets.ViewSet):
         request,
         platform=None,
         preview=False,
+        version=None,
     ):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
@@ -928,6 +933,12 @@ class AppViewSet(viewsets.ViewSet):
             )
             .order_by("-created_at")
             .first()
+            if version is None
+            else AppData.objects.filter(
+                app_uuid=app.uuid,
+                version=version,
+                is_draft=False,
+            ).first()
         )
 
         # If we are running a published app, use the published app data
