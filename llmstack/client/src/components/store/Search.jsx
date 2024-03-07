@@ -87,7 +87,11 @@ export default function Search({ appSlug }) {
   const [searching, setSearching] = useState(false);
   const [apps, setApps] = useState([]);
   const appsByStoreCategory = useRecoilValue(
-    appsByStoreCategoryState(categoryFilter),
+    appsByStoreCategoryState(
+      categoryFilter.toLowerCase().startsWith("recommended")
+        ? `recommended/${appSlug}`
+        : categoryFilter.toLowerCase(),
+    ),
   );
 
   useEffect(() => {
