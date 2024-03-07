@@ -97,6 +97,7 @@ class SingleStoreDataSource(DataSourceProcessor[SingleStoreDatabaseSchema]):
         data = {
             "sql": query,
             "database": self._configuration.connection.database,
+            "program_name": "promptly_datasource",
         }
 
         response = post(
