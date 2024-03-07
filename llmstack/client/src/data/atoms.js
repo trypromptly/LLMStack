@@ -451,6 +451,18 @@ export const appsByStoreCategoryState = atomFamily({
   },
 });
 
+export const storeCategoriesState = atom({
+  key: "storeCategoriesState",
+  default: async () => {
+    try {
+      const categories = await axios().get("/api/store/categories");
+      return categories.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
 export const embedDatasourceState = atomFamily({
   key: "embedDatasourceState",
   default: async (datasourceUUID) => {

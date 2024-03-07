@@ -13,27 +13,10 @@ import SearchIcon from "@mui/icons-material/Search";
 import capitalize from "lodash/capitalize";
 import { useRecoilValue } from "recoil";
 import { axios } from "../../data/axios";
-import { appsByStoreCategoryState } from "../../data/atoms";
-
-const DEFAULT_CATEGORIES = [
-  "recommended",
-  "featured",
-  "popular",
-  "new",
-  "trending",
-  "top Rated",
-  "cooking",
-  "writing",
-  "professional",
-  "programming",
-  "games",
-  "utilities",
-  "travel",
-  "productivity",
-  "funny",
-  "history",
-  "science",
-];
+import {
+  appsByStoreCategoryState,
+  storeCategoriesState,
+} from "../../data/atoms";
 
 function AppEntry({ app }) {
   return (
@@ -98,7 +81,10 @@ export default function Search({ appSlug }) {
   const [categoryFilter, setCategoryFilter] = useState(
     appSlug ? "recommended" : "featured",
   );
-  const [appCategories, setAppCategories] = useState(DEFAULT_CATEGORIES);
+  const defaultCategories = useRecoilValue(storeCategoriesState).map(
+    (category) => category.slug,
+  );
+  const [appCategories, setAppCategories] = useState(defaultCategories);
   const [searchTerm, setSearchTerm] = useState("");
   const [searching, setSearching] = useState(false);
   const [apps, setApps] = useState([]);
@@ -109,15 +95,15 @@ export default function Search({ appSlug }) {
   useEffect(() => {
     if (categoryFilter && searchTerm === "") {
       setApps(appsByStoreCategory);
-      setAppCategories(DEFAULT_CATEGORIES);
+      setAppCategories(defaultCategories);
     }
-  }, [appsByStoreCategory, searchTerm, categoryFilter]);
+  }, [appsByStoreCategory, defaultCategories, searchTerm, categoryFilter]);
 
   const searchApps = (term) => {
     setSearching(true);
     if (term === "") {
       setApps(appsByStoreCategory);
-      setAppCategories(DEFAULT_CATEGORIES);
+      setAppCategories(defaultCategories);
       setSearching(false);
     } else {
       try {
