@@ -126,7 +126,9 @@ export default function Sidebar({ menuItems }) {
   const isSelected = (link) =>
     (location.pathname.startsWith(link) && link !== "/") ||
     (link === "/" && location.pathname === "/") ||
-    (link === "/" && location.pathname.startsWith("/apps"));
+    (link === "/" &&
+      !process.env.REACT_APP_ENABLE_APP_STORE &&
+      location.pathname.startsWith("/apps"));
 
   return (
     <Box sx={{ display: "flex" }}>

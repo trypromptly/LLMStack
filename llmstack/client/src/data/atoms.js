@@ -418,6 +418,39 @@ export const appTemplateState = atomFamily({
   },
 });
 
+export const storeAppState = atomFamily({
+  key: "storeAppState",
+  default: async (appSlug) => {
+    if (!appSlug) {
+      return null;
+    }
+
+    try {
+      const app = await axios().get(`/api/store/apps/${appSlug}`);
+      return app.data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
+});
+
+export const appsByStoreCategoryState = atomFamily({
+  key: "appsByStoreCategoryState",
+  default: async (category) => {
+    if (!category) {
+      return [];
+    }
+
+    try {
+      const apps = await axios().get(`/api/store/${category}/apps`);
+      return apps.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
 export const embedDatasourceState = atomFamily({
   key: "embedDatasourceState",
   default: async (datasourceUUID) => {

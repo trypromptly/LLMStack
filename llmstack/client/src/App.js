@@ -11,19 +11,9 @@ import { isMobileState, profileFlagsState } from "./data/atoms";
 
 const menuItems = [
   {
-    key: "4",
-    label: "Apps",
-    link: "/",
-  },
-  {
     key: "1",
     label: "Playground",
     link: "/playground",
-  },
-  {
-    key: "6",
-    label: "Discover",
-    link: "/hub",
   },
   {
     key: "7",
@@ -49,6 +39,7 @@ const menuItems = [
 
 export default function App({ children }) {
   const location = useLocation();
+  let allMenuItems = menuItems;
 
   useEffect(() => {
     ReactGA.initialize(
@@ -75,6 +66,47 @@ export default function App({ children }) {
     return () => window.removeEventListener("resize", handleResize);
   }, [setIsMobile]);
 
+  if (process.env.REACT_APP_ENABLE_APP_STORE === "true") {
+    allMenuItems = [
+      {
+        key: "2",
+        label: "Home",
+        link: "/",
+      },
+      {
+        key: "4",
+        label: "Apps",
+        link: "/apps",
+      },
+      ...menuItems,
+    ];
+  } else {
+    allMenuItems = [
+      {
+        key: "4",
+        label: "Apps",
+        link: "/",
+      },
+      ...menuItems,
+    ];
+  }
+
+  if (profileFlags.IS_ORGANIZATION_OWNER) {
+    allMenuItems.push({
+      key: "8",
+      label: "Organization",
+      link: "/organization",
+    });
+  }
+
+  if (isMobile) {
+    allMenuItems.push({
+      key: "9",
+      label: "Docs",
+      link: "https://docs.trypromptly.com",
+    });
+  }
+
   return (
     <div id="app-container">
       <SnackbarProvider
@@ -82,44 +114,9 @@ export default function App({ children }) {
         autoHideDuration={3000}
         anchorOrigin={{ horizontal: "center", vertical: "top" }}
       />
-      {isMobile && (
-        <NavBar
-          menuItems={[
-            ...menuItems,
-            {
-              key: "9",
-              label: "Docs",
-              link: "https://docs.trypromptly.com",
-            },
-          ].concat(
-            profileFlags.IS_ORGANIZATION_OWNER
-              ? [
-                  {
-                    key: "8",
-                    label: "Organization",
-                    link: "/organization",
-                  },
-                ]
-              : [],
-          )}
-        />
-      )}
+      {isMobile && <NavBar menuItems={allMenuItems} />}
       <Stack direction={"row"}>
-        {!isMobile && (
-          <Sidebar
-            menuItems={menuItems.concat(
-              profileFlags.IS_ORGANIZATION_OWNER
-                ? [
-                    {
-                      key: "8",
-                      label: "Organization",
-                      link: "/organization",
-                    },
-                  ]
-                : [],
-            )}
-          />
-        )}
+        {!isMobile && <Sidebar menuItems={allMenuItems} />}
         <Suspense
           fallback={
             <Grid

@@ -8,6 +8,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RecoilRoot } from "recoil";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
+import HomePage from "./pages/Home";
 
 const App = lazy(() => import("./App"));
 const ErrorPage = lazy(() => import("./pages/error"));
@@ -265,20 +266,7 @@ const defaultTheme = createTheme({
   },
 });
 
-let router = null;
-
-const root = ReactDOM.createRoot(document.getElementById("root"));
-
-router = createBrowserRouter([
-  {
-    path: "/",
-    element: (
-      <App>
-        <AppStudioPage />
-      </App>
-    ),
-    errorElement: <ErrorPage />,
-  },
+let routes = [
   {
     path: "/playground",
     element: (
@@ -536,7 +524,45 @@ router = createBrowserRouter([
     path: "/session-expired",
     element: <SessionExpiredPage />,
   },
-]);
+];
+
+// Add store app paths
+if (process.env.REACT_APP_ENABLE_APP_STORE === "true") {
+  routes.push(
+    {
+      path: "/",
+      element: (
+        <App>
+          <HomePage />
+        </App>
+      ),
+      errorElement: <ErrorPage />,
+    },
+    {
+      path: "/a/:appSlug",
+      element: (
+        <App>
+          <HomePage />
+        </App>
+      ),
+      errorElement: <ErrorPage />,
+    },
+  );
+} else {
+  routes.push({
+    path: "/",
+    element: (
+      <App>
+        <AppStudioPage />
+      </App>
+    ),
+    errorElement: <ErrorPage />,
+  });
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+const router = createBrowserRouter(routes);
 
 root.render(
   <React.StrictMode>
