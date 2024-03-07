@@ -6,8 +6,6 @@ import Search from "../components/store/Search";
 export default function HomePage() {
   const { appSlug = "super-agent" } = useParams();
 
-  console.log(appSlug);
-
   return (
     <Grid container>
       <Grid xs={12} md={7}>

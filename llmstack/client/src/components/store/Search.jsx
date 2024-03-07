@@ -15,7 +15,7 @@ import { useRecoilValue } from "recoil";
 import { axios } from "../../data/axios";
 import {
   appsByStoreCategoryState,
-  storeCategoriesState,
+  storeCategoriesSlugState,
 } from "../../data/atoms";
 
 function AppEntry({ app }) {
@@ -81,9 +81,7 @@ export default function Search({ appSlug }) {
   const [categoryFilter, setCategoryFilter] = useState(
     appSlug ? "recommended" : "featured",
   );
-  const defaultCategories = useRecoilValue(storeCategoriesState).map(
-    (category) => category.slug,
-  );
+  const defaultCategories = useRecoilValue(storeCategoriesSlugState);
   const [appCategories, setAppCategories] = useState(defaultCategories);
   const [searchTerm, setSearchTerm] = useState("");
   const [searching, setSearching] = useState(false);

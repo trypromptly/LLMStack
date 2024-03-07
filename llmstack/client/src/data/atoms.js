@@ -463,6 +463,14 @@ export const storeCategoriesState = atom({
   },
 });
 
+export const storeCategoriesSlugState = selector({
+  key: "storeCategoriesSlugState",
+  get: async ({ get }) => {
+    const categories = await get(storeCategoriesState)();
+    return categories.map((x) => x.slug);
+  },
+});
+
 export const embedDatasourceState = atomFamily({
   key: "embedDatasourceState",
   default: async (datasourceUUID) => {
