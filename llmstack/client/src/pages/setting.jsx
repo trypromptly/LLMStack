@@ -18,13 +18,13 @@ import { styled } from "@mui/material/styles";
 import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
 import { createRef, useEffect, useState } from "react";
-import { useRecoilValue } from "recoil";
+import { useRecoilValue, useRecoilState } from "recoil";
 import Connections from "../components/Connections";
 import Subscription from "../components/Subscription";
 import ThemedJsonForm from "../components/ThemedJsonForm";
-import { profileFlagsState } from "../data/atoms";
+import { profileFlagsState, profileState } from "../data/atoms";
+import { axios } from "../data/axios";
 import "../index.css";
-import { fetchData, patchData } from "./dataUtil";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -146,44 +146,15 @@ const SettingPage = () => {
     anthropic_api_key: "",
     logo: "",
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [updateKeys, setUpdateKeys] = useState(new Set());
   const profileFlags = useRecoilValue(profileFlagsState);
+  const [profileData, setProfileData] = useRecoilState(profileState);
   const formRef = createRef();
 
   useEffect(() => {
-    fetchData(
-      "api/profiles/me",
-      () => {},
-      (profile) => {
-        setFormData({
-          username: profile.username,
-          token: profile.token,
-          openai_key: profile.openai_key,
-          stabilityai_key: profile.stabilityai_key,
-          cohere_key: profile.cohere_key,
-          forefrontai_key: profile.forefrontai_key,
-          elevenlabs_key: profile.elevenlabs_key,
-          google_service_account_json_key:
-            profile.google_service_account_json_key,
-          azure_openai_api_key: profile.azure_openai_api_key,
-          localai_api_key: profile.localai_api_key,
-          localai_base_url: profile.localai_base_url,
-          anthropic_api_key: profile.anthropic_api_key,
-          logo: profile.logo,
-          user_email: profile.user_email,
-        });
-        setLoading(false);
-      },
-    );
-
-    const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get("showNotification")) {
-      enqueueSnackbar(searchParams.get("notificationMessage") || "", {
-        variant: searchParams.get("notificationType") || "info",
-      });
-    }
-  }, []);
+    setFormData(profileData);
+  }, [profileData, setFormData]);
 
   const handleUpdate = (update_keys) => {
     setLoading(true);
@@ -192,35 +163,21 @@ const SettingPage = () => {
       data[update_key] = formData[update_key];
     });
 
-    patchData(
-      "api/profiles/me",
-      data,
-      (loading_result) => {
-        setLoading(loading_result);
-      },
-      (profile) => {
-        setFormData({
-          token: profile.token,
-          openai_key: profile.openai_key,
-          stabilityai_key: profile.stabilityai_key,
-          cohere_key: profile.cohere_key,
-          forefrontai_key: profile.forefrontai_key,
-          elevenlabs_key: profile.elevenlabs_key,
-          google_service_account_json_key:
-            profile.google_service_account_json_key,
-          azure_openai_api_key: profile.azure_openai_api_key,
-          localai_api_key: profile.localai_api_key,
-          localai_base_url: profile.localai_base_url,
-          anthropic_api_key: profile.anthropic_api_key,
-          logo: profile.logo,
-        });
-        setLoading(false);
+    axios()
+      .patch("api/profiles/me", data)
+      .then((response) => {
+        setProfileData(response.data);
         enqueueSnackbar("Profile updated successfully", {
           variant: "success",
         });
-      },
-      () => {},
-    );
+      })
+      .catch((error) => {
+        console.error("Error updating profile", error);
+      })
+      .finally(() => {
+        setUpdateKeys(new Set());
+        setLoading(false);
+      });
   };
 
   function settingsValidate(formData, errors, uiSchema) {
