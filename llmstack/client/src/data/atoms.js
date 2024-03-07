@@ -443,7 +443,7 @@ export const appsByStoreCategoryState = atomFamily({
     }
 
     try {
-      const apps = await axios().get(`/api/store/${category}/apps`);
+      const apps = await axios().get(`/api/store/categories/${category}/apps`);
       return apps.data?.results;
     } catch (error) {
       return [];
