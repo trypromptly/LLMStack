@@ -16,23 +16,23 @@ import { axios } from "../../data/axios";
 import { appsByStoreCategoryState } from "../../data/atoms";
 
 const DEFAULT_CATEGORIES = [
-  "Recommended",
-  "Featured",
-  "Popular",
-  "New",
-  "Trending",
-  "Top Rated",
-  "Cooking",
-  "Writing",
-  "Professional",
-  "Programming",
-  "Games",
-  "Utilities",
-  "Travel",
-  "Productivity",
-  "Funny",
-  "History",
-  "Science",
+  "recommended",
+  "featured",
+  "popular",
+  "new",
+  "trending",
+  "top Rated",
+  "cooking",
+  "writing",
+  "professional",
+  "programming",
+  "games",
+  "utilities",
+  "travel",
+  "productivity",
+  "funny",
+  "history",
+  "science",
 ];
 
 function AppEntry({ app }) {
@@ -95,7 +95,9 @@ function AppEntry({ app }) {
 }
 
 export default function Search({ appSlug }) {
-  const [categoryFilter, setCategoryFilter] = useState("Recommended");
+  const [categoryFilter, setCategoryFilter] = useState(
+    appSlug ? "recommended" : "featured",
+  );
   const [appCategories, setAppCategories] = useState(DEFAULT_CATEGORIES);
   const [searchTerm, setSearchTerm] = useState("");
   const [searching, setSearching] = useState(false);
@@ -120,9 +122,11 @@ export default function Search({ appSlug }) {
     } else {
       try {
         const response = axios().get(`/api/store/search?query=${term}`);
-        setApps(response.data || []);
+        setApps(response.data?.results || []);
 
-        const categories = response.data?.map((app) => app?.categories).flat();
+        const categories = response.data?.results
+          ?.map((app) => app?.categories)
+          .flat();
         setAppCategories([...new Set(categories)]);
       } catch (error) {
         console.error(error);
@@ -203,9 +207,8 @@ export default function Search({ appSlug }) {
               <p>No apps found</p>
             </Box>
           )}
-          {apps.map((app) => (
-            <AppEntry app={app} key={app.slug} />
-          ))}
+          {apps.length > 0 &&
+            apps.map((app) => <AppEntry app={app} key={app.slug} />)}
         </Stack>
       )}
     </Box>

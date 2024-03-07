@@ -444,7 +444,7 @@ export const appsByStoreCategoryState = atomFamily({
 
     try {
       const apps = await axios().get(`/api/store/${category}/apps`);
-      return apps.data;
+      return apps.data?.results;
     } catch (error) {
       return [];
     }
