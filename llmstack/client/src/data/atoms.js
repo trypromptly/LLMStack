@@ -426,7 +426,9 @@ export const storeAppState = atomFamily({
     }
 
     try {
-      const app = await axios().get(`/api/store/apps/${appSlug}`);
+      const app = await axios().get(
+        `/api/store/apps/${appSlug}?include_data=true`,
+      );
       return app.data;
     } catch (error) {
       console.error(error);
