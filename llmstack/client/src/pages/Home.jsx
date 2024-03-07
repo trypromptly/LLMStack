@@ -12,7 +12,7 @@ export default function HomePage() {
         <StoreApp appSlug={appSlug} />
       </Grid>
       <Grid xs={12} md={5}>
-        <Search />
+        <Search appSlug={appSlug} />
       </Grid>
     </Grid>
   );

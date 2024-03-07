@@ -182,7 +182,7 @@ export default function Search({ appSlug }) {
                 onClick={() =>
                   setCategoryFilter(
                     category.toLowerCase().startsWith("recommended")
-                      ? `recommended/${appSlug} `
+                      ? `recommended/${appSlug}`
                       : category.toLowerCase(),
                   )
                 }
