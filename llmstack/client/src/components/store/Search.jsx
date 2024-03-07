@@ -104,19 +104,22 @@ export default function Search({ appSlug }) {
       setAppCategories(defaultCategories);
       setSearching(false);
     } else {
-      try {
-        const response = axios().get(`/api/store/search?query=${term}`);
-        setApps(response.data?.results || []);
+      axios()
+        .get(`/api/store/search?query=${term}`)
+        .then((response) => {
+          setApps(response.data?.results || []);
 
-        const categories = response.data?.results
-          ?.map((app) => app?.categories)
-          .flat();
-        setAppCategories([...new Set(categories)]);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setSearching(false);
-      }
+          const categories = response.data?.results
+            ?.map((app) => app?.categories)
+            .flat();
+          setAppCategories([...new Set(categories)]);
+        })
+        .catch((error) => {
+          console.error(error);
+        })
+        .finally(() => {
+          setSearching(false);
+        });
     }
   };
 
