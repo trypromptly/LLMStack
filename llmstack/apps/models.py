@@ -189,6 +189,11 @@ class App(models.Model):
         blank=True,
         unique=True,
     )
+    store_uuid = models.UUIDField(
+        help_text="Identifier for the app in the store",
+        null=True,
+        blank=True,
+    )
     uuid = models.UUIDField(
         default=uuid.uuid4,
         help_text="Identifier for the app",

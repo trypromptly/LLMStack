@@ -343,6 +343,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
             "type",
             "uuid",
             "published_uuid",
+            "store_uuid",
             "is_published",
             "unique_processors",
             "input_ui_schema",
