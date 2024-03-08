@@ -43,6 +43,7 @@ class AppRunner:
         request_user_agent="",
         request_content_type="",
         disable_history=False,
+        app_store_uuid="",
     ):
         self.app = app
         self.app_data = app_data
@@ -97,6 +98,7 @@ class AppRunner:
             request_content_type=request_content_type,
             request_body=request.data,
             disable_history=self.disable_history,
+            request_app_store_uuid=app_store_uuid,
         )
 
     def app_init(self):
@@ -189,9 +191,9 @@ class AppRunner:
                             "config": convert_template_vars_from_legacy_format(
                                 processor["config"],
                             ),
-                            "session_data": app_session_data["data"]
-                            if app_session_data and "data" in app_session_data
-                            else {},
+                            "session_data": (
+                                app_session_data["data"] if app_session_data and "data" in app_session_data else {}
+                            ),
                             "is_tool": True if self.app.type.slug == "agent" else False,
                         },
                         output_cls=processor_cls.get_output_cls(),
@@ -251,9 +253,9 @@ class AppRunner:
                             "config": convert_template_vars_from_legacy_format(
                                 processor.config,
                             ),
-                            "session_data": app_session_data["data"]
-                            if app_session_data and "data" in app_session_data
-                            else {},
+                            "session_data": (
+                                app_session_data["data"] if app_session_data and "data" in app_session_data else {}
+                            ),
                         },
                         output_cls=processor_cls.get_output_cls(),
                     ),
@@ -402,12 +404,17 @@ class AppRunner:
                                 yield {
                                     "session": {"id": self.app_session["uuid"]},
                                     "csp": csp,
-                                    "templates": {
-                                        **{k: v["processor"]["output_template"] for k, v in processor_configs.items()},
-                                        **{"agent": self.app_data["output_template"]},
-                                    }
-                                    if processor_configs
-                                    else {"agent": self.app_data["output_template"]},
+                                    "templates": (
+                                        {
+                                            **{
+                                                k: v["processor"]["output_template"]
+                                                for k, v in processor_configs.items()
+                                            },
+                                            **{"agent": self.app_data["output_template"]},
+                                        }
+                                        if processor_configs
+                                        else {"agent": self.app_data["output_template"]}
+                                    ),
                                 }
                             output = next(output_iter)
                             yield output
@@ -588,14 +595,16 @@ class AppRunner:
         csp = self._get_csp()
 
         template = convert_template_vars_from_legacy_format(
-            self.app_data["output_template"].get(
-                "markdown",
-                "",
-            )
-            if self.app_data and "output_template" in self.app_data
-            else self.app.output_template.get(
-                "markdown",
-                "",
+            (
+                self.app_data["output_template"].get(
+                    "markdown",
+                    "",
+                )
+                if self.app_data and "output_template" in self.app_data
+                else self.app.output_template.get(
+                    "markdown",
+                    "",
+                )
             ),
         )
         processor_actor_configs, processor_configs = self._get_processor_actor_configs()

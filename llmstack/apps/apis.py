@@ -893,6 +893,7 @@ class AppViewSet(viewsets.ViewSet):
         platform=None,
         preview=False,
         version=None,
+        app_store_uuid=None,
     ):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner = get_object_or_404(Profile, user=app.owner)
@@ -976,6 +977,7 @@ class AppViewSet(viewsets.ViewSet):
             request_location=request_location,
             request_user_agent=request_user_agent,
             request_content_type=request_content_type,
+            app_store_uuid=app_store_uuid,
         )
 
         return app_runner.run_app()
