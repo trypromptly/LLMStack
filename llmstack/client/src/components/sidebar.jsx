@@ -126,6 +126,9 @@ export default function Sidebar({ menuItems }) {
   const isSelected = (link) =>
     (location.pathname.startsWith(link) && link !== "/") ||
     (link === "/" && location.pathname === "/") ||
+    (process.env.REACT_APP_ENABLE_APP_STORE &&
+      link === "/" &&
+      location.pathname.startsWith("/a/")) ||
     (link === "/" &&
       !process.env.REACT_APP_ENABLE_APP_STORE &&
       location.pathname.startsWith("/apps"));
