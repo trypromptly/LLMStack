@@ -24,12 +24,19 @@ function AppEntry({ app }) {
       sx={{
         border: "1px solid #e0e0e0",
         borderRadius: "4px",
+        backgroundColor: "#f8f8f8",
         p: 1,
         m: 1,
         display: "flex",
         alignItems: "center",
         cursor: "pointer",
         textAlign: "left",
+        ":hover": {
+          backgroundColor: "#edeff7",
+          borderColor: "#d0d0d0",
+          borderRadius: "4px",
+          boxShadow: "0 0 0 1px #d0d0d0",
+        },
       }}
       onClick={() => {
         window.location.href = `/a/${app.slug}`;

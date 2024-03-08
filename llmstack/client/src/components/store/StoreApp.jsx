@@ -16,7 +16,7 @@ const AppIcon = styled("img")({
 
 function StoreAppHeader({ name, icon, username, description, categories }) {
   return (
-    <Card sx={{ marginLeft: 2, marginTop: 1 }}>
+    <Card sx={{ marginLeft: 2, marginTop: 1, backgroundColor: "#edeff7" }}>
       <Box
         sx={{
           display: "flex",
@@ -77,21 +77,19 @@ export default function StoreApp({ appSlug }) {
   }
 
   return (
-    <Box>
-      <Grid container spacing={0} direction={"column"}>
-        <Grid>
-          <StoreAppHeader
-            name={storeApp.name}
-            icon={storeApp.icon}
-            username={storeApp.username}
-            description={storeApp.description}
-            categories={storeApp.categories}
-          />
-        </Grid>
-        <Grid>
-          <AppRenderer app={storeApp} ws={ws} />
-        </Grid>
+    <Grid container spacing={0} direction={"column"}>
+      <Grid>
+        <StoreAppHeader
+          name={storeApp.name}
+          icon={storeApp.icon}
+          username={storeApp.username}
+          description={storeApp.description}
+          categories={storeApp.categories}
+        />
       </Grid>
-    </Box>
+      <Grid>
+        <AppRenderer app={storeApp} ws={ws} />
+      </Grid>
+    </Grid>
   );
 }
