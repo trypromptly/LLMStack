@@ -25,6 +25,7 @@ class BookKeepingData(BaseModel):
     run_data: dict = {}
     message_id: str = None
     disable_history: bool = False
+    usage_data: dict = {}
 
 
 class ActorConfig(BaseModel):
