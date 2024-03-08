@@ -18,6 +18,7 @@ import Form from "@rjsf/mui";
 import { getTemplate, getUiOptions } from "@rjsf/utils";
 import { useState } from "react";
 import { TextFieldWithVars } from "./apps/TextFieldWithVars";
+import AppVersionSelector from "./apps/AppVersionSelector";
 import CustomObjectFieldTemplate from "./ConfigurationFormObjectFieldTemplate";
 import ConnectionSelector from "./connections/ConnectionSelector";
 import { DataSourceSelector } from "./datasource/DataSourceSelector";
@@ -268,6 +269,10 @@ const DatasourceWidget = (props) => {
   return <DataSourceSelector {...props} />;
 };
 
+const AppVersionSelectorWidget = (props) => {
+  return <AppVersionSelector {...props} />;
+};
+
 const ErrorListTemplate = (props) => {
   const { errors } = props;
 
@@ -338,6 +343,7 @@ const ThemedJsonForm = ({
           connection: ConnectionSelectorWidget,
           richtext: RichTextWidget,
           voice: CustomVoiceRecorderWidget,
+          app_version: AppVersionSelectorWidget,
         },
         ...widgets,
       }}

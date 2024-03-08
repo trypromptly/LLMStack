@@ -418,6 +418,22 @@ export const appTemplateState = atomFamily({
   },
 });
 
+export const appVersionsState = atomFamily({
+  key: "appVersionsState",
+  default: async (uuid) => {
+    if (!uuid) {
+      return [];
+    }
+
+    try {
+      const appVersions = await axios().get(`/api/apps/${uuid}/versions`);
+      return appVersions.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
 export const storeAppState = atomFamily({
   key: "storeAppState",
   default: async (appSlug) => {

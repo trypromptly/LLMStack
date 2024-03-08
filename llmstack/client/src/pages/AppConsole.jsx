@@ -4,6 +4,7 @@ import PreviewIcon from "@mui/icons-material/Preview";
 import PublishedWithChangesIcon from "@mui/icons-material/PublishedWithChanges";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import UnpublishedIcon from "@mui/icons-material/Unpublished";
+import StorefrontIcon from "@mui/icons-material/Storefront";
 import {
   Alert,
   AlertTitle,
@@ -54,6 +55,7 @@ import {
   profileState,
 } from "../data/atoms";
 import { axios } from "../data/axios";
+import StoreListingModal from "../components/store/StoreListingModal";
 
 const menuItems = [
   {
@@ -189,6 +191,7 @@ export default function AppConsolePage(props) {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showSharingModal, setShowSharingModal] = useState(false);
   const [showUnpublishModal, setShowUnpublishModal] = useState(false);
+  const [showStoreListingModal, setShowStoreListingModal] = useState(false);
   const [processors, setProcessors] = useState([]);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
@@ -495,42 +498,78 @@ export default function AppConsolePage(props) {
                 />
 
                 {appId && app && (
-                  <Tooltip
-                    arrow={true}
-                    title={
-                      app?.has_live_version
-                        ? isPublished
-                          ? "Unpublish App"
-                          : "Publish App"
-                        : "Please save App before publishing"
-                    }
-                  >
-                    <span>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        style={{ textTransform: "none" }}
-                        disabled={
-                          app.owner_email !== profile.user_email ||
-                          !app?.has_live_version
-                        }
-                        startIcon={
-                          isPublished ? (
-                            <UnpublishedIcon />
-                          ) : (
-                            <PublishedWithChangesIcon />
-                          )
-                        }
-                        onClick={() =>
-                          isPublished
-                            ? setShowUnpublishModal(true)
-                            : setShowPublishModal(true)
+                  <>
+                    <Tooltip
+                      arrow={true}
+                      title={
+                        app?.has_live_version
+                          ? isPublished
+                            ? "Unpublish App"
+                            : "Publish App"
+                          : app?.store_uuid
+                            ? "Please unlist your app from the store before unpublishing"
+                            : "Please save App before publishing"
+                      }
+                    >
+                      <span>
+                        <Button
+                          variant="contained"
+                          color="success"
+                          style={{ textTransform: "none" }}
+                          disabled={
+                            app.owner_email !== profile.user_email ||
+                            !app?.has_live_version ||
+                            app?.store_uuid
+                          }
+                          startIcon={
+                            isPublished ? (
+                              <UnpublishedIcon />
+                            ) : (
+                              <PublishedWithChangesIcon />
+                            )
+                          }
+                          onClick={() =>
+                            isPublished
+                              ? setShowUnpublishModal(true)
+                              : setShowPublishModal(true)
+                          }
+                        >
+                          {isPublished ? "Unpublish" : "Publish"}
+                        </Button>
+                      </span>
+                    </Tooltip>
+                    {process.env.REACT_APP_ENABLE_APP_STORE && (
+                      <Tooltip
+                        arrow={true}
+                        title={
+                          !isPublished
+                            ? "Please publish the app before submitting to Promptly App Store"
+                            : !profile.username
+                              ? "Please set your username in settings to submit to Promptly App Store"
+                              : !app?.store_uuid
+                                ? "Submit to Promptly App Store to make it available to other users"
+                                : "Edit Store Listing"
                         }
                       >
-                        {isPublished ? "Unpublish" : "Publish"}
-                      </Button>
-                    </span>
-                  </Tooltip>
+                        <span>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            style={{ textTransform: "none" }}
+                            disabled={!isPublished || !profile.username}
+                            startIcon={<StorefrontIcon />}
+                            onClick={() =>
+                              setShowStoreListingModal(!showStoreListingModal)
+                            }
+                          >
+                            {app?.store_uuid
+                              ? "Edit Store Listing"
+                              : "List on App Store"}
+                          </Button>
+                        </span>
+                      </Tooltip>
+                    )}
+                  </>
                 )}
               </Stack>
             </Stack>
@@ -713,6 +752,13 @@ export default function AppConsolePage(props) {
           </Box>
         </Grid>
       </Grid>
+      {showStoreListingModal && (
+        <StoreListingModal
+          app={app}
+          open={showStoreListingModal}
+          handleCloseCb={() => setShowStoreListingModal(false)}
+        />
+      )}
     </div>
   );
 }
