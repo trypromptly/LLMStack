@@ -39,7 +39,7 @@ const appStoreListingSchema = (appUuid, categories) => {
 const appStoreListingUiSchema = (readOnlySlug) => {
   return {
     icon: { "ui:widget": "file" },
-    slug: { "ui:readonly": true },
+    slug: { "ui:readonly": readOnlySlug },
     description: {
       "ui:widget": "textarea",
     },
