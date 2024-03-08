@@ -165,6 +165,10 @@ class ApiProcessorInterface(
     def session_data_to_persist(self) -> dict:
         return {}
 
+    # Used to track usage data
+    def usage_data(self) -> dict:
+        return {"credits": 1}
+
     def is_output_cacheable(self) -> bool:
         return True
 
@@ -260,6 +264,8 @@ class ApiProcessorInterface(
                 timestamp=time.time(),
                 disable_history=self.disable_history(),
             )
+        if bookkeeping_data:
+            bookkeeping_data.usage_data = self.usage_data()
 
         self._output_stream.bookkeep(bookkeeping_data)
 
@@ -317,6 +323,9 @@ class ApiProcessorInterface(
                 timestamp=time.time(),
                 disable_history=self.disable_history(),
             )
+
+        if bookkeeping_data:
+            bookkeeping_data.usage_data = self.usage_data()
 
         self._output_stream.bookkeep(bookkeeping_data)
 
