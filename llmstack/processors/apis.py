@@ -23,6 +23,7 @@ from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
 
 from llmstack.apps.app_session_utils import create_app_session
+from llmstack.apps.models import App
 from llmstack.base.models import Profile
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
@@ -455,9 +456,9 @@ class ApiBackendViewSet(viewsets.ViewSet):
                     "input_ui_schema": subclass.get_input_ui_schema(),
                     "output_ui_schema": subclass.get_output_ui_schema(),
                     "config_ui_schema": subclass.get_configuration_ui_schema(),
-                    "output_template": subclass.get_output_template().dict()
-                    if subclass.get_output_template()
-                    else None,
+                    "output_template": (
+                        subclass.get_output_template().dict() if subclass.get_output_template() else None
+                    ),
                 },
             )
         return DRFResponse(processors)
@@ -474,17 +475,22 @@ class HistoryViewSet(viewsets.ModelViewSet):
         endpoint_uuid = request.GET.get("endpoint_uuid", None)
         detail = request.GET.get("detail", False)
 
-        filters = {
-            "owner": request.user,
-        }
+        filters = {}
         if app_uuid and app_uuid != "null":
-            filters["app_uuid"] = app_uuid
+            app = App.objects.filter(uuid=app_uuid).first()
+            if app and app.has_write_permission(request.user):
+                filters["app_uuid"] = app_uuid
+                filters["owner"] = app.owner
+
         if session_key and session_key != "null":
             filters["session_key"] = session_key
         if request_user_email and request_user_email != "null":
             filters["request_user_email"] = request_user_email
         if endpoint_uuid and endpoint_uuid != "null":
             filters["endpoint_uuid"] = endpoint_uuid
+
+        if not filters:
+            filters["owner"] = request.user
 
         queryset = RunEntry.objects.all().filter(**filters).order_by("-created_at")
         page = self.paginate_queryset(queryset)
