@@ -2,7 +2,7 @@ const { createProxyMiddleware } = require("http-proxy-middleware");
 
 module.exports = function (app) {
   app.use(
-    "/api",
+    ["/api", "/static/files"],
     createProxyMiddleware({
       target: process.env.REACT_APP_API_SERVER
         ? `http://${process.env.REACT_APP_API_SERVER}`
