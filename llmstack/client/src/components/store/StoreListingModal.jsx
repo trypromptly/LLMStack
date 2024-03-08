@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -6,7 +6,9 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { LoadingButton } from "@mui/lab";
+import kebabCase from "lodash/kebabCase";
 import { useRecoilValue } from "recoil";
 import { storeCategoriesSlugState } from "../../data/atoms";
 import validator from "@rjsf/validator-ajv8";
@@ -34,22 +36,25 @@ const appStoreListingSchema = (appUuid, categories) => {
   };
 };
 
-const appStoreListingUiSchema = {
-  icon: { "ui:widget": "file" },
-  description: {
-    "ui:widget": "textarea",
-  },
-  changelog: {
-    "ui:widget": "textarea",
-  },
-  version: {
-    "ui:widget": "app_version",
-  },
-  categories: {
-    "ui:options": {
-      orderable: false,
+const appStoreListingUiSchema = (readOnlySlug) => {
+  return {
+    icon: { "ui:widget": "file" },
+    slug: { "ui:readonly": true },
+    description: {
+      "ui:widget": "textarea",
     },
-  },
+    changelog: {
+      "ui:widget": "textarea",
+    },
+    version: {
+      "ui:widget": "app_version",
+    },
+    categories: {
+      "ui:options": {
+        orderable: false,
+      },
+    },
+  };
 };
 
 export default function StoreListingModal({ app, open, handleCloseCb }) {
@@ -57,10 +62,58 @@ export default function StoreListingModal({ app, open, handleCloseCb }) {
   const [saving, setSaving] = useState(false);
   const categories = useRecoilValue(storeCategoriesSlugState);
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (app?.store_uuid) {
+      axios()
+        .get(`/api/store/apps/${app?.store_uuid}`)
+        .then((response) => {
+          if (response.status === 200) {
+            setFormData({
+              slug: response.data.slug,
+              name: response.data.name,
+              description: response.data.description,
+              icon: response.data.icon,
+              version: response.data.version,
+              categories: response.data.categories,
+              changelog: response.data.changelog,
+            });
+          }
+
+          return response;
+        })
+        .catch((error) => {
+          enqueueSnackbar(
+            `Error Occurred: ${error?.response?.data?.message || error}`,
+            {
+              variant: "error",
+            },
+          );
+        });
+    } else {
+      setFormData({
+        slug: kebabCase(app?.name),
+        name: app?.name,
+        description: app?.description,
+      });
+    }
+  }, [app?.store_uuid, app?.name, app?.description]);
+
+  const handleSave = (storeUuid) => {
     setSaving(true);
-    axios()
-      .post("/api/store/apps", {
+
+    let savePromise = null;
+
+    if (storeUuid) {
+      savePromise = axios().patch(`/api/store/apps/${storeUuid}`, {
+        published_app_version: formData.version,
+        categories: formData.categories,
+        name: formData.name,
+        description: formData.description,
+        icon: formData.icon,
+        changelog: formData.changelog,
+      });
+    } else {
+      axios().post("/api/store/apps", {
         published_app_uuid: app?.published_uuid,
         published_app_version: formData.version,
         categories: formData.categories,
@@ -68,7 +121,11 @@ export default function StoreListingModal({ app, open, handleCloseCb }) {
         name: formData.name,
         description: formData.description,
         icon: formData.icon,
-      })
+        changelog: formData.changelog,
+      });
+    }
+
+    savePromise
       .then((response) => {
         if (response.status === 200) {
           enqueueSnackbar("App Store Listing Saved", { variant: "success" });
@@ -100,7 +157,7 @@ export default function StoreListingModal({ app, open, handleCloseCb }) {
           onChange={(e) => {
             setFormData(e.formData);
           }}
-          uiSchema={appStoreListingUiSchema}
+          uiSchema={appStoreListingUiSchema(app?.store_uuid ? true : false)}
           liveValidate
           validator={validator}
           disableAdvanced={true}
@@ -110,8 +167,20 @@ export default function StoreListingModal({ app, open, handleCloseCb }) {
         <Button onClick={handleCloseCb} sx={{ textTransform: "none" }}>
           Close
         </Button>
+        {app?.store_uuid && (
+          <Button
+            variant="outlined"
+            sx={{ textTransform: "none" }}
+            startIcon={<OpenInNewIcon />}
+            onClick={() => {
+              window.open(`/a/${formData?.slug}`, "_blank");
+            }}
+          >
+            View Listing
+          </Button>
+        )}
         <LoadingButton
-          onClick={handleSave}
+          onClick={() => handleSave(app?.store_uuid)}
           sx={{ textTransform: "none" }}
           variant="contained"
           loading={saving}
