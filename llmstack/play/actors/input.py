@@ -27,6 +27,7 @@ class InputRequest(NamedTuple):
     request_content_type: str
     request_body: str
     disable_history: bool = False
+    request_app_store_uuid: str = ""
 
 
 class InputActor(Actor):

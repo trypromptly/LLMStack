@@ -177,6 +177,7 @@ class HistorySerializer(serializers.ModelSerializer):
         fields = [
             "request_uuid",
             "app_uuid",
+            "app_store_uuid",
             "endpoint_uuid",
             "session_key",
             "created_at",

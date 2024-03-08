@@ -100,6 +100,7 @@ def persist_history_task_internal(processors, bookkeeping_data_map):
     run_entry = RunEntry(
         request_uuid=input["request_uuid"],
         app_uuid=input["request_app_uuid"] or None,
+        app_store_uuid=input.get("request_app_store_uuid", None) or None,
         endpoint_uuid=input["request_endpoint_uuid"] or None,
         owner=input["request_owner"] or None,
         session_key=input["request_app_session_key"] or None,

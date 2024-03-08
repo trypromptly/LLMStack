@@ -321,6 +321,12 @@ class RunEntry(models.Model):
         default=None,
         null=True,
     )
+    app_store_uuid = models.CharField(
+        max_length=40,
+        help_text="UUID of the app store",
+        default=None,
+        null=True,
+    )
     endpoint_uuid = models.CharField(
         max_length=40,
         help_text="UUID of the endpoint",
