@@ -113,7 +113,7 @@ export default function StoreListingModal({ app, open, handleCloseCb }) {
         changelog: formData.changelog,
       });
     } else {
-      axios().post("/api/store/apps", {
+      savePromise = axios().post("/api/store/apps", {
         published_app_uuid: app?.published_uuid,
         published_app_version: formData.version,
         categories: formData.categories,
