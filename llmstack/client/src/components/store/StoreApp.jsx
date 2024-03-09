@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Box, Card, Chip, Typography } from "@mui/material";
+import { Box, Button, Card, Chip, Collapse, Typography } from "@mui/material";
+import {
+  KeyboardDoubleArrowDownOutlined,
+  KeyboardDoubleArrowUpOutlined,
+} from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 import Grid from "@mui/material/Unstable_Grid2";
 import { useRecoilValue } from "recoil";
@@ -16,6 +20,12 @@ const AppIcon = styled("img")({
 });
 
 function StoreAppHeader({ name, icon, username, description, categories }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const handleExpand = () => {
+    setExpanded(!expanded);
+  };
+
   return (
     <Card sx={{ marginLeft: 2, marginTop: 1, backgroundColor: "#edeff7" }}>
       <Box
@@ -48,7 +58,34 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
         </Box>
       </Box>
       <Box sx={{ textAlign: "left", ml: 2, mb: 2 }}>
-        <LayoutRenderer>{description}</LayoutRenderer>
+        <Collapse in={expanded} timeout="auto" unmountOnExit>
+          <LayoutRenderer>{description}</LayoutRenderer>
+        </Collapse>
+        <Collapse in={!expanded} timeout="auto" unmountOnExit>
+          <Typography>{description.substring(0, 200)}</Typography>
+        </Collapse>
+        {description.length > 200 && (
+          <Button
+            onClick={handleExpand}
+            size="small"
+            sx={{
+              textTransform: "none",
+              fontSize: "0.8em",
+              "& .MuiButton-startIcon": {
+                marginRight: "0.5em",
+              },
+            }}
+            startIcon={
+              expanded ? (
+                <KeyboardDoubleArrowUpOutlined />
+              ) : (
+                <KeyboardDoubleArrowDownOutlined />
+              )
+            }
+          >
+            {expanded ? "Show Less" : "View More"}
+          </Button>
+        )}
       </Box>
     </Card>
   );
