@@ -6,6 +6,7 @@ import { useRecoilValue } from "recoil";
 import { AppRenderer } from "../apps/renderer/AppRenderer";
 import { Ws } from "../../data/ws";
 import { storeAppState } from "../../data/atoms";
+import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 
 const AppIcon = styled("img")({
   width: 80,
@@ -47,9 +48,7 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
         </Box>
       </Box>
       <Box sx={{ textAlign: "left", ml: 2, mb: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          {description}
-        </Typography>
+        <LayoutRenderer>{description}</LayoutRenderer>
       </Box>
     </Card>
   );
