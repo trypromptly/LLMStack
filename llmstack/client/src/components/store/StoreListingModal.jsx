@@ -15,16 +15,38 @@ import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { axios } from "../../data/axios";
 import { enqueueSnackbar } from "notistack";
+import DescriptionGeneratorWidget from "./DescriptionGeneratorWidget";
+import ImageGeneratorWidget from "./ImageGeneratorWidget";
 
-const appStoreListingSchema = (appUuid, categories) => {
+const appStoreListingSchema = (
+  categories,
+  appUuid,
+  appPublishedUuid,
+  appVersion,
+  appDescription,
+  appCategories,
+) => {
   return {
     type: "object",
     properties: {
       slug: { type: "string", title: "Slug" },
       name: { type: "string", title: "Name" },
       version: { type: "number", title: "App Version", appUuid },
-      description: { type: "string", title: "Description" },
-      icon: { type: "string", title: "Icon" },
+      description: {
+        type: "string",
+        title: "Description",
+        appPublishedUuid,
+        appVersion,
+        appCategories,
+      },
+      icon: {
+        type: "string",
+        title: "Icon",
+        appDescription,
+        appPublishedUuid,
+        appVersion,
+        appCategories,
+      },
       categories: {
         type: "array",
         title: "Categories",
@@ -38,10 +60,9 @@ const appStoreListingSchema = (appUuid, categories) => {
 
 const appStoreListingUiSchema = (readOnlySlug) => {
   return {
-    icon: { "ui:widget": "file" },
     slug: { "ui:readonly": readOnlySlug },
     description: {
-      "ui:widget": "textarea",
+      "ui:widget": "description_generator",
     },
     changelog: {
       "ui:widget": "textarea",
@@ -53,6 +74,9 @@ const appStoreListingUiSchema = (readOnlySlug) => {
       "ui:options": {
         orderable: false,
       },
+    },
+    icon: {
+      "ui:widget": "image_generator",
     },
   };
 };
@@ -152,7 +176,14 @@ export default function StoreListingModal({ app, open, handleCloseCb }) {
       </DialogTitle>
       <DialogContent>
         <ThemedJsonForm
-          schema={appStoreListingSchema(app?.uuid, categories)}
+          schema={appStoreListingSchema(
+            categories,
+            app?.uuid,
+            app?.published_uuid,
+            formData?.version || 0,
+            formData?.description || "",
+            formData?.categories || [],
+          )}
           formData={formData}
           onChange={(e) => {
             setFormData(e.formData);
@@ -161,6 +192,10 @@ export default function StoreListingModal({ app, open, handleCloseCb }) {
           liveValidate
           validator={validator}
           disableAdvanced={true}
+          widgets={{
+            description_generator: DescriptionGeneratorWidget,
+            image_generator: ImageGeneratorWidget,
+          }}
         />
       </DialogContent>
       <DialogActions>
