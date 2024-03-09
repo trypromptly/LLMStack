@@ -70,7 +70,9 @@ function AppEntry({ app }) {
             {app.name}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {app.description}
+            {app.description?.length > 200
+              ? `${app.description.substring(0, 200)}...`
+              : app.description}
           </Typography>
           <Box sx={{ mt: 1, mb: 1 }}>
             {app.categories &&
