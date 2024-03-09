@@ -159,6 +159,8 @@ class ResponseSerializer(serializers.ModelSerializer):
 
 
 class HistorySerializer(serializers.ModelSerializer):
+    app_detail = serializers.SerializerMethodField()
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if self.context.get("hide_details"):
@@ -172,11 +174,36 @@ class HistorySerializer(serializers.ModelSerializer):
 
         return representation
 
+    def get_app_detail(self, obj):
+        from promptly_app_store.models import AppStoreApp
+
+        from llmstack.apps.models import App
+
+        name = ""
+        path = ""
+        if obj.app_uuid:
+            app = App.objects.get(uuid=obj.app_uuid)
+            if not app:
+                return {"name": "Deleted App", "path": "/"}
+            name = app.name
+            path = f"/apps/{obj.app_uuid}"
+        elif obj.app_store_uuid:
+            app = AppStoreApp.objects.get(uuid=obj.app_store_uuid)
+            if not app:
+                return {"name": "Deleted App", "path": "/"}
+            name = app.name
+            path = f"/a/{app.slug}"
+        else:
+            name = "Playground"
+            path = "/playground"
+        return {"name": name, "path": path}
+
     class Meta:
         model = RunEntry
         fields = [
             "request_uuid",
             "app_uuid",
+            "app_detail",
             "app_store_uuid",
             "endpoint_uuid",
             "session_key",
