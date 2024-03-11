@@ -42,12 +42,6 @@ export const axios = () => {
             "/login?redirectUrl=" + window.location.pathname;
         }
 
-        try {
-          enqueueSnackbar("Error Occurred", { variant: "error" });
-        } catch (e) {
-          // Ignore
-        }
-
         return Promise.reject(error);
       },
     );
