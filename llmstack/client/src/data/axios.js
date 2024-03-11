@@ -1,5 +1,4 @@
 import axiosLib from "axios";
-import { enqueueSnackbar } from "notistack";
 
 export const axios = () => {
   let caxios = axiosLib.create({
