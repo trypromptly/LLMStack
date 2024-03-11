@@ -16,7 +16,6 @@ import TwitterIcon from "@mui/icons-material/Twitter";
 import {
   Avatar,
   Box,
-  Button,
   CssBaseline,
   Divider,
   List,
@@ -35,8 +34,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { ReactComponent as GithubIcon } from "../assets/images/icons/github.svg";
 import { isLoggedInState, profileState } from "../data/atoms";
-import { LoggedOutModal } from "./LoggedOutModal";
 import { onLogoutClick } from "./logout";
+import LoginDialog from "./LoginDialog";
 
 const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
 
@@ -122,6 +121,7 @@ export default function Sidebar({ menuItems }) {
   const [loggedOutModalVisibility, setLoggedOutModalVisibility] =
     useState(false);
   const [open, setOpen] = React.useState(false);
+  const [loginRedirectPath, setLoginRedirectPath] = useState("/");
 
   const isSelected = (link) =>
     (location.pathname.startsWith(link) && link !== "/") ||
@@ -174,6 +174,7 @@ export default function Sidebar({ menuItems }) {
                   if (isLoggedIn) {
                     navigate(item.link);
                   } else {
+                    setLoginRedirectPath(item.link);
                     setLoggedOutModalVisibility(true);
                   }
                 }}
@@ -431,23 +432,11 @@ export default function Sidebar({ menuItems }) {
           )}
         </List>
       </Drawer>
-      <LoggedOutModal
-        visibility={!isLoggedIn && loggedOutModalVisibility}
-        handleCancelCb={() => setLoggedOutModalVisibility(false)}
-        title={"Logged Out"}
-        message={
-          <p>
-            You are logged out. Please{" "}
-            <Button
-              type="link"
-              onClick={() => (window.location.href = "/login")}
-              sx={{ padding: "0px" }}
-            >
-              login
-            </Button>{" "}
-            to proceed.
-          </p>
-        }
+      <LoginDialog
+        open={!isLoggedIn && loggedOutModalVisibility}
+        loginMessage="Please sign in to continue."
+        handleClose={() => setLoggedOutModalVisibility(false)}
+        redirectPath={loginRedirectPath}
       />
     </Box>
   );

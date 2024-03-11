@@ -32,6 +32,7 @@ export const axios = () => {
       (response) => response,
       (error) => {
         if (
+          !window.location.pathname === "/" &&
           !window.location.pathname.startsWith("/s/") &&
           !window.location.pathname.startsWith("/a/") &&
           !window.location.pathname.startsWith("/hub") &&
