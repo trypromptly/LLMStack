@@ -423,6 +423,10 @@ class RunEntry(models.Model):
     def __str__(self):
         return self.request_uuid
 
+    @property
+    def is_store_request(self):
+        return self.app_store_uuid is not None
+
     @staticmethod
     def from_pinot_dict(row):
         owner = User.objects.get(id=row["owner_id"])

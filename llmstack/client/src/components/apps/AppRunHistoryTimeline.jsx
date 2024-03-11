@@ -320,19 +320,11 @@ export function AppRunHistoryTimeline(props) {
     const value = row[column.id];
 
     if (column.id === "name") {
-      if (row.app_uuid !== null) {
-        const app = apps.find((app) => app.uuid === row.app_uuid);
-        if (app) {
-          return (
-            <Button sx={{ textTransform: "none" }} href={`/apps/${app.uuid}`}>
-              {app.name}
-            </Button>
-          );
-        } else {
-          return <Button sx={{ textTransform: "none" }}>Deleted App</Button>;
-        }
-      }
-      return <Button sx={{ textTransform: "none" }}>Playground</Button>;
+      return (
+        <Button sx={{ textTransform: "none" }} href={row?.app_detail?.path}>
+          {row?.app_detail?.name}
+        </Button>
+      );
     } else if (column.id === "type") {
       return (
         <Tooltip title={row.app_uuid !== null ? "App" : "Endpoint"}>
