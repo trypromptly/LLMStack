@@ -55,10 +55,11 @@ function AppEntry({ app }) {
           src={app.icon128}
           alt={app.name}
           style={{
-            width: 50,
-            height: 50,
+            width: 70,
+            height: 70,
             margin: "1em 0.5em",
-            borderRadius: 1,
+            borderRadius: "0.2em",
+            alignSelf: "start",
           }}
         />
         <Box sx={{ padding: 2 }}>
