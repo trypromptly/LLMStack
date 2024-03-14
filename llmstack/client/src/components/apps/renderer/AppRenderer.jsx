@@ -24,7 +24,7 @@ import { isLoggedInState, appRunDataState } from "../../../data/atoms";
 import { useSetRecoilState, useRecoilValue } from "recoil";
 import LoginDialog from "../../LoginDialog";
 
-const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto"}'>
+export const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto"}'>
   <pa-paper style="padding: 10px;">
     <pa-grid container="true" spacing="2" style="width: 100%">
       <pa-grid item="true" xs="12">
@@ -40,7 +40,7 @@ const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0
   </pa-paper>
 </pa-layout>`;
 
-const defaultChatLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto", "padding": "10px"}'>
+export const defaultChatLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto", "padding": "10px"}'>
     <pa-grid container="true" spacing="2" style="width: 100%">
       <pa-grid item="true" xs="12">
         <pa-chat-output sx='{"height": "calc(100vh - 300px)", "minHeight": "90%"}'></pa-chat-output>

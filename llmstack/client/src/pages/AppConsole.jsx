@@ -56,6 +56,10 @@ import {
 } from "../data/atoms";
 import { axios } from "../data/axios";
 import StoreListingModal from "../components/store/StoreListingModal";
+import {
+  defaultChatLayout,
+  defaultWorkflowLayout,
+} from "../components/apps/renderer/AppRenderer";
 
 const menuItems = [
   {
@@ -671,7 +675,13 @@ export default function AppConsolePage(props) {
                   }));
                   setProcessors(newProcessors);
                 }}
-                appConfig={app?.data?.config || {}}
+                appConfig={{
+                  layout:
+                    app?.data?.type_slug === "web"
+                      ? defaultWorkflowLayout
+                      : defaultChatLayout,
+                  ...app?.data?.config,
+                }}
                 setAppConfig={(newConfig) =>
                   setApp((app) => ({
                     ...app,
