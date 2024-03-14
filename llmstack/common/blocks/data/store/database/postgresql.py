@@ -1,7 +1,7 @@
 from base64 import b64decode
 from enum import Enum
 from tempfile import NamedTemporaryFile
-from typing import List, Optional
+from typing import ClassVar, List, Optional
 
 import psycopg2
 
@@ -19,6 +19,7 @@ class SSLMode(str, Enum):
 
 
 class PostgresConfiguration(BaseSchema):
+    engine: ClassVar[str] = "postgresql"
     user: Optional[str]
     password: Optional[str]
     host: str = "127.0.0.1"
@@ -53,7 +54,10 @@ def _create_cert_file(configuration, key, ssl_config):
         ssl_config[key] = cert_file.name
 
 
-def _get_ssl_config(configuration: dict):
+def get_pg_ssl_config(configuration: dict):
+    if not configuration.get("use_ssl"):
+        return {}
+
     ssl_config = {"sslmode": configuration.get("sslmode", "prefer")}
 
     _create_cert_file(configuration, "sslrootcert", ssl_config)
@@ -65,7 +69,7 @@ def _get_ssl_config(configuration: dict):
 
 def get_pg_connection(configuration: dict):
     ssl_config = (
-        _get_ssl_config(
+        get_pg_ssl_config(
             configuration,
         )
         if configuration.get("use_ssl")
