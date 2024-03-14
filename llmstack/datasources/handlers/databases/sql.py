@@ -5,10 +5,14 @@ from typing import Dict, List, Optional
 from pydantic import Field
 
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
-from llmstack.common.blocks.data.store.postgres import PostgresConfiguration
-from llmstack.common.blocks.data.store.postgres.read import (
-    PostgresReader,
-    PostgresReaderInput,
+from llmstack.common.blocks.data.store.database.database_reader import (
+    DatabaseReader,
+    DatabaseReaderInput,
+)
+from llmstack.common.blocks.data.store.database.utils import (
+    DATABASES,
+    DatabaseConfiguration,
+    DatabaseEngineType,
 )
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.models import Config
@@ -22,43 +26,54 @@ from llmstack.datasources.models import DataSource
 logger = logging.getLogger(__name__)
 
 
-class PostgresConnection(_Schema):
-    host: str = Field(description="Host of the Postgres instance")
+class SQLConnection(_Schema):
+    host: str = Field(description="Host of the Database instance")
     port: int = Field(
-        description="Port number to connect to the Postgres instance",
+        description="Port number to connect to the Database instance",
     )
-    database_name: str = Field(description="Postgres database name")
-    username: str = Field(description="Postgres username")
-    password: Optional[str] = Field(description="Postgres password")
+    database_name: str = Field(description="Database name")
+    username: str = Field(description="Database username")
+    password: Optional[str] = Field(description="Database password")
 
 
-class PostgresDatabaseSchema(DataSourceSchema):
-    connection: Optional[PostgresConnection] = Field(
-        description="Postgres connection details",
+class SQLDatabaseSchema(DataSourceSchema):
+    connection: Optional[SQLConnection] = Field(
+        description="Database connection details",
     )
 
 
-class PostgresConnectionConfiguration(Config):
-    config_type = "postgres_connection"
+class SQLConnectionConfiguration(Config):
+    engine: Optional[DatabaseEngineType] = None
+    config_type: Optional[str] = None
     is_encrypted = True
-    postgres_config: Optional[Dict]
+    config: Optional[Dict]
+
+    def __init__(self, engine: DatabaseEngineType, *args, **kwargs):
+        super().__init__(**args, **kwargs)
+        self.engine = engine
+        self.config_type = f"{engine}_connection"
 
 
-class PostgresDataSource(DataSourceProcessor[PostgresDatabaseSchema]):
+class SQLDataSource(DataSourceProcessor[SQLDatabaseSchema]):
     # Initializer for the class.
     # It requires a datasource object as input, checks if it has a 'data'
     # configuration, and sets up Weaviate Database Configuration.
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
+
+        if self.datasource.type.slug not in DATABASES:
+            raise ValueError(f"Database engine {self.datasource.type.slug} not supported")
+
         if self.datasource.config and "data" in self.datasource.config:
-            config_dict = PostgresConnectionConfiguration().from_dict(
+            config_dict = SQLConnectionConfiguration(engine=self.datasource.type.slug).from_dict(
                 self.datasource.config,
                 self.datasource.profile.decrypt_value,
             )
-            self._configuration = PostgresDatabaseSchema(
-                **config_dict["postgres_config"],
+            self._configuration = SQLDatabaseSchema(
+                **config_dict["config"],
             )
-            self._reader_configuration = PostgresConfiguration(
+            self._reader_configuration = DatabaseConfiguration(
+                engine=self.database_engine,
                 user=self._configuration.connection.username,
                 password=self._configuration.connection.password,
                 host=self._configuration.connection.host,
@@ -70,35 +85,33 @@ class PostgresDataSource(DataSourceProcessor[PostgresDatabaseSchema]):
 
     @staticmethod
     def name() -> str:
-        return "Postgres"
+        return "SQL"
 
     @staticmethod
     def slug() -> str:
-        return "postgres"
+        return "sql"
 
     @staticmethod
     def description() -> str:
-        return "Connect to a Postgres database"
+        return "Connect to a SQL Database"
 
     # This static method takes a dictionary for configuration and a DataSource object as inputs.
     # Validation of these inputs is performed and a dictionary containing the
-    # Postgres Connection Configuration is returned.
+    # Database Connection Configuration is returned.
     @staticmethod
     def process_validate_config(
         config_data: dict,
         datasource: DataSource,
     ) -> dict:
-        return PostgresConnectionConfiguration(
-            postgres_config=config_data,
+        return SQLConnectionConfiguration(
+            config=config_data,
         ).to_dict(
             encrypt_fn=datasource.profile.encrypt_value,
         )
 
-    # This static method returns the provider slug for the datasource
-    # connector.
     @staticmethod
     def provider_slug() -> str:
-        return "postgres"
+        return "promptly"
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         raise NotImplementedError
@@ -110,10 +123,10 @@ class PostgresDataSource(DataSourceProcessor[PostgresDatabaseSchema]):
         raise NotImplementedError
 
     def similarity_search(self, query: str, **kwargs) -> List[dict]:
-        pg_client = PostgresReader()
+        client = DatabaseReader()
         result = (
-            pg_client.process(
-                PostgresReaderInput(
+            client.process(
+                DatabaseReaderInput(
                     sql=query,
                 ),
                 configuration=self._reader_configuration,
@@ -148,10 +161,10 @@ class PostgresDataSource(DataSourceProcessor[PostgresDatabaseSchema]):
         ]
 
     def hybrid_search(self, query: str, **kwargs) -> List[dict]:
-        pg_client = PostgresReader()
+        client = DatabaseReader()
         result = (
-            pg_client.process(
-                PostgresReaderInput(
+            client.process(
+                DatabaseReaderInput(
                     sql=query,
                 ),
                 configuration=self._reader_configuration,
