@@ -52,7 +52,7 @@ function AppEntry({ app }) {
         }}
       >
         <img
-          src={app.icon}
+          src={app.icon128}
           alt={app.name}
           style={{
             width: 50,

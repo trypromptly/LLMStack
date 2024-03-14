@@ -117,7 +117,7 @@ export default function StoreApp({ appSlug }) {
       <Grid>
         <StoreAppHeader
           name={storeApp.name}
-          icon={storeApp.icon}
+          icon={storeApp.icon512}
           username={storeApp.username}
           description={storeApp.description}
           categories={storeApp.categories}
