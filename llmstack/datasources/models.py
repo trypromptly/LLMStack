@@ -176,3 +176,54 @@ class DataSourceEntry(models.Model):
                 ).organization
             )
         return False
+
+
+def select_storage():
+    from django.core.files.storage import storages
+
+    return storages["useruploads"]
+
+
+def upload_to(instance, filename):
+    return "/".join(
+        [
+            str(instance.profile_uuid),
+            instance.path,
+            filename,
+        ]
+    )
+
+
+class UserFiles(models.Model):
+    user = models.OneToOneField(User, on_delete=models.DO_NOTHING, help_text="User this asset belongs to")
+    path = models.CharField(max_length=256, help_text="Path to the asset", null=True, blank=True)
+    file = models.FileField(
+        storage=select_storage,
+        upload_to=upload_to,
+        null=True,
+        blank=True,
+    )
+    metadata = models.JSONField(
+        default=dict,
+        help_text="Metadata for the asset",
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def profile_uuid(self):
+        return Profile.objects.get(user=self.user).uuid
+
+
+def create_from_bytes(user, file_bytes, filename, metadata=None):
+    from django.core.files.base import ContentFile
+
+    asset = UserFiles(user=user)
+    asset.file.save(
+        filename,
+        ContentFile(file_bytes),
+    )
+    asset.metadata = metadata
+    asset.save()
+    return asset
