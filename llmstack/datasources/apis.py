@@ -33,16 +33,15 @@ logger = logging.getLogger(__name__)
 
 
 class DataSourceTypeViewSet(viewsets.ModelViewSet):
-    queryset = DataSourceType.objects.all()
     serializer_class = DataSourceTypeSerializer
 
+    def get_queryset(self):
+        return DataSourceType.objects.all()
+
     def get(self, request):
-        return DRFResponse(
-            DataSourceTypeSerializer(
-                instance=self.queryset,
-                many=True,
-            ).data,
-        )
+        queryset = self.get_queryset()
+        serialzer = self.serializer_class(instance=queryset, many=True)
+        return DRFResponse(serialzer.data)
 
 
 class DataSourceEntryViewSet(viewsets.ModelViewSet):
