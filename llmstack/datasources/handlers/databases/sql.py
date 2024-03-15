@@ -26,14 +26,14 @@ from llmstack.datasources.models import DataSource
 logger = logging.getLogger(__name__)
 
 
-class PostgresConnection(_Schema):
-    host: str = Field(description="Host of the Postgres instance")
+class PostgreSQLConnection(_Schema):
+    host: str = Field(description="Host of the PostgreSQL instance")
     port: int = Field(
-        description="Port number to connect to the Postgres instance",
+        description="Port number to connect to the PostgreSQL instance",
     )
-    database_name: str = Field(description="Postgres database name")
-    username: str = Field(description="Postgres username")
-    password: Optional[str] = Field(description="Postgres password")
+    database_name: str = Field(description="PostgreSQL database name")
+    username: str = Field(description="PostgreSQL username")
+    password: Optional[str] = Field(description="PostgreSQL password")
 
 
 class MySQLConnection(_Schema):
@@ -50,7 +50,7 @@ class SQLiteConnection(_Schema):
     database_path: str = Field(description="MySQL database name")
 
 
-SQLConnection = Union[PostgresConnection, MySQLConnection, SQLiteConnection]
+SQLConnection = Union[PostgreSQLConnection, MySQLConnection, SQLiteConnection]
 
 
 class SQLDatabaseSchema(DataSourceSchema):
