@@ -1,8 +1,9 @@
 import json
 import logging
-from typing import ClassVar, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import Field
+from typing_extensions import Literal
 
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.data.store.database.database_reader import (
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class PostgreSQLConnection(_Schema):
-    engine: ClassVar[str] = DatabaseEngineType.POSTGRESQL
+    engine: Literal[DatabaseEngineType.POSTGRESQL] = DatabaseEngineType.POSTGRESQL
     host: str = Field(description="Host of the PostgreSQL instance")
     port: int = Field(
         description="Port number to connect to the PostgreSQL instance",
@@ -40,7 +41,7 @@ class PostgreSQLConnection(_Schema):
 
 
 class MySQLConnection(_Schema):
-    engine: ClassVar[str] = DatabaseEngineType.MYSQL
+    engine: Literal[DatabaseEngineType.MYSQL] = DatabaseEngineType.MYSQL
     host: str = Field(description="Host of the MySQL instance")
     port: int = Field(
         description="Port number to connect to the MySQL instance",
@@ -54,7 +55,7 @@ class MySQLConnection(_Schema):
 
 
 class SQLiteConnection(_Schema):
-    engine: ClassVar[str] = DatabaseEngineType.SQLITE
+    engine: Literal[DatabaseEngineType.SQLITE] = DatabaseEngineType.SQLITE
     database_path: str = Field(description="MySQL database name")
 
     class Config:
