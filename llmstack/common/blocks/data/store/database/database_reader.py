@@ -11,6 +11,7 @@ from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
 from llmstack.common.blocks.data.store.database.utils import (
     DatabaseConfiguration,
+    DatabaseConfigurationType,
     DatabaseOutput,
     get_database_connection,
 )
@@ -73,7 +74,7 @@ class DatabaseReader(
     def process(
         self,
         input: DatabaseReaderInput,
-        configuration: DatabaseConfiguration,
+        configuration: DatabaseConfigurationType,
     ) -> DatabaseOutput:
         connection = get_database_connection(configuration=configuration)
         try:

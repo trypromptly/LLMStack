@@ -1,12 +1,14 @@
 from base64 import b64decode
 from enum import Enum
 from tempfile import NamedTemporaryFile
-from typing import ClassVar, List, Optional
+from typing import List, Optional
 
 import psycopg2
+from typing_extensions import Literal
 
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
+from llmstack.common.blocks.data.store.database.constants import DatabaseEngineType
 
 
 class SSLMode(str, Enum):
@@ -19,7 +21,7 @@ class SSLMode(str, Enum):
 
 
 class PostgresConfiguration(BaseSchema):
-    engine: ClassVar[str] = "postgresql"
+    engine: Literal[DatabaseEngineType.POSTGRESQL] = DatabaseEngineType.POSTGRESQL
     user: Optional[str]
     password: Optional[str]
     host: str = "127.0.0.1"

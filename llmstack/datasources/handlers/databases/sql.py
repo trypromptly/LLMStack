@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List, Optional, Union
+from typing import ClassVar, Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -10,9 +10,8 @@ from llmstack.common.blocks.data.store.database.database_reader import (
     DatabaseReaderInput,
 )
 from llmstack.common.blocks.data.store.database.utils import (
-    DATABASES,
-    DatabaseConfiguration,
     DatabaseEngineType,
+    get_database_configuration_class,
 )
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.models import Config
@@ -27,27 +26,39 @@ logger = logging.getLogger(__name__)
 
 
 class PostgreSQLConnection(_Schema):
+    engine: ClassVar[str] = DatabaseEngineType.POSTGRESQL
     host: str = Field(description="Host of the PostgreSQL instance")
     port: int = Field(
         description="Port number to connect to the PostgreSQL instance",
     )
     database_name: str = Field(description="PostgreSQL database name")
-    username: str = Field(description="PostgreSQL username")
-    password: Optional[str] = Field(description="PostgreSQL password")
+    username: str = Field(description="PostgreSQL database username")
+    password: Optional[str] = Field(description="PostgreSQL database password")
+
+    class Config:
+        title = "PostgreSQL"
 
 
 class MySQLConnection(_Schema):
+    engine: ClassVar[str] = DatabaseEngineType.MYSQL
     host: str = Field(description="Host of the MySQL instance")
     port: int = Field(
         description="Port number to connect to the MySQL instance",
     )
     database_name: str = Field(description="MySQL database name")
-    username: str = Field(description="MySQL username")
-    password: Optional[str] = Field(description="MySQL password")
+    username: str = Field(description="MySQL database username")
+    password: Optional[str] = Field(description="MySQL database password")
+
+    class Config:
+        title = "MySQL"
 
 
 class SQLiteConnection(_Schema):
+    engine: ClassVar[str] = DatabaseEngineType.SQLITE
     database_path: str = Field(description="MySQL database name")
+
+    class Config:
+        title = "SQLite"
 
 
 SQLConnection = Union[PostgreSQLConnection, MySQLConnection, SQLiteConnection]
@@ -55,20 +66,15 @@ SQLConnection = Union[PostgreSQLConnection, MySQLConnection, SQLiteConnection]
 
 class SQLDatabaseSchema(DataSourceSchema):
     connection: Optional[SQLConnection] = Field(
-        description="Database connection details",
+        title="Database",
+        description="Database details",
     )
 
 
 class SQLConnectionConfiguration(Config):
-    engine: Optional[DatabaseEngineType] = None
-    config_type: Optional[str] = None
+    config_type: Optional[str] = "sql_connection"
     is_encrypted = True
     config: Optional[Dict]
-
-    def __init__(self, engine: DatabaseEngineType, *args, **kwargs):
-        super().__init__(**args, **kwargs)
-        self.engine = engine
-        self.config_type = f"{engine}_connection"
 
 
 class SQLDataSource(DataSourceProcessor[SQLDatabaseSchema]):
@@ -78,25 +84,26 @@ class SQLDataSource(DataSourceProcessor[SQLDatabaseSchema]):
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
 
-        if self.datasource.type.slug not in DATABASES:
-            raise ValueError(f"Database engine {self.datasource.type.slug} not supported")
-
         if self.datasource.config and "data" in self.datasource.config:
-            config_dict = SQLConnectionConfiguration(engine=self.datasource.type.slug).from_dict(
+            config_dict = SQLConnectionConfiguration().from_dict(
                 self.datasource.config,
                 self.datasource.profile.decrypt_value,
             )
+
             self._configuration = SQLDatabaseSchema(
                 **config_dict["config"],
             )
-            if self.datasource.type.slug != DatabaseEngineType.SQLITE:
-                self._reader_configuration = DatabaseConfiguration(
-                    engine=self.datasource.type.slug,
+
+            database_configuration_class = get_database_configuration_class(self._configuration.connection.engine)
+
+            if self._configuration.connection.engine == DatabaseEngineType.SQLITE:
+                self._reader_configuration = database_configuration_class(
+                    engine=self._configuration.connection.engine,
                     dbpath=self._configuration.connection.database_path,
                 )
             else:
-                self._reader_configuration = DatabaseConfiguration(
-                    engine=self.datasource.type.slug,
+                self._reader_configuration = database_configuration_class(
+                    engine=self._configuration.connection.engine,
                     user=self._configuration.connection.username,
                     password=self._configuration.connection.password,
                     host=self._configuration.connection.host,

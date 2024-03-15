@@ -1,8 +1,11 @@
 from enum import Enum
-from typing import ClassVar, List, Optional
+from typing import List, Optional
+
+from typing_extensions import Literal
 
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
+from llmstack.common.blocks.data.store.database.constants import DatabaseEngineType
 
 try:
     import MySQLdb
@@ -21,7 +24,7 @@ class SSLMode(str, Enum):
 
 
 class MySQLConfiguration(BaseSchema):
-    engine: ClassVar[str] = "mysql"
+    engine: Literal[DatabaseEngineType.MYSQL] = DatabaseEngineType.MYSQL
     user: Optional[str]
     password: Optional[str]
     host: str = "127.0.0.1"

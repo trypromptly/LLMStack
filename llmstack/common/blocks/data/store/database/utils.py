@@ -1,10 +1,10 @@
-from enum import StrEnum
-from typing import List
+from typing import List, TypeVar
 
 import sqlalchemy
 
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
+from llmstack.common.blocks.data.store.database.constants import DatabaseEngineType
 from llmstack.common.blocks.data.store.database.mysql import (
     MySQLConfiguration,
     get_mysql_ssl_config,
@@ -14,13 +14,6 @@ from llmstack.common.blocks.data.store.database.postgresql import (
     get_pg_ssl_config,
 )
 from llmstack.common.blocks.data.store.database.sqlite import SQLiteConfiguration
-
-
-class DatabaseEngineType(StrEnum):
-    POSTGRESQL = "postgresql"
-    MYSQL = "mysql"
-    SQLITE = "sqlite"
-
 
 DATABASES = {
     DatabaseEngineType.POSTGRESQL: {
@@ -39,23 +32,42 @@ DATABASES = {
 
 DatabaseConfiguration = MySQLConfiguration | PostgresConfiguration | SQLiteConfiguration
 
+DatabaseConfigurationType = TypeVar("DatabaseConfigurationType", bound=DatabaseConfiguration)
+
 
 class DatabaseOutput(BaseSchema):
     documents: List[DataDocument]
 
 
+def get_database_configuration_class(engine: DatabaseEngineType) -> DatabaseConfigurationType:
+    if engine == DatabaseEngineType.POSTGRESQL:
+        return PostgresConfiguration
+    elif engine == DatabaseEngineType.MYSQL:
+        return MySQLConfiguration
+    elif engine == DatabaseEngineType.SQLITE:
+        return SQLiteConfiguration
+    else:
+        raise ValueError(f"Unsupported database engine: {engine}")
+
+
+def get_ssl_config(configuration: DatabaseConfigurationType) -> dict:
+    ssl_config = {}
+    if configuration.engine == DatabaseEngineType.POSTGRESQL:
+        ssl_config = get_pg_ssl_config(configuration.dict())
+    elif configuration.engine == DatabaseEngineType.MYSQL:
+        ssl_config = get_mysql_ssl_config(configuration.dict())
+    return ssl_config
+
+
 def get_database_connection(
-    configuration: DatabaseConfiguration,
+    configuration: DatabaseConfigurationType,
     ssl_config: dict = None,
 ) -> sqlalchemy.engine.Connection:
     if configuration.engine not in DATABASES:
-        raise ValueError(f"Unsupported database engine: {configuration.type}")
+        raise ValueError(f"Unsupported database engine: {configuration.engine}")
 
     if not ssl_config:
-        if configuration.engine == DatabaseEngineType.POSTGRESQL:
-            ssl_config = get_pg_ssl_config(configuration.dict())
-        elif configuration.engine == DatabaseEngineType.MYSQL:
-            ssl_config = get_mysql_ssl_config(configuration.dict())
+        ssl_config = get_ssl_config(configuration)
 
     database_name = configuration.dbpath if configuration.engine == DatabaseEngineType.SQLITE else configuration.dbname
 
