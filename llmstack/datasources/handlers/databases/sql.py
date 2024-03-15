@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -26,14 +26,31 @@ from llmstack.datasources.models import DataSource
 logger = logging.getLogger(__name__)
 
 
-class SQLConnection(_Schema):
-    host: str = Field(description="Host of the Database instance")
+class PostgresConnection(_Schema):
+    host: str = Field(description="Host of the Postgres instance")
     port: int = Field(
-        description="Port number to connect to the Database instance",
+        description="Port number to connect to the Postgres instance",
     )
-    database_name: str = Field(description="Database name")
-    username: str = Field(description="Database username")
-    password: Optional[str] = Field(description="Database password")
+    database_name: str = Field(description="Postgres database name")
+    username: str = Field(description="Postgres username")
+    password: Optional[str] = Field(description="Postgres password")
+
+
+class MySQLConnection(_Schema):
+    host: str = Field(description="Host of the MySQL instance")
+    port: int = Field(
+        description="Port number to connect to the MySQL instance",
+    )
+    database_name: str = Field(description="MySQL database name")
+    username: str = Field(description="MySQL username")
+    password: Optional[str] = Field(description="MySQL password")
+
+
+class SQLiteConnection(_Schema):
+    database_path: str = Field(description="MySQL database name")
+
+
+SQLConnection = Union[PostgresConnection, MySQLConnection, SQLiteConnection]
 
 
 class SQLDatabaseSchema(DataSourceSchema):
@@ -72,15 +89,21 @@ class SQLDataSource(DataSourceProcessor[SQLDatabaseSchema]):
             self._configuration = SQLDatabaseSchema(
                 **config_dict["config"],
             )
-            self._reader_configuration = DatabaseConfiguration(
-                engine=self.database_engine,
-                user=self._configuration.connection.username,
-                password=self._configuration.connection.password,
-                host=self._configuration.connection.host,
-                port=self._configuration.connection.port,
-                dbname=self._configuration.connection.database_name,
-                use_ssl=False,
-            )
+            if self.datasource.type.slug != DatabaseEngineType.SQLITE:
+                self._reader_configuration = DatabaseConfiguration(
+                    engine=self.datasource.type.slug,
+                    dbpath=self._configuration.connection.database_path,
+                )
+            else:
+                self._reader_configuration = DatabaseConfiguration(
+                    engine=self.datasource.type.slug,
+                    user=self._configuration.connection.username,
+                    password=self._configuration.connection.password,
+                    host=self._configuration.connection.host,
+                    port=self._configuration.connection.port,
+                    dbname=self._configuration.connection.database_name,
+                    use_ssl=False,
+                )
             self._source_name = self.datasource.name
 
     @staticmethod
