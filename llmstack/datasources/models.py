@@ -197,6 +197,7 @@ def upload_to(instance, filename):
 
 
 class UserFiles(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, help_text="UUID of the asset")
     user = models.OneToOneField(User, on_delete=models.DO_NOTHING, help_text="User this asset belongs to")
     path = ""
     file = models.FileField(
