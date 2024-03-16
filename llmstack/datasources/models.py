@@ -1,3 +1,4 @@
+import base64
 import logging
 import uuid
 
@@ -6,6 +7,7 @@ from django.db import models
 from django.utils.timezone import now
 
 from llmstack.base.models import Profile
+from llmstack.common.utils.utils import validate_parse_data_uri
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +198,7 @@ def upload_to(instance, filename):
 
 class UserFiles(models.Model):
     user = models.OneToOneField(User, on_delete=models.DO_NOTHING, help_text="User this asset belongs to")
-    path = models.CharField(max_length=256, help_text="Path to the asset", null=True, blank=True)
+    path = ""
     file = models.FileField(
         storage=select_storage,
         upload_to=upload_to,
@@ -211,6 +213,10 @@ class UserFiles(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __init__(self, *args, path="", **kwargs) -> None:
+        super(UserFiles, self).__init__(*args, **kwargs)
+        self.path = path
+
     @property
     def profile_uuid(self):
         return Profile.objects.get(user=self.user).uuid
@@ -224,6 +230,13 @@ def create_from_bytes(user, file_bytes, filename, metadata=None):
         filename,
         ContentFile(file_bytes),
     )
-    asset.metadata = metadata
+    bytes_size = len(file_bytes)
+    asset.metadata = {**metadata, "file_size": bytes_size}
     asset.save()
     return asset
+
+
+def create_from_data_uri(user, data_uri, metadata={}):
+    mime_type, file_name, file_data = validate_parse_data_uri(data_uri)
+    file_bytes = base64.b64decode(file_data)
+    return create_from_bytes(user, file_bytes, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name})
