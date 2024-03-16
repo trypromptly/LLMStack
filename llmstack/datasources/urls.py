@@ -8,10 +8,6 @@ urlpatterns = [
         "api/datasource_types",
         apis.DataSourceTypeViewSet.as_view({"get": "get"}),
     ),
-    path(
-        "api/datasource_types",
-        apis.DataSourceTypeViewSet.as_view({"get": "get"}),
-    ),
     # Data sources
     path(
         "api/datasources",

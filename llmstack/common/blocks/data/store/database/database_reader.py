@@ -1,50 +1,23 @@
+import collections
+import datetime
 import json
-from collections import defaultdict
-from datetime import datetime
-from uuid import UUID
+import uuid
 
+import sqlalchemy
 from psycopg2.extras import Range
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
-from llmstack.common.blocks.data.store.postgres import (
-    PostgresConfiguration,
-    PostgresOutput,
-    get_pg_connection,
+from llmstack.common.blocks.data.store.database.utils import (
+    DatabaseConfiguration,
+    DatabaseConfigurationType,
+    DatabaseOutput,
+    get_database_connection,
 )
 
 
-class PostgresReaderInput(BaseSchema):
-    sql: str
-
-
-types_map = {
-    20: "integer",
-    21: "integer",
-    23: "integer",
-    700: "float",
-    1700: "float",
-    701: "float",
-    16: "boolean",
-    1082: "date",
-    1182: "date",
-    1114: "datetime",
-    1184: "datetime",
-    1115: "datetime",
-    1185: "datetime",
-    1014: "string",
-    1015: "string",
-    1008: "string",
-    1009: "string",
-    2951: "string",
-    1043: "string",
-    1002: "string",
-    1003: "string",
-}
-
-
-class PostgreSQLJSONEncoder(json.JSONEncoder):
+class DatabaseJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, Range):
             # From: https://github.com/psycopg/psycopg2/pull/779
@@ -64,20 +37,24 @@ class PostgreSQLJSONEncoder(json.JSONEncoder):
             ]
 
             return "".join(items)
-        elif isinstance(o, UUID):
+        elif isinstance(o, uuid.UUID):
             return str(o.hex)
-        elif isinstance(o, datetime):
+        elif isinstance(o, (datetime.date, datetime.datetime)):
             return o.isoformat()
 
-        return super(PostgreSQLJSONEncoder, self).default(o)
+        return super().default(o)
 
 
-class PostgresReader(
-    ProcessorInterface[PostgresReaderInput, PostgresOutput, PostgresConfiguration],
+class DatabaseReaderInput(BaseSchema):
+    sql: str
+
+
+class DatabaseReader(
+    ProcessorInterface[DatabaseReaderInput, DatabaseOutput, DatabaseConfiguration],
 ):
     def fetch_columns(self, columns):
         column_names = set()
-        duplicates_counters = defaultdict(int)
+        duplicates_counters = collections.defaultdict(int)
         new_columns = []
 
         for col in columns:
@@ -90,35 +67,35 @@ class PostgresReader(
                 )
 
             column_names.add(column_name)
-            new_columns.append(
-                {"name": column_name, "friendly_name": column_name, "type": col[1]},
-            )
+            new_columns.append({"name": column_name, "type": col[1]})
 
         return new_columns
 
     def process(
         self,
-        input: PostgresReaderInput,
-        configuration: PostgresConfiguration,
-    ) -> PostgresOutput:
-        connection = get_pg_connection(configuration.dict())
-        cursor = connection.cursor()
+        input: DatabaseReaderInput,
+        configuration: DatabaseConfigurationType,
+    ) -> DatabaseOutput:
+        connection = get_database_connection(configuration=configuration)
         try:
-            cursor.execute(input.sql)
+            result = connection.execute(sqlalchemy.text(input.sql))
+            cursor = result.cursor
+
             if cursor.description is not None:
                 columns = self.fetch_columns(
-                    [(i[0], types_map.get(i[1], None)) for i in cursor.description],
+                    [(i[0], None) for i in cursor.description],
                 )
                 rows = [dict(zip((column["name"] for column in columns), row)) for row in cursor]
 
                 data = {"columns": columns, "rows": rows}
-                json_data = json.dumps(data, cls=PostgreSQLJSONEncoder)
+                json_data = json.dumps(data, cls=DatabaseJSONEncoder)
             else:
                 raise Exception("Query completed but it returned no data.")
         except Exception as e:
-            connection.cancel()
+            connection.close()
+            connection.engine.dispose()
             raise e
-        return PostgresOutput(
+        return DatabaseOutput(
             documents=[
                 DataDocument(
                     content=json_data,

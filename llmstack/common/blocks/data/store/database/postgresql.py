@@ -4,9 +4,11 @@ from tempfile import NamedTemporaryFile
 from typing import List, Optional
 
 import psycopg2
+from typing_extensions import Literal
 
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data import DataDocument
+from llmstack.common.blocks.data.store.database.constants import DatabaseEngineType
 
 
 class SSLMode(str, Enum):
@@ -19,6 +21,7 @@ class SSLMode(str, Enum):
 
 
 class PostgresConfiguration(BaseSchema):
+    engine: Literal[DatabaseEngineType.POSTGRESQL] = DatabaseEngineType.POSTGRESQL
     user: Optional[str]
     password: Optional[str]
     host: str = "127.0.0.1"
@@ -53,7 +56,10 @@ def _create_cert_file(configuration, key, ssl_config):
         ssl_config[key] = cert_file.name
 
 
-def _get_ssl_config(configuration: dict):
+def get_pg_ssl_config(configuration: dict):
+    if not configuration.get("use_ssl"):
+        return {}
+
     ssl_config = {"sslmode": configuration.get("sslmode", "prefer")}
 
     _create_cert_file(configuration, "sslrootcert", ssl_config)
@@ -65,7 +71,7 @@ def _get_ssl_config(configuration: dict):
 
 def get_pg_connection(configuration: dict):
     ssl_config = (
-        _get_ssl_config(
+        get_pg_ssl_config(
             configuration,
         )
         if configuration.get("use_ssl")
