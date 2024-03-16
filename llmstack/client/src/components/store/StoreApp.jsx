@@ -113,7 +113,7 @@ export default function StoreApp({ appSlug }) {
   }
 
   return (
-    <Grid container spacing={0} direction={"column"}>
+    <Grid container spacing={2} direction={"column"}>
       <Grid>
         <StoreAppHeader
           name={storeApp.name}
