@@ -129,6 +129,7 @@ drf-yaml = "^3.0.1"
 google-generativeai = "^0.3.1"
 scrapy-playwright = "^0.0.33"
 mysqlclient = "^2.2.4"
+django-ratelimit = "^4.1.0"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]

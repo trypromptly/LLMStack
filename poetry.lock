@@ -1320,6 +1320,17 @@ Django = ">=3.2"
 tests = ["tox"]
 
 [[package]]
+name = "django-ratelimit"
+version = "4.1.0"
+description = "Cache-based rate-limiting for Django."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "django-ratelimit-4.1.0.tar.gz", hash = "sha256:555943b283045b917ad59f196829530d63be2a39adb72788d985b90c81ba808b"},
+    {file = "django_ratelimit-4.1.0-py2.py3-none-any.whl", hash = "sha256:d047a31cf94d83ef1465d7543ca66c6fc16695559b5f8d814d1b51df15110b92"},
+]
+
+[[package]]
 name = "django-redis"
 version = "5.4.0"
 description = "Full featured redis cache backend for Django."
@@ -7856,4 +7867,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "0defe7f936ad04209532f761048b763c18f8f1b83bcf2da1b561c6cc37ae449b"
+content-hash = "d9855460e88ca9ea5f706bd28bc271745eda573480e66f10da686f8ce3f78673"
