@@ -208,6 +208,9 @@ STORAGES = {
             "base_url": GENERATEDFILES_URL,
         },
     },
+    "useruploads": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
 }
 
 # Default primary key field type

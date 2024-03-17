@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import DataSource, DataSourceEntry, DataSourceType
+from .models import DataSource, DataSourceEntry, DataSourceType, UserFiles
 
 
 class DataSourceEntryAdmin(admin.ModelAdmin):
@@ -15,3 +15,4 @@ class DataSourceAdmin(admin.ModelAdmin):
 admin.site.register(DataSourceEntry, DataSourceEntryAdmin)
 admin.site.register(DataSourceType, DataSourceAdmin)
 admin.site.register(DataSource)
+admin.site.register(UserFiles)
