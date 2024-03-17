@@ -52,7 +52,7 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
           <Box sx={{ mt: 1, mb: 1 }}>
             {categories &&
               categories.map((category) => (
-                <Chip label={category} size="small" />
+                <Chip label={category} size="small" key={category} />
               ))}
           </Box>
         </Box>

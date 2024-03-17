@@ -78,7 +78,11 @@ function AppEntry({ app }) {
           <Box sx={{ mt: 1, mb: 1 }}>
             {app.categories &&
               app.categories.map((category) => (
-                <Chip label={capitalize(category)} size="small" />
+                <Chip
+                  label={capitalize(category)}
+                  size="small"
+                  key={category}
+                />
               ))}
           </Box>
         </Box>
@@ -176,6 +180,7 @@ export default function Search({ appSlug }) {
           <Box>
             {appCategories.map((category) => (
               <Chip
+                key={category}
                 label={capitalize(category)}
                 size="small"
                 variant={
