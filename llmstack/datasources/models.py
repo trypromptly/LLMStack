@@ -4,6 +4,8 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from django.utils.timezone import now
 
 from llmstack.base.models import Profile
@@ -198,7 +200,7 @@ def upload_to(instance, filename):
 
 class UserFiles(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, help_text="UUID of the asset")
-    user = models.OneToOneField(User, on_delete=models.DO_NOTHING, help_text="User this asset belongs to")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, help_text="User this asset belongs to")
     path = ""
     file = models.FileField(
         storage=select_storage,
@@ -221,6 +223,12 @@ class UserFiles(models.Model):
     @property
     def profile_uuid(self):
         return Profile.objects.get(user=self.user).uuid
+
+
+@receiver(pre_delete, sender=UserFiles)
+def delete_file_on_delete(sender, instance, **kwargs):
+    if instance.file:
+        instance.file.delete(False)
 
 
 def create_from_bytes(user, file_bytes, filename, metadata=None):
