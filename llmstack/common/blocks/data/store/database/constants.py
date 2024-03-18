@@ -1,7 +1,7 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class DatabaseEngineType(StrEnum):
+class DatabaseEngineType(str, Enum):
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
     SQLITE = "sqlite"

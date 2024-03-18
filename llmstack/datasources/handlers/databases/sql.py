@@ -6,12 +6,12 @@ from pydantic import Field
 from typing_extensions import Literal
 
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
+from llmstack.common.blocks.data.store.database.constants import DatabaseEngineType
 from llmstack.common.blocks.data.store.database.database_reader import (
     DatabaseReader,
     DatabaseReaderInput,
 )
 from llmstack.common.blocks.data.store.database.utils import (
-    DatabaseEngineType,
     get_database_configuration_class,
 )
 from llmstack.common.blocks.data.store.vectorstore import Document
