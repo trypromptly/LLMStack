@@ -231,10 +231,10 @@ def delete_file_on_delete(sender, instance, **kwargs):
         instance.file.delete(False)
 
 
-def create_from_bytes(user, file_bytes, filename, metadata=None):
+def create_from_bytes(user, file_bytes, filename, metadata=None, path=""):
     from django.core.files.base import ContentFile
 
-    asset = UserFiles(user=user)
+    asset = UserFiles(user=user, path=path)
     asset.file.save(
         filename,
         ContentFile(file_bytes),
@@ -245,7 +245,9 @@ def create_from_bytes(user, file_bytes, filename, metadata=None):
     return asset
 
 
-def create_from_data_uri(user, data_uri, metadata={}):
+def create_from_data_uri(user, data_uri, metadata={}, path=""):
     mime_type, file_name, file_data = validate_parse_data_uri(data_uri)
     file_bytes = base64.b64decode(file_data)
-    return create_from_bytes(user, file_bytes, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name})
+    return create_from_bytes(
+        user, file_bytes, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name}, path=path
+    )
