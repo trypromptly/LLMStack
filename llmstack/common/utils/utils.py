@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import logging
 import re
 import time
@@ -101,6 +102,22 @@ def validate_parse_data_uri(
 
     mime_type, file_name, data = match.groups()
     return (mime_type, file_name, data)
+
+
+def generate_checksum(file_data, algorithm="sha256"):
+    """
+    Generates a checksum of file data using the specified algorithm.
+
+    Parameters:
+        file_data (bytes): The data of the file as bytes.
+        algorithm (str): The hashing algorithm to use (default is SHA-256).
+
+    Returns:
+        str: The checksum of the file data.
+    """
+    checksum = hashlib.new(algorithm)
+    checksum.update(file_data)
+    return checksum.hexdigest()
 
 
 def sanitize_dict_values(value):
