@@ -15,7 +15,7 @@ class MySQLReadTest(unittest.TestCase):
             user="root",
             password="",
             host="localhost",
-            port=5432,
+            port=3306,
             dbname="usersdb",
         )
         reader_input = DatabaseReaderInput(
