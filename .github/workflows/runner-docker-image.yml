@@ -27,14 +27,14 @@ jobs:
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
         with:
-          tool-cache: false        
+          tool-cache: false
           android: true
           dotnet: true
           haskell: true
           large-packages: true
           docker-images: true
           swap-storage: false
-    
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -42,9 +42,9 @@ jobs:
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.1.1
+        uses: sigstore/cosign-installer@v3.3.0
         with:
-          cosign-release: "v2.1.1"
+          cosign-release: "v2.2.2"
 
       # Setup QEMU for cross compilation
       - name: Set up QEMU
