@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.39.0-jammy
+FROM mcr.microsoft.com/playwright:next
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     x11vnc \
     novnc \
     redis-server \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install poetry
