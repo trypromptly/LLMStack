@@ -96,7 +96,7 @@ yarl = {version = "^1.8.2", allow-prereleases = true}
 zope-interface = {version = "^6.0", allow-prereleases = true}
 beautifulsoup4 = {version = "^4.12.2", allow-prereleases = true}
 django-jsonform = {version = "^2.17.4", allow-prereleases = true}
-playwright = "^1.39.0"
+playwright = "1.42.0"
 geoip2 = {version = "^4.7.0", allow-prereleases = true}
 weaviate-client = {version = "^3.22.1", allow-prereleases = true}
 google-auth = {version = "^2.22.0", allow-prereleases = true}

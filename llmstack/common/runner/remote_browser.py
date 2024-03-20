@@ -8,8 +8,7 @@ from concurrent import futures
 from typing import Iterator
 
 from grpc import ServicerContext
-from playwright._impl._api_types import TimeoutError
-from playwright.async_api import async_playwright
+from playwright.async_api import TimeoutError, async_playwright
 
 from llmstack.common.runner.playwright.browser import BROWSER_INIT_SCRIPT, USER_AGENTS
 from llmstack.common.runner.proto.runner_pb2 import (

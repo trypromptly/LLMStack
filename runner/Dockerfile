@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:next
+FROM mcr.microsoft.com/playwright:next-jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     novnc \
     redis-server \
     pkg-config \
+    libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install poetry
