@@ -2,20 +2,10 @@ import logging
 
 from llmstack.processors.models import RunEntry
 
-from .history import HistoryStore
-
 logger = logging.getLogger(__name__)
 
 
-def persist_history_task_internal(processors, bookkeeping_data_map):
-    if "input" not in bookkeeping_data_map or (
-        "output" not in bookkeeping_data_map and "agent" not in bookkeeping_data_map
-    ):
-        logger.error(
-            f"Could not persist history {bookkeeping_data_map} for {processors} because input or output is missing",
-        )
-        return
-
+def _process_app_run_data(processors, bookkeeping_data_map):
     input = bookkeeping_data_map["input"]["run_data"]
     output = (
         bookkeeping_data_map["agent"]["run_data"]
@@ -118,17 +108,4 @@ def persist_history_task_internal(processors, bookkeeping_data_map):
         processor_runs=processor_runs,
         platform_data=platform_data,
     )
-
-    # Persist history
-    HistoryStore.persist(
-        run_entry,
-        processor_runs=processor_runs,
-        input=input,
-    )
-
-
-def persist_history_task(processors, bookkeeping_data_map):
-    try:
-        persist_history_task_internal(processors, bookkeeping_data_map)
-    except Exception as e:
-        logger.error(f"Error persisting history: {e}")
+    return input, processor_runs, run_entry
