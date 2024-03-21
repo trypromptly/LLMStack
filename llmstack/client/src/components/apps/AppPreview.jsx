@@ -1,4 +1,3 @@
-import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { isMobileState } from "../../data/atoms";
@@ -23,9 +22,5 @@ export function AppPreview(props) {
     }
   }, [app, ws, wsUrlPrefix]);
 
-  return (
-    <Box>
-      <AppRenderer isMobile={isMobile} app={app} ws={ws} />
-    </Box>
-  );
+  return <AppRenderer isMobile={isMobile} app={app} ws={ws} />;
 }

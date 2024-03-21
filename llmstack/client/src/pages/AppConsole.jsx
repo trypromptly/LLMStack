@@ -385,7 +385,15 @@ export default function AppConsolePage(props) {
   return isLoading ? (
     <CircularProgress />
   ) : (
-    <div id="app-edit-page" style={{ margin: 10 }}>
+    <Box
+      id="app-edit-page"
+      style={{
+        padding: 5,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <AppBar
         position="sticky"
         sx={{
@@ -581,7 +589,6 @@ export default function AppConsolePage(props) {
         )}
       </AppBar>
       <Stack>
-        &nbsp;
         {false &&
           missingKeys.length > 0 &&
           !profileFlags.IS_ORGANIZATION_MEMBER && (
@@ -619,7 +626,7 @@ export default function AppConsolePage(props) {
       </Stack>
       <Grid
         container
-        sx={{ maxWidth: "1200px !important", margin: "auto" }}
+        sx={{ maxWidth: "1200px !important", margin: "auto", flex: "1 1 auto" }}
         rowSpacing={1}
         columnSpacing={{ xs: 0, sm: 1 }}
       >
@@ -646,7 +653,7 @@ export default function AppConsolePage(props) {
             />
           </Box>
         </Grid>
-        <Grid item md={9} xs={12}>
+        <Grid item md={9} xs={12} mt={3}>
           {Object.values(validationErrors).flatMap((entry) => entry.errors)
             .length > 0 && (
             <Box sx={{ marginBottom: "8px" }}>
@@ -663,7 +670,7 @@ export default function AppConsolePage(props) {
               </Alert>
             </Box>
           )}
-          <Box sx={{ alignSelf: "flex-start" }}>
+          <Box sx={{ alignSelf: "flex-start", height: "100%" }}>
             {selectedMenuItem === "editor" && (
               <AppEditor
                 processors={processors}
@@ -769,6 +776,6 @@ export default function AppConsolePage(props) {
           handleCloseCb={() => setShowStoreListingModal(false)}
         />
       )}
-    </div>
+    </Box>
   );
 }

@@ -27,7 +27,7 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
   };
 
   return (
-    <Card sx={{ marginLeft: 2, marginTop: 1, backgroundColor: "#edeff7" }}>
+    <Card sx={{ backgroundColor: "#edeff7" }}>
       <Box
         sx={{
           display: "flex",
@@ -113,8 +113,8 @@ export default function StoreApp({ appSlug }) {
   }
 
   return (
-    <Grid container spacing={2} direction={"column"}>
-      <Grid>
+    <Grid container spacing={1} direction={"column"} sx={{ height: "100%" }}>
+      <Grid sx={{ ml: 2, mt: 1 }}>
         <StoreAppHeader
           name={storeApp.name}
           icon={storeApp.icon512}
@@ -123,7 +123,7 @@ export default function StoreApp({ appSlug }) {
           categories={storeApp.categories}
         />
       </Grid>
-      <Grid>
+      <Grid sx={{ flex: 1, ml: 2 }}>
         <AppRenderer app={storeApp} ws={ws} />
       </Grid>
     </Grid>

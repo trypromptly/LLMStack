@@ -24,7 +24,7 @@ import { isLoggedInState, appRunDataState } from "../../../data/atoms";
 import { useSetRecoilState, useRecoilValue } from "recoil";
 import LoginDialog from "../../LoginDialog";
 
-export const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto"}'>
+export const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin": "10px auto"}'>
   <pa-paper style="padding: 10px;">
     <pa-grid container="true" spacing="2" style="width: 100%">
       <pa-grid item="true" xs="12">
@@ -40,12 +40,12 @@ export const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "900px", "marg
   </pa-paper>
 </pa-layout>`;
 
-export const defaultChatLayout = `<pa-layout sx='{"maxWidth": "900px", "margin": "0 auto", "padding": "10px"}'>
-    <pa-grid container="true" spacing="2" style="width: 100%">
-      <pa-grid item="true" xs="12">
-        <pa-chat-output sx='{"height": "calc(100vh - 300px)", "minHeight": "90%"}'></pa-chat-output>
+export const defaultChatLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "5px 0", "height": "100%"}'>
+    <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
+      <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
+        <pa-chat-output></pa-chat-output>
       </pa-grid>
-      <pa-grid item="true" xs="12">
+      <pa-grid item="true" xs="12" sx='{"alignSelf": "flex-end", "flex": "0 !important", "width": "100%", "padding": "0 !important"}'>
         <pa-input-form clearonsubmit="true"></pa-input-form>
       </pa-grid>
     </pa-grid>

@@ -7,7 +7,7 @@ export default function HomePage() {
   const { appSlug = "super-agent" } = useParams();
 
   return (
-    <Grid container>
+    <Grid container sx={{ height: "100%" }}>
       <Grid xs={12} md={7}>
         <StoreApp appSlug={appSlug} />
       </Grid>

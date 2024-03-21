@@ -127,7 +127,7 @@ export const PublishedAppFooter = () => {
 
 export const PublishedApp = ({ ws, app, error, isLoggedIn, isMobile }) => {
   return (
-    <Stack container spacing={2}>
+    <Stack container spacing={2} height={"100vh"}>
       <PublishedAppHeader
         appName={app.name}
         appLogo={app.logo}
@@ -137,7 +137,7 @@ export const PublishedApp = ({ ws, app, error, isLoggedIn, isMobile }) => {
         <p></p>
       </Box>
       {error && <PublishedAppError error={error} isLoggedIn={isLoggedIn} />}
-      <Box>
+      <Box sx={{ height: "100%" }}>
         <AppRenderer app={app} isMobile={isMobile} ws={ws} />
       </Box>
       {(app.has_footer ||
@@ -156,9 +156,9 @@ export const PublishedAppWebEmbed = ({
   isMobile,
 }) => {
   return (
-    <Stack container spacing={2}>
+    <Stack container spacing={2} sx={{ height: "calc(100vh - 170px)" }}>
       {error && <PublishedAppError error={error} isLoggedIn={isLoggedIn} />}
-      <Box>
+      <Box sx={{ height: "100%" }}>
         <AppRenderer app={app} isMobile={isMobile} ws={ws} />
       </Box>
       {(app.has_footer ||
@@ -284,13 +284,15 @@ export const PublishedAppChatEmbed = ({
               {app?.name}
             </span>
           </div>
-          <PublishedAppWebEmbed
-            ws={ws}
-            app={app}
-            error={error}
-            isLoggedIn={isLoggedIn}
-            isMobile={isMobile}
-          />
+          <Box sx={{ margin: 2 }}>
+            <PublishedAppWebEmbed
+              ws={ws}
+              app={app}
+              error={error}
+              isLoggedIn={isLoggedIn}
+              isMobile={isMobile}
+            />
+          </Box>
         </div>
       )}
     </>
