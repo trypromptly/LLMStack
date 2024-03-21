@@ -6,7 +6,6 @@ import {
   InputBase,
   IconButton,
   Paper,
-  Stack,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
