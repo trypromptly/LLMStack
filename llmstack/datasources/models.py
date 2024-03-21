@@ -1,15 +1,11 @@
-import base64
 import logging
 import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
 from django.utils.timezone import now
 
 from llmstack.base.models import Profile
-from llmstack.common.utils.utils import validate_parse_data_uri
 
 logger = logging.getLogger(__name__)
 
@@ -195,59 +191,4 @@ def upload_to(instance, filename):
             instance.path,
             filename,
         ]
-    )
-
-
-class UserFiles(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, help_text="UUID of the asset")
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, help_text="User this asset belongs to")
-    path = ""
-    file = models.FileField(
-        storage=select_storage,
-        upload_to=upload_to,
-        null=True,
-        blank=True,
-    )
-    metadata = models.JSONField(
-        default=dict,
-        help_text="Metadata for the asset",
-        null=True,
-        blank=True,
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __init__(self, *args, path="", **kwargs) -> None:
-        super(UserFiles, self).__init__(*args, **kwargs)
-        self.path = path
-
-    @property
-    def profile_uuid(self):
-        return Profile.objects.get(user=self.user).uuid
-
-
-@receiver(pre_delete, sender=UserFiles)
-def delete_file_on_delete(sender, instance, **kwargs):
-    if instance.file:
-        instance.file.delete(False)
-
-
-def create_from_bytes(user, file_bytes, filename, metadata=None, path=""):
-    from django.core.files.base import ContentFile
-
-    asset = UserFiles(user=user, path=path)
-    asset.file.save(
-        filename,
-        ContentFile(file_bytes),
-    )
-    bytes_size = len(file_bytes)
-    asset.metadata = {**metadata, "file_size": bytes_size}
-    asset.save()
-    return asset
-
-
-def create_from_data_uri(user, data_uri, metadata={}, path=""):
-    mime_type, file_name, file_data = validate_parse_data_uri(data_uri)
-    file_bytes = base64.b64decode(file_data)
-    return create_from_bytes(
-        user, file_bytes, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name}, path=path
     )

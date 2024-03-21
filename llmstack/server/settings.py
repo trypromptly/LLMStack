@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "llmstack.connections.apps.ConnectionsConfig",
     "llmstack.jobs.apps.JobsConfig",
     "llmstack.organizations.apps.OrganizationsConfig",
+    "llmstack.assets.apps.AssetsConfig",
     "flags",
     "allauth",
     "allauth.account",
@@ -208,7 +209,7 @@ STORAGES = {
             "base_url": GENERATEDFILES_URL,
         },
     },
-    "useruploads": {
+    "assets": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
 }
