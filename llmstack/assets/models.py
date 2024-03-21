@@ -8,7 +8,7 @@ from django.dispatch import receiver
 
 class Assets(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, help_text="UUID of the asset")
-    path = None
+    ref_id = None
     file = None
     metadata = models.JSONField(
         default=dict,
@@ -19,10 +19,10 @@ class Assets(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     @classmethod
-    def create_from_bytes(cls, file_bytes, filename, metadata=None, path=""):
+    def create_from_bytes(cls, file_bytes, filename, metadata=None, ref_id=""):
         from django.core.files.base import ContentFile
 
-        asset = cls(path=path)
+        asset = cls(ref_id=ref_id)
         asset.file.save(filename, ContentFile(file_bytes))
         bytes_size = len(file_bytes)
         asset.metadata = {**metadata, "file_size": bytes_size}
@@ -30,13 +30,13 @@ class Assets(models.Model):
         return asset
 
     @classmethod
-    def create_from_data_uri(cls, data_uri, metadata={}, path=""):
+    def create_from_data_uri(cls, data_uri, metadata={}, ref_id=""):
         from llmstack.common.utils.utils import validate_parse_data_uri
 
         mime_type, file_name, file_data = validate_parse_data_uri(data_uri)
         file_bytes = base64.b64decode(file_data)
         return cls.create_from_bytes(
-            file_bytes, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name}, path=path
+            file_bytes, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name}, ref_id=ref_id
         )
 
     class Meta:
