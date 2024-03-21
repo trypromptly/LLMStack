@@ -176,19 +176,3 @@ class DataSourceEntry(models.Model):
                 ).organization
             )
         return False
-
-
-def select_storage():
-    from django.core.files.storage import storages
-
-    return storages["useruploads"]
-
-
-def upload_to(instance, filename):
-    return "/".join(
-        [
-            str(instance.profile_uuid),
-            instance.path,
-            filename,
-        ]
-    )
