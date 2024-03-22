@@ -378,7 +378,6 @@ SITE_URL = os.getenv("SITE_URL", "https://trypromptly.com")
 INDEX_VIEW_MODULE = "llmstack.base.views"
 EMAIL_SENDER_CLASS = "llmstack.emails.sender.DefaultEmailSender"
 EMAIL_TEMPLATE_FACTORY_CLASS = "llmstack.emails.templates.factory.DefaultEmailTemplateFactory"
-HISTORY_STORE_CLASS = "llmstack.processors.history.DefaultHistoryStore"
 FLAG_SOURCES = ["llmstack.base.flags.FlagSource"]
 
 # Make sure name and slug are unique
