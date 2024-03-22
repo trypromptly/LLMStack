@@ -109,6 +109,10 @@ const AppList = ({ queryTerm }) => {
   }, [appsLoadable.contents, setAppsData, appsLoadable.state]);
 
   useEffect(() => {
+    setNextPage(null);
+  }, [queryTerm]);
+
+  useEffect(() => {
     if (loaderRef.current && appsLoadable.state === "hasValue") {
       setAppsData(appsLoadable.contents);
       const observer = new IntersectionObserver((entries) => {
@@ -181,7 +185,6 @@ export default function Search({ appSlug }) {
         sx={{ p: "2px 4px", display: "flex", alignItems: "center" }}
         onSubmit={(e) => {
           e.preventDefault();
-          // searchApps(searchTerm);
           setQueryTerm(`search?query=${searchTerm}`);
         }}
       >

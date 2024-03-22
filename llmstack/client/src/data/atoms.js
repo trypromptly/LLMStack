@@ -455,7 +455,7 @@ export const storeAppState = atomFamily({
 
 export const appsPageState = atomFamily({
   key: "appsPageState",
-  default: { apps: [], nextPage: null },
+  default: { apps: [], nextPage: null, empty: false },
 });
 
 export const fetchAppsFromStore = selectorFamily({
@@ -464,7 +464,12 @@ export const fetchAppsFromStore = selectorFamily({
     ({ queryTerm, nextPage }) =>
     async ({ get }) => {
       const currentPageData = get(appsPageState(queryTerm));
-      if (nextPage === currentPageData.nextPage) {
+      if (
+        (nextPage && nextPage === currentPageData.nextPage) ||
+        (!nextPage &&
+          currentPageData.apps.length === 0 &&
+          !currentPageData.empty)
+      ) {
         try {
           const response = await axios().get(
             nextPage?.replaceAll("http://localhost:8000", "") ||
@@ -474,6 +479,7 @@ export const fetchAppsFromStore = selectorFamily({
           return {
             apps: [...currentPageData.apps, ...data.results],
             nextPage: data.next,
+            empty: data.results.length === 0,
           };
         } catch (error) {
           console.error(error);
