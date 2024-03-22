@@ -180,7 +180,7 @@ class HistorySerializer(serializers.ModelSerializer):
         name = ""
         path = ""
         if obj.app_uuid:
-            app = App.objects.get(uuid=obj.app_uuid)
+            app = App.objects.filter(uuid=obj.app_uuid).first()
             if not app:
                 return {"name": "Deleted App", "path": "/"}
             name = app.name
@@ -188,7 +188,7 @@ class HistorySerializer(serializers.ModelSerializer):
         elif obj.app_store_uuid:
             from promptly_app_store.models import AppStoreApp
 
-            app = AppStoreApp.objects.get(uuid=obj.app_store_uuid)
+            app = AppStoreApp.objects.first(uuid=obj.app_store_uuid).first()
             if not app:
                 return {"name": "Deleted App", "path": "/"}
             name = app.name
