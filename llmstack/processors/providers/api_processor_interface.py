@@ -167,7 +167,7 @@ class ApiProcessorInterface(
 
     # Used to track usage data
     def usage_data(self) -> dict:
-        return {"credits": 1}
+        return {"credits": 1000}
 
     def is_output_cacheable(self) -> bool:
         return True
