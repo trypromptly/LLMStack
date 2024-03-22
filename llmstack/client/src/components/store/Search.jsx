@@ -13,7 +13,7 @@ import capitalize from "lodash/capitalize";
 import { useRecoilValue, useRecoilState, useRecoilValueLoadable } from "recoil";
 import {
   appsPageState,
-  storeCategoriesSlugState,
+  storeCategoriesListState,
   fetchAppsFromStore,
 } from "../../data/atoms";
 
@@ -158,20 +158,20 @@ export default function Search({ appSlug }) {
       ? `categories/recommended/${appSlug}/apps`
       : "categories/featured/apps",
   );
-  const defaultCategories = useRecoilValue(storeCategoriesSlugState);
-  const [appCategories, setAppCategories] = useState(defaultCategories);
+  const categoriesList = useRecoilValue(storeCategoriesListState);
+  const [appCategories, setAppCategories] = useState(categoriesList);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (categoryFilter && searchTerm === "") {
-      setAppCategories(defaultCategories);
+      setAppCategories(categoriesList);
       setQueryTerm(
         categoryFilter.toLowerCase().startsWith("recommended")
           ? `categories/recommended/${appSlug}/apps`
           : `categories/${categoryFilter.toLowerCase()}/apps`,
       );
     }
-  }, [defaultCategories, searchTerm, categoryFilter, appSlug]);
+  }, [categoriesList, searchTerm, categoryFilter, appSlug]);
 
   return (
     <Box
@@ -210,13 +210,13 @@ export default function Search({ appSlug }) {
       <Box sx={{ textAlign: "left", mt: 1 }}>
         {appCategories.map((category) => (
           <Chip
-            key={category}
-            label={capitalize(category)}
+            key={category.slug}
+            label={category.name}
             size="small"
             variant={
-              categoryFilter.toLowerCase() === category.toLowerCase() ||
+              categoryFilter === category.slug ||
               (categoryFilter.startsWith("recommended") &&
-                category.toLowerCase().startsWith("recommended"))
+                category.slug === "recommended")
                 ? "filled"
                 : "outlined"
             }
@@ -224,16 +224,16 @@ export default function Search({ appSlug }) {
               cursor: "pointer",
               m: 0.5,
               border:
-                categoryFilter.toLowerCase() === category.toLowerCase()
+                categoryFilter.toLowerCase() === category.slug
                   ? "1px solid #b0b0b0"
                   : "1px solid #e0e0e0",
             }}
             onClick={() => {
-              setCategoryFilter(category);
+              setCategoryFilter(category.slug);
               setQueryTerm(
-                category.toLowerCase().startsWith("recommended")
+                category.slug === "recommended"
                   ? `categories/recommended/${appSlug}/apps`
-                  : `categories/${category.toLowerCase()}/apps`,
+                  : `categories/${category.slug}/apps`,
               );
             }}
           />

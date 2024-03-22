@@ -507,6 +507,32 @@ export const storeCategoriesState = atom({
   },
 });
 
+export const storeCategoriesListState = selector({
+  key: "storeCategoriesListState",
+  get: async ({ get }) => {
+    const categories = await get(storeCategoriesState)();
+
+    return [...categories.special, ...categories.fixed];
+  },
+});
+
+export const storeFixedCategoriesListState = selector({
+  key: "storeFixedCategoriesListState",
+  get: async ({ get }) => {
+    const categories = await get(storeCategoriesState)();
+
+    return categories.fixed;
+  },
+});
+
+export const storeSpecialCategoriesListState = selector({
+  key: "storeSpecialCategoriesListState",
+  get: async ({ get }) => {
+    const categories = await get(storeCategoriesState)();
+    return categories.special;
+  },
+});
+
 export const storeCategoriesSlugState = selector({
   key: "storeCategoriesSlugState",
   get: async ({ get }) => {

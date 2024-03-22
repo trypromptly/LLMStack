@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Box, Button, Card, Chip, Collapse, Typography } from "@mui/material";
 import {
   KeyboardDoubleArrowDownOutlined,
@@ -9,7 +9,7 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { useRecoilValue } from "recoil";
 import { AppRenderer } from "../apps/renderer/AppRenderer";
 import { Ws } from "../../data/ws";
-import { storeAppState } from "../../data/atoms";
+import { storeAppState, storeCategoriesListState } from "../../data/atoms";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 
 const AppIcon = styled("img")({
@@ -21,10 +21,18 @@ const AppIcon = styled("img")({
 
 function StoreAppHeader({ name, icon, username, description, categories }) {
   const [expanded, setExpanded] = useState(false);
+  const storeCategories = useRecoilValue(storeCategoriesListState);
 
   const handleExpand = () => {
     setExpanded(!expanded);
   };
+
+  const findCategory = useCallback(
+    (slug) => {
+      return storeCategories.find((x) => x.slug === slug);
+    },
+    [storeCategories],
+  );
 
   return (
     <Card sx={{ backgroundColor: "#edeff7" }}>
@@ -52,7 +60,11 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
           <Box sx={{ mt: 1, mb: 1 }}>
             {categories &&
               categories.map((category) => (
-                <Chip label={category} size="small" key={category} />
+                <Chip
+                  label={findCategory(category)?.name || category}
+                  size="small"
+                  key={category}
+                />
               ))}
           </Box>
         </Box>
