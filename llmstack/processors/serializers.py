@@ -175,8 +175,6 @@ class HistorySerializer(serializers.ModelSerializer):
         return representation
 
     def get_app_detail(self, obj):
-        from promptly_app_store.models import AppStoreApp
-
         from llmstack.apps.models import App
 
         name = ""
@@ -188,6 +186,8 @@ class HistorySerializer(serializers.ModelSerializer):
             name = app.name
             path = f"/apps/{obj.app_uuid}"
         elif obj.app_store_uuid:
+            from promptly_app_store.models import AppStoreApp
+
             app = AppStoreApp.objects.get(uuid=obj.app_store_uuid)
             if not app:
                 return {"name": "Deleted App", "path": "/"}
