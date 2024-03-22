@@ -259,7 +259,9 @@ def main():
     # Django manage.py command setup
     manage_py_command = subparsers.add_parser("manage.py")
     manage_py_command.add_argument(
-        "manage_py_subcommand", help="Type 'manage.py <subcommand>' for a specific subcommand."
+        "manage_py_subcommand",
+        help="Type 'manage.py <subcommand>' for a specific subcommand.",
+        nargs=argparse.REMAINDER,
     )
 
     # Load environment variables from config under [llmstack] section
