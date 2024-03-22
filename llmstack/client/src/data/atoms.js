@@ -1,4 +1,4 @@
-import { atom, atomFamily, selector } from "recoil";
+import { atom, atomFamily, selector, selectorFamily } from "recoil";
 import { axios } from "./axios";
 
 const apiProvidersFetchSelector = selector({
@@ -453,20 +453,40 @@ export const storeAppState = atomFamily({
   },
 });
 
-export const appsByStoreCategoryState = atomFamily({
-  key: "appsByStoreCategoryState",
-  default: async (category) => {
-    if (!category) {
-      return [];
-    }
+export const appsPageState = atomFamily({
+  key: "appsPageState",
+  default: { apps: [], nextPage: null },
+});
 
-    try {
-      const apps = await axios().get(`/api/store/categories/${category}/apps`);
-      return apps.data?.results;
-    } catch (error) {
-      return [];
-    }
-  },
+export const fetchAppsFromStore = selectorFamily({
+  key: "fetchAppsFromStore",
+  get:
+    ({ queryTerm, nextPage }) =>
+    async ({ get }) => {
+      const currentPageData = get(appsPageState(queryTerm));
+      if (nextPage === currentPageData.nextPage) {
+        try {
+          const response = await axios().get(
+            nextPage?.replaceAll("http://localhost:8000", "") ||
+              `/api/store/${queryTerm}`,
+          );
+          const data = response.data;
+          return {
+            apps: [...currentPageData.apps, ...data.results],
+            nextPage: data.next,
+          };
+        } catch (error) {
+          console.error(error);
+          return currentPageData;
+        }
+      }
+      return currentPageData;
+    },
+  set:
+    ({ query }) =>
+    ({ set }, newValue) => {
+      set(appsPageState(query), newValue);
+    },
 });
 
 export const storeCategoriesState = atom({
