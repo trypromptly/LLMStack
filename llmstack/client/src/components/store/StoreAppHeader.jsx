@@ -13,14 +13,23 @@ const AppIcon = styled("img")({
   width: 80,
   height: 80,
   margin: "1em 0.5em",
-  borderRadius: 2,
+  borderRadius: 8,
+});
+
+const AppIconSmall = styled("img")({
+  width: 35,
+  height: 35,
+  margin: "0.5em 0.2em 0.5em 0.5em",
+  borderRadius: 4,
 });
 
 function StoreAppHeader({ name, icon, username, description, categories }) {
+  const [expanded, setExpanded] = useState(true);
   const [expandedDescription, setExpandedDescription] = useState(false);
   const storeCategories = useRecoilValue(storeCategoriesListState);
 
-  const handleExpand = () => {
+  const handleExpand = (e) => {
+    e.stopPropagation();
     setExpandedDescription(!expandedDescription);
   };
 
@@ -32,48 +41,76 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
   );
 
   return (
-    <Card sx={{ backgroundColor: "#edeff7" }}>
+    <Card
+      sx={{ backgroundColor: "#edeff7", cursor: "pointer" }}
+      onClick={() => setExpanded(!expanded)}
+    >
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           textAlign: "left",
           pl: 1,
-          pb: 1,
         }}
       >
-        <AppIcon src={icon} alt={name} />
-        <Box sx={{ padding: 2 }}>
-          <Typography
-            component="div"
-            color="text.primary"
-            sx={{ fontSize: 24, fontWeight: 600 }}
-          >
-            {name}
-          </Typography>
-          <Typography color="text.secondary">
-            by <b>{username}</b>
-          </Typography>
-          <Box sx={{ mt: 1, mb: 1 }}>
-            {categories &&
-              categories.map((category) => (
-                <Chip
-                  label={findCategory(category)?.name || category}
-                  size="small"
-                  key={category}
-                />
-              ))}
+        {!expanded && (
+          <Box sx={{ display: "flex", pt: 1 }}>
+            <AppIconSmall src={icon} alt={name} />
+            <Box sx={{ padding: 2, alignSelf: "center" }}>
+              <Typography
+                component="div"
+                color="text.primary"
+                sx={{ fontSize: 22, fontWeight: 600 }}
+              >
+                {name}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
+        )}
+        {expanded && (
+          <Box sx={{ display: "flex" }}>
+            <AppIcon src={icon} alt={name} />
+            <Box sx={{ padding: 2 }}>
+              <Typography
+                component="div"
+                color="text.primary"
+                sx={{ fontSize: 24, fontWeight: 600 }}
+              >
+                {name}
+              </Typography>
+              <Typography color="text.secondary">
+                by <b>{username}</b>
+              </Typography>
+              <Box sx={{ mt: 1, mb: 1 }}>
+                {categories &&
+                  categories.map((category) => (
+                    <Chip
+                      label={findCategory(category)?.name || category}
+                      size="small"
+                      key={category}
+                    />
+                  ))}
+              </Box>
+            </Box>
+          </Box>
+        )}
       </Box>
       <Box sx={{ textAlign: "left", ml: 2, mb: 2 }}>
-        <Collapse in={expandedDescription} timeout="auto" unmountOnExit>
+        <Collapse
+          in={expanded && expandedDescription}
+          timeout="auto"
+          unmountOnExit
+        >
           <LayoutRenderer>{description}</LayoutRenderer>
         </Collapse>
-        <Collapse in={!expandedDescription} timeout="auto" unmountOnExit>
+        <Collapse
+          in={expanded && !expandedDescription}
+          timeout="auto"
+          unmountOnExit
+        >
           <Typography>{description.substring(0, 200)}</Typography>
         </Collapse>
-        {description.length > 200 && (
+        {expanded && description.length > 200 && (
           <Button
             onClick={handleExpand}
             size="small"

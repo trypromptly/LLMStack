@@ -33,7 +33,7 @@ export default function StoreApp({ appSlug }) {
       <Grid sx={{ ml: 2, mt: 1 }}>
         <StoreAppHeader
           name={storeApp.name}
-          icon={storeApp.icon512}
+          icon={storeApp.icon128}
           username={storeApp.username}
           description={storeApp.description}
           categories={storeApp.categories}
