@@ -12,7 +12,7 @@
   background-color: #f3f3f3;
   line-height: 1.7em;
   border-radius: 8px;
-  max-width: 75%;
+  max-width: 85%;
   color: #222;
   animation: revealWords 2s steps(100);
   display: flex;
