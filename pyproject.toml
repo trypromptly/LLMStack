@@ -80,7 +80,7 @@ sqlalchemy = {version = "^1.4.46", allow-prereleases = true}
 sqlparse = {version = "^0.4.3", allow-prereleases = true}
 tenacity = {version = "^8.2.2", allow-prereleases = true}
 typer = {version = "^0.7.0", allow-prereleases = true}
-typing-inspect = {version = "^0.8.0", allow-prereleases = true}
+typing-inspect = {version = "^0.9.0", allow-prereleases = true}
 typing-extensions = {version = "^4.5.0", allow-prereleases = true}
 twisted = {version = "^22.10.0", allow-prereleases = true}
 txaio = {version = "^23.1.1", allow-prereleases = true}
@@ -102,7 +102,7 @@ weaviate-client = {version = "^3.22.1", allow-prereleases = true}
 google-auth = {version = "^2.22.0", allow-prereleases = true}
 pynacl = {version = "^1.5.0", allow-prereleases = true}
 scrapy = "^2.11.0"
-unstructured = {extras = ["all-docs"], version = "^0.10.30"}
+unstructured = {version = "0.12.6", python=">=3.10,<3.12"}
 spacy = {version = "^3.6.0", allow-prereleases = true}
 striprtf = {version = "^0.0.22", allow-prereleases = true}
 tiktoken = {version = "^0.4.0", allow-prereleases = true}
@@ -141,7 +141,7 @@ pre-commit = "^3.6.0"
 optional = false 
 
 [tool.poetry.group.server.dependencies]
-django = "5.0"
+django = {version = "5.0", python = ">=3.10,<3.12" }
 django-allauth = {version = "^0.61.1", allow-prereleases = true}
 django-environ = {version = "^0.10.0", allow-prereleases = true}
 django-picklefield = {version = "^3.1", allow-prereleases = true}
