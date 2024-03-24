@@ -1,14 +1,29 @@
 import { Button, Paper, Stack, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { organizationState, profileFlagsState } from "../data/atoms";
 import SubscriptionUpdateModal from "./SubscriptionUpdateModal";
+import { axios } from "../data/axios";
 
 function Subscription(props) {
   const [subscriptionUpdateModalOpen, setSubscriptionUpdateModalOpen] =
     useState(false);
   const profileFlags = useRecoilValue(profileFlagsState);
   const organization = useRecoilValue(organizationState);
+  const [creditsAvailable, setCreditsAvailable] = useState(0);
+
+  useEffect(() => {
+    axios()
+      .get("/api/profiles/me/credits")
+      .then((response) => {
+        if (response.status === 200) {
+          setCreditsAvailable(response.data.available_credits / 1000);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
 
   return (
     <Stack sx={{ margin: "0 10px 60px 10px" }}>
@@ -19,6 +34,9 @@ function Subscription(props) {
           sx={{ marginBottom: "8px" }}
         >
           Subscription
+          <span style={{ float: "right", fontWeight: 400, fontSize: "16px" }}>
+            Remaining Credits: <b>{creditsAvailable}</b>
+          </span>
         </Typography>
         <Stack>
           <Paper>

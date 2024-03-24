@@ -10,7 +10,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { LoadingButton } from "@mui/lab";
 import kebabCase from "lodash/kebabCase";
 import { useRecoilValue } from "recoil";
-import { storeCategoriesSlugState } from "../../data/atoms";
+import { storeFixedCategoriesListState } from "../../data/atoms";
 import validator from "@rjsf/validator-ajv8";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { axios } from "../../data/axios";
@@ -84,7 +84,9 @@ const appStoreListingUiSchema = (readOnlySlug) => {
 export default function StoreListingModal({ app, open, handleCloseCb }) {
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
-  const categories = useRecoilValue(storeCategoriesSlugState);
+  const categories = useRecoilValue(storeFixedCategoriesListState).map(
+    (x) => x.slug,
+  );
 
   useEffect(() => {
     if (app?.store_uuid) {

@@ -1,4 +1,4 @@
-import { atom, atomFamily, selector } from "recoil";
+import { atom, atomFamily, selector, selectorFamily } from "recoil";
 import { axios } from "./axios";
 
 const apiProvidersFetchSelector = selector({
@@ -453,20 +453,46 @@ export const storeAppState = atomFamily({
   },
 });
 
-export const appsByStoreCategoryState = atomFamily({
-  key: "appsByStoreCategoryState",
-  default: async (category) => {
-    if (!category) {
-      return [];
-    }
+export const appsPageState = atomFamily({
+  key: "appsPageState",
+  default: { apps: [], nextPage: null, empty: false },
+});
 
-    try {
-      const apps = await axios().get(`/api/store/categories/${category}/apps`);
-      return apps.data?.results;
-    } catch (error) {
-      return [];
-    }
-  },
+export const fetchAppsFromStore = selectorFamily({
+  key: "fetchAppsFromStore",
+  get:
+    ({ queryTerm, nextPage }) =>
+    async ({ get }) => {
+      const currentPageData = get(appsPageState(queryTerm));
+      if (
+        (nextPage && nextPage === currentPageData.nextPage) ||
+        (!nextPage &&
+          currentPageData.apps.length === 0 &&
+          !currentPageData.empty)
+      ) {
+        try {
+          const response = await axios().get(
+            nextPage?.replaceAll("http://localhost:8000", "") ||
+              `/api/store/${queryTerm}`,
+          );
+          const data = response.data;
+          return {
+            apps: [...currentPageData.apps, ...data.results],
+            nextPage: data.next,
+            empty: data.results.length === 0,
+          };
+        } catch (error) {
+          console.error(error);
+          return currentPageData;
+        }
+      }
+      return currentPageData;
+    },
+  set:
+    ({ query }) =>
+    ({ set }, newValue) => {
+      set(appsPageState(query), newValue);
+    },
 });
 
 export const storeCategoriesState = atom({
@@ -478,6 +504,32 @@ export const storeCategoriesState = atom({
     } catch (error) {
       return [];
     }
+  },
+});
+
+export const storeCategoriesListState = selector({
+  key: "storeCategoriesListState",
+  get: async ({ get }) => {
+    const categories = await get(storeCategoriesState)();
+
+    return [...categories.special, ...categories.fixed];
+  },
+});
+
+export const storeFixedCategoriesListState = selector({
+  key: "storeFixedCategoriesListState",
+  get: async ({ get }) => {
+    const categories = await get(storeCategoriesState)();
+
+    return categories.fixed;
+  },
+});
+
+export const storeSpecialCategoriesListState = selector({
+  key: "storeSpecialCategoriesListState",
+  get: async ({ get }) => {
+    const categories = await get(storeCategoriesState)();
+    return categories.special;
   },
 });
 

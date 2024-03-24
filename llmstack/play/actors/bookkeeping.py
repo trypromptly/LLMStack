@@ -2,10 +2,9 @@ import logging
 from typing import Any
 
 from llmstack.apps.app_session_utils import save_app_session_data
-from llmstack.jobs.adhoc import HistoryPersistenceJob
+from llmstack.events.apis import EventsViewSet
 from llmstack.play.actor import Actor
 from llmstack.play.output_stream import Message, MessageType
-from llmstack.processors.tasks import persist_history_task
 
 logger = logging.getLogger(__name__)
 
@@ -81,16 +80,13 @@ class BookKeepingActor(Actor):
             ):
                 logger.info("Not persisting history since disable_history is set to True")
                 return super().on_stop()
-
-            HistoryPersistenceJob.create(
-                func=persist_history_task,
-                args=[
-                    list(
-                        self._processor_configs.keys(),
-                    ),
-                    self._bookkeeping_data_map,
-                ],
-            ).add_to_queue()
+            EventsViewSet().create(
+                "app.run.finished",
+                {
+                    "processors": list(self._processor_configs.keys()),
+                    "bookkeeping_data_map": self._bookkeeping_data_map,
+                },
+            )
         except Exception as e:
             logger.error(f"Error adding history persistence job: {e}")
         return super().on_stop()
