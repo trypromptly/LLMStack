@@ -137,6 +137,7 @@ unstructured-inference = "^0.7.23"
 unstructured-pytesseract = "^0.3.12"
 pikepdf = "^8.11.0"
 pypdf = "^4.0.1"
+python-docx = "^1.1.0"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
