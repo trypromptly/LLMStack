@@ -8079,4 +8079,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "2a78c8573429bce21310f63dfe7f6d2434d0d2bad8472d13770c1dad2ed04967"
+content-hash = "fe7b68bcd05386bdc406419ed371f46f09178c3738f02c31570e3a13e296c8f7"

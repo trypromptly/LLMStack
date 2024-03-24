@@ -103,6 +103,7 @@ google-auth = {version = "^2.22.0", allow-prereleases = true}
 pynacl = {version = "^1.5.0", allow-prereleases = true}
 scrapy = "^2.11.0"
 unstructured = {version = "0.12.6", python=">=3.10,<3.12"}
+scipy = {version = "1.12.0", python=">=3.10,<3.12"}
 spacy = {version = "^3.6.0", allow-prereleases = true}
 striprtf = {version = "^0.0.22", allow-prereleases = true}
 tiktoken = {version = "^0.4.0", allow-prereleases = true}
@@ -132,10 +133,10 @@ mysqlclient = "^2.2.4"
 django-ratelimit = "^4.1.0"
 pillow-heif = "^0.15.0"
 opencv-python = "^4.9.0.80"
-unstructured-inference = "^0.7.25"
+unstructured-inference = "^0.7.23"
 unstructured-pytesseract = "^0.3.12"
-pikepdf = "^8.14.0"
-pypdf = "^4.1.0"
+pikepdf = "^8.11.0"
+pypdf = "^4.0.1"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
