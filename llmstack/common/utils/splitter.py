@@ -223,7 +223,12 @@ class HtmlSplitter(TextSplitter):
 class UnstructuredTextSplitter(TextSplitter):
     """Interface for splitting unstructured text into structured data."""
 
-    def __init__(self, chunking_stragy: str = "by_title", chunk_size: int = 4000, length_function: Any = len):
+    def __init__(
+        self,
+        chunking_stragy: str = "by_title",  # supported 'basic' or 'by_title'
+        chunk_size: int = 4000,
+        length_function: Any = len,
+    ):
         self._chunking_strategy = chunking_stragy
         super().__init__(chunk_size, chunk_overlap=0, length_function=length_function)
 
@@ -245,7 +250,11 @@ class UnstructuredDocumentSplitter(TextSplitter):
     """Interface for splitting unstructured text into structured data."""
 
     def __init__(
-        self, file_name: str, chunking_strategy: str = "by_title", chunk_size: int = 4000, length_function: Any = len
+        self,
+        file_name: str,
+        chunking_strategy: str = "by_title",  # supported 'basic' or 'by_title'
+        chunk_size: int = 4000,
+        length_function: Any = len,
     ):
         self._file_name = file_name
         self._chunking_strategy = chunking_strategy
