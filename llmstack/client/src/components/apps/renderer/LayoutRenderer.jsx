@@ -75,6 +75,7 @@ const AppMessageToolbar = ({ message }) => {
 
 const PromptlyAppInputForm = memo(
   ({ workflow, runApp, submitButtonOptions, sx, clearOnSubmit = false }) => {
+    const formRef = useRef(null);
     const appRunData = useRecoilValue(appRunDataState);
     const { schema, uiSchema } = getJSONSchemaFromInputFields(
       appRunData?.inputFields,
@@ -97,6 +98,7 @@ const PromptlyAppInputForm = memo(
         <ThemedJsonForm
           disableAdvanced={true}
           schema={schema}
+          formRef={formRef}
           uiSchema={{
             ...uiSchema,
             "ui:submitButtonOptions": {
@@ -198,19 +200,40 @@ const ErrorMessage = memo(
   },
 );
 
+const getMultiInputFieldValues = (content) => {
+  const files = content.files?.map((file) => file.name).join(", ") + "\n\n";
+  return content?.files?.length > 0
+    ? files + (content.text || "")
+    : content.text || "";
+};
+
 const UserMessage = memo(
   ({ message, inputFields }) => {
     const getContentFromMessage = useCallback((messageContent, inputFields) => {
       try {
         return Object.keys(messageContent).length === 1
           ? Object.keys(messageContent)
-              .map((key) => messageContent[key])
+              .map((key) => {
+                const inputField = inputFields?.find(
+                  (input_field) => input_field.name === key,
+                );
+
+                if (inputField.type === "multi") {
+                  return getMultiInputFieldValues(messageContent[key]);
+                }
+                return messageContent[key];
+              })
               .join("\n\n")
           : Object.keys(messageContent)
               .map((key) => {
                 const inputField = inputFields?.find(
                   (input_field) => input_field.name === key,
                 );
+
+                if (inputField.type === "multi") {
+                  return getMultiInputFieldValues(messageContent[key]);
+                }
+
                 return `**${key}**: ${
                   inputField &&
                   (inputField.type === "file" ||

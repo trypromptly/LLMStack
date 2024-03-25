@@ -28,6 +28,7 @@ import SecretTextField from "./form/SecretTextField";
 import WebpageURLExtractorWidget from "./form/WebpageURLExtractorWidget";
 import VoiceRecorderWidget from "./form/VoiceRecorderWidget";
 import MuiCustomSelect from "./MuiCustomSelect";
+import MultiInputField from "./form/MultiInputField";
 
 function CustomGdriveFileWidget(props) {
   return <GdriveFileSelector {...props} />;
@@ -326,6 +327,11 @@ const ThemedJsonForm = ({
           ? CustomObjectFieldTemplateWithoutAdvanced
           : CustomObjectFieldTemplateWithAdvanced,
         ...templates,
+      }}
+      fields={{
+        multi: (fieldProps) => (
+          <MultiInputField {...fieldProps} formRef={props.formRef} />
+        ),
       }}
       widgets={{
         ...{

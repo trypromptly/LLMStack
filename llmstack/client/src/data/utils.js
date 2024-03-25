@@ -144,6 +144,16 @@ export function getJSONSchemaFromInputFields(inputFields) {
           uiSchema[field.name]["ui:options"] = field["ui:options"];
         }
       }
+
+      if (field.type === "multi") {
+        uiSchema[field.name] = {
+          "ui:field": "multi",
+        };
+        schema.properties[field.name].type = "object";
+        schema.properties[field.name].placeholder =
+          field.placeholder || field.description || "";
+        schema.properties[field.name].allowFiles = field.allowFiles || false;
+      }
     });
 
   uiSchema["ui:order"] = order;

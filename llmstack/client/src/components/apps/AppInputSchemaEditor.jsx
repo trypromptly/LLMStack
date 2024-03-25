@@ -23,6 +23,7 @@ const dataTypes = [
   "file",
   "select",
   "voice",
+  "multi",
 ];
 
 export function AppInputSchemaEditor({
