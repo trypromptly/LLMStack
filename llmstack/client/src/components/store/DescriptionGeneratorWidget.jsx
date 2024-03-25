@@ -24,8 +24,8 @@ export default function DescriptionGeneratorWidget(props) {
   const appPublishedUuid = schema?.appPublishedUuid;
 
   useEffect(() => {
-    setValue(props.value);
-  }, [props.value]);
+    props.onChange(value);
+  }, [value, props]);
 
   const generateDescription = (prompt) => {
     if (!prompt) {
@@ -82,7 +82,7 @@ export default function DescriptionGeneratorWidget(props) {
           setShowGenerator(false);
         }}
         onChange={(event) => {
-          onChange(event.target.value);
+          setValue(event.target.value);
           event.preventDefault();
         }}
         disabled={generating}
