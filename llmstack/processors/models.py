@@ -340,6 +340,8 @@ class RunEntry(models.Model):
     owner = models.ForeignKey(
         User,
         on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
         help_text="Owner of the app or endpoint",
     )
     session_key = models.CharField(
