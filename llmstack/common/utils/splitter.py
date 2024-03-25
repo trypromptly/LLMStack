@@ -7,6 +7,8 @@ from typing import Any, Callable, Iterable, List, Optional
 
 import spacy
 import tiktoken
+from unstructured.chunking.basic import chunk_elements
+from unstructured.partition.auto import partition, partition_text
 
 logger = logging.getLogger(__name__)
 
@@ -216,3 +218,57 @@ class HtmlSplitter(TextSplitter):
         soup = BeautifulSoup(text, "html.parser")
         html_chunks = self._split_html(soup)
         return self._merge_chunks(html_chunks, separator="")
+
+
+class UnstructuredTextSplitter(TextSplitter):
+    """Interface for splitting unstructured text into structured data."""
+
+    def __init__(
+        self,
+        chunking_stragy: str = "by_title",  # supported 'basic' or 'by_title'
+        chunk_size: int = 4000,
+        length_function: Any = len,
+    ):
+        self._chunking_strategy = chunking_stragy
+        super().__init__(chunk_size, chunk_overlap=0, length_function=length_function)
+
+    def _split_text(self, text: str) -> List[str]:
+        elements = partition_text(
+            text=text,
+            chunking_strategy=self._chunking_strategy,
+            skip_infer_table_types="[]",  # don't forget to include apostrophe around the square bracket
+        )
+        chunks = chunk_elements(elements, max_characters=self._chunk_size)
+        return [chunk.text for chunk in chunks]
+
+    def split_text(self, text: str) -> List[str]:
+        chunks = self._split_text(text)
+        return self._merge_chunks(chunks, separator="")
+
+
+class UnstructuredDocumentSplitter(TextSplitter):
+    """Interface for splitting unstructured text into structured data."""
+
+    def __init__(
+        self,
+        file_name: str,
+        chunking_strategy: str = "by_title",  # supported 'basic' or 'by_title'
+        chunk_size: int = 4000,
+        length_function: Any = len,
+    ):
+        self._file_name = file_name
+        self._chunking_strategy = chunking_strategy
+        super().__init__(chunk_size, chunk_overlap=0, length_function=length_function)
+
+    def _split_text(self) -> List[str]:
+        elements = partition(
+            filename=self._file_name,
+            chunking_strategy=self._chunking_strategy,
+            skip_infer_table_types="[]",  # don't forget to include apostrophe around the square bracket
+        )
+        chunks = chunk_elements(elements, max_characters=self._chunk_size)
+        return [chunk.text for chunk in chunks]
+
+    def split_text(self) -> List[str]:
+        chunks = self._split_text()
+        return self._merge_chunks(chunks, separator="")

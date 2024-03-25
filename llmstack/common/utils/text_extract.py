@@ -80,16 +80,17 @@ def extract_text_elements(
     data,
     file_name,
     charset="utf-8",
+    chunking_strategy="basic",  # supported 'basic' or 'by_title'
     extra_params: Optional[ExtraParams] = None,
 ) -> List[Element]:
     data_fp = BytesIO(data)
     elements = []
     if mime_type == "application/pdf":
-        elements = partition_pdf(file=data_fp)
+        elements = partition_pdf(file=data_fp, chunking_strategy=chunking_strategy)
     elif mime_type == "application/rtf" or mime_type == "text/rtf":
-        elements = partition_text(text=rtf_to_text(data.decode(charset)))
+        elements = partition_text(text=rtf_to_text(data.decode(charset)), chunking_strategy=chunking_strategy)
     elif mime_type == "text/plain":
-        elements = partition_text(text=data.decode(charset))
+        elements = partition_text(text=data.decode(charset), chunking_strategy=chunking_strategy)
     elif mime_type == "application/json":
         elements = [
             Text(
@@ -105,13 +106,13 @@ def extract_text_elements(
             ),
         ]
     elif mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        elements = partition_docx(file=data_fp)
+        elements = partition_docx(file=data_fp, chunking_strategy=chunking_strategy)
     elif mime_type == "application/msword":
         raise Exception(
             "Unsupported file type .doc please convert it to .docx",
         )
     elif mime_type == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-        elements = partition_pptx(file=data_fp)
+        elements = partition_pptx(file=data_fp, chunking_strategy=chunking_strategy)
     elif mime_type == "application/vnd.ms-powerpoint":
         raise Exception(
             "Unsupported file type .ppt please convert it to .pptx",
@@ -164,11 +165,11 @@ def extract_text_elements(
             ),
         ]
     elif mime_type == "text/html":
-        elements = partition_html(file=data_fp, headers=headers)
+        elements = partition_html(file=data_fp, headers=headers, chunking_strategy=chunking_strategy)
     elif mime_type == "application/epub+zip":
-        elements = partition_epub(file=data_fp)
+        elements = partition_epub(file=data_fp, chunking_strategy=chunking_strategy)
     elif mime_type == "text/markdown":
-        elements = partition_md(text=data.decode(charset))
+        elements = partition_md(text=data.decode(charset), chunking_strategy=chunking_strategy)
     else:
         raise Exception("Unsupported file type")
 
