@@ -288,6 +288,13 @@ export function AppRenderer({ app, ws }) {
         // If the user is not logged in, show the login dialog
         if (!isLoggedIn) {
           setShowLoginDialog(true);
+
+          ReactGA.event({
+            category: "Account",
+            action: "Usage Limit Login Prompt",
+            label: app?.name,
+            transport: "beacon",
+          });
         }
       }
 
