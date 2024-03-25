@@ -172,7 +172,12 @@ const SettingPage = () => {
         });
       })
       .catch((error) => {
-        console.error("Error updating profile", error);
+        enqueueSnackbar(
+          `Failed to update profile. ${error?.response?.data?.error}`,
+          {
+            variant: "error",
+          },
+        );
       })
       .finally(() => {
         setUpdateKeys(new Set());
