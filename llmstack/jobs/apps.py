@@ -1,5 +1,9 @@
+import logging
+
 from django.apps import AppConfig
 from django.db.models.functions import Now
+
+logger = logging.getLogger(__name__)
 
 
 class JobsConfig(AppConfig):
@@ -40,5 +44,5 @@ class JobsConfig(AppConfig):
     def reschedule_jobs(self, jobs):
         for job in jobs:
             if job.is_scheduled() is False:
-                print("Scheduling job: {}".format(job))
+                logger.info("Scheduling job: {}".format(job))
                 # job.save()
