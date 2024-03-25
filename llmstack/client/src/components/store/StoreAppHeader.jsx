@@ -6,7 +6,7 @@ import {
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 import { useRecoilValue } from "recoil";
-import { storeCategoriesListState } from "../../data/atoms";
+import { storeCategoriesListState, isMobileState } from "../../data/atoms";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 
 const AppIcon = styled("img")({
@@ -24,7 +24,8 @@ const AppIconSmall = styled("img")({
 });
 
 function StoreAppHeader({ name, icon, username, description, categories }) {
-  const [expanded, setExpanded] = useState(true);
+  const isMobile = useRecoilValue(isMobileState);
+  const [expanded, setExpanded] = useState(!isMobile);
   const [expandedDescription, setExpandedDescription] = useState(false);
   const storeCategories = useRecoilValue(storeCategoriesListState);
 
