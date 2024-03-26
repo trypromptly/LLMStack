@@ -94,10 +94,24 @@ class AgentActor(Actor):
         else:
             self._chat_history_limit = 0
 
+        # Get and hydrate user_message_template with self._input
+        user_message_template = self._config.get(
+            "user_message",
+            "{{task}}",
+        )
+
+        try:
+            user_message = Template(user_message_template).render(
+                **self._input,
+            )
+        except Exception as e:
+            logger.error(f"Error rendering user message template: {e}")
+            user_message = user_message_template
+
         self._agent_messages.append(
             {
                 "role": "user",
-                "content": self._input.get("task", "Hello"),
+                "content": user_message,
             },
         )
 

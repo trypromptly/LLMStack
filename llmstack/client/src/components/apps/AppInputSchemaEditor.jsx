@@ -30,6 +30,7 @@ export function AppInputSchemaEditor({
   fields,
   setFields,
   readOnly = false,
+  setErrors,
   ...props
 }) {
   React.useEffect(() => {
@@ -87,8 +88,8 @@ export function AppInputSchemaEditor({
         }
       }
     }
-    props.setErrors(newErrors);
-  }, [fields, props]);
+    setErrors(newErrors);
+  }, [fields, setErrors]);
 
   const addField = () => {
     setFields([

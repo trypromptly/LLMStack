@@ -16,6 +16,8 @@ import ThemedJsonForm from "../ThemedJsonForm";
 import "./AppEditor.css";
 import { AppInputSchemaEditor } from "./AppInputSchemaEditor";
 import { AppStepCard } from "./AppStepCard";
+import { TextFieldWithVars } from "./TextFieldWithVars";
+import { getJSONSchemaFromInputFields } from "../../data/utils";
 
 export function AppConfigEditor({
   appType,
@@ -30,6 +32,7 @@ export function AppConfigEditor({
   const [errors, setErrors] = useState([]);
   const [setValidationErrorsForId, clearValidationErrorsForId] =
     useValidationErrorsForAppComponents("appConfig");
+  const inputSchema = getJSONSchemaFromInputFields(inputFields);
 
   useEffect(() => {
     if (!isAgent) {
@@ -91,7 +94,7 @@ export function AppConfigEditor({
           <AccordionDetails>
             <AppInputSchemaEditor
               fields={
-                isAgent
+                !inputFields && isAgent
                   ? [
                       {
                         name: "task",
@@ -104,7 +107,6 @@ export function AppConfigEditor({
                   : inputFields
               }
               setFields={setInputFields}
-              readOnly={isAgent}
               setErrors={setErrors}
             />
           </AccordionDetails>
@@ -136,6 +138,21 @@ export function AppConfigEditor({
               formData={config}
               onChange={({ formData }) => {
                 setConfig(formData);
+              }}
+              widgets={{
+                textwithvars: (props) => (
+                  <TextFieldWithVars
+                    {...props}
+                    schemas={[
+                      {
+                        id: "",
+                        items: inputSchema?.schema,
+                        label: "Input",
+                        pillPrefix: "[1] Input /",
+                      },
+                    ]}
+                  />
+                ),
               }}
             />
           </AccordionDetails>

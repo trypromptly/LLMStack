@@ -325,18 +325,7 @@ export default function AppConsolePage(props) {
         config: app?.data?.config,
         app_type: app?.type?.id,
         type_slug: app?.type?.slug,
-        input_fields:
-          app?.type?.slug === "agent"
-            ? [
-                {
-                  name: "task",
-                  title: "Task",
-                  description: "What do you want the agent to perform?",
-                  type: "string",
-                  required: true,
-                },
-              ]
-            : appInputFields,
+        input_fields: appInputFields,
         output_template:
           app?.type?.slug === "agent"
             ? { markdown: "{{agent.content}}" }

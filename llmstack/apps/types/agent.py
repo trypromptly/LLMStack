@@ -26,6 +26,11 @@ class AgentConfigSchema(BaseSchema):
         default=AgentModel.GPT_3_5_LATEST,
         description="The model to use for the agent.",
     )
+    user_message: Optional[str] = Field(
+        title="User Message",
+        description="The user message to use with the Agent. This is the message that the user provides to the agent in the input.",
+        widget="textwithvars",
+    )
     system_message: str = Field(
         title="System Message",
         default="You are a helpful assistant that uses provided tools to perform actions.",
