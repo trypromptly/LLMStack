@@ -645,7 +645,10 @@ const PromptlyAppChatOutput = memo(
                   onClick={() =>
                     appRunData?.inputFields?.length > 0 &&
                     runApp(appRunData?.sessionId, {
-                      [appRunData?.inputFields[0].name]: message,
+                      [appRunData?.inputFields[0].name]:
+                        appRunData?.inputFields[0].type === "multi"
+                          ? { text: message }
+                          : message,
                     })
                   }
                 />
