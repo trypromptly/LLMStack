@@ -72,6 +72,9 @@ class SQLDatabaseSchema(DataSourceSchema):
         widget="connection",
         advanced_parameter=False,
         description="Use your authenticated connection to the database",
+        filters={
+            "base_connection_type": ConnectionType.CREDENTIALS,
+        },
     )
 
 

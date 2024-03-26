@@ -7,7 +7,19 @@ import { connectionsState } from "../../data/atoms";
 import AddConnectionModal from "./AddConnectionModal";
 
 function ConnectionSelector(props) {
-  const connections = useRecoilValue(connectionsState);
+  const connectionFilters = props.schema?.filters || {};
+  const connectionsFromState = useRecoilValue(connectionsState);
+  const connections = connectionsFromState.filter((connection) => {
+    let include = true;
+    for (const [key, value] of Object.entries(connectionFilters)) {
+      if (connection[key] !== value) {
+        include = false;
+        break;
+      }
+    }
+    return include;
+  });
+
   const [showAddConnectionModal, setShowAddConnectionModal] = useState(false);
 
   return (
