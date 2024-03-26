@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react";
 import ReactGA from "react-ga4";
+import { useLocation } from "react-router-dom";
 import { stitchObjects } from "../../../data/utils";
 import LayoutRenderer from "./LayoutRenderer";
 import {
@@ -53,6 +54,7 @@ export const defaultChatLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin"
 
 export function AppRenderer({ app, ws }) {
   const appSessionId = useRef(null);
+  const location = useLocation();
   const [layout, setLayout] = useState("");
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const templateEngine = useMemo(() => new Liquid(), []);
@@ -146,64 +148,6 @@ export function AppRenderer({ app, ws }) {
       }
     });
   };
-
-  useEffect(() => {
-    if (app?.data?.config?.layout) {
-      setLayout(app?.data?.config?.layout);
-    } else {
-      setLayout(
-        app?.data?.type_slug === "web"
-          ? defaultWorkflowLayout
-          : defaultChatLayout,
-      );
-    }
-  }, [app?.data?.config?.layout, app?.data?.type_slug]);
-
-  useEffect(() => {
-    if (app?.data?.config?.welcome_message) {
-      const welcomeMessage = new AppMessage(
-        "welcome",
-        app?.data?.config?.welcome_message,
-      );
-      messagesRef.current.add(welcomeMessage);
-    }
-
-    setAppRunData((prevState) => ({
-      ...prevState,
-      isStreaming: false,
-      isRunning: false,
-      errors: null,
-      inputFields: app?.data?.input_fields,
-      appIntroText: app.data?.config?.input_template?.replaceAll(
-        "<a href",
-        "<a target='_blank' href",
-      ),
-      messages: messagesRef.current.get(),
-      processors: app?.data?.processors || [],
-      assistantImage: app?.data?.config?.assistant_image,
-      suggestedMessages: app?.data?.config?.suggested_messages || [],
-    }));
-
-    return () => {
-      setAppRunData({});
-      chunkedOutput.current = {};
-    };
-  });
-
-  useEffect(() => {
-    if (
-      ws &&
-      app?.data?.config?.layout &&
-      !appSessionId.current &&
-      app?.data?.config?.init_on_load
-    ) {
-      ws.send(
-        JSON.stringify({
-          event: "init",
-        }),
-      );
-    }
-  }, [ws, app?.data?.config?.layout, app?.data?.config?.init_on_load]);
 
   if (ws) {
     ws.setOnMessage((evt) => {
@@ -394,11 +338,13 @@ export function AppRenderer({ app, ws }) {
       isRunning: false,
     }));
 
-    ws.send(
-      JSON.stringify({
-        event: "stop",
-      }),
-    );
+    if (ws) {
+      ws.send(
+        JSON.stringify({
+          event: "stop",
+        }),
+      );
+    }
   }, [ws, setAppRunData]);
 
   const runProcessor = useCallback(
@@ -433,6 +379,72 @@ export function AppRenderer({ app, ws }) {
     },
     [app?.uuid],
   );
+
+  useEffect(() => {
+    // Cancel app run and reset appRunData if location changes
+    return () => {
+      cancelAppRun();
+      setAppRunData({});
+    };
+  }, [location, cancelAppRun, setAppRunData]);
+
+  useEffect(() => {
+    if (app?.data?.config?.layout) {
+      setLayout(app?.data?.config?.layout);
+    } else {
+      setLayout(
+        app?.data?.type_slug === "web"
+          ? defaultWorkflowLayout
+          : defaultChatLayout,
+      );
+    }
+  }, [app?.data?.config?.layout, app?.data?.type_slug]);
+
+  useEffect(() => {
+    if (app?.data?.config?.welcome_message) {
+      const welcomeMessage = new AppMessage(
+        "welcome",
+        app?.data?.config?.welcome_message,
+      );
+      messagesRef.current.add(welcomeMessage);
+    }
+
+    setAppRunData((prevState) => ({
+      ...prevState,
+      isStreaming: false,
+      isRunning: false,
+      errors: null,
+      inputFields: app?.data?.input_fields,
+      appIntroText: app.data?.config?.input_template?.replaceAll(
+        "<a href",
+        "<a target='_blank' href",
+      ),
+      messages: messagesRef.current.get(),
+      processors: app?.data?.processors || [],
+      assistantImage: app?.data?.config?.assistant_image,
+      suggestedMessages: app?.data?.config?.suggested_messages || [],
+    }));
+
+    return () => {
+      setAppRunData({});
+      chunkedOutput.current = {};
+    };
+  });
+
+  useEffect(() => {
+    if (
+      ws &&
+      app?.data?.config?.layout &&
+      !appSessionId.current &&
+      app?.data?.config?.init_on_load
+    ) {
+      ws.send(
+        JSON.stringify({
+          event: "init",
+        }),
+      );
+    }
+  }, [ws, app?.data?.config?.layout, app?.data?.config?.init_on_load]);
 
   const MemoizedLayoutRenderer = memo(
     LayoutRenderer,
