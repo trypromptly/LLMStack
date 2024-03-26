@@ -150,6 +150,9 @@ class AgentActor(Actor):
                 "agent_messages": self._agent_messages,
             },
             timestamp=time.time(),
+            usage_data={
+                "credits": 100 * len(self._agent_messages),
+            },
         )
         self._output_stream.bookkeep(bookkeeping_data)
         async_to_sync(self._output_stream.write_raw)(
@@ -179,6 +182,9 @@ class AgentActor(Actor):
                     "agent_messages": self._agent_messages,
                 },
                 timestamp=time.time(),
+                usage_data={
+                    "credits": 100 * len(self._agent_messages),
+                },
             )
             self._output_stream.bookkeep(bookkeeping_data)
 
@@ -319,6 +325,9 @@ class AgentActor(Actor):
                         "agent_messages": self._agent_messages,
                     },
                     timestamp=time.time(),
+                    usage_data={
+                        "credits": 100 * len(self._agent_messages),
+                    },
                 )
                 # Persist session data
                 self._agent_app_session_data["data"] = {

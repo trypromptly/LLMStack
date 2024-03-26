@@ -108,7 +108,7 @@ def _process_app_run_data(processors, bookkeeping_data_map):
         processor_runs=processor_runs,
         platform_data=platform_data,
     )
-    return input, processor_runs, run_entry
+    return input, processor_runs, run_entry, bookkeeping_data_map["agent"] if "agent" in bookkeeping_data_map else None
 
 
 def persist_app_run_history(event_data):
@@ -122,5 +122,5 @@ def persist_app_run_history(event_data):
         )
         return
 
-    input, processor_runs, run_entry = _process_app_run_data(processors, bookkeeping_data_map)
+    input, processor_runs, run_entry, agent_run = _process_app_run_data(processors, bookkeeping_data_map)
     run_entry.save()
