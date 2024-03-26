@@ -3,10 +3,13 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.timezone import now
 
 from llmstack.assets.models import Assets
 from llmstack.base.models import Profile
+from llmstack.events.apis import EventsViewSet
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +166,11 @@ class DataSourceEntry(models.Model):
         help_text="Time when the data source file was updated",
     )
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.old_size = self.size
+        self.owner_id = self.datasource.owner
+
     def user_can_read(self, user) -> bool:
         if self.datasource.visibility == DataSourceVisibility.PRIVATE:
             return self.datasource.owner == user
@@ -177,6 +185,38 @@ class DataSourceEntry(models.Model):
                 ).organization
             )
         return False
+
+
+@receiver(post_save, sender=DataSourceEntry)
+def register_data_change(sender, instance: DataSourceEntry, **kwargs):
+    if instance.old_size != instance.size:
+        # The datasource entry size has changed
+        EventsViewSet().create(
+            topic="datasource_entries.update",
+            event_data={
+                "operation": "save",
+                "uuid": str(instance.uuid),
+                "old_size": instance.old_size,
+                "size": instance.size,
+                "owner": instance.owner_id,
+            },
+        )
+
+
+@receiver(post_delete, sender=DataSourceEntry)
+def register_data_delete(sender, instance: DataSourceEntry, **kwargs):
+    if instance.old_size != 0:
+        # The datasource entry size has changed
+        EventsViewSet().create(
+            topic="datasource_entries.update",
+            event_data={
+                "operation": "delete",
+                "uuid": str(instance.uuid),
+                "old_size": instance.size,
+                "size": 0,
+                "owner": instance.owner_id,
+            },
+        )
 
 
 def select_storage():
