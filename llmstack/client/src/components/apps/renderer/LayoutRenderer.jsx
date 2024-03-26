@@ -634,7 +634,14 @@ const PromptlyAppChatOutput = memo(
                 <Chip
                   key={index}
                   label={message}
-                  sx={{ margin: "5px 2px" }}
+                  sx={{
+                    margin: "5px 2px",
+                    backgroundColor: "white",
+                    border: "solid 1px #ccc",
+                    ":hover": {
+                      backgroundColor: "#f0f0f0",
+                    },
+                  }}
                   onClick={() =>
                     appRunData?.inputFields?.length > 0 &&
                     runApp(appRunData?.sessionId, {
