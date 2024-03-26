@@ -108,8 +108,24 @@ const PromptlyAppInputForm = memo(
           }}
           submitBtn={
             noSubmitRender ? null : (
-              <Button variant="contained" type="submit">
-                Submit
+              <Button
+                variant="contained"
+                type="submit"
+                onClick={() =>
+                  appRunData?.isRunning ? console.log("Cancel") : null
+                }
+                sx={{
+                  background: appRunData?.isRunning ? "grey" : "primary",
+                }}
+                startIcon={
+                  appRunData?.isRunning ? (
+                    <CircularProgress size={16} sx={{ color: "white" }} />
+                  ) : null
+                }
+              >
+                {appRunData?.isRunning
+                  ? "Cancel"
+                  : submitButtonOptions?.label || "Submit"}
               </Button>
             )
           }
