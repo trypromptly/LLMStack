@@ -117,7 +117,8 @@ export function DataSourceEntries({
           (row?.status === "READY" || row?.status === "ERROR") &&
           (row?.datasource?.type?.name.toLowerCase() === "file" ||
             row?.datasource?.type?.name.toLowerCase() === "pdf" ||
-            row?.datasource?.type?.name.toLowerCase() === "url");
+            row?.datasource?.type?.name.toLowerCase() === "url" ||
+            row?.datasource?.type?.name.toLowerCase() === "gdrive_file");
         return (
           <Box>
             <Tooltip title="View contents">
