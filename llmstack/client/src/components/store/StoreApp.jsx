@@ -39,7 +39,7 @@ export default function StoreApp({ appSlug }) {
           categories={storeApp.categories}
         />
       </Grid>
-      <Grid sx={{ flex: 1, ml: 2 }}>
+      <Grid sx={{ flex: 1, ml: 2, height: 0, overflow: "auto" }}>
         <AppRenderer app={storeApp} ws={ws} />
       </Grid>
     </Grid>
