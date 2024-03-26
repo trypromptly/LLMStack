@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.timezone import now
 
+from llmstack.assets.models import Assets
 from llmstack.base.models import Profile
 
 logger = logging.getLogger(__name__)
@@ -176,3 +177,23 @@ class DataSourceEntry(models.Model):
                 ).organization
             )
         return False
+
+
+def select_storage():
+    from django.core.files.storage import storages
+
+    return storages["assets"]
+
+
+def appstore_upload_to(instance, filename):
+    return "/".join(["datasource_entries", str(instance.ref_id), filename])
+
+
+class DataSourceEntryFiles(Assets):
+    ref_id = models.UUIDField(help_text="UUID of the datasource entry this file belongs to", blank=True, null=False)
+    file = models.FileField(
+        storage=select_storage,
+        upload_to=appstore_upload_to,
+        null=True,
+        blank=True,
+    )

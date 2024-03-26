@@ -13,6 +13,7 @@ from llmstack.apps.integration_configs import (
     TwilioIntegrationConfig,
     WebIntegrationConfig,
 )
+from llmstack.assets.models import Assets
 from llmstack.base.models import Profile
 from llmstack.common.utils.db_models import ArrayField
 from llmstack.processors.models import Endpoint
@@ -570,6 +571,26 @@ class AppSessionData(models.Model):
     last_updated_at = models.DateTimeField(
         auto_now=True,
         help_text="Time at which the app instance was last updated",
+    )
+
+
+def select_storage():
+    from django.core.files.storage import storages
+
+    return storages["assets"]
+
+
+def appstore_upload_to(instance, filename):
+    return "/".join(["app_sessions", str(instance.ref_id), filename])
+
+
+class AppSessionFiles(Assets):
+    ref_id = models.UUIDField(help_text="App session_id this file belongs to", blank=True, null=False)
+    file = models.FileField(
+        storage=select_storage,
+        upload_to=appstore_upload_to,
+        null=True,
+        blank=True,
     )
 
 
