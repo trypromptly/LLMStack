@@ -634,23 +634,39 @@ const PromptlyAppChatOutput = memo(
                 <Chip
                   key={index}
                   label={message}
-                  sx={{
-                    margin: "5px 2px",
-                    backgroundColor: "white",
-                    border: "solid 1px #ccc",
-                    ":hover": {
-                      backgroundColor: "#f0f0f0",
-                    },
-                  }}
-                  onClick={() =>
-                    appRunData?.inputFields?.length > 0 &&
-                    runApp(appRunData?.sessionId, {
-                      [appRunData?.inputFields[0].name]:
-                        appRunData?.inputFields[0].type === "multi"
-                          ? { text: message }
-                          : message,
-                    })
-                  }
+                  component={() => (
+                    <Box
+                      sx={{
+                        display: "inline-block",
+                        margin: "4px 2px 0 2px",
+                        padding: "2px 5px",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        backgroundColor: "white",
+                        border: "solid 1px #ccc",
+                        ":hover": {
+                          backgroundColor: "#f0f0f0",
+                        },
+                        "& > p": {
+                          margin: 0,
+                          padding: "5px",
+                          fontSize: "14px",
+                        },
+                      }}
+                      onClick={() =>
+                        appRunData?.inputFields?.length > 0 &&
+                        runApp(appRunData?.sessionId, {
+                          [appRunData?.inputFields[0].name]:
+                            appRunData?.inputFields[0].type === "multi"
+                              ? { text: message }
+                              : message,
+                        })
+                      }
+                    >
+                      <LayoutRenderer>{message}</LayoutRenderer>
+                    </Box>
+                  )}
                 />
               ))}
             </Grid>
