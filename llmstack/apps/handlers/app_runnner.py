@@ -346,7 +346,7 @@ class AppRunner:
                         coordinator_ref.stop()
                         raise Exception(f"Error streaming output: {e}")
 
-                return stream_output()
+                return stream_output(), coordinator_ref
 
             for output in output_iter:
                 # Iterate through output_iter to get the final output
@@ -425,7 +425,7 @@ class AppRunner:
                         coordinator_ref.stop()
                         raise Exception(f"Error streaming output: {e}")
 
-                return stream_output()
+                return stream_output(), coordinator_ref
 
             for output in output_iter:
                 # Iterate through output_iter to get the final output

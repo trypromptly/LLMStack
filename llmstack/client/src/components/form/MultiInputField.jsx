@@ -106,6 +106,11 @@ const MultiInputField = (props) => {
     setValue({});
   };
 
+  const handleCancel = () => {
+    props.onChange({});
+    props.onCancel();
+  };
+
   const handleKeyDown = (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -206,7 +211,10 @@ const MultiInputField = (props) => {
               position="end"
               sx={{ marginBottom: 5, alignSelf: "flex-end" }}
             >
-              <IconButton aria-label="send" onClick={handleSubmit}>
+              <IconButton
+                aria-label="send"
+                onClick={appRunData?.isRunning ? handleCancel : handleSubmit}
+              >
                 {appRunData?.isRunning ? <StopCircle /> : <Send />}
               </IconButton>
             </InputAdornment>

@@ -330,7 +330,11 @@ const ThemedJsonForm = ({
       }}
       fields={{
         multi: (fieldProps) => (
-          <MultiInputField {...fieldProps} formRef={props.formRef} />
+          <MultiInputField
+            {...fieldProps}
+            formRef={props.formRef}
+            onCancel={props.onCancel}
+          />
         ),
       }}
       widgets={{

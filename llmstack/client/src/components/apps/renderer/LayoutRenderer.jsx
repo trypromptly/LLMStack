@@ -74,7 +74,14 @@ const AppMessageToolbar = ({ message }) => {
 };
 
 const PromptlyAppInputForm = memo(
-  ({ workflow, runApp, submitButtonOptions, sx, clearOnSubmit = false }) => {
+  ({
+    workflow,
+    runApp,
+    cancelAppRun,
+    submitButtonOptions,
+    sx,
+    clearOnSubmit = false,
+  }) => {
     const formRef = useRef(null);
     const appRunData = useRecoilValue(appRunDataState);
     const { schema, uiSchema } = getJSONSchemaFromInputFields(
@@ -111,9 +118,12 @@ const PromptlyAppInputForm = memo(
               <Button
                 variant="contained"
                 type="submit"
-                onClick={() =>
-                  appRunData?.isRunning ? console.log("Cancel") : null
-                }
+                onClick={(e) => {
+                  if (appRunData?.isRunning) {
+                    cancelAppRun();
+                    e.preventDefault();
+                  }
+                }}
                 sx={{
                   background: appRunData?.isRunning ? "grey" : "primary",
                 }}
@@ -138,6 +148,7 @@ const PromptlyAppInputForm = memo(
               setUserFormData(formData);
             }
           }}
+          onCancel={() => cancelAppRun()}
           sx={sx}
         />
       </Box>
@@ -778,7 +789,12 @@ const parseAndRebuildDataProps = () => {
   };
 };
 
-export default function LayoutRenderer({ runApp, runProcessor, children }) {
+export default function LayoutRenderer({
+  runApp,
+  runProcessor,
+  cancelAppRun,
+  children,
+}) {
   const memoizedRemarkPlugins = useMemo(() => [remarkGfm], []);
   const memoizedRehypePlugins = useMemo(
     () => [rehypeRaw, parseAndRebuildSxProps, parseAndRebuildDataProps],
@@ -786,6 +802,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
   );
   const memoizedRunApp = useCallback(runApp, [runApp]);
   const memoizedRunProcessor = useCallback(runProcessor, [runProcessor]);
+  const memoizedCancelAppRun = useCallback(cancelAppRun, [cancelAppRun]);
   const memoizedComponents = useMemo(() => {
     return {
       "promptly-heygen-realtime-avatar": memo(
@@ -850,6 +867,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
         return (
           <PromptlyAppInputForm
             runApp={memoizedRunApp}
+            cancelAppRun={memoizedCancelAppRun}
             submitButtonOptions={props.submitbuttonoption}
             clearOnSubmit={props.clearonsubmit}
             sx={props.sx || {}}
@@ -1103,7 +1121,7 @@ export default function LayoutRenderer({ runApp, runProcessor, children }) {
         (prev, next) => isEqual(prev, next),
       ),
     };
-  }, [memoizedRunApp, memoizedRunProcessor]);
+  }, [memoizedRunApp, memoizedCancelAppRun, memoizedRunProcessor]);
 
   if (typeof children !== "string") {
     console.trace("LayoutRenderer: children must be a string", children);

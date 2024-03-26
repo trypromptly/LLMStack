@@ -388,6 +388,19 @@ export function AppRenderer({ app, ws }) {
     [ws, app, setAppRunData],
   );
 
+  const cancelAppRun = useCallback(() => {
+    setAppRunData((prevState) => ({
+      ...prevState,
+      isRunning: false,
+    }));
+
+    ws.send(
+      JSON.stringify({
+        event: "stop",
+      }),
+    );
+  }, [ws, setAppRunData]);
+
   const runProcessor = useCallback(
     async (sessionId, processorId, input, disable_history = true) => {
       // Do not allow running a processor if there is no session
@@ -427,6 +440,7 @@ export function AppRenderer({ app, ws }) {
       return (
         prevProps.runApp === nextProps.runApp &&
         prevProps.runProcessor === nextProps.runProcessor &&
+        prevProps.cancelAppRun === nextProps.cancelAppRun &&
         prevProps.children === nextProps.children
       );
     },
@@ -441,7 +455,11 @@ export function AppRenderer({ app, ws }) {
           redirectPath={window.location.pathname}
         />
       )}
-      <MemoizedLayoutRenderer runApp={runApp} runProcessor={runProcessor}>
+      <MemoizedLayoutRenderer
+        runApp={runApp}
+        runProcessor={runProcessor}
+        cancelAppRun={cancelAppRun}
+      >
         {layout}
       </MemoizedLayoutRenderer>
     </>
