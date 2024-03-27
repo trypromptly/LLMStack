@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   Box,
   Chip,
@@ -150,8 +151,9 @@ const AppList = ({ queryTerm }) => {
 };
 
 export default function Search({ appSlug }) {
+  const location = useLocation();
   const [categoryFilter, setCategoryFilter] = useState(
-    appSlug ? "recommended" : "featured",
+    appSlug && location.pathname !== "/" ? "recommended" : "featured",
   );
   const [queryTerm, setQueryTerm] = useState(
     appSlug
