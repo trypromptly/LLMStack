@@ -56,10 +56,11 @@ function ConnectionSelector(props) {
   const connectionFilters = props.schema?.filters || [];
   const connectionsFromState = useRecoilValue(connectionsState);
 
-  const connections = connectionsFromState.filter((connection) =>
-    connectionFilters.some((filter) =>
-      hasMatchingConnectionFilter(connection, filter),
-    ),
+  const connections = connectionsFromState.filter(
+    (connection) =>
+      connectionFilters.some((filter) =>
+        hasMatchingConnectionFilter(connection, filter),
+      ) || !connectionFilters.length,
   );
 
   const [showAddConnectionModal, setShowAddConnectionModal] = useState(false);
