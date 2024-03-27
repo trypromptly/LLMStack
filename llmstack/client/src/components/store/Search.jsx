@@ -24,7 +24,7 @@ const AppEntry = forwardRef(({ app }, ref) => (
       ref={ref}
       sx={{
         border: "1px solid #e0e0e0",
-        borderRadius: "4px",
+        borderRadius: 1,
         p: 1,
         m: 1,
         display: "flex",
@@ -34,7 +34,7 @@ const AppEntry = forwardRef(({ app }, ref) => (
         ":hover": {
           backgroundColor: "#edeff7",
           borderColor: "#d0d0d0",
-          borderRadius: "4px",
+          borderRadius: 1,
           boxShadow: "0 0 0 1px #d0d0d0",
         },
       }}
@@ -183,7 +183,6 @@ export default function Search({ appSlug }) {
   return (
     <Box
       ml={2}
-      mr={2}
       pt={1}
       sx={{ display: "flex", flexDirection: "column", maxHeight: "100vh" }}
     >

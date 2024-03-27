@@ -30,7 +30,7 @@ export default function StoreApp({ appSlug }) {
 
   return (
     <Grid container spacing={1} direction={"column"} sx={{ height: "100%" }}>
-      <Grid sx={{ ml: 2, mt: 1 }}>
+      <Grid>
         <StoreAppHeader
           name={storeApp.name}
           icon={storeApp.icon128}
@@ -39,7 +39,15 @@ export default function StoreApp({ appSlug }) {
           categories={storeApp.categories}
         />
       </Grid>
-      <Grid sx={{ flex: 1, ml: 2, height: 0, overflow: "auto" }}>
+      <Grid
+        sx={{
+          flex: 1,
+          padding: 4,
+          paddingBottom: 0,
+          height: 0,
+          overflow: "auto",
+        }}
+      >
         <AppRenderer app={storeApp} ws={ws} />
       </Grid>
     </Grid>
