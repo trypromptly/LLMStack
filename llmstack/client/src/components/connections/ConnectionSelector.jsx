@@ -6,19 +6,60 @@ import { useRecoilValue } from "recoil";
 import { connectionsState } from "../../data/atoms";
 import AddConnectionModal from "./AddConnectionModal";
 
-function ConnectionSelector(props) {
-  const connectionFilters = props.schema?.filters || {};
-  const connectionsFromState = useRecoilValue(connectionsState);
-  const connections = connectionsFromState.filter((connection) => {
-    let include = true;
-    for (const [key, value] of Object.entries(connectionFilters)) {
-      if (connection[key] !== value) {
-        include = false;
-        break;
-      }
+/**
+ * Check if the connection matches the given `filterString`.
+ *
+ * `filterString` is a combination of the connection attributes 'base_connection_type', 'provider_slug', and 'connection_type_slug', separated by '/'.
+ * We may skip provider_slug or connection_type_slug if they are not present in the filter string.
+ *
+ * If the filter string is empty, the connection matches.
+ * If the filter string has one part, the connection matches if the base_connection_type matches.
+ * If the filter string has two parts, the connection matches if the base_connection_type and provider_slug or connection_type_slug match.
+ * If the filter string has three parts, the connection matches if all three parts match.
+ *
+ * @param {*} connection The connection object to check.
+ * @param {*} filterString The filter string to match against.
+ * @returns {boolean} True if the connection matches the filter string, false otherwise.
+ */
+function hasMatchingConnectionFilter(connection, filterString) {
+  if (!filterString) {
+    // If the filter string is empty, return true.
+    return true;
+  }
+
+  // Split the filter string by '/' to get each part.
+  const parts = filterString.split("/");
+
+  // Check the number of parts to determine which pattern we're matching against.
+  // Then compare each part with the corresponding object attribute.
+  const isMatch = parts.every((part, index) => {
+    switch (index) {
+      case 0:
+        return part === connection.base_connection_type;
+      case 1:
+        return (
+          part === connection.provider_slug ||
+          part === connection.connection_type_slug
+        );
+      case 2:
+        return part === connection.connection_type_slug;
+      default:
+        return false;
     }
-    return include;
   });
+
+  return isMatch;
+}
+
+function ConnectionSelector(props) {
+  const connectionFilters = props.schema?.filters || [];
+  const connectionsFromState = useRecoilValue(connectionsState);
+
+  const connections = connectionsFromState.filter((connection) =>
+    connectionFilters.some((filter) =>
+      hasMatchingConnectionFilter(connection, filter),
+    ),
+  );
 
   const [showAddConnectionModal, setShowAddConnectionModal] = useState(false);
 
