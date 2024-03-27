@@ -54,6 +54,22 @@ class SlackAppRunner(AppRunner):
         self._slack_user = {}
         self._slack_user_email = ""
 
+        # the request type should be either url_verification or event_callback
+        self._request_type = self.request.data.get("type")
+        self._is_valid_request_type = self._request_type in ["url_verification", "event_callback"]
+        self._is_valid_app_token = self.request.data.get("token") == self.slack_config.get("verification_token")
+        self._is_valid_app_id = self.request.data.get("api_app_id") == self.slack_config.get("app_id")
+
+        self._request_slash_command = self.request.data.get("command")
+        self._request_slash_command_text = self.request.data.get("text")
+        self._configured_slash_command = self.slack_config.get("slash_command_name")
+
+        is_valid_slash_command = False
+        if self._request_slash_command and self._configured_slash_command:
+            is_valid_slash_command = self._request_slash_command == self._configured_slash_command
+
+        self._is_valid_slash_command = is_valid_slash_command
+
     def app_init(self):
         self.slack_config = (
             SlackIntegrationConfig().from_dict(
@@ -120,11 +136,10 @@ class SlackAppRunner(AppRunner):
 
     def _get_input_data(self):
         slack_request_payload = self.request.data
-
-        slack_message_type = slack_request_payload["type"]
-        if slack_message_type == "url_verification":
+        slack_request_type = slack_request_payload.get("type")
+        if slack_request_type == "url_verification":
             return {"input": {"challenge": slack_request_payload["challenge"]}}
-        elif slack_message_type == "event_callback":
+        elif slack_request_type == "event_callback":
             payload = process_slack_message_text(
                 slack_request_payload["event"]["text"],
             )
@@ -140,6 +155,31 @@ class SlackAppRunner(AppRunner):
                     "channel": slack_request_payload["event"]["channel"],
                     "text-type": slack_request_payload["event"]["type"],
                     "ts": slack_request_payload["event"]["ts"],
+                    **dict(
+                        zip(
+                            list(map(lambda x: x["name"], self.app_data["input_fields"])),
+                            [payload] * len(self.app_data["input_fields"]),
+                        ),
+                    ),
+                },
+            }
+        # If the request is a command, then the payload will be in the form of a command
+        elif slack_request_payload.get("command"):
+            payload = process_slack_message_text(
+                slack_request_payload["text"],
+            )
+            return {
+                "input": {
+                    "text": slack_request_payload["text"],
+                    "user": slack_request_payload["user_id"],
+                    "slack_user_email": self._slack_user_email,
+                    "token": slack_request_payload["token"],
+                    "team_id": slack_request_payload["team_id"],
+                    "api_app_id": slack_request_payload["api_app_id"],
+                    "team": slack_request_payload["team_id"],
+                    "channel": slack_request_payload["channel_id"],
+                    "text-type": "command",
+                    "ts": "",
                     **dict(
                         zip(
                             list(map(lambda x: x["name"], self.app_data["input_fields"])),
@@ -187,6 +227,8 @@ class SlackAppRunner(AppRunner):
         )
 
     def _is_app_accessible(self):
+        error_message = ""
+
         if (
             self.request.headers.get(
                 "X-Slack-Request-Timestamp",
@@ -194,26 +236,44 @@ class SlackAppRunner(AppRunner):
             is None
             or self.request.headers.get("X-Slack-Signature") is None
         ):
-            raise Exception("Invalid Slack request")
+            error_message = "Invalid Slack request"
 
-        request_type = self.request.data.get("type")
+        elif not self._is_valid_app_token:
+            error_message = "Invalid App Token"
 
-        # the request type should be either url_verification or event_callback
-        is_valid_request_type = request_type in ["url_verification", "event_callback"]
-        is_valid_app_token = self.request.data.get("token") == self.slack_config.get("verification_token")
-        is_valid_app_id = self.request.data.get("api_app_id") == self.slack_config.get("app_id")
+        elif not self._is_valid_app_id:
+            error_message = "Invalid App ID"
+
+        elif self._request_slash_command and not self._is_valid_slash_command:
+            error_message = f"Invalid Slack Command - `{self.request.data.get('command')}`"
+
+        elif self._request_type and not self._is_valid_request_type:
+            error_message = "Invalid Slack request type. Only url_verification and event_callback are allowed."
+
+        # elif self._request_slash_command and not self._request_slash_command_text:
+        #     error_message = f"Invalid Slash Command arguments. Command: `{self.request.data.get('command')}`. Arguments: `{self.request.data.get('text') or '-'}`"
+
+        elif self._request_type and not self._is_valid_request_type:
+            error_message = f"Invalid Slack event request type - `{self._request_type}`"
 
         # Validate that the app token, app ID and the request type are all valid.
-        if not (is_valid_app_token and is_valid_app_id and is_valid_request_type):
-            raise Exception("Invalid Slack request")
+        elif not (
+            self._is_valid_app_token
+            and self._is_valid_app_id
+            and (self._is_valid_request_type or self._is_valid_slash_command)
+        ):
+            error_message = "Invalid Slack request"
+
+        if error_message:
+            raise Exception(error_message)
 
         # URL verification is allowed without any further checks
-        if request_type == "url_verification":
+        if self._request_type == "url_verification":
             return True
 
         # Verify the request is coming from the app we expect and the event
         # type is app_mention
-        elif request_type == "event_callback":
+        elif self._request_type == "event_callback":
             event_data = self.request.data.get("event") or {}
             event_type = event_data.get("type")
             channel_type = event_data.get("channel_type")
@@ -225,7 +285,7 @@ class SlackAppRunner(AppRunner):
                 # Only allow direct messages from users and not from bots
                 if channel_type == "im" and "subtype" not in event_data and "bot_id" not in event_data:
                     return True
-            raise Exception("Invalid Slack request")
+            raise Exception("Invalid Slack event_callback request")
 
         return super()._is_app_accessible()
 
@@ -371,3 +431,57 @@ class SlackAppRunner(AppRunner):
             self._get_bookkeeping_actor_config(processor_configs),
         )
         return actor_configs
+
+    def run_app(self):
+        # Check if the app access permissions are valid
+
+        try:
+            self._is_app_accessible()
+        except Exception as e:
+            return {"message": f"{str(e)}"}
+
+        csp = self._get_csp()
+
+        template = convert_template_vars_from_legacy_format(
+            self.app_data["output_template"].get(
+                "markdown",
+                "",
+            )
+            if self.app_data and "output_template" in self.app_data
+            else self.app.output_template.get(
+                "markdown",
+                "",
+            ),
+        )
+        processor_actor_configs, processor_configs = self._get_processor_actor_configs()
+        actor_configs = self._get_actor_configs(
+            template,
+            processor_configs,
+            processor_actor_configs,
+        )
+
+        if self.app.type.slug == "agent":
+            self._start_agent(
+                self._get_input_data(),
+                self.app_session,
+                actor_configs,
+                csp,
+                template,
+                processor_configs,
+            )
+        else:
+            self._start(
+                self._get_input_data(),
+                self.app_session,
+                actor_configs,
+                csp,
+                template,
+            )
+
+        message = ""
+        if self._is_valid_slash_command:
+            message = f"Processing your command - `{self.request.data.get('command')} {self.request.data.get('text')}`"
+
+        return {
+            "message": message,
+        }
