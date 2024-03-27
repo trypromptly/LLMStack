@@ -7,6 +7,7 @@ import {
   profileFlagsState,
 } from "../data/atoms";
 import SubscriptionUpdateModal from "./SubscriptionUpdateModal";
+import { formatStorage } from "../data/utils";
 
 function Subscription(props) {
   const [subscriptionUpdateModalOpen, setSubscriptionUpdateModalOpen] =
@@ -18,6 +19,20 @@ function Subscription(props) {
   return (
     <Stack sx={{ margin: "0 10px 60px 10px" }}>
       <Stack>
+        <Typography
+          variant="h6"
+          className="section-header"
+          sx={{ marginBottom: "8px" }}
+        >
+          Storage
+          <span style={{ float: "right", fontWeight: 400, fontSize: "16px" }}>
+            Used:{" "}
+            <b>{`${Math.round(
+              profile?.credits?.used_storage / profile?.credits?.total_storage,
+            )}% of ${formatStorage(profile?.credits?.total_storage)}`}</b>
+          </span>
+        </Typography>
+        <br />
         <Typography
           variant="h6"
           className="section-header"
