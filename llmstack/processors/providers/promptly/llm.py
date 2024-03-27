@@ -133,7 +133,7 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
 
 class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, LLMProcessorConfiguration]):
     """
-    Echo processor
+    Simple LLM processor
     """
 
     @staticmethod
