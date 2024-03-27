@@ -100,6 +100,8 @@ export function getJSONSchemaFromInputFields(inputFields) {
           field.type === "text" ||
           field.type === "voice" ||
           field.type === "file" ||
+          field.type === "datasource" ||
+          field.type === "connection" ||
           field.type === "select"
             ? "string"
             : field.type,
@@ -165,6 +167,18 @@ export function getJSONSchemaFromInputFields(inputFields) {
         schema.properties[field.name].placeholder =
           field.placeholder || field.description || "";
         schema.properties[field.name].allowFiles = field.allowFiles || false;
+      }
+
+      if (field.type === "datasource") {
+        uiSchema[field.name] = {
+          "ui:widget": "datasource",
+        };
+      }
+
+      if (field.type === "connection") {
+        uiSchema[field.name] = {
+          "ui:widget": "connection",
+        };
       }
     });
 

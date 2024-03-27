@@ -5,6 +5,7 @@ import FormControl from "@mui/material/FormControl";
 import { useRecoilValue } from "recoil";
 import { connectionsState } from "../../data/atoms";
 import AddConnectionModal from "./AddConnectionModal";
+import WithLogin from "../WithLogin";
 
 /**
  * Check if the connection matches the given `filterString`.
@@ -109,13 +110,15 @@ function ConnectionSelector(props) {
       >
         <AddCircleOutlineIcon />
       </Button>
-      <AddConnectionModal
-        open={showAddConnectionModal}
-        connection={null}
-        onCancelCb={() => {
-          setShowAddConnectionModal(false);
-        }}
-      />
+      <WithLogin loginMessage="Please login to add and select a connection.">
+        <AddConnectionModal
+          open={showAddConnectionModal}
+          connection={null}
+          onCancelCb={() => {
+            setShowAddConnectionModal(false);
+          }}
+        />
+      </WithLogin>
     </FormControl>
   );
 }

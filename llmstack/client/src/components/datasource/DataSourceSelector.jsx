@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { dataSourcesState, orgDataSourcesState } from "../../data/atoms";
 import { AddDataSourceModal } from "./AddDataSourceModal";
+import WithLogin from "../WithLogin";
 
 export function DataSourceSelector(props) {
   const dataSources = useRecoilValue(dataSourcesState);
@@ -80,11 +81,13 @@ export function DataSourceSelector(props) {
       >
         <AddCircleOutlineIcon />
       </Button>
-      <AddDataSourceModal
-        open={showAddDataSourceModal}
-        handleCancelCb={() => setShowAddDataSourceModal(false)}
-        dataSourceAddedCb={(dataSource) => props.onChange([dataSource.uuid])}
-      />
+      <WithLogin loginMessage="Please login to add and select a datasource.">
+        <AddDataSourceModal
+          open={showAddDataSourceModal}
+          handleCancelCb={() => setShowAddDataSourceModal(false)}
+          dataSourceAddedCb={(dataSource) => props.onChange([dataSource.uuid])}
+        />
+      </WithLogin>
     </FormControl>
   );
 }
