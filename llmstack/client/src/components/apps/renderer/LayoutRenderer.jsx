@@ -345,7 +345,7 @@ const AppMessage = memo(
           padding: "3px 0",
         }}
       >
-        <AppAvatar assistantImage={assistantImage} />
+        {!workflow && <AppAvatar assistantImage={assistantImage} />}
         <Box
           className={
             workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
