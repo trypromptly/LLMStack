@@ -50,6 +50,9 @@ class OpenAIModel(str, Enum):
     def __str__(self):
         return self.value
 
+    def model_name(self):
+        return self.value
+
 
 class OpenAIModelConfig(BaseModel):
     provider: Literal["openai"] = "openai"
@@ -62,6 +65,9 @@ class GoogleModel(str, Enum):
     def __str__(self):
         return self.value
 
+    def model_name(self):
+        return self.value
+
 
 class GoogleModelConfig(BaseModel):
     provider: Literal["google"] = "google"
@@ -70,8 +76,22 @@ class GoogleModelConfig(BaseModel):
 
 class AnthropicModel(str, Enum):
     CLAUDE_2_1 = "claude-2.1"
+    CLAUDE_3_Opus = "claude-3-opus"
+    CLAUDE_3_Sonnet = "claude-3-sonnet"
+    CLAUDE_3_Haiku = "claude-3-haiku"
 
     def __str__(self):
+        return self.value
+
+    def model_name(self):
+        if self.value == "claude-2.1":
+            return "claude-2.1"
+        elif self.value == "claude-3-opus":
+            return "claude-3-opus-20240229"
+        elif self.value == "claude-3-sonnet":
+            return "claude-3-sonnet-20240229"
+        elif self.value == "claude-3-haiku":
+            return "claude-3-haiku-20240307"
         return self.value
 
 
@@ -113,7 +133,7 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
 
 class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, LLMProcessorConfiguration]):
     """
-    Echo processor
+    Simple LLM processor
     """
 
     @staticmethod
@@ -136,7 +156,9 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
         from llmstack.common.utils.sslr import LLM
 
         output_stream = self._output_stream
-        google_api_key, token_type = get_google_credential_from_env(self._env)
+        google_api_key, token_type = (
+            get_google_credential_from_env(self._env) if self._env.get("google_service_account_json_key") else None
+        )
 
         client = LLM(
             provider=self._config.provider_config.provider,
@@ -154,7 +176,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
         result = client.chat.completions.create(
             messages=messages,
-            model=self._config.provider_config.model.value,
+            model=self._config.provider_config.model.model_name(),
             max_tokens=self._config.max_tokens,
             stream=True,
             seed=self._config.seed,
