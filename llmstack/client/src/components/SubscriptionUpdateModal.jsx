@@ -1,5 +1,6 @@
 import { LoadingButton } from "@mui/lab";
 import {
+  Box,
   Button,
   Card,
   CardContent,
@@ -13,6 +14,8 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  Tab,
+  Tabs,
   Typography,
 } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
@@ -22,6 +25,7 @@ import { axios } from "../data/axios";
 const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
   const [subscriptionPrices, setSubscriptionPrices] = useState([]);
   const [subscription, setSubscription] = useState("");
+  const [tabValue, setTabValue] = useState(0);
   const [updateButtonLoading, setUpdateButtonLoading] = useState(false);
   const [updateButtonDisabled, setUpdateButtonDisabled] = useState(false);
   const [cancelButtonDisabled, setCancelButtonDisabled] = useState(false);
@@ -39,13 +43,53 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
       });
   }, []);
 
+  const getPriceCards = (isSubscription) =>
+    subscriptionPrices
+      .filter(
+        (price) =>
+          (isSubscription && price.recurring_interval) ||
+          (!isSubscription && !price.recurring_interval),
+      )
+      .map((subscriptionPrice) => (
+        <Card
+          component="label"
+          key={subscriptionPrice.id}
+          sx={{ width: "150px", height: "150px" }}
+        >
+          <CardHeader
+            title={subscriptionPrice.product_name}
+            subheader={<Divider />}
+            sx={{ padding: 0 }}
+          />
+          <CardContent>
+            <Stack>
+              <Typography variant="h5">
+                ${subscriptionPrice.unit_amount}
+                {isSubscription ? " / " : null}
+                {subscriptionPrice.recurring_interval}
+              </Typography>
+              <Radio
+                variant="soft"
+                value={subscriptionPrice.id}
+                onChange={(e) => {
+                  setSubscription(e.target.value);
+                }}
+                sx={{
+                  mb: 4,
+                }}
+              />
+            </Stack>
+          </CardContent>
+        </Card>
+      ));
+
   return (
     <Dialog open={open} onClose={handleCloseCb} fullWidth>
-      <DialogTitle>{"Upgrade Subscription"}</DialogTitle>
+      <DialogTitle>Manage Subscription</DialogTitle>
       <DialogContent>
         <Typography variant="body1">
-          Choose a subscription plan to upgrade to. To compare the features of
-          each plan, please visit our{" "}
+          Please pick an option that suits you best. For more details, please
+          visit our{" "}
           <a
             href="https://www.trypromptly.com/#pricing"
             target="_blank"
@@ -56,47 +100,56 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
           .
         </Typography>
         <br />
-        <FormControl>
-          <RadioGroup
-            overlay
-            name="subscriptions"
-            defaultValue=""
-            row
-            sx={{ gap: 4 }}
-          >
-            {subscriptionPrices.map((subscriptionPrice) => (
-              <Card
-                component="label"
-                key={subscriptionPrice.id}
-                sx={{ width: "150px", height: "150px" }}
-              >
-                <CardHeader
-                  title={subscriptionPrice.product_name}
-                  subheader={<Divider />}
-                  sx={{ padding: 0 }}
-                />
-                <CardContent>
-                  <Stack>
-                    <Typography variant="h5">
-                      ${subscriptionPrice.unit_amount} /{" "}
-                      {subscriptionPrice.recurring_interval}
-                    </Typography>
-                    <Radio
-                      variant="soft"
-                      value={subscriptionPrice.id}
-                      onChange={(e) => {
-                        setSubscription(e.target.value);
-                      }}
-                      sx={{
-                        mb: 4,
-                      }}
-                    />
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))}
-          </RadioGroup>
-        </FormControl>
+        <Box sx={{ display: "flex" }}>
+          <FormControl sx={{ width: "100%", flexDirection: "column" }}>
+            <RadioGroup
+              overlay
+              name="subscriptions"
+              defaultValue=""
+              row
+              sx={{ gap: 4 }}
+            >
+              <Stack spacing={2}>
+                <Tabs
+                  value={tabValue}
+                  onChange={(e, newValue) => setTabValue(newValue)}
+                >
+                  <Tab
+                    label="Buy credits"
+                    id="credits-tab"
+                    aria-controls="credits-tabpanel"
+                  />
+                  <Tab
+                    label="Subscription"
+                    id="subscription-tab"
+                    aria-controls="subscription-tabpanel"
+                  />
+                </Tabs>
+
+                {tabValue === 0 && (
+                  <Box
+                    id="credits-tabpanel"
+                    aria-labelledby="credits-tab"
+                    hidden={tabValue !== 0}
+                    sx={{ display: "flex", gap: 2 }}
+                  >
+                    {getPriceCards(false)}
+                  </Box>
+                )}
+                {tabValue === 1 && (
+                  <Box
+                    id="subscription-tabpanel"
+                    aria-labelledby="subscription-tab"
+                    hidden={tabValue !== 1}
+                    sx={{ display: "flex", gap: 2 }}
+                  >
+                    {getPriceCards(true)}
+                  </Box>
+                )}
+              </Stack>
+            </RadioGroup>
+          </FormControl>
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button
