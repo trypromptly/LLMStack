@@ -107,14 +107,24 @@ export function AddDataSourceModal({
                 })
                 .then(() => {
                   reloadDataSourceEntries();
+                  enqueueSnackbar(
+                    "Processing Data, please refresh the page in a few minutes",
+                    {
+                      variant: "success",
+                    },
+                  );
+                })
+                .catch((error) => {
+                  enqueueSnackbar(
+                    `Failed to add entry. ${error?.response?.data}`,
+                    {
+                      variant: "error",
+                    },
+                  );
+                })
+                .finally(() => {
+                  handleCancelCb();
                 });
-              handleCancelCb();
-              enqueueSnackbar(
-                "Processing Data, please refresh the page in a few minutes",
-                {
-                  variant: "success",
-                },
-              );
             } else {
               if (dataSourceName === "") {
                 setDataSourceNameError(true);

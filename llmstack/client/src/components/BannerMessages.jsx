@@ -21,6 +21,21 @@ function BannerMessages() {
     });
   }
 
+  if (profileFlags.HAS_EXCEEDED_STORAGE_QUOTA) {
+    bannerMessages.push({
+      message: (
+        <span>
+          You have exceeded the allowed storage limit for your plan. Please
+          upgrade your account to add more storage or delete some data.
+          <br />
+          To upgrade your plan, click on <b>Manage Subscription</b> in the{" "}
+          <a href="/settings">Settings</a> page.
+        </span>
+      ),
+      variant: "error",
+    });
+  }
+
   if (bannerMessages.length === 0) {
     return null;
   }

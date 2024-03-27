@@ -4,6 +4,7 @@ import uuid
 from concurrent.futures import Future
 
 from django.shortcuts import get_object_or_404
+from flags.state import flag_enabled
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 from rq.job import Job
@@ -392,6 +393,13 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             uuid=uuid.UUID(uid),
             owner=request.user,
         )
+
+        # Check if flag_enabled("has_exceeded_storage_quota") is True and deny the request
+        if flag_enabled("HAS_EXCEEDED_STORAGE_QUOTA", request=request):
+            return DRFResponse(
+                "Storage quota exceeded",
+                status=400,
+            )
 
         adhoc_job = AdhocJob(
             name=f"add_entry_{datasource.uuid}",
