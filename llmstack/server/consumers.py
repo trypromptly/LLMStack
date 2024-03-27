@@ -70,6 +70,7 @@ class AppConsumer(AsyncWebsocketConsumer):
         self.app_id = self.scope["url_route"]["kwargs"]["app_id"]
         self.preview = True if "preview" in self.scope["url_route"]["kwargs"] else False
         self._session_id = None
+        self._coordinator_ref = None
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -106,7 +107,7 @@ class AppConsumer(AsyncWebsocketConsumer):
                 if is_ratelimited_fn(request, self._respond_to_event):
                     raise Ratelimited("Rate limit reached.")
 
-                output_stream, self._coordinater_ref = await self._run_app(request_uuid=request_uuid, request=request)
+                output_stream, self._coordinator_ref = await self._run_app(request_uuid=request_uuid, request=request)
                 # Generate a uuid for the response
                 response_id = str(uuid.uuid4())
 
@@ -133,8 +134,8 @@ class AppConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({"session": {"id": self._session_id}}))
 
         if event == "stop":
-            if self._coordinater_ref:
-                self._coordinater_ref.stop()
+            if self._coordinator_ref:
+                self._coordinator_ref.stop()
 
     async def receive(self, text_data):
         loop = asyncio.get_running_loop()

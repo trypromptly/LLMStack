@@ -338,7 +338,7 @@ export function AppRenderer({ app, ws }) {
       isRunning: false,
     }));
 
-    if (ws) {
+    if (ws && ws.ws) {
       ws.send(
         JSON.stringify({
           event: "stop",
