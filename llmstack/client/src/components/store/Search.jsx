@@ -219,7 +219,7 @@ export default function Search({ appSlug }) {
           <Chip
             key={category.slug}
             label={category.name}
-            size="small"
+            size="medium"
             variant={
               categoryFilter === category.slug ||
               (categoryFilter.startsWith("recommended") &&
