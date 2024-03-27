@@ -1,7 +1,7 @@
-import { Box, createTheme, ThemeProvider } from "@mui/material";
+import { Box, createTheme, Grid, ThemeProvider } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import { TourProvider } from "@reactour/tour";
-import React, { lazy } from "react";
+import React, { Suspense, lazy } from "react";
 import { CookiesProvider } from "react-cookie";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -422,7 +422,21 @@ let routes = [
   },
   {
     path: "/app/:publishedAppId/:embed?/:chatBubble?",
-    element: <PublishedAppPage />,
+    element: (
+      <Suspense
+        fallback={
+          <Grid
+            sx={{
+              margin: "auto",
+            }}
+          >
+            <CircularProgress />
+          </Grid>
+        }
+      >
+        <PublishedAppPage />
+      </Suspense>
+    ),
     errorElement: <ErrorPage />,
   },
   {
