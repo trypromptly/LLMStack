@@ -27,9 +27,13 @@ function Subscription(props) {
           Storage
           <span style={{ float: "right", fontWeight: 400, fontSize: "16px" }}>
             Used:{" "}
-            <b>{`${Math.round(
-              profile?.credits?.used_storage / profile?.credits?.total_storage,
-            )}% of ${formatStorage(profile?.credits?.total_storage)}`}</b>
+            <b>{`${
+              Math.round(
+                (profile?.credits?.used_storage /
+                  profile?.credits?.total_storage) *
+                  10000,
+              ) / 100
+            }% of ${formatStorage(profile?.credits?.total_storage)}`}</b>
           </span>
         </Typography>
         <br />
