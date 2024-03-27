@@ -22,19 +22,14 @@ function ObjectFieldGrid(props) {
   const { AddButton } = registry.templates;
 
   return (
-    <Grid container={true} style={{ marginTop: "10px" }}>
+    <Grid container={true} sx={{ mt: 2 }} gap={1}>
       {properties.map((element, index) =>
         // Remove the <Grid> if the inner element is hidden as the <Grid>
         // itself would otherwise still take up space.
         element.hidden ? (
           element.content
         ) : (
-          <Grid
-            item={true}
-            xs={12}
-            key={index}
-            style={{ marginBottom: "10px" }}
-          >
+          <Grid item={true} xs={12} key={index}>
             {element.content}
           </Grid>
         ),

@@ -12,6 +12,7 @@
   background-color: #f3f3f3;
   line-height: 1.7em;
   border-radius: 8px;
+  border: solid 1px #d0d0d0;
   max-width: 85%;
   color: #222;
   animation: revealWords 2s steps(100);
@@ -35,8 +36,9 @@
   max-width: 75%;
   padding: 10px;
   border-radius: 8px;
-  color: #fff;
-  background-color: #244793;
+  color: #171717;
+  border: solid 1px #bbbbbb;
+  background-color: #dedede;
   align-self: flex-end;
   margin: 8px 0;
 }

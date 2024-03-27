@@ -34,7 +34,7 @@ import { getJSONSchemaFromInputFields } from "../../../data/utils";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
-import { appRunDataState } from "../../../data/atoms";
+import { appRunDataState, profileState } from "../../../data/atoms";
 import { LexicalRenderer } from "../lexical/LexicalRenderer";
 import ThemedJsonForm from "../../ThemedJsonForm";
 import loadingImage from "../../../assets/images/loading.gif";
@@ -191,9 +191,36 @@ const AppAvatar = memo(
         src={assistantImage}
         alt="Assistant"
         style={{ margin: "10px 8px" }}
-        sx={sx}
+        sx={{
+          width: 32,
+          height: 32,
+          ...sx,
+        }}
       />
     ) : null;
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
+
+const UserAvatar = memo(
+  ({ sx = {} }) => {
+    const profile = useRecoilValue(profileState);
+    return (
+      <Avatar
+        alt="User"
+        style={{ margin: "10px 8px" }}
+        sx={{
+          width: 32,
+          height: 32,
+          ...sx,
+        }}
+        src={profile?.avatar}
+      >
+        P
+      </Avatar>
+    );
   },
   (prev, next) => {
     return prev === next;
@@ -280,10 +307,22 @@ const UserMessage = memo(
     }, []);
 
     return (
-      <Box className="layout-chat_message_from_user">
-        <LayoutRenderer>
-          {getContentFromMessage(message.content, inputFields) || ""}
-        </LayoutRenderer>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row-reverse",
+          width: "100%",
+          textAlign: "right",
+          fontSize: 16,
+          padding: "3px 0",
+        }}
+      >
+        <UserAvatar />
+        <Box className="layout-chat_message_from_user">
+          <LayoutRenderer>
+            {getContentFromMessage(message.content, inputFields) || ""}
+          </LayoutRenderer>
+        </Box>
       </Box>
     );
   },
