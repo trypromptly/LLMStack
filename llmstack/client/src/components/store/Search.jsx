@@ -19,71 +19,76 @@ import {
 } from "../../data/atoms";
 
 const AppEntry = forwardRef(({ app }, ref) => (
-  <Box
-    ref={ref}
-    sx={{
-      border: "1px solid #e0e0e0",
-      borderRadius: "4px",
-      backgroundColor: "#f8f8f8",
-      p: 1,
-      m: 1,
-      display: "flex",
-      alignItems: "center",
-      cursor: "pointer",
-      textAlign: "left",
-      ":hover": {
-        backgroundColor: "#edeff7",
-        borderColor: "#d0d0d0",
-        borderRadius: "4px",
-        boxShadow: "0 0 0 1px #d0d0d0",
-      },
-    }}
-    onClick={() => {
-      window.location.href = `/a/${app.slug}`;
-    }}
-  >
+  <a href={`/a/${app.slug}`} style={{ textDecoration: "none" }}>
     <Box
+      ref={ref}
       sx={{
+        border: "1px solid #e0e0e0",
+        borderRadius: "4px",
+        p: 1,
+        m: 1,
         display: "flex",
         alignItems: "center",
+        cursor: "pointer",
         textAlign: "left",
-        pl: 1,
-        pb: 1,
+        ":hover": {
+          backgroundColor: "#edeff7",
+          borderColor: "#d0d0d0",
+          borderRadius: "4px",
+          boxShadow: "0 0 0 1px #d0d0d0",
+        },
+      }}
+      onClick={() => {
+        window.location.href = `/a/${app.slug}`;
       }}
     >
-      <img
-        src={app.icon128}
-        alt={app.name}
-        style={{
-          width: 70,
-          height: 70,
-          margin: "1em 0.5em",
-          borderRadius: "0.2em",
-          alignSelf: "start",
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          textAlign: "left",
+          pl: 1,
+          pb: 1,
         }}
-      />
-      <Box sx={{ padding: 2 }}>
-        <Typography
-          component="div"
-          color="text.primary"
-          sx={{ fontSize: 18, fontWeight: 600 }}
-        >
-          {app.name}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {app.description?.length > 200
-            ? `${app.description.substring(0, 200)}...`
-            : app.description}
-        </Typography>
-        <Box sx={{ mt: 1, mb: 1 }}>
-          {app.categories &&
-            app.categories.map((category) => (
-              <Chip label={capitalize(category)} size="small" key={category} />
-            ))}
+      >
+        <img
+          src={app.icon128}
+          alt={app.name}
+          style={{
+            width: 70,
+            height: 70,
+            margin: "1em 0.5em",
+            borderRadius: "0.2em",
+            alignSelf: "start",
+          }}
+        />
+        <Box sx={{ padding: 2 }}>
+          <Typography
+            component="div"
+            color="text.primary"
+            sx={{ fontSize: 18, fontWeight: 600 }}
+          >
+            {app.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {app.description?.length > 200
+              ? `${app.description.substring(0, 200)}...`
+              : app.description}
+          </Typography>
+          <Box sx={{ mt: 1, mb: 1 }}>
+            {app.categories &&
+              app.categories.map((category) => (
+                <Chip
+                  label={capitalize(category)}
+                  size="small"
+                  key={category}
+                />
+              ))}
+          </Box>
         </Box>
       </Box>
     </Box>
-  </Box>
+  </a>
 ));
 
 const AppList = ({ queryTerm }) => {
