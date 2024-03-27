@@ -24,6 +24,7 @@ import { axios } from "../../../data/axios";
 import { isLoggedInState, appRunDataState } from "../../../data/atoms";
 import { useSetRecoilState, useRecoilValue } from "recoil";
 import LoginDialog from "../../LoginDialog";
+import logo from "../../../assets/promptly-icon.png";
 
 export const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin": "10px auto"}'>
   <pa-paper style="padding: 10px;">
@@ -421,7 +422,7 @@ export function AppRenderer({ app, ws }) {
       ),
       messages: messagesRef.current.get(),
       processors: app?.data?.processors || [],
-      assistantImage: app?.data?.config?.assistant_image,
+      assistantImage: app?.data?.config?.assistant_image || logo,
       suggestedMessages: app?.data?.config?.suggested_messages || [],
     }));
 
