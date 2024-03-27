@@ -26,7 +26,7 @@ const AppEntry = forwardRef(({ app }, ref) => (
         border: "1px solid #e0e0e0",
         borderRadius: 1,
         p: 1,
-        m: 1,
+        margin: "4px 2px 4px 2px",
         display: "flex",
         alignItems: "center",
         cursor: "pointer",
@@ -181,11 +181,7 @@ export default function Search({ appSlug }) {
   }, [categoriesList, searchTerm, categoryFilter, appSlug]);
 
   return (
-    <Box
-      ml={2}
-      pt={1}
-      sx={{ display: "flex", flexDirection: "column", maxHeight: "100vh" }}
-    >
+    <Box sx={{ display: "flex", flexDirection: "column", maxHeight: "100vh" }}>
       <Paper
         component="form"
         sx={{ p: "2px 4px", display: "flex", alignItems: "center" }}

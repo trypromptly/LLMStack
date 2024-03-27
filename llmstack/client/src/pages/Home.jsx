@@ -10,7 +10,15 @@ export default function HomePage() {
   const isMobile = useRecoilValue(isMobileState);
 
   return (
-    <Grid container sx={{ height: "100%", padding: 3 }}>
+    <Grid
+      container
+      sx={{
+        height: "100%",
+        margin: "auto",
+        padding: 2,
+      }}
+      columnGap={2}
+    >
       <Grid
         xs={12}
         md={7}
@@ -18,6 +26,7 @@ export default function HomePage() {
           height: isMobile ? "calc(100% - 120px)" : "auto",
           border: "solid 1px #ddd",
           borderRadius: "8px 8px 4px 4px",
+          flex: "1 !important",
         }}
       >
         <StoreApp appSlug={appSlug} />
