@@ -22,6 +22,8 @@ def get_google_credential_from_env(env: str) -> dict:
         return token, JWT_TOKEN
     except json.JSONDecodeError:
         return data, API_KEY
+    except Exception:
+        return None, None
 
 
 def get_project_id_from_env(env: str) -> str:
