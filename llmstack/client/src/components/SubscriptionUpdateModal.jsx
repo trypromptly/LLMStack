@@ -59,15 +59,23 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
           <CardHeader
             title={subscriptionPrice.product_name}
             subheader={<Divider />}
-            sx={{ padding: 0 }}
+            sx={{ padding: 0, "& span": { textAlign: "center" } }}
           />
           <CardContent>
             <Stack>
-              <Typography variant="h5">
-                ${subscriptionPrice.unit_amount}
-                {isSubscription ? " / " : null}
-                {subscriptionPrice.recurring_interval}
-              </Typography>
+              {subscriptionPrice.recurring_interval && (
+                <Typography variant="h5" sx={{ textAlign: "center" }}>
+                  ${subscriptionPrice.unit_amount}
+                  {isSubscription ? " / " : null}
+                  {subscriptionPrice.recurring_interval}
+                </Typography>
+              )}
+              {!subscriptionPrice.recurring_interval && (
+                <Typography variant="body2" sx={{ textAlign: "center" }}>
+                  {subscriptionPrice.description} at $
+                  <b>{subscriptionPrice.unit_amount} </b>
+                </Typography>
+              )}
               <Radio
                 variant="soft"
                 value={subscriptionPrice.id}
