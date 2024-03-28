@@ -211,7 +211,7 @@ export default function Search({ appSlug }) {
         }}
       >
         <InputBase
-          sx={{ ml: 1, flex: 1 }}
+          sx={{ ml: 2.5, flex: 1 }}
           placeholder="Explore Promptly Apps"
           inputProps={{ "aria-label": "Explore Promptly Apps" }}
           value={searchTerm}
