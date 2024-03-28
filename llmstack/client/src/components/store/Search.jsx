@@ -184,7 +184,12 @@ export default function Search({ appSlug }) {
     <Box sx={{ display: "flex", flexDirection: "column", maxHeight: "100vh" }}>
       <Paper
         component="form"
-        sx={{ p: "2px 4px", display: "flex", alignItems: "center" }}
+        sx={{
+          p: "2px 4px",
+          display: "flex",
+          alignItems: "center",
+          background: "#fbfbfb",
+        }}
         onSubmit={(e) => {
           e.preventDefault();
           setQueryTerm(`search?query=${searchTerm}`);
