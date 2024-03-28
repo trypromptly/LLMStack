@@ -145,17 +145,29 @@ export default function Sidebar({ menuItems }) {
       >
         <List>
           <ListItem>
-            <img style={logoStyle} src={icon} alt="logo" />
-            <Typography
-              variant="h5"
-              sx={{
-                margin: "0 8px",
-                opacity: open ? 1 : 0,
-                display: open ? "block" : "none",
+            <a
+              href="https://www.trypromptly.com"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                textDecoration: "none",
+                color: "#183a58",
+                display: "flex",
+                alignItems: "center",
               }}
             >
-              {SITE_NAME}
-            </Typography>
+              <img style={logoStyle} src={icon} alt="logo" />
+              <Typography
+                variant="h5"
+                sx={{
+                  margin: "0 8px",
+                  opacity: open ? 1 : 0,
+                  display: open ? "block" : "none",
+                }}
+              >
+                {SITE_NAME}
+              </Typography>
+            </a>
           </ListItem>
         </List>
         <List>
