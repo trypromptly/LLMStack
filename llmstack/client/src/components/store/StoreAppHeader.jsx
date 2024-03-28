@@ -57,7 +57,6 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
           display: "flex",
           alignItems: "center",
           textAlign: "left",
-          pl: 1,
         }}
       >
         {!expanded && (
@@ -102,7 +101,20 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
           </Box>
         )}
       </Box>
-      <Box sx={{ textAlign: "left", ml: 2, mb: 2 }}>
+      <Box
+        sx={{
+          textAlign: "left",
+          m: 2,
+          mt: 0,
+          pl: 2,
+          pr: 2,
+          lineHeight: "1.6",
+          color: "#183a58",
+          "& p": {
+            mt: 0,
+          },
+        }}
+      >
         <Collapse
           in={expanded && expandedDescription}
           timeout="auto"
