@@ -3,6 +3,7 @@ import {
   ContentCopyOutlined,
   KeyboardArrowDownOutlined,
   KeyboardArrowRightOutlined,
+  DownloadOutlined,
 } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 import { Liquid } from "liquidjs";
@@ -1105,6 +1106,7 @@ export default function LayoutRenderer({
       img: memo(
         ({ node, ...props }) => {
           const { alt, src } = props;
+          const [showDownloadIcon, setShowDownloadIcon] = useState(false);
           // We provide alt text and style as altText|style where style is a string
           const [altText, style] = alt?.split("|");
           let styleJson = {};
@@ -1115,18 +1117,47 @@ export default function LayoutRenderer({
           }
 
           return (
-            <img
-              src={src || loadingImage}
-              alt={altText}
-              style={{
-                ...{
-                  display: "block",
-                  maxWidth: "100%",
-                  boxShadow: "0px 0px 10px 1px #7d7d7d",
-                },
-                ...styleJson,
-              }}
-            />
+            <Box
+              onMouseEnter={() => setShowDownloadIcon(true)}
+              onMouseLeave={() => setShowDownloadIcon(false)}
+              sx={{ position: "relative" }}
+            >
+              {showDownloadIcon && src && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "3px 0",
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                  }}
+                >
+                  <IconButton
+                    sx={{ color: "#333" }}
+                    onClick={() => {
+                      window.open(src, "_blank");
+                    }}
+                  >
+                    <DownloadOutlined fontSize="small" />
+                  </IconButton>
+                </Box>
+              )}
+              <img
+                src={src || loadingImage}
+                alt={altText}
+                style={{
+                  ...{
+                    display: "block",
+                    maxWidth: "100%",
+                    boxShadow: "0px 0px 10px 1px #7d7d7d",
+                  },
+                  ...styleJson,
+                }}
+              />
+            </Box>
           );
         },
         (prev, next) => isEqual(prev, next),
