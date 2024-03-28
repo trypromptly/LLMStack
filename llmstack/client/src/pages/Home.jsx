@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useMediaQuery, useTheme } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import StoreApp from "../components/store/StoreApp";
 import Search from "../components/store/Search";
@@ -8,6 +9,8 @@ import { isMobileState } from "../data/atoms";
 export default function HomePage() {
   const { appSlug = "super-agent" } = useParams();
   const isMobile = useRecoilValue(isMobileState);
+  const theme = useTheme();
+  const matchesMdDown = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
     <Grid
@@ -31,7 +34,15 @@ export default function HomePage() {
       >
         <StoreApp appSlug={appSlug} />
       </Grid>
-      <Grid xs={12} md={4.5}>
+      <Grid
+        xs={12}
+        md={4.5}
+        sx={{
+          ...(matchesMdDown && {
+            marginTop: 3,
+          }),
+        }}
+      >
         <Search appSlug={appSlug} />
       </Grid>
     </Grid>
