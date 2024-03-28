@@ -27,7 +27,7 @@ const AppEntry = forwardRef(({ app }, ref) => (
         borderRadius: 1,
         p: 1.5,
         flexDirection: "column",
-        margin: "8px 2px 8px 2px",
+        margin: "8px 2px 10px 2px",
         display: "flex",
         alignItems: "left",
         cursor: "pointer",
