@@ -73,6 +73,57 @@ const AppMessageToolbar = ({ message }) => {
   );
 };
 
+const SuggestedMessages = memo(
+  ({ messages, onClick }) => {
+    return (
+      <Grid
+        sx={{
+          alignSelf: "flex-end",
+          textAlign: "right",
+          marginTop: "auto",
+        }}
+      >
+        {messages.map((message, index) => (
+          <Chip
+            key={index}
+            label={message}
+            component={() => (
+              <Box
+                sx={{
+                  display: "inline-block",
+                  margin: "4px 2px 0 2px",
+                  padding: "2px 5px",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  backgroundColor: "white",
+                  border: "solid 1px #ccc",
+                  ":hover": {
+                    backgroundColor: "#f0f0f0",
+                  },
+                  "& > p": {
+                    margin: 0,
+                    padding: "5px",
+                    fontSize: "14px",
+                  },
+                }}
+                onClick={() => onClick(message)}
+              >
+                <LayoutRenderer>
+                  {typeof message === "object" ? message.label : message}
+                </LayoutRenderer>
+              </Box>
+            )}
+          />
+        ))}
+      </Grid>
+    );
+  },
+  (prev, next) => {
+    return isEqual(prev.messages, next.messages);
+  },
+);
+
 const PromptlyAppInputForm = memo(
   ({
     workflow,
@@ -662,53 +713,23 @@ const PromptlyAppChatOutput = memo(
           0 &&
           appRunData?.suggestedMessages &&
           appRunData?.suggestedMessages?.length > 0 && (
-            <Grid
-              sx={{
-                alignSelf: "flex-end",
-                textAlign: "right",
-                marginTop: "auto",
-              }}
-            >
-              {appRunData.suggestedMessages.map((message, index) => (
-                <Chip
-                  key={index}
-                  label={message}
-                  component={() => (
-                    <Box
-                      sx={{
-                        display: "inline-block",
-                        margin: "4px 2px 0 2px",
-                        padding: "2px 5px",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        backgroundColor: "white",
-                        border: "solid 1px #ccc",
-                        ":hover": {
-                          backgroundColor: "#f0f0f0",
-                        },
-                        "& > p": {
-                          margin: 0,
-                          padding: "5px",
-                          fontSize: "14px",
-                        },
-                      }}
-                      onClick={() =>
-                        appRunData?.inputFields?.length > 0 &&
-                        runApp(appRunData?.sessionId, {
-                          [appRunData?.inputFields[0].name]:
-                            appRunData?.inputFields[0].type === "multi"
-                              ? { text: message }
-                              : message,
-                        })
-                      }
-                    >
-                      <LayoutRenderer>{message}</LayoutRenderer>
-                    </Box>
-                  )}
-                />
-              ))}
-            </Grid>
+            <SuggestedMessages
+              messages={appRunData?.suggestedMessages}
+              onClick={(message) =>
+                appRunData?.inputFields?.length > 0 &&
+                runApp(
+                  appRunData?.sessionId,
+                  typeof message === "object"
+                    ? message.input
+                    : {
+                        [appRunData?.inputFields[0].name]:
+                          appRunData?.inputFields[0].type === "multi"
+                            ? { text: message }
+                            : message,
+                      },
+                )
+              }
+            />
           )}
       </Box>
     );
