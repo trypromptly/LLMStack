@@ -145,7 +145,7 @@ const AppList = ({ queryTerm }) => {
 
   const apps = appsData?.apps || [];
   return (
-    <Box sx={{ overflowY: "auto", flex: "1 1 auto", mt: -1.5 }}>
+    <Box sx={{ overflowY: "auto", flex: "1 1 auto" }}>
       {apps.length > 0 ? (
         apps.map((app, index) => (
           <AppEntry
@@ -196,10 +196,10 @@ export default function Search({ appSlug }) {
       <Paper
         component="form"
         sx={{
-          mt: 2,
+          mt: 3,
           ml: 0.5,
           mr: 0.5,
-          p: "2px 4px 0 4px",
+          p: "4px 4px 0 4px",
           display: "flex",
           alignItems: "center",
           background: "#fbfbfb",
@@ -229,7 +229,7 @@ export default function Search({ appSlug }) {
         </IconButton>
       </Paper>
 
-      <Box sx={{ textAlign: "left", mt: "3px" }}>
+      <Box sx={{ textAlign: "left", mt: 1 }}>
         {appCategories.map((category) => (
           <Chip
             key={category.slug}

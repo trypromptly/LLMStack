@@ -30,9 +30,9 @@ export default function HomePage() {
           border: "solid 1px #ddd",
           borderRadius: "8px 8px 4px 4px",
           flex: "1 !important",
-          ml: 2,
-          mt: 2,
-          mb: 2,
+          ml: 3,
+          mt: 3,
+          mb: 3,
           ...(matchesMdDown && {
             m: 1,
           }),
@@ -44,7 +44,7 @@ export default function HomePage() {
         xs={12}
         md={4.5}
         sx={{
-          mr: 2,
+          mr: 3,
           ...(matchesMdDown && {
             m: 1,
             marginTop: 3,
