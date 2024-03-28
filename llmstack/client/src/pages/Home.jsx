@@ -18,7 +18,7 @@ export default function HomePage() {
       sx={{
         height: "100%",
         margin: "auto",
-        padding: 2,
+        padding: 0,
       }}
       columnGap={2}
     >
@@ -30,6 +30,12 @@ export default function HomePage() {
           border: "solid 1px #ddd",
           borderRadius: "8px 8px 4px 4px",
           flex: "1 !important",
+          ml: 2,
+          mt: 2,
+          mb: 2,
+          ...(matchesMdDown && {
+            m: 1,
+          }),
         }}
       >
         <StoreApp appSlug={appSlug} />
@@ -38,7 +44,9 @@ export default function HomePage() {
         xs={12}
         md={4.5}
         sx={{
+          mr: 2,
           ...(matchesMdDown && {
+            m: 1,
             marginTop: 3,
           }),
         }}
