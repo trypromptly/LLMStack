@@ -43,7 +43,13 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
 
   return (
     <Card
-      sx={{ backgroundColor: "#F4F6F8", cursor: "pointer" }}
+      sx={{
+        backgroundColor: "#F4F6F8",
+        cursor: "pointer",
+        boxShadow: "none",
+        borderBottom: "1px solid #ddd",
+        borderRadius: "8px 8px 0 0",
+      }}
       onClick={() => setExpanded(!expanded)}
     >
       <Box
