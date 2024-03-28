@@ -21,7 +21,7 @@ export default function HomePage() {
     >
       <Grid
         xs={12}
-        md={7}
+        md={7.5}
         sx={{
           height: isMobile ? "calc(100% - 120px)" : "auto",
           border: "solid 1px #ddd",
@@ -31,7 +31,7 @@ export default function HomePage() {
       >
         <StoreApp appSlug={appSlug} />
       </Grid>
-      <Grid xs={12} md={5}>
+      <Grid xs={12} md={4.5}>
         <Search appSlug={appSlug} />
       </Grid>
     </Grid>

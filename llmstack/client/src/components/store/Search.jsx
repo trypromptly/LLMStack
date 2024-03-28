@@ -25,10 +25,11 @@ const AppEntry = forwardRef(({ app }, ref) => (
       sx={{
         border: "1px solid #e0e0e0",
         borderRadius: 1,
-        p: 1,
+        p: 1.5,
+        flexDirection: "column",
         margin: "4px 2px 4px 2px",
         display: "flex",
-        alignItems: "center",
+        alignItems: "left",
         cursor: "pointer",
         textAlign: "left",
         ":hover": {
@@ -48,16 +49,16 @@ const AppEntry = forwardRef(({ app }, ref) => (
           alignItems: "center",
           textAlign: "left",
           pl: 1,
-          pb: 1,
+          width: "100%",
         }}
       >
         <img
           src={app.icon128}
           alt={app.name}
           style={{
-            width: 70,
-            height: 70,
-            margin: "1em 0.5em",
+            width: 60,
+            height: 60,
+            margin: "1em 0.5em 0.5em 0.5em",
             borderRadius: "0.2em",
             alignSelf: "start",
           }}
@@ -69,11 +70,6 @@ const AppEntry = forwardRef(({ app }, ref) => (
             sx={{ fontSize: 18, fontWeight: 600 }}
           >
             {app.name}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {app.description?.length > 200
-              ? `${app.description.substring(0, 200)}...`
-              : app.description}
           </Typography>
           <Box sx={{ mt: 1, mb: 1 }}>
             {app.categories &&
@@ -87,6 +83,21 @@ const AppEntry = forwardRef(({ app }, ref) => (
           </Box>
         </Box>
       </Box>
+      <Typography
+        color="text.secondary"
+        sx={{
+          m: 3,
+          mt: 0,
+          fontSize: 14,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          display: "-webkit-box",
+          "-webkit-line-clamp": "3",
+          "-webkit-box-orient": "vertical",
+        }}
+      >
+        {app.description}
+      </Typography>
     </Box>
   </a>
 ));
