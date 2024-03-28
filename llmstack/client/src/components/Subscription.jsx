@@ -44,7 +44,7 @@ function Subscription(props) {
         >
           Subscription
           <span style={{ float: "right", fontWeight: 400, fontSize: "16px" }}>
-            Remaining Credits: <b>{profile?.credits?.available / 100}</b>
+            Remaining Credits: <b>{profile?.credits?.available / 1000}</b>
           </span>
         </Typography>
         <Stack>
