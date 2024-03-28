@@ -1,6 +1,7 @@
 import { CircularProgress, Grid, Stack } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { Suspense, useEffect } from "react";
+import { useCookies } from "react-cookie";
 import ReactGA from "react-ga4";
 import { useLocation } from "react-router-dom";
 import { useRecoilState, useRecoilValue } from "recoil";
@@ -39,18 +40,35 @@ const menuItems = [
 
 export default function App({ children }) {
   const location = useLocation();
+  const [_, setCookie] = useCookies(["irclickid"]); // eslint-disable-line
+
   let allMenuItems = menuItems;
 
   useEffect(() => {
+    if (location) {
+      // Get irclickid parameter from URL and set it as a cookie for 30 days
+      const urlParams = new URLSearchParams(location.search);
+      const irclickid = urlParams.get("irclickid");
+      if (irclickid) {
+        setCookie("irclickid", irclickid, {
+          path: "/",
+          domain: ".trypromptly.com",
+          secure: true,
+          maxAge: 2592000,
+        });
+      }
+    }
+
     ReactGA.initialize(
       process.env.REACT_APP_GA_MEASUREMENT_ID || "G-WV60HC9CHD",
     );
+
     ReactGA.send({
       hitType: "pageview",
       page: location.pathname + location.search,
       title: location.pathname,
     });
-  }, [location]);
+  }, [location, setCookie]);
 
   const [isMobile, setIsMobile] = useRecoilState(isMobileState);
   const profileFlags = useRecoilValue(profileFlagsState);
