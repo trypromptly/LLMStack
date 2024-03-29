@@ -100,6 +100,9 @@ class AgentActor(Actor):
             "{{task}}",
         )
 
+        if user_message_template == "":
+            user_message_template = "{{task}}"
+
         try:
             user_message = Template(user_message_template).render(
                 **self._input,
