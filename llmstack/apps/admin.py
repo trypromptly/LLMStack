@@ -7,6 +7,7 @@ from .models import (
     AppRunGraphEntry,
     AppSession,
     AppSessionData,
+    AppSessionFiles,
     AppTemplate,
     AppTemplateCategory,
     AppType,
@@ -41,6 +42,7 @@ admin.site.register(App, AppAdmin)
 admin.site.register(AppData)
 admin.site.register(AppSession)
 admin.site.register(AppSessionData)
+admin.site.register(AppSessionFiles)
 admin.site.register(AppTemplate)
 admin.site.register(AppTemplateCategory)
 admin.site.register(AppHub, AppHubAdmin)
