@@ -317,13 +317,16 @@ def upsert_datasource_entry_subtask_success_callback(
     *args,
     **kwargs,
 ):
-    post_upsert_datasource_task(
-        job.meta["task_run_log_uuid"],
-        job.meta["input_data_index"],
-        TaskStatus.SUCCESS,
-        result,
-        job,
-    )
+    try:
+        post_upsert_datasource_task(
+            job.meta["task_run_log_uuid"],
+            job.meta["input_data_index"],
+            TaskStatus.SUCCESS,
+            result,
+            job,
+        )
+    except Exception as e:
+        logger.error(f"Exception: {e}")
 
 
 def upsert_datasource_entry_subtask_failure_callback(
@@ -336,13 +339,16 @@ def upsert_datasource_entry_subtask_failure_callback(
     logger.error(
         f'task_run_log_uuid: {job.meta["task_run_log_uuid"]}, type: {type}, value: {value}, Traceback: {traceback} ',
     )
-    post_upsert_datasource_task(
-        job.meta["task_run_log_uuid"],
-        job.meta["input_data_index"],
-        TaskStatus.FAILURE,
-        f"Exception: {type}, detail: {value}",
-        job,
-    )
+    try:
+        post_upsert_datasource_task(
+            job.meta["task_run_log_uuid"],
+            job.meta["input_data_index"],
+            TaskStatus.FAILURE,
+            f"Exception: {type}, detail: {value}",
+            job,
+        )
+    except Exception as e:
+        logger.error(f"Exception: {e}")
 
 
 def upsert_datasource_entries_task(datasource_id, input_data, *args, **kwargs):
