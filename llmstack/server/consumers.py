@@ -56,6 +56,7 @@ def _build_request_from_input(post_data, scope):
         "REMOTE_ADDR": headers.get(b"x-forwarded-for", b"").decode("utf-8").split(",")[0].strip(),
         "_prid": session.get("_prid", ""),
     }
+    http_request.session = session
     http_request.method = method
     http_request.GET = query_params
     http_request.stream = json.dumps(post_data)
