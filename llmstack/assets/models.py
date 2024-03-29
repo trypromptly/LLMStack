@@ -39,6 +39,10 @@ class Assets(models.Model):
             file_bytes, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name}, ref_id=ref_id
         )
 
+    @classmethod
+    def is_accessible(request, asset):
+        return False
+
     class Meta:
         abstract = True
 
