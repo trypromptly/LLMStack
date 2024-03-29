@@ -5,6 +5,7 @@ from django.urls import include, path
 
 urlpatterns = [
     path("", include("llmstack.apps.urls")),
+    path("", include("llmstack.assets.urls")),
     path("", include("llmstack.processors.urls")),
     path("", include("llmstack.organizations.urls")),
     path("", include("llmstack.datasources.urls")),
