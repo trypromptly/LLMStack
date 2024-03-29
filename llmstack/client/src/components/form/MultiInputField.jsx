@@ -51,14 +51,14 @@ const processFile = (file) => {
     reader.onload = (event) => {
       if (typeof event.target?.result === "string") {
         resolve({
-          dataURL: addNameToDataURL(event.target.result, name),
+          data: addNameToDataURL(event.target.result, name),
           name,
           size,
           type,
         });
       } else {
         resolve({
-          dataURL: null,
+          data: null,
           name,
           size,
           type,
