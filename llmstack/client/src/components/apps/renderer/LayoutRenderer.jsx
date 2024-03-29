@@ -32,6 +32,7 @@ import remarkGfm from "remark-gfm";
 import { useRecoilValue } from "recoil";
 import { ProviderIcon } from "../ProviderIcon";
 import { getJSONSchemaFromInputFields } from "../../../data/utils";
+import { AssetRenderer } from "./AssetRenderer";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
@@ -909,6 +910,12 @@ export default function LayoutRenderer({
       "pa-layout": memo(
         ({ node, ...props }) => {
           return <Box {...props}>{props.children}</Box>;
+        },
+        (prev, next) => prev.props === next.props,
+      ),
+      "pa-asset": memo(
+        ({ node, ...props }) => {
+          return <AssetRenderer {...props} />;
         },
         (prev, next) => prev.props === next.props,
       ),
