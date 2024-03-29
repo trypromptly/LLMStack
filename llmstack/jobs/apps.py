@@ -11,14 +11,7 @@ class JobsConfig(AppConfig):
     label = "jobs"
 
     def ready(self):
-        try:
-            self.reschedule_cron_jobs()
-            self.reschedule_repeatable_jobs()
-            self.reschedule_scheduled_jobs()
-        except BaseException:
-            # Django isn't ready yet, example a management command is being
-            # executed
-            pass
+        pass
 
     def reschedule_cron_jobs(self):
         from .models import CronJob
