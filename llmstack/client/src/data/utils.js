@@ -132,6 +132,8 @@ export function getJSONSchemaFromInputFields(inputFields) {
         schema.properties[field.name].format = "data-url";
         schema.properties[field.name].pattern =
           "data:(.*);name=(.*);base64,(.*)";
+        schema.properties[field.name].accept = field.accept || "*";
+        schema.properties[field.name].maxSize = field.maxSize || 2000000;
       }
 
       if (field.type === "voice") {
