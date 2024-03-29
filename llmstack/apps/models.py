@@ -496,6 +496,26 @@ class AppData(models.Model):
         return f'{self.app_uuid}_{"draft" if self.is_draft else "published"}_v{self.version}'
 
 
+def select_storage():
+    from django.core.files.storage import storages
+
+    return storages["assets"]
+
+
+def appstore_upload_to(instance, filename):
+    return "/".join(["appdata", str(instance.ref_id), filename])
+
+
+class AppDataAssets(Assets):
+    ref_id = models.UUIDField(help_text="Published UUID of the app this asset belongs to", null=False)
+    file = models.FileField(
+        storage=select_storage,
+        upload_to=appstore_upload_to,
+        null=True,
+        blank=True,
+    )
+
+
 class AppHub(models.Model):
     app = models.ForeignKey(
         App,
