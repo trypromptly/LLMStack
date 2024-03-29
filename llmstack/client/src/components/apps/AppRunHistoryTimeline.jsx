@@ -33,7 +33,7 @@ import { ReactComponent as SlackIcon } from "../../assets/images/icons/slack.svg
 import { ReactComponent as TwilioIcon } from "../../assets/images/icons/twilio.svg";
 import { appsBriefState } from "../../data/atoms";
 import { axios } from "../../data/axios";
-import MarkdownRenderer from "./MarkdownRenderer";
+import LayoutRenderer from "./renderer/LayoutRenderer";
 
 import "ace-builds/src-noconflict/mode-sh";
 import "ace-builds/src-noconflict/theme-chrome";
@@ -83,7 +83,7 @@ const allcolumns = [
 const ExpandedRowItem = ({ label, value, content_type = null }) => {
   const renderedBody = useMemo(() => {
     if (content_type === "text/markdown") {
-      return <MarkdownRenderer>{value}</MarkdownRenderer>;
+      return <LayoutRenderer>{value}</LayoutRenderer>;
     } else if (content_type === "application/json") {
       // Format JSON string
       let formattedJSON = value

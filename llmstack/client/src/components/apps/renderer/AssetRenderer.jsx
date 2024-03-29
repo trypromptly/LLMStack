@@ -3,7 +3,7 @@ import { axios } from "../../../data/axios";
 
 const Image = (props) => {
   const { url, alt } = props;
-  return <img src={url} alt={alt || "Asset"} />;
+  return <img src={url} alt={alt || "Asset"} width={"100%"} />;
 };
 
 export const AssetRenderer = (props) => {
