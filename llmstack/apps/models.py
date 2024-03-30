@@ -593,6 +593,33 @@ class AppSessionFiles(Assets):
         blank=True,
     )
 
+    def is_accessible(request, asset):
+        user = (
+            request.user.email
+            if request.user.is_authenticated
+            else request.session["_prid"]
+            if "_prid" in request.session
+            else ""
+        )
+        metadata = asset.metadata
+
+        # If the asset is public, anyone can access it
+        if metadata.get("is_public", False):
+            return True
+
+        # If the asset is private, only the owner can access it
+        if metadata.get("owner", "") == user:
+            return True
+
+        # If the asset is associated with an app, check if the user has access to the app
+        app_uuid = metadata.get("app_uuid", "")
+        if app_uuid:
+            app = App.objects.get(uuid=app_uuid)
+            if app.has_write_permission(user):
+                return True
+
+        return False
+
 
 class TestSet(models.Model):
     uuid = models.UUIDField(

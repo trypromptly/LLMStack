@@ -13,7 +13,7 @@ from llmstack.apps.app_session_utils import (
     get_app_session_data,
 )
 from llmstack.apps.integration_configs import WebIntegrationConfig
-from llmstack.apps.models import AppVisibility
+from llmstack.apps.models import AppSessionFiles, AppVisibility
 from llmstack.base.models import Profile
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.agent import AgentActor
@@ -29,6 +29,30 @@ logger = logging.getLogger(__name__)
 
 
 class AppRunner:
+    def _upload_file(self, file, session_id, app_uuid, user):
+        if not file:
+            return None
+
+        file_obj = AppSessionFiles.create_from_data_uri(
+            file, ref_id=session_id, metadata={"owner": user, "app_uuid": app_uuid}
+        )
+
+        return f"objref://sessionfiles/{file_obj.uuid}"
+
+    def _preprocess_input_files(self, input_data, input_fields, session_id, app_uuid, user):
+        for field in input_fields:
+            if field["name"] in input_data and input_data[field["name"]]:
+                if field["type"] == "file":
+                    input_data[field["name"]] = self._upload_file(input_data[field["name"]], session_id, app_uuid, user)
+                elif field["type"] == "multi" and "files" in input_data[field["name"]]:
+                    # multi has a list of files to upload
+                    files = input_data[field["name"]]["files"]
+                    for file in files:
+                        file["data"] = self._upload_file(file["data"], session_id, app_uuid, user)
+                    input_data[field["name"]]["files"] = files
+
+        return input_data
+
     def __init__(
         self,
         app,
@@ -52,6 +76,22 @@ class AppRunner:
         self.app_run_request_user = request.user
         self.session_id = session_id
         self.app_session = self._get_or_create_app_session()
+
+        # Pre-process run input to convert files to objrefs
+        if "input" in request.data and app_data and "input_fields" in app_data and self.app_session:
+            self.request.data["input"] = self._preprocess_input_files(
+                input_data=request.data["input"],
+                input_fields=app_data["input_fields"],
+                session_id=self.app_session["uuid"],
+                app_uuid=str(app.uuid),
+                user=(
+                    request.user.email
+                    if request.user.is_authenticated
+                    else request.session["_prid"]
+                    if "_prid" in request.session
+                    else ""
+                ),
+            )
 
         self.stream = stream
         self.disable_history = disable_history
