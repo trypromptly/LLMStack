@@ -44,6 +44,7 @@ from .models import (
     App,
     AppAccessPermission,
     AppData,
+    AppDataAssets,
     AppHub,
     AppRunGraphEntry,
     AppTemplate,
@@ -631,6 +632,20 @@ class AppViewSet(viewsets.ViewSet):
         except Exception:
             processed_processors_data = processors_data
 
+        if "config" in request.data:
+            if "assistant_image" in request.data["config"]:
+                assistant_image = request.data["config"]["assistant_image"]
+                if assistant_image.startswith("data:image"):
+                    assistant_image_asset = AppDataAssets.create_from_data_uri(
+                        data_uri=assistant_image, metadata={"app_uuid": str(app.uuid)}, ref_id=str(app.published_uuid)
+                    )
+                    request.data["config"]["assistant_image"] = f"objref://appdata/{str(assistant_image_asset.uuid)}"
+
+            app_data_config = request.data["config"]
+
+        else:
+            app_data_config = versioned_app_data.data["config"]
+
         # Find the versioned app data and update it
         app_data = {
             "name": request.data["name"] if "name" in request.data else versioned_app_data.data["name"],
@@ -640,7 +655,7 @@ class AppViewSet(viewsets.ViewSet):
             "description": (
                 request.data["description"] if "description" in request.data else versioned_app_data.data["description"]
             ),
-            "config": request.data["config"] if "config" in request.data else versioned_app_data.data["config"],
+            "config": app_data_config,
             "input_fields": (
                 request.data["input_fields"]
                 if "input_fields" in request.data

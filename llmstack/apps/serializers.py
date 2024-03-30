@@ -3,6 +3,7 @@ from rest_framework import serializers
 from llmstack.apps.app_types import AppTypeFactory
 from llmstack.apps.yaml_loader import get_app_template_by_slug
 from llmstack.base.models import Profile
+from llmstack.common.utils.utils import is_object_ref_id
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.processors.models import ApiBackend, Endpoint
 from llmstack.processors.serializers import (
@@ -15,6 +16,7 @@ from .models import (
     App,
     AppAccessPermission,
     AppData,
+    AppDataAssets,
     AppHub,
     AppRunGraphEntry,
     AppSession,
@@ -178,6 +180,16 @@ class AppSerializer(DynamicFieldsModelSerializer):
         if app_data and app_data.data:
             if not obj.has_write_permission(self._request_user):
                 app_data.data.pop("processors", None)
+
+            if (
+                "config" in app_data.data
+                and "assistant_image" in app_data.data["config"]
+                and is_object_ref_id(app_data.data["config"]["assistant_image"])
+            ):
+                app_data.data["config"]["assistant_image"] = AppDataAssets.get_asset_data_uri(
+                    app_data.data["config"]["assistant_image"], include_name=True
+                )
+
             return app_data.data
         return None
 
