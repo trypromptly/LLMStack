@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { axios } from "../../../data/axios";
+import loadingImage from "../../../assets/images/loading.gif";
 
 const Image = (props) => {
   const { url, alt } = props;
@@ -23,8 +24,10 @@ export const AssetRenderer = (props) => {
       });
   }, [url]);
 
-  if (type.startsWith("image") && file) {
-    return <Image url={file?.url} alt={file?.name} />;
+  if (type.startsWith("image")) {
+    return (
+      <Image url={file?.url || loadingImage} alt={file?.name || "Loading"} />
+    );
   }
 
   return <p>AssetRenderer</p>;
