@@ -59,6 +59,7 @@ def _build_request_from_input(post_data, scope):
     http_request.session = session
     http_request.method = method
     http_request.GET = query_params
+    http_request.query_params = query_params
     http_request.stream = json.dumps(post_data)
     http_request.user = user
     http_request.data = post_data
