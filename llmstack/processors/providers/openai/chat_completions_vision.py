@@ -161,6 +161,12 @@ class ChatCompletionsVision(
         for msg in chat_history:
             messages.append(msg)
 
+        # If message is a UrlImageMessage, check if it has objref and convert it to a data URI
+        for msg in self._input.messages:
+            if msg.type == "image_url":
+                # Convert objref to data URI if it exists
+                msg.image_url = self._get_session_asset_data_uri(msg.image_url, include_name=False)
+
         messages.append(
             {
                 "role": "user",
