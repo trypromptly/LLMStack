@@ -593,12 +593,12 @@ class AppSessionFiles(Assets):
         blank=True,
     )
 
-    def is_accessible(request, asset):
+    def is_accessible(asset, request_user, request_session):
         user = (
-            request.user.email
-            if request.user.is_authenticated
-            else request.session["_prid"]
-            if "_prid" in request.session
+            request_user.email
+            if request_user.is_authenticated
+            else request_session["_prid"]
+            if "_prid" in request_session
             else ""
         )
         metadata = asset.metadata
@@ -615,7 +615,7 @@ class AppSessionFiles(Assets):
         app_uuid = metadata.get("app_uuid", "")
         if app_uuid:
             app = App.objects.get(uuid=app_uuid)
-            if app.has_write_permission(user):
+            if app.has_write_permission(request_user):
                 return True
 
         return False

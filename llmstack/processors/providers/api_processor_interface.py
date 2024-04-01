@@ -82,6 +82,29 @@ class ApiProcessorInterface(
     Abstract class for API processors
     """
 
+    def _get_session_asset(self, objref, include_data=True, include_name=True):
+        from llmstack.assets.apis import AssetViewSet
+
+        response = AssetViewSet().get_by_objref(
+            self._request, objref, include_data=include_data, include_name=include_name
+        )
+
+        if response.status_code == 200:
+            return response.data
+
+        return None
+
+    # Convert objref to data URI if it exists
+    def _get_session_asset_data_uri(self, objref, include_name=True):
+        if not objref.startswith("objref://"):
+            return objref
+
+        asset = self._get_session_asset(objref, include_data=True, include_name=include_name)
+        if asset and "data_uri" in asset:
+            return asset["data_uri"]
+
+        return objref
+
     def __init__(
         self,
         input,
@@ -91,6 +114,7 @@ class ApiProcessorInterface(
         dependencies=[],
         all_dependencies=[],
         session_data=None,
+        request=None,
         id=None,
         is_tool=False,
     ):
@@ -100,19 +124,13 @@ class ApiProcessorInterface(
             all_dependencies=all_dependencies,
         )
 
-        # TODO: This is for backward compatibility. Remove this once all the
-        # processors are updated
-        if "datasource" in config and isinstance(config["datasource"], str):
-            config["datasource"] = [config["datasource"]]
-        if "datasources" in config and isinstance(config["datasources"], str):
-            config["datasources"] = [config["datasources"]]
-
         self._config = self._get_configuration_class()(**config)
         self._input = self._get_input_class()(**input)
         self._env = env
         self._id = id
         self._output_stream = output_stream
         self._is_tool = is_tool
+        self._request = request
 
         self.process_session_data(session_data)
 

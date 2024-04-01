@@ -40,8 +40,27 @@ class Assets(models.Model):
         )
 
     @classmethod
-    def is_accessible(request, asset):
+    def is_accessible(asset, request_user, request_session):
         return False
+
+    @classmethod
+    def get_asset_data_uri(cls, asset, include_name=False):
+        if not asset:
+            return None
+
+        file_data = None
+        if asset.file:
+            with asset.file.open("rb") as f:
+                file_data = f.read()
+
+        if file_data:
+            file_mime_type = asset.metadata.get("mime_type", "application/octet-stream")
+            file_name = asset.metadata.get("file_name", "")
+            if include_name:
+                return f"data:{file_mime_type};name={file_name};base64,{base64.b64encode(file_data).decode('utf-8')}"
+            return f"data:{asset.metadata['mime_type']};base64,{base64.b64encode(file_data).decode('utf-8')}"
+
+        return None
 
     class Meta:
         abstract = True

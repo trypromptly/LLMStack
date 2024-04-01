@@ -78,6 +78,7 @@ class AppProcessorRunner(AppRunner):
                     "input": {**app_processor["input"], **self.request.data.get("input", {})},
                     "config": app_processor["config"],
                     "session_data": app_session_data["data"] if app_session_data and "data" in app_session_data else {},
+                    "request": self.request,
                     "is_tool": True if self.app.type.slug == "agent" else False,
                 },
                 output_cls=processor_cls.get_output_cls(),
