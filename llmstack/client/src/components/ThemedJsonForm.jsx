@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import Form from "@rjsf/mui";
 import { getTemplate, getUiOptions } from "@rjsf/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TextFieldWithVars } from "./apps/TextFieldWithVars";
 import AppVersionSelector from "./apps/AppVersionSelector";
 import CustomObjectFieldTemplate from "./ConfigurationFormObjectFieldTemplate";
@@ -311,6 +311,18 @@ const ThemedJsonForm = ({
   disableAdvanced = false,
   ...props
 }) => {
+  // disable the default form submit action on mount
+  useEffect(() => {
+    if (props.formRef?.current?.formElement?.current) {
+      props.formRef.current.formElement.current.addEventListener(
+        "submit",
+        (e) => {
+          e.preventDefault();
+        },
+      );
+    }
+  }, [props.formRef]);
+
   return (
     <Form
       ref={props.formRef}
