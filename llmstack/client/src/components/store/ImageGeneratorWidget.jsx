@@ -44,7 +44,7 @@ const rejectStyle = {
 };
 
 export default function ImageGeneratorWidget(props) {
-  const { schema, onChange } = props;
+  const { schema, onChange, disableGenerator } = props;
   const [value, setValue] = useState(props.value);
   const [showGenerator, setShowGenerator] = useState(false);
   const [generatorPrompt, setGeneratorPrompt] = useState(
@@ -177,7 +177,7 @@ export default function ImageGeneratorWidget(props) {
           </Box>
         </Box>
       </Stack>
-      {!showGenerator && (
+      {!disableGenerator && !showGenerator && (
         <Tooltip title="Auto-generate app image from the given app and description">
           <IconButton
             type="button"

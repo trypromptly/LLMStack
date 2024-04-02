@@ -18,6 +18,7 @@ import { AppInputSchemaEditor } from "./AppInputSchemaEditor";
 import { AppStepCard } from "./AppStepCard";
 import { TextFieldWithVars } from "./TextFieldWithVars";
 import { getJSONSchemaFromInputFields } from "../../data/utils";
+import ImageGeneratorWidget from "../store/ImageGeneratorWidget";
 
 export function AppConfigEditor({
   appType,
@@ -140,6 +141,9 @@ export function AppConfigEditor({
                 setConfig(formData);
               }}
               widgets={{
+                image_generator: (props) => (
+                  <ImageGeneratorWidget {...props} disableGenerator={true} />
+                ),
                 textwithvars: (props) => (
                   <TextFieldWithVars
                     {...props}

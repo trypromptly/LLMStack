@@ -25,7 +25,7 @@ class ChatAppConfigSchema(BaseSchema):
         accepts={
             "image/*": [],
         },
-        widget="file",
+        widget="image_generator",
     )
     window_color: str = Field(
         title="Primary Color of Chat Window",
