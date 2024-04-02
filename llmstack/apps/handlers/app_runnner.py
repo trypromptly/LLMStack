@@ -47,7 +47,7 @@ class AppRunner:
                 elif field["type"] == "multi" and "files" in input_data[field["name"]]:
                     # multi has a list of files to upload
                     files = input_data[field["name"]]["files"]
-                    for file in files:
+                    for file in files[:5]:
                         file["data"] = self._upload_file(file["data"], session_id, app_uuid, user)
                     input_data[field["name"]]["files"] = files
 
