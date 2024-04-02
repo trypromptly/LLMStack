@@ -39,12 +39,13 @@ import LoginDialog from "./LoginDialog";
 
 const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
 
-const icon = require(`../assets/${SITE_NAME.toLowerCase()}-icon.png`);
+const icon =
+  SITE_NAME === "Promptly"
+    ? require(`../assets/icon-transparent.png`)
+    : require(`../assets/llmstack-icon.png`);
 
 const logoStyle = {
-  width: "36px",
-  borderRadius: SITE_NAME === "Promptly" ? "5px" : "inherit",
-  border: SITE_NAME === "Promptly" ? "solid 1px #183a58" : "inherit",
+  width: "28px",
 };
 
 const getNavItemIcon = (itemLabel) => {
