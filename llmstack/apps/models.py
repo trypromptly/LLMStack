@@ -543,15 +543,6 @@ class AppDataAssets(Assets):
             or (app.has_read_permission(request_user) or app.has_write_permission(request_user))
         )
 
-    @classmethod
-    def get_asset_data_uri_from_objref(cls, objref):
-        url_parts = objref.split("objref://")[1].split("/")
-        if len(url_parts) != 2:
-            return None
-        asset_obj = AppDataAssets.objects.get(uuid=url_parts[1])
-
-        return cls.get_asset_data_uri(asset_obj, include_name=True)
-
 
 class AppHub(models.Model):
     app = models.ForeignKey(
