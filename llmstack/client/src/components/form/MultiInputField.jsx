@@ -202,8 +202,8 @@ const MultiInputField = (props) => {
                 type="file"
                 style={{ display: "none" }}
                 onChange={handleFileSelect}
-                accept="audio/*, video/*, image/*, text/csv, application/pdf"
-                multiple
+                accept={props.schema.filesAccept}
+                multiple={props.schema.filesMultiple}
               />
             </InputAdornment>
           ) : null,

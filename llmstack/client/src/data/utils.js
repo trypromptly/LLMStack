@@ -169,6 +169,13 @@ export function getJSONSchemaFromInputFields(inputFields) {
         schema.properties[field.name].placeholder =
           field.placeholder || field.description || "";
         schema.properties[field.name].allowFiles = field.allowFiles || false;
+        schema.properties[field.name].filesMultiple =
+          field.filesMultiple || false;
+        schema.properties[field.name].filesAccept =
+          field.filesAccept ||
+          "audio/*, video/*, image/*, text/csv, application/pdf";
+        schema.properties[field.name].filesMaxSize =
+          field.filesMaxSize || 2000000;
       }
 
       if (field.type === "datasource") {
