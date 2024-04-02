@@ -127,7 +127,10 @@
 }
 
 .step-runner-indicator {
-  display: inline;
+  display: flex;
+  flex-direction: row;
+  border: none;
+  align-self: center;
 }
 
 .step-runner-indicator span {
