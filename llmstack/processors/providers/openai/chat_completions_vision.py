@@ -8,6 +8,7 @@ from asgiref.sync import async_to_sync
 from openai import OpenAI
 from pydantic import BaseModel, Field, confloat, conint
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.llm.openai import (
     OpenAIChatCompletionsAPIProcessorConfiguration,
 )
@@ -144,6 +145,12 @@ class ChatCompletionsVision(
     @staticmethod
     def provider_slug() -> str:
         return "openai"
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown="""{{result}}""",
+        )
 
     def session_data_to_persist(self) -> dict:
         return {"chat_history": self._chat_history}
