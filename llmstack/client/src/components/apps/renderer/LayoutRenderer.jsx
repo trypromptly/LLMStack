@@ -511,7 +511,7 @@ const AgentStepMessage = memo(
     return (
       <Box
         className="layout-chat_message_type_step"
-        style={assistantImage ? { marginLeft: "56px" } : {}}
+        style={assistantImage ? { marginLeft: "48px" } : {}}
       >
         {message.content.name && (
           <AgentStepToolHeader
