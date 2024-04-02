@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (
     App,
     AppData,
+    AppDataAssets,
     AppHub,
     AppRunGraphEntry,
     AppSession,
@@ -48,3 +49,4 @@ admin.site.register(AppTemplateCategory)
 admin.site.register(AppHub, AppHubAdmin)
 admin.site.register(TestSet)
 admin.site.register(TestCase)
+admin.site.register(AppDataAssets)

@@ -446,6 +446,12 @@ class App(models.Model):
 
         return self.owner == user or (self.is_published and user.email in self.write_accessible_by)
 
+    def has_read_permission(self, user):
+        if not user or not user.is_authenticated:
+            return False
+
+        return self.owner == user or (self.is_published and user.email in self.read_accessible_by)
+
     def __str__(self) -> str:
         return self.name + " - " + self.owner.username
 
@@ -494,6 +500,48 @@ class AppData(models.Model):
 
     def __str__(self) -> str:
         return f'{self.app_uuid}_{"draft" if self.is_draft else "published"}_v{self.version}'
+
+    def save(self, *args, **kwargs):
+        if "config" in self.data:
+            if "assistant_image" in self.data["config"]:
+                if self.data["config"]["assistant_image"] and self.data["config"]["assistant_image"].startswith(
+                    "data:image"
+                ):
+                    app = App.objects.get(uuid=self.app_uuid)
+                    assistant_image_asset = AppDataAssets.create_from_data_uri(
+                        data_uri=self.data["config"]["assistant_image"],
+                        metadata={"app_uuid": str(self.app_uuid)},
+                        ref_id=str(app.published_uuid),
+                    )
+                    self.data["config"]["assistant_image"] = f"objref://appdata/{str(assistant_image_asset.uuid)}"
+        return super().save(*args, **kwargs)
+
+
+def select_storage():
+    from django.core.files.storage import storages
+
+    return storages["assets"]
+
+
+def appstore_upload_to(instance, filename):
+    return "/".join(["appdata", str(instance.ref_id), filename])
+
+
+class AppDataAssets(Assets):
+    ref_id = models.UUIDField(help_text="Published UUID of the app this asset belongs to", null=False)
+    file = models.FileField(
+        storage=select_storage,
+        upload_to=appstore_upload_to,
+        null=True,
+        blank=True,
+    )
+
+    def is_accessible(asset, request_user, request_session):
+        app = App.objects.get(published_uuid=asset.ref_id)
+        return app and (
+            (app.is_published and app.is_public)
+            or (app.has_read_permission(request_user) or app.has_write_permission(request_user))
+        )
 
 
 class AppHub(models.Model):
