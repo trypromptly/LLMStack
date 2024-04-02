@@ -222,6 +222,7 @@ class AgentActor(Actor):
                 seed=self._config.get("seed", None),
             )
             agent_message_id = str(uuid.uuid4())
+            agent_function_call_id = None
 
             for data in result:
                 if (
@@ -239,12 +240,13 @@ class AgentActor(Actor):
 
                     if function_call and function_call.name:
                         function_name += function_call.name
+                        agent_function_call_id = str(uuid.uuid4())
                         async_to_sync(self._output_stream.write)(
                             AgentOutput(
                                 content=FunctionCall(
                                     name=function_call.name,
                                 ),
-                                id=agent_message_id,
+                                id=f"{agent_message_id}/{agent_function_call_id}",
                                 from_id=function_name,
                                 type="step",
                             ),
@@ -256,7 +258,7 @@ class AgentActor(Actor):
                                 content=FunctionCall(
                                     arguments=function_call.arguments,
                                 ),
-                                id=agent_message_id,
+                                id=f"{agent_message_id}/{agent_function_call_id}",
                                 from_id=function_name,
                                 type="step",
                             ),
@@ -296,7 +298,7 @@ class AgentActor(Actor):
                     )
                     async_to_sync(self._output_stream.write_raw)(
                         Message(
-                            message_id=agent_message_id,
+                            message_id=f"{agent_message_id}/{agent_function_call_id}",
                             message_type=MessageType.TOOL_INVOKE,
                             message=tool_invoke_input,
                             message_to=function_name,
