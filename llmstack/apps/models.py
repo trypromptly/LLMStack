@@ -446,6 +446,12 @@ class App(models.Model):
 
         return self.owner == user or (self.is_published and user.email in self.write_accessible_by)
 
+    def has_read_permission(self, user):
+        if not user or not user.is_authenticated:
+            return False
+
+        return self.owner == user or (self.is_published and user.email in self.read_accessible_by)
+
     def __str__(self) -> str:
         return self.name + " - " + self.owner.username
 
@@ -514,6 +520,19 @@ class AppDataAssets(Assets):
         null=True,
         blank=True,
     )
+
+    def is_accessible(asset, request_user, request_session):
+        app = App.objects.get(published_uuid=asset.ref_id)
+        return app and (app.has_read_permission(request_user) or app.has_write_permission(request_user))
+
+    @classmethod
+    def get_asset_data_uri_from_objref(cls, objref):
+        url_parts = objref.split("objref://")[1].split("/")
+        if len(url_parts) != 2:
+            return None
+        asset_obj = AppDataAssets.objects.get(uuid=url_parts[1])
+
+        return cls.get_asset_data_uri(asset_obj, include_name=True)
 
 
 class AppHub(models.Model):
