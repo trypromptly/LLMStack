@@ -68,10 +68,7 @@ class AgentConfigSchema(BaseSchema):
         title="Assistant Image",
         default="",
         description="Icon to show for the messages from assistant",
-        accepts={
-            "image/*": [],
-        },
-        widget="file",
+        widget="image_generator",
         advanced_parameter=True,
     )
     window_color: str = Field(
