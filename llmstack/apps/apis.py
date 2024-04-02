@@ -631,11 +631,6 @@ class AppViewSet(viewsets.ViewSet):
         except Exception:
             processed_processors_data = processors_data
 
-        if "config" in request.data:
-            app_data_config = request.data["config"]
-        else:
-            app_data_config = versioned_app_data.data["config"]
-
         # Find the versioned app data and update it
         app_data = {
             "name": request.data["name"] if "name" in request.data else versioned_app_data.data["name"],
@@ -645,7 +640,7 @@ class AppViewSet(viewsets.ViewSet):
             "description": (
                 request.data["description"] if "description" in request.data else versioned_app_data.data["description"]
             ),
-            "config": app_data_config,
+            "config": request.data["config"] if "config" in request.data else versioned_app_data.data["config"],
             "input_fields": (
                 request.data["input_fields"]
                 if "input_fields" in request.data
