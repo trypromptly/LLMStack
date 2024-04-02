@@ -49,11 +49,13 @@ class AssetViewSet(viewsets.ModelViewSet):
                 model_cls = AppDataAssets
 
             if not model_cls:
+                logger.error(f"Invalid category for asset model: {category}")
                 return None
 
             asset = model_cls.objects.filter(uuid=asset_uuid).first()
 
             if asset is None or not model_cls.is_accessible(asset, request_user, request_session):
+                logger.info(f"Asset not found or not accessible: {objref}")
                 return None
 
             response = {"url": asset.file.url}
@@ -71,6 +73,5 @@ class AssetViewSet(viewsets.ModelViewSet):
                 response["data_uri"] = model_cls.get_asset_data_uri(asset, include_name=include_name)
 
             return response
-        except Exception as e:
-            logger.error(f"Failed to get asset data for objref {objref} with error: {e}")
+        except Exception:
             return None
