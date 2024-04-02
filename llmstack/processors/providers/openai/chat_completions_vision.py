@@ -205,7 +205,17 @@ class ChatCompletionsVision(
         for message in self._input.messages:
             self._chat_history.append(message)
         self._chat_history.append(
-            {"role": "assistant", "content": output.result},
+            {
+                "role": "assistant",
+                "content": (
+                    output["result"]
+                    if isinstance(
+                        output,
+                        dict,
+                    )
+                    else output.result
+                ),
+            },
         )
 
         return output
