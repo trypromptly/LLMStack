@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         storage=llmstack.apps.models.select_storage,
-                        upload_to=llmstack.apps.models.datasource_upload_to,
+                        upload_to=llmstack.apps.models.appstore_upload_to,
                     ),
                 ),
             ],
