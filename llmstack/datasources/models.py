@@ -225,7 +225,7 @@ def select_storage():
     return storages["assets"]
 
 
-def appstore_upload_to(instance, filename):
+def datasource_upload_to(instance, filename):
     return "/".join(["datasource_entries", str(instance.ref_id), filename])
 
 
@@ -233,7 +233,7 @@ class DataSourceEntryFiles(Assets):
     ref_id = models.UUIDField(help_text="UUID of the datasource entry this file belongs to", blank=True, null=False)
     file = models.FileField(
         storage=select_storage,
-        upload_to=appstore_upload_to,
+        upload_to=datasource_upload_to,
         null=True,
         blank=True,
     )
