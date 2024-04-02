@@ -573,7 +573,12 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 EVENT_TOPIC_MAPPING = {
-    "app.run.finished": ["llmstack.events.consumers.app_run_finished.persist_app_run_history"],
+    "app.run.finished": [
+        {
+            "event_processor": "llmstack.events.consumers.app_run_finished.persist_app_run_history",
+            "event_data_cls": "llmstack.events.consumers.app_run_finished.AppRunFinishedEventData",
+        }
+    ],
 }
 
 ANONYMOUS_USER_RATELIMIT = os.getenv("ANONYMOUS_USER_RATELIMIT", None)
