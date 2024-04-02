@@ -523,7 +523,10 @@ class AppDataAssets(Assets):
 
     def is_accessible(asset, request_user, request_session):
         app = App.objects.get(published_uuid=asset.ref_id)
-        return app and (app.has_read_permission(request_user) or app.has_write_permission(request_user))
+        return app and (
+            (app.is_published and app.is_public)
+            or (app.has_read_permission(request_user) or app.has_write_permission(request_user))
+        )
 
     @classmethod
     def get_asset_data_uri_from_objref(cls, objref):
