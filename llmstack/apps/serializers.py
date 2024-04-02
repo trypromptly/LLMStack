@@ -190,12 +190,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
                     url_parts = app_data.data["config"]["assistant_image"].split("objref://")[1].split("/")
                     app_asset_uuid = url_parts[1]
                     app_data_asset_obj = AppDataAssets.objects.get(uuid=app_asset_uuid)
-                    if app_data_asset_obj:
-                        app_data.data["config"]["assistant_image"] = AppDataAssets.get_asset_data_uri(
-                            app_data_asset_obj, include_name=True
-                        )
-                    else:
-                        app_data.data["config"]["assistant_image"] = None
+                    app_data.data["config"]["assistant_image"] = app_data_asset_obj.file.url
                 except Exception:
                     app_data.data["config"]["assistant_image"] = None
 
