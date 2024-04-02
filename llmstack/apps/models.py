@@ -501,6 +501,21 @@ class AppData(models.Model):
     def __str__(self) -> str:
         return f'{self.app_uuid}_{"draft" if self.is_draft else "published"}_v{self.version}'
 
+    def save(self, *args, **kwargs):
+        if "config" in self.data:
+            if "assistant_image" in self.data["config"]:
+                if self.data["config"]["assistant_image"] and self.data["config"]["assistant_image"].startswith(
+                    "data:image"
+                ):
+                    app = App.objects.get(uuid=self.app_uuid)
+                    assistant_image_asset = AppDataAssets.create_from_data_uri(
+                        data_uri=self.data["config"]["assistant_image"],
+                        metadata={"app_uuid": str(self.app_uuid)},
+                        ref_id=str(app.published_uuid),
+                    )
+                    self.data["config"]["assistant_image"] = f"objref://appdata/{str(assistant_image_asset.uuid)}"
+        return super().save(*args, **kwargs)
+
 
 def select_storage():
     from django.core.files.storage import storages
