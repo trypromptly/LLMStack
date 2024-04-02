@@ -2,8 +2,8 @@ from rest_framework import serializers
 
 from llmstack.apps.app_types import AppTypeFactory
 from llmstack.apps.yaml_loader import get_app_template_by_slug
+from llmstack.assets.apis import AssetViewSet
 from llmstack.base.models import Profile
-from llmstack.common.utils.utils import is_object_ref_id
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.processors.models import ApiBackend, Endpoint
 from llmstack.processors.serializers import (
@@ -16,7 +16,6 @@ from .models import (
     App,
     AppAccessPermission,
     AppData,
-    AppDataAssets,
     AppHub,
     AppRunGraphEntry,
     AppSession,
@@ -181,19 +180,13 @@ class AppSerializer(DynamicFieldsModelSerializer):
             if not obj.has_write_permission(self._request_user):
                 app_data.data.pop("processors", None)
 
-            if (
-                "config" in app_data.data
-                and "assistant_image" in app_data.data["config"]
-                and is_object_ref_id(app_data.data["config"]["assistant_image"])
-            ):
-                try:
-                    url_parts = app_data.data["config"]["assistant_image"].split("objref://")[1].split("/")
-                    app_asset_uuid = url_parts[1]
-                    app_data_asset_obj = AppDataAssets.objects.get(uuid=app_asset_uuid)
-                    app_data.data["config"]["assistant_image"] = app_data_asset_obj.file.url
-                except Exception:
-                    app_data.data["config"]["assistant_image"] = None
-
+            if "config" in app_data.data and "assistant_image" in app_data.data["config"]:
+                asset_data = AssetViewSet().get_asset_data(
+                    objref=app_data.data["config"]["assistant_image"],
+                    request_user=self._request_user,
+                )
+                if asset_data and "url" in asset_data:
+                    app_data.data["config"]["assistant_image"] = asset_data["url"]
             return app_data.data
         return None
 

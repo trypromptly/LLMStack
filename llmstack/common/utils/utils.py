@@ -104,13 +104,6 @@ def validate_parse_data_uri(
     return (mime_type, file_name, data)
 
 
-def is_object_ref_id(ref_id):
-    if not ref_id:
-        return False
-
-    return re.match(r"objref://(\w+)/(.*)", ref_id)
-
-
 def generate_checksum(file_data, algorithm="sha256"):
     """
     Generates a checksum of file data using the specified algorithm.
