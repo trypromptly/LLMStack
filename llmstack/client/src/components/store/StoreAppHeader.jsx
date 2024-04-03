@@ -64,7 +64,7 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
             <AppIconSmall src={icon} alt={name} />
             <Box sx={{ padding: 2, alignSelf: "center" }}>
               <Typography
-                component="div"
+                component="h1"
                 color="text.primary"
                 sx={{ fontSize: 22, fontWeight: 600 }}
               >
@@ -78,7 +78,7 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
             <AppIcon src={icon} alt={name} />
             <Box sx={{ padding: 2 }}>
               <Typography
-                component="div"
+                component="h1"
                 color="text.primary"
                 sx={{ fontSize: 24, fontWeight: 600 }}
               >
