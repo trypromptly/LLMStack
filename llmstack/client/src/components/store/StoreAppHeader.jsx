@@ -44,10 +44,10 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
   return (
     <Card
       sx={{
-        backgroundColor: "#F4F6F8",
+        backgroundColor: "#F3F5F8",
         cursor: "pointer",
         boxShadow: "none",
-        borderBottom: "1px solid #ddd",
+        borderBottom: "1px solid #E8EBEE",
         borderRadius: "8px 8px 0 0",
       }}
       onClick={() => setExpanded(!expanded)}
@@ -65,8 +65,8 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
             <Box sx={{ padding: 2, alignSelf: "center" }}>
               <Typography
                 component="h1"
-                color="text.primary"
-                sx={{ fontSize: 22, fontWeight: 600 }}
+                color="#183A58"
+                sx={{ fontSize: "20px", lineHeight: "24px", fontWeight: 600 }}
               >
                 {name}
               </Typography>
@@ -79,8 +79,8 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
             <Box sx={{ padding: 2 }}>
               <Typography
                 component="h1"
-                color="text.primary"
-                sx={{ fontSize: 24, fontWeight: 600 }}
+                color="#183A58"
+                sx={{ fontSize: "20px", lineHeight: "24px", fontWeight: 600 }}
               >
                 {name}
               </Typography>

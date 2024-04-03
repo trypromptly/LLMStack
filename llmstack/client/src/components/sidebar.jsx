@@ -73,7 +73,7 @@ const openedMixin = (theme) => ({
   }),
   overflowX: "hidden",
   borderRight: "solid 1px #E8EBEE",
-  boxShadow: "0px 2px 4px -2px #1018280F, 0px 4px 8px -2px #1018281A",
+  boxShadow: "0px 2px 4px -2px #1018280F, 0px 4px 8px -2px #1018281F",
 });
 
 const closedMixin = (theme) => ({
@@ -82,7 +82,7 @@ const closedMixin = (theme) => ({
     duration: theme.transitions.duration.leavingScreen,
   }),
   borderRight: "solid 1px #E8EBEE",
-  boxShadow: "0px 2px 4px -2px #1018280F, 0px 4px 8px -2px #1018281A",
+  boxShadow: "0px 2px 4px -2px #1018281F, 0px 4px 8px -2px #1018282A",
   overflowX: "hidden",
   width: `calc(${theme.spacing(14)} + 1px)`,
   [theme.breakpoints.up("sm")]: {

@@ -20,19 +20,20 @@ export default function HomePage() {
         margin: "auto",
         padding: 0,
       }}
-      columnGap={2}
+      columnGap={4}
     >
       <Grid
         xs={12}
         md={7.5}
         sx={{
           height: isMobile ? "calc(100% - 120px)" : "auto",
-          border: "solid 1px #ddd",
+          border: "1px solid #E8EBEE",
+          boxShadow: "0px 4px 6px -2px #10182808, 0px 12px 16px -4px #1018281F",
           borderRadius: "8px 8px 4px 4px",
           flex: "1 !important",
-          ml: 3,
-          mt: 3,
-          mb: 3,
+          ml: 4,
+          mt: 4,
+          mb: 4,
           ...(matchesMdDown && {
             m: 1,
           }),
@@ -44,10 +45,10 @@ export default function HomePage() {
         xs={12}
         md={4.5}
         sx={{
-          mr: 3,
+          mr: 4,
           ...(matchesMdDown && {
             m: 1,
-            marginTop: 3,
+            marginTop: 4,
           }),
         }}
       >

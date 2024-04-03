@@ -196,9 +196,9 @@ export default function Search({ appSlug }) {
       <Paper
         component="form"
         sx={{
-          mt: 3,
+          mt: 4,
           ml: 0.5,
-          mr: 0.5,
+          mr: 0,
           p: "4px 4px 0 4px",
           display: "flex",
           alignItems: "center",
