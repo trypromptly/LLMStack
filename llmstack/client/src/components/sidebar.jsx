@@ -144,7 +144,7 @@ export default function Sidebar({ menuItems }) {
         },
         "& .MuiListItemButton-root": {
           borderRadius: "8px",
-          padding: "16px",
+          padding: "0 16px",
           margin: "0 4px",
         },
       }}
@@ -236,7 +236,7 @@ export default function Sidebar({ menuItems }) {
           <ListItem key={"docs"} disablePadding>
             <ListItemButton
               sx={{
-                minHeight: 32,
+                minHeight: 48,
                 justifyContent: open ? "initial" : "center",
                 px: 2.5,
               }}
@@ -268,7 +268,7 @@ export default function Sidebar({ menuItems }) {
           <ListItem key={"help"} disablePadding>
             <ListItemButton
               sx={{
-                minHeight: 32,
+                minHeight: 48,
                 justifyContent: open ? "initial" : "center",
                 px: 2.5,
               }}
@@ -301,7 +301,7 @@ export default function Sidebar({ menuItems }) {
             <ListItem key={"github"} disablePadding>
               <ListItemButton
                 sx={{
-                  minHeight: 32,
+                  minHeight: 48,
                   justifyContent: open ? "initial" : "center",
                   px: 2.5,
                 }}
@@ -334,7 +334,7 @@ export default function Sidebar({ menuItems }) {
           <ListItem key={"twitter"} disablePadding>
             <ListItemButton
               sx={{
-                minHeight: 32,
+                minHeight: 48,
                 justifyContent: open ? "initial" : "center",
                 px: 2.5,
               }}
@@ -367,7 +367,7 @@ export default function Sidebar({ menuItems }) {
             <ListItem key={"logout"} disablePadding>
               <ListItemButton
                 sx={{
-                  minHeight: 32,
+                  minHeight: 48,
                   justifyContent: open ? "initial" : "center",
                   px: 2.5,
                 }}
@@ -400,7 +400,7 @@ export default function Sidebar({ menuItems }) {
             <ListItem key={"profile-icon"} disablePadding>
               <ListItemButton
                 sx={{
-                  minHeight: 32,
+                  minHeight: 48,
                   justifyContent: open ? "initial" : "center",
                   px: 2.5,
                 }}
