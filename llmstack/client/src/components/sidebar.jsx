@@ -8,9 +8,9 @@ import {
   HomeOutlined,
   LightbulbOutlined,
   LogoutOutlined,
-  PlayArrowOutlined,
+  TerminalOutlined,
   SettingsOutlined,
-  SourceOutlined,
+  FolderOutlined,
 } from "@mui/icons-material";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import {
@@ -45,18 +45,18 @@ const icon =
     : require(`../assets/llmstack-icon.png`);
 
 const logoStyle = {
-  width: "28px",
+  width: "24px",
 };
 
 const getNavItemIcon = (itemLabel) => {
   const iconMap = {
-    Playground: <PlayArrowOutlined />,
+    Playground: <TerminalOutlined />,
     Home: <HomeOutlined />,
     History: <HistoryOutlined />,
     Settings: <SettingsOutlined />,
     Discover: <LightbulbOutlined />,
     Apps: <AppsOutlined />,
-    Data: <SourceOutlined />,
+    Data: <FolderOutlined />,
     Organization: <CorporateFareOutlined />,
     Jobs: <EventRepeatOutlined />,
   };
@@ -135,7 +135,20 @@ export default function Sidebar({ menuItems }) {
       location.pathname.startsWith("/apps"));
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box
+      sx={{
+        display: "flex",
+        "& .Mui-selected": {
+          borderRadius: "8px",
+          backgroundColor: "#E8EBEE",
+        },
+        "& .MuiListItemButton-root": {
+          borderRadius: "8px",
+          padding: "16px",
+          margin: "0 4px",
+        },
+      }}
+    >
       <CssBaseline />
       <Drawer
         variant="permanent"
@@ -145,7 +158,7 @@ export default function Sidebar({ menuItems }) {
         onMouseLeave={() => setOpen(false)}
       >
         <List>
-          <ListItem>
+          <ListItem sx={{ justifyContent: "center" }}>
             <a
               href="https://www.trypromptly.com"
               target="_blank"
@@ -155,6 +168,8 @@ export default function Sidebar({ menuItems }) {
                 color: "#183a58",
                 display: "flex",
                 alignItems: "center",
+                marginTop: "24px",
+                marginBottom: "48px",
               }}
             >
               <img style={logoStyle} src={icon} alt="logo" />
@@ -209,6 +224,8 @@ export default function Sidebar({ menuItems }) {
                   sx={{
                     opacity: open ? 1 : 0,
                     display: open ? "block" : "none",
+                    padding: 0,
+                    margin: 0,
                   }}
                 />
               </ListItemButton>
