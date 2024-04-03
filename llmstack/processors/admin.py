@@ -6,11 +6,9 @@ from .models import (
     Endpoint,
     EndpointInvocationCount,
     Feedback,
-    PromptHub,
     Request,
     Response,
     RunEntry,
-    Share,
     ShareTag,
     VersionedEndpoint,
 )
@@ -24,6 +22,4 @@ admin.site.register(Feedback)
 admin.site.register(Request)
 admin.site.register(Response)
 admin.site.register(RunEntry)
-admin.site.register(Share)
 admin.site.register(ShareTag)
-admin.site.register(PromptHub)
