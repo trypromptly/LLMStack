@@ -72,7 +72,8 @@ const openedMixin = (theme) => ({
     duration: theme.transitions.duration.enteringScreen,
   }),
   overflowX: "hidden",
-  boxShadow: "0px 0px 10px #999",
+  borderRight: "solid 1px #E8EBEE",
+  boxShadow: "0px 2px 4px -2px #1018280F, 0px 4px 8px -2px #1018281A",
 });
 
 const closedMixin = (theme) => ({
@@ -80,6 +81,8 @@ const closedMixin = (theme) => ({
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
+  borderRight: "solid 1px #E8EBEE",
+  boxShadow: "0px 2px 4px -2px #1018280F, 0px 4px 8px -2px #1018281A",
   overflowX: "hidden",
   width: `calc(${theme.spacing(14)} + 1px)`,
   [theme.breakpoints.up("sm")]: {
@@ -97,7 +100,7 @@ const Drawer = styled(MuiDrawer, {
   whiteSpace: "nowrap",
   boxSizing: "border-box",
   "& .MuiListItemButton-root": {
-    margin: "0px 10px",
+    margin: "0px 4px",
   },
   "& .MuiListItemText-root": {
     "& .MuiTypography-root": {
@@ -140,7 +143,11 @@ export default function Sidebar({ menuItems }) {
         display: "flex",
         "& .Mui-selected": {
           borderRadius: "8px",
-          backgroundColor: "#E8EBEE",
+          backgroundColor: "#E8EBEE !important",
+
+          "& .MuiListItemIcon-root": {
+            color: "#183A58",
+          },
         },
         "& .MuiListItemButton-root": {
           borderRadius: "8px",
@@ -169,7 +176,7 @@ export default function Sidebar({ menuItems }) {
                 display: "flex",
                 alignItems: "center",
                 marginTop: "24px",
-                marginBottom: "48px",
+                marginBottom: "32px",
               }}
             >
               <img style={logoStyle} src={icon} alt="logo" />
@@ -232,7 +239,7 @@ export default function Sidebar({ menuItems }) {
             </ListItem>
           ))}
         </List>
-        <List sx={{ position: "absolute", bottom: 0, minWidth: "150px" }}>
+        <List sx={{ position: "absolute", bottom: 0 }}>
           <ListItem key={"docs"} disablePadding>
             <ListItemButton
               sx={{
@@ -247,7 +254,7 @@ export default function Sidebar({ menuItems }) {
               <ListItemIcon
                 sx={(theme) => ({
                   minWidth: 0,
-                  mr: open ? 1 : "auto",
+                  mr: open ? 3 : "auto",
                   justifyContent: "center",
                   color: "#666",
                 })}
@@ -279,7 +286,7 @@ export default function Sidebar({ menuItems }) {
               <ListItemIcon
                 sx={(theme) => ({
                   minWidth: 0,
-                  mr: open ? 1 : "auto",
+                  mr: open ? 3 : "auto",
                   justifyContent: "center",
                   color: "#666",
                 })}
@@ -291,7 +298,6 @@ export default function Sidebar({ menuItems }) {
                 sx={{
                   opacity: open ? 1 : 0,
                   display: open ? "block" : "none",
-                  color: "#666",
                   margin: 0,
                 }}
               />
@@ -312,7 +318,7 @@ export default function Sidebar({ menuItems }) {
                 <ListItemIcon
                   sx={(theme) => ({
                     minWidth: 0,
-                    mr: open ? 1 : "auto",
+                    mr: open ? 3 : "auto",
                     justifyContent: "center",
                     color: "#666",
                   })}
@@ -324,7 +330,6 @@ export default function Sidebar({ menuItems }) {
                   sx={{
                     opacity: open ? 1 : 0,
                     display: open ? "block" : "none",
-                    color: "#666",
                     margin: 0,
                   }}
                 />
@@ -345,7 +350,7 @@ export default function Sidebar({ menuItems }) {
               <ListItemIcon
                 sx={(theme) => ({
                   minWidth: 0,
-                  mr: open ? 1 : "auto",
+                  mr: open ? 3 : "auto",
                   justifyContent: "center",
                   color: "#666",
                 })}
@@ -357,7 +362,6 @@ export default function Sidebar({ menuItems }) {
                 sx={{
                   opacity: open ? 1 : 0,
                   display: open ? "block" : "none",
-                  color: "#666",
                   margin: 0,
                 }}
               />
@@ -376,7 +380,7 @@ export default function Sidebar({ menuItems }) {
                 <ListItemIcon
                   sx={(theme) => ({
                     minWidth: 0,
-                    mr: open ? 1 : "auto",
+                    mr: open ? 3 : "auto",
                     justifyContent: "center",
                     color: "#666",
                   })}
@@ -388,7 +392,6 @@ export default function Sidebar({ menuItems }) {
                   sx={{
                     opacity: open ? 1 : 0,
                     display: open ? "block" : "none",
-                    color: "#666",
                     margin: 0,
                   }}
                 />
@@ -408,7 +411,7 @@ export default function Sidebar({ menuItems }) {
                 <ListItemIcon
                   sx={(theme) => ({
                     minWidth: 0,
-                    mr: open ? 1 : "auto",
+                    mr: open ? 3 : "auto",
                     justifyContent: "center",
                     color: "#666",
                   })}
@@ -453,8 +456,8 @@ export default function Sidebar({ menuItems }) {
                   sx={{
                     opacity: open ? 1 : 0,
                     display: open ? "block" : "none",
-                    color: "#666",
                     margin: 0,
+                    maxWidth: "72px",
                   }}
                 />
               </ListItemButton>
