@@ -279,6 +279,7 @@ export default function Search({ appSlug }) {
                 : "gray.main",
               "& :hover": {
                 borderRadius: 2,
+                padding: "2px 8px",
                 backgroundColor: isSameCategory(categoryFilter, category.slug)
                   ? "corral.main"
                   : "inherit",
