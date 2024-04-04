@@ -250,8 +250,8 @@ const AppAvatar = memo(
           height: 40,
           mt: "10px",
           mr: "8px",
-          border: "solid 1px #E8EBEE",
-          backgroundColor: "corral.main",
+          border: assistantImage ? "none" : "solid 1px #E8EBEE",
+          backgroundColor: assistantImage ? "inherit" : "corral.main",
           ...sx,
         }}
       />
@@ -267,18 +267,17 @@ const UserAvatar = memo(
     const profile = useRecoilValue(profileState);
     return (
       <Avatar
+        src={profile?.avatar}
         alt="User"
-        // style={{ margin: "10px 0 10px 8px" }}
         sx={{
           width: 40,
           height: 40,
           mt: "10px",
           ml: "8px",
-          border: "solid 1px #E8EBEE",
-          backgroundColor: "corral.main",
+          border: profile?.avatar ? "none" : "solid 1px #E8EBEE",
+          backgroundColor: profile?.avatar ? "inherit" : "corral.main",
           ...sx,
         }}
-        src={profile?.avatar}
       >
         P
       </Avatar>
