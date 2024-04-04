@@ -99,7 +99,9 @@ const SuggestedMessages = memo(
                   cursor: "pointer",
                   textAlign: "left",
                   backgroundColor: "white",
-                  border: "solid 1px #ccc",
+                  border: "solid 1px",
+                  borderColor: "gray.main",
+                  color: "#183A58",
                   ":hover": {
                     backgroundColor: "#f0f0f0",
                   },
