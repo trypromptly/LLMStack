@@ -23,20 +23,21 @@ const AppEntry = forwardRef(({ app }, ref) => (
     <Box
       ref={ref}
       sx={{
-        border: "1px solid #e0e0e0",
-        borderRadius: 1,
-        p: 1.5,
+        border: "1px solid #E8EBEE",
+        borderRadius: 2,
+        p: 4,
+        gap: 4,
         flexDirection: "column",
         margin: "8px 2px 10px 2px",
         display: "flex",
         alignItems: "left",
         cursor: "pointer",
         textAlign: "left",
+        boxShadow: "0px 2px 4px -2px #1018280F, 0px 4px 8px -2px #1018281A",
         ":hover": {
-          backgroundColor: "#edeff7",
-          borderColor: "#d0d0d0",
+          backgroundColor: "#F3F5F8",
           borderRadius: 1,
-          boxShadow: "0 0 0 1px #d0d0d0",
+          boxShadow: "0px 2px 4px -2px #1018283F, 0px 4px 8px -2px #1018283A",
         },
       }}
       onClick={() => {
@@ -48,36 +49,48 @@ const AppEntry = forwardRef(({ app }, ref) => (
           display: "flex",
           alignItems: "center",
           textAlign: "left",
-          pl: 1,
           width: "100%",
+          gap: 4,
         }}
       >
         <img
           src={app.icon128}
           alt={app.name}
           style={{
-            width: 60,
-            height: 60,
-            margin: "1em 0.5em 0.5em 0.5em",
-            borderRadius: "0.2em",
-            alignSelf: "start",
+            width: "50px",
+            height: "50px",
+            borderRadius: "8px",
+            alignSelf: "center",
           }}
         />
-        <Box sx={{ padding: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Typography
             component="div"
-            color="text.primary"
-            sx={{ fontSize: 18, fontWeight: 600 }}
+            sx={{
+              fontSize: 16,
+              fontWeight: 600,
+              lineHeight: "20px",
+              color: "#183A58",
+              ml: 0.5,
+            }}
           >
             {app.name}
           </Typography>
-          <Box sx={{ mt: 1, mb: 1 }}>
+          <Box>
             {app.categories &&
               app.categories.map((category) => (
                 <Chip
                   label={capitalize(category)}
                   size="small"
                   key={category}
+                  sx={{
+                    borderRadius: 2,
+                    padding: "4px, 8px, 4px, 8px",
+                    backgroundColor: "#FBFBFB",
+                    border: 1,
+                    color: "#183A58",
+                    borderColor: "gray.main",
+                  }}
                 />
               ))}
           </Box>
@@ -86,13 +99,13 @@ const AppEntry = forwardRef(({ app }, ref) => (
       <Typography
         color="text.secondary"
         sx={{
-          m: 3,
-          mt: 0,
           fontSize: 14,
+          color: "#647B8F",
+          lineHeight: "22px",
           overflow: "hidden",
           textOverflow: "ellipsis",
           display: "-webkit-box",
-          "-webkit-line-clamp": "3",
+          "-webkit-line-clamp": "2",
           "-webkit-box-orient": "vertical",
         }}
       >
@@ -180,6 +193,11 @@ export default function Search({ appSlug }) {
   const [appCategories, setAppCategories] = useState(categoriesList);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const isSameCategory = (categoryFilter, categorySlug) =>
+    categoryFilter === categorySlug ||
+    (categoryFilter.startsWith("recommended") &&
+      categorySlug === "recommended");
+
   useEffect(() => {
     if (categoryFilter && searchTerm === "") {
       setAppCategories(categoriesList);
@@ -199,11 +217,14 @@ export default function Search({ appSlug }) {
           mt: 4,
           ml: 0.5,
           mr: 0,
+          mb: 2,
           p: "4px 4px 0 4px",
           display: "flex",
           alignItems: "center",
           background: "#fbfbfb",
-          border: "1px solid #ddd",
+          border: "1px solid #E8EBEE",
+          borderRadius: 2,
+          boxShadow: "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
         }}
         onSubmit={(e) => {
           e.preventDefault();
@@ -229,26 +250,35 @@ export default function Search({ appSlug }) {
         </IconButton>
       </Paper>
 
-      <Box sx={{ textAlign: "left", mt: 1 }}>
+      <Box sx={{ textAlign: "left", mt: 1, mb: 2 }}>
         {appCategories.map((category) => (
           <Chip
             key={category.slug}
             label={category.name}
-            size="medium"
-            variant={
-              categoryFilter === category.slug ||
-              (categoryFilter.startsWith("recommended") &&
-                category.slug === "recommended")
-                ? "filled"
-                : "outlined"
-            }
+            size="small"
+            variant={"outlined"}
             sx={{
               cursor: "pointer",
-              m: 0.5,
-              border:
-                categoryFilter.toLowerCase() === category.slug
-                  ? "1px solid #b0b0b0"
-                  : "1px solid #e0e0e0",
+              borderRadius: 2,
+              color: isSameCategory(categoryFilter, category.slug)
+                ? "#FFF"
+                : "#183A58",
+              padding: "4px, 8px, 4px, 8px",
+              m: 1,
+              backgroundColor: isSameCategory(categoryFilter, category.slug)
+                ? "corral.main"
+                : "#FBFBFB",
+              boxShadow: "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
+              border: "1px solid",
+              borderColor: isSameCategory(categoryFilter, category.slug)
+                ? "corral.main"
+                : "gray.main",
+              "& :hover": {
+                borderRadius: 2,
+                backgroundColor: isSameCategory(categoryFilter, category.slug)
+                  ? "corral.main"
+                  : "inherit",
+              },
             }}
             onClick={() => {
               setCategoryFilter(category.slug);
