@@ -176,6 +176,7 @@ const defaultTheme = createTheme({
 
           "& .MuiInputBase-root": {
             padding: "0.1rem",
+            borderRadius: "8px",
           },
 
           "& .MuiTypography-body1": {
@@ -265,6 +266,7 @@ const defaultTheme = createTheme({
         root: {
           "&.MuiButton-contained": {
             textTransform: "none",
+            borderRadius: "8px",
           },
         },
       },
