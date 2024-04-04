@@ -1,5 +1,8 @@
 import logging
+import random
+import string
 import uuid
+from functools import reduce
 
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField as PGArrayField
@@ -742,3 +745,47 @@ def update_app_pre_save(sender, instance, **kwargs):
         "twilio_sms",
     )
     instance = twilio_sms_type_handler_cls.pre_save(instance)
+
+
+def generate_code(code_length=7, population=[string.ascii_uppercase, string.ascii_lowercase, string.digits]):
+    population = reduce(lambda acc, x: acc + x, population, "")
+    return "".join(random.choices(population=population, k=code_length))
+
+
+class AppSessionShare(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, help_text="UUID for the model")
+    code = models.CharField(max_length=7, help_text="Share code", unique=True)
+    app_session_uuid = models.UUIDField(help_text="UUID of the app session", null=True, blank=True)
+    run_entry_request_uuids = (
+        PGArrayField(
+            models.CharField(
+                max_length=40,
+            ),
+            default=None,
+            help_text="List of run entry request UUIDs associated with the share",
+            blank=True,
+            null=True,
+        )
+        if connection.vendor == "postgresql"
+        else ArrayField(
+            null=True,
+            help_text="List of run entry request UUIDs associated with the share",
+            blank=True,
+        )
+    )
+    visibility = models.PositiveSmallIntegerField(
+        default=AppVisibility.PUBLIC,
+        choices=AppVisibility.choices,
+        help_text="Visibility of the share",
+    )
+    metadata = models.JSONField(default=dict, help_text="Metadata for the share")
+
+    def save(self, *args, **kwargs):
+        if self.code is None:
+            while True:
+                code = generate_code(code_length=7)
+                if not AppSessionShare.objects.filter(code=code).exists():
+                    self.code = code
+                    break
+
+        return super().save(*args, **kwargs)

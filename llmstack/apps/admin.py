@@ -9,6 +9,7 @@ from .models import (
     AppSession,
     AppSessionData,
     AppSessionFiles,
+    AppSessionShare,
     AppTemplate,
     AppTemplateCategory,
     AppType,
@@ -50,3 +51,4 @@ admin.site.register(AppHub, AppHubAdmin)
 admin.site.register(TestSet)
 admin.site.register(TestCase)
 admin.site.register(AppDataAssets)
+admin.site.register(AppSessionShare)
