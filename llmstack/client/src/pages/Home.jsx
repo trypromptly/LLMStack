@@ -29,7 +29,7 @@ export default function HomePage() {
           height: isMobile ? "calc(100% - 120px)" : "auto",
           border: "1px solid #E8EBEE",
           boxShadow: "0px 4px 6px -2px #10182808, 0px 12px 16px -4px #1018281F",
-          borderRadius: "8px 8px 4px 4px",
+          borderRadius: "8px",
           flex: "1 !important",
           ml: 4,
           mt: 4,

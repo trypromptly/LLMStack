@@ -75,6 +75,15 @@ const defaultTheme = createTheme({
       dark: "#58b65c",
       contrastText: "#fff",
     },
+    corral: {
+      main: "#EE625A",
+      light: "#EE625A",
+      dark: "#EE625A",
+      contrastText: "#FFFFFF",
+    },
+    gray: {
+      main: "#E8EBEE",
+    },
   },
   components: {
     MuiChip: {

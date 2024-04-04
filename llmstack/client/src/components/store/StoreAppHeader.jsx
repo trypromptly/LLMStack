@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { Box, Button, Card, Chip, Collapse, Typography } from "@mui/material";
 import {
-  KeyboardDoubleArrowDownOutlined,
-  KeyboardDoubleArrowUpOutlined,
+  KeyboardArrowDownOutlined,
+  KeyboardArrowUpOutlined,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 import { useRecoilValue } from "recoil";
@@ -12,27 +12,21 @@ import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 const AppIcon = styled("img")({
   width: 80,
   height: 80,
-  margin: "1em 0.5em",
+  margin: 0,
   borderRadius: 8,
 });
 
 const AppIconSmall = styled("img")({
   width: 35,
   height: 35,
-  margin: "0.5em 0.2em 0.5em 0.5em",
+  margin: 0,
   borderRadius: 4,
 });
 
 function StoreAppHeader({ name, icon, username, description, categories }) {
   const isMobile = useRecoilValue(isMobileState);
   const [expanded, setExpanded] = useState(!isMobile);
-  const [expandedDescription, setExpandedDescription] = useState(false);
   const storeCategories = useRecoilValue(storeCategoriesListState);
-
-  const handleExpand = (e) => {
-    e.stopPropagation();
-    setExpandedDescription(!expandedDescription);
-  };
 
   const findCategory = useCallback(
     (slug) => {
@@ -47,8 +41,13 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
         backgroundColor: "#F3F5F8",
         cursor: "pointer",
         boxShadow: "none",
+        display: "flex",
+        flexDirection: "column",
         borderBottom: "1px solid #E8EBEE",
         borderRadius: "8px 8px 0 0",
+        p: expanded ? 6 : 4,
+        gap: 4,
+        height: expanded ? "auto" : "72px",
       }}
       onClick={() => setExpanded(!expanded)}
     >
@@ -57,43 +56,90 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
           display: "flex",
           alignItems: "center",
           textAlign: "left",
+          width: "100%",
         }}
       >
         {!expanded && (
-          <Box sx={{ display: "flex", pt: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              width: "100%",
+              gap: 4,
+              alignItems: "center",
+            }}
+          >
             <AppIconSmall src={icon} alt={name} />
-            <Box sx={{ padding: 2, alignSelf: "center" }}>
-              <Typography
-                component="h1"
-                color="#183A58"
-                sx={{ fontSize: "20px", lineHeight: "24px", fontWeight: 600 }}
+            <Box sx={{ alignSelf: "center", width: "100%" }}>
+              <Box
+                sx={{ width: "100%", display: "flex", alignItems: "center" }}
               >
-                {name}
-              </Typography>
+                <Typography
+                  component="h1"
+                  color="#183A58"
+                  sx={{ fontSize: "20px", lineHeight: "24px", fontWeight: 600 }}
+                >
+                  {name}
+                </Typography>
+                <Button sx={{ color: "#183A58", ml: "auto", mr: "-12px" }}>
+                  {expanded ? (
+                    <KeyboardArrowUpOutlined />
+                  ) : (
+                    <KeyboardArrowDownOutlined />
+                  )}
+                </Button>
+              </Box>
             </Box>
           </Box>
         )}
         {expanded && (
-          <Box sx={{ display: "flex" }}>
+          <Box
+            sx={{
+              display: "flex",
+              width: "100%",
+              gap: 4,
+              alignItems: "center",
+            }}
+          >
             <AppIcon src={icon} alt={name} />
-            <Box sx={{ padding: 2 }}>
-              <Typography
-                component="h1"
-                color="#183A58"
-                sx={{ fontSize: "20px", lineHeight: "24px", fontWeight: 600 }}
+            <Box sx={{ width: "100%" }}>
+              <Box
+                sx={{ width: "100%", display: "flex", alignItems: "center" }}
               >
-                {name}
+                <Typography
+                  component="h1"
+                  sx={{ fontSize: "20px", lineHeight: "24px", fontWeight: 600 }}
+                >
+                  {name}
+                </Typography>
+                <Button sx={{ ml: "auto", mr: "-20px" }}>
+                  {expanded ? (
+                    <KeyboardArrowUpOutlined />
+                  ) : (
+                    <KeyboardArrowDownOutlined />
+                  )}
+                </Button>
+              </Box>
+              <Typography>
+                by&nbsp;
+                <Typography color="corral.main" sx={{ display: "inline" }}>
+                  {username}
+                </Typography>
               </Typography>
-              <Typography color="text.secondary">
-                by <b>{username}</b>
-              </Typography>
-              <Box sx={{ mt: 1, mb: 1 }}>
+              <Box sx={{ mt: 1, mb: 1, ml: -0.4 }}>
                 {categories &&
                   categories.map((category) => (
                     <Chip
                       label={findCategory(category)?.name || category}
                       size="small"
                       key={category}
+                      sx={{
+                        borderRadius: 2,
+                        padding: "4px, 8px, 4px, 8px",
+                        backgroundColor: "#FFF",
+                        border: 1,
+                        color: "#183A58",
+                        borderColor: "gray.main",
+                      }}
                     />
                   ))}
               </Box>
@@ -104,53 +150,18 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
       <Box
         sx={{
           textAlign: "left",
-          m: 2,
-          mt: 0,
-          pl: 2,
-          pr: 2,
           lineHeight: "1.6",
           color: "#183a58",
           "& p": {
             mt: 0,
+            ml: 0,
+            marginBlockEnd: 0,
           },
         }}
       >
-        <Collapse
-          in={expanded && expandedDescription}
-          timeout="auto"
-          unmountOnExit
-        >
+        <Collapse in={expanded} timeout="auto" unmountOnExit>
           <LayoutRenderer>{description}</LayoutRenderer>
         </Collapse>
-        <Collapse
-          in={expanded && !expandedDescription}
-          timeout="auto"
-          unmountOnExit
-        >
-          <Typography>{description.substring(0, 200)}</Typography>
-        </Collapse>
-        {expanded && description.length > 200 && (
-          <Button
-            onClick={handleExpand}
-            size="small"
-            sx={{
-              textTransform: "none",
-              fontSize: "0.8em",
-              "& .MuiButton-startIcon": {
-                marginRight: "0.5em",
-              },
-            }}
-            startIcon={
-              expandedDescription ? (
-                <KeyboardDoubleArrowUpOutlined />
-              ) : (
-                <KeyboardDoubleArrowDownOutlined />
-              )
-            }
-          >
-            {expandedDescription ? "Show Less" : "View More"}
-          </Button>
-        )}
       </Box>
     </Card>
   );
