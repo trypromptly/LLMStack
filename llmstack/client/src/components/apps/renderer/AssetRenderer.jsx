@@ -12,16 +12,20 @@ export const AssetRenderer = (props) => {
   const [file, setFile] = useState(null);
 
   useEffect(() => {
-    const urlParts = url.split("objref://")[1].split("/");
-    const [category, assetId] = [urlParts[0], urlParts[1]];
-    axios()
-      .get(`/api/assets/${category}/${assetId}`)
-      .then((response) => {
-        setFile(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    try {
+      const urlParts = url.split("objref://")[1].split("/");
+      const [category, assetId] = [urlParts[0], urlParts[1]];
+      axios()
+        .get(`/api/assets/${category}/${assetId}`)
+        .then((response) => {
+          setFile(response.data);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    } catch (error) {
+      console.error(error);
+    }
   }, [url]);
 
   if (type.startsWith("image")) {
