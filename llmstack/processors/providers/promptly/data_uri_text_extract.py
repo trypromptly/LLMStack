@@ -128,6 +128,10 @@ class DataUriTextExtract(
 
         if file is None:
             raise Exception("No file found in input")
+
+        # Extract from objref if it is one
+        file = self._get_session_asset_data_uri(file)
+
         mime_type, file_name, data = validate_parse_data_uri(file)
 
         if not self.extracted_text:

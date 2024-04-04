@@ -64,7 +64,6 @@ class AudioTranslationsConfiguration(ApiProcessorSchema):
 class AudioTranslations(
     ApiProcessorInterface[AudioTranslationsInput, AudioTranslationsOutput, AudioTranslationsConfiguration],
 ):
-
     """
     OpenAI Audio Translations API
     """
@@ -86,13 +85,14 @@ class AudioTranslations(
         return "openai"
 
     def process(self) -> dict:
-        if self._input.file and len(self._input.file) > 0:
+        file = self._input.file or self._input.file_data
+
+        # Extract from objref if it is one
+        file = self._get_session_asset_data_uri(file)
+
+        if file and len(file) > 0:
             mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
                 self._input.file,
-            )
-        elif self._input.file_data and len(self._input.file_data) > 0:
-            mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
-                self._input.file_data,
             )
         else:
             raise Exception("No file or file_data found in input")

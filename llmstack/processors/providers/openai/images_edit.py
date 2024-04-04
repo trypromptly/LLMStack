@@ -109,6 +109,9 @@ class ImagesEdit(
         if image is None or image == "":
             raise Exception("No image found in input")
 
+        # Extract from objref if it is one
+        image = self._get_session_asset_data_uri(image)
+
         mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
             image,
         )

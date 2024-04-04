@@ -52,7 +52,7 @@ class AssetViewSet(viewsets.ModelViewSet):
                 logger.error(f"Invalid category for asset model: {category}")
                 return None
 
-            asset = model_cls.objects.filter(uuid=asset_uuid).first()
+            asset = model_cls.objects.filter(uuid=asset_uuid.strip()).first()
 
             if asset is None or not model_cls.is_accessible(asset, request_user, request_session):
                 logger.info(f"Asset not found or not accessible: {objref}")
