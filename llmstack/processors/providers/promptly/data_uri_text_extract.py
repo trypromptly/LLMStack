@@ -5,6 +5,7 @@ from typing import List, Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field, conint
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
 from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.utils.splitter import SpacyTextSplitter
@@ -101,6 +102,12 @@ class DataUriTextExtract(
     @staticmethod
     def provider_slug() -> str:
         return "promptly"
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown="""{{text}}""",
+        )
 
     def session_data_to_persist(self) -> dict:
         return {
