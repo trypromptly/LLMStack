@@ -175,7 +175,6 @@ const MultiInputField = (props) => {
         sx={{
           "& .MuiInputBase-root": {
             padding: 2,
-            backgroundColor: "#FBFBFB",
           },
           "& .MuiInputBase-input": {
             resize: "none",

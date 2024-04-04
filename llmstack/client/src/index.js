@@ -40,7 +40,7 @@ const defaultTheme = createTheme({
   },
   palette: {
     primary: {
-      main: "#0a398d",
+      main: "#183A58",
       light: "#0a398d",
       dark: "#1b4ca3",
       contrastText: "#fff",
@@ -128,6 +128,10 @@ const defaultTheme = createTheme({
       },
       styleOverrides: {
         root: {
+          backgroundColor: "#FBFBFB",
+          borderRadius: "8px",
+          borderColor: "#E8EBEE",
+          boxShadow: "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
           "& textarea": {
             whiteSpace: "pre-wrap",
             padding: "0.6rem",
@@ -206,7 +210,8 @@ const defaultTheme = createTheme({
         root: {
           "& .MuiOutlinedInput-root": {
             "& > fieldset": {
-              border: "1px solid rgb(204, 204, 204)",
+              border: "1px solid #E8EBEE",
+              borderRadius: "8px",
             },
             "&.Mui-focused > fieldset": { border: "1px solid #0f477e" },
             "&:hover > fieldset": { border: "1px solid #0f477e" },

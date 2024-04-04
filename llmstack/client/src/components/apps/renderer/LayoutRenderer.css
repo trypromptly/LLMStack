@@ -10,17 +10,20 @@
   font-family: "Lato", sans-serif;
   font-size: 16px;
   padding: 0 10px;
-  background-color: #f3f3f3;
+  background-color: #f3f5f8;
   line-height: 1.7em;
   border-radius: 8px;
-  border: solid 1px #d0d0d0;
+  border: solid 1px #e8ebee;
   max-width: 85%;
-  color: #222;
+  color: #183a58;
   animation: revealWords 2s steps(100);
   display: flex;
   align-items: flex-start;
   flex-direction: column;
   align-self: baseline;
+  box-shadow:
+    0px 1px 2px 0px #1018280f,
+    0px 1px 3px 0px #1018281a;
 }
 
 .layout-chat_message_from_app img {
@@ -37,15 +40,17 @@
   max-width: 75%;
   padding: 10px;
   border-radius: 8px;
-  color: #171717;
-  border: solid 1px #bbbbbb;
-  background-color: #dedede;
+  color: #ffffff;
+  background-color: #466179;
   align-self: flex-end;
   margin: 8px 0;
+  box-shadow:
+    0px 1px 2px 0px #1018280f,
+    0px 1px 3px 0px #1018281a;
 }
 
 .layout-chat_message_from_user p {
-  margin: 6px 0;
+  margin: 2px 0;
 }
 
 .layout-chat_message_from_user a {

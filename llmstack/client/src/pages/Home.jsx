@@ -28,7 +28,7 @@ export default function HomePage() {
         sx={{
           height: isMobile ? "calc(100% - 120px)" : "auto",
           border: "1px solid #E8EBEE",
-          boxShadow: "0px 4px 6px -2px #10182808, 0px 12px 16px -4px #1018281F",
+          boxShadow: "0px 2px 8px -2px #1018280F, 0px 4px 12px -2px #1018281A",
           borderRadius: "8px",
           flex: "1 !important",
           ml: 4,

@@ -245,10 +245,13 @@ const AppAvatar = memo(
       <Avatar
         src={assistantImage}
         alt="Assistant"
-        style={{ margin: "10px 8px" }}
         sx={{
-          width: 32,
-          height: 32,
+          width: 40,
+          height: 40,
+          mt: "10px",
+          mr: "8px",
+          border: "solid 1px #E8EBEE",
+          backgroundColor: "corral.main",
           ...sx,
         }}
       />
@@ -265,10 +268,14 @@ const UserAvatar = memo(
     return (
       <Avatar
         alt="User"
-        style={{ margin: "10px 8px" }}
+        // style={{ margin: "10px 0 10px 8px" }}
         sx={{
-          width: 32,
-          height: 32,
+          width: 40,
+          height: 40,
+          mt: "10px",
+          ml: "8px",
+          border: "solid 1px #E8EBEE",
+          backgroundColor: "corral.main",
           ...sx,
         }}
         src={profile?.avatar}

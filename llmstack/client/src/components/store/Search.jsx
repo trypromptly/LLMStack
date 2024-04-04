@@ -225,6 +225,10 @@ export default function Search({ appSlug }) {
           border: "1px solid #E8EBEE",
           borderRadius: 2,
           boxShadow: "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
+          "& .MuiInputBase-root": {
+            backgroundColor: "#fbfbfb",
+            boxShadow: "none",
+          },
         }}
         onSubmit={(e) => {
           e.preventDefault();

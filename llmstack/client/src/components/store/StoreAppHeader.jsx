@@ -43,7 +43,7 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
         boxShadow: "none",
         display: "flex",
         flexDirection: "column",
-        borderBottom: "1px solid #E8EBEE",
+        border: "1px solid #E8EBEE",
         borderRadius: "8px 8px 0 0",
         p: expanded ? 6 : 4,
         gap: 4,
