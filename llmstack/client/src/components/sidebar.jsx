@@ -458,6 +458,10 @@ export default function Sidebar({ menuItems }) {
                     display: open ? "block" : "none",
                     margin: 0,
                     maxWidth: "72px",
+                    "& .MuiTypography-root": {
+                      fontSize: "clamp(9px, 2vw, 16px)",
+                      whiteSpace: "normal",
+                    },
                   }}
                 />
               </ListItemButton>
