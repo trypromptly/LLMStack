@@ -11,6 +11,7 @@ import {
   TerminalOutlined,
   SettingsOutlined,
   FolderOutlined,
+  LoginOutlined,
 } from "@mui/icons-material";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import {
@@ -239,7 +240,7 @@ export default function Sidebar({ menuItems }) {
             </ListItem>
           ))}
         </List>
-        <List sx={{ position: "absolute", bottom: 0 }}>
+        <List sx={{ position: "absolute", bottom: 0, width: "100%" }}>
           <ListItem key={"docs"} disablePadding>
             <ListItemButton
               sx={{
@@ -367,37 +368,39 @@ export default function Sidebar({ menuItems }) {
               />
             </ListItemButton>
           </ListItem>
-          {isLoggedIn && (
-            <ListItem key={"logout"} disablePadding>
-              <ListItemButton
-                sx={{
-                  minHeight: 48,
-                  justifyContent: open ? "initial" : "center",
-                  px: 2.5,
-                }}
-                onClick={onLogoutClick}
+          <ListItem key={isLoggedIn ? "logout" : "login"} disablePadding>
+            <ListItemButton
+              sx={{
+                minHeight: 48,
+                justifyContent: open ? "initial" : "center",
+                px: 2.5,
+              }}
+              onClick={
+                isLoggedIn
+                  ? onLogoutClick
+                  : () => setLoggedOutModalVisibility(true)
+              }
+            >
+              <ListItemIcon
+                sx={(theme) => ({
+                  minWidth: 0,
+                  mr: open ? 3 : "auto",
+                  justifyContent: "center",
+                  color: "#666",
+                })}
               >
-                <ListItemIcon
-                  sx={(theme) => ({
-                    minWidth: 0,
-                    mr: open ? 3 : "auto",
-                    justifyContent: "center",
-                    color: "#666",
-                  })}
-                >
-                  <LogoutOutlined />
-                </ListItemIcon>
-                <ListItemText
-                  primary={"Logout"}
-                  sx={{
-                    opacity: open ? 1 : 0,
-                    display: open ? "block" : "none",
-                    margin: 0,
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          )}
+                {isLoggedIn ? <LogoutOutlined /> : <LoginOutlined />}
+              </ListItemIcon>
+              <ListItemText
+                primary={isLoggedIn ? "Logout" : "Login"}
+                sx={{
+                  opacity: open ? 1 : 0,
+                  display: open ? "block" : "none",
+                  margin: 0,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
           {isLoggedIn && <Divider sx={{ margin: "5px 0" }} />}
           {isLoggedIn && (
             <ListItem key={"profile-icon"} disablePadding>
