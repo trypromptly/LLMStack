@@ -1,12 +1,12 @@
 from typing import Optional, Union
 
 import httpx
+from openai._base_client import make_request_options  # type: ignore # noqa: F401
 from openai.pagination import SyncPage
 from openai.resources import Models as OpenAIModels
 
-from .._client import make_request_options
 from .._types import NOT_GIVEN, Body, Headers, NotGiven, Query
-from ..constants import PROVIDER_GOOGLE, PROVIDER_STABILITYAI
+from ..constants import PROVIDER_COHERE, PROVIDER_GOOGLE, PROVIDER_STABILITYAI
 from ..types import Model
 
 
@@ -27,13 +27,36 @@ class Models(OpenAIModels):
         """
         if self._client._llm_router_provider == PROVIDER_STABILITYAI:
             return self._get_api_list(
-                "v1/engines/list",
+                "/engines/list",
                 page=SyncPage[Model],
                 options=make_request_options(
                     extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
                 ),
                 model=Model,
             )
+
+        elif self._client._llm_router_provider == PROVIDER_COHERE:
+            response = self._get_api_list(
+                "/models",
+                page=SyncPage[Model],
+                options=make_request_options(
+                    extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                ),
+                model=Model,
+            )
+            models = list(
+                map(
+                    lambda entry: Model(
+                        id=entry["name"],
+                        object="model",
+                        created=0,
+                        owned_by="",
+                        extra_data=entry,
+                    ),
+                    response.models,
+                )
+            )
+            return SyncPage(data=models, object="list")
 
         elif self._client._llm_router_provider == PROVIDER_GOOGLE:
             import google.generativeai as genai
