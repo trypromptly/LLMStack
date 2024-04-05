@@ -373,7 +373,6 @@ class LLMCohereStream(Stream[_T]):
                     ],
                 }
             else:
-                print(chunk_json)
                 continue
 
             yield process_data(data=data, cast_to=cast_to, response=response)
