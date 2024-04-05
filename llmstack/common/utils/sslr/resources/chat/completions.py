@@ -4,6 +4,7 @@ import uuid
 from typing import Dict, List, Literal, Optional, Union
 
 import httpx
+from openai._base_client import make_request_options
 from openai.resources.chat import AsyncCompletions as OpenAIAsyncCompletions
 from openai.resources.chat import Completions as OpenAICompletions
 from openai.resources.chat import (
@@ -12,8 +13,13 @@ from openai.resources.chat import (
 )
 from openai.types import chat, completion_create_params
 
-from ..._client import make_request_options
-from ..._streaming import LLMAnthropicStream, LLMGRPCStream, LLMRestStream, Stream
+from ..._streaming import (
+    LLMAnthropicStream,
+    LLMCohereStream,
+    LLMGRPCStream,
+    LLMRestStream,
+    Stream,
+)
 from ..._types import NOT_GIVEN, Body, Headers, NotGiven, Query
 from ..._utils import (
     _convert_schema_dict_to_gapic,
@@ -24,7 +30,7 @@ from ..._utils import (
     maybe_transform,
     required_args,
 )
-from ...constants import PROVIDER_ANTHROPIC, PROVIDER_GOOGLE
+from ...constants import PROVIDER_ANTHROPIC, PROVIDER_COHERE, PROVIDER_GOOGLE
 from ...types import chat as _chat
 from ...types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
@@ -177,7 +183,7 @@ class Completions(OpenAICompletions):
             "user": user,
         }
         if self._client._llm_router_provider == PROVIDER_ANTHROPIC:
-            path = "/v1/messages"
+            path = "/messages"
             stream_cls = LLMAnthropicStream[_chat.ChatCompletionChunk]
             user_messages = list(filter(lambda message: message["role"] == "user", messages_openai_format))
             system_messages = list(filter(lambda message: message["role"] == "system", messages_openai_format))
@@ -185,8 +191,30 @@ class Completions(OpenAICompletions):
                 system = system_messages[0]["content"]
                 if system:
                     post_body_data["system"] = system
-                    post_body_data["messages"] = user_messages
-                    post_body_data.pop("seed")
+
+            post_body_data["messages"] = user_messages
+            post_body_data.pop("seed")
+
+        elif self._client._llm_router_provider == PROVIDER_COHERE:
+            path = "/chat"
+            stream_cls = LLMCohereStream[_chat.ChatCompletionChunk]
+            user_messages = list(filter(lambda message: message["role"] == "user", messages_openai_format))
+            system_messages = list(filter(lambda message: message["role"] == "system", messages_openai_format))
+            if system_messages and "content" in system_messages[0] and isinstance(system_messages[0]["content"], str):
+                system = system_messages[0]["content"]
+                if system:
+                    post_body_data["preamble"] = system
+            msg = ""
+            for message in user_messages:
+                if isinstance(message["content"], str):
+                    msg += message["content"]
+                elif isinstance(message["content"], list):
+                    for content_part in message["content"]:
+                        if content_part["type"] == "text":
+                            msg += content_part["text"]
+                else:
+                    raise ValueError("Invalid message content")
+            post_body_data["message"] = msg
 
         return self._post(
             path=path,

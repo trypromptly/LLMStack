@@ -100,12 +100,30 @@ class AnthropicModelConfig(BaseModel):
     model: AnthropicModel = Field(default=AnthropicModel.CLAUDE_2_1, description="The model for the LLM")
 
 
+class CohereModel(str, Enum):
+    COMMAND = "command"
+    COMMAND_LIGHT = "command-light"
+    COMMAND_NIGHTLY = "command-nightly"
+    COMMAND_LIGHT_NIGHTLY = "command-light-nightly"
+
+    def __str__(self):
+        return self.value
+
+    def model_name(self):
+        return self.value
+
+
+class CohereModelConfig(BaseModel):
+    provider: Literal["cohere"] = "cohere"
+    model: CohereModel = Field(default=CohereModel.COMMAND, description="The model for the LLM")
+
+
 class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         description="The system message for the LLM", widget="textarea", advanced_parameter=False
     )
 
-    provider_config: Union[OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig] = Field(
+    provider_config: Union[OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig] = Field(
         descrmination_field="provider",
         advanced_parameter=False,
     )
@@ -166,6 +184,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             stabilityai_api_key=self._env.get("stabilityai_api_key"),
             google_api_key=google_api_key,
             anthropic_api_key=self._env.get("anthropic_api_key"),
+            cohere_api_key=self._env.get("cohere_api_key"),
         )
 
         messages = []

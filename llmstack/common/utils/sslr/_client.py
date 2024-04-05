@@ -1,9 +1,9 @@
+import json
 import os
 from typing import Any, Literal, Mapping, Optional, Type, Union, overload
 
 import httpx
 from openai import OpenAI
-from openai._base_client import make_request_options  # type: ignore # noqa: F401
 from openai._client import SyncAPIClient
 from openai._models import FinalRequestOptions
 from openai._utils import is_given
@@ -19,6 +19,7 @@ from .constants import (
     DEFAULT_MAX_RETRIES,
     PROVIDER_ANTHROPIC,
     PROVIDER_AZURE_OPENAI,
+    PROVIDER_COHERE,
     PROVIDER_GOOGLE,
     PROVIDER_LOCALAI,
     PROVIDER_OPENAI,
@@ -101,6 +102,41 @@ class LLMClient(SyncAPIClient):
                         "completion_tokens": json_response["usage"]["output_tokens"],
                         "total_tokens": json_response["usage"]["input_tokens"]
                         + json_response["usage"]["output_tokens"],
+                    },
+                }
+                modified_response = LLMHttpResponse(response=response, json=result)
+                api_response = LLMResponse(
+                    raw=modified_response,
+                    client=self,
+                    cast_to=cast_to,
+                    stream=stream,
+                    stream_cls=stream_cls,
+                    options=options,
+                )
+                return api_response.parse()
+        elif self._llm_router_provider == PROVIDER_COHERE and response.request.url.path.endswith("/chat"):
+            if not stream:
+                json_response = response.json()
+                request_data = json.loads(response.request._content.decode("utf-8"))
+                result = {
+                    "id": json_response["generation_id"],
+                    "object": "'chat.completion",
+                    "created": 0,
+                    "model": request_data["model"],
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {
+                                "role": "assistant",
+                                "content": json_response["text"],
+                            },
+                            "finish_reason": json_response["finish_reason"],
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": json_response["token_count"]["prompt_tokens"],
+                        "completion_tokens": json_response["token_count"]["response_tokens"],
+                        "total_tokens": json_response["token_count"]["total_tokens"],
                     },
                 }
                 modified_response = LLMHttpResponse(response=response, json=result)
@@ -203,6 +239,21 @@ class LLM(LLMClient, OpenAI):
     ) -> None:
         ...
 
+    # Cohere options
+    @overload
+    def __init__(
+        self,
+        *,
+        cohere_api_key: str,
+        timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        default_headers: Optional[Mapping[str, str]] = None,
+        default_query: Optional[Mapping[str, object]] = None,
+        http_client: Optional[httpx.Client] = None,
+        _strict_response_validation: bool = False,
+    ) -> None:
+        ...
+
     @overload
     def __init__(
         self,
@@ -253,6 +304,7 @@ class LLM(LLMClient, OpenAI):
         azure_openai_api_version: Optional[str] = None,
         azure_endpoint: Optional[str] = None,
         azure_deployment: Optional[str] = None,
+        cohere_api_key: Optional[str] = None,
         api_key: Optional[str] = None,
         openai_api_key: Optional[str] = None,
         localai_api_key: Optional[str] = None,
@@ -324,7 +376,7 @@ class LLM(LLMClient, OpenAI):
             api_key = stabilityai_api_key
 
             if not base_url:
-                base_url = "https://api.stability.ai/"
+                base_url = "https://api.stability.ai/v1"
 
         elif provider == PROVIDER_LOCALAI:
             if base_url is None:
@@ -339,7 +391,12 @@ class LLM(LLMClient, OpenAI):
             api_key = anthropic_api_key
             self.auth_token = None
             if base_url is None:
-                base_url = "https://api.anthropic.com"
+                base_url = "https://api.anthropic.com/v1"
+
+        elif provider == PROVIDER_COHERE:
+            api_key = cohere_api_key
+            if base_url is None:
+                base_url = "https://api.cohere.ai/v1"
 
         if api_key is None:
             # define a sentinel value to avoid any typing issues

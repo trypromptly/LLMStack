@@ -1,3 +1,4 @@
+import json
 from itertools import groupby
 from typing import Any, Iterator, Optional, TypeVar, cast
 
@@ -255,6 +256,126 @@ class LLMAnthropicStream(Stream[_T]):
                     body=body,
                     response=self.response,
                 )
+
+        # Ensure the entire stream is consumed
+        for _sse in iterator:
+            ...
+
+    def __enter__(self):
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc: Optional[BaseException],
+        exc_tb: Optional[Any],
+    ) -> None:
+        self.close()
+
+    def close(self) -> None:
+        """
+        Close the response and release the connection.
+
+        Automatically called if the response body is read to completion.
+        """
+        self.response.close()
+
+
+class LLMCohereStream(Stream[_T]):
+    def __init__(
+        self,
+        *,
+        cast_to: type[_T],
+        response: httpx.Response,
+        client: Any,
+    ) -> None:
+        self.response = response
+        self._cast_to = cast_to
+        self._client = client
+        self._decoder = SSEDecoder()
+        self._iterator = self.__stream__()
+
+    def __next__(self) -> _T:
+        return self._iterator.__next__()
+
+    def __iter__(self) -> Iterator[_T]:
+        for item in self._iterator:
+            yield item
+
+    def _iter_events(self) -> Iterator[ServerSentEvent]:
+        yield from self.response.iter_lines()
+
+    def __stream__(self) -> Iterator[_T]:
+        cast_to = cast(Any, self._cast_to)
+        response = self.response
+        process_data = self._client._process_response_data
+        iterator = self._iter_events()
+        input_tokens = 0
+        id = None
+        model = None
+        output_tokens = 0
+        total_tokens = 0
+
+        for chunk in iterator:
+            chunk_json = json.loads(chunk)
+            if chunk_json["event_type"] == "stream-end":
+                input_tokens = chunk_json.get("token_count", {}).get("prompt_tokens", 0)
+                output_tokens = chunk_json.get("token_count", {}).get("response_tokens", 0)
+                total_tokens = chunk_json.get("token_count", {}).get("total_tokens", 0)
+                finish_reason = chunk_json.get("finish_reason", "stop")
+
+                data = {
+                    "id": id,
+                    "object": "chat.completion.chunk",
+                    "created": 0,
+                    "model": model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {},
+                            "logprobs": None,
+                            "finish_reason": finish_reason,
+                        }
+                    ],
+                    "usage": {
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                        "total_tokens": total_tokens,
+                    },
+                }
+
+            elif chunk_json["event_type"] == "stream-start":
+                id = chunk_json.get("generation_id")
+                continue
+
+            elif chunk_json["event_type"] == "text-generation":
+                data = {
+                    "id": id,
+                    "object": "chat.completion.chunk",
+                    "created": 0,
+                    "model": model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {
+                                "role": "assistant",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "mime_type": "text/plain",
+                                        "data": chunk_json["text"],
+                                    }
+                                ],
+                            },
+                            "logprobs": None,
+                            "finish_reason": None,
+                        }
+                    ],
+                }
+            else:
+                continue
+
+            yield process_data(data=data, cast_to=cast_to, response=response)
 
         # Ensure the entire stream is consumed
         for _sse in iterator:
