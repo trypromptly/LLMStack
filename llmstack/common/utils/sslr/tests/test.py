@@ -87,7 +87,7 @@ class TestLLM(unittest.TestCase):
                     }
                 ],
                 model=PROVIDER_MODEL_MAP[provider],
-                max_tokens=2,
+                max_tokens=100,
                 stream=True,
             )
             self.assertIsInstance(result, openai.Stream)
