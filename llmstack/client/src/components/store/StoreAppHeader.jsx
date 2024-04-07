@@ -47,7 +47,7 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
         borderRadius: "8px 8px 0 0",
         p: expanded ? 6 : 4,
         gap: 4,
-        height: expanded ? "auto" : "72px",
+        height: expanded ? "auto" : isMobile ? "40px" : "72px",
       }}
       onClick={() => setExpanded(!expanded)}
     >
