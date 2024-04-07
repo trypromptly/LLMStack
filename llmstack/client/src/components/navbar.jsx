@@ -9,19 +9,19 @@ import {
 } from "@mui/material";
 import React from "react";
 
-const icon = require(
-  `../assets/${
-    process.env.REACT_APP_SITE_NAME
-      ? process.env.REACT_APP_SITE_NAME.toLowerCase()
-      : "llmstack"
-  }-icon.png`,
-);
+const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
+const icon =
+  SITE_NAME === "Promptly"
+    ? require(`../assets/icon-transparent.png`)
+    : require(`../assets/llmstack-icon.png`);
 
 const navbarStyle = {
   width: "100%",
-  color: "#000",
-  backgroundColor: "#ffdfb21c",
-  borderBottom: "solid 1px #ccc",
+  color: "#647B8F",
+  backgroundColor: "#fff",
+  padding: "4px 12px",
+  marginBottom: "4px",
+  boxShadow: "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
 };
 
 export default function NavBar({ menuItems }) {
