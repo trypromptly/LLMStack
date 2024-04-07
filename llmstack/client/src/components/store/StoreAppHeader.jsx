@@ -80,7 +80,13 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
                 >
                   {name}
                 </Typography>
-                <Button sx={{ color: "#183A58", ml: "auto", mr: "-12px" }}>
+                <Button
+                  sx={{
+                    color: "#183A58",
+                    ml: "auto",
+                    mr: isMobile ? "-20px" : "-12px",
+                  }}
+                >
                   {expanded ? (
                     <KeyboardArrowUpOutlined />
                   ) : (
