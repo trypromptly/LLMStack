@@ -14,6 +14,7 @@ import capitalize from "lodash/capitalize";
 import { useRecoilValue, useRecoilState, useRecoilValueLoadable } from "recoil";
 import {
   appsPageState,
+  isMobileState,
   storeCategoriesListState,
   fetchAppsFromStore,
 } from "../../data/atoms";
@@ -181,6 +182,7 @@ const AppList = ({ queryTerm }) => {
 
 export default function Search({ appSlug }) {
   const location = useLocation();
+  const isMobile = useRecoilValue(isMobileState);
   const [categoryFilter, setCategoryFilter] = useState(
     appSlug && location.pathname !== "/" ? "recommended" : "featured",
   );
@@ -214,7 +216,7 @@ export default function Search({ appSlug }) {
       <Paper
         component="form"
         sx={{
-          mt: 4,
+          mt: isMobile ? 0 : 4,
           ml: 0.5,
           mr: 0,
           mb: 2,
