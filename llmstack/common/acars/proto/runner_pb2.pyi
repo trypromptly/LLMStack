@@ -330,21 +330,30 @@ class RestrictedPythonCodeRunnerResponse(_message.Message):
     ) -> None: ...
 
 class CodeRunnerRequest(_message.Message):
-    __slots__ = ("source_code", "timeout_secs", "session_id", "files")
+    __slots__ = ("source_code", "timeout_secs", "files")
     SOURCE_CODE_FIELD_NUMBER: _ClassVar[int]
     TIMEOUT_SECS_FIELD_NUMBER: _ClassVar[int]
-    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
     FILES_FIELD_NUMBER: _ClassVar[int]
     source_code: str
     timeout_secs: int
-    session_id: str
     files: _containers.RepeatedCompositeFieldContainer[Content]
     def __init__(
         self,
         source_code: _Optional[str] = ...,
         timeout_secs: _Optional[int] = ...,
-        session_id: _Optional[str] = ...,
         files: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
+    ) -> None: ...
+
+class File(_message.Message):
+    __slots__ = ("name", "mime_type", "content")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    MIME_TYPE_FIELD_NUMBER: _ClassVar[int]
+    CONTENT_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    mime_type: str
+    content: bytes
+    def __init__(
+        self, name: _Optional[str] = ..., mime_type: _Optional[str] = ..., content: _Optional[bytes] = ...
     ) -> None: ...
 
 class CodeRunnerResponse(_message.Message):
@@ -356,11 +365,11 @@ class CodeRunnerResponse(_message.Message):
     state: RemoteBrowserState
     stdout: _containers.RepeatedCompositeFieldContainer[Content]
     stderr: str
-    files: _containers.RepeatedCompositeFieldContainer[Content]
+    files: _containers.RepeatedCompositeFieldContainer[File]
     def __init__(
         self,
         state: _Optional[_Union[RemoteBrowserState, str]] = ...,
         stdout: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
         stderr: _Optional[str] = ...,
-        files: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
+        files: _Optional[_Iterable[_Union[File, _Mapping]]] = ...,
     ) -> None: ...
