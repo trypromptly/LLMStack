@@ -42,7 +42,7 @@ export const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "1200px", "mar
   </pa-paper>
 </pa-layout>`;
 
-export const defaultChatLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "5px 0", "height": "100%"}'>
+export const defaultChatLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "0", "height": "100%"}'>
     <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
       <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
         <pa-chat-output></pa-chat-output>
