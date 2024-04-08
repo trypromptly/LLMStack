@@ -4,15 +4,12 @@ from enum import Enum
 from typing import Dict, List, Optional
 
 import grpc
-import orjson as json
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from google.protobuf.json_format import MessageToDict, ParseDict
-from google.protobuf.struct_pb2 import Struct
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
+from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -35,7 +32,7 @@ class CodeInterpreterInput(ApiProcessorSchema):
         title="Language", description="The language of the code", default=CodeInterpreterLanguage.PYTHON
     )
     local_variables: Optional[str] = Field(
-        description="Values for the local variables as a JSON string", widget="textarea"
+        description="Values for the local variables as a JSON string", widget="hidden", hidden=True
     )
 
 
@@ -112,35 +109,25 @@ class CodeInterpreterProcessor(
         return content
 
     def process(self) -> dict:
-        output_stream = self._output_stream
         channel = grpc.insecure_channel(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}")
         stub = runner_pb2_grpc.RunnerStub(channel)
-        input_data = {}
-        if self._input.local_variables:
-            try:
-                input_data = json.loads(self._input.local_variables)
-            except Exception as e:
-                logger.error(f"Error parsing local variables: {e}")
 
-        request = runner_pb2.RestrictedPythonCodeRunnerRequest(
-            source_code=self._input.code,
-            input_data=ParseDict(input_data, Struct()),
-            timeout_secs=5,
+        request = runner_pb2.CodeRunnerRequest(
+            session_id="session_id", source_code=self._input.code, timeout_secs=self._config.timeout
         )
-        response_iterator = stub.GetRestrictedPythonCodeRunner(request)
-        for response in response_iterator:
-            if response.state == runner_pb2.RemoteBrowserState.TERMINATED:
-                converted_stdout = self.convert_stdout_to_content(response.stdout)
-                async_to_sync(output_stream.write)(
-                    CodeInterpreterOutput(
-                        stdout=converted_stdout,
-                        stderr=str(response.stderr),
-                        local_variables=MessageToDict(response.local_variables) if response.local_variables else None,
-                        exit_code=0,
-                    )
-                )
-                break
+        response_iter = stub.GetCodeRunner(
+            iter([request]),
+            metadata=(
+                ("user_session_creds", "user_session_creds"),
+                ("session_id", "session_id"),
+            ),
+        )
+        for response in response_iter:
+            if response.stdout:
+                stdout_result = self.convert_stdout_to_content(response.stdout)
+                async_to_sync(self._output_stream.write)(CodeInterpreterOutput(stdout=stdout_result))
+            elif response.stderr:
+                async_to_sync(self._output_stream.write)(CodeInterpreterOutput(stderr=response.stderr))
 
-        output = output_stream.finalize()
-
+        output = self._output_stream.finalize()
         return output

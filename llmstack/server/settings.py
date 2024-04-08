@@ -448,7 +448,11 @@ PROVIDERS = [
             "llmstack.datasources.handlers.text",
             "llmstack.datasources.handlers.website",
         ],
-        "processor_exclude": [],
+        "processor_exclude": [
+            "llmstack.processors.providers.promptly.code_interpreter.CodeInterpreterProcessor",
+            "llmstack.processors.providers.promptly.static_web_browser.StaticWebBrowser",
+            "llmstack.processors.providers.promptly.web_browser.WebBrowser",
+        ],
         "datasource_processors_exclude": [],
         "slug": "promptly",
     },

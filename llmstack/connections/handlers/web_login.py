@@ -6,8 +6,8 @@ import grpc
 from django.conf import settings
 from pydantic import Field
 
+from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.common.blocks.base.schema import BaseSchema
-from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
 from llmstack.connections.models import (
     Connection,
     ConnectionActivationInput,
