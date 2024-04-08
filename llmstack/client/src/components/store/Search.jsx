@@ -123,6 +123,7 @@ const AppList = ({ queryTerm }) => {
     fetchAppsFromStore({ queryTerm, nextPage }),
   );
   const [appsData, setAppsData] = useRecoilState(appsPageState(queryTerm));
+  const isMobile = useRecoilValue(isMobileState);
 
   const appendFetchedApps = useCallback(() => {
     if (appsLoadable.state !== "hasValue") return;
@@ -159,7 +160,13 @@ const AppList = ({ queryTerm }) => {
 
   const apps = appsData?.apps || [];
   return (
-    <Box sx={{ overflowY: "auto", flex: "1 1 auto" }}>
+    <Box
+      sx={{
+        overflowY: "auto",
+        flex: "1 1 auto",
+        height: isMobile ? "calc(100vh - 260px)" : "auto",
+      }}
+    >
       {apps.length > 0 ? (
         apps.map((app, index) => (
           <AppEntry

@@ -34,7 +34,7 @@ export default function HomePage() {
     <Grid
       container
       sx={{
-        height: isMobile ? "100vh" : "100%",
+        height: isMobile ? "calc(100vh - 68px)" : "100%",
         margin: "auto",
         padding: 0,
         alignContent: "flex-start",
@@ -63,7 +63,7 @@ export default function HomePage() {
             }
             onClick={() => setSelectedTab("main")}
           >
-            Main
+            Arena
           </Button>
           <Button
             variant="contained"
@@ -84,7 +84,7 @@ export default function HomePage() {
           xs={12}
           md={7.5}
           sx={{
-            height: isMobile ? "calc(100% - 120px)" : "auto",
+            height: isMobile ? "calc(100% - 68px)" : "auto",
             border: "1px solid #E8EBEE",
             boxShadow:
               "0px 2px 8px -2px #1018280F, 0px 4px 12px -2px #1018281A",
@@ -94,7 +94,7 @@ export default function HomePage() {
             mt: 4,
             mb: 4,
             ...(matchesMdDown && {
-              m: 1,
+              m: 2,
             }),
           }}
         >
@@ -109,8 +109,7 @@ export default function HomePage() {
             display: isMobile && selectedTab === "main" ? "none" : "block",
             mr: 4,
             ...(matchesMdDown && {
-              m: 1,
-              // marginTop: 4,
+              m: 2,
             }),
           }}
         >

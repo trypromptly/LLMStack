@@ -138,7 +138,6 @@ export default function App({ children }) {
         autoHideDuration={3000}
         anchorOrigin={{ horizontal: "center", vertical: "top" }}
       />
-      {isMobile && <NavBar menuItems={allMenuItems} />}
       <Stack direction={"row"}>
         {!isMobile && <Sidebar menuItems={allMenuItems} />}
         <Suspense
@@ -163,16 +162,19 @@ export default function App({ children }) {
             }}
           >
             <BannerMessages />
+            {isMobile && <NavBar menuItems={allMenuItems} />}
             {children}
           </Grid>
         </Suspense>
       </Stack>
-      <div
-        dangerouslySetInnerHTML={{
-          __html:
-            '<promptly-app-embed published-app-id="f4d7cb50-1805-4add-80c5-e30334bce53c" width="100px" chat-bubble="true"></promptly-app-embed>',
-        }}
-      ></div>
+      {!isMobile && (
+        <div
+          dangerouslySetInnerHTML={{
+            __html:
+              '<promptly-app-embed published-app-id="f4d7cb50-1805-4add-80c5-e30334bce53c" width="100px" chat-bubble="true"></promptly-app-embed>',
+          }}
+        ></div>
+      )}
     </div>
   );
 }
