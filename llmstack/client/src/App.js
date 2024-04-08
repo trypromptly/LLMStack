@@ -167,7 +167,7 @@ export default function App({ children }) {
           </Grid>
         </Suspense>
       </Stack>
-      {!isMobile && (
+      {!isMobile && process.env.REACT_APP_ENABLE_APP_STORE && (
         <div
           dangerouslySetInnerHTML={{
             __html:
