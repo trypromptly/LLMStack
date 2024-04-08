@@ -8,7 +8,7 @@ from google.protobuf.json_format import MessageToDict
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.common.runner.proto import runner_pb2, runner_pb2_grpc
+from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
