@@ -107,15 +107,15 @@ class CodeInterpreterProcessor(
         return content
 
     def process_session_data(self, session_data):
-        self._kernel_id = session_data.get("kernel_id", None)
+        self._kernel_session_id = session_data.get("kernel_session_id", None)
 
     def session_data_to_persist(self) -> dict:
         return {
-            "kernel_id": self._kernel_id,
+            "kernel_session_id": self._kernel_session_id,
         }
 
     def process(self) -> dict:
-        kernel_id = self._kernel_id if self._kernel_id else str(uuid.uuid4())
+        kernel_session_id = self._kernel_session_id if self._kernel_session_id else str(uuid.uuid4())
 
         channel = grpc.insecure_channel(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}")
         stub = runner_pb2_grpc.RunnerStub(channel)
@@ -123,7 +123,7 @@ class CodeInterpreterProcessor(
         request = runner_pb2.CodeRunnerRequest(source_code=self._input.code, timeout_secs=self._config.timeout)
         response_iter = stub.GetCodeRunner(
             iter([request]),
-            metadata=(("session_id", kernel_id),),
+            metadata=(("kernel_session_id", kernel_session_id),),
         )
         for response in response_iter:
             if response.stdout:
