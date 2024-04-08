@@ -1,5 +1,6 @@
 import base64
 import logging
+import uuid
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -30,9 +31,6 @@ class CodeInterpreterInput(ApiProcessorSchema):
     code: str = Field(description="The code to run", widget="textarea", default="")
     language: CodeInterpreterLanguage = Field(
         title="Language", description="The language of the code", default=CodeInterpreterLanguage.PYTHON
-    )
-    local_variables: Optional[str] = Field(
-        description="Values for the local variables as a JSON string", widget="hidden", hidden=True
     )
 
 
@@ -108,25 +106,31 @@ class CodeInterpreterProcessor(
                 content.append(Content(mime_type=ContentMimeType.LATEX, data=data))
         return content
 
+    def process_session_data(self, session_data):
+        self._kernel_id = session_data.get("kernel_id", None)
+
+    def session_data_to_persist(self) -> dict:
+        return {
+            "kernel_id": self._kernel_id,
+        }
+
     def process(self) -> dict:
+        kernel_id = self._kernel_id if self._kernel_id else str(uuid.uuid4())
+
         channel = grpc.insecure_channel(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}")
         stub = runner_pb2_grpc.RunnerStub(channel)
 
-        request = runner_pb2.CodeRunnerRequest(
-            session_id="session_id", source_code=self._input.code, timeout_secs=self._config.timeout
-        )
+        request = runner_pb2.CodeRunnerRequest(source_code=self._input.code, timeout_secs=self._config.timeout)
         response_iter = stub.GetCodeRunner(
             iter([request]),
-            metadata=(
-                ("user_session_creds", "user_session_creds"),
-                ("session_id", "session_id"),
-            ),
+            metadata=(("session_id", kernel_id),),
         )
         for response in response_iter:
             if response.stdout:
                 stdout_result = self.convert_stdout_to_content(response.stdout)
                 async_to_sync(self._output_stream.write)(CodeInterpreterOutput(stdout=stdout_result))
-            elif response.stderr:
+
+            if response.stderr:
                 async_to_sync(self._output_stream.write)(CodeInterpreterOutput(stderr=response.stderr))
 
         output = self._output_stream.finalize()
