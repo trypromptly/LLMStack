@@ -611,7 +611,7 @@ const PromptlyAppOutputHeader = memo(
   },
 );
 
-const PromptlyAppChatOutput = memo(
+export const PromptlyAppChatOutput = memo(
   ({ runApp, minHeight, maxHeight, sx, enableAutoScroll = true }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const assistantImage = useMemo(
@@ -757,7 +757,7 @@ const PromptlyAppChatOutput = memo(
   },
 );
 
-const PromptlyAppWorkflowOutput = memo(
+export const PromptlyAppWorkflowOutput = memo(
   ({ showHeader, placeholder, sx, enableAutoScroll = true }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const assistantImage = useMemo(
