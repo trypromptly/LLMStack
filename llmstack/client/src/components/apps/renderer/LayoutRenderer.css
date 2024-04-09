@@ -136,6 +136,7 @@
   flex-direction: row;
   border: none;
   align-self: center;
+  box-shadow: none;
 }
 
 .step-runner-indicator span {
