@@ -93,6 +93,7 @@ export function AppRenderer({ app, ws }) {
           resolve(
             new AgentStepErrorMessage(
               `${message.id}/${agentMessage.id}`,
+              message.request_id,
               agentMessage.content,
               message.reply_to,
             ),
@@ -117,6 +118,7 @@ export function AppRenderer({ app, ws }) {
             if (agentMessage.type === "step") {
               newMessage = new AgentStepMessage(
                 `${message.id}/${agentMessage.id}`,
+                message.request_id,
                 {
                   ...chunkedOutput[agentMessage.id],
                   output: response,
@@ -127,6 +129,7 @@ export function AppRenderer({ app, ws }) {
             } else {
               newMessage = new AgentMessage(
                 `${message.id}/${agentMessage.id}`,
+                message.request_id,
                 response,
                 message.reply_to,
               );
@@ -141,7 +144,14 @@ export function AppRenderer({ app, ws }) {
         templateEngine
           .render(outputTemplate, chunkedOutput)
           .then((response) => {
-            resolve(new AppMessage(message.id, response, message.reply_to));
+            resolve(
+              new AppMessage(
+                message.id,
+                message.request_id,
+                response,
+                message.reply_to,
+              ),
+            );
           })
           .catch((error) => {
             reject(error);
@@ -197,6 +207,7 @@ export function AppRenderer({ app, ws }) {
         messagesRef.current.add(
           new AppErrorMessage(
             null,
+            message.request_id,
             "Rate limit exceeded. Please try after sometime.",
           ),
         );
@@ -215,6 +226,7 @@ export function AppRenderer({ app, ws }) {
         messagesRef.current.add(
           new AppErrorMessage(
             null,
+            message.request_id,
             isLoggedIn
               ? "Usage limit exceeded. Please try after adding more credits."
               : "Usage limit exceeded. Please login to continue.",
@@ -245,7 +257,9 @@ export function AppRenderer({ app, ws }) {
 
       if (message.errors && message.errors.length > 0) {
         message.errors.forEach((error) => {
-          messagesRef.current.add(new AppErrorMessage(null, error));
+          messagesRef.current.add(
+            new AppErrorMessage(null, message.request_id, error),
+          );
         });
 
         setAppRunData((prevState) => ({
@@ -304,7 +318,7 @@ export function AppRenderer({ app, ws }) {
       chunkedOutput.current = {};
       const requestId = Math.random().toString(36).substring(2);
 
-      messagesRef.current.add(new UserMessage(requestId, input));
+      messagesRef.current.add(new UserMessage(requestId, null, input));
       setAppRunData((prevState) => ({
         ...prevState,
         isRunning: true,
@@ -405,6 +419,7 @@ export function AppRenderer({ app, ws }) {
     if (app?.data?.config?.welcome_message) {
       const welcomeMessage = new AppMessage(
         "welcome",
+        null,
         app?.data?.config?.welcome_message,
       );
       messagesRef.current.add(welcomeMessage);

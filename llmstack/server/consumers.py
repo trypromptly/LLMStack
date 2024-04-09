@@ -97,6 +97,7 @@ class AppConsumer(AsyncWebsocketConsumer):
         input = json_data.get("input", {})
         id = json_data.get("id", None)
         event = json_data.get("event", None)
+        request_uuid = str(uuid.uuid4())
         self._session_id = self._session_id or json_data.get(
             "session_id",
             None,
@@ -104,7 +105,6 @@ class AppConsumer(AsyncWebsocketConsumer):
 
         if event == "run":
             try:
-                request_uuid = str(uuid.uuid4())
                 request = await _build_request_from_input({"input": input, "stream": True}, self.scope)
                 if is_ratelimited_fn(request, self._respond_to_event):
                     raise Ratelimited("Rate limit reached.")
@@ -119,21 +119,33 @@ class AppConsumer(AsyncWebsocketConsumer):
                             self._session_id = output["session"]["id"]
                         await self.send(text_data=json.dumps({**output, **{"reply_to": id}}))
                     else:
-                        await self.send(text_data=json.dumps({"output": output, "reply_to": id, "id": response_id}))
+                        await self.send(
+                            text_data=json.dumps(
+                                {"output": output, "reply_to": id, "id": response_id, "request_id": request_uuid}
+                            )
+                        )
 
-                await self.send(text_data=json.dumps({"event": "done", "reply_to": id, "id": response_id}))
+                await self.send(
+                    text_data=json.dumps(
+                        {"event": "done", "reply_to": id, "id": response_id, "request_id": request_uuid}
+                    )
+                )
             except Ratelimited:
-                await self.send(text_data=json.dumps({"event": "ratelimited", "reply_to": id}))
+                await self.send(
+                    text_data=json.dumps({"event": "ratelimited", "reply_to": id, "request_id": request_uuid})
+                )
             except UsageLimitReached:
-                await self.send(text_data=json.dumps({"event": "usagelimited", "reply_to": id}))
+                await self.send(
+                    text_data=json.dumps({"event": "usagelimited", "reply_to": id, "request_id": request_uuid})
+                )
             except Exception as e:
                 logger.exception(e)
-                await self.send(text_data=json.dumps({"errors": [str(e)], "reply_to": id}))
+                await self.send(text_data=json.dumps({"errors": [str(e)], "reply_to": id, "request_id": request_uuid}))
 
         if event == "init":
             # Create a new session and return the session id
             self._session_id = await AppViewSet().init_app_async(self.app_id)
-            await self.send(text_data=json.dumps({"session": {"id": self._session_id}}))
+            await self.send(text_data=json.dumps({"session": {"id": self._session_id}, "request_id": request_uuid}))
 
         if event == "stop":
             if self._coordinator_ref:
