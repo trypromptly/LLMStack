@@ -6,6 +6,8 @@ import { CookiesProvider } from "react-cookie";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RecoilRoot } from "recoil";
+import { CacheProvider } from "@emotion/react";
+import createCache from "@emotion/cache";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 import HomePage from "./pages/Home";
@@ -640,30 +642,39 @@ const setInitialRecoilState = ({ set }) => {
   }
 };
 
+const speedy = navigator.userAgent.toLowerCase().indexOf("prerender") === -1;
+
+const emotionCache = createCache({
+  key: "emotion-cache",
+  speedy: speedy,
+});
+
 root.render(
   <React.StrictMode>
     <RecoilRoot initializeState={setInitialRecoilState}>
-      <ThemeProvider theme={defaultTheme}>
-        <TourProvider>
-          <CookiesProvider>
-            <Box
-              sx={{
-                minHeight: "100vh",
-                background:
-                  window.location.pathname.endsWith("/embed") ||
-                  window.location.pathname.endsWith("/embed/chatBubble")
-                    ? "transparent"
-                    : "#f5f5f5",
-              }}
-            >
-              <RouterProvider
-                router={router}
-                fallbackElement={<CircularProgress />}
-              />
-            </Box>
-          </CookiesProvider>
-        </TourProvider>
-      </ThemeProvider>
+      <CacheProvider value={emotionCache}>
+        <ThemeProvider theme={defaultTheme}>
+          <TourProvider>
+            <CookiesProvider>
+              <Box
+                sx={{
+                  minHeight: "100vh",
+                  background:
+                    window.location.pathname.endsWith("/embed") ||
+                    window.location.pathname.endsWith("/embed/chatBubble")
+                      ? "transparent"
+                      : "#f5f5f5",
+                }}
+              >
+                <RouterProvider
+                  router={router}
+                  fallbackElement={<CircularProgress />}
+                />
+              </Box>
+            </CookiesProvider>
+          </TourProvider>
+        </ThemeProvider>
+      </CacheProvider>
     </RecoilRoot>
   </React.StrictMode>,
 );
