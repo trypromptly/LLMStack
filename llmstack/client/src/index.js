@@ -605,7 +605,8 @@ const router = createBrowserRouter(routes);
 
 const setInitialRecoilState = ({ set }) => {
   if (window.initialState) {
-    let slug = window.location.pathname.split("/")[1] || "super-agent";
+    const pathSegments = window.location.pathname.split("/");
+    let slug = pathSegments.length > 2 ? pathSegments[2] : "super-agent";
     Object.entries(window.initialState).forEach(([key, value]) => {
       if (key === "profile") {
         set(profileState, value);
@@ -625,17 +626,19 @@ const setInitialRecoilState = ({ set }) => {
 
       if (key === "relatedApps") {
         if (value["featuredApps"]) {
-          set(
-            appsPageState("categories/featured/apps", null),
-            value["featuredApps"],
-          );
+          set(appsPageState("categories/featured/apps", null), {
+            apps: value["featuredApps"].results,
+            next: value["featuredApps"].next,
+            empty: value["featuredApps"].results.length === 0,
+          });
         }
 
         if (value["recommendedApps"]) {
-          set(
-            appsPageState(`categories/recommended/${slug}/apps`, null),
-            value["recommendedApps"],
-          );
+          set(appsPageState(`categories/recommended/${slug}/apps`, null), {
+            apps: value["recommendedApps"].results,
+            next: value["recommendedApps"].next,
+            empty: value["recommendedApps"].results.length === 0,
+          });
         }
       }
     });
