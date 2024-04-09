@@ -1,4 +1,12 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ContentCopyOutlined,
   KeyboardArrowDownOutlined,
@@ -88,9 +96,9 @@ const SuggestedMessages = memo(
         {messages.map((message, index) => (
           <Chip
             key={index}
-            label={message}
-            component={() => (
+            component={forwardRef((props, ref) => (
               <Box
+                ref={ref}
                 sx={{
                   display: "inline-block",
                   margin: "4px 2px 0 2px",
@@ -117,7 +125,7 @@ const SuggestedMessages = memo(
                   {typeof message === "object" ? message.label : message}
                 </LayoutRenderer>
               </Box>
-            )}
+            ))}
           />
         ))}
       </Grid>
@@ -955,7 +963,36 @@ export default function LayoutRenderer({
       ),
       "pa-grid": memo(
         ({ node, ...props }) => {
-          return <Grid {...props}>{props.children}</Grid>;
+          const container =
+            props.container === "true" || props.container || false;
+          const item = props.item === "true" || props.item || false;
+          const sx = parseSxFromProps(props.sx);
+
+          let parsedProps = {};
+
+          for (const prop in props) {
+            if (prop !== "container" && prop !== "item" && prop !== "sx") {
+              if (
+                (prop === "xs" ||
+                  prop === "sm" ||
+                  prop === "md" ||
+                  prop === "lg" ||
+                  prop === "xl") &&
+                typeof props[prop] == "string" &&
+                !isNaN(props[prop])
+              ) {
+                parsedProps[prop] = parseInt(props[prop]);
+              } else {
+                parsedProps[prop] = props[prop];
+              }
+            }
+          }
+
+          return (
+            <Grid container={container} item={item} sx={sx} {...parsedProps}>
+              {props.children}
+            </Grid>
+          );
         },
         (prev, next) => prev.props === next.props,
       ),

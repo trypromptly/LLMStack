@@ -156,7 +156,6 @@ const MultiInputField = (props) => {
         </Stack>
       )}
       <TextField
-        {...props}
         value={value?.text || ""}
         label={
           props.schema?.placeholder

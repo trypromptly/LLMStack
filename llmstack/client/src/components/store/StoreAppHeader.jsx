@@ -125,11 +125,9 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
                   )}
                 </Button>
               </Box>
-              <Typography>
-                by&nbsp;
-                <Typography color="corral.main" sx={{ display: "inline" }}>
-                  {username}
-                </Typography>
+              <span style={{ color: "gray" }}>by&nbsp;</span>
+              <Typography color="corral.main" sx={{ display: "inline" }}>
+                {username}
               </Typography>
               <Box sx={{ mt: 1, mb: 1, ml: -0.4 }}>
                 {categories &&
