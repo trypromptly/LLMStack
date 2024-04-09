@@ -41,7 +41,9 @@ export default function ShareModal({
       enqueueSnackbar("Link copied to clipboard", { variant: "success" });
     } else {
       if (shareCode) {
-        navigator.clipboard.writeText(`https://trypromptly.com/s/${shareCode}`);
+        navigator.clipboard.writeText(
+          `${window.location.protocol}://${window.location.host}/s/${shareCode}`,
+        );
         enqueueSnackbar("Link copied to clipboard", { variant: "success" });
         return;
       }
@@ -65,7 +67,7 @@ export default function ShareModal({
         .post(`/api/apps/share/`, body)
         .then((response) => {
           navigator.clipboard.writeText(
-            `https://trypromptly.com/s/${response.data.code}`,
+            `${window.location.protocol}://${window.location.host}/s/${response.data.code}`,
           );
           setShareCode(response.data.code);
           enqueueSnackbar("Link copied to clipboard", { variant: "success" });
