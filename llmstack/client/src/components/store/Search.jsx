@@ -147,7 +147,6 @@ const AppList = ({ queryTerm }) => {
   useEffect(() => {
     if (loaderRef.current && appsLoadable.state === "hasValue") {
       setAppsData(appsLoadable.contents);
-      window.prerenderReady = true;
       const observer = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && appsLoadable.contents.nextPage) {
           appendFetchedApps();
