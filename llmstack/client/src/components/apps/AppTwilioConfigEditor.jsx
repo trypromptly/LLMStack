@@ -3,7 +3,7 @@ import validator from "@rjsf/validator-ajv8";
 import { createRef } from "react";
 import { useRecoilValue } from "recoil";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
-import { profileFlagsState } from "../../data/atoms";
+import { profileFlagsSelector } from "../../data/atoms";
 import ThemedJsonForm from "../ThemedJsonForm";
 import { AppSaveButtons } from "./AppSaveButtons";
 import { EmbedCodeSnippet } from "./EmbedCodeSnippets";
@@ -58,7 +58,7 @@ const twilioConfigUISchema = {
 export function AppTwilioConfigEditor(props) {
   const [setValidationErrorsForId, clearValidationErrorsForId] =
     useValidationErrorsForAppComponents("twilioIntegrationConfig");
-  const profileFlags = useRecoilValue(profileFlagsState);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
   const formRef = createRef();
 
   function twilioConfigValidate(formData, errors, uiSchema) {

@@ -21,7 +21,7 @@ import {
 import { enqueueSnackbar } from "notistack";
 import { useState } from "react";
 import { useRecoilValue } from "recoil";
-import { profileFlagsState } from "../../data/atoms";
+import { profileFlagsSelector } from "../../data/atoms";
 import { axios } from "../../data/axios";
 
 const shareDialogStyles = {
@@ -62,7 +62,7 @@ function PublishModalInternal({
       })),
     ) || [],
   );
-  const profileFlags = useRecoilValue(profileFlagsState);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
 
   const accessPermissionOptions = [
     {

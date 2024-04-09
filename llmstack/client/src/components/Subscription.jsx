@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import {
   organizationState,
-  profileState,
-  profileFlagsState,
+  profileSelector,
+  profileFlagsSelector,
 } from "../data/atoms";
 import SubscriptionUpdateModal from "./SubscriptionUpdateModal";
 import { formatStorage } from "../data/utils";
@@ -12,8 +12,8 @@ import { formatStorage } from "../data/utils";
 function Subscription(props) {
   const [subscriptionUpdateModalOpen, setSubscriptionUpdateModalOpen] =
     useState(false);
-  const profileFlags = useRecoilValue(profileFlagsState);
-  const profile = useRecoilValue(profileState);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
+  const profile = useRecoilValue(profileSelector);
   const organization = useRecoilValue(organizationState);
 
   return (

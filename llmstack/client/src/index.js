@@ -9,6 +9,13 @@ import { RecoilRoot } from "recoil";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 import HomePage from "./pages/Home";
+import {
+  appsPageState,
+  profileState,
+  profileFlagsState,
+  storeAppState,
+  storeCategoriesState,
+} from "./data/atoms";
 
 const App = lazy(() => import("./App"));
 const ErrorPage = lazy(() => import("./pages/error"));
@@ -594,9 +601,48 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 
 const router = createBrowserRouter(routes);
 
+const setInitialRecoilState = ({ set }) => {
+  if (window.initialState) {
+    let slug = window.location.pathname.split("/")[1] || "super-agent";
+    Object.entries(window.initialState).forEach(([key, value]) => {
+      if (key === "profile") {
+        set(profileState, value);
+      }
+
+      if (key === "profileFlags") {
+        set(profileFlagsState, value);
+      }
+
+      if (key === "storeApp" && value["slug"]) {
+        set(storeAppState(value["slug"]), value);
+      }
+
+      if (key === "storeCategories") {
+        set(storeCategoriesState, value);
+      }
+
+      if (key === "relatedApps") {
+        if (value["featuredApps"]) {
+          set(
+            appsPageState("categories/featured/apps", null),
+            value["featuredApps"],
+          );
+        }
+
+        if (value["recommendedApps"]) {
+          set(
+            appsPageState(`categories/recommended/${slug}/apps`, null),
+            value["recommendedApps"],
+          );
+        }
+      }
+    });
+  }
+};
+
 root.render(
   <React.StrictMode>
-    <RecoilRoot>
+    <RecoilRoot initializeState={setInitialRecoilState}>
       <ThemeProvider theme={defaultTheme}>
         <TourProvider>
           <CookiesProvider>

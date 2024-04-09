@@ -218,9 +218,19 @@ export const endpointShareCodeValueState = atom({
   default: null,
 });
 
-export const profileFetchSelector = selector({
-  key: "profileFetchSelector",
-  get: async () => {
+export const profileState = atom({
+  key: "profileState",
+  default: null,
+});
+
+export const profileSelector = selector({
+  key: "profileSelector",
+  get: async ({ get }) => {
+    const profile = get(profileState);
+    if (profile) {
+      return profile;
+    }
+
     try {
       const profile = await axios().get("/api/profiles/me");
       return profile.data;
@@ -228,17 +238,15 @@ export const profileFetchSelector = selector({
       return null;
     }
   },
-});
-
-export const profileState = atom({
-  key: "profileValue",
-  default: profileFetchSelector,
+  set: ({ set }, newValue) => {
+    set(profileState, newValue);
+  },
 });
 
 export const isLoggedInState = selector({
   key: "isLoggedIn",
   get: ({ get }) => {
-    return get(profileState) !== null;
+    return get(profileSelector) !== null;
   },
 });
 
@@ -434,23 +442,36 @@ export const appVersionsState = atomFamily({
   },
 });
 
-export const storeAppState = atomFamily({
-  key: "storeAppState",
-  default: async (appSlug) => {
-    if (!appSlug) {
-      return null;
-    }
+export const fetchAppState = atomFamily({
+  key: "fetchAppState",
+  default: null,
+});
 
-    try {
-      const app = await axios().get(
-        `/api/store/apps/${appSlug}?include_data=true`,
-      );
-      return app.data;
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
-  },
+export const storeAppState = selectorFamily({
+  key: "storeAppData",
+  get:
+    (appSlug) =>
+    async ({ get }) => {
+      const existingData = get(fetchAppState(appSlug));
+      if (existingData !== null) {
+        return existingData;
+      }
+
+      try {
+        const response = await axios().get(
+          `/api/store/apps/${appSlug}?include_data=true`,
+        );
+        return response.data;
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    },
+  set:
+    (appSlug) =>
+    ({ set }, newValue) => {
+      set(fetchAppState(appSlug), newValue);
+    },
 });
 
 export const appsPageState = atomFamily({
@@ -497,20 +518,40 @@ export const fetchAppsFromStore = selectorFamily({
 
 export const storeCategoriesState = atom({
   key: "storeCategoriesState",
-  default: async () => {
+  default: {
+    special: [],
+    fixed: [],
+  },
+});
+
+const storeCategoriesSelector = selector({
+  key: "storeCategoriesSelector",
+  get: async ({ get }) => {
+    const categories = get(storeCategoriesState);
+
+    if (categories.special.length > 0 || categories.fixed.length > 0) {
+      return get(storeCategoriesState);
+    }
+
     try {
       const categories = await axios().get("/api/store/categories");
       return categories.data;
     } catch (error) {
-      return [];
+      return {
+        special: [],
+        fixed: [],
+      };
     }
+  },
+  set: ({ set }, newValue) => {
+    set(storeCategoriesState, newValue);
   },
 });
 
 export const storeCategoriesListState = selector({
   key: "storeCategoriesListState",
   get: async ({ get }) => {
-    const categories = await get(storeCategoriesState)();
+    const categories = await get(storeCategoriesSelector);
 
     return [...categories.special, ...categories.fixed];
   },
@@ -519,7 +560,7 @@ export const storeCategoriesListState = selector({
 export const storeFixedCategoriesListState = selector({
   key: "storeFixedCategoriesListState",
   get: async ({ get }) => {
-    const categories = await get(storeCategoriesState)();
+    const categories = await get(storeCategoriesSelector);
 
     return categories.fixed;
   },
@@ -528,7 +569,7 @@ export const storeFixedCategoriesListState = selector({
 export const storeSpecialCategoriesListState = selector({
   key: "storeSpecialCategoriesListState",
   get: async ({ get }) => {
-    const categories = await get(storeCategoriesState)();
+    const categories = await get(storeCategoriesSelector);
     return categories.special;
   },
 });
@@ -536,7 +577,7 @@ export const storeSpecialCategoriesListState = selector({
 export const storeCategoriesSlugState = selector({
   key: "storeCategoriesSlugState",
   get: async ({ get }) => {
-    const categories = await get(storeCategoriesState)();
+    const categories = await get(storeCategoriesSelector);
     return categories.map((x) => x.slug);
   },
 });
@@ -618,9 +659,19 @@ export const appsBriefState = atom({
   default: appsBriefFetchSelector,
 });
 
-export const profileFlagsFetchSelector = selector({
-  key: "profileFlagsFetchSelector",
-  get: async () => {
+export const profileFlagsState = atom({
+  key: "profileFlagsState",
+  default: {},
+});
+
+export const profileFlagsSelector = selector({
+  key: "profileFlagsSelector",
+  get: async ({ get }) => {
+    const profileFlags = get(profileFlagsState);
+    if (Object.keys(profileFlags).length > 0) {
+      return profileFlags;
+    }
+
     try {
       const profile = await axios().get("/api/profiles/me/flags");
       return profile.data;
@@ -628,11 +679,9 @@ export const profileFlagsFetchSelector = selector({
       return {};
     }
   },
-});
-
-export const profileFlagsState = atom({
-  key: "profileFlagsState",
-  default: profileFlagsFetchSelector,
+  set: ({ set }, newValue) => {
+    set(profileFlagsState, newValue);
+  },
 });
 
 export const organizationFetchSelector = selector({

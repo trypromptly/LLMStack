@@ -51,8 +51,8 @@ import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
 import { useValidationErrorsForAppConsole } from "../data/appValidation";
 import {
   apiBackendsState,
-  profileFlagsState,
-  profileState,
+  profileFlagsSelector,
+  profileSelector,
 } from "../data/atoms";
 import { axios } from "../data/axios";
 import StoreListingModal from "../components/store/StoreListingModal";
@@ -204,8 +204,8 @@ export default function AppConsolePage(props) {
   const [missingKeys, setMissingKeys] = useState([]);
   const [appVisibility, setAppVisibility] = useState(3);
   const [selectedMenuItem, setSelectedMenuItem] = useState(page || "editor");
-  const profile = useRecoilValue(profileState);
-  const profileFlags = useRecoilValue(profileFlagsState);
+  const profile = useRecoilValue(profileSelector);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
   const validationErrors = useValidationErrorsForAppConsole();
 
   useEffect(() => {

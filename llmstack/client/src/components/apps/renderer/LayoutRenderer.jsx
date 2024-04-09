@@ -44,7 +44,7 @@ import { AssetRenderer } from "./AssetRenderer";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
-import { appRunDataState, profileState } from "../../../data/atoms";
+import { appRunDataState, profileSelector } from "../../../data/atoms";
 import { LexicalRenderer } from "../lexical/LexicalRenderer";
 import ThemedJsonForm from "../../ThemedJsonForm";
 import loadingImage from "../../../assets/images/loading.gif";
@@ -272,7 +272,7 @@ const AppAvatar = memo(
 
 const UserAvatar = memo(
   ({ sx = {} }) => {
-    const profile = useRecoilValue(profileState);
+    const profile = useRecoilValue(profileSelector);
     return (
       <Avatar
         src={profile?.avatar}

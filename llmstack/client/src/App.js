@@ -8,7 +8,7 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import BannerMessages from "./components/BannerMessages";
 import NavBar from "./components/navbar";
 import Sidebar from "./components/sidebar";
-import { isMobileState, profileFlagsState } from "./data/atoms";
+import { isMobileState, profileFlagsSelector } from "./data/atoms";
 
 const menuItems = [
   {
@@ -77,7 +77,7 @@ export default function App({ children }) {
   }, [location, setCookie]);
 
   const [isMobile, setIsMobile] = useRecoilState(isMobileState);
-  const profileFlags = useRecoilValue(profileFlagsState);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
 
   useEffect(() => {
     const handleResize = () => {

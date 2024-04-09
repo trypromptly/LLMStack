@@ -34,7 +34,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { ReactComponent as GithubIcon } from "../assets/images/icons/github.svg";
-import { isLoggedInState, profileState } from "../data/atoms";
+import { isLoggedInState, profileSelector } from "../data/atoms";
 import { onLogoutClick } from "./logout";
 import LoginDialog from "./LoginDialog";
 
@@ -122,7 +122,7 @@ export default function Sidebar({ menuItems }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isLoggedIn = useRecoilValue(isLoggedInState);
-  const profile = useRecoilValue(profileState);
+  const profile = useRecoilValue(profileSelector);
   const [loggedOutModalVisibility, setLoggedOutModalVisibility] =
     useState(false);
   const [open, setOpen] = React.useState(false);

@@ -5,7 +5,7 @@ import { Box, Stack, Tab, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import AceEditor from "react-ace";
 import { useRecoilValue } from "recoil";
-import { profileState } from "../../data/atoms";
+import { profileSelector } from "../../data/atoms";
 
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-python";
@@ -23,7 +23,7 @@ export function AppApiExamples(props) {
   const [tabValue, setTabValue] = useState("1");
   const [streamingTabValue, setstreamingTabValue] = useState("1");
 
-  const profile = useRecoilValue(profileState);
+  const profile = useRecoilValue(profileSelector);
 
   useEffect(() => {
     setPythonCode(`import requests

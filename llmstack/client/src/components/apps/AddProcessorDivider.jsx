@@ -16,7 +16,7 @@ import {
   apiBackendsState,
   apiProvidersState,
   organizationState,
-  profileFlagsState,
+  profileFlagsSelector,
 } from "../../data/atoms";
 import { ProviderIcon } from "./ProviderIcon";
 
@@ -39,7 +39,7 @@ export function AddProcessorDivider({
   setProcessorBackend,
 }) {
   const organization = useRecoilValue(organizationState);
-  const profileFlags = useRecoilValue(profileFlagsState);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
   const apiBackends = useRecoilValue(apiBackendsState);
   const apiProviders = useRecoilValue(apiProvidersState);
 

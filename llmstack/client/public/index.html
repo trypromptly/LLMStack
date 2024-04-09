@@ -20,8 +20,6 @@
       rel="apple-touch-icon"
       href="%PUBLIC_URL%/static/images/{{ site_name|default:'llmstack' }}-icon.png"
     />
-    <!-- <link rel="manifest" href="%PUBLIC_URL%/manifest.json" /> -->
-    <!-- prettier-ignore -->
     <title>
       {{ page_title|default:"Promptly: AI Apps and Chatbots in Minutes | No-code AI App Builder" }}
     </title>
@@ -49,6 +47,9 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <script>
       window.prerenderReady = false;
+      window.initialState = JSON.parse(
+        "{{ initial_state|default:'{}'|escapejs }}",
+      );
     </script>
     <div id="root"></div>
     <script

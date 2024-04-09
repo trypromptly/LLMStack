@@ -1,9 +1,9 @@
 import { Alert, Stack } from "@mui/material";
 import { useRecoilValue } from "recoil";
-import { profileFlagsState } from "../data/atoms";
+import { profileFlagsSelector } from "../data/atoms";
 
 function BannerMessages() {
-  const profileFlags = useRecoilValue(profileFlagsState);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
   let bannerMessages = [];
 
   if (profileFlags.HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA) {

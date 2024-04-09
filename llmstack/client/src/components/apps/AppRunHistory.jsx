@@ -19,7 +19,7 @@ import moment from "moment";
 import { enqueueSnackbar } from "notistack";
 import { useState } from "react";
 import { useRecoilValue } from "recoil";
-import { profileFlagsState } from "../../data/atoms";
+import { profileFlagsSelector } from "../../data/atoms";
 import { axios } from "../../data/axios";
 import { AppRunHistorySessions } from "./AppRunHistorySessions";
 import { AppRunHistoryTimeline } from "./AppRunHistoryTimeline";
@@ -129,7 +129,7 @@ export function AppRunHistory(props) {
   const { app } = props;
   const [selectedTab, setSelectedTab] = useState(0);
   const [openDownloadModal, setOpenDownloadModal] = useState(false);
-  const profileFlags = useRecoilValue(profileFlagsState);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
   const tabs = [
     {
       label: "Sessions",

@@ -43,7 +43,7 @@ import {
   dataSourceEntriesState,
   dataSourceEntriesTableDataState,
   orgDataSourceEntriesState,
-  profileFlagsState,
+  profileFlagsSelector,
 } from "../data/atoms";
 import { axios } from "../data/axios";
 import { useReloadDataSourceEntries, useReloadDataSources } from "../data/init";
@@ -278,7 +278,7 @@ export default function DataPage() {
   const [dataSourceBeingLoaded, setDataSourceBeingLoaded] = useState(null); // uuid of the data source being loaded
   const reloadDataSourceEntries = useReloadDataSourceEntries();
   const reloadDataSources = useReloadDataSources();
-  const profileFlags = useRecoilValue(profileFlagsState);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
 
   useEffect(() => {
     if (dataSourceEntriesTable.length > 0) {

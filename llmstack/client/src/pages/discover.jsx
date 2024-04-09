@@ -15,7 +15,7 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { organizationState, profileFlagsState } from "../data/atoms";
+import { organizationState, profileFlagsSelector } from "../data/atoms";
 import { axios } from "../data/axios";
 
 class DiscoverCard {
@@ -96,7 +96,7 @@ export default function Discover() {
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [orgApps, setOrgApps] = useState([]);
-  const profileFlags = useRecoilValue(profileFlagsState);
+  const profileFlags = useRecoilValue(profileFlagsSelector);
   const organization = useRecoilValue(organizationState);
 
   const pageHeaderStyle = {
