@@ -37,6 +37,8 @@ export default function StoreApp({ appSlug }) {
           username={storeApp.username}
           description={storeApp.description}
           categories={storeApp.categories}
+          appTypeSlug={storeApp?.data?.type_slug || "agent"}
+          appStoreUuid={storeApp.uuid}
         />
       </Grid>
       <Grid

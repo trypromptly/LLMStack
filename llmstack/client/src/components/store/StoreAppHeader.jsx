@@ -1,13 +1,19 @@
 import React, { useState, useCallback } from "react";
-import { Box, Button, Card, Chip, Collapse, Typography } from "@mui/material";
 import {
-  KeyboardArrowDownOutlined,
-  KeyboardArrowUpOutlined,
-} from "@mui/icons-material";
+  Box,
+  Button,
+  Card,
+  Chip,
+  Collapse,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import { IosShareOutlined } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 import { useRecoilValue } from "recoil";
 import { storeCategoriesListState, isMobileState } from "../../data/atoms";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
+import ShareModal from "./ShareModal";
 
 const AppIcon = styled("img")({
   width: 80,
@@ -23,9 +29,18 @@ const AppIconSmall = styled("img")({
   borderRadius: 4,
 });
 
-function StoreAppHeader({ name, icon, username, description, categories }) {
+function StoreAppHeader({
+  name,
+  icon,
+  username,
+  description,
+  categories,
+  appStoreUuid,
+  appTypeSlug,
+}) {
   const isMobile = useRecoilValue(isMobileState);
   const [expanded, setExpanded] = useState(!isMobile);
+  const [showShareModal, setShowShareModal] = useState(false);
   const storeCategories = useRecoilValue(storeCategoriesListState);
 
   const findCategory = useCallback(
@@ -51,6 +66,12 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
       }}
       onClick={() => setExpanded(!expanded)}
     >
+      <ShareModal
+        open={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        appTypeSlug={appTypeSlug}
+        appStoreUuid={appStoreUuid}
+      />
       <Box
         sx={{
           display: "flex",
@@ -76,23 +97,33 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
                 <Typography
                   component="h1"
                   color="#183A58"
-                  sx={{ fontSize: "20px", lineHeight: "24px", fontWeight: 600 }}
+                  sx={{
+                    fontSize: "20px",
+                    lineHeight: "24px",
+                    fontWeight: 600,
+                  }}
                 >
                   {name}
                 </Typography>
-                <Button
+                <IconButton
                   sx={{
-                    color: "#183A58",
+                    color: "#FFF",
                     ml: "auto",
-                    mr: isMobile ? "-20px" : "-12px",
+                    mr: isMobile ? "-4px" : "0px",
+                    backgroundColor: "primary.main",
+                    ":hover": {
+                      backgroundColor: "primary.dark",
+                    },
+                    borderRadius: "8px",
+                  }}
+                  onClose={() => setShowShareModal(true)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowShareModal(true);
                   }}
                 >
-                  {expanded ? (
-                    <KeyboardArrowUpOutlined />
-                  ) : (
-                    <KeyboardArrowDownOutlined />
-                  )}
-                </Button>
+                  <IosShareOutlined fontSize="small" variant="contained" />
+                </IconButton>
               </Box>
             </Box>
           </Box>
@@ -113,17 +144,47 @@ function StoreAppHeader({ name, icon, username, description, categories }) {
               >
                 <Typography
                   component="h1"
-                  sx={{ fontSize: "20px", lineHeight: "24px", fontWeight: 600 }}
+                  sx={{
+                    fontSize: "20px",
+                    lineHeight: "24px",
+                    fontWeight: 600,
+                  }}
                 >
                   {name}
                 </Typography>
-                <Button sx={{ ml: "auto", mr: "-20px" }}>
-                  {expanded ? (
-                    <KeyboardArrowUpOutlined />
-                  ) : (
-                    <KeyboardArrowDownOutlined />
-                  )}
-                </Button>
+                {isMobile ? (
+                  <IconButton
+                    sx={{
+                      color: "#FFF",
+                      ml: "auto",
+                      mr: "-4px",
+                      backgroundColor: "primary.main",
+                      ":hover": {
+                        backgroundColor: "primary.dark",
+                      },
+                      borderRadius: "8px",
+                    }}
+                    onClose={() => setShowShareModal(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowShareModal(true);
+                    }}
+                  >
+                    <IosShareOutlined fontSize="small" variant="contained" />
+                  </IconButton>
+                ) : (
+                  <Button
+                    variant="contained"
+                    sx={{ ml: "auto", mr: "-4px", color: "#FFF" }}
+                    startIcon={<IosShareOutlined fontSize="small" />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowShareModal(true);
+                    }}
+                  >
+                    Share
+                  </Button>
+                )}
               </Box>
               <span style={{ color: "gray" }}>by&nbsp;</span>
               <Typography color="corral.main" sx={{ display: "inline" }}>
