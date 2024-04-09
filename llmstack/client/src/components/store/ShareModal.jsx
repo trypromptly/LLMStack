@@ -29,6 +29,10 @@ export default function ShareModal({
   const [shareCode, setShareCode] = useState("");
   const [shareUrlLoading, setShareUrlLoading] = useState(false);
 
+  const getShareUrl = (code) => {
+    return `${window.location.protocol}://${window.location.host}/s/${code}`;
+  };
+
   const handleShare = (event, sessionId, isLoggedIn) => {
     event.stopPropagation();
 
@@ -41,9 +45,7 @@ export default function ShareModal({
       enqueueSnackbar("Link copied to clipboard", { variant: "success" });
     } else {
       if (shareCode) {
-        navigator.clipboard.writeText(
-          `${window.location.protocol}://${window.location.host}/s/${shareCode}`,
-        );
+        navigator.clipboard.writeText(getShareUrl(shareCode));
         enqueueSnackbar("Link copied to clipboard", { variant: "success" });
         return;
       }
@@ -66,9 +68,7 @@ export default function ShareModal({
       axios()
         .post(`/api/apps/share/`, body)
         .then((response) => {
-          navigator.clipboard.writeText(
-            `${window.location.protocol}://${window.location.host}/s/${response.data.code}`,
-          );
+          navigator.clipboard.writeText(getShareUrl(response.data.code));
           setShareCode(response.data.code);
           enqueueSnackbar("Link copied to clipboard", { variant: "success" });
         })
@@ -104,7 +104,7 @@ export default function ShareModal({
               "Share this app by clicking on the copy link button."}
         </Typography>
         {shareCode && (
-          <Box sx={{ marginTop: 2 }}>
+          <Box sx={{ marginTop: 2, marginBottom: 4 }}>
             <Typography variant="body1">
               Link copied to the clipboard. Share this link with others to view
               the output from this app run:{" "}
@@ -118,7 +118,7 @@ export default function ShareModal({
             </Typography>
           </Box>
         )}
-        {!shareCode && appRunData?.sessionId && (
+        {appRunData?.sessionId && (
           <Box
             sx={{
               maxHeight: "300px",
