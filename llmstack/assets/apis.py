@@ -74,5 +74,5 @@ class AssetViewSet(viewsets.ModelViewSet):
 
             return response
         except Exception as e:
-            logger.error(f"Error retrieving asset: {objref} - {e}")
+            logger.error(f"Error retrieving asset: {e}")
             return None
