@@ -18,11 +18,11 @@ import { styled } from "@mui/material/styles";
 import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
 import { createRef, useEffect, useState } from "react";
-import { useRecoilValue, useRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import Connections from "../components/Connections";
 import Subscription from "../components/Subscription";
 import ThemedJsonForm from "../components/ThemedJsonForm";
-import { profileFlagsState, profileState } from "../data/atoms";
+import { profileFlagsState, profileSelector } from "../data/atoms";
 import { axios } from "../data/axios";
 import "../index.css";
 
@@ -149,7 +149,7 @@ const SettingPage = () => {
   const [loading, setLoading] = useState(false);
   const [updateKeys, setUpdateKeys] = useState(new Set());
   const profileFlags = useRecoilValue(profileFlagsState);
-  const [profileData, setProfileData] = useRecoilState(profileState);
+  const profileData = useRecoilValue(profileSelector);
   const formRef = createRef();
 
   useEffect(() => {
@@ -166,7 +166,6 @@ const SettingPage = () => {
     axios()
       .patch("api/profiles/me", data)
       .then((response) => {
-        setProfileData(response.data);
         enqueueSnackbar("Profile updated successfully", {
           variant: "success",
         });
@@ -182,6 +181,7 @@ const SettingPage = () => {
       .finally(() => {
         setUpdateKeys(new Set());
         setLoading(false);
+        window.location.reload();
       });
   };
 
