@@ -73,5 +73,6 @@ class AssetViewSet(viewsets.ModelViewSet):
                 response["data_uri"] = model_cls.get_asset_data_uri(asset, include_name=include_name)
 
             return response
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error retrieving asset: {objref} - {e}")
             return None
