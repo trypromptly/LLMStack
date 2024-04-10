@@ -1173,6 +1173,10 @@ export default function LayoutRenderer({
             // Do nothing
           }
 
+          if (src && src.startsWith("objref://")) {
+            return <AssetRenderer url={src} type="image" />;
+          }
+
           return (
             <Box
               onMouseEnter={() => setShowDownloadIcon(true)}
