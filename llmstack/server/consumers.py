@@ -243,15 +243,11 @@ class ConnectionConsumer(AsyncWebsocketConsumer):
                 self.disconnect(1000)
 
 
-class PlaygroundConsumer(AsyncWebsocketConsumer):
+class PlaygroundConsumer(AppConsumer):
     async def connect(self):
         self._session_id = None
         self._coordinator_ref = None
         await self.accept()
-
-    async def disconnect(self, close_code):
-        # TODO: Close the stream
-        pass
 
     def _run_app(self, request_uuid, request, **kwargs):
         from llmstack.apps.apis import AppViewSet
@@ -324,9 +320,3 @@ class PlaygroundConsumer(AsyncWebsocketConsumer):
         elif event == "stop":
             if self._coordinator_ref:
                 self._coordinator_ref.stop()
-
-    async def receive(self, text_data):
-        loop = asyncio.get_running_loop()
-        loop.create_task(
-            self._respond_to_event(text_data),
-        )
