@@ -98,7 +98,6 @@ class ImagesGenerationsConfiguration(ApiProcessorSchema):
 class ImagesGenerations(
     ApiProcessorInterface[ImagesGenerationsInput, ImagesGenerationsOutput, ImagesGenerationsConfiguration],
 ):
-
     """
     OpenAI Images Generations API
     """
@@ -135,6 +134,11 @@ class ImagesGenerations(
             quality=self._config.quality,
             response_format=self._config.response_format,
         )
+
+        # Convert images to objrefs
+        for image in result.data:
+            if image.url:
+                image.url = self._upload_asset_from_url(asset=image.url)
 
         async_to_sync(self._output_stream.write)(
             ImagesGenerationsOutput(
