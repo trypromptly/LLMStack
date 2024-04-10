@@ -249,17 +249,6 @@ class PlaygroundConsumer(AppConsumer):
         self._coordinator_ref = None
         await self.accept()
 
-    def _run_app(self, request_uuid, request, **kwargs):
-        from llmstack.apps.apis import AppViewSet
-
-        return AppViewSet().run_app_internal_async(
-            uid=self.app_id,
-            session_id=self._session_id,
-            request_uuid=request_uuid,
-            request=request,
-            preview=self.preview,
-        )
-
     @sync_to_async
     def run(self, request):
         from llmstack.processors.apis import EndpointViewSet
