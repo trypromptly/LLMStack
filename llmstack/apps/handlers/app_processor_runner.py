@@ -77,6 +77,16 @@ class AppProcessorRunner(AppRunner):
                     "env": vendor_env,
                     "input": {**app_processor["input"], **self.request.data.get("input", {})},
                     "config": app_processor["config"],
+                    "metadata": {
+                        "session_id": self.session_id,
+                        "username": (
+                            self.request.user.username
+                            if self.request.user.is_authenticated
+                            else self.request.session["_prid"]
+                            if "_prid" in self.request.session
+                            else ""
+                        ),
+                    },
                     "session_data": app_session_data["data"] if app_session_data and "data" in app_session_data else {},
                     "request": self.request,
                     "is_tool": True if self.app.type.slug == "agent" else False,

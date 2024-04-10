@@ -34,7 +34,7 @@ class AppRunner:
             return None
 
         file_obj = AppSessionFiles.create_from_data_uri(
-            file, ref_id=session_id, metadata={"owner": user, "app_uuid": app_uuid}
+            file, ref_id=session_id, metadata={"username": user, "app_uuid": app_uuid}
         )
 
         return f"objref://sessionfiles/{file_obj.uuid}"
@@ -85,7 +85,7 @@ class AppRunner:
                 session_id=self.app_session["uuid"],
                 app_uuid=str(app.uuid),
                 user=(
-                    request.user.email
+                    request.user.username
                     if request.user.is_authenticated
                     else request.session["_prid"]
                     if "_prid" in request.session
@@ -231,6 +231,17 @@ class AppRunner:
                             "config": convert_template_vars_from_legacy_format(
                                 processor["config"],
                             ),
+                            "metadata": {
+                                "session_id": self.session_id,
+                                "app_uuid": str(self.app.uuid),
+                                "username": (
+                                    self.request.user.username
+                                    if self.request.user.is_authenticated
+                                    else self.request.session["_prid"]
+                                    if "_prid" in self.request.session
+                                    else ""
+                                ),
+                            },
                             "session_data": (
                                 app_session_data["data"] if app_session_data and "data" in app_session_data else {}
                             ),

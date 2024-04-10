@@ -105,6 +105,24 @@ class ApiProcessorInterface(
 
         return objref
 
+    # Upload the asset to the session
+    def _upload_asset_from_url(self, asset):
+        from llmstack.apps.models import AppSessionFiles
+
+        try:
+            asset_metadata = {
+                "app_uuid": self._metadata.get("app_uuid", ""),
+                "username": self._metadata.get("username", ""),
+            }
+            asset = AppSessionFiles.create_from_url(
+                asset, metadata=asset_metadata, ref_id=self._metadata.get("session_id", "")
+            )
+        except Exception as e:
+            logger.exception(e)
+            return asset
+
+        return f"objref://sessionfiles/{asset.uuid}"
+
     def __init__(
         self,
         input,
@@ -113,6 +131,7 @@ class ApiProcessorInterface(
         output_stream=None,
         dependencies=[],
         all_dependencies=[],
+        metadata={},
         session_data=None,
         request=None,
         id=None,
@@ -131,6 +150,7 @@ class ApiProcessorInterface(
         self._output_stream = output_stream
         self._is_tool = is_tool
         self._request = request
+        self._metadata = metadata
 
         self.process_session_data(session_data)
 

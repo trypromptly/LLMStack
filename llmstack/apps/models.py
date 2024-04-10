@@ -642,7 +642,7 @@ class AppSessionFiles(Assets):
     )
 
     def is_accessible(asset, request_user, request_session):
-        user = (
+        username = (
             request_user.email
             if request_user.is_authenticated
             else request_session["_prid"]
@@ -656,7 +656,14 @@ class AppSessionFiles(Assets):
             return True
 
         # If the asset is private, only the owner can access it
-        if metadata.get("owner", "") == user:
+        if (
+            metadata.get("owner", "")
+            and request_user.is_authenticated
+            and metadata.get("owner", "") == request_user.email
+        ):
+            return True
+
+        if metadata.get("username", "") and metadata.get("username", "") == username:
             return True
 
         # If the asset is associated with an app, check if the user has access to the app

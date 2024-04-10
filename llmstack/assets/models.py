@@ -1,6 +1,7 @@
 import base64
 import uuid
 
+import requests
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -37,6 +38,26 @@ class Assets(models.Model):
         file_bytes = base64.b64decode(file_data)
         return cls.create_from_bytes(
             file_bytes, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name}, ref_id=ref_id
+        )
+
+    @classmethod
+    def create_from_url(cls, url, metadata={}, ref_id=""):
+        # Download the file from the URL and create an asset
+        response = requests.get(url, timeout=5)
+        if response.status_code != 200:
+            return None
+
+        # Get the filename and mime type from the response headers
+        file_name = url.split("://")[-1].split("?")[0]
+        content_disposition = response.headers.get("content-disposition", "")
+        content_disposition_split = content_disposition.split("filename=")
+        if content_disposition_split and len(content_disposition_split) > 1:
+            file_name = content_disposition.split("filename=")[1].strip()
+
+        mime_type = response.headers.get("content-type", "application/octet-stream")
+
+        return cls.create_from_bytes(
+            response.content, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name}, ref_id=ref_id
         )
 
     @classmethod
