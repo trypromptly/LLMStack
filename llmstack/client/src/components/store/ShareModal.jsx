@@ -30,7 +30,7 @@ export default function ShareModal({
   const [shareUrlLoading, setShareUrlLoading] = useState(false);
 
   const getShareUrl = (code) => {
-    return `${window.location.protocol}://${window.location.host}/s/${code}`;
+    return `${window.location.protocol}//${window.location.host}/s/${code}`;
   };
 
   const handleShare = (event, sessionId, isLoggedIn) => {
@@ -106,14 +106,9 @@ export default function ShareModal({
         {shareCode && (
           <Box sx={{ marginTop: 2, marginBottom: 4 }}>
             <Typography variant="body1">
-              Link copied to the clipboard. Share this link with others to view
-              the output from this app run:{" "}
-              <a
-                href={`https://trypromptly.com/s/${shareCode}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                https://trypromptly.com/s/{shareCode}
+              Share this link with others to view the output from this app run:{" "}
+              <a href={getShareUrl(shareCode)} target="_blank" rel="noreferrer">
+                {getShareUrl(shareCode)}
               </a>
             </Typography>
           </Box>

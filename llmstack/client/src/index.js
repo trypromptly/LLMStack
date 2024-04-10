@@ -21,6 +21,7 @@ import {
 
 const App = lazy(() => import("./App"));
 const ErrorPage = lazy(() => import("./pages/error"));
+const AppSessionSharePage = lazy(() => import("./pages/AppSessionShare"));
 const PlaygroundPage = lazy(() => import("./pages/playground"));
 const LoginPage = lazy(() => import("./pages/login"));
 const SignupPage = lazy(() => import("./pages/signup"));
@@ -474,10 +475,10 @@ let routes = [
     errorElement: <ErrorPage />,
   },
   {
-    path: "/s/:shareId",
+    path: "/s/:shareCode",
     element: (
       <App>
-        <PlaygroundPage isSharedPageMode={true} />
+        <AppSessionSharePage />
       </App>
     ),
     errorElement: <ErrorPage />,

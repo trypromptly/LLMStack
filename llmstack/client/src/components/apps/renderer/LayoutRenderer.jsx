@@ -897,6 +897,7 @@ export default function LayoutRenderer({
   runApp,
   runProcessor,
   cancelAppRun,
+  noInput = false,
   children,
 }) {
   const memoizedRemarkPlugins = useMemo(() => [remarkGfm], []);
@@ -1003,6 +1004,10 @@ export default function LayoutRenderer({
         (prev, next) => prev.props === next.props,
       ),
       "pa-input-form": ({ node, ...props }) => {
+        if (noInput) {
+          return null;
+        }
+
         return (
           <PromptlyAppInputForm
             runApp={memoizedRunApp}
@@ -1290,7 +1295,7 @@ export default function LayoutRenderer({
         (prev, next) => isEqual(prev, next),
       ),
     };
-  }, [memoizedRunApp, memoizedCancelAppRun, memoizedRunProcessor]);
+  }, [memoizedRunApp, memoizedCancelAppRun, memoizedRunProcessor, noInput]);
 
   if (typeof children !== "string") {
     console.trace("LayoutRenderer: children must be a string", children);

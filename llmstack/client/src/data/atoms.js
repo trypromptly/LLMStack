@@ -516,6 +516,37 @@ export const fetchAppsFromStore = selectorFamily({
     },
 });
 
+export const appRunShareState = atomFamily({
+  key: "appRunShareState",
+  default: null,
+});
+
+export const appRunShareSelector = selectorFamily({
+  key: "appRunShareSelector",
+  get:
+    (shareCode) =>
+    async ({ get }) => {
+      const existingData = get(appRunShareState(shareCode));
+
+      if (existingData !== null) {
+        return existingData;
+      }
+
+      try {
+        const response = await axios().get(`/api/apps/share/${shareCode}`);
+        return response.data;
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    },
+  set:
+    (shareCode) =>
+    ({ set }, newValue) => {
+      set(appRunShareState(shareCode), newValue);
+    },
+});
+
 export const storeCategoriesState = atom({
   key: "storeCategoriesState",
   default: {
