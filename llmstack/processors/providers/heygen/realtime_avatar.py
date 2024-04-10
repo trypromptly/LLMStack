@@ -121,7 +121,9 @@ class RealtimeAvatarProcessor(
         output_stream=None,
         dependencies=[],
         all_dependencies=[],
+        metadata={},
         session_data=None,
+        request=None,
         id=None,
         is_tool=False,
     ):
@@ -132,7 +134,9 @@ class RealtimeAvatarProcessor(
             output_stream,
             dependencies,
             all_dependencies,
+            metadata,
             session_data,
+            request,
             id,
             is_tool,
         )
@@ -288,9 +292,11 @@ class RealtimeAvatarProcessor(
             url = "https://api.heygen.com/v1/realtime.task"
             body = {
                 "session_id": session_id,
-                "text": self._messages_to_repeat[self._messages_repeated].strip()
-                if self._config.input_stream
-                else self._input.text,
+                "text": (
+                    self._messages_to_repeat[self._messages_repeated].strip()
+                    if self._config.input_stream
+                    else self._input.text
+                ),
                 "task_type": task_type,
             }
 
