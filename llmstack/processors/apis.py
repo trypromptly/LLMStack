@@ -13,7 +13,6 @@ from django.http import (
     HttpResponseNotFound,
     StreamingHttpResponse,
 )
-from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from flags.state import flag_enabled
 from rest_framework import status, viewsets
@@ -24,7 +23,7 @@ from rest_framework.views import APIView
 
 from llmstack.apps.app_session_utils import create_app_session
 from llmstack.apps.models import App
-from llmstack.base.models import Profile
+from llmstack.base.models import Profile, get_vendor_env_platform_defaults
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor, InputRequest
@@ -184,9 +183,6 @@ class EndpointViewSet(viewsets.ViewSet):
         return DRFResponse(invoke_result)
 
     def run(self, request):
-        if request.user.is_anonymous:
-            return HttpResponseForbidden("Please login to run this endpoint")
-
         request_uuid = str(uuid.uuid4())
 
         bypass_cache = request.data.get("bypass_cache", False)
@@ -215,15 +211,18 @@ class EndpointViewSet(viewsets.ViewSet):
             ",",
         )[0].strip() or request.META.get("HTTP_X_REAL_IP", "")
 
+        request_owner = None if request.user.is_anonymous else request.user
+        request_user_email = "" if request.user.is_anonymous else request.user.email
+
         input_request = InputRequest(
             request_endpoint_uuid=request_uuid,
             request_app_uuid="",
             request_app_session_key="",
-            request_owner=request.user,
+            request_owner=request_owner,
             request_uuid=str(
                 uuid.uuid4(),
             ),
-            request_user_email=request.user.email,
+            request_user_email=request_user_email,
             request_ip=request_ip,
             request_location=request_location,
             request_user_agent=request_user_agent,
@@ -234,7 +233,7 @@ class EndpointViewSet(viewsets.ViewSet):
         try:
             invoke_result = self.run_endpoint(
                 endpoint_uuid=request_uuid,
-                run_as_user=request.user,
+                run_as_user=request_owner,
                 input_request=input_request,
                 template_values={},
                 bypass_cache=bypass_cache,
@@ -272,9 +271,9 @@ class EndpointViewSet(viewsets.ViewSet):
         output_stream=None,
         stream=False,
     ):
-        profile = get_object_or_404(Profile, user=run_as_user)
+        profile = Profile.objects.get(user=run_as_user) if run_as_user else None
 
-        vendor_env = profile.get_vendor_env()
+        vendor_env = profile.get_vendor_env() if profile else get_vendor_env_platform_defaults()
 
         # Pick a processor
         processor_cls = ApiProcessorFactory.get_api_processor(

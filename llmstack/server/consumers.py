@@ -292,7 +292,12 @@ class PlaygroundConsumer(AsyncWebsocketConsumer):
 
                 await self.send(
                     text_data=json.dumps(
-                        {"output": response.data, "reply_to": id, "id": response_id, "request_id": request_uuid}
+                        {
+                            "output": response.data,
+                            "reply_to": id,
+                            "id": response_id,
+                            "request_id": request_uuid,
+                        }
                     )
                 )
                 await self.send(
