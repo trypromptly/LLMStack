@@ -480,7 +480,7 @@ const AgentStepToolHeader = memo(
   ({ processor, isExpanded, onClick, isRunning = true }) => {
     const icon = (
       <ProviderIcon
-        provider_slug={processor?.provider_slug}
+        providerSlug={processor?.provider_slug}
         style={{ width: "12px", height: "12px" }}
       />
     );
