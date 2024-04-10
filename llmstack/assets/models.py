@@ -48,7 +48,7 @@ class Assets(models.Model):
             return None
 
         # Get the filename and mime type from the response headers
-        file_name = url.split("://")[-1].split("?")[0]
+        file_name = url.split("://")[-1].split("?")[0].split("/")[-1]
         content_disposition = response.headers.get("content-disposition", "")
         content_disposition_split = content_disposition.split("filename=")
         if content_disposition_split and len(content_disposition_split) > 1:
