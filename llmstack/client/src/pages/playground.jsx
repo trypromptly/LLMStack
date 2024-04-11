@@ -1,6 +1,14 @@
+import { Liquid } from "liquidjs";
 import { Box, Button, Grid, Stack, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import React, { lazy, useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  lazy,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
   apiBackendSelectedState,
@@ -18,6 +26,9 @@ import { Ws } from "../data/ws";
 import { stitchObjects } from "../data/utils";
 
 import { PromptlyAppWorkflowOutput } from "../components/apps/renderer/LayoutRenderer";
+import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/theme-chrome";
 
 const ApiBackendSelector = lazy(
   () => import("../components/ApiBackendSelector"),
@@ -25,6 +36,22 @@ const ApiBackendSelector = lazy(
 const ConfigForm = lazy(() => import("../components/ConfigForm"));
 const InputForm = lazy(() => import("../components/InputForm"));
 const LoginDialog = lazy(() => import("../components/LoginDialog"));
+
+export function ThemedJsonEditor({ data }) {
+  return (
+    <AceEditor
+      readOnly={true}
+      mode="json"
+      theme="chrome"
+      value={JSON.stringify(data, null, 2)}
+      editorProps={{ $blockScrolling: true }}
+      setOptions={{
+        useWorker: false,
+        showGutter: false,
+      }}
+    />
+  );
+}
 
 function Output(props) {
   const [value, setValue] = React.useState("form");
@@ -40,12 +67,14 @@ function Output(props) {
             aria-label="Output form tabs"
           >
             <Tab label="Output" value="form" />
+            <Tab label="JSON" value="json" />
           </TabList>
         </Box>
         <TabPanel value="form" sx={{ padding: "4px" }}>
-          <Box>
-            <PromptlyAppWorkflowOutput showHeader={false} />
-          </Box>
+          <PromptlyAppWorkflowOutput showHeader={false} />
+        </TabPanel>
+        <TabPanel value="json" sx={{ padding: "4px" }}>
+          <ThemedJsonEditor data={props.jsonResult} />
         </TabPanel>
       </TabContext>
     </Box>
@@ -60,9 +89,22 @@ export default function PlaygroundPage() {
   const chunkedOutput = useRef({});
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const setAppRunData = useSetRecoilState(appRunDataState);
+  const [jsonResult, setJsonResult] = useState({});
 
   const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
+  const templateEngine = useMemo(() => new Liquid(), []);
+  const [outputTemplate, setOutputTemplate] = useState(null);
+
   const paramValues = useRecoilValue(endpointConfigValueState);
+  useEffect(() => {
+    if (apiBackendSelected) {
+      setOutputTemplate(
+        templateEngine.parse(
+          apiBackendSelected.output_template || "{{ output }}",
+        ),
+      );
+    }
+  }, [templateEngine, apiBackendSelected, setOutputTemplate]);
 
   const [ws, setWs] = useState(null);
 
@@ -83,8 +125,6 @@ export default function PlaygroundPage() {
   if (ws) {
     ws.setOnMessage((evt) => {
       const message = JSON.parse(evt.data);
-
-      console.log("Received message", message);
 
       if (message.session) {
         appSessionId.current = message.session.id;
@@ -182,20 +222,26 @@ export default function PlaygroundPage() {
       }
 
       if (message.id && message.output) {
-        const newMessage = message.output;
-        messagesRef.current.add(
-          new AppMessage(
-            message.id,
-            message.request_id,
-            JSON.stringify(message.output),
-            message.reply_to,
-          ),
-        );
-        setAppRunData((prevState) => ({
-          ...prevState,
-          messages: messagesRef.current.get(),
-          isStreaming: newMessage.content !== null,
-        }));
+        templateEngine
+          .render(outputTemplate, {
+            output: JSON.stringify(chunkedOutput.current?.output) || "{}",
+          })
+          .then((newMessage) => {
+            messagesRef.current.add(
+              new AppMessage(
+                message.id,
+                message.request_id,
+                newMessage,
+                message.reply_to,
+              ),
+            );
+            setAppRunData((prevState) => ({
+              ...prevState,
+              messages: messagesRef.current.get(),
+              isStreaming: newMessage.content !== null,
+            }));
+          });
+        setJsonResult(chunkedOutput.current?.output);
       }
     });
   }
@@ -288,7 +334,7 @@ export default function PlaygroundPage() {
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <Output />
+            <Output jsonResult={jsonResult} />
           </Grid>
         </Grid>
       </Stack>
