@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Box } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { useRecoilValue } from "recoil";
-import { AppRenderer } from "../apps/renderer/AppRenderer";
 import { Ws } from "../../data/ws";
 import { storeAppState } from "../../data/atoms";
-import StoreAppHeader from "./StoreAppHeader";
+
+const AppRenderer = React.lazy(() => import("../apps/renderer/AppRenderer"));
+const StoreAppHeader = React.lazy(() => import("./StoreAppHeader"));
 
 export default function StoreApp({ appSlug }) {
   const storeApp = useRecoilValue(storeAppState(appSlug));

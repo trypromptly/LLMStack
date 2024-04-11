@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { lazy, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { Button, useMediaQuery, useTheme, Stack } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { appRunShareSelector, isMobileState } from "../data/atoms";
-import Search from "../components/store/Search";
-import SessionRenderer from "../components/store/SessionRenderer";
+
+const Search = lazy(() => import("../components/store/Search"));
+const SessionRenderer = lazy(
+  () => import("../components/store/SessionRenderer"),
+);
 
 const AppSessionSharePage = () => {
   const shareCode = useParams().shareCode;

@@ -10,7 +10,6 @@ import React, {
 import ReactGA from "react-ga4";
 import { useLocation } from "react-router-dom";
 import { stitchObjects } from "../../../data/utils";
-import LayoutRenderer from "./LayoutRenderer";
 import {
   AppMessage,
   AppErrorMessage,
@@ -23,8 +22,10 @@ import {
 import { axios } from "../../../data/axios";
 import { isLoggedInState, appRunDataState } from "../../../data/atoms";
 import { useSetRecoilState, useRecoilValue } from "recoil";
-import LoginDialog from "../../LoginDialog";
 import logo from "../../../assets/promptly-icon.png";
+
+const LayoutRenderer = React.lazy(() => import("./LayoutRenderer"));
+const LoginDialog = React.lazy(() => import("../../LoginDialog"));
 
 export const defaultWorkflowLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin": "10px auto"}'>
   <pa-paper style="padding: 10px;">
@@ -53,7 +54,7 @@ export const defaultChatLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin"
     </pa-grid>
 </pa-layout>`;
 
-export function AppRenderer({ app, ws }) {
+export default function AppRenderer({ app, ws }) {
   const appSessionId = useRef(null);
   const location = useLocation();
   const [layout, setLayout] = useState("");

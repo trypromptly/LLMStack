@@ -1,11 +1,12 @@
 import { useParams } from "react-router-dom";
 import { Button, useMediaQuery, useTheme, Stack } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
-import StoreApp from "../components/store/StoreApp";
-import Search from "../components/store/Search";
 import { useRecoilValue } from "recoil";
 import { isMobileState } from "../data/atoms";
-import { useState } from "react";
+import { lazy, useState } from "react";
+
+const StoreApp = lazy(() => import("../components/store/StoreApp"));
+const Search = lazy(() => import("../components/store/Search"));
 
 export default function HomePage() {
   const { appSlug = "super-agent" } = useParams();

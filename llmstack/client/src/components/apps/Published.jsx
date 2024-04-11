@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, useEffect, useRef, useState } from "react";
 import {
   AppBar,
   Avatar,
@@ -17,9 +17,10 @@ import {
 } from "@mui/icons-material";
 import { ReactComponent as GithubIcon } from "../../assets/images/icons/github.svg";
 import { TwitterIcon, TwitterShareButton } from "react-share";
-import { AppRenderer } from "./renderer/AppRenderer";
 import logo from "../../assets/logo.png";
 import "./Published.css";
+
+const AppRenderer = lazy(() => import("./renderer/AppRenderer"));
 
 const SITE_NAME = process.env.REACT_APP_SITE_NAME || "LLMStack";
 

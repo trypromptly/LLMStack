@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { lazy, useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { isMobileState } from "../../data/atoms";
 import { Ws } from "../../data/ws";
-import { AppRenderer } from "./renderer/AppRenderer";
+
+const AppRenderer = lazy(() => import("./renderer/AppRenderer"));
 
 export function AppPreview(props) {
   const { app } = props;
