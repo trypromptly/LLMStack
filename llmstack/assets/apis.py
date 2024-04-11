@@ -1,5 +1,6 @@
 import logging
 
+from django import db
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response as DRFResponse
@@ -75,4 +76,5 @@ class AssetViewSet(viewsets.ModelViewSet):
             return response
         except Exception as e:
             logger.error(f"Error retrieving asset: {e}")
+            db.connections.close_all()
             return None
