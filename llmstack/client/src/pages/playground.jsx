@@ -1,11 +1,10 @@
-import { Box, Button, Grid, Stack, CircularProgress, Tab } from "@mui/material";
+import { Box, Button, Grid, Stack, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import React, { lazy, useEffect, useState, useRef, useCallback } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
   apiBackendSelectedState,
   endpointConfigValueState,
-  endpointSelectedState,
   inputValueState,
   isLoggedInState,
   templateValueState,
@@ -63,21 +62,8 @@ export default function PlaygroundPage() {
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const setAppRunData = useSetRecoilState(appRunDataState);
 
-  const [apiBackendSelected, setApiBackendSelected] = useRecoilState(
-    apiBackendSelectedState,
-  );
-  const [endpointSelected, setEndpointSelected] = useRecoilState(
-    endpointSelectedState,
-  );
-  const [paramValues, setParamValues] = useRecoilState(
-    endpointConfigValueState,
-  );
-  const [promptValues, setPromptValues] = useRecoilState(templateValueState);
-  const [output, setOutput] = useState("");
-  const [runError, setRunError] = useState("");
-  const [outputLoading, setOutputLoading] = useState(false);
-  const [tokenCount, setTokenCount] = useState(null);
-  const [processorResult, setProcessorResult] = useState(null);
+  const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
+  const paramValues = useRecoilValue(endpointConfigValueState);
 
   const [ws, setWs] = useState(null);
 
@@ -215,36 +201,8 @@ export default function PlaygroundPage() {
     });
   }
 
-  // useEffect(() => {
-  //   if (appRunData && !appRunData?.isRunning && !appRunData?.isStreaming) {
-  //     if (appRunData?.messages) {
-  //       const lastMessage =
-  //         appRunData?.messages[appRunData?.messages.length - 1];
-  //       if (lastMessage) {
-  //         setOutputLoading(false);
-  //         setProcessorResult(lastMessage?.content?.output);
-  //         if (lastMessage?.content?.output) {
-  //           if (lastMessage?.content?.output?.generations) {
-  //             setOutput(lastMessage?.content?.output?.generations);
-  //           } else if (lastMessage?.content?.output?.chat_completions) {
-  //             setOutput(lastMessage?.content?.output?.chat_completions);
-  //           } else {
-  //             setOutput([lastMessage?.content?.output]);
-  //           }
-  //         }
-  //         if (lastMessage?.content?.errors) {
-  //           setRunError(lastMessage?.content?.errors);
-  //         }
-  //       }
-  //     }
-  //   }
-  // }, [appRunData]);
-
   const runApp = useCallback(
     (sessionId, input) => {
-      setRunError("");
-      setOutputLoading(true);
-
       chunkedOutput.current = {};
       const requestId = Math.random().toString(36).substring(2);
 
@@ -288,18 +246,6 @@ export default function PlaygroundPage() {
       </Button>
     );
   };
-
-  useEffect(() => {
-    setTokenCount(null);
-    setOutput("");
-  }, [
-    setApiBackendSelected,
-    setEndpointSelected,
-    setParamValues,
-    setPromptValues,
-  ]);
-
-  useEffect(() => {}, [paramValues, promptValues]);
 
   return (
     <Box sx={{ margin: "10px 2px" }}>
