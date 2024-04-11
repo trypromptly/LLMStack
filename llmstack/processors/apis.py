@@ -183,6 +183,9 @@ class EndpointViewSet(viewsets.ViewSet):
         return DRFResponse(invoke_result)
 
     def run(self, request):
+        if request.user.is_anonymous:
+            return HttpResponseForbidden("Please login to run this endpoint")
+
         request_uuid = str(uuid.uuid4())
 
         bypass_cache = request.data.get("bypass_cache", False)
