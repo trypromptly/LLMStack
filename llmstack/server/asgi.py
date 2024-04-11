@@ -7,7 +7,11 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 from django.urls import path
 
-from llmstack.server.consumers import AppConsumer, ConnectionConsumer
+from llmstack.server.consumers import (
+    AppConsumer,
+    ConnectionConsumer,
+    PlaygroundConsumer,
+)
 
 BASE_DIR = dirname(dirname(abspath(__file__)))
 sys.path.append(join(BASE_DIR, "llmstack"))
@@ -29,6 +33,7 @@ application = ProtocolTypeRouter(
                         "ws/connections/<str:conn_id>/activate",
                         ConnectionConsumer.as_asgi(),
                     ),
+                    path("ws/playground", PlaygroundConsumer.as_asgi()),
                 ],
             ),
         ),

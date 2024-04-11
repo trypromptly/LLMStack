@@ -20,6 +20,19 @@ from llmstack.emails.templates.factory import EmailTemplateFactory
 logger = logging.getLogger(__name__)
 
 
+def get_vendor_env_platform_defaults():
+    return {
+        "azure_openai_api_key": settings.DEFAULT_AZURE_OPENAI_API_KEY,
+        "openai_api_key": settings.DEFAULT_OPENAI_API_KEY,
+        "stabilityai_api_key": settings.DEFAULT_DREAMSTUDIO_API_KEY,
+        "cohere_api_key": settings.DEFAULT_COHERE_API_KEY,
+        "forefrontai_api_key": settings.DEFAULT_FOREFRONTAI_API_KEY,
+        "elevenlabs_api_key": settings.DEFAULT_ELEVENLABS_API_KEY,
+        "google_service_account_json_key": settings.DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY,
+        "aws_access_key_id": settings.DEFAULT_AWS_ACCESS_KEY_ID,
+    }
+
+
 class VectorstoreEmbeddingEndpoint(Enum):
     OPEN_AI = "openai"
     AZURE_OPEN_AI = "azure_openai"

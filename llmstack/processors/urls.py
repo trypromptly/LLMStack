@@ -33,8 +33,6 @@ urlpatterns = [
         "api/endpoints/<str:id>/<str:version>",
         apis.EndpointViewSet.as_view({"post": "invoke_api"}),
     ),
-    # Playground
-    path("api/playground/run", apis.EndpointViewSet.as_view({"post": "run"})),
     # History
     path("api/history", apis.HistoryViewSet.as_view({"get": "list"})),
     path(
