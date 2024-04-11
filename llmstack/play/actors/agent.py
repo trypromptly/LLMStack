@@ -205,9 +205,9 @@ class AgentActor(Actor):
             model = self._config.get("model", "gpt-3.5-turbo")
 
             if model == "gpt-3.5-turbo-latest":
-                model = "gpt-3.5-turbo-1106"
+                model = "gpt-3.5-turbo"
             elif model == "gpt-4-turbo-latest":
-                model = "gpt-4-0125-preview"
+                model = "gpt-4-turbo"
 
             # Make one call to the model
             full_content = ""
