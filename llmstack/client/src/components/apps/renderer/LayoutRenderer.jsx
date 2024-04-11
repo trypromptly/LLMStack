@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  lazy,
   memo,
   useCallback,
   useEffect,
@@ -45,8 +46,6 @@ import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
 import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 import { appRunDataState, profileSelector } from "../../../data/atoms";
-import { LexicalRenderer } from "../lexical/LexicalRenderer";
-import ThemedJsonForm from "../../ThemedJsonForm";
 import loadingImage from "../../../assets/images/loading.gif";
 import { isEqual, get } from "lodash";
 
@@ -57,6 +56,9 @@ import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/theme-dracula";
 import "./LayoutRenderer.css";
+
+const LexicalRenderer = lazy(() => import("../lexical/LexicalRenderer"));
+const ThemedJsonForm = lazy(() => import("../../ThemedJsonForm"));
 
 const liquidEngine = new Liquid();
 

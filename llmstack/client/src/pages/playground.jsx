@@ -1,10 +1,6 @@
 import { Box, Button, Grid, Stack } from "@mui/material";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { lazy, useEffect, useState, useRef, useCallback } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
-import ApiBackendSelector from "../components/ApiBackendSelector";
-import ConfigForm from "../components/ConfigForm";
-import InputForm from "../components/InputForm";
-import Output from "../components/Output";
 import {
   apiBackendSelectedState,
   endpointConfigValueState,
@@ -20,6 +16,14 @@ import {
 } from "../components/apps/renderer/Messages";
 import { Ws } from "../data/ws";
 import { stitchObjects } from "../data/utils";
+
+const ApiBackendSelector = lazy(
+  () => import("../components/ApiBackendSelector"),
+);
+const ConfigForm = lazy(() => import("../components/ConfigForm"));
+const InputForm = lazy(() => import("../components/InputForm"));
+const Output = lazy(() => import("../components/Output"));
+const LoginDialog = lazy(() => import("../components/LoginDialog"));
 
 export default function PlaygroundPage() {
   const isLoggedIn = useRecoilValue(isLoggedInState);
@@ -236,21 +240,6 @@ export default function PlaygroundPage() {
     [ws, setAppRunData],
   );
 
-  const cancelAppRun = useCallback(() => {
-    setAppRunData((prevState) => ({
-      ...prevState,
-      isRunning: false,
-    }));
-
-    if (ws && ws.ws) {
-      ws.send(
-        JSON.stringify({
-          event: "stop",
-        }),
-      );
-    }
-  }, [ws, setAppRunData]);
-
   const Run = () => {
     return (
       <Button
@@ -285,6 +274,13 @@ export default function PlaygroundPage() {
 
   return (
     <Box sx={{ margin: "10px 2px" }}>
+      {showLoginDialog && (
+        <LoginDialog
+          open={showLoginDialog}
+          handleClose={() => setShowLoginDialog(false)}
+          redirectPath={window.location.pathname}
+        />
+      )}
       <Stack>
         <ApiBackendSelector />
         <Grid container spacing={2}>

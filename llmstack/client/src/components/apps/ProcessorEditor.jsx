@@ -8,15 +8,16 @@ import {
   Typography,
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
-import { useEffect, useState } from "react";
+import { lazy, useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 import { appsState } from "../../data/atoms";
-import ThemedJsonForm from "../ThemedJsonForm";
 import "./AppEditor.css";
-import { AppSelector } from "./AppSelector";
-import { AppStepCard } from "./AppStepCard";
-import { TextFieldWithVars } from "./TextFieldWithVars";
+
+const ThemedJsonForm = lazy(() => import("../ThemedJsonForm"));
+const AppSelector = lazy(() => import("./AppSelector"));
+const AppStepCard = lazy(() => import("./AppStepCard"));
+const TextFieldWithVars = lazy(() => import("./TextFieldWithVars"));
 
 function PromptlyAppStepCard({
   appId,

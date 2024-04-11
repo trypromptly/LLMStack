@@ -1,7 +1,7 @@
 import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 import "./LexicalEditor.css";
 
-export function LexicalRenderer({ text }) {
+export default function LexicalRenderer({ text }) {
   const domParser = new DOMParser();
   const doc = domParser.parseFromString(text, "text/html");
 

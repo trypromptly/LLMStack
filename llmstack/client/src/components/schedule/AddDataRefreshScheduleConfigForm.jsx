@@ -1,11 +1,15 @@
+import { lazy } from "react";
 import { Box } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
 import moment from "moment";
 import { useRecoilValue } from "recoil";
 import { dataSourcesState } from "../../data/atoms";
-import { DataSourceSelector } from "../datasource/DataSourceSelector";
-import ThemedJsonForm from "../ThemedJsonForm";
-import FrequencyPickerWidget from "./FrequencyPickerWidget";
+
+const DataSourceSelector = lazy(
+  () => import("../datasource/DataSourceSelector"),
+);
+const ThemedJsonForm = lazy(() => import("../ThemedJsonForm"));
+const FrequencyPickerWidget = lazy(() => import("./FrequencyPickerWidget"));
 
 const SCHEMA = {
   properties: {

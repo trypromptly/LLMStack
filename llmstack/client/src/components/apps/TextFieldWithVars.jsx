@@ -208,7 +208,7 @@ const generateTreeItemsFromSchema = (
   return [treeItems, currentKeys];
 };
 
-export function TextFieldWithVars(props) {
+export default function TextFieldWithVars(props) {
   const { value, onChange } = props;
   const [treeViewVisible, setTreeViewVisible] = useState(false);
   const [textFocus, setTextFocus] = useState(false);

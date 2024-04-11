@@ -10,15 +10,18 @@ import {
   Typography,
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
-import { useEffect, useState } from "react";
+import { lazy, useEffect, useState } from "react";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
-import ThemedJsonForm from "../ThemedJsonForm";
 import "./AppEditor.css";
-import { AppInputSchemaEditor } from "./AppInputSchemaEditor";
-import { AppStepCard } from "./AppStepCard";
-import { TextFieldWithVars } from "./TextFieldWithVars";
 import { getJSONSchemaFromInputFields } from "../../data/utils";
-import ImageGeneratorWidget from "../store/ImageGeneratorWidget";
+
+const ImageGeneratorWidget = lazy(
+  () => import("../store/ImageGeneratorWidget"),
+);
+const ThemedJsonForm = lazy(() => import("../ThemedJsonForm"));
+const AppInputSchemaEditor = lazy(() => import("./AppInputSchemaEditor"));
+const AppStepCard = lazy(() => import("./AppStepCard"));
+const TextFieldWithVars = lazy(() => import("./TextFieldWithVars"));
 
 export function AppConfigEditor({
   appType,

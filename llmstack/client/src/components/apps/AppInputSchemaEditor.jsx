@@ -26,7 +26,7 @@ const dataTypes = [
   "multi",
 ];
 
-export function AppInputSchemaEditor({
+export default function AppInputSchemaEditor({
   fields,
   setFields,
   readOnly = false,

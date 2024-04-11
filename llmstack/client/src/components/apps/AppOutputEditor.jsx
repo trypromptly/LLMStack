@@ -1,10 +1,11 @@
 import WebTwoToneIcon from "@mui/icons-material/WebTwoTone";
 import { CardContent } from "@mui/material";
 import TextField from "@mui/material/TextField";
-import { useEffect, useState } from "react";
+import { lazy, useEffect, useState } from "react";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
-import { AppStepCard } from "./AppStepCard";
-import { TextFieldWithVars } from "./TextFieldWithVars";
+
+const AppStepCard = lazy(() => import("./AppStepCard"));
+const TextFieldWithVars = lazy(() => import("./TextFieldWithVars"));
 
 export function AppOutputEditor({
   index,

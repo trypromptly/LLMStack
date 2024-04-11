@@ -9,7 +9,7 @@ import {
 import { useState } from "react";
 import { ProviderIcon } from "./ProviderIcon";
 
-export function AppStepCard({
+export default function AppStepCard({
   icon,
   title,
   description,
