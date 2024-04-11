@@ -13,6 +13,7 @@ import reportWebVitals from "./reportWebVitals";
 import HomePage from "./pages/Home";
 import {
   appsPageState,
+  appRunShareState,
   profileState,
   profileFlagsState,
   storeAppState,
@@ -641,6 +642,10 @@ const setInitialRecoilState = ({ set }) => {
             empty: value["recommendedApps"].results.length === 0,
           });
         }
+      }
+
+      if (key === "sessionShare" && value["code"]) {
+        set(appRunShareState(value["code"]), value);
       }
     });
   }
