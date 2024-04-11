@@ -82,7 +82,7 @@ class EndpointViewSet(viewsets.ViewSet):
             request_location=request_location,
             request_user_agent=request_user_agent,
             request_body=request.data,
-            request_content_type=request.content_type,
+            request_content_type="application/json",
         )
 
         try:

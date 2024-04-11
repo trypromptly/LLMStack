@@ -1,6 +1,7 @@
-import { Box, Button, Grid, Stack } from "@mui/material";
-import { lazy, useEffect, useState, useRef, useCallback } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { Box, Button, Grid, Stack, CircularProgress, Tab } from "@mui/material";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
+import React, { lazy, useEffect, useState, useRef, useCallback } from "react";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
   apiBackendSelectedState,
   endpointConfigValueState,
@@ -8,6 +9,7 @@ import {
   inputValueState,
   isLoggedInState,
   templateValueState,
+  appRunDataState,
 } from "../data/atoms";
 import {
   Messages,
@@ -17,13 +19,40 @@ import {
 import { Ws } from "../data/ws";
 import { stitchObjects } from "../data/utils";
 
+import { PromptlyAppWorkflowOutput } from "../components/apps/renderer/LayoutRenderer";
+
 const ApiBackendSelector = lazy(
   () => import("../components/ApiBackendSelector"),
 );
 const ConfigForm = lazy(() => import("../components/ConfigForm"));
 const InputForm = lazy(() => import("../components/InputForm"));
-const Output = lazy(() => import("../components/Output"));
 const LoginDialog = lazy(() => import("../components/LoginDialog"));
+
+function Output(props) {
+  const [value, setValue] = React.useState("form");
+
+  return (
+    <Box sx={{ width: "100%" }}>
+      <TabContext value={value}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <TabList
+            onChange={(event, newValue) => {
+              setValue(newValue);
+            }}
+            aria-label="Output form tabs"
+          >
+            <Tab label="Output" value="form" />
+          </TabList>
+        </Box>
+        <TabPanel value="form" sx={{ padding: "4px" }}>
+          <Box>
+            <PromptlyAppWorkflowOutput showHeader={false} />
+          </Box>
+        </TabPanel>
+      </TabContext>
+    </Box>
+  );
+}
 
 export default function PlaygroundPage() {
   const isLoggedIn = useRecoilValue(isLoggedInState);
@@ -32,6 +61,7 @@ export default function PlaygroundPage() {
   const messagesRef = useRef(new Messages());
   const chunkedOutput = useRef({});
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const setAppRunData = useSetRecoilState(appRunDataState);
 
   const [apiBackendSelected, setApiBackendSelected] = useRecoilState(
     apiBackendSelectedState,
@@ -50,7 +80,6 @@ export default function PlaygroundPage() {
   const [processorResult, setProcessorResult] = useState(null);
 
   const [ws, setWs] = useState(null);
-  const [appRunData, setAppRunData] = useState({});
 
   const wsUrlPrefix = `${
     window.location.protocol === "https:" ? "wss" : "ws"
@@ -70,12 +99,14 @@ export default function PlaygroundPage() {
     ws.setOnMessage((evt) => {
       const message = JSON.parse(evt.data);
 
+      console.log("Received message", message);
+
       if (message.session) {
         appSessionId.current = message.session.id;
 
         // Add messages from the session to the message list
         setAppRunData((prevState) => {
-          prevState?.playground_messages?.forEach((message) => {
+          prevState?.messages?.forEach((message) => {
             messagesRef.current.add(message);
           });
 
@@ -111,7 +142,7 @@ export default function PlaygroundPage() {
           isStreaming: false,
           isRateLimited: true,
           errors: ["Rate limit exceeded"],
-          playground_messages: messagesRef.current.get(),
+          messages: messagesRef.current.get(),
         }));
       }
 
@@ -132,7 +163,7 @@ export default function PlaygroundPage() {
           isStreaming: false,
           isUsageLimited: true,
           errors: ["Usage limit exceeded"],
-          playground_messages: messagesRef.current.get(),
+          messages: messagesRef.current.get(),
         }));
 
         // If the user is not logged in, show the login dialog
@@ -153,7 +184,7 @@ export default function PlaygroundPage() {
           isRunning: false,
           isStreaming: false,
           errors: message.errors,
-          playground_messages: messagesRef.current.get(),
+          messages: messagesRef.current.get(),
         }));
         chunkedOutput.current = {};
       }
@@ -171,45 +202,43 @@ export default function PlaygroundPage() {
           new AppMessage(
             message.id,
             message.request_id,
-            message.output,
+            JSON.stringify(message.output),
             message.reply_to,
           ),
         );
         setAppRunData((prevState) => ({
           ...prevState,
-          playground_messages: messagesRef.current.get(),
+          messages: messagesRef.current.get(),
           isStreaming: newMessage.content !== null,
         }));
       }
     });
   }
 
-  useEffect(() => {
-    if (appRunData && !appRunData?.isRunning && !appRunData?.isStreaming) {
-      if (appRunData?.playground_messages) {
-        const lastMessage =
-          appRunData?.playground_messages[
-            appRunData?.playground_messages.length - 1
-          ];
-        if (lastMessage) {
-          setOutputLoading(false);
-          setProcessorResult(lastMessage?.content?.output);
-          if (lastMessage?.content?.output) {
-            if (lastMessage?.content?.output?.generations) {
-              setOutput(lastMessage?.content?.output?.generations);
-            } else if (lastMessage?.content?.output?.chat_completions) {
-              setOutput(lastMessage?.content?.output?.chat_completions);
-            } else {
-              setOutput([lastMessage?.content?.output]);
-            }
-          }
-          if (lastMessage?.content?.errors) {
-            setRunError(lastMessage?.content?.errors);
-          }
-        }
-      }
-    }
-  }, [appRunData]);
+  // useEffect(() => {
+  //   if (appRunData && !appRunData?.isRunning && !appRunData?.isStreaming) {
+  //     if (appRunData?.messages) {
+  //       const lastMessage =
+  //         appRunData?.messages[appRunData?.messages.length - 1];
+  //       if (lastMessage) {
+  //         setOutputLoading(false);
+  //         setProcessorResult(lastMessage?.content?.output);
+  //         if (lastMessage?.content?.output) {
+  //           if (lastMessage?.content?.output?.generations) {
+  //             setOutput(lastMessage?.content?.output?.generations);
+  //           } else if (lastMessage?.content?.output?.chat_completions) {
+  //             setOutput(lastMessage?.content?.output?.chat_completions);
+  //           } else {
+  //             setOutput([lastMessage?.content?.output]);
+  //           }
+  //         }
+  //         if (lastMessage?.content?.errors) {
+  //           setRunError(lastMessage?.content?.errors);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }, [appRunData]);
 
   const runApp = useCallback(
     (sessionId, input) => {
@@ -224,7 +253,7 @@ export default function PlaygroundPage() {
         isRunning: true,
         isStreaming: false,
         errors: null,
-        playground_messages: messagesRef.current.get(),
+        messages: messagesRef.current.get(),
         input,
       }));
 
@@ -314,17 +343,7 @@ export default function PlaygroundPage() {
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <Output
-              result={output}
-              endpoint={endpointSelected}
-              loading={outputLoading}
-              loadingTip={"Running the input..."}
-              runError={runError}
-              tokenCount={tokenCount}
-              schema={apiBackendSelected?.output_schema || {}}
-              uiSchema={apiBackendSelected?.output_ui_schema || {}}
-              formData={processorResult || {}}
-            />
+            <Output />
           </Grid>
         </Grid>
       </Stack>
