@@ -359,11 +359,11 @@ class WebBrowser(
 
         model = self._config.model if self._config.model else Model.GPT_3_5_LATEST
         if model == "gpt-3.5-turbo-latest":
-            model = "gpt-3.5-turbo-1106"
+            model = "gpt-3.5-turbo"
         elif model == "gpt-4-turbo-latest":
-            model = "gpt-4-0125-preview"
+            model = "gpt-4-turbo"
         elif model == "gpt-4-vision-latest":
-            model = "gpt-4-vision-preview"
+            model = "gpt-4-turbo"
 
         messages = [
             {
@@ -394,7 +394,7 @@ class WebBrowser(
             if response.content.text or response.content.screenshot:
                 browser_text_response = self._process_browser_content(response)
                 browser_response = browser_text_response
-                if self._config.model == Model.GPT_4_V_LATEST:
+                if self._config.model == Model.GPT_4_V_LATEST or self._config.model == Model.GPT_4_LATEST:
                     browser_response = [
                         {
                             "type": "text",
@@ -465,12 +465,10 @@ class WebBrowser(
                 "messages": messages,
                 "max_tokens": 4000,
                 "seed": self._config.seed,
-            }
-
-            if self._config.model is not Model.GPT_4_V_LATEST:
-                chat_completions_args["response_format"] = {
+                "response_format": {
                     "type": "json_object",
-                }
+                },
+            }
 
             result = openai_client.chat.completions.create(
                 **chat_completions_args,
