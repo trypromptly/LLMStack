@@ -14,25 +14,6 @@ urlpatterns = [
     ),
     path("api/apibackends", apis.ApiBackendViewSet.as_view({"get": "list"})),
     path("api/apiproviders", apis.ApiProviderViewSet.as_view({"get": "list"})),
-    # Endpoints
-    path(
-        "api/endpoints/invoke_api/<str:id>",
-        apis.EndpointViewSet.as_view({"post": "invoke_api"}),
-    ),
-    path(
-        "api/endpoints/invoke_api/<str:id>/<str:version>",
-        apis.EndpointViewSet.as_view({"post": "invoke_api"}),
-    ),
-    path(
-        "api/endpoints/<str:id>",
-        apis.EndpointViewSet.as_view(
-            {"post": "invoke_api"},
-        ),
-    ),
-    path(
-        "api/endpoints/<str:id>/<str:version>",
-        apis.EndpointViewSet.as_view({"post": "invoke_api"}),
-    ),
     # History
     path("api/history", apis.HistoryViewSet.as_view({"get": "list"})),
     path(

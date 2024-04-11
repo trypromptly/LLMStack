@@ -1,13 +1,21 @@
-import { Box, Button, Grid, Stack } from "@mui/material";
-import { lazy, useEffect, useState, useRef, useCallback } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { Liquid } from "liquidjs";
+import { Box, Button, Grid, Stack, Tab } from "@mui/material";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
+import React, {
+  lazy,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
   apiBackendSelectedState,
   endpointConfigValueState,
-  endpointSelectedState,
   inputValueState,
   isLoggedInState,
-  templateValueState,
+  appRunDataState,
 } from "../data/atoms";
 import {
   Messages,
@@ -17,13 +25,61 @@ import {
 import { Ws } from "../data/ws";
 import { stitchObjects } from "../data/utils";
 
+import { PromptlyAppWorkflowOutput } from "../components/apps/renderer/LayoutRenderer";
+import AceEditor from "react-ace";
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/theme-chrome";
+
 const ApiBackendSelector = lazy(
   () => import("../components/ApiBackendSelector"),
 );
 const ConfigForm = lazy(() => import("../components/ConfigForm"));
 const InputForm = lazy(() => import("../components/InputForm"));
-const Output = lazy(() => import("../components/Output"));
 const LoginDialog = lazy(() => import("../components/LoginDialog"));
+
+export function ThemedJsonEditor({ data }) {
+  return (
+    <AceEditor
+      readOnly={true}
+      mode="json"
+      theme="chrome"
+      value={JSON.stringify(data, null, 2)}
+      editorProps={{ $blockScrolling: true }}
+      setOptions={{
+        useWorker: false,
+        showGutter: false,
+      }}
+    />
+  );
+}
+
+function Output(props) {
+  const [value, setValue] = React.useState("form");
+
+  return (
+    <Box sx={{ width: "100%" }}>
+      <TabContext value={value}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <TabList
+            onChange={(event, newValue) => {
+              setValue(newValue);
+            }}
+            aria-label="Output form tabs"
+          >
+            <Tab label="Output" value="form" />
+            <Tab label="JSON" value="json" />
+          </TabList>
+        </Box>
+        <TabPanel value="form" sx={{ padding: "4px" }}>
+          <PromptlyAppWorkflowOutput showHeader={false} />
+        </TabPanel>
+        <TabPanel value="json" sx={{ padding: "4px" }}>
+          <ThemedJsonEditor data={props.jsonResult} />
+        </TabPanel>
+      </TabContext>
+    </Box>
+  );
+}
 
 export default function PlaygroundPage() {
   const isLoggedIn = useRecoilValue(isLoggedInState);
@@ -32,25 +88,25 @@ export default function PlaygroundPage() {
   const messagesRef = useRef(new Messages());
   const chunkedOutput = useRef({});
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const setAppRunData = useSetRecoilState(appRunDataState);
+  const [jsonResult, setJsonResult] = useState({});
 
-  const [apiBackendSelected, setApiBackendSelected] = useRecoilState(
-    apiBackendSelectedState,
-  );
-  const [endpointSelected, setEndpointSelected] = useRecoilState(
-    endpointSelectedState,
-  );
-  const [paramValues, setParamValues] = useRecoilState(
-    endpointConfigValueState,
-  );
-  const [promptValues, setPromptValues] = useRecoilState(templateValueState);
-  const [output, setOutput] = useState("");
-  const [runError, setRunError] = useState("");
-  const [outputLoading, setOutputLoading] = useState(false);
-  const [tokenCount, setTokenCount] = useState(null);
-  const [processorResult, setProcessorResult] = useState(null);
+  const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
+  const templateEngine = useMemo(() => new Liquid(), []);
+  const [outputTemplate, setOutputTemplate] = useState(null);
+
+  const paramValues = useRecoilValue(endpointConfigValueState);
+  useEffect(() => {
+    if (apiBackendSelected) {
+      setOutputTemplate(
+        templateEngine.parse(
+          apiBackendSelected.output_template || "{{ output }}",
+        ),
+      );
+    }
+  }, [templateEngine, apiBackendSelected, setOutputTemplate]);
 
   const [ws, setWs] = useState(null);
-  const [appRunData, setAppRunData] = useState({});
 
   const wsUrlPrefix = `${
     window.location.protocol === "https:" ? "wss" : "ws"
@@ -75,7 +131,7 @@ export default function PlaygroundPage() {
 
         // Add messages from the session to the message list
         setAppRunData((prevState) => {
-          prevState?.playground_messages?.forEach((message) => {
+          prevState?.messages?.forEach((message) => {
             messagesRef.current.add(message);
           });
 
@@ -111,7 +167,7 @@ export default function PlaygroundPage() {
           isStreaming: false,
           isRateLimited: true,
           errors: ["Rate limit exceeded"],
-          playground_messages: messagesRef.current.get(),
+          messages: messagesRef.current.get(),
         }));
       }
 
@@ -132,7 +188,7 @@ export default function PlaygroundPage() {
           isStreaming: false,
           isUsageLimited: true,
           errors: ["Usage limit exceeded"],
-          playground_messages: messagesRef.current.get(),
+          messages: messagesRef.current.get(),
         }));
 
         // If the user is not logged in, show the login dialog
@@ -153,7 +209,7 @@ export default function PlaygroundPage() {
           isRunning: false,
           isStreaming: false,
           errors: message.errors,
-          playground_messages: messagesRef.current.get(),
+          messages: messagesRef.current.get(),
         }));
         chunkedOutput.current = {};
       }
@@ -166,56 +222,32 @@ export default function PlaygroundPage() {
       }
 
       if (message.id && message.output) {
-        const newMessage = message.output;
-        messagesRef.current.add(
-          new AppMessage(
-            message.id,
-            message.request_id,
-            message.output,
-            message.reply_to,
-          ),
-        );
-        setAppRunData((prevState) => ({
-          ...prevState,
-          playground_messages: messagesRef.current.get(),
-          isStreaming: newMessage.content !== null,
-        }));
+        templateEngine
+          .render(outputTemplate, {
+            output: JSON.stringify(chunkedOutput.current?.output) || "{}",
+          })
+          .then((newMessage) => {
+            messagesRef.current.add(
+              new AppMessage(
+                message.id,
+                message.request_id,
+                newMessage,
+                message.reply_to,
+              ),
+            );
+            setAppRunData((prevState) => ({
+              ...prevState,
+              messages: messagesRef.current.get(),
+              isStreaming: newMessage.content !== null,
+            }));
+          });
+        setJsonResult(chunkedOutput.current?.output);
       }
     });
   }
 
-  useEffect(() => {
-    if (appRunData && !appRunData?.isRunning && !appRunData?.isStreaming) {
-      if (appRunData?.playground_messages) {
-        const lastMessage =
-          appRunData?.playground_messages[
-            appRunData?.playground_messages.length - 1
-          ];
-        if (lastMessage) {
-          setOutputLoading(false);
-          setProcessorResult(lastMessage?.content?.output);
-          if (lastMessage?.content?.output) {
-            if (lastMessage?.content?.output?.generations) {
-              setOutput(lastMessage?.content?.output?.generations);
-            } else if (lastMessage?.content?.output?.chat_completions) {
-              setOutput(lastMessage?.content?.output?.chat_completions);
-            } else {
-              setOutput([lastMessage?.content?.output]);
-            }
-          }
-          if (lastMessage?.content?.errors) {
-            setRunError(lastMessage?.content?.errors);
-          }
-        }
-      }
-    }
-  }, [appRunData]);
-
   const runApp = useCallback(
     (sessionId, input) => {
-      setRunError("");
-      setOutputLoading(true);
-
       chunkedOutput.current = {};
       const requestId = Math.random().toString(36).substring(2);
 
@@ -224,7 +256,7 @@ export default function PlaygroundPage() {
         isRunning: true,
         isStreaming: false,
         errors: null,
-        playground_messages: messagesRef.current.get(),
+        messages: messagesRef.current.get(),
         input,
       }));
 
@@ -259,18 +291,6 @@ export default function PlaygroundPage() {
       </Button>
     );
   };
-
-  useEffect(() => {
-    setTokenCount(null);
-    setOutput("");
-  }, [
-    setApiBackendSelected,
-    setEndpointSelected,
-    setParamValues,
-    setPromptValues,
-  ]);
-
-  useEffect(() => {}, [paramValues, promptValues]);
 
   return (
     <Box sx={{ margin: "10px 2px" }}>
@@ -314,17 +334,7 @@ export default function PlaygroundPage() {
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <Output
-              result={output}
-              endpoint={endpointSelected}
-              loading={outputLoading}
-              loadingTip={"Running the input..."}
-              runError={runError}
-              tokenCount={tokenCount}
-              schema={apiBackendSelected?.output_schema || {}}
-              uiSchema={apiBackendSelected?.output_ui_schema || {}}
-              formData={processorResult || {}}
-            />
+            <Output jsonResult={jsonResult} />
           </Grid>
         </Grid>
       </Stack>

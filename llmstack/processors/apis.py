@@ -7,16 +7,9 @@ from collections import namedtuple
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Max
-from django.http import (
-    Http404,
-    HttpResponseForbidden,
-    HttpResponseNotFound,
-    StreamingHttpResponse,
-)
-from django.views.decorators.csrf import csrf_exempt
+from django.http import Http404, HttpResponseForbidden, StreamingHttpResponse
 from flags.state import flag_enabled
 from rest_framework import status, viewsets
-from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
@@ -31,7 +24,7 @@ from llmstack.play.actors.output import OutputActor
 from llmstack.play.coordinator import Coordinator
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 
-from .models import Endpoint, RunEntry
+from .models import RunEntry
 from .providers.api_processors import ApiProcessorFactory
 from .serializers import HistorySerializer, LoginSerializer
 
@@ -40,148 +33,7 @@ Schema = namedtuple("Schema", "type default is_required")
 logger = logging.getLogger(__name__)
 
 
-def sanitize_json(json_obj):
-    """
-    Sanitizes a JSON object to escape double quotes in values.
-    """
-    if isinstance(json_obj, dict):
-        # If the object is a dictionary, traverse its values recursively
-        for key, value in json_obj.items():
-            json_obj[key] = sanitize_json(value)
-    elif isinstance(json_obj, list):
-        # If the object is a list, traverse its values recursively
-        for i, value in enumerate(json_obj):
-            json_obj[i] = sanitize_json(value)
-    elif isinstance(json_obj, str):
-        # If the object is a string, replace double quotes with escaped double
-        # quotes
-        json_obj = json_obj.replace('"', '\\"')
-    return json_obj
-
-
 class EndpointViewSet(viewsets.ViewSet):
-    @action(detail=True, methods=["post"])
-    @csrf_exempt
-    def invoke_api(self, request, id, version=None):
-        # If version is not provided, find latest live endpoint
-        endpoint = None
-        if version is None:
-            endpoint = (
-                Endpoint.objects.filter(
-                    parent_uuid=uuid.UUID(
-                        id,
-                    ),
-                    is_live=True,
-                )
-                .order_by("-version")
-                .first()
-            )
-        else:
-            endpoint = Endpoint.objects.filter(
-                parent_uuid=uuid.UUID(id),
-                version=version,
-            ).first()
-
-        # Couldn't find a live version. Find latest version for endpoint
-        if not endpoint:
-            endpoint = (
-                Endpoint.objects.filter(
-                    parent_uuid=uuid.UUID(id),
-                )
-                .order_by("-version")
-                .first()
-            )
-
-        if not endpoint:
-            return HttpResponseNotFound("Invalid endpoint")
-
-        if request.user != endpoint.owner:
-            return HttpResponseForbidden("Invalid ownership")
-
-        bypass_cache = request.data.get("bypass_cache", False)
-
-        # Create request object for this versioned endpoint
-        template_values = request.data["template_values"] if "template_values" in request.data else {}
-        config = request.data["config"] if "config" in request.data else {}
-        input = request.data["input"] if "input" in request.data else {}
-
-        stream = request.data.get("stream", False)
-
-        request_user_agent = request.META.get(
-            "HTTP_USER_AGENT",
-            "Streaming API Client" if stream else "API Client",
-        )
-        request_location = request.headers.get("X-Client-Geo-Location", "")
-        request_ip = request_ip = request.headers.get(
-            "X-Forwarded-For",
-            request.META.get(
-                "REMOTE_ADDR",
-                "",
-            ),
-        ).split(
-            ",",
-        )[0].strip() or request.META.get("HTTP_X_REAL_IP", "")
-
-        request_user_email = ""
-        if request.user and request.user.email and len(request.user.email) > 0:
-            request_user_email = request.user.email
-        elif request.user and request.user.username and len(request.user.username) > 0:
-            # Use username as email if email is not set
-            request_user_email = request.user.username
-
-        input_request = InputRequest(
-            request_endpoint_uuid=str(
-                endpoint.uuid,
-            ),
-            request_app_uuid="",
-            request_app_session_key="",
-            request_owner=request.user,
-            request_uuid=str(
-                uuid.uuid4(),
-            ),
-            request_user_email=request_user_email,
-            request_ip=request_ip,
-            request_location=request_location,
-            request_user_agent=request_user_agent,
-            request_body=request.data,
-            request_content_type=request.content_type,
-        )
-        try:
-            invoke_result = self.run_endpoint(
-                endpoint_uuid=endpoint.uuid,
-                run_as_user=request.user,
-                input_request=input_request,
-                template_values=template_values,
-                bypass_cache=bypass_cache,
-                input={
-                    **endpoint.input,
-                    **input,
-                },
-                config={
-                    **endpoint.config,
-                    **config,
-                },
-                api_backend_slug=endpoint.api_backend.slug,
-                api_provider_slug=endpoint.api_backend.api_provider.slug,
-                app_session=None,
-                stream=stream,
-            )
-
-            if stream:
-                response = StreamingHttpResponse(
-                    streaming_content=invoke_result,
-                    content_type="application/json",
-                )
-                response.is_async = True
-                return response
-        except Exception as e:
-            invoke_result = {"id": -1, "errors": [str(e)]}
-
-        if "errors" in invoke_result:
-            return DRFResponse({"errors": invoke_result["errors"]}, status=500)
-
-        return DRFResponse(invoke_result)
-
     def run(self, request):
         if request.user.is_anonymous:
             return HttpResponseForbidden("Please login to run this endpoint")
@@ -230,7 +82,7 @@ class EndpointViewSet(viewsets.ViewSet):
             request_location=request_location,
             request_user_agent=request_user_agent,
             request_body=request.data,
-            request_content_type=request.content_type,
+            request_content_type="application/json",
         )
 
         try:

@@ -253,6 +253,9 @@ class PlaygroundConsumer(AppConsumer):
     def run(self, request):
         from llmstack.processors.apis import EndpointViewSet
 
+        if is_usage_limited_fn(request, self.run):
+            raise UsageLimitReached("Usage limit reached.")
+
         return EndpointViewSet().run(request)
 
     async def _respond_to_event(self, text_data):
