@@ -40,6 +40,9 @@ class AssetViewSet(viewsets.ModelViewSet):
         return DRFResponse(asset)
 
     def get_asset_data(self, objref, request_user, request_session=None, include_data=False, include_name=False):
+        if objref is None or not objref.startswith("objref://"):
+            return None
+
         try:
             category, asset_uuid = objref.split("objref://")[1].split("/")
 
