@@ -118,6 +118,14 @@ class LLMClient(SyncAPIClient):
             if not stream:
                 json_response = response.json()
                 request_data = json.loads(response.request._content.decode("utf-8"))
+                try:
+                    input_tokens = json_response["meta"]["tokens"]["input_tokens"]
+                    output_tokens = json_response["meta"]["tokens"]["output_tokens"]
+                    total_tokens = input_tokens + output_tokens
+                except Exception:
+                    input_tokens = None
+                    output_tokens = None
+                    total_tokens = None
                 result = {
                     "id": json_response["generation_id"],
                     "object": "'chat.completion",
@@ -134,9 +142,9 @@ class LLMClient(SyncAPIClient):
                         }
                     ],
                     "usage": {
-                        "prompt_tokens": json_response["token_count"]["prompt_tokens"],
-                        "completion_tokens": json_response["token_count"]["response_tokens"],
-                        "total_tokens": json_response["token_count"]["total_tokens"],
+                        "prompt_tokens": input_tokens,
+                        "completion_tokens": output_tokens,
+                        "total_tokens": total_tokens,
                     },
                 }
                 modified_response = LLMHttpResponse(response=response, json=result)

@@ -17,11 +17,10 @@ PROVIDER_MODEL_MAP = {
     PROVIDER_COHERE: "command",
 }
 
-PROVIDER_LIST = [PROVIDER_GOOGLE, PROVIDER_OPENAI, PROVIDER_STABILITYAI, PROVIDER_COHERE]
 
 MODELS_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_COHERE, PROVIDER_GOOGLE, PROVIDER_STABILITYAI]
-COMPLETIONS_PROVIDER_LIST = [PROVIDER_OPENAI]
-
+COMPLETIONS_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_GOOGLE, PROVIDER_COHERE, PROVIDER_ANTHROPIC]
+COMPLETIONS_WITH_FN_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_GOOGLE]
 IMAGE_GENERATION_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_STABILITYAI]
 
 IMAGE_GENERATION_PROVIDER_MODEL_MAP = {
@@ -128,7 +127,7 @@ class TestLLM(unittest.TestCase):
                     self.assertIsNotNone(chunk.choices[0].delta.content_str)
 
     def test_completions_function_calling(self):
-        for provider in COMPLETIONS_PROVIDER_LIST:
+        for provider in COMPLETIONS_WITH_FN_PROVIDER_LIST:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -170,7 +169,7 @@ class TestLLM(unittest.TestCase):
     def test_completions_function_calling_streaming(self):
         import openai
 
-        for provider in COMPLETIONS_PROVIDER_LIST:
+        for provider in COMPLETIONS_WITH_FN_PROVIDER_LIST:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
