@@ -5,9 +5,24 @@ import { useState } from "react";
 
 const PinnedPosts = lazy(() => import("./PinnedPosts"));
 const PublicProfileHeader = lazy(() => import("./PublicProfileHeader"));
+const SessionRenderer = lazy(() => import("./SessionRenderer"));
 
-const PublicProfileRenderer = ({ username }) => {
+const PublicProfileRenderer = ({ username, postSlug }) => {
   const [publicProfile, setPublicProfile] = useState(null);
+  const [sessionData, setSessionData] = useState({});
+
+  useEffect(() => {
+    if (postSlug) {
+      axios()
+        .get(`/api/profiles/${username}/posts/${postSlug}`)
+        .then((response) => {
+          setSessionData(response.data);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  }, [username, postSlug]);
 
   useEffect(() => {
     // Fetch public profile data
@@ -43,7 +58,11 @@ const PublicProfileRenderer = ({ username }) => {
           overflow: "auto",
         }}
       >
-        <PinnedPosts username={username} />
+        {postSlug ? (
+          <SessionRenderer sessionData={sessionData} noHeader />
+        ) : (
+          <PinnedPosts username={username} />
+        )}
       </Grid>
     </Grid>
   );

@@ -107,11 +107,7 @@ const PublicProfilePage = () => {
             }),
           }}
         >
-          {postSlug ? (
-            <PublicProfileRenderer username={username} postSlug={postSlug} />
-          ) : (
-            <PublicProfileRenderer username={username} />
-          )}
+          <PublicProfileRenderer username={username} postSlug={postSlug} />
         </Grid>
       )}
       {(!isMobile || selectedTab === "more") && (

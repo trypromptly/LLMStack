@@ -14,7 +14,7 @@ import StoreAppHeader from "./StoreAppHeader";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import { useCallback } from "react";
 
-const SessionRenderer = ({ sessionData }) => {
+const SessionRenderer = ({ sessionData, noHeader = false }) => {
   const storeApp = sessionData?.store_app;
   const appTypeSlug = storeApp?.data?.type_slug || "agent";
   const setAppRunData = useSetRecoilState(appRunDataState);
@@ -81,20 +81,23 @@ const SessionRenderer = ({ sessionData }) => {
       );
     }
 
-    setAppRunData({
-      messages,
-      assistantImage: storeApp.data?.config?.assistant_image || "",
-      inputFields: storeApp.data?.input_fields || [],
-      processors: storeApp.data?.processors || [],
-    });
+    if (storeApp) {
+      setAppRunData({
+        messages,
+        assistantImage: storeApp.data?.config?.assistant_image || "",
+        inputFields: storeApp.data?.input_fields || [],
+        processors: storeApp.data?.processors || [],
+      });
+    }
   }, [
     sessionData,
     appTypeSlug,
     setAppRunData,
     renderAgentStepOutput,
-    storeApp.data?.config?.assistant_image,
-    storeApp.data?.input_fields,
-    storeApp.data?.processors,
+    storeApp,
+    storeApp?.data?.config?.assistant_image,
+    storeApp?.data?.input_fields,
+    storeApp?.data?.processors,
   ]);
 
   const memoizedLayoutRenderer = useMemo(
@@ -106,20 +109,26 @@ const SessionRenderer = ({ sessionData }) => {
     [storeApp],
   );
 
+  if (!storeApp) {
+    return null;
+  }
+
   return (
     <Grid container spacing={1} direction={"column"} sx={{ height: "100%" }}>
-      <Grid>
-        <StoreAppHeader
-          name={storeApp.name}
-          icon={storeApp.icon128}
-          username={storeApp.username}
-          description={storeApp.description}
-          categories={storeApp.categories}
-          appTypeSlug={storeApp?.data?.type_slug || "agent"}
-          appStoreUuid={storeApp.uuid}
-          shareHeader
-        />
-      </Grid>
+      {!noHeader && (
+        <Grid>
+          <StoreAppHeader
+            name={storeApp.name}
+            icon={storeApp.icon128}
+            username={storeApp.username}
+            description={storeApp.description}
+            categories={storeApp.categories}
+            appTypeSlug={storeApp?.data?.type_slug || "agent"}
+            appStoreUuid={storeApp.uuid}
+            shareHeader
+          />
+        </Grid>
+      )}
       <Grid
         sx={{
           flex: 1,
