@@ -493,7 +493,7 @@ export const fetchAppsFromStore = selectorFamily({
       ) {
         try {
           const response = await axios().get(
-            nextPage?.replaceAll("http://localhost:8000", "") ||
+            nextPage?.replaceAll(nextPage?.split("/api/")[0], "") ||
               `/api/store/${queryTerm}`,
           );
           const data = response.data;
