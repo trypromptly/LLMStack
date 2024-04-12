@@ -17,9 +17,16 @@ PROVIDER_MODEL_MAP = {
     PROVIDER_COHERE: "command",
 }
 
-PROVIDER_LIST = [PROVIDER_GOOGLE, PROVIDER_OPENAI, PROVIDER_STABILITYAI, PROVIDER_COHERE]
 
-PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_COHERE]
+MODELS_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_COHERE, PROVIDER_GOOGLE, PROVIDER_STABILITYAI]
+COMPLETIONS_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_GOOGLE, PROVIDER_COHERE, PROVIDER_ANTHROPIC]
+COMPLETIONS_WITH_FN_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_GOOGLE]
+IMAGE_GENERATION_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_STABILITYAI]
+
+IMAGE_GENERATION_PROVIDER_MODEL_MAP = {
+    PROVIDER_OPENAI: "dall-e-2",
+    PROVIDER_STABILITYAI: "stable-diffusion-xl-1024-v1-0",
+}
 
 
 class TestLLM(unittest.TestCase):
@@ -34,13 +41,13 @@ class TestLLM(unittest.TestCase):
         )
 
     def test_models(self):
-        for provider in PROVIDER_LIST:
+        for provider in MODELS_PROVIDER_LIST:
             client = self._initialize_client(provider)
             model_ids = [model.id for model in client.models.list()]
             self.assertTrue(len(model_ids) > 0)
 
     def test_chat_completions_single_text(self):
-        for provider in PROVIDER_LIST:
+        for provider in COMPLETIONS_PROVIDER_LIST:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -56,7 +63,7 @@ class TestLLM(unittest.TestCase):
                 self.assertIsNotNone(choice.message.content_str)
 
     def test_chat_completions_multiple_parts(self):
-        for provider in PROVIDER_LIST:
+        for provider in COMPLETIONS_PROVIDER_LIST:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -77,7 +84,7 @@ class TestLLM(unittest.TestCase):
     def test_chat_completions_single_text_streaming(self):
         import openai
 
-        for provider in PROVIDER_LIST:
+        for provider in COMPLETIONS_PROVIDER_LIST:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -98,7 +105,7 @@ class TestLLM(unittest.TestCase):
     def test_chat_completions_multiple_parts_streaming(self):
         import openai
 
-        for provider in PROVIDER_LIST:
+        for provider in COMPLETIONS_PROVIDER_LIST:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -120,7 +127,7 @@ class TestLLM(unittest.TestCase):
                     self.assertIsNotNone(chunk.choices[0].delta.content_str)
 
     def test_completions_function_calling(self):
-        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI]:
+        for provider in COMPLETIONS_WITH_FN_PROVIDER_LIST:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -162,7 +169,7 @@ class TestLLM(unittest.TestCase):
     def test_completions_function_calling_streaming(self):
         import openai
 
-        for provider in [PROVIDER_GOOGLE, PROVIDER_OPENAI]:
+        for provider in COMPLETIONS_WITH_FN_PROVIDER_LIST:
             client = self._initialize_client(provider)
             result = client.chat.completions.create(
                 messages=[
@@ -212,6 +219,19 @@ class TestLLM(unittest.TestCase):
             function_args = list(filter(lambda entry: entry != "", function_args))
             self.assertEqual(function_names, ["get_current_weather"])
             self.assertGreater(len(function_args[0]), 1)
+
+    def test_image_generation(self):
+        for provider in IMAGE_GENERATION_PROVIDER_LIST:
+            client = self._initialize_client(provider)
+            result = client.images.generate(
+                prompt="a cat in the style of a dog",
+                model=IMAGE_GENERATION_PROVIDER_MODEL_MAP[provider],
+                n=1,
+                response_format="b64_json",
+                size="1024x1024",
+            )
+            assert len(result.data) == 1
+            assert result.data[0].b64_json is not None
 
 
 if __name__ == "__main__":
