@@ -41,16 +41,13 @@ const SessionRenderer = ({ sessionData }) => {
   useEffect(() => {
     let messages = [];
     for (const runEntry of sessionData?.run_entry_requests || []) {
-      let input = runEntry.request_body;
-      try {
-        input = JSON.parse(
-          runEntry.request_body.replace(/'/g, '"').replace(/True/g, "true"),
-        ).input;
-      } catch (e) {
-        console.error(e);
-      }
-
-      messages.push(new UserMessage(null, runEntry.request_uuid, input));
+      messages.push(
+        new UserMessage(
+          null,
+          runEntry.request_uuid,
+          runEntry.request_body?.input || {},
+        ),
+      );
 
       if (appTypeSlug === "agent") {
         for (const processorRun of runEntry.processor_runs) {
