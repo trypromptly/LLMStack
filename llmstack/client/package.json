@@ -5,7 +5,6 @@
   "proxy": "http://localhost:9000",
   "homepage": "https://llmstack.trypromptly.com",
   "dependencies": {
-    "@fontsource/ibm-plex-mono": "^5.0.12",
     "@fontsource/lato": "^5.0.20",
     "@jsonforms/material-renderers": "^3.1.0",
     "@jsonforms/react": "^3.0.0",
