@@ -16,7 +16,11 @@ import {
   PromptlyAppWorkflowOutput,
 } from "../apps/renderer/LayoutRenderer";
 import { axios } from "../../data/axios";
-import { appRunDataState, isLoggedInState } from "../../data/atoms";
+import {
+  appRunDataState,
+  isLoggedInState,
+  profileSelector,
+} from "../../data/atoms";
 
 export default function ShareModal({
   open,
@@ -26,7 +30,10 @@ export default function ShareModal({
 }) {
   const appRunData = useRecoilValue(appRunDataState);
   const isLoggedIn = useRecoilValue(isLoggedInState);
+  const profile = useRecoilValue(profileSelector);
   const [shareCode, setShareCode] = useState("");
+  const [pinned, setPinned] = useState(false);
+  const [pinToProfileLoading, setPinToProfileLoading] = useState(false);
   const [shareUrlLoading, setShareUrlLoading] = useState(false);
 
   const getShareUrl = (code) => {
@@ -82,6 +89,39 @@ export default function ShareModal({
     }
   };
 
+  const handlePinToProfile = (event, sessionId, isLoggedIn) => {
+    event.stopPropagation();
+
+    if (!isLoggedIn || !sessionId || !profile || !profile.username) {
+      enqueueSnackbar(
+        "You must be logged in and have your username set to pin an app run",
+        {
+          variant: "error",
+        },
+      );
+
+      return;
+    }
+
+    setPinToProfileLoading(true);
+
+    axios()
+      .post(`/api/profiles/${profile.username}/posts`, {
+        share_code: shareCode,
+      })
+      .then(() => {
+        setPinned(true);
+        enqueueSnackbar("App run pinned to profile", { variant: "success" });
+      })
+      .catch((error) => {
+        console.error("Error pinning app run", error);
+        enqueueSnackbar("Error pinning app run", { variant: "error" });
+      })
+      .finally(() => {
+        setPinToProfileLoading(false);
+      });
+  };
+
   const handleClose = (e) => {
     e.stopPropagation();
     onClose();
@@ -99,7 +139,7 @@ export default function ShareModal({
       <DialogContent>
         <Typography variant="body1">
           {appRunData?.sessionId && !shareCode
-            ? "Share the output from this app run by clicking on the copy link button."
+            ? "Share the output from this app run by clicking on the create link button to generate a shareable url."
             : !shareCode &&
               "Share this app by clicking on the copy link button."}
         </Typography>
@@ -146,8 +186,22 @@ export default function ShareModal({
           loading={shareUrlLoading}
           disabled={appRunData?.isRunning}
         >
-          Copy Link
+          {shareCode ? "Copy Link" : "Create Link"}
         </LoadingButton>
+        {shareCode && profile?.username && (
+          <LoadingButton
+            key="pin"
+            variant="contained"
+            type="primary"
+            onClick={(e) =>
+              handlePinToProfile(e, appRunData?.sessionId, isLoggedIn)
+            }
+            loading={pinToProfileLoading}
+            disabled={appRunData?.isRunning || pinToProfileLoading || pinned}
+          >
+            {pinned ? "View on Profile" : "Pin to Profile"}
+          </LoadingButton>
+        )}
       </DialogActions>
     </Dialog>
   );

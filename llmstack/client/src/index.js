@@ -10,7 +10,6 @@ import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
-import HomePage from "./pages/Home";
 import {
   appsPageState,
   appRunShareState,
@@ -21,6 +20,8 @@ import {
 } from "./data/atoms";
 
 const App = lazy(() => import("./App"));
+const HomePage = lazy(() => import("./pages/Home"));
+const PublicProfilePage = lazy(() => import("./pages/PublicProfile"));
 const ErrorPage = lazy(() => import("./pages/error"));
 const AppSessionSharePage = lazy(() => import("./pages/AppSessionShare"));
 const PlaygroundPage = lazy(() => import("./pages/playground"));
@@ -480,6 +481,15 @@ let routes = [
     element: (
       <App>
         <AppSessionSharePage />
+      </App>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/u/:username/:postSlug?",
+    element: (
+      <App>
+        <PublicProfilePage />
       </App>
     ),
     errorElement: <ErrorPage />,
