@@ -4,7 +4,7 @@ from typing import Any, Optional, TypeVar
 
 import jinja2
 import ujson as json
-from django.db import connections
+from django import db
 from pydantic import AnyUrl, BaseModel
 
 from llmstack.apps.schemas import OutputTemplate
@@ -120,10 +120,10 @@ class ApiProcessorInterface(
             )
         except Exception as e:
             logger.exception(e)
-            connections.close_all()
+            db.connection.close()
             return asset
 
-        connections.close_all()
+        db.connection.close()
 
         return f"objref://sessionfiles/{asset.uuid}"
 
