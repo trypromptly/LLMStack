@@ -125,7 +125,7 @@ class Images(OpenAIImages):
             )
         elif self._client._llm_router_provider == PROVIDER_STABILITYAI:
             if model == "core":
-                path = "/v2beta/stable-image/generate/core"
+                path = "v2beta/stable-image/generate/core"
                 body = {"prompt": prompt, "output_format": "png"}
                 if aspect_ratio:
                     body["aspect_ratio"] = aspect_ratio
@@ -166,7 +166,7 @@ class Images(OpenAIImages):
                 or model == "stable-diffusion-v1-6"
                 or model == "stable-diffusion-xl-beta-v2-2-2"
             ):
-                path = f"/v1/generation/{model}/text-to-image"
+                path = f"v1/generation/{model}/text-to-image"
                 text_prompts = []
                 if prompt:
                     text_prompts.append({"text": prompt, "weight": 1.0})
@@ -207,6 +207,7 @@ class Images(OpenAIImages):
                     )
             else:
                 raise ValueError("Invalid model for StabilityAI")
+
         result = self._post(
             path,
             body=body,

@@ -376,7 +376,7 @@ class LLM(LLMClient, OpenAI):
             api_key = stabilityai_api_key
 
             if not base_url:
-                base_url = "https://api.stability.ai/v1"
+                base_url = "https://api.stability.ai/"
 
         elif provider == PROVIDER_LOCALAI:
             if base_url is None:
