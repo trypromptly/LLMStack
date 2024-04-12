@@ -41,7 +41,10 @@ const Post = ({ post, username }) => {
           <Divider />
         )}
 
-        <Typography variant="body1" sx={{ marginTop: 3 }}>
+        <Typography
+          variant="body1"
+          sx={{ margin: 1, color: "#647b8f", paddingTop: 2 }}
+        >
           {share.description}
         </Typography>
         <Stack
