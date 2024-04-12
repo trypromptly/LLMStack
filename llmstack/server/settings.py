@@ -576,6 +576,54 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
+ENABLE_SAML_SOCIALACCOUNT = os.getenv("ENABLE_SAML_SOCIALACCOUNT", "False") == "True"
+if ENABLE_SAML_SOCIALACCOUNT:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+    if "allauth.socialaccount.providers.saml" not in INSTALLED_APPS:
+        INSTALLED_APPS.append("allauth.socialaccount.providers.saml")
+
+    # Microsoft Entra ID SAML Configuration
+    SAML_APP_NAME = os.getenv("SAML_APP_NAME", "")
+    SAML_APP_CLIENT_ID = os.getenv("SAML_APP_CLIENT_ID", "")
+    SAML_APP_TENANT_ID = os.getenv("SAML_APP_TENANT_ID", "")
+    SAML_APP_CERTIFICATE = os.getenv("SAML_APP_CERTIFICATE", "")
+
+    SAML_APP = {
+        "name": SAML_APP_NAME,
+        "provider_id": f"https://login.microsoftonline.com/{SAML_APP_TENANT_ID}/",
+        "client_id": SAML_APP_CLIENT_ID,
+        "settings": {
+            "attribute_mapping": {
+                "uid": "http://schemas.microsoft.com/identity/claims/objectidentifier",
+                "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+                "first_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+                "last_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
+            },
+            "idp": {
+                "entity_id": f"https://sts.windows.net/{SAML_APP_TENANT_ID}/",
+                "sso_url": f"https://login.microsoftonline.com/{SAML_APP_TENANT_ID}/saml2",
+                "slo_url": f"https://login.microsoftonline.com/{SAML_APP_TENANT_ID}/saml2",
+                "x509cert": SAML_APP_CERTIFICATE,
+            },
+            # "advanced": {
+            #     "strict": False,
+            #     "authn_requests_signed": False,
+            #     "logout_request_signed": False,
+            #     "logout_response_signed": False,
+            #     "requested_authn_context": False,
+            #     "sign_metadata": False,
+            #     "want_assertion_encrypted": False,
+            #     "want_assertion_signed": True,
+            #     "want_messages_signed": False,
+            # },
+        },
+    }
+
+    SOCIALACCOUNT_PROVIDERS["saml"] = {
+        "APPS": [SAML_APP],
+    }
+
 EVENT_TOPIC_MAPPING = {
     "app.run.finished": [
         {
