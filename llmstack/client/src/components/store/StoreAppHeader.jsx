@@ -44,7 +44,7 @@ function StoreAppHeader({
   shareHeader = false,
 }) {
   const isMobile = useRecoilValue(isMobileState);
-  const [expanded, setExpanded] = useState(!isMobile);
+  const [expanded, setExpanded] = useState(!shareHeader && !isMobile);
   const [showShareModal, setShowShareModal] = useState(false);
   const storeCategories = useRecoilValue(storeCategoriesListState);
 
