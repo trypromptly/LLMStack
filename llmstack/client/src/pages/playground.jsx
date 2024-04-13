@@ -1,14 +1,6 @@
-import { Liquid } from "liquidjs";
 import { Box, Button, Grid, Stack, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import React, {
-  lazy,
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { lazy, useEffect, useState, useRef, useCallback } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
   apiBackendSelectedState,
@@ -62,7 +54,6 @@ export function ThemedJsonEditor({ data }) {
 
 function Output(props) {
   const [value, setValue] = React.useState("form");
-  const chunkedOutput = useRef({});
   const [jsonOutput, setJsonOutput] = useState({});
 
   return (
@@ -84,21 +75,8 @@ function Output(props) {
             app={props.app}
             isMobile={false}
             ws={props.ws}
-            wsOnMessage={(message) => {
-              if (message?.output) {
-                let newChunkedOutput = {};
-
-                newChunkedOutput = stitchObjects(
-                  chunkedOutput.current,
-                  message.output,
-                );
-                chunkedOutput.current = newChunkedOutput;
-              }
-
-              if (message?.event === "done") {
-                setJsonOutput(chunkedOutput.current);
-                chunkedOutput.current = {};
-              }
+            onEventDone={(message) => {
+              setJsonOutput(message?.processor || {});
             }}
           />
         </TabPanel>
