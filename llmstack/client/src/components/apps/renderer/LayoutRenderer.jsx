@@ -850,7 +850,6 @@ export const PromptlyAppWorkflowOutput = memo(
 export const PromptlyPlaygroundOutput = memo(
   ({ showHeader, placeholder, sx, enableAutoScroll = true }) => {
     const appRunData = useRecoilValue(appRunDataState);
-    console.log(appRunData);
     const assistantImage = useMemo(
       () => appRunData?.assistantImage,
       [appRunData?.assistantImage],
