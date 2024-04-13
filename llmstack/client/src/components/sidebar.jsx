@@ -410,6 +410,10 @@ export default function Sidebar({ menuItems }) {
                   justifyContent: open ? "initial" : "center",
                   px: 2.5,
                 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/u/${profile?.username}`);
+                }}
               >
                 <ListItemIcon
                   sx={(theme) => ({
