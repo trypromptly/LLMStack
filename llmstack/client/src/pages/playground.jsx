@@ -25,10 +25,19 @@ import {
 import { Ws } from "../data/ws";
 import { stitchObjects } from "../data/utils";
 
-import { PromptlyAppWorkflowOutput } from "../components/apps/renderer/LayoutRenderer";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
+
+const defaultPlaygroundLayout = `<pa-layout sx='{"width": "100%", "margin": "10px auto"}'>
+  <pa-paper style="padding: 10px;">
+    <pa-grid container="true" spacing="2" style="width: 100%">
+      <pa-grid item="true" xs="2">
+        <pa-playground-output showHeader="true"></pa-playground-output>
+      </pa-grid>
+    </pa-grid>
+  </pa-paper>
+</pa-layout>`;
 
 const ApiBackendSelector = lazy(
   () => import("../components/ApiBackendSelector"),
@@ -36,6 +45,9 @@ const ApiBackendSelector = lazy(
 const ConfigForm = lazy(() => import("../components/ConfigForm"));
 const InputForm = lazy(() => import("../components/InputForm"));
 const LoginDialog = lazy(() => import("../components/LoginDialog"));
+const AppRenderer = lazy(
+  () => import("../components/apps/renderer/AppRenderer"),
+);
 
 export function ThemedJsonEditor({ data }) {
   return (
@@ -71,7 +83,7 @@ function Output(props) {
           </TabList>
         </Box>
         <TabPanel value="form" sx={{ padding: "4px" }}>
-          <PromptlyAppWorkflowOutput showHeader={false} />
+          <AppRenderer app={props.app} isMobile={false} ws={props.ws} />
         </TabPanel>
         <TabPanel value="json" sx={{ padding: "4px" }}>
           <ThemedJsonEditor data={props.jsonResult} />
@@ -82,14 +94,23 @@ function Output(props) {
 }
 
 export default function PlaygroundPage() {
-  const isLoggedIn = useRecoilValue(isLoggedInState);
+  const app = {
+    name: "Playground",
+    uuid: null,
+    data: {
+      type_slug: "playground",
+      output_template: { markdown: "{{ processor | json }}" },
+      config: {
+        layout: defaultPlaygroundLayout,
+      },
+    },
+  };
   const [input] = useRecoilState(inputValueState);
   const appSessionId = useRef(null);
   const messagesRef = useRef(new Messages());
   const chunkedOutput = useRef({});
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const setAppRunData = useSetRecoilState(appRunDataState);
-  const [jsonResult, setJsonResult] = useState({});
 
   const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
   const templateEngine = useMemo(() => new Liquid(), []);
@@ -121,130 +142,6 @@ export default function PlaygroundPage() {
       setWs(new Ws(`${wsUrlPrefix}/playground`));
     }
   }, [ws, wsUrlPrefix]);
-
-  if (ws) {
-    ws.setOnMessage((evt) => {
-      const message = JSON.parse(evt.data);
-
-      if (message.session) {
-        appSessionId.current = message.session.id;
-
-        // Add messages from the session to the message list
-        setAppRunData((prevState) => {
-          prevState?.messages?.forEach((message) => {
-            messagesRef.current.add(message);
-          });
-
-          return {
-            ...prevState,
-            sessionId: message.session.id,
-          };
-        });
-      }
-
-      if (message.event && message.event === "done") {
-        setAppRunData((prevState) => ({
-          ...prevState,
-          isRunning: false,
-          isStreaming: false,
-        }));
-
-        chunkedOutput.current = {};
-      }
-
-      if (message.event && message.event === "ratelimited") {
-        messagesRef.current.add(
-          new AppErrorMessage(
-            null,
-            message.request_id,
-            "Rate limit exceeded. Please try after sometime.",
-          ),
-        );
-
-        setAppRunData((prevState) => ({
-          ...prevState,
-          isRunning: false,
-          isStreaming: false,
-          isRateLimited: true,
-          errors: ["Rate limit exceeded"],
-          messages: messagesRef.current.get(),
-        }));
-      }
-
-      if (message.event && message.event === "usagelimited") {
-        messagesRef.current.add(
-          new AppErrorMessage(
-            null,
-            message.request_id,
-            isLoggedIn
-              ? "Usage limit exceeded. Please try after adding more credits."
-              : "Usage limit exceeded. Please login to continue.",
-          ),
-        );
-
-        setAppRunData((prevState) => ({
-          ...prevState,
-          isRunning: false,
-          isStreaming: false,
-          isUsageLimited: true,
-          errors: ["Usage limit exceeded"],
-          messages: messagesRef.current.get(),
-        }));
-
-        // If the user is not logged in, show the login dialog
-        if (!isLoggedIn) {
-          setShowLoginDialog(true);
-        }
-      }
-
-      if (message.errors && message.errors.length > 0) {
-        message.errors.forEach((error) => {
-          messagesRef.current.add(
-            new AppErrorMessage(null, message.request_id, error),
-          );
-        });
-
-        setAppRunData((prevState) => ({
-          ...prevState,
-          isRunning: false,
-          isStreaming: false,
-          errors: message.errors,
-          messages: messagesRef.current.get(),
-        }));
-        chunkedOutput.current = {};
-      }
-
-      // Merge the new output with the existing output
-      if (message.output) {
-        let newChunkedOutput = {};
-        newChunkedOutput = stitchObjects(chunkedOutput.current, message.output);
-        chunkedOutput.current = newChunkedOutput;
-      }
-
-      if (message.id && message.output) {
-        templateEngine
-          .render(outputTemplate, {
-            output: JSON.stringify(chunkedOutput.current?.output) || "{}",
-          })
-          .then((newMessage) => {
-            messagesRef.current.add(
-              new AppMessage(
-                message.id,
-                message.request_id,
-                newMessage,
-                message.reply_to,
-              ),
-            );
-            setAppRunData((prevState) => ({
-              ...prevState,
-              messages: messagesRef.current.get(),
-              isStreaming: newMessage.content !== null,
-            }));
-          });
-        setJsonResult(chunkedOutput.current?.output);
-      }
-    });
-  }
 
   const runApp = useCallback(
     (sessionId, input) => {
@@ -303,6 +200,7 @@ export default function PlaygroundPage() {
       )}
       <Stack>
         <ApiBackendSelector />
+        {/* <AppRenderer app={app} isMobile={false} ws={ws} /> */}
         <Grid container spacing={2}>
           <Grid item xs={12} md={4} sx={{ height: "100%" }}>
             <Stack spacing={2}>
@@ -334,7 +232,7 @@ export default function PlaygroundPage() {
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <Output jsonResult={jsonResult} />
+            <Output ws={ws} app={app} />
           </Grid>
         </Grid>
       </Stack>
