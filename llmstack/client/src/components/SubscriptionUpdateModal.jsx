@@ -14,8 +14,6 @@ import {
   Radio,
   RadioGroup,
   Stack,
-  Tab,
-  Tabs,
   Typography,
 } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
@@ -25,7 +23,7 @@ import { axios } from "../data/axios";
 const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
   const [subscriptionPrices, setSubscriptionPrices] = useState([]);
   const [subscription, setSubscription] = useState("");
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState("0");
   const [updateButtonLoading, setUpdateButtonLoading] = useState(false);
   const [updateButtonDisabled, setUpdateButtonDisabled] = useState(false);
   const [cancelButtonDisabled, setCancelButtonDisabled] = useState(false);
@@ -54,7 +52,11 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
         <Card
           component="label"
           key={subscriptionPrice.id}
-          sx={{ width: "150px", height: "150px" }}
+          sx={{
+            boxShadow: "none",
+            border: "solid 1px #ddd",
+            borderRadius: "8px",
+          }}
         >
           <CardHeader
             title={subscriptionPrice.product_name}
@@ -64,14 +66,20 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
           <CardContent>
             <Stack>
               {subscriptionPrice.recurring_interval && (
-                <Typography variant="h5" sx={{ textAlign: "center" }}>
+                <Typography
+                  variant="h5"
+                  sx={{ textAlign: "center", color: "#666" }}
+                >
                   ${subscriptionPrice.unit_amount}
                   {isSubscription ? " / " : null}
                   {subscriptionPrice.recurring_interval}
                 </Typography>
               )}
               {!subscriptionPrice.recurring_interval && (
-                <Typography variant="body2" sx={{ textAlign: "center" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ textAlign: "center", color: "#666" }}
+                >
                   {subscriptionPrice.description} at $
                   <b>{subscriptionPrice.unit_amount} </b>
                 </Typography>
@@ -90,12 +98,31 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
           </CardContent>
         </Card>
       ));
+  const defaultMobileTabStyle = {
+    backgroundColor: "gray.main",
+    color: "black",
+    width: "50%",
+
+    "&:hover": {
+      backgroundColor: "gray.main",
+    },
+  };
+
+  const selectedMobileTabStyle = {
+    backgroundColor: "corral.main",
+    color: "white",
+    width: "50%",
+
+    "&:hover": {
+      backgroundColor: "corral.dark",
+    },
+  };
 
   return (
     <Dialog open={open} onClose={handleCloseCb} fullWidth>
       <DialogTitle>Manage Subscription</DialogTitle>
       <DialogContent>
-        <Typography variant="body1">
+        <Typography variant="body1" sx={{ color: "#666" }}>
           Please pick an option that suits you best. For more details, please
           visit our{" "}
           <a
@@ -117,24 +144,48 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
               row
               sx={{ gap: 4 }}
             >
-              <Stack spacing={2}>
-                <Tabs
-                  value={tabValue}
-                  onChange={(e, newValue) => setTabValue(newValue)}
+              <Stack
+                sx={{
+                  display: "flex",
+                  width: "100%",
+                  padding: "8px 0",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  gap: 2,
+                  height: "40px",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  size="small"
+                  sx={
+                    tabValue === "0"
+                      ? selectedMobileTabStyle
+                      : defaultMobileTabStyle
+                  }
+                  onClick={() => setTabValue("0")}
+                  id="credits-tab"
+                  aria-controls="credits-tabpanel"
                 >
-                  <Tab
-                    label="Buy credits"
-                    id="credits-tab"
-                    aria-controls="credits-tabpanel"
-                  />
-                  <Tab
-                    label="Subscription"
-                    id="subscription-tab"
-                    aria-controls="subscription-tabpanel"
-                  />
-                </Tabs>
-
-                {tabValue === 0 && (
+                  Buy Credits
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  sx={
+                    tabValue === "1"
+                      ? selectedMobileTabStyle
+                      : defaultMobileTabStyle
+                  }
+                  onClick={() => setTabValue("1")}
+                  id="subscription-tab"
+                  aria-controls="subscription-tabpanel"
+                >
+                  Subscription
+                </Button>
+              </Stack>
+              <Stack spacing={2}>
+                {tabValue === "0" && (
                   <Box
                     id="credits-tabpanel"
                     aria-labelledby="credits-tab"
@@ -144,7 +195,7 @@ const SubscriptionUpdateModal = ({ open, handleCloseCb }) => {
                     {getPriceCards(false)}
                   </Box>
                 )}
-                {tabValue === 1 && (
+                {tabValue === "1" && (
                   <Box
                     id="subscription-tabpanel"
                     aria-labelledby="subscription-tab"
