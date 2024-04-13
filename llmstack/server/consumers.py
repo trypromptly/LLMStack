@@ -4,7 +4,6 @@ import json
 import logging
 import uuid
 
-from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
@@ -245,70 +244,18 @@ class ConnectionConsumer(AsyncWebsocketConsumer):
 
 class PlaygroundConsumer(AppConsumer):
     async def connect(self):
+        self.app_id = None
+        self.preview = False
         self._session_id = None
         self._coordinator_ref = None
         await self.accept()
 
-    @sync_to_async
-    def run(self, request):
-        from llmstack.processors.apis import EndpointViewSet
+    def _run_app(self, request_uuid, request, **kwargs):
+        from llmstack.apps.apis import AppViewSet
 
-        if is_usage_limited_fn(request, self.run):
-            raise UsageLimitReached("Usage limit reached.")
-
-        return EndpointViewSet().run(request)
-
-    async def _respond_to_event(self, text_data):
-        json_data = json.loads(text_data)
-        input = json_data.get("input", {})
-        id = json_data.get("id", None)
-        event = json_data.get("event", None)
-        request_uuid = str(uuid.uuid4())
-        self._session_id = self._session_id or json_data.get("session_id", None)
-
-        if event == "run":
-            try:
-                request = await _build_request_from_input(input, self.scope)
-
-                if is_ratelimited_fn(request, self._respond_to_event):
-                    raise Ratelimited("Rate limit reached.")
-
-                response = await self.run(request)
-
-                # Generate a uuid for the response
-                response_id = str(uuid.uuid4())
-
-                await self.send(
-                    text_data=json.dumps(
-                        {
-                            "output": response.data,
-                            "reply_to": id,
-                            "id": response_id,
-                            "request_id": request_uuid,
-                        }
-                    )
-                )
-                await self.send(
-                    text_data=json.dumps(
-                        {"event": "done", "reply_to": id, "id": response_id, "request_id": request_uuid}
-                    )
-                )
-            except Ratelimited:
-                await self.send(
-                    text_data=json.dumps({"event": "ratelimited", "reply_to": id, "request_id": request_uuid})
-                )
-            except UsageLimitReached:
-                await self.send(
-                    text_data=json.dumps({"event": "usagelimited", "reply_to": id, "request_id": request_uuid})
-                )
-            except Exception as e:
-                logger.exception(e)
-                await self.send(text_data=json.dumps({"errors": [str(e)], "reply_to": id, "request_id": request_uuid}))
-
-        elif event == "init":
-            # Create a new session and return the session id
-            await self.send(text_data=json.dumps({"session": {"id": str(uuid.uuid4())}, "request_id": request_uuid}))
-
-        elif event == "stop":
-            if self._coordinator_ref:
-                self._coordinator_ref.stop()
+        return AppViewSet().run_playground_internal_async(
+            session_id=self._session_id,
+            request_uuid=request_uuid,
+            request=request,
+            preview=self.preview,
+        )

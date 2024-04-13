@@ -580,3 +580,34 @@ def create_user_profile(sender, instance, created, **kwargs):
             )
             email_sender = EmailSender(email_template_cls(user=instance))
             email_sender.send()
+
+
+class AnonymousProfile:
+    user = None
+    uuid = None
+    token = None
+    organization = None
+    azure_openai_api_key = None
+    openai_key = None
+    stabilityai_key = None
+    cohere_key = None
+    forefrontai_key = None
+    elevenlabs_key = None
+    google_service_account_json_key = None
+    aws_access_key_id = None
+    aws_secret_access_key = None
+    aws_default_region = None
+    localai_api_key = None
+    localai_base_url = None
+    anthropic_api_key = None
+    logo = None
+    _connections = None
+
+    def get_vendor_env(self):
+        return get_vendor_env_platform_defaults()
+
+    def is_basic_subscriber(self):
+        return False
+
+    def is_pro_subscriber(self):
+        return False

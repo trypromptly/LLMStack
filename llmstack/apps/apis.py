@@ -23,6 +23,7 @@ from rest_framework.response import Response as DRFResponse
 from llmstack.apps.app_session_utils import create_app_session
 from llmstack.apps.handlers.app_processor_runner import AppProcessorRunner
 from llmstack.apps.handlers.app_runner_factory import AppRunnerFactory
+from llmstack.apps.handlers.playground_runner import PlaygroundRunner
 from llmstack.apps.integration_configs import (
     DiscordIntegrationConfig,
     SlackIntegrationConfig,
@@ -33,7 +34,7 @@ from llmstack.apps.yaml_loader import (
     get_app_template_by_slug,
     get_app_templates_from_contrib,
 )
-from llmstack.base.models import Profile
+from llmstack.base.models import AnonymousProfile, Profile
 from llmstack.common.utils.utils import get_location
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
@@ -883,6 +884,92 @@ class AppViewSet(viewsets.ViewSet):
             request,
             preview=preview,
         )
+
+    async def run_playground_internal_async(self, session_id, request_uuid, request, preview=False):
+        return await database_sync_to_async(self.run_playground_internal)(
+            session_id,
+            request_uuid,
+            request,
+            platform="playground",
+            preview=False,
+            disable_history=False,
+        )
+
+    def run_playground_internal(
+        self,
+        session_id,
+        request_uuid,
+        request,
+        platform="playground",
+        preview=False,
+        disable_history=False,
+    ):
+        from llmstack.apps.handlers.playground_runner import (
+            PlaygroundApp,
+            PlaygroundAppType,
+        )
+
+        stream = request.data.get("stream", True)
+        request_ip = request.headers.get("X-Forwarded-For", request.META.get("REMOTE_ADDR", "")).split(",")[
+            0
+        ].strip() or request.META.get("HTTP_X_REAL_IP", "")
+
+        request_location = request.headers.get("X-Client-Geo-Location", "")
+
+        if not request_location:
+            location = get_location(request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
+
+        request_user_agent = request.META.get("HTTP_USER_AGENT", "")
+        request_content_type = request.META.get("CONTENT_TYPE", "")
+
+        if flag_enabled(
+            "HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA",
+            request=request,
+            user=request.user,
+        ):
+            raise Exception(
+                "You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.",
+            )
+
+        app_owner_profile = (
+            Profile.objects.get(user=request.user) if request.user.is_authenticated else AnonymousProfile()
+        )
+        processor_id = request.data["input"]["api_provider_slug"] + "_" + request.data["input"]["api_backend_slug"]
+
+        app = PlaygroundApp(
+            id="",
+            uuid="ebb44d38-76b8-4735-b33b-5aadfe6470f9",
+            type=PlaygroundAppType(slug="playground"),
+            web_integration_config={},
+            is_published=True,
+        )
+        app_runner = PlaygroundRunner(
+            app=app,
+            app_data={
+                "processors": [
+                    {
+                        "id": processor_id,
+                        "processor_slug": request.data["input"]["api_backend_slug"],
+                        "provider_slug": request.data["input"]["api_provider_slug"],
+                        "input": request.data["input"]["input"],
+                        "config": request.data["input"]["config"],
+                    }
+                ]
+            },
+            request_uuid=request_uuid,
+            request=request,
+            session_id=session_id,
+            app_owner=app_owner_profile,
+            stream=stream,
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=request_user_agent,
+            request_content_type=request_content_type,
+            disable_history=False,
+        )
+
+        return app_runner.run_app(processor_id=processor_id)
 
     def run_app_internal(
         self,
