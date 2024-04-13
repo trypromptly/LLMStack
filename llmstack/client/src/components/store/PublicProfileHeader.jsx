@@ -1,10 +1,6 @@
 import { Avatar, Box, Card, Typography } from "@mui/material";
-import { useRecoilValue } from "recoil";
-import { isMobileState } from "../../data/atoms";
 
 function PublicProfileHeader({ name, avatar, username, sessionData }) {
-  const isMobile = useRecoilValue(isMobileState);
-
   return (
     <Card
       sx={{
