@@ -847,6 +847,89 @@ export const PromptlyAppWorkflowOutput = memo(
   },
 );
 
+export const PromptlyPlaygroundOutput = memo(
+  ({ showHeader, placeholder, sx, enableAutoScroll = true }) => {
+    const appRunData = useRecoilValue(appRunDataState);
+    console.log(appRunData);
+    const assistantImage = useMemo(
+      () => appRunData?.assistantImage,
+      [appRunData?.assistantImage],
+    );
+    const appMessages = useMemo(
+      () => appRunData?.messages || [],
+      [appRunData?.messages],
+    );
+    const messagesContainerRef = useRef(null);
+    const [autoScroll, setAutoScroll] = useState(enableAutoScroll);
+    const [lastScrollY, setLastScrollY] = useState(window.scrollY);
+
+    useEffect(() => {
+      if (autoScroll && messagesContainerRef.current) {
+        window.scrollTo(0, messagesContainerRef.current.scrollHeight);
+      }
+    }, [appMessages, autoScroll]);
+
+    useEffect(() => {
+      const handleScroll = () => {
+        const currentScrollY = window.scrollY;
+
+        if (
+          appRunData?.isRunning &&
+          !appRunData?.isStreaming &&
+          lastScrollY > currentScrollY
+        ) {
+          setAutoScroll(false);
+        }
+
+        setLastScrollY(currentScrollY);
+      };
+
+      // Add the event listener
+      window.addEventListener("scroll", handleScroll);
+
+      // Clean up function
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    }, [lastScrollY, appRunData?.isRunning, appRunData?.isStreaming]);
+
+    return (
+      <Box ref={messagesContainerRef} sx={sx}>
+        {!appRunData?.isStreaming &&
+          appRunData?.isRunning &&
+          !appRunData?.errors && (
+            <Box
+              sx={{
+                margin: "auto",
+                textAlign: "center",
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          )}
+        {!appRunData.isRunning &&
+          !appRunData.errors &&
+          appMessages.length === 0 &&
+          placeholder}
+        {appMessages.length > 0 &&
+          appMessages[appMessages.length - 1].type === "app" && (
+            <AppMessage
+              message={appMessages[appMessages.length - 1]}
+              workflow={true}
+              assistantImage={assistantImage}
+            />
+          )}
+        {appRunData?.errors && (
+          <Alert severity="error">{appRunData?.errors.join("\n")}</Alert>
+        )}
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev === next;
+  },
+);
+
 const parseSxFromProps = (sxString) => {
   let sx = {};
 
@@ -1026,6 +1109,17 @@ export default function LayoutRenderer({
 
         return (
           <PromptlyAppWorkflowOutput
+            showHeader={props?.showheader}
+            placeholder={props.placeholder}
+            sx={sx}
+          />
+        );
+      },
+      "pa-playground-output": ({ node, ...props }) => {
+        let sx = parseSxFromProps(props.sx);
+
+        return (
+          <PromptlyPlaygroundOutput
             showHeader={props?.showheader}
             placeholder={props.placeholder}
             sx={sx}
