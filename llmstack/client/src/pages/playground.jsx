@@ -14,16 +14,10 @@ import {
   apiBackendSelectedState,
   endpointConfigValueState,
   inputValueState,
-  isLoggedInState,
   appRunDataState,
 } from "../data/atoms";
-import {
-  Messages,
-  AppErrorMessage,
-  AppMessage,
-} from "../components/apps/renderer/Messages";
+import { Messages } from "../components/apps/renderer/Messages";
 import { Ws } from "../data/ws";
-import { stitchObjects } from "../data/utils";
 
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-json";
@@ -108,24 +102,11 @@ export default function PlaygroundPage() {
   const [input] = useRecoilState(inputValueState);
   const appSessionId = useRef(null);
   const messagesRef = useRef(new Messages());
-  const chunkedOutput = useRef({});
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const setAppRunData = useSetRecoilState(appRunDataState);
 
   const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
-  const templateEngine = useMemo(() => new Liquid(), []);
-  const [outputTemplate, setOutputTemplate] = useState(null);
-
   const paramValues = useRecoilValue(endpointConfigValueState);
-  useEffect(() => {
-    if (apiBackendSelected) {
-      setOutputTemplate(
-        templateEngine.parse(
-          apiBackendSelected.output_template || "{{ output }}",
-        ),
-      );
-    }
-  }, [templateEngine, apiBackendSelected, setOutputTemplate]);
 
   const [ws, setWs] = useState(null);
 
@@ -145,7 +126,6 @@ export default function PlaygroundPage() {
 
   const runApp = useCallback(
     (sessionId, input) => {
-      chunkedOutput.current = {};
       const requestId = Math.random().toString(36).substring(2);
 
       setAppRunData((prevState) => ({
@@ -200,7 +180,6 @@ export default function PlaygroundPage() {
       )}
       <Stack>
         <ApiBackendSelector />
-        {/* <AppRenderer app={app} isMobile={false} ws={ws} /> */}
         <Grid container spacing={2}>
           <Grid item xs={12} md={4} sx={{ height: "100%" }}>
             <Stack spacing={2}>
