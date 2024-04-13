@@ -42,7 +42,12 @@ const Post = ({ post, username }) => {
           {share.title}
         </Typography>
         {share.cover_image ? (
-          <AssetRenderer url={share.cover_image} type="image" />
+          <AssetRenderer
+            url={share.cover_image}
+            type="image"
+            noDownload
+            styleJson={{ boxShadow: "none", border: "solid 1px #eee" }}
+          />
         ) : (
           <Divider />
         )}
