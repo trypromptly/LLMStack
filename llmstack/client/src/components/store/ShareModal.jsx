@@ -1,14 +1,35 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  FacebookIcon,
+  FacebookShareButton,
+  FacebookMessengerIcon,
+  FacebookMessengerShareButton,
+  LinkedinIcon,
+  LinkedinShareButton,
+  PinterestIcon,
+  PinterestShareButton,
+  TelegramIcon,
+  TelegramShareButton,
+  TwitterShareButton,
+  WhatsappIcon,
+  WhatsappShareButton,
+  XIcon,
+} from "react-share";
+import {
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
+  Stack,
+  TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import ContentCopy from "@mui/icons-material/ContentCopy";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { enqueueSnackbar } from "notistack";
 import { useRecoilValue } from "recoil";
@@ -34,12 +55,16 @@ export default function ShareModal({
   const profile = useRecoilValue(profileSelector);
   const [shareCode, setShareCode] = useState("");
   const navigate = useNavigate();
-  const [pinned, setPinned] = useState(false);
+  const [pinned, setPinned] = useState(null);
   const [pinToProfileLoading, setPinToProfileLoading] = useState(false);
   const [shareUrlLoading, setShareUrlLoading] = useState(false);
 
   const getShareUrl = (code) => {
-    return `${window.location.protocol}//${window.location.host}/s/${code}`;
+    if (code) {
+      return `${window.location.protocol}//${window.location.host}/s/${code}`;
+    }
+
+    return window.location.href;
   };
 
   const handleShare = (event, sessionId, isLoggedIn) => {
@@ -112,7 +137,7 @@ export default function ShareModal({
         share_code: shareCode,
       })
       .then((response) => {
-        setPinned(response?.data?.metadata?.slug);
+        setPinned(response?.data?.share?.slug);
         enqueueSnackbar("App run pinned to profile", { variant: "success" });
       })
       .catch((error) => {
@@ -136,6 +161,7 @@ export default function ShareModal({
       onClose={handleClose}
       fullWidth
       onClick={(e) => e.stopPropagation()}
+      maxWidth="xs"
     >
       <DialogTitle id="app-share-modal">Share</DialogTitle>
       <DialogContent>
@@ -143,15 +169,13 @@ export default function ShareModal({
           {appRunData?.sessionId && !shareCode
             ? "Share the output from this app run by clicking on the create link button to generate a shareable url."
             : !shareCode &&
-              "Share this app by clicking on the copy link button."}
+              "Share this app using the link below or by clicking on the social media buttons."}
         </Typography>
         {shareCode && (
           <Box sx={{ marginTop: 2, marginBottom: 4 }}>
             <Typography variant="body1">
-              Share this link with others to view the output from this app run:{" "}
-              <a href={getShareUrl(shareCode)} target="_blank" rel="noreferrer">
-                {getShareUrl(shareCode)}
-              </a>
+              Share this app session using the link below or use the buttons to
+              share on social media.
             </Typography>
           </Box>
         )}
@@ -174,22 +198,100 @@ export default function ShareModal({
             )}
           </Box>
         )}
+        {(shareCode || (!shareCode && !appRunData.sessionId)) && (
+          <Box sx={{ paddingTop: 4, display: "inline-table" }}>
+            <TextField
+              label="Share URL"
+              value={getShareUrl(shareCode)}
+              fullWidth
+              variant="outlined"
+              size="medium"
+              InputProps={{
+                readOnly: true,
+                endAdornment: (
+                  <IconButton
+                    onClick={(e) => {
+                      navigator.clipboard.writeText(getShareUrl(shareCode));
+                      enqueueSnackbar("Share code copied successfully", {
+                        variant: "success",
+                      });
+                    }}
+                  >
+                    <Tooltip title="Copy Share URL">
+                      <ContentCopy fontSize="small" />
+                    </Tooltip>
+                  </IconButton>
+                ),
+              }}
+            />
+
+            <Typography variant="caption">
+              Share the link with others to view the output from this app run
+            </Typography>
+
+            <Stack direction={"row"} gap={2} sx={{ paddingTop: 2 }}>
+              <FacebookShareButton url={getShareUrl(shareCode)}>
+                <FacebookIcon size={30} round={true} />
+              </FacebookShareButton>
+              <FacebookMessengerShareButton url={getShareUrl(shareCode)}>
+                <FacebookMessengerIcon size={30} round={true} />
+              </FacebookMessengerShareButton>
+              <LinkedinShareButton url={getShareUrl(shareCode)}>
+                <LinkedinIcon size={30} round={true} />
+              </LinkedinShareButton>
+              <PinterestShareButton url={getShareUrl(shareCode)}>
+                <PinterestIcon size={30} round={true} />
+              </PinterestShareButton>
+              <TelegramShareButton url={getShareUrl(shareCode)}>
+                <TelegramIcon size={30} round={true} />
+              </TelegramShareButton>
+              <WhatsappShareButton url={getShareUrl(shareCode)}>
+                <WhatsappIcon size={30} round={true} />
+              </WhatsappShareButton>
+              <TwitterShareButton
+                url={getShareUrl(shareCode)}
+                title={"Check this app on Promptly!\n\n"}
+                via={"TryPromptly"}
+              >
+                <XIcon size={30} round={true} />
+              </TwitterShareButton>
+            </Stack>
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
         <Button key="cancel" onClick={handleClose}>
           Cancel
         </Button>
 
-        <LoadingButton
-          key="submit"
-          variant="contained"
-          type="primary"
-          onClick={(e) => handleShare(e, appRunData?.sessionId, isLoggedIn)}
-          loading={shareUrlLoading}
-          disabled={appRunData?.isRunning}
-        >
-          {shareCode ? "Copy Link" : "Create Link"}
-        </LoadingButton>
+        {!shareCode && (
+          <LoadingButton
+            key="submit"
+            variant="contained"
+            type="primary"
+            onClick={(e) => {
+              appRunData?.sessionId
+                ? handleShare(e, appRunData?.sessionId, isLoggedIn)
+                : handleClose(e);
+            }}
+            loading={shareUrlLoading}
+            disabled={appRunData?.isRunning}
+          >
+            {appRunData?.sessionId ? "Create Link" : "Done"}
+          </LoadingButton>
+        )}
+        {!shareCode && !profile?.username && (
+          <LoadingButton
+            key="submit"
+            variant="contained"
+            type="primary"
+            onClick={(e) => navigate(`/s/${shareCode}`)}
+            loading={shareUrlLoading}
+            disabled={appRunData?.isRunning}
+          >
+            View Session
+          </LoadingButton>
+        )}
         {shareCode && profile?.username && (
           <LoadingButton
             key="pin"
@@ -198,14 +300,20 @@ export default function ShareModal({
             onClick={(e) => {
               if (pinned) {
                 navigate(`/u/${profile.username}/${pinned}`);
-              } else {
+              } else if (appRunData?.sessionId) {
                 handlePinToProfile(e, appRunData?.sessionId, isLoggedIn);
+              } else {
+                handleClose(e);
               }
             }}
             loading={pinToProfileLoading}
             disabled={appRunData?.isRunning || pinToProfileLoading}
           >
-            {pinned ? "View on Profile" : "Pin to Profile"}
+            {pinned
+              ? "View on Profile"
+              : appRunData?.sessionId
+                ? "Pin to Profile"
+                : "Done"}
           </LoadingButton>
         )}
       </DialogActions>
