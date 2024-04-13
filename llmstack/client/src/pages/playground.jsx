@@ -10,7 +10,6 @@ import {
 } from "../data/atoms";
 import { Messages } from "../components/apps/renderer/Messages";
 import { Ws } from "../data/ws";
-import { stitchObjects } from "../data/utils";
 
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-json";
