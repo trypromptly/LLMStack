@@ -57,7 +57,7 @@ const Post = ({ post, username }) => {
           direction={"row"}
           gap={2}
           sx={{
-            justifyContent: "space-between",
+            justifyContent: "space-around",
             paddingTop: 4,
             paddingBottom: 2,
           }}
