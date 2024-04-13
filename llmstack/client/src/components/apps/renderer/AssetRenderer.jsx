@@ -1,14 +1,63 @@
 import { useEffect, useState } from "react";
+import { Box, IconButton } from "@mui/material";
+import { DownloadOutlined } from "@mui/icons-material";
 import { axios } from "../../../data/axios";
 import loadingImage from "../../../assets/images/loading.gif";
 
 const Image = (props) => {
-  const { url, alt } = props;
-  return <img src={url} alt={alt || "Asset"} width={"100%"} />;
+  const { url, alt, noDownload, styleJson } = props;
+  const [showDownloadIcon, setShowDownloadIcon] = useState(false);
+
+  return (
+    <Box
+      onMouseEnter={() => setShowDownloadIcon(true)}
+      onMouseLeave={() => setShowDownloadIcon(false)}
+      sx={{ position: "relative" }}
+    >
+      {showDownloadIcon && !noDownload && url && (
+        <Box
+          sx={{
+            display: "flex",
+            borderRadius: "4px 0 0 0",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "3px 0",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+          }}
+        >
+          <IconButton
+            sx={{ color: "#333" }}
+            onClick={() => {
+              window.open(url, "_blank");
+            }}
+          >
+            <DownloadOutlined fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
+      <img
+        src={url || loadingImage}
+        alt={alt || "Asset"}
+        style={{
+          ...{
+            display: "block",
+            objectFit: "contain",
+            maxWidth: "100%",
+            borderRadius: "4px",
+            boxShadow: "0px 0px 4px 0px #7d7d7d",
+          },
+          ...styleJson,
+        }}
+      />
+    </Box>
+  );
 };
 
 export const AssetRenderer = (props) => {
-  const { url, type } = props;
+  const { url, type, noDownload, styleJson } = props;
   const [file, setFile] = useState(null);
 
   useEffect(() => {
@@ -30,7 +79,12 @@ export const AssetRenderer = (props) => {
 
   if (type.startsWith("image")) {
     return (
-      <Image url={file?.url || loadingImage} alt={file?.name || "Loading"} />
+      <Image
+        url={file?.url || loadingImage}
+        alt={file?.name || "Loading"}
+        noDownload={noDownload}
+        styleJson={styleJson}
+      />
     );
   }
 
