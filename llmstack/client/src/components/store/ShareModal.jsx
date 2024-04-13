@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -32,6 +33,7 @@ export default function ShareModal({
   const isLoggedIn = useRecoilValue(isLoggedInState);
   const profile = useRecoilValue(profileSelector);
   const [shareCode, setShareCode] = useState("");
+  const navigate = useNavigate();
   const [pinned, setPinned] = useState(false);
   const [pinToProfileLoading, setPinToProfileLoading] = useState(false);
   const [shareUrlLoading, setShareUrlLoading] = useState(false);
@@ -109,8 +111,8 @@ export default function ShareModal({
       .post(`/api/profiles/${profile.username}/posts`, {
         share_code: shareCode,
       })
-      .then(() => {
-        setPinned(true);
+      .then((response) => {
+        setPinned(response?.data?.metadata?.slug);
         enqueueSnackbar("App run pinned to profile", { variant: "success" });
       })
       .catch((error) => {
@@ -193,11 +195,15 @@ export default function ShareModal({
             key="pin"
             variant="contained"
             type="primary"
-            onClick={(e) =>
-              handlePinToProfile(e, appRunData?.sessionId, isLoggedIn)
-            }
+            onClick={(e) => {
+              if (pinned) {
+                navigate(`/u/${profile.username}/${pinned}`);
+              } else {
+                handlePinToProfile(e, appRunData?.sessionId, isLoggedIn);
+              }
+            }}
             loading={pinToProfileLoading}
-            disabled={appRunData?.isRunning || pinToProfileLoading || pinned}
+            disabled={appRunData?.isRunning || pinToProfileLoading}
           >
             {pinned ? "View on Profile" : "Pin to Profile"}
           </LoadingButton>
