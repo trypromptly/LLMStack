@@ -140,6 +140,7 @@ class ApiProcessorInterface(
         request=None,
         id=None,
         is_tool=False,
+        session_enabled=True,
     ):
         Actor.__init__(
             self,
@@ -155,8 +156,9 @@ class ApiProcessorInterface(
         self._is_tool = is_tool
         self._request = request
         self._metadata = metadata
+        self._session_enabled = session_enabled
 
-        self.process_session_data(session_data)
+        self.process_session_data(session_data if session_enabled else {})
 
     @classmethod
     def get_output_schema(cls) -> dict:
@@ -302,7 +304,7 @@ class ApiProcessorInterface(
                 input=self._input,
                 config=self._config,
                 output=output or {},
-                session_data=self.session_data_to_persist(),
+                session_data=self.session_data_to_persist() if self._session_enabled else {},
                 timestamp=time.time(),
                 disable_history=self.disable_history(),
             )
@@ -361,7 +363,7 @@ class ApiProcessorInterface(
                 input=self._input,
                 config=self._config,
                 output=output or {},
-                session_data=self.session_data_to_persist(),
+                session_data=self.session_data_to_persist() if self._session_enabled else {},
                 timestamp=time.time(),
                 disable_history=self.disable_history(),
             )

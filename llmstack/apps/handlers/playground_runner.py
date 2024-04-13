@@ -99,6 +99,7 @@ class PlaygroundRunner(AppRunner):
                     "session_data": {},
                     "request": self.request,
                     "is_tool": False,
+                    "session_enabled": False,
                 },
                 output_cls=processor_cls.get_output_cls(),
             ),
