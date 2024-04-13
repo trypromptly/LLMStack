@@ -18,6 +18,7 @@ import {
 } from "../data/atoms";
 import { Messages } from "../components/apps/renderer/Messages";
 import { Ws } from "../data/ws";
+import { stitchObjects } from "../data/utils";
 
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-json";
@@ -27,7 +28,7 @@ const defaultPlaygroundLayout = `<pa-layout sx='{"width": "100%", "margin": "10p
   <pa-paper style="padding: 10px;">
     <pa-grid container="true" spacing="2" style="width: 100%">
       <pa-grid item="true" xs="2">
-        <pa-playground-output showHeader="true"></pa-playground-output>
+        <pa-workflow-output showHeader="true"></pa-workflow-output>
       </pa-grid>
     </pa-grid>
   </pa-paper>
@@ -61,6 +62,8 @@ export function ThemedJsonEditor({ data }) {
 
 function Output(props) {
   const [value, setValue] = React.useState("form");
+  const chunkedOutput = useRef({});
+  const [jsonOutput, setJsonOutput] = useState({});
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -77,10 +80,30 @@ function Output(props) {
           </TabList>
         </Box>
         <TabPanel value="form" sx={{ padding: "4px" }}>
-          <AppRenderer app={props.app} isMobile={false} ws={props.ws} />
+          <AppRenderer
+            app={props.app}
+            isMobile={false}
+            ws={props.ws}
+            wsOnMessage={(message) => {
+              if (message?.output) {
+                let newChunkedOutput = {};
+
+                newChunkedOutput = stitchObjects(
+                  chunkedOutput.current,
+                  message.output,
+                );
+                chunkedOutput.current = newChunkedOutput;
+              }
+
+              if (message?.event === "done") {
+                setJsonOutput(chunkedOutput.current);
+                chunkedOutput.current = {};
+              }
+            }}
+          />
         </TabPanel>
         <TabPanel value="json" sx={{ padding: "4px" }}>
-          <ThemedJsonEditor data={props.jsonResult} />
+          <ThemedJsonEditor data={jsonOutput} />
         </TabPanel>
       </TabContext>
     </Box>

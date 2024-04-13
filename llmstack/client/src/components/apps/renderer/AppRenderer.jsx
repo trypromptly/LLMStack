@@ -54,7 +54,7 @@ export const defaultChatLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin"
     </pa-grid>
 </pa-layout>`;
 
-export default function AppRenderer({ app, ws }) {
+export default function AppRenderer({ app, ws, wsOnMessage }) {
   const appSessionId = useRef(null);
   const location = useLocation();
   const [layout, setLayout] = useState("");
@@ -164,6 +164,9 @@ export default function AppRenderer({ app, ws }) {
   if (ws) {
     ws.setOnMessage((evt) => {
       const message = JSON.parse(evt.data);
+      if (wsOnMessage) {
+        wsOnMessage(message);
+      }
 
       if (message.session) {
         appSessionId.current = message.session.id;

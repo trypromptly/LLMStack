@@ -96,7 +96,7 @@ class PlaygroundRunner(AppRunner):
                             else ""
                         ),
                     },
-                    "session_data": app_session_data["data"] if app_session_data and "data" in app_session_data else {},
+                    "session_data": {},
                     "request": self.request,
                     "is_tool": False,
                 },
