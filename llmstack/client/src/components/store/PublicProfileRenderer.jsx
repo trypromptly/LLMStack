@@ -47,6 +47,7 @@ const PublicProfileRenderer = ({ username, postSlug }) => {
           name={publicProfile.name}
           avatar={publicProfile.avatar}
           username={publicProfile.username}
+          sessionData={sessionData}
         />
       </Grid>
       <Grid

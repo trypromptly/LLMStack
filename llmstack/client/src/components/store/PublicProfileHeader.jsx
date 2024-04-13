@@ -2,7 +2,7 @@ import { Avatar, Box, Card, Typography } from "@mui/material";
 import { useRecoilValue } from "recoil";
 import { isMobileState } from "../../data/atoms";
 
-function PublicProfileHeader({ name, avatar, username }) {
+function PublicProfileHeader({ name, avatar, username, sessionData }) {
   const isMobile = useRecoilValue(isMobileState);
 
   return (
@@ -15,8 +15,8 @@ function PublicProfileHeader({ name, avatar, username }) {
         border: "1px solid #E8EBEE",
         borderRadius: "8px 8px 0 0",
         p: 4,
-        gap: 4,
-        height: isMobile ? "40px" : "72px",
+        gap: 2,
+        height: "auto",
       }}
     >
       <Box
@@ -52,7 +52,7 @@ function PublicProfileHeader({ name, avatar, username }) {
                   fontWeight: 600,
                 }}
               >
-                {name}
+                {sessionData?.metadata?.title || name}
               </Typography>
             </Box>
             <Typography
@@ -64,6 +64,19 @@ function PublicProfileHeader({ name, avatar, username }) {
           </Box>
         </Box>
       </Box>
+      {sessionData &&
+        sessionData.metadata &&
+        sessionData.metadata.description && (
+          <Box>
+            <Typography
+              color="primary.main"
+              variant="body1"
+              sx={{ fontSize: "14px", padding: 0, textAlign: "left" }}
+            >
+              {sessionData?.metadata.description}
+            </Typography>
+          </Box>
+        )}
     </Card>
   );
 }
