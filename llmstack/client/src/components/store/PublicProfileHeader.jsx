@@ -39,22 +39,26 @@ function PublicProfileHeader({ name, avatar, username }) {
             src={avatar}
             alt={name}
             variant="square"
-            sx={{ borderRadius: 2 }}
+            sx={{ borderRadius: 2, cursor: "pointer" }}
+            onClick={() => (window.location.href = `/u/${username}`)}
           />
           <Box sx={{ width: "100%" }}>
             <Box sx={{ width: "100%", display: "flex", alignItems: "center" }}>
               <Typography
                 component="h1"
                 sx={{
-                  fontSize: "20px",
-                  lineHeight: "24px",
+                  fontSize: "16px",
+                  lineHeight: "20px",
                   fontWeight: 600,
                 }}
               >
                 {name}
               </Typography>
             </Box>
-            <Typography color="corral.main" sx={{ display: "inline" }}>
+            <Typography
+              color="corral.main"
+              sx={{ display: "inline", fontSize: "14px" }}
+            >
               {username}
             </Typography>
           </Box>

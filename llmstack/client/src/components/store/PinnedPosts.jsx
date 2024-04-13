@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { Button, Divider, Stack, Typography } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  Divider,
+  Stack,
+  Typography,
+} from "@mui/material";
 import ShareIcon from "@mui/icons-material/Share";
 import AppShortcutIcon from "@mui/icons-material/AppShortcut";
 import Grid from "@mui/material/Unstable_Grid2";
@@ -79,9 +85,11 @@ const Post = ({ post, username }) => {
 
 const PinnedPosts = ({ username }) => {
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // TODO: handle pagination
+    setLoading(true);
     axios()
       .get(`/api/profiles/${username}/posts`)
       .then((response) => {
@@ -89,12 +97,16 @@ const PinnedPosts = ({ username }) => {
       })
       .catch((error) => {
         console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, [username]);
 
   return (
     <Grid container gap={4} sx={{ justifyContent: "space-around" }}>
-      {posts.length === 0 ? (
+      {loading && <CircularProgress />}
+      {posts.length === 0 && !loading ? (
         <Grid>
           <Typography variant="body1">No pinned posts</Typography>
         </Grid>
