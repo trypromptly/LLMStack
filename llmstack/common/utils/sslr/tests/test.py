@@ -103,24 +103,42 @@ class TestLLMChatCompletions(unittest.TestCase):
         result = self._call_chat_completions_single_text(PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC])
         self.assertIsNotNone(result.choices[0].message.content_str)
 
-    def test_chat_completions_multiple_parts(self):
-        for provider in COMPLETIONS_PROVIDER_LIST:
-            client = self._initialize_client(provider)
-            result = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "mime_type": "text/plain", "data": "Say this is "},
-                            {"type": "text", "mime_type": "text/plain", "data": "a test"},
-                        ],
-                    },
-                ],
-                model=PROVIDER_MODEL_MAP[provider],
-                max_tokens=100,
-            )
-            for choice in result.choices:
-                self.assertIsNotNone(choice.message.content_str)
+    def _call_chat_completions_multiple_parts(self, provider, model):
+        client = self._initialize_client(provider)
+        result = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "mime_type": "text/plain", "data": "Say this is "},
+                        {"type": "text", "mime_type": "text/plain", "data": "a test"},
+                    ],
+                },
+            ],
+            model=model,
+            max_tokens=100,
+        )
+        return result
+
+    def test_openai_chat_completions_multiple_parts(self):
+        result = self._call_chat_completions_multiple_parts(PROVIDER_OPENAI, PROVIDER_MODEL_MAP[PROVIDER_OPENAI])
+        for choice in result.choices:
+            self.assertIsNotNone(choice.message.content_str)
+
+    def test_google_chat_completions_multiple_parts(self):
+        result = self._call_chat_completions_multiple_parts(PROVIDER_GOOGLE, PROVIDER_MODEL_MAP[PROVIDER_GOOGLE])
+        for choice in result.choices:
+            self.assertIsNotNone(choice.message.content_str)
+
+    def test_cohere_chat_completions_multiple_parts(self):
+        result = self._call_chat_completions_multiple_parts(PROVIDER_COHERE, PROVIDER_MODEL_MAP[PROVIDER_COHERE])
+        for choice in result.choices:
+            self.assertIsNotNone(choice.message.content_str)
+
+    def test_anthropic_chat_completions_multiple_parts(self):
+        result = self._call_chat_completions_multiple_parts(PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC])
+        for choice in result.choices:
+            self.assertIsNotNone(choice.message.content_str)
 
     def test_chat_completions_single_text_streaming(self):
         import openai
