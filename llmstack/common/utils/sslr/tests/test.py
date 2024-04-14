@@ -388,18 +388,28 @@ class TestLLMImageGeneration(unittest.TestCase):
             cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
         )
 
-    def test_image_generation(self):
-        for provider in IMAGE_GENERATION_PROVIDER_LIST:
-            client = self._initialize_client(provider)
-            result = client.images.generate(
-                prompt="a cat in the style of a dog",
-                model=IMAGE_GENERATION_PROVIDER_MODEL_MAP[provider],
-                n=1,
-                response_format="b64_json",
-                size="1024x1024",
-            )
-            assert len(result.data) == 1
-            assert result.data[0].b64_json is not None
+    def _call_image_generation(self, provider, model):
+        client = self._initialize_client(provider)
+        result = client.images.generate(
+            prompt="a cat in the style of a dog",
+            model=model,
+            n=1,
+            response_format="b64_json",
+            size="1024x1024",
+        )
+        return result
+
+    def test_image_generation_openai(self):
+        result = self._call_image_generation(PROVIDER_OPENAI, IMAGE_GENERATION_PROVIDER_MODEL_MAP[PROVIDER_OPENAI])
+        assert len(result.data) == 1
+        assert result.data[0].b64_json is not None
+
+    def test_image_generation_stabilityai(self):
+        result = self._call_image_generation(
+            PROVIDER_STABILITYAI, IMAGE_GENERATION_PROVIDER_MODEL_MAP[PROVIDER_STABILITYAI]
+        )
+        assert len(result.data) == 1
+        assert result.data[0].b64_json is not None
 
 
 if __name__ == "__main__":

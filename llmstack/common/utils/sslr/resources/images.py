@@ -105,6 +105,8 @@ class Images(OpenAIImages):
         timeout: Union[float, httpx.Timeout, None] = NOT_GIVEN,
         **kwargs,
     ) -> images_response.ImagesResponse:
+        response_format = "b64_json"
+
         if self._client._llm_router_provider == PROVIDER_OPENAI:
             path = "/images/generations"
             body = maybe_transform(
