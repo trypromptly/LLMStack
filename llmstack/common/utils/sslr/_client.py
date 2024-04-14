@@ -4,6 +4,7 @@ from typing import Any, Literal, Mapping, Optional, Type, Union, overload
 
 import httpx
 from openai import OpenAI
+from openai._base_client import _StreamT
 from openai._client import SyncAPIClient
 from openai._models import FinalRequestOptions
 from openai._utils import is_given
@@ -29,6 +30,18 @@ from .resources import Audio, Chat, Completions, Embeddings, Images, Models
 
 
 class LLMClient(SyncAPIClient):
+    def _prepare_options(
+        self,
+        options: FinalRequestOptions,  # noqa: ARG002
+    ) -> None:
+        return super()._prepare_options(options)
+
+    def _prepare_request(
+        self,
+        request: httpx.Request,  # noqa: ARG002
+    ) -> None:
+        return super()._prepare_request(request)
+
     @override
     def _build_request(
         self,
@@ -54,7 +67,15 @@ class LLMClient(SyncAPIClient):
 
         return super()._build_request(options)
 
-    @override
+    def _process_response_data(
+        self,
+        *,
+        data: object,
+        cast_to: type[ResponseT],
+        response: httpx.Response,
+    ) -> ResponseT:
+        return super()._process_response_data(data=data, cast_to=cast_to, response=response)
+
     def _process_response(
         self,
         *,
@@ -162,6 +183,23 @@ class LLMClient(SyncAPIClient):
             cast_to=cast_to,
             options=options,
             response=response,
+            stream=stream,
+            stream_cls=stream_cls,
+        )
+
+    def _request(
+        self,
+        *,
+        cast_to: Type[ResponseT],
+        options: FinalRequestOptions,
+        remaining_retries: int | None,
+        stream: bool,
+        stream_cls: type[_StreamT] | None,
+    ) -> ResponseT | _StreamT:
+        return super()._request(
+            cast_to=cast_to,
+            options=options,
+            remaining_retries=remaining_retries,
             stream=stream,
             stream_cls=stream_cls,
         )
