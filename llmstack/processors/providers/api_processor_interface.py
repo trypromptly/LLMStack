@@ -115,9 +115,14 @@ class ApiProcessorInterface(
                 "app_uuid": self._metadata.get("app_uuid", ""),
                 "username": self._metadata.get("username", ""),
             }
-            asset = AppSessionFiles.create_from_url(
-                asset, metadata=asset_metadata, ref_id=self._metadata.get("session_id", "")
-            )
+            if asset.startswith("data:"):
+                asset = AppSessionFiles.create_from_data_uri(
+                    asset, metadata=asset_metadata, ref_id=self._metadata.get("session_id", "")
+                )
+            else:
+                asset = AppSessionFiles.create_from_url(
+                    asset, metadata=asset_metadata, ref_id=self._metadata.get("session_id", "")
+                )
         except Exception as e:
             logger.exception(e)
             db.connection.close()
