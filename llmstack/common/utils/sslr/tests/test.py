@@ -18,12 +18,12 @@ PROVIDER_MODEL_MAP = {
 }
 
 
-MODELS_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_COHERE, PROVIDER_GOOGLE, PROVIDER_STABILITYAI]
-
 IMAGE_GENERATION_PROVIDER_MODEL_MAP = {
     PROVIDER_OPENAI: "dall-e-2",
     PROVIDER_STABILITYAI: "stable-diffusion-xl-1024-v1-0",
 }
+
+MAX_TOKENS = 50
 
 
 class TestLLMModels(unittest.TestCase):
@@ -83,7 +83,7 @@ class TestLLMChatCompletions(unittest.TestCase):
                 }
             ],
             model=model,
-            max_tokens=100,
+            max_tokens=MAX_TOKENS,
         )
         return result
 
@@ -116,7 +116,7 @@ class TestLLMChatCompletions(unittest.TestCase):
                 },
             ],
             model=model,
-            max_tokens=100,
+            max_tokens=MAX_TOKENS,
         )
         return result
 
@@ -162,7 +162,7 @@ class TestLLMChatCompletionsStreaming(unittest.TestCase):
                 }
             ],
             model=model,
-            max_tokens=100,
+            max_tokens=MAX_TOKENS,
             stream=True,
         )
         return result
@@ -218,7 +218,7 @@ class TestLLMChatCompletionsStreaming(unittest.TestCase):
                 },
             ],
             model=model,
-            max_tokens=100,
+            max_tokens=MAX_TOKENS,
             stream=True,
         )
         return result
