@@ -19,9 +19,6 @@ PROVIDER_MODEL_MAP = {
 
 
 MODELS_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_COHERE, PROVIDER_GOOGLE, PROVIDER_STABILITYAI]
-COMPLETIONS_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_GOOGLE, PROVIDER_COHERE, PROVIDER_ANTHROPIC]
-COMPLETIONS_WITH_FN_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_GOOGLE]
-IMAGE_GENERATION_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_STABILITYAI]
 
 IMAGE_GENERATION_PROVIDER_MODEL_MAP = {
     PROVIDER_OPENAI: "dall-e-2",
@@ -29,7 +26,7 @@ IMAGE_GENERATION_PROVIDER_MODEL_MAP = {
 }
 
 
-class TestLLM(unittest.TestCase):
+class TestLLMModels(unittest.TestCase):
     def _initialize_client(self, provider):
         return LLM(
             provider=provider,
@@ -40,11 +37,41 @@ class TestLLM(unittest.TestCase):
             cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
         )
 
-    def test_models(self):
-        for provider in MODELS_PROVIDER_LIST:
-            client = self._initialize_client(provider)
-            model_ids = [model.id for model in client.models.list()]
-            self.assertTrue(len(model_ids) > 0)
+    def test_openai_models(self):
+        client = self._initialize_client(PROVIDER_OPENAI)
+        model_ids = [model.id for model in client.models.list()]
+        self.assertTrue(len(model_ids) > 0)
+
+    def test_google_models(self):
+        client = self._initialize_client(PROVIDER_GOOGLE)
+        model_ids = [model.id for model in client.models.list()]
+        self.assertTrue(len(model_ids) > 0)
+
+    def test_stabilityai_models(self):
+        client = self._initialize_client(PROVIDER_STABILITYAI)
+        model_ids = [model.id for model in client.models.list()]
+        self.assertTrue(len(model_ids) > 0)
+
+    def test_cohere_models(self):
+        client = self._initialize_client(PROVIDER_COHERE)
+        model_ids = [model.id for model in client.models.list()]
+        self.assertTrue(len(model_ids) > 0)
+
+
+COMPLETIONS_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_GOOGLE, PROVIDER_COHERE]
+COMPLETIONS_WITH_FN_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_GOOGLE]
+
+
+class TestLLMChatCompletions(unittest.TestCase):
+    def _initialize_client(self, provider):
+        return LLM(
+            provider=provider,
+            openai_api_key=os.environ.get("DEFAULT_OPENAI_KEY"),
+            stabilityai_api_key=os.environ.get("DEFAULT_STABILITYAI_KEY"),
+            google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
+            anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
+            cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
+        )
 
     def test_chat_completions_single_text(self):
         for provider in COMPLETIONS_PROVIDER_LIST:
@@ -125,6 +152,18 @@ class TestLLM(unittest.TestCase):
             for chunk in result:
                 if chunk.choices[0].finish_reason is None:
                     self.assertIsNotNone(chunk.choices[0].delta.content_str)
+
+
+class TestLLMChatFunctionCalling(unittest.TestCase):
+    def _initialize_client(self, provider):
+        return LLM(
+            provider=provider,
+            openai_api_key=os.environ.get("DEFAULT_OPENAI_KEY"),
+            stabilityai_api_key=os.environ.get("DEFAULT_STABILITYAI_KEY"),
+            google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
+            anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
+            cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
+        )
 
     def test_completions_function_calling(self):
         for provider in COMPLETIONS_WITH_FN_PROVIDER_LIST:
@@ -219,6 +258,21 @@ class TestLLM(unittest.TestCase):
             function_args = list(filter(lambda entry: entry != "", function_args))
             self.assertEqual(function_names, ["get_current_weather"])
             self.assertGreater(len(function_args[0]), 1)
+
+
+IMAGE_GENERATION_PROVIDER_LIST = [PROVIDER_OPENAI, PROVIDER_STABILITYAI]
+
+
+class TestLLMImageGeneration(unittest.TestCase):
+    def _initialize_client(self, provider):
+        return LLM(
+            provider=provider,
+            openai_api_key=os.environ.get("DEFAULT_OPENAI_KEY"),
+            stabilityai_api_key=os.environ.get("DEFAULT_STABILITYAI_KEY"),
+            google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
+            anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
+            cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
+        )
 
     def test_image_generation(self):
         for provider in IMAGE_GENERATION_PROVIDER_LIST:
