@@ -27,7 +27,7 @@ class Models(OpenAIModels):
         """
         if self._client._llm_router_provider == PROVIDER_STABILITYAI:
             return self._get_api_list(
-                "/engines/list",
+                "v1/engines/list",
                 page=SyncPage[Model],
                 options=make_request_options(
                     extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout

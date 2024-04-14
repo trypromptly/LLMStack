@@ -114,29 +114,6 @@ class LLMRestStream(Stream[_T]):
 
 
 class LLMAnthropicStream(Stream[_T]):
-    def __init__(
-        self,
-        *,
-        cast_to: type[_T],
-        response: httpx.Response,
-        client: Any,
-    ) -> None:
-        self.response = response
-        self._cast_to = cast_to
-        self._client = client
-        self._decoder = SSEDecoder()
-        self._iterator = self.__stream__()
-
-    def __next__(self) -> _T:
-        return self._iterator.__next__()
-
-    def __iter__(self) -> Iterator[_T]:
-        for item in self._iterator:
-            yield item
-
-    def _iter_events(self) -> Iterator[ServerSentEvent]:
-        yield from self._decoder.iter(self.response.iter_lines())
-
     def __stream__(self) -> Iterator[_T]:
         cast_to = cast(Any, self._cast_to)
         response = self.response

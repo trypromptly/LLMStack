@@ -164,7 +164,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
     @staticmethod
     def description() -> str:
-        return "Simple LLM processor for all providers"
+        return "Simple LLM Chat completions processor"
 
     @staticmethod
     def provider_slug() -> str:
