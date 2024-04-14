@@ -73,21 +73,35 @@ class TestLLMChatCompletions(unittest.TestCase):
             cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
         )
 
-    def test_chat_completions_single_text(self):
-        for provider in COMPLETIONS_PROVIDER_LIST:
-            client = self._initialize_client(provider)
-            result = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": "Say this is a test",
-                    }
-                ],
-                model=PROVIDER_MODEL_MAP[provider],
-                max_tokens=100,
-            )
-            for choice in result.choices:
-                self.assertIsNotNone(choice.message.content_str)
+    def _call_chat_completions_single_text(self, provider, model):
+        client = self._initialize_client(provider)
+        result = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Say this is a test",
+                }
+            ],
+            model=model,
+            max_tokens=100,
+        )
+        return result
+
+    def test_openai_chat_completions_single_text(self):
+        result = self._call_chat_completions_single_text(PROVIDER_OPENAI, PROVIDER_MODEL_MAP[PROVIDER_OPENAI])
+        self.assertIsNotNone(result.choices[0].message.content_str)
+
+    def test_google_chat_completions_single_text(self):
+        result = self._call_chat_completions_single_text(PROVIDER_GOOGLE, PROVIDER_MODEL_MAP[PROVIDER_GOOGLE])
+        self.assertIsNotNone(result.choices[0].message.content_str)
+
+    def test_cohere_chat_completions_single_text(self):
+        result = self._call_chat_completions_single_text(PROVIDER_COHERE, PROVIDER_MODEL_MAP[PROVIDER_COHERE])
+        self.assertIsNotNone(result.choices[0].message.content_str)
+
+    def test_anthropic_chat_completions_single_text(self):
+        result = self._call_chat_completions_single_text(PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC])
+        self.assertIsNotNone(result.choices[0].message.content_str)
 
     def test_chat_completions_multiple_parts(self):
         for provider in COMPLETIONS_PROVIDER_LIST:
