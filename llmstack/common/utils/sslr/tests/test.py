@@ -194,16 +194,16 @@ class TestLLMChatCompletionsStreaming(unittest.TestCase):
             if chunk.choices[0].finish_reason is None:
                 self.assertIsNotNone(chunk.choices[0].delta.content_str)
 
-    # def test_chat_completions_single_text_streaming_anthropic(self):
-    #     import openai
+    def test_chat_completions_single_text_streaming_anthropic(self):
+        import openai
 
-    #     result = self._call_chat_completions_single_text_streaming(
-    #         PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC]
-    #     )
-    #     self.assertIsInstance(result, openai.Stream)
-    #     for chunk in result:
-    #         if chunk.choices[0].finish_reason is None:
-    #             self.assertIsNotNone(chunk.choices[0].delta.content_str)
+        result = self._call_chat_completions_single_text_streaming(
+            PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC]
+        )
+        self.assertIsInstance(result, openai.Stream)
+        for chunk in result:
+            if chunk.choices[0].finish_reason is None:
+                self.assertIsNotNone(chunk.choices[0].delta.content_str)
 
     def _call_chat_completions_multiple_parts_streaming(self, provider, model):
         client = self._initialize_client(provider)
@@ -256,16 +256,16 @@ class TestLLMChatCompletionsStreaming(unittest.TestCase):
             if chunk.choices[0].finish_reason is None:
                 self.assertIsNotNone(chunk.choices[0].delta.content_str)
 
-    # def test_chat_completions_multiple_parts_streaming_anthropic(self):
-    #     import openai
+    def test_chat_completions_multiple_parts_streaming_anthropic(self):
+        import openai
 
-    #     result = self._call_chat_completions_multiple_parts_streaming(
-    #         PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC]
-    #     )
-    #     self.assertIsInstance(result, openai.Stream)
-    #     for chunk in result:
-    #         if chunk.choices[0].finish_reason is None:
-    #             self.assertIsNotNone(chunk.choices[0].delta.content_str)
+        result = self._call_chat_completions_multiple_parts_streaming(
+            PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC]
+        )
+        self.assertIsInstance(result, openai.Stream)
+        for chunk in result:
+            if chunk.choices[0].finish_reason is None:
+                self.assertIsNotNone(chunk.choices[0].delta.content_str)
 
 
 class TestLLMChatFunctionCalling(unittest.TestCase):
