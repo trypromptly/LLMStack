@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, QueryDict
 from django_ratelimit.exceptions import Ratelimited
+from flags.state import flag_enabled
 
 from llmstack.connections.actors import ConnectionActivationActor
 from llmstack.connections.models import (
@@ -28,6 +29,19 @@ is_usage_limited_fn = getattr(usage_limiter_module, "is_usage_limited", None)
 
 class UsageLimitReached(PermissionDenied):
     pass
+
+
+class OutOfCredits(PermissionDenied):
+    pass
+
+
+@database_sync_to_async
+def _usage_limit_exceeded(request, user):
+    return flag_enabled(
+        "HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA",
+        request=request,
+        user=request.user,
+    )
 
 
 @database_sync_to_async
@@ -252,6 +266,11 @@ class PlaygroundConsumer(AppConsumer):
 
     def _run_app(self, request_uuid, request, **kwargs):
         from llmstack.apps.apis import AppViewSet
+
+        if _usage_limit_exceeded(request, self._run_app):
+            raise OutOfCredits(
+                "You have exceeded your usage credits. Please add credits to your account from settings to continue using the platform.",
+            )
 
         return AppViewSet().run_playground_internal_async(
             session_id=self._session_id,
