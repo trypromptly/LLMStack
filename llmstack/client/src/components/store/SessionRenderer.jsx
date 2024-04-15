@@ -13,6 +13,10 @@ import { appRunDataState } from "../../data/atoms";
 import StoreAppHeader from "./StoreAppHeader";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import { useCallback } from "react";
+import {
+  defaultChatLayout,
+  defaultWorkflowLayout,
+} from "../apps/renderer/AppRenderer";
 
 const SessionRenderer = ({ sessionData, noHeader = false }) => {
   const storeApp = sessionData?.store_app;
@@ -103,7 +107,8 @@ const SessionRenderer = ({ sessionData, noHeader = false }) => {
   const memoizedLayoutRenderer = useMemo(
     () => (
       <LayoutRenderer noInput>
-        {storeApp?.data?.config?.layout || ""}
+        {storeApp?.data?.config?.layout ||
+          (appTypeSlug === "web" ? defaultWorkflowLayout : defaultChatLayout)}
       </LayoutRenderer>
     ),
     [storeApp],
