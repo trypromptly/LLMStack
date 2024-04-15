@@ -99,7 +99,7 @@ const PinnedPosts = ({ username }) => {
     const handleResize = () => {
       if (containerRef.current) {
         const width = containerRef.current.clientWidth;
-        const newCols = Math.floor(width / 280);
+        const newCols = Math.floor(width / 220);
         setCols(newCols);
       }
     };
