@@ -412,7 +412,10 @@ export default function Sidebar({ menuItems }) {
                 }}
                 onClick={(e) => {
                   e.preventDefault();
-                  navigate(`/u/${profile?.username}`);
+
+                  if (isLoggedIn && profile?.username) {
+                    navigate(`/u/${profile?.username}`);
+                  }
                 }}
               >
                 <ListItemIcon
