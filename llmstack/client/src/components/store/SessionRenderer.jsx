@@ -111,7 +111,7 @@ const SessionRenderer = ({ sessionData, noHeader = false }) => {
           (appTypeSlug === "web" ? defaultWorkflowLayout : defaultChatLayout)}
       </LayoutRenderer>
     ),
-    [storeApp],
+    [storeApp, appTypeSlug],
   );
 
   if (!storeApp) {
