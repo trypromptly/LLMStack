@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Button,
   CircularProgress,
   Divider,
+  ImageList,
+  ImageListItem,
   Stack,
   Typography,
 } from "@mui/material";
@@ -16,11 +18,10 @@ const Post = ({ post, username }) => {
   const { share } = post;
 
   return (
-    <Grid>
+    <ImageListItem key={share}>
       <Stack
         sx={{
-          maxWidth: "300px",
-          minWidth: "200px",
+          display: "inline-block",
           borderRadius: 2,
           border: "solid 1px #eee",
           padding: 2,
@@ -84,13 +85,31 @@ const Post = ({ post, username }) => {
           </Button>
         </Stack>
       </Stack>
-    </Grid>
+    </ImageListItem>
   );
 };
 
 const PinnedPosts = ({ username }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cols, setCols] = useState(1);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.clientWidth;
+        const newCols = Math.floor(width / 280);
+        setCols(newCols);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [containerRef]);
 
   useEffect(() => {
     // TODO: handle pagination
@@ -109,17 +128,31 @@ const PinnedPosts = ({ username }) => {
   }, [username]);
 
   return (
-    <Grid container gap={4} sx={{ justifyContent: "space-around" }}>
-      {loading && <CircularProgress />}
-      {posts.length === 0 && !loading ? (
-        <Grid>
-          <Typography variant="body1">No pinned posts</Typography>
-        </Grid>
-      ) : (
-        posts.map((post, index) => (
-          <Post key={index} post={post} username={username} />
-        ))
-      )}
+    <Grid
+      container
+      gap={4}
+      sx={{ justifyContent: "space-around", paddingTop: 0 }}
+      ref={containerRef}
+      columns={cols}
+    >
+      <ImageList
+        variant="masonry"
+        cols={cols}
+        gap={12}
+        rowHeight={"auto"}
+        sx={{ marginTop: 0 }}
+      >
+        {loading && <CircularProgress />}
+        {posts.length === 0 && !loading ? (
+          <Grid>
+            <Typography variant="body1">No pinned posts</Typography>
+          </Grid>
+        ) : (
+          posts.map((post, index) => (
+            <Post key={index} post={post} username={username} />
+          ))
+        )}
+      </ImageList>
     </Grid>
   );
 };
