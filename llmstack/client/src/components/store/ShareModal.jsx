@@ -280,7 +280,7 @@ export default function ShareModal({
             {appRunData?.sessionId ? "Create Link" : "Done"}
           </LoadingButton>
         )}
-        {!shareCode && !profile?.username && (
+        {shareCode && !profile?.username && (
           <LoadingButton
             key="submit"
             variant="contained"
