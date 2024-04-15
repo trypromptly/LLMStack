@@ -18,7 +18,7 @@ import "ace-builds/src-noconflict/theme-chrome";
 const defaultPlaygroundLayout = `<pa-layout sx='{"width": "100%", "margin": "10px auto"}'>
   <pa-paper style="padding: 10px;">
     <pa-grid container="true" spacing="2" style="width: 100%">
-      <pa-grid item="true" xs="2">
+      <pa-grid item="true" xs="12">
         <pa-workflow-output></pa-workflow-output>
       </pa-grid>
     </pa-grid>
