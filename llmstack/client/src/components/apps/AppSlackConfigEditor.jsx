@@ -32,12 +32,32 @@ const slackConfigSchema = {
       description:
         "Signing secret to verify the request from Slack. This secret is available at Features > Basic Information in your app page. More details https://api.slack.com/authentication/verifying-requests-from-slack",
     },
+    slash_command_name: {
+      type: "string",
+      title: "Slash Command Name",
+      description:
+        "The name of the slash command that will be used to trigger the app. Slack commands must start with a slash, be all lowercase, and contain no spaces. Examples: /deploy, /ack, /weather. Ensure that the bot has access to the commands scope under Features > OAuth & Permissions.",
+    },
+    slash_command_description: {
+      type: "string",
+      title: "Slash Command Description",
+      description:
+        "The description of the slash command that will be used to trigger the app.",
+    },
   },
   required: ["app_id", "bot_token", "verification_token", "signing_secret"],
 };
 
 const slackConfigUISchema = {
   app_id: {
+    "ui:widget": "text",
+    "ui:emptyValue": "",
+  },
+  slash_command_name: {
+    "ui:widget": "text",
+    "ui:emptyValue": "",
+  },
+  slash_command_description: {
     "ui:widget": "text",
     "ui:emptyValue": "",
   },
@@ -63,6 +83,8 @@ export function AppSlackConfigEditor(props) {
   function slackConfigValidate(formData, errors, uiSchema) {
     if (
       formData.app_id ||
+      formData.slash_command_name ||
+      formData.slash_command_description ||
       formData.bot_token ||
       formData.verification_token ||
       formData.signing_secret
@@ -78,6 +100,20 @@ export function AppSlackConfigEditor(props) {
       }
       if (!formData.signing_secret) {
         errors.signing_secret.addError("Signing Secret is required");
+      }
+
+      const hasSlashCommand = Boolean(
+        formData.slash_command_name || formData.slash_command_description,
+      );
+      if (hasSlashCommand) {
+        if (!formData.slash_command_name) {
+          errors.slash_command_name.addError("Slash Command Name is required");
+        }
+        if (!formData.slash_command_description) {
+          errors.slash_command_description.addError(
+            "Slash Command Description is required",
+          );
+        }
       }
     }
 

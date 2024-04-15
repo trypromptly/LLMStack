@@ -51,6 +51,8 @@ class SlackIntegrationConfig(AppIntegrationConfig):
     config_type = "slack"
     is_encrypted = True
     app_id: str = ""
+    slash_command_name: str = ""
+    slash_command_description: str = ""
     bot_token: str = ""
     verification_token: str = ""
     signing_secret: str = ""
