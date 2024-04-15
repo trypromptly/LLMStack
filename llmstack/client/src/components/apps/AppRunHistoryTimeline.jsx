@@ -107,6 +107,7 @@ const ExpandedRowItem = ({ label, value, content_type = null }) => {
           showPrintMargin={false}
           showLineNumbers={false}
           showGutter={false}
+          setOptions={{ useWorker: false }}
           onLoad={(editor) => {
             const maxEditorHeight = 200;
 
