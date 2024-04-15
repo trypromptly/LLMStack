@@ -40,7 +40,7 @@ def _usage_limit_exceeded(request, user):
     return flag_enabled(
         "HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA",
         request=request,
-        user=request.user,
+        user=user,
     )
 
 
@@ -93,10 +93,10 @@ class AppConsumer(AsyncWebsocketConsumer):
         # TODO: Close the stream
         pass
 
-    def _run_app(self, request_uuid, request, **kwargs):
+    async def _run_app(self, request_uuid, request, **kwargs):
         from llmstack.apps.apis import AppViewSet
 
-        return AppViewSet().run_app_internal_async(
+        return await AppViewSet().run_app_internal_async(
             uid=self.app_id,
             session_id=self._session_id,
             request_uuid=request_uuid,
@@ -264,15 +264,15 @@ class PlaygroundConsumer(AppConsumer):
         self._coordinator_ref = None
         await self.accept()
 
-    def _run_app(self, request_uuid, request, **kwargs):
+    async def _run_app(self, request_uuid, request, **kwargs):
         from llmstack.apps.apis import AppViewSet
 
-        if _usage_limit_exceeded(request, self._run_app):
+        if await _usage_limit_exceeded(request, request.user):
             raise OutOfCredits(
                 "You have exceeded your usage credits. Please add credits to your account from settings to continue using the platform.",
             )
 
-        return AppViewSet().run_playground_internal_async(
+        return await AppViewSet().run_playground_internal_async(
             session_id=self._session_id,
             request_uuid=request_uuid,
             request=request,
