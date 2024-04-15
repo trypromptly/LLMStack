@@ -895,6 +895,24 @@ const parseAndRebuildDataProps = () => {
   };
 };
 
+// A rephype plugin to replace p tags that are simply wrapped around pa-* elements with the pa-* element
+const parseAndRebuildPTags = () => {
+  return (tree) => {
+    visit(tree, (node, index, parent) => {
+      if (node && isElement(node) && node.tagName === "p") {
+        if (
+          node.children &&
+          node.children.length === 1 &&
+          isElement(node.children[0]) &&
+          node.children[0].tagName.startsWith("pa-")
+        ) {
+          parent.children[index] = node.children[0];
+        }
+      }
+    });
+  };
+};
+
 export default function LayoutRenderer({
   runApp,
   runProcessor,
@@ -904,7 +922,12 @@ export default function LayoutRenderer({
 }) {
   const memoizedRemarkPlugins = useMemo(() => [remarkGfm], []);
   const memoizedRehypePlugins = useMemo(
-    () => [rehypeRaw, parseAndRebuildSxProps, parseAndRebuildDataProps],
+    () => [
+      rehypeRaw,
+      parseAndRebuildSxProps,
+      parseAndRebuildDataProps,
+      parseAndRebuildPTags,
+    ],
     [],
   );
   const memoizedRunApp = useCallback(runApp, [runApp]);
@@ -926,6 +949,22 @@ export default function LayoutRenderer({
       "promptly-web-browser-embed": memo(({ node, ...props }) => {
         return <RemoteBrowserEmbed wsUrl={props?.wsurl} />;
       }),
+      "pa-video-embed": memo(
+        ({ node, ...props }) => {
+          return (
+            <Box sx={props.sx || {}}>
+              <iframe
+                src={props.src}
+                width={props.width || "100%"}
+                height={props.height || "100%"}
+                allowFullScreen
+                title={props.title}
+              />
+            </Box>
+          );
+        },
+        (prev, next) => prev.props === next.props,
+      ),
       "pa-layout": memo(
         ({ node, ...props }) => {
           return <Box {...props}>{props.children}</Box>;
