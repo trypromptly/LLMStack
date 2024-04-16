@@ -198,9 +198,7 @@ export default function Search({ appSlug }) {
       ? `categories/recommended/${appSlug}/apps`
       : "categories/featured/apps",
   );
-  const categoriesList = useRecoilValue(storeCategoriesListState).filter(
-    (category) => !(category.slug === "recommended" && !appSlug),
-  );
+  const categoriesList = useRecoilValue(storeCategoriesListState);
   const [appCategories, setAppCategories] = useState(categoriesList);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -210,8 +208,17 @@ export default function Search({ appSlug }) {
       categorySlug === "recommended");
 
   useEffect(() => {
+    let listCategories = categoriesList;
+
+    if (!appSlug) {
+      listCategories = categoriesList.filter(
+        (category) => !(category.slug === "recommended"),
+      );
+    }
+
+    setAppCategories(listCategories);
+
     if (categoryFilter && searchTerm === "") {
-      setAppCategories(categoriesList);
       setQueryTerm(
         categoryFilter.toLowerCase().startsWith("recommended")
           ? `categories/recommended/${appSlug}/apps`
