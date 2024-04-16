@@ -673,6 +673,10 @@ class AppSessionFiles(Assets):
             if app.has_write_permission(request_user):
                 return True
 
+            # If username is unavailable in metadata and the app is public, user can access it
+            if app.is_public and app.is_published and not metadata.get("username", "") and not username:
+                return True
+
         return False
 
 
