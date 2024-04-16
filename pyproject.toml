@@ -139,7 +139,6 @@ pikepdf = "^8.11.0"
 pypdf = "^4.0.1"
 python-docx = "^1.1.0"
 cohere = "5.0.0"
-django-allauth = {extras = ["saml"], version = "^0.61.1"}
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
@@ -152,7 +151,7 @@ optional = false
 
 [tool.poetry.group.server.dependencies]
 django = {version = "5.0", python = ">=3.10,<3.12" }
-django-allauth = {version = "^0.61.1", allow-prereleases = true}
+django-allauth = {version = "^0.61.1", allow-prereleases = true, extras = ["saml"]}
 django-environ = {version = "^0.10.0", allow-prereleases = true}
 django-picklefield = {version = "^3.1", allow-prereleases = true}
 django-redis = {version = "^5.2.0", allow-prereleases = true}
