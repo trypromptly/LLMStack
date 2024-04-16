@@ -91,6 +91,7 @@ const Post = ({ post, username }) => {
 
 const PinnedPosts = ({ username }) => {
   const [posts, setPosts] = useState([]);
+  const [nextPage, setNextPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cols, setCols] = useState(1);
   const containerRef = useRef(null);
@@ -111,13 +112,22 @@ const PinnedPosts = ({ username }) => {
     };
   }, [containerRef]);
 
-  useEffect(() => {
-    // TODO: handle pagination
+  const fetchNextPage = (page) => {
     setLoading(true);
     axios()
-      .get(`/api/profiles/${username}/posts`)
+      .get(page)
       .then((response) => {
-        setPosts(response.data?.results || []);
+        setPosts([...posts, ...response.data.results]);
+        if (response?.data?.next) {
+          setNextPage(
+            response.data.next?.replaceAll(
+              response.data.next?.split("/api/")[0],
+              "",
+            ),
+          );
+        } else {
+          setNextPage(null);
+        }
       })
       .catch((error) => {
         console.error(error);
@@ -125,6 +135,12 @@ const PinnedPosts = ({ username }) => {
       .finally(() => {
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    // TODO: handle pagination
+    const url = `/api/profiles/${username}/posts`;
+    fetchNextPage(url);
   }, [username]);
 
   return (
@@ -135,6 +151,7 @@ const PinnedPosts = ({ username }) => {
       ref={containerRef}
       columns={cols}
     >
+      {loading && <CircularProgress />}
       <ImageList
         variant="masonry"
         cols={cols}
@@ -142,7 +159,6 @@ const PinnedPosts = ({ username }) => {
         rowHeight={"auto"}
         sx={{ marginTop: 0 }}
       >
-        {loading && <CircularProgress />}
         {posts.length === 0 && !loading ? (
           <Grid>
             <Typography variant="body1">No pinned posts</Typography>
@@ -153,6 +169,15 @@ const PinnedPosts = ({ username }) => {
           ))
         )}
       </ImageList>
+      {nextPage && (
+        <Button
+          variant="outlined"
+          onClick={() => fetchNextPage(nextPage)}
+          sx={{ margin: "20px 0" }}
+        >
+          Load More
+        </Button>
+      )}
     </Grid>
   );
 };
