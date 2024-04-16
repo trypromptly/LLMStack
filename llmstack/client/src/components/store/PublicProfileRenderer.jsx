@@ -8,7 +8,6 @@ const PublicProfileHeader = lazy(() => import("./PublicProfileHeader"));
 const SessionRenderer = lazy(() => import("./SessionRenderer"));
 
 const PublicProfileRenderer = ({ username, postSlug }) => {
-  const [publicProfile, setPublicProfile] = useState(null);
   const [sessionData, setSessionData] = useState({});
 
   useEffect(() => {
@@ -24,31 +23,10 @@ const PublicProfileRenderer = ({ username, postSlug }) => {
     }
   }, [username, postSlug]);
 
-  useEffect(() => {
-    // Fetch public profile data
-    axios()
-      .get(`/api/profiles/${username}`)
-      .then((response) => {
-        setPublicProfile(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, [username]);
-
-  if (!publicProfile) {
-    return null;
-  }
-
   return (
     <Grid container spacing={1} direction={"column"} sx={{ height: "100%" }}>
       <Grid>
-        <PublicProfileHeader
-          name={publicProfile.name}
-          avatar={publicProfile.avatar}
-          username={publicProfile.username}
-          sessionData={sessionData}
-        />
+        <PublicProfileHeader username={username} sessionData={sessionData} />
       </Grid>
       <Grid
         sx={{

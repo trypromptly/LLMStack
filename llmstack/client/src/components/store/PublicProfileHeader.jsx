@@ -1,6 +1,24 @@
+import { useEffect, useState } from "react";
 import { Avatar, Box, Card, Typography } from "@mui/material";
+import { axios } from "../../data/axios";
 
-function PublicProfileHeader({ name, avatar, username, sessionData }) {
+function PublicProfileHeader({ username, sessionData }) {
+  const [publicProfile, setPublicProfile] = useState(null);
+
+  useEffect(() => {
+    // Fetch public profile data
+    if (!username) return;
+
+    axios()
+      .get(`/api/profiles/${username}`)
+      .then((response) => {
+        setPublicProfile(response.data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [username]);
+
   return (
     <Card
       sx={{
@@ -32,8 +50,8 @@ function PublicProfileHeader({ name, avatar, username, sessionData }) {
           }}
         >
           <Avatar
-            src={avatar}
-            alt={name}
+            src={publicProfile?.avatar}
+            alt={publicProfile?.name}
             variant="square"
             sx={{ borderRadius: 2, cursor: "pointer" }}
             onClick={() => (window.location.href = `/u/${username}`)}
@@ -48,7 +66,9 @@ function PublicProfileHeader({ name, avatar, username, sessionData }) {
                   fontWeight: 600,
                 }}
               >
-                {sessionData?.metadata?.title || name}
+                {sessionData?.metadata?.title ||
+                  publicProfile?.name ||
+                  username}
               </Typography>
             </Box>
             <Typography
