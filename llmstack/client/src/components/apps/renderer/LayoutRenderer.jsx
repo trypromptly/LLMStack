@@ -737,6 +737,7 @@ export const PromptlyAppChatOutput = memo(
               messages={
                 appRunData?.suggestedMessages
                   ? appRunData?.suggestedMessages
+                      .slice()
                       .sort(() => Math.random() - 0.5)
                       .slice(0, 4)
                   : []
