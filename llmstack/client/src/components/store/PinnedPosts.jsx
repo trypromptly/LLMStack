@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import {
   Button,
   CircularProgress,
@@ -14,11 +14,11 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { axios } from "../../data/axios";
 import { AssetRenderer } from "../apps/renderer/AssetRenderer";
 
-const Post = ({ post, username }) => {
+const Post = forwardRef(({ post, username }, ref) => {
   const { share } = post;
 
   return (
-    <ImageListItem key={share}>
+    <ImageListItem key={share} ref={ref}>
       <Stack
         sx={{
           display: "inline-block",
@@ -87,20 +87,47 @@ const Post = ({ post, username }) => {
       </Stack>
     </ImageListItem>
   );
-};
+});
 
 const PinnedPosts = ({ username }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [cols, setCols] = useState(1);
+  const [nextPage, setNextPage] = useState(null);
   const containerRef = useRef(null);
+  const loaderRef = useRef(null);
+  const cols = useRef(3);
+
+  const loadNextPage = useCallback(() => {
+    setLoading(true);
+    axios()
+      .get(nextPage)
+      .then((response) => {
+        setPosts((posts) => [...posts, ...(response.data?.results || [])]);
+
+        if (response.data?.next) {
+          setNextPage(
+            response.data.next.replaceAll(
+              response.data.next.split("/api/")[0],
+              "",
+            ),
+          );
+        } else {
+          setNextPage(null);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [nextPage]);
 
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
         const width = containerRef.current.clientWidth;
-        const newCols = Math.floor(width / 220);
-        setCols(newCols);
+        cols.current = Math.floor(width / 220);
       }
     };
 
@@ -112,12 +139,33 @@ const PinnedPosts = ({ username }) => {
   }, [containerRef]);
 
   useEffect(() => {
+    if (loaderRef.current) {
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && nextPage) {
+          loadNextPage();
+        }
+      });
+      observer.observe(loaderRef.current);
+      return () => observer.disconnect();
+    }
+  }, [loaderRef, nextPage, loadNextPage]);
+
+  useEffect(() => {
     // TODO: handle pagination
     setLoading(true);
     axios()
       .get(`/api/profiles/${username}/posts`)
       .then((response) => {
         setPosts(response.data?.results || []);
+
+        if (response.data?.next) {
+          setNextPage(
+            response.data.next.replaceAll(
+              response.data.next.split("/api/")[0],
+              "",
+            ),
+          );
+        }
       })
       .catch((error) => {
         console.error(error);
@@ -133,11 +181,11 @@ const PinnedPosts = ({ username }) => {
       gap={4}
       sx={{ justifyContent: "space-around", paddingTop: 0 }}
       ref={containerRef}
-      columns={cols}
+      columns={cols.current}
     >
       <ImageList
         variant="masonry"
-        cols={cols}
+        cols={cols.current}
         gap={12}
         rowHeight={"auto"}
         sx={{ marginTop: 0 }}
@@ -149,7 +197,12 @@ const PinnedPosts = ({ username }) => {
           </Grid>
         ) : (
           posts.map((post, index) => (
-            <Post key={index} post={post} username={username} />
+            <Post
+              key={index}
+              post={post}
+              username={username}
+              ref={index + 1 === posts.length ? loaderRef : null}
+            />
           ))
         )}
       </ImageList>
