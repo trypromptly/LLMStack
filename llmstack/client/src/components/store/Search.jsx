@@ -198,7 +198,9 @@ export default function Search({ appSlug }) {
       ? `categories/recommended/${appSlug}/apps`
       : "categories/featured/apps",
   );
-  const categoriesList = useRecoilValue(storeCategoriesListState);
+  const categoriesList = useRecoilValue(storeCategoriesListState).filter(
+    (category) => !(category.slug === "recommended" && !appSlug),
+  );
   const [appCategories, setAppCategories] = useState(categoriesList);
   const [searchTerm, setSearchTerm] = useState("");
 
