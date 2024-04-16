@@ -734,7 +734,17 @@ export const PromptlyAppChatOutput = memo(
           appRunData?.suggestedMessages &&
           appRunData?.suggestedMessages?.length > 0 && (
             <SuggestedMessages
-              messages={appRunData?.suggestedMessages}
+              messages={
+                appRunData?.suggestedMessages
+                  ? appRunData?.suggestedMessages
+                      .slice()
+                      .sort(() => Math.random() - 0.5)
+                      .slice(
+                        0,
+                        Math.min(4, appRunData?.suggestedMessages.length),
+                      )
+                  : []
+              }
               onClick={(message) =>
                 appRunData?.inputFields?.length > 0 &&
                 runApp(
