@@ -37,7 +37,7 @@ class Images(OpenAIImages):
         extra_body: Body | None = None,
         timeout: Optional[float | httpx.Timeout | None] = NOT_GIVEN,
     ) -> images_response.ImagesResponse:
-        return self.create_variation(
+        return super().create_variation(
             image=image,
             model=model,
             n=n,
@@ -54,34 +54,63 @@ class Images(OpenAIImages):
         self,
         *,
         image: FileTypes,
-        prompt: str,
+        prompt: Optional[str] = None,
         mask: Union[FileTypes] = NOT_GIVEN,
         model: Union[str, Literal["dall-e-2"], None] = NOT_GIVEN,
         n: Optional[int] = NOT_GIVEN,
         response_format: Optional[Literal["url", "b64_json"]] = NOT_GIVEN,
         size: Optional[Literal["256x256", "512x512", "1024x1024"]] = NOT_GIVEN,
         user: str = NOT_GIVEN,
+        operation: Optional[Literal["inpaint", "outpaint", "search_replace", "remove_background"]] = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: Union[float, httpx.Timeout, None] = NOT_GIVEN,
+        **kwargs,
     ) -> images_response.ImagesResponse:
-        return super().edit(
-            image=image,
-            prompt=prompt,
-            mask=mask,
-            model=model,
-            n=n,
-            response_format=response_format,
-            size=size,
-            user=user,
-            extra_headers=extra_headers,
-            extra_query=extra_query,
-            extra_body=extra_body,
-            timeout=timeout,
-        )
+        response_format = "b64_json"
+        if response_format:
+            print(response_format)
+        if self._client._llm_router_provider == PROVIDER_OPENAI:
+            raise NotImplementedError("Edit image is not supported by OpenAI")
+        elif self._client._llm_router_provider == PROVIDER_STABILITYAI:
+            if model == "core":
+                if operation == "remove_background":
+                    path = "v2beta/stable-image/edit/remove-background"
+                    body = {"output_format": "png"}
+
+                    url = f"{self._client._base_url}{path}"
+                    header_accept = "application/json;type=image/png"
+                    response = requests.post(
+                        url=url,
+                        headers={"authorization": "Bearer " + self._client.api_key, "accept": header_accept},
+                        data=body,
+                        files={"image": image},
+                    )
+                    print(response.json())
+                    if response.status_code == 200:
+                        print(response.json())
+                        finish_reason = response.headers.get("finish_reason")
+                        if finish_reason == "CONTENT_FILTERED":
+                            raise self._client._make_status_error("Content filtered.", body=body, response=response)
+                        content_type = "image/png"
+                        seed = response.headers.get("seed")
+                        timestamp = int(datetime.now().timestamp())
+                        image_b64_str = response.json().get("image")
+                        timestamp = int(datetime.now().timestamp())
+                        return images_response.ImagesResponse(
+                            created=timestamp,
+                            data=[Image(b64_json=image_b64_str, mime_type=content_type, metadata={"seed": seed})],
+                        )
+                elif operation == "inpaint":
+                    pass
+                elif operation == "outpaint":
+                    pass
+                elif operation == "search_replace":
+                    pass
+                raise NotImplementedError("Edit image is not supported by StabilityAI")
 
     def generate(
         self,

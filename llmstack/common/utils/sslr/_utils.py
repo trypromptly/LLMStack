@@ -4,6 +4,8 @@ from typing import Any, Dict, Literal
 
 from openai._compat import cached_property  # type: ignore # noqa: F401
 from openai._utils import (  # type: ignore # noqa: F401
+    deepcopy_minimal,
+    extract_files,
     is_mapping,
     maybe_transform,
     required_args,
