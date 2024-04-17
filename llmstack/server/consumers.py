@@ -267,6 +267,9 @@ class PlaygroundConsumer(AppConsumer):
     async def _run_app(self, request_uuid, request, **kwargs):
         from llmstack.apps.apis import AppViewSet
 
+        if is_usage_limited_fn(request, self._run_app):
+            raise UsageLimitReached("Usage limit reached. Please login to continue.")
+
         if await _usage_limit_exceeded(request, request.user):
             raise OutOfCredits(
                 "You have exceeded your usage credits. Please add credits to your account from settings to continue using the platform.",
