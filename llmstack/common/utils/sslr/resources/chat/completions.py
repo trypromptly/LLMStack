@@ -228,6 +228,9 @@ class Completions(OpenAICompletions):
             if extra_body and "safe_prompt" in extra_body:
                 post_body_data["safe_prompt"] = extra_body["safe_prompt"]
 
+            if "seed" in post_body_data:
+                post_body_data.pop("seed")
+
         return self._post(
             path=path,
             body=maybe_transform(

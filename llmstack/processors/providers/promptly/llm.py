@@ -118,12 +118,34 @@ class CohereModelConfig(BaseModel):
     model: CohereModel = Field(default=CohereModel.COMMAND, description="The model for the LLM")
 
 
+class MistralModel(str, Enum):
+    MISTRAL_7B = "open-mistral-7b"
+    MIXTRAL_7B = "open-mixtral-8x7b"
+    MIXTRAL_22B = "open-mixtral-8x22b"
+    MIXTRAL_SMALL = "mistral-small-latest"
+    MIXTRAL_MEDIUM = "mistral-medium-latest"
+    MIXTRAL_LARGE = "mistral-large-latest"
+
+    def __str__(self):
+        return self.value
+
+    def model_name(self):
+        return self.value
+
+
+class MistralModelConfig(BaseModel):
+    provider: Literal["mistral"] = "mistral"
+    model: MistralModel = Field(default=MistralModel.MIXTRAL_SMALL, description="The model for the LLM")
+
+
 class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         description="The system message for the LLM", widget="textarea", advanced_parameter=False
     )
 
-    provider_config: Union[OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig] = Field(
+    provider_config: Union[
+        OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig, MistralModelConfig
+    ] = Field(
         descrmination_field="provider",
         advanced_parameter=False,
     )
@@ -185,6 +207,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             google_api_key=google_api_key,
             anthropic_api_key=self._env.get("anthropic_api_key"),
             cohere_api_key=self._env.get("cohere_api_key"),
+            mistral_api_key=self._env.get("mistral_api_key"),
         )
 
         messages = []
