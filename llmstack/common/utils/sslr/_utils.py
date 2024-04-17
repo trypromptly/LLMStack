@@ -12,6 +12,37 @@ from openai._utils import (  # type: ignore # noqa: F401
 )
 
 
+def resize_image_file(image_file: bytes, max_pixels: int, max_size: int):
+    from io import BytesIO
+
+    from PIL import Image
+
+    result = image_file
+    img = Image.open(BytesIO(image_file))
+    width, height = img.size
+    img_pixels = width * height
+    img_size = len(image_file)
+    resized_file = BytesIO()
+    if img_pixels > max_pixels:
+        reduction_factor = (max_pixels / img_pixels) ** 0.5
+        new_width = int(width * reduction_factor)
+        new_height = int(height * reduction_factor)
+        img = img.resize((new_width, new_height))
+        # Save the resized image to a in-memory file
+        img.save(resized_file, format="PNG")
+        resized_file.seek(0)
+        result = resized_file.getvalue()
+        img_size = len(result)
+
+    if img_size > max_size:
+        quality = int((max_size / img_size) * 100)
+        img.save(resized_file, format="PNG", quality=quality)
+        resized_file.seek(0)
+        result = resized_file.getvalue()
+
+    return result
+
+
 def generate_uuid(_str: str = None):
     import hashlib
     import uuid
