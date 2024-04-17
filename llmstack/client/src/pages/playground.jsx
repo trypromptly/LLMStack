@@ -170,7 +170,7 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <Box sx={{ margin: "10px 2px" }}>
+    <Box sx={{ margin: "16px" }}>
       {showLoginDialog && (
         <LoginDialog
           open={showLoginDialog}
