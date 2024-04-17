@@ -6,6 +6,7 @@ from llmstack.common.utils.sslr.constants import (
     PROVIDER_ANTHROPIC,
     PROVIDER_COHERE,
     PROVIDER_GOOGLE,
+    PROVIDER_MISTRAL,
     PROVIDER_OPENAI,
     PROVIDER_STABILITYAI,
 )
@@ -15,6 +16,7 @@ PROVIDER_MODEL_MAP = {
     PROVIDER_OPENAI: "gpt-3.5-turbo",
     PROVIDER_ANTHROPIC: "claude-2.1",
     PROVIDER_COHERE: "command",
+    PROVIDER_MISTRAL: "mistral-small-latest",
 }
 
 
@@ -71,6 +73,7 @@ class TestLLMChatCompletions(unittest.TestCase):
             google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
             anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
             cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
+            mistral_api_key=os.environ.get("DEFAULT_MISTRAL_KEY"),
         )
 
     def _call_chat_completions_single_text(self, provider, model):
@@ -101,6 +104,10 @@ class TestLLMChatCompletions(unittest.TestCase):
 
     def test_chat_completions_single_text_anthropic(self):
         result = self._call_chat_completions_single_text(PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC])
+        self.assertIsNotNone(result.choices[0].message.content_str)
+
+    def test_chat_completions_single_text_mistral(self):
+        result = self._call_chat_completions_single_text(PROVIDER_MISTRAL, PROVIDER_MODEL_MAP[PROVIDER_MISTRAL])
         self.assertIsNotNone(result.choices[0].message.content_str)
 
     def _call_chat_completions_multiple_parts(self, provider, model):
@@ -150,6 +157,7 @@ class TestLLMChatCompletionsStreaming(unittest.TestCase):
             google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
             anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
             cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
+            mistral_api_key=os.environ.get("DEFAULT_MISTRAL_KEY"),
         )
 
     def _call_chat_completions_single_text_streaming(self, provider, model):
@@ -199,6 +207,17 @@ class TestLLMChatCompletionsStreaming(unittest.TestCase):
 
         result = self._call_chat_completions_single_text_streaming(
             PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC]
+        )
+        self.assertIsInstance(result, openai.Stream)
+        for chunk in result:
+            if chunk.choices[0].finish_reason is None:
+                self.assertIsNotNone(chunk.choices[0].delta.content_str)
+
+    def test_chat_completions_single_text_streaming_mistral(self):
+        import openai
+
+        result = self._call_chat_completions_single_text_streaming(
+            PROVIDER_MISTRAL, PROVIDER_MODEL_MAP[PROVIDER_MISTRAL]
         )
         self.assertIsInstance(result, openai.Stream)
         for chunk in result:
