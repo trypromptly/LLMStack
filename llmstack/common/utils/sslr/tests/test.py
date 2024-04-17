@@ -2,6 +2,7 @@ import os
 import unittest
 
 from llmstack.common.utils.sslr import LLM
+from llmstack.common.utils.sslr._utils import resize_image_file
 from llmstack.common.utils.sslr.constants import (
     PROVIDER_ANTHROPIC,
     PROVIDER_COHERE,
@@ -446,10 +447,12 @@ class TestLLMImageEdit(unittest.TestCase):
         import pathlib
 
         image_file = f"{pathlib.Path(__file__).parent.resolve()}/test_image.jpg"
-        with open(image_file, "rb"):
+        with open(image_file, "rb") as f:
+            data = f.read()
             client = self._initialize_client(PROVIDER_STABILITYAI)
-            result = client.images.edit(image="resized_image_file_data", model="core", operation="remove_background")
-            print(result)
+            resized_img_file = resize_image_file(data, 4194304, 410094304)
+            result = client.images.edit(image=resized_img_file, model="core", operation="remove_background")
+            assert result.data[0].b64_json is not None
 
 
 if __name__ == "__main__":
