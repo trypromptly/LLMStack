@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
@@ -60,10 +60,7 @@ class MessagesInput(ApiProcessorSchema):
 
 
 class MessagesOutput(ApiProcessorSchema):
-    messages: List[ChatMessage] = Field(
-        default=[],
-        description="A list of messages, each with a role and message text.",
-    )
+    message: str = Field(description="The response message.")
 
 
 class MessagesConfiguration(ApiProcessorSchema):
@@ -86,18 +83,20 @@ class MessagesConfiguration(ApiProcessorSchema):
         advanced_parameter=False,
     )
     temperature: float = Field(
-        default=0.0,
+        default=0.5,
         description="Amount of randomness injected into the response.",
         multiple_of=0.1,
         ge=0.0,
         le=1.0,
         advanced_parameter=False,
     )
+    retain_history: Optional[bool] = Field(
+        default=False,
+        description="Retain and use the chat history. (Only works in apps)",
+    )
 
 
-class MessagesProcessor(
-    ApiProcessorInterface[MessagesInput, MessagesOutput, MessagesConfiguration],
-):
+class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, MessagesConfiguration]):
     @staticmethod
     def name() -> str:
         return "Messages"
@@ -114,6 +113,13 @@ class MessagesProcessor(
     def provider_slug() -> str:
         return "anthropic"
 
+    def process_session_data(self, session_data):
+        self._chat_history = session_data["chat_history"] if "chat_history" in session_data else []
+
+    def session_data_to_persist(self) -> dict:
+        if self._config.retain_history:
+            return {"chat_history": self._chat_history}
+
     def process(self) -> MessagesOutput:
         from llmstack.common.utils.sslr import LLM
 
@@ -124,8 +130,13 @@ class MessagesProcessor(
         messages = []
         if self._config.system_prompt:
             messages.append({"role": "system", "content": self._config.system_message})
+
+        if self._chat_history:
+            for message in self._chat_history:
+                messages.append({"role": message["role"], "content": message["message"]})
+
         for message in self._input.messages:
-            messages.append({"role": message.role, "content": message.message})
+            messages.append({"role": str(message.role), "content": str(message.message)})
 
         response = client.chat.completions.create(
             messages=messages,
@@ -136,10 +147,20 @@ class MessagesProcessor(
         )
 
         for result in response:
-            logger.info(f"result: {result}")
-            async_to_sync(self._output_stream.write)(
-                MessagesOutput(messages=[]),
-            )
+            choice = result.choices[0]
+            if choice.delta.content:
+                text_content = "".join(
+                    list(map(lambda entry: entry["data"] if entry["type"] == "text" else "", choice.delta.content))
+                )
+                async_to_sync(self._output_stream.write)(MessagesOutput(message=text_content))
+                text_content = ""
 
         output = self._output_stream.finalize()
+
+        if self._config.retain_history:
+            for message in self._input.messages:
+                self._chat_history.append({"role": str(message.role), "message": str(message.message)})
+
+            self._chat_history.append({"role": "assistant", "message": output.message})
+
         return output
