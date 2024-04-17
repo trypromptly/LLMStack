@@ -57,7 +57,7 @@ class LLMImageEditProcessorInput(ApiProcessorSchema):
         advanced_parameter=True,
     )
     operation: Optional[ImageEditOperation] = Field(
-        default=ImageEditOperation.INPAINT,
+        default=ImageEditOperation.SEARCH_REPLACE,
         description="The operation to perform on the image",
     )
 
