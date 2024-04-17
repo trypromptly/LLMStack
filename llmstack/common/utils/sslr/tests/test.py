@@ -431,6 +431,11 @@ class TestLLMImageGeneration(unittest.TestCase):
         assert len(result.data) == 1
         assert result.data[0].b64_json is not None
 
+    def test_image_generation_stabilityai_sd3(self):
+        result = self._call_image_generation(PROVIDER_STABILITYAI, "sd3-turbo")
+        assert len(result.data) == 1
+        assert result.data[0].b64_json is not None
+
 
 class TestLLMImageEdit(unittest.TestCase):
     def _initialize_client(self, provider):
