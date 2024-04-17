@@ -30,6 +30,7 @@ const navbarStyle = {
 
 export default function NavBar({ menuItems }) {
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [open, setOpen] = useState(false);
   const isLoggedIn = useRecoilValue(isLoggedInState);
   const navigate = useNavigate();
   const [loggedOutModalVisibility, setLoggedOutModalVisibility] =
@@ -38,10 +39,12 @@ export default function NavBar({ menuItems }) {
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
+    setOpen(true);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+    setOpen(false);
   };
 
   return (
@@ -68,11 +71,7 @@ export default function NavBar({ menuItems }) {
           <MenuIcon />
         </IconButton>
 
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-        >
+        <Menu anchorEl={anchorEl} open={open} onClose={handleMenuClose}>
           {menuItems.map((item) => (
             <MenuItem key={item.key} onClick={handleMenuClose}>
               <Link
