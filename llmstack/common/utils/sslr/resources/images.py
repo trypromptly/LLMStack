@@ -194,7 +194,6 @@ class Images(OpenAIImages):
                 if style:
                     body["style_preset"] = style
 
-                response_format = "url"
                 url = f"{self._client._base_url}{path}"
                 header_accept = "application/json;type=image/png"
                 response = requests.post(
@@ -216,9 +215,42 @@ class Images(OpenAIImages):
                         created=timestamp,
                         data=[Image(b64_json=image_b64_str, mime_type=content_type, metadata={"seed": seed})],
                     )
-
                 else:
                     raise self._client._make_status_error("Error in generating image.", body=body, response=response)
+            elif model == "sd3" or model == "sd3-turbo":
+                path = "v2beta/stable-image/generate/sd3"
+                body = {"prompt": prompt, "output_format": "png", "mode": "text-to-image", "model": model}
+                if aspect_ratio:
+                    body["aspect_ratio"] = aspect_ratio
+                if negative_prompt:
+                    body["negative_prompt"] = negative_prompt
+                if seed:
+                    body["seed"] = seed
+
+                url = f"{self._client._base_url}{path}"
+                header_accept = "application/json;type=image/png"
+                response = requests.post(
+                    url=url,
+                    headers={"authorization": "Bearer " + self._client.api_key, "accept": header_accept},
+                    data=body,
+                    files={"none": ""},
+                )
+                if response.status_code == 200:
+                    finish_reason = response.headers.get("finish_reason")
+                    if finish_reason == "CONTENT_FILTERED":
+                        raise self._client._make_status_error("Content filtered.", body=body, response=response)
+                    content_type = "image/png"
+                    seed = response.headers.get("seed")
+                    timestamp = int(datetime.now().timestamp())
+                    image_b64_str = response.json().get("image")
+                    timestamp = int(datetime.now().timestamp())
+                    return images_response.ImagesResponse(
+                        created=timestamp,
+                        data=[Image(b64_json=image_b64_str, mime_type=content_type, metadata={"seed": seed})],
+                    )
+                else:
+                    raise self._client._make_status_error("Error in generating image.", body=body, response=response)
+
             elif (
                 model == "stable-diffusion-xl-1024-v1-0"
                 or model == "stable-diffusion-v1-6"
