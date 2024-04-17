@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Literal, Optional, Union
 
@@ -14,6 +15,8 @@ from llmstack.common.utils.sslr.types.image import Image
 
 from .._utils import cached_property, maybe_transform
 from ..types import images_response
+
+logger = logging.getLogger(__name__)
 
 
 class Images(OpenAIImages):
@@ -68,7 +71,6 @@ class Images(OpenAIImages):
         extra_query: Query | None = None,
         extra_body: Body | None = None,
         timeout: Union[float, httpx.Timeout, None] = NOT_GIVEN,
-        **kwargs,
     ) -> images_response.ImagesResponse:
         response_format = "b64_json"
         if response_format:
@@ -77,9 +79,10 @@ class Images(OpenAIImages):
             raise NotImplementedError("Edit image is not supported by OpenAI")
         elif self._client._llm_router_provider == PROVIDER_STABILITYAI:
             if model == "core":
+                body = {"output_format": "png"}
+
                 if operation == "remove_background":
                     path = "v2beta/stable-image/edit/remove-background"
-                    body = {"output_format": "png"}
 
                     url = f"{self._client._base_url}{path}"
                     header_accept = "application/json;type=image/png"
@@ -107,7 +110,33 @@ class Images(OpenAIImages):
                 elif operation == "outpaint":
                     pass
                 elif operation == "search_replace":
-                    pass
+                    path = "v2beta/stable-image/edit/search-and-replace"
+                    body["prompt"] = prompt
+                    body["search_prompt"] = extra_body.get("search_prompt")
+                    url = f"{self._client._base_url}{path}"
+                    header_accept = "application/json;type=image/png"
+
+                    response = requests.post(
+                        url=url,
+                        headers={"authorization": "Bearer " + self._client.api_key, "accept": header_accept},
+                        data=body,
+                        files={"image": image},
+                    )
+
+                    if response.status_code == 200:
+                        finish_reason = response.headers.get("finish_reason")
+                        if finish_reason == "CONTENT_FILTERED":
+                            raise self._client._make_status_error("Content filtered.", body=body, response=response)
+                        content_type = "image/png"
+                        seed = response.headers.get("seed")
+                        timestamp = int(datetime.now().timestamp())
+                        image_b64_str = response.json().get("image")
+                        timestamp = int(datetime.now().timestamp())
+                        return images_response.ImagesResponse(
+                            created=timestamp,
+                            data=[Image(b64_json=image_b64_str, mime_type=content_type, metadata={"seed": seed})],
+                        )
+
                 raise NotImplementedError("Edit image is not supported by StabilityAI")
 
     def generate(
