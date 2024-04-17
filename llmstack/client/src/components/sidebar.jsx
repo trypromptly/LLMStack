@@ -207,7 +207,11 @@ export default function Sidebar({ menuItems }) {
                 onClick={(e) => {
                   e.preventDefault();
 
-                  if (isLoggedIn) {
+                  if (
+                    isLoggedIn ||
+                    item.link === "/" ||
+                    item.link === "/playground"
+                  ) {
                     navigate(item.link);
                   } else {
                     setLoginRedirectPath(item.link);
