@@ -30,6 +30,7 @@ def get_vendor_env_platform_defaults():
         "elevenlabs_api_key": settings.DEFAULT_ELEVENLABS_API_KEY,
         "google_service_account_json_key": settings.DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY,
         "aws_access_key_id": settings.DEFAULT_AWS_ACCESS_KEY_ID,
+        "mistral_api_key": settings.DEFAULT_MISTRAL_API_KEY,
     }
 
 
@@ -153,6 +154,13 @@ class AbstractProfile(models.Model):
         max_length=256,
         default=None,
         help_text="Anthropic API key to use with Anthropic models like Claude",
+        null=True,
+        blank=True,
+    )
+    mistral_api_key = models.CharField(
+        max_length=256,
+        default=None,
+        help_text="Mistral API key to use with Mistral backend",
         null=True,
         blank=True,
     )
@@ -421,6 +429,14 @@ class AbstractProfile(models.Model):
                 if api_key_value
                 else settings.DEFAULT_ANTHROPIC_API_KEY
             )
+        elif attrname == "mistral_api_key":
+            return (
+                self.decrypt_value(
+                    api_key_value,
+                )
+                if api_key_value
+                else settings.DEFAULT_MISTRAL_API_KEY
+            )
         elif attrname == "google_custom_search_api_key":
             return api_key_value if api_key_value else settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY
         elif attrname == "google_custom_search_cx":
@@ -469,6 +485,7 @@ class AbstractProfile(models.Model):
             "localai_api_key": self.get_vendor_key("localai_api_key"),
             "localai_base_url": self.get_vendor_key("localai_base_url"),
             "anthropic_api_key": self.get_vendor_key("anthropic_api_key"),
+            "mistral_api_key": self.get_vendor_key("mistral_api_key"),
             "weaviate_url": self.weaviate_url,
             "weaviate_api_key": self.weaviate_api_key,
             "weaviate_embedding_endpoint": self.vectostore_embedding_endpoint,
@@ -600,6 +617,7 @@ class AnonymousProfile:
     localai_api_key = None
     localai_base_url = None
     anthropic_api_key = None
+    mistral_api_key = None
     logo = None
     _connections = None
 
