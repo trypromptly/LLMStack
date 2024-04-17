@@ -14,8 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class CompletionsModel(str, Enum):
-    CLAUDE_2 = "claude-2"
-    CLAUDE_INSTANT = "claude-instant"
+    CLAUDE_2 = "claude-2.0"
+    CLAUDE_INSTANT = "claude-instant-1.2"
+    CLAUDE_2_1 = "claude-2.1"
 
     def __str__(self):
         return self.value
