@@ -632,12 +632,18 @@ class AppViewSet(viewsets.ViewSet):
         except Exception:
             processed_processors_data = processors_data
 
-        app_data_config = request.data["config"] if "config" in request.data else versioned_app_data.data["config"]
+        app_data_config = (
+            request.data["config"]
+            if "config" in request.data
+            else (versioned_app_data.data["config"] if versioned_app_data else None)
+        )
         if app_data_config:
             if "assistant_image" in app_data_config and app_data_config["assistant_image"]:
                 if not app_data_config["assistant_image"].startswith("data:image"):
                     # This is a URL instead of objref
-                    last_assistant_image = versioned_app_data.data["config"]["assistant_image"]
+                    last_assistant_image = (
+                        versioned_app_data.data["config"]["assistant_image"] if versioned_app_data else ""
+                    )
                     if last_assistant_image and last_assistant_image.startswith("objref:"):
                         app_data_config["assistant_image"] = last_assistant_image
 
