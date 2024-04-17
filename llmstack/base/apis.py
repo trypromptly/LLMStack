@@ -208,6 +208,19 @@ class ProfileViewSet(viewsets.ViewSet):
             else:
                 profile.anthropic_api_key = ""
 
+        if "mistral_api_key" in request.data and flag_enabled(
+            "CAN_ADD_KEYS",
+            request=request,
+        ):
+            should_update = True
+            mistral_api_key = request.data.get("mistral_api_key")
+            if mistral_api_key and len(mistral_api_key) > 0:
+                profile.mistral_api_key = profile.encrypt_value(
+                    mistral_api_key,
+                ).decode("utf-8")
+            else:
+                profile.mistral_api_key = ""
+
         if "logo" in request.data:
             should_update = True
             logo = request.data.get("logo")

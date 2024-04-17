@@ -23,6 +23,8 @@ import stabilityAiIcon_dark from "../../assets/images/stabilityai-icon-dark.png"
 import stabilityAiIcon_light from "../../assets/images/stabilityai-icon-light.png";
 import vertexAiIcon_dark from "../../assets/images/vertexai-icon-dark.png";
 import vertexAiIcon_light from "../../assets/images/vertexai-icon-light.png";
+import mistralAiIcon_light from "../../assets/images/mistral-icon-light.png";
+import mistralAiIcon_dark from "../../assets/images/mistral-icon-dark.png";
 
 const getIconImage = (icon, isActive) => {
   switch (icon?.replaceAll(" ", "").toLowerCase()) {
@@ -50,6 +52,8 @@ const getIconImage = (icon, isActive) => {
       return isActive ? linkedinIcon_dark : linkedinIcon_light;
     case "heygen":
       return isActive ? heygenIcon_dark : heygenIcon_light;
+    case "mistral":
+      return isActive ? mistralAiIcon_dark : mistralAiIcon_light;
     default:
       return promptlyIcon_light;
   }

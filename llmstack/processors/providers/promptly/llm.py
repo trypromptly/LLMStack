@@ -10,6 +10,9 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorSchema,
 )
 from llmstack.processors.providers.google import get_google_credential_from_env
+from llmstack.processors.providers.mistral.chat_completions import (
+    MessagesModel as MistralModel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,12 +121,19 @@ class CohereModelConfig(BaseModel):
     model: CohereModel = Field(default=CohereModel.COMMAND, description="The model for the LLM")
 
 
+class MistralModelConfig(BaseModel):
+    provider: Literal["mistral"] = "mistral"
+    model: MistralModel = Field(default=MistralModel.MIXTRAL_SMALL, description="The model for the LLM")
+
+
 class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         description="The system message for the LLM", widget="textarea", advanced_parameter=False
     )
 
-    provider_config: Union[OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig] = Field(
+    provider_config: Union[
+        OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig, MistralModelConfig
+    ] = Field(
         descrmination_field="provider",
         advanced_parameter=False,
     )
@@ -185,6 +195,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             google_api_key=google_api_key,
             anthropic_api_key=self._env.get("anthropic_api_key"),
             cohere_api_key=self._env.get("cohere_api_key"),
+            mistral_api_key=self._env.get("mistral_api_key"),
         )
 
         messages = []

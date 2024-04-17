@@ -30,7 +30,12 @@ from ..._utils import (
     maybe_transform,
     required_args,
 )
-from ...constants import PROVIDER_ANTHROPIC, PROVIDER_COHERE, PROVIDER_GOOGLE
+from ...constants import (
+    PROVIDER_ANTHROPIC,
+    PROVIDER_COHERE,
+    PROVIDER_GOOGLE,
+    PROVIDER_MISTRAL,
+)
 from ...types import chat as _chat
 from ...types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
@@ -182,6 +187,7 @@ class Completions(OpenAICompletions):
             "top_p": top_p,
             "user": user,
         }
+
         if self._client._llm_router_provider == PROVIDER_ANTHROPIC:
             path = "/messages"
             stream_cls = LLMAnthropicStream[_chat.ChatCompletionChunk]
@@ -215,6 +221,15 @@ class Completions(OpenAICompletions):
                 else:
                     raise ValueError("Invalid message content")
             post_body_data["message"] = msg
+        elif self._client._llm_router_provider == PROVIDER_MISTRAL:
+            path = "/chat/completions"
+            stream_cls = LLMRestStream[_chat.ChatCompletionChunk]
+            post_body_data["random_seed"] = seed
+            if extra_body and "safe_prompt" in extra_body:
+                post_body_data["safe_prompt"] = extra_body["safe_prompt"]
+
+            if "seed" in post_body_data:
+                post_body_data.pop("seed")
 
         return self._post(
             path=path,

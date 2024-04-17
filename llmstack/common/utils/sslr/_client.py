@@ -13,7 +13,13 @@ from typing_extensions import override
 
 from ._exceptions import LLMError
 from ._response import LLMResponse
-from ._streaming import AsyncStream, LLMAnthropicStream, LLMGRPCStream, LLMRestStream
+from ._streaming import (
+    AsyncStream,
+    LLMAnthropicStream,
+    LLMCohereStream,
+    LLMGRPCStream,
+    LLMRestStream,
+)
 from ._types import NOT_GIVEN, NotGiven, ResponseT, Timeout
 from ._utils import LLMHttpResponse, is_mapping
 from .constants import (
@@ -23,6 +29,7 @@ from .constants import (
     PROVIDER_COHERE,
     PROVIDER_GOOGLE,
     PROVIDER_LOCALAI,
+    PROVIDER_MISTRAL,
     PROVIDER_OPENAI,
     PROVIDER_STABILITYAI,
 )
@@ -213,7 +220,25 @@ class LLM(LLMClient, OpenAI):
     audio: Audio
     models: Models
 
-    # Stability AI options
+    # Mistral options
+    @overload
+    def __init__(
+        self,
+        *,
+        provider: Literal["mistral"],
+        mistral_api_key: str,
+        base_url: str,
+        organization: Optional[str] = None,
+        timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        default_headers: Optional[Mapping[str, str]] = None,
+        default_query: Optional[Mapping[str, object]] = None,
+        http_client: Optional[httpx.Client] = None,
+        _strict_response_validation: bool = False,
+    ) -> None:
+        ...
+
+    # Anthropic options
     @overload
     def __init__(
         self,
@@ -360,6 +385,7 @@ class LLM(LLMClient, OpenAI):
         anthropic_api_key: Optional[str] = None,
         azure_ad_token: Optional[str] = None,
         azure_ad_token_provider: Optional[AzureADTokenProvider] = None,
+        mistral_api_key: Optional[str] = None,
         organization: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
@@ -444,6 +470,11 @@ class LLM(LLMClient, OpenAI):
             if base_url is None:
                 base_url = "https://api.cohere.ai/v1"
 
+        elif provider == PROVIDER_MISTRAL:
+            api_key = mistral_api_key
+            if base_url is None:
+                base_url = "https://api.mistral.ai/v1"
+
         if api_key is None:
             # define a sentinel value to avoid any typing issues
             raise ValueError("api_key is required")
@@ -468,6 +499,8 @@ class LLM(LLMClient, OpenAI):
             self._default_stream_cls = LLMGRPCStream
         elif provider == PROVIDER_ANTHROPIC:
             self._default_stream_cls = LLMAnthropicStream
+        elif provider == PROVIDER_COHERE:
+            self._default_stream_cls = LLMCohereStream
 
         self.chat = Chat(self)
         self.embeddings = Embeddings(self)
