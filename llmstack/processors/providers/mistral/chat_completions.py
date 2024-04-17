@@ -64,14 +64,14 @@ class MessagesOutput(ApiProcessorSchema):
 class MessagesConfiguration(ApiProcessorSchema):
     system_prompt: str = Field(
         default="",
-        description="A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.",
+        description="A system prompt is a way of providing context and instructions to the model.",
         widget="textarea",
         advanced_parameter=False,
     )
 
     model: MessagesModel = Field(
         default=MessagesModel.MIXTRAL_SMALL,
-        description="The model that will generate the responses.",
+        description="The Mistral model that will generate the responses.",
         advanced_parameter=False,
     )
     max_tokens: int = Field(
@@ -125,6 +125,7 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
     def session_data_to_persist(self) -> dict:
         if self._config.retain_history:
             return {"chat_history": self._chat_history}
+        return {}
 
     def process(self) -> MessagesOutput:
         from llmstack.common.utils.sslr import LLM

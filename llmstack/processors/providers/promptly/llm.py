@@ -10,6 +10,9 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorSchema,
 )
 from llmstack.processors.providers.google import get_google_credential_from_env
+from llmstack.processors.providers.mistral.chat_completions import (
+    MessagesModel as MistralModel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -116,21 +119,6 @@ class CohereModel(str, Enum):
 class CohereModelConfig(BaseModel):
     provider: Literal["cohere"] = "cohere"
     model: CohereModel = Field(default=CohereModel.COMMAND, description="The model for the LLM")
-
-
-class MistralModel(str, Enum):
-    MISTRAL_7B = "open-mistral-7b"
-    MIXTRAL_7B = "open-mixtral-8x7b"
-    MIXTRAL_22B = "open-mixtral-8x22b"
-    MIXTRAL_SMALL = "mistral-small-latest"
-    MIXTRAL_MEDIUM = "mistral-medium-latest"
-    MIXTRAL_LARGE = "mistral-large-latest"
-
-    def __str__(self):
-        return self.value
-
-    def model_name(self):
-        return self.value
 
 
 class MistralModelConfig(BaseModel):
