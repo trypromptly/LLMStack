@@ -89,9 +89,7 @@ class Images(OpenAIImages):
                         data=body,
                         files={"image": image},
                     )
-                    print(response.json())
                     if response.status_code == 200:
-                        print(response.json())
                         finish_reason = response.headers.get("finish_reason")
                         if finish_reason == "CONTENT_FILTERED":
                             raise self._client._make_status_error("Content filtered.", body=body, response=response)
