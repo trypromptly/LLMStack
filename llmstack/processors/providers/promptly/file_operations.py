@@ -185,7 +185,7 @@ class FileOperationsProcessor(
         if not content and archive:
             result = self._get_all_session_assets(include_name=True, include_data=True)
             if result and "assets" in result and len(result["assets"]):
-                zipped_assets, archive_name = _create_archive(result["assets"])
+                zipped_assets, archive_name = _create_archive(result["assets"], directory)
                 asset = self._upload_asset_from_url(asset=zipped_assets)
                 async_to_sync(output_stream.write)(
                     FileOperationsOutput(
