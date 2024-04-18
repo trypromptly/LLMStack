@@ -1,40 +1,67 @@
-import json
 import logging
-import random
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-import grpc
-import stability_sdk.interfaces.gooseai.generation.generation_pb2 as generation
 from asgiref.sync import async_to_sync
-from google.protobuf.json_format import MessageToJson
 from pydantic import Field
-from stability_sdk import client
 
-from llmstack.common.utils.utils import get_key_or_raise
 from llmstack.processors.providers.api_processor_interface import (
-    IMAGE_WIDGET_NAME,
     ApiProcessorInterface,
     ApiProcessorSchema,
-)
-from llmstack.processors.providers.stabilityai.utils import (
-    GuidancePreset,
-    Sampler,
-    get_guidance_preset_enum,
-    get_sampler_grpc_enum,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class StableDiffusionModel(str, Enum):
-    STABLE_DIFFUSION_V1 = "stable-diffusion-v1"
-    STABLE_DIFFUSION_V1_5 = "stable-diffusion-v1-5"
-    STABLE_DIFFUSION_512_V2_0 = "stable-diffusion-512-v2-0"
-    STABLE_DIFFUSION_768_V2_0 = "stable-diffusion-512-v2-0"
-    STABLE_DIFFUSION_512_V2_1 = "stable-diffusion-512-v2-1"
-    STABLE_DIFFUSION_768_V2_1 = "stable-diffusion-768-v2-1"
-    STABLE_DIFFUSION_XL = "stable-diffusion-xl-beta-v2-2-2"
+class StabilityAIModel(str, Enum):
+    STABLE_DIFFUSION_XL = "stable-diffusion-xl"
+    STABLE_DIFFUSION = "stable-diffusion"
+    STABLE_DIFFUSION_XL_BETA = "stable-diffusion-xl-beta"
+    CORE = "core"
+    SD_3 = "sd3"
+    SD_3_TURBO = "sd3-turbo"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def model_name(self):
+        if self.value == "stable-diffusion-xl":
+            return "stable-diffusion-xl-1024-v1-0"
+        elif self.value == "stable-diffusion":
+            return "stable-diffusion-v1-6"
+        elif self.value == "stable-diffusion-xl-beta":
+            return "stable-diffusion-xl-beta-v2-2-2"
+        elif self.value == "core":
+            return "core"
+        elif self.value == "sd3":
+            return "sd3"
+        elif self.value == "sd3-turbo":
+            return "sd3-turbo"
+        else:
+            raise ValueError(f"Unknown model {self.value}")
+
+
+class Sampler(str, Enum):
+    ddim = "ddim"
+    plms = "plms"
+    k_euler = "k_euler"
+    k_euler_ancestral = "k_euler_ancestral"
+    k_heun = "k_heun"
+    k_dpm_2 = "k_dpm_2"
+    k_dpm_2_ancestral = "k_dpm_2_ancestral"
+    k_dpmpp_2m = "k_dpmpp_2m"
+
+    def __str__(self):
+        return self.value
+
+
+class GuidancePreset(str, Enum):
+    simple = "simple"
+    fast_blue = "fast_blue"
+    fast_green = "fast_green"
+    slow = "slow"
+    slower = "slower"
+    slowest = "slowest"
 
     def __str__(self):
         return self.value
@@ -56,18 +83,12 @@ class TextToImageOutput(ApiProcessorSchema):
     answer: List[str] = Field(
         default=[],
         description="The generated images.",
-        widget=IMAGE_WIDGET_NAME,
-    )
-    api_response: Optional[Dict] = Field(
-        default=None,
-        description="The raw response from the API.",
-        widget="hidden",
     )
 
 
 class TextToImageConfiguration(ApiProcessorSchema):
-    engine_id: StableDiffusionModel = Field(
-        default=StableDiffusionModel.STABLE_DIFFUSION_V1_5,
+    engine_id: StabilityAIModel = Field(
+        default=StabilityAIModel.STABLE_DIFFUSION_XL,
         description="Inference engine (model) to use.",
         advanced_parameter=False,
     )
@@ -113,9 +134,7 @@ class TextToImageConfiguration(ApiProcessorSchema):
     )
 
 
-class TextToImage(
-    ApiProcessorInterface[TextToImageInput, TextToImageOutput, TextToImageConfiguration],
-):
+class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, TextToImageConfiguration]):
     """
     StabilityAI Images Generations API
     """
@@ -137,92 +156,33 @@ class TextToImage(
         return "stabilityai"
 
     def process(self) -> dict:
-        stability_api_key = get_key_or_raise(
-            self._env,
-            "stabilityai_api_key",
-            "No stabilityai_api_key found in _env",
-        )
+        from llmstack.common.utils.sslr import LLM
+
         prompt = self._input.prompt
+        negative_prompt = self._input.negative_prompt
+
         if not prompt:
             raise Exception("Prompt is required")
 
-        negative_prompt = self._input.negative_prompt
         prompts = []
-        for p in prompt:
-            if p:
-                prompts.append(
-                    generation.Prompt(
-                        text=p,
-                        parameters=generation.PromptParameters(
-                            weight=1,
-                        ),
-                    ),
-                )
 
-        for p in negative_prompt:
-            if p:
-                prompts.append(
-                    generation.Prompt(
-                        text=p,
-                        parameters=generation.PromptParameters(
-                            weight=-1,
-                        ),
-                    ),
-                )
-
-        if self._config.seed == 0:
-            self._config.seed = random.randint(0, 2147483646)
-
-        stability_api = client.StabilityInference(
-            key=stability_api_key,
-            verbose=True,
-            engine=self._config.engine_id,
+        client = LLM(
+            provider="stabilityai",
+            stabilityai_api_key=self._env.get("stabilityai_api_key"),
         )
-        try:
-            grpc_response = stability_api.generate(
-                prompt=prompts,
-                height=self._config.height,
-                width=self._config.width,
-                cfg_scale=self._config.cfg_scale,
-                sampler=get_sampler_grpc_enum(self._config.sampler),
-                steps=self._config.steps,
-                seed=self._config.seed,
-                samples=self._config.num_samples,
-                guidance_preset=get_guidance_preset_enum(
-                    self._config.guidance_preset,
-                ),
-            )
-        except grpc.RpcError as grpc_ex:
-            logger.exception(grpc_ex)
-            raise Exception(grpc_ex.details())
-        except Exception as ex:
-            logger.exception(ex)
-            raise Exception(ex)
-
-        api_response = {"data": []}
-        image_count = 0
-        for resp in grpc_response:
-            resp_json = json.loads(MessageToJson(resp))
-            api_response["data"].append(resp_json)
-            if "artifacts" in resp_json:
-                for image_data in resp_json["artifacts"]:
-                    if image_data["type"] == "ARTIFACT_IMAGE":
-                        async_to_sync(self._output_stream.write)(
-                            TextToImageOutput(
-                                answer=(
-                                    [
-                                        ""
-                                        for _ in range(
-                                            image_count,
-                                        )
-                                    ]
-                                    + ["data:{};base64,{}".format(image_data["mime"], image_data["binary"])]
-                                ),
-                            ),
-                        )
-                        image_count += 1
-
+        result = client.images.generate(
+            prompt=" ".join(prompts),
+            negative_prompt=" ".join(negative_prompt) if negative_prompt else None,
+            model=self._config.engine_id.model_name(),
+            n=1,
+            response_format="b64_json",
+            size=f"{self._config.width}x{self._config.height}",
+        )
+        image = result.data[0]
+        data_uri = image.data_uri(include_name=True)
+        object_ref = self._upload_asset_from_url(asset=data_uri)
         async_to_sync(self._output_stream.write)(
-            TextToImageOutput(answer=[""], api_response=api_response),
+            TextToImageOutput(answer=[object_ref]),
         )
-        return self._output_stream.finalize()
+        output = self._output_stream.finalize()
+        return output
