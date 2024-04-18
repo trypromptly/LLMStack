@@ -72,9 +72,6 @@ class Images(OpenAIImages):
         extra_body: Body | None = None,
         timeout: Union[float, httpx.Timeout, None] = NOT_GIVEN,
     ) -> images_response.ImagesResponse:
-        response_format = "b64_json"
-        if response_format:
-            print(response_format)
         if self._client._llm_router_provider == PROVIDER_OPENAI:
             raise NotImplementedError("Edit image is not supported by OpenAI")
         elif self._client._llm_router_provider == PROVIDER_STABILITYAI:
