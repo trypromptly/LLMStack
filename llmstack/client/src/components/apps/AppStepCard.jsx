@@ -116,9 +116,11 @@ export default function AppStepCard({
                 width: "100%",
                 ".MuiInputBase-input": {
                   fontSize: "14px",
-                  padding: "0 0 2px 0",
+                  paddingLeft: "2px",
                   fontFamily: "Lato, sans-serif",
                   color: "#fff",
+                  backgroundColor: "#2e4658",
+                  borderRadius: "6px",
                 },
               }}
               onBlur={() => setShowDescriptionEditor(false)}
