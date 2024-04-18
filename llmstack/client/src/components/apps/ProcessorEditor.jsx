@@ -296,11 +296,13 @@ export function ProcessorEditor({
       setActiveStep={setActiveStep}
       errors={isTool ? [] : errors}
       action={
-        index === processors.length - 1 ? (
+        index === processors.length - 1 || isTool ? (
           <DeleteIcon
             style={{ color: "#888", cursor: "pointer", marginTop: "3px" }}
             onClick={() => {
-              setProcessors(processors.slice(0, -1));
+              let newProcessors = processors.slice();
+              newProcessors.splice(index, 1);
+              setProcessors(newProcessors);
             }}
           />
         ) : null
