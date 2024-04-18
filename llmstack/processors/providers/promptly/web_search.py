@@ -137,6 +137,8 @@ class WebSearch(
             }
             advanced_params = self._config.advanced_params.strip().split("&")
             for param in advanced_params:
+                if not param:
+                    continue
                 key, value = param.split("=")
                 params[key] = value
 
