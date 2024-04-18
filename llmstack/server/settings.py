@@ -479,6 +479,11 @@ PROVIDERS = [
         "processor_packages": ["llmstack.processors.providers.heygen"],
         "slug": "heygen",
     },
+    {
+        "name": "Meta",
+        "processor_packages": ["llmstack.processors.providers.meta"],
+        "slug": "meta",
+    },
 ]
 
 # Include networking providers if they are enabled
