@@ -39,6 +39,21 @@ class AssetViewSet(viewsets.ModelViewSet):
 
         return DRFResponse(asset)
 
+    def get_by_ref_id(self, request, category, ref_id, include_data=False, include_name=False, include_objref=False):
+        asset = self.get_asset_data_by_ref_id(
+            category,
+            ref_id,
+            request.user,
+            request.session,
+            include_data=include_data,
+            include_name=include_name,
+            include_objref=include_objref,
+        )
+        if asset is None:
+            return DRFResponse(status=404)
+
+        return DRFResponse(asset)
+
     def get_asset_data(self, objref, request_user, request_session=None, include_data=False, include_name=False):
         if objref is None or not objref.startswith("objref://"):
             return None
@@ -77,6 +92,63 @@ class AssetViewSet(viewsets.ModelViewSet):
                 response["data_uri"] = model_cls.get_asset_data_uri(asset, include_name=include_name)
 
             return response
+        except Exception as e:
+            logger.error(f"Error retrieving asset: {e}")
+            db.connections.close_all()
+            return None
+
+    def get_asset_data_by_ref_id(
+        self,
+        category,
+        ref_id,
+        request_user,
+        request_session=None,
+        include_data=False,
+        include_name=False,
+        include_objref=False,
+    ):
+        try:
+            model_cls = None
+            if category == "sessionfiles":
+                model_cls = AppSessionFiles
+            elif category == "appdata":
+                model_cls = AppDataAssets
+
+            if not model_cls:
+                logger.error(f"Invalid category for asset model: {category}")
+                return None
+
+            assets = model_cls.objects.filter(ref_id=ref_id.strip())
+
+            result = []
+            for asset in assets:
+                if not model_cls.is_accessible(asset, request_user, request_session):
+                    continue
+
+                response = {"url": asset.file.url}
+
+                if "file_name" in asset.metadata:
+                    response["name"] = asset.metadata["file_name"]
+
+                if "mime_type" in asset.metadata:
+                    response["type"] = asset.metadata["mime_type"]
+
+                if "file_size" in asset.metadata:
+                    response["size"] = asset.metadata["file_size"]
+
+                if include_data:
+                    response["data_uri"] = model_cls.get_asset_data_uri(asset, include_name=include_name)
+
+                if include_objref:
+                    response["objref"] = f"objref://{category}/{asset.uuid}"
+
+                result.append(response)
+
+            if len(result) == 0:
+                return None
+
+            return {"assets": result}
+
         except Exception as e:
             logger.error(f"Error retrieving asset: {e}")
             db.connections.close_all()

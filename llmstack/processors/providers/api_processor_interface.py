@@ -106,6 +106,22 @@ class ApiProcessorInterface(
 
         return objref
 
+    def _get_all_session_assets(self, include_name=True, include_data=False, include_objref=False):
+        from llmstack.assets.apis import AssetViewSet
+
+        response = AssetViewSet().get_by_ref_id(
+            self._request,
+            "sessionfiles",
+            self._metadata.get("session_id", ""),
+            include_data=include_data,
+            include_name=include_name,
+            include_objref=include_objref,
+        )
+        if response.status_code == 200:
+            return response.data
+
+        return None
+
     # Upload the asset to the session
     def _upload_asset_from_url(self, asset):
         from llmstack.apps.models import AppSessionFiles

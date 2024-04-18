@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import shutil
@@ -6,19 +7,38 @@ import uuid
 from typing import Optional
 
 from asgiref.sync import async_to_sync
-from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import storages
-from pydantic import Field
+from pydantic import Field, root_validator
 
+from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
 
-generatedfiles_storage = storages["generatedfiles"]
-
 logger = logging.getLogger(__name__)
+
+
+def _mime_type_from_file_ext(ext):
+    if ext == "txt":
+        return "text/plain"
+    elif ext == "html":
+        return "text/html"
+    elif ext == "css":
+        return "text/css"
+    elif ext == "js":
+        return "application/javascript"
+    elif ext == "json":
+        return "application/json"
+    elif ext == "xml":
+        return "application/xml"
+    elif ext == "csv":
+        return "text/csv"
+    elif ext == "tsv":
+        return "text/tab-separated-values"
+    elif ext == "md":
+        return "text/markdown"
+    else:
+        return "application/octet-stream"
 
 
 class FileOperationsInput(ApiProcessorSchema):
@@ -36,12 +56,42 @@ class FileOperationsInput(ApiProcessorSchema):
         default=False,
         description="If true, an archive with the contents of the directory will be created",
     )
+    mimetype: Optional[str] = Field(
+        description="The mimetype of the file. If not provided, it will be inferred from the filename",
+    )
+
+    @root_validator
+    def validate_input(cls, values):
+        mimetype = values.get("mimetype")
+        if not mimetype:
+            filename = values.get("filename")
+            if filename:
+                file_extension = filename.split(".")[-1]
+                mimetype = _mime_type_from_file_ext(file_extension)
+                values["mimetype"] = mimetype
+        return values
+
+
+def create_data_uri(data, mime_type="text/plain", base64_encode=False, filename=None):
+    # Encode data in Base64 if requested
+    if base64_encode:
+        data = base64.b64encode(data).decode("utf-8")
+
+    # Build the Data URI
+    data_uri = f"data:{mime_type}"
+    if filename:
+        data_uri += f";name={filename}"
+    if base64_encode:
+        data_uri += ";base64"
+    data_uri += f",{data}"
+
+    return data_uri
 
 
 class FileOperationsOutput(ApiProcessorSchema):
     directory: str = Field(description="The directory the file was created in")
     filename: str = Field(description="The name of the file created")
-    url: str = Field(description="Download URL of the file created")
+    objref: Optional[str] = Field(default=None, description="Object ref of the file created")
     archive: bool = Field(
         default=False,
         description="If true, then we just created an archive with contents from directory",
@@ -54,6 +104,50 @@ class FileOperationsOutput(ApiProcessorSchema):
 
 class FileOperationsConfiguration(ApiProcessorSchema):
     pass
+
+
+def _create_archive(files):
+    """
+    Using django storage, recursively copies all the files to a temporary directory and creates an archive
+    """
+    zip_file_bytes = None
+    zip_filedata_uri = None
+
+    # Create a temporary directory to store the files
+    with tempfile.TemporaryDirectory() as temp_archive_dir:
+        archive_name = f"{temp_archive_dir}.zip".replace("/", "_")
+
+        # Create files in the temporary directory
+        for file in files:
+            name = file["name"]
+            data_uri = file["data_uri"]
+            mime_type, file_name, b64_file_data = validate_parse_data_uri(data_uri)
+            file_data_bytes = base64.b64decode(b64_file_data)
+            has_directory = "/" in name
+            if has_directory:
+                directory = os.path.join(temp_archive_dir, os.path.dirname(name))
+                if not os.path.exists(directory):
+                    os.makedirs(directory, exist_ok=True)
+
+            # If the filename exisits prepend a random string to the filename
+            if os.path.exists(os.path.join(temp_archive_dir, name)):
+                name = f"{uuid.uuid4().hex[:4]}_{name}"
+
+            with open(os.path.join(temp_archive_dir, name), "wb") as f:
+                f.write(file_data_bytes)
+
+        # Create an archive of the temporary directory
+        shutil.make_archive(temp_archive_dir, "zip", temp_archive_dir)
+
+        # Save the archive to the storage
+
+        with open(f"{temp_archive_dir}.zip", "rb") as f:
+            zip_file_bytes = f.read()
+            zip_filedata_uri = create_data_uri(
+                zip_file_bytes, "application/zip", base64_encode=True, filename=archive_name
+            )
+
+    return (zip_filedata_uri, archive_name)
 
 
 class FileOperationsProcessor(
@@ -79,118 +173,58 @@ class FileOperationsProcessor(
     def tool_only() -> bool:
         return True
 
-    def _copy_directory(self, directory, temp_archive_dir):
-        """
-        Recursively copies the django's storage directory to a temporary directory
-        """
-        if not generatedfiles_storage.exists(
-            directory,
-        ) or not os.path.exists(temp_archive_dir):
-            return
-
-        files = generatedfiles_storage.listdir(directory)[1]
-        directories = generatedfiles_storage.listdir(directory)[0]
-
-        # Copy the files to the temporary directory by reading their contents
-        for file in files:
-            with generatedfiles_storage.open(f"{directory}/{file}", "rb") as f:
-                with open(f"{temp_archive_dir}/{file}", "wb") as temp_file:
-                    temp_file.write(f.read())
-
-        # Recursively copy the directories to the temporary directory
-        for subdirectory in directories:
-            # Make a directory
-            os.mkdir(f"{temp_archive_dir}/{subdirectory}")
-            self._copy_directory(
-                f"{directory}/{subdirectory}",
-                f"{temp_archive_dir}/{subdirectory}",
-            )
-
-    def _create_archive(self, file):
-        """
-        Using django storage, recursively copies all the files to a temporary directory and creates an archive
-        """
-        # Create a temporary directory to store the archive
-        with tempfile.TemporaryDirectory() as temp_archive_dir:
-            if generatedfiles_storage.exists(file):
-                self._copy_directory(file, temp_archive_dir)
-
-            # Create a temporary file to store the archive
-            temp_archive_file = tempfile.NamedTemporaryFile()
-
-            # Create the archive
-            shutil.make_archive(
-                temp_archive_file.name,
-                "zip",
-                temp_archive_dir,
-            )
-
-            temp_archive_file.close()
-
-            # Copy archive to storage
-            return generatedfiles_storage.save(
-                f"{file}.zip",
-                ContentFile(
-                    open(f"{temp_archive_file.name}.zip", "rb").read(),
-                ),
-            )
-
     def process(self) -> dict:
         output_stream = self._output_stream
 
         content = self._input.content
         filename = self._input.filename or str(uuid.uuid4())
-        directory = self._input.directory or str(uuid.uuid4())
+        directory = self._input.directory or ""
         archive = self._input.archive
 
         # Create an archive if directory is provided but not content with
         # archive flag set
         if not content and archive:
-            saved_path = self._create_archive(directory)
-            generated_url = generatedfiles_storage.url(saved_path)
-            url = (
-                f"{settings.SITE_URL}{generated_url}"
-                if generated_url.startswith(
-                    "/",
+            result = self._get_all_session_assets(include_name=True, include_data=True)
+            if result and "assets" in result and len(result["assets"]):
+                zipped_assets, archive_name = _create_archive(result["assets"])
+                asset = self._upload_asset_from_url(asset=zipped_assets)
+                async_to_sync(output_stream.write)(
+                    FileOperationsOutput(
+                        directory="",
+                        filename=archive_name,
+                        objref=asset,
+                        archive=True,
+                        text="Archive created with contents from directory",
+                    ),
                 )
-                and settings.SITE_URL
-                else generated_url
-            )
-            text = f"Archive created at {url} with contents from directory {directory}"
-
-            async_to_sync(output_stream.write)(
-                FileOperationsOutput(
-                    directory=directory,
-                    filename=os.path.basename(saved_path),
-                    url=url,
-                    archive=True,
-                    text=text,
-                ),
-            )
+            else:
+                async_to_sync(output_stream.write)(
+                    FileOperationsOutput(
+                        directory=directory,
+                        objref=None,
+                        filename=filename,
+                        archive=True,
+                        text="No files found to create an archive",
+                    ),
+                )
         elif content and not archive:
-            saved_path = generatedfiles_storage.save(
-                f"{directory}/{filename}",
-                ContentFile(content),
+            full_file_path = f"{directory}/{filename}" if directory else filename
+            # Create a dataURI for the file
+            data_uri = create_data_uri(
+                self._input.content.encode("utf-8"),
+                self._input.mimetype,
+                base64_encode=True,
+                filename=full_file_path,
             )
-            generated_url = generatedfiles_storage.url(saved_path)
-            url = (
-                f"{settings.SITE_URL}{generated_url}"
-                if generated_url.startswith(
-                    "/",
-                )
-                and settings.SITE_URL
-                else generated_url
-            )
-            filename = os.path.basename(saved_path)
-            text = f"File {filename} created at {url} in directory {directory}"
+            asset = self._upload_asset_from_url(asset=data_uri)
 
             async_to_sync(output_stream.write)(
                 FileOperationsOutput(
                     directory=directory,
                     filename=filename,
-                    url=url,
+                    objref=asset,
                     archive=False,
-                    text=text,
+                    text=content,
                 ),
             )
 
