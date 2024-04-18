@@ -106,7 +106,7 @@ class FileOperationsConfiguration(ApiProcessorSchema):
     pass
 
 
-def _create_archive(files):
+def _create_archive(files, directory=""):
     """
     Using django storage, recursively copies all the files to a temporary directory and creates an archive
     """
@@ -120,18 +120,17 @@ def _create_archive(files):
         # Create files in the temporary directory
         for file in files:
             name = file["name"]
+            if directory and not name.startswith(directory):
+                continue
+
+            if os.path.dirname(name):
+                abs_directory_path = os.path.join(temp_archive_dir, os.path.dirname(name))
+                if not os.path.exists(abs_directory_path):
+                    os.makedirs(abs_directory_path, exist_ok=True)
+
             data_uri = file["data_uri"]
             mime_type, file_name, b64_file_data = validate_parse_data_uri(data_uri)
             file_data_bytes = base64.b64decode(b64_file_data)
-            has_directory = "/" in name
-            if has_directory:
-                directory = os.path.join(temp_archive_dir, os.path.dirname(name))
-                if not os.path.exists(directory):
-                    os.makedirs(directory, exist_ok=True)
-
-            # If the filename exisits prepend a random string to the filename
-            if os.path.exists(os.path.join(temp_archive_dir, name)):
-                name = f"{uuid.uuid4().hex[:4]}_{name}"
 
             with open(os.path.join(temp_archive_dir, name), "wb") as f:
                 f.write(file_data_bytes)
