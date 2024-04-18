@@ -1,5 +1,8 @@
 import copy
+import hashlib
 import json as jsonlib
+import uuid
+from io import BytesIO
 from typing import Any, Dict, Literal
 
 from openai._compat import cached_property  # type: ignore # noqa: F401
@@ -10,13 +13,10 @@ from openai._utils import (  # type: ignore # noqa: F401
     maybe_transform,
     required_args,
 )
+from PIL import Image
 
 
 def resize_image_file(image_file: bytes, max_pixels: int, max_size: int):
-    from io import BytesIO
-
-    from PIL import Image
-
     result = image_file
     img = Image.open(BytesIO(image_file))
     width, height = img.size
@@ -44,9 +44,6 @@ def resize_image_file(image_file: bytes, max_pixels: int, max_size: int):
 
 
 def generate_uuid(_str: str = None):
-    import hashlib
-    import uuid
-
     if _str:
         input_hash = hashlib.sha256(b"your_data_here").hexdigest()
         return str(uuid.uuid5(uuid.NAMESPACE_DNS, input_hash))
