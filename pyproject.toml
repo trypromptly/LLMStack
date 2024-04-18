@@ -139,6 +139,7 @@ pikepdf = "^8.11.0"
 pypdf = "^4.0.1"
 python-docx = "^1.1.0"
 cohere = "5.0.0"
+python-liquid = "^1.12.1"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]

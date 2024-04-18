@@ -2,7 +2,7 @@ import logging
 import time
 from typing import Any, NamedTuple
 
-from jinja2 import Template
+from liquid import Template
 
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.utils import extract_jinja2_variables

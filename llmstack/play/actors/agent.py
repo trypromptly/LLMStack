@@ -5,7 +5,7 @@ from typing import Any
 
 import orjson as json
 from asgiref.sync import async_to_sync
-from jinja2 import Template
+from liquid import Template
 from openai import OpenAI
 from pydantic import BaseModel
 
