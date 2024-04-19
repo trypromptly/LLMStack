@@ -70,6 +70,7 @@ class MessagesConfiguration(ApiProcessorSchema):
         default=MessagesModel.LLAMA_3_8B,
         description="The Llama model that will generate the responses.",
         advanced_parameter=False,
+        widget="customselect",
     )
     max_tokens: int = Field(
         ge=1,
