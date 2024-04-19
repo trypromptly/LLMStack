@@ -1,61 +1,17 @@
 import json
 import logging
-import os
 from enum import Enum
-from typing import Iterator, List, Optional
+from typing import List, Optional
 
-import requests
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
-from llmstack.connections.models import ConnectionType
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.processors.providers.google import get_google_credential_from_env
 
 logger = logging.getLogger(__name__)
-
-
-class Llama3ChatFormat:
-    def __init__(self):
-        pass
-
-    def add_header(self, message):
-        tokens = []
-        tokens.append("<|start_header_id|>")
-        tokens.extend([message["role"]])
-        tokens.append("<|end_header_id|>")
-        tokens.extend("\n\n")
-        return tokens
-
-    def add_message(self, message):
-        tokens = self.add_header(message)
-        tokens.extend([message["content"].strip()])
-        tokens.append("<|eot_id|>")
-        return tokens
-
-    def prompt(self, dialog, system) -> str:
-        tokens = []
-        tokens.append("<|begin_of_text|>")
-        if system:
-            tokens.extend(self.add_message({"role": "system", "content": system}))
-        for message in dialog:
-            tokens.extend(self.add_message(message))
-        # Add the start of an assistant message for the model to complete.
-        tokens.extend(self.add_header({"role": "assistant", "content": ""}))
-        return "".join(tokens)
-
-
-def _iter_bytes(response_bytes: bytes) -> Iterator[bytes]:
-    start = 0
-    while start < len(response_bytes):
-        end = response_bytes.find(b"\x00", start)
-        if end == -1:
-            end = len(response_bytes)
-        yield response_bytes[start:end]
-        start = end + 1
 
 
 class MessagesModel(str, Enum):
@@ -140,16 +96,6 @@ class MessagesConfiguration(ApiProcessorSchema):
         default=None,
         description="The seed to use for random sampling. If set, different calls will generate deterministic results.",
     )
-    vertex_url: Optional[str] = Field(
-        default=None,
-        description="The URL to the Vertex AI endpoint.",
-    )
-    connection_id: Optional[str] = Field(
-        widget="connection",
-        advanced_parameter=False,
-        description="Select a connection to use for the Vertex AI endpoint.",
-        filters=[ConnectionType.CREDENTIALS + "/bearer_authentication"],
-    )
     top_p: Optional[float] = Field(
         default=0.9,
         description="The cumulative probability of the top tokens to sample from.",
@@ -192,29 +138,15 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         return {}
 
     def process(self) -> MessagesOutput:
+        from llmstack.common.utils.sslr import LLM
+
+        deployment_configs = json.loads(self._env.get("deployment_configs", "{}"))
+        model_deployment_config = deployment_configs.get(self._config.model.model_name(), {})
+
         messages = []
 
-        connection = (
-            self._env["connections"].get(
-                self._config.connection_id,
-                None,
-            )
-            if self._config.connection_id
-            else None
-        )
-
-        url = self._config.vertex_url
-        if connection and connection["base_connection_type"] == ConnectionType.CREDENTIALS:
-            token = connection["configuration"]["token"]
-            token_prefix = connection["configuration"]["token_prefix"]
-
-        if connection is None and self._config.vertex_url is None:
-            google_api_key, token_type = (
-                get_google_credential_from_env(self._env) if self._env.get("google_service_account_json_key") else None
-            )
-            token_prefix = "Bearer"
-            token = google_api_key
-            url = os.getenv("VERTEX_LLAM3_8B_URL")
+        if self._config.system_prompt:
+            messages.append({"role": "system", "content": self._config.system_prompt})
 
         if self._chat_history:
             for message in self._chat_history:
@@ -223,32 +155,25 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         for message in self._input.messages:
             messages.append({"role": str(message.role), "content": str(message.message)})
 
-        prompt = Llama3ChatFormat().prompt(messages, system=self._config.system_prompt)
-        response = requests.post(
-            url=url,
-            headers={"Authorization": f"{token_prefix} {token}"},
-            json={
-                "instances": [
-                    {
-                        "prompt": prompt,
-                        "temperature": self._config.temperature,
-                        "top_p": self._config.top_p,
-                        "repetition_penalty": self._config.repetition_penalty,
-                        "max_tokens": self._config.max_tokens,
-                        "stream": True,
-                        "stop": ["<|eot_id|>"],
-                    }
-                ],
-                "parameters": {},
-            },
+        client = LLM(provider="custom", deployment_config=model_deployment_config)
+
+        result = client.chat.completions.create(
+            messages=messages,
+            model="tgi",
+            max_tokens=self._config.max_tokens,
             stream=True,
+            seed=self._config.seed,
+            temperature=self._config.temperature,
+            top_p=self._config.top_p,
+            stop=["<|eot_id|>"],
+            extra_body={"repetition_penalty": self._config.repetition_penalty},
         )
-        if response.status_code == 200:
-            for response_bytes in _iter_bytes(response.content):
-                json_chunk = json.loads(response_bytes.decode("utf-8"))
-                async_to_sync(self._output_stream.write)(MessagesOutput(result=json_chunk["predictions"][0]))
-        else:
-            response.raise_for_status()
+        for entry in result:
+            async_to_sync(self._output_stream.write)(
+                MessagesOutput(
+                    result=entry.choices[0].delta.content_str,
+                ),
+            )
 
         output = self._output_stream.finalize()
 

@@ -1,7 +1,6 @@
 import json
 import os
-from enum import Enum
-from typing import Any, List, Literal, Mapping, Optional, Type, Union, overload
+from typing import Any, Literal, Mapping, Optional, Type, Union, overload
 
 import httpx
 from openai import OpenAI
@@ -39,48 +38,41 @@ from .constants import (
 from .resources import Audio, Chat, Completions, Embeddings, Images, Models
 
 
-class ModelDeploymentProvider(str, Enum):
-    HUGGINGFACE = "huggingface"
-    GCP = "gcp"
-    AZURE = "azure"
-    AWS = "aws"
-
-    def __str__(self):
-        return self.value
-
-
 class BearerAuthentication(BaseModel):
     _type: Literal["bearer_authentication"] = "bearer_authentication"
     bearer_token: str = Field(default="", description="The auth token to use.")
 
 
-class DeploymentConfig(BaseModel):
-    provider: ModelDeploymentProvider = Field(
-        default=ModelDeploymentProvider.HUGGINGFACE,
-        description="The provider of the Llama model.",
-    )
-    deployment_url: str = Field(
-        default="",
-        description="The URL of the deployed Llama model.",
-    )
-    credentials: Union[BearerAuthentication, None] = Field(
-        description="The API key to use for the deployed model.",
-    )
-    model_name: Optional[str] = Field(
-        default=None,
-        description="The name of the model to use.",
-    )
+class BaseCustomDeplymentConfig(BaseModel):
+    _type: str
+    _base_url: str
+    _api_key: str
 
     @property
-    def token(self):
-        if self.credentials._type == "bearer_authentication":
-            return self.credentials.bearer_token
-        else:
-            return None
+    def base_url(self):
+        raise NotImplementedError
+
+    @property
+    def api_key(self):
+        raise NotImplementedError
+
+
+class HuggingFaceDeploymentConfig(BaseCustomDeplymentConfig):
+    _type: Literal["hugging_face"] = "hugging_face"
+    model_name: str
+    token: BearerAuthentication
+    deployment_url: str
 
     @property
     def base_url(self):
         return self.deployment_url
+
+    @property
+    def api_key(self):
+        return self.token.bearer_token
+
+
+DeploymentConfig = Union[HuggingFaceDeploymentConfig, BaseCustomDeplymentConfig]
 
 
 class LLMClient(SyncAPIClient):
@@ -288,7 +280,7 @@ class LLM(LLMClient, OpenAI):
         self,
         *,
         provider: Literal["custom"],
-        deployment_configs: List[DeploymentConfig],
+        deployment_config: DeploymentConfig,
         timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
         max_retries: int = DEFAULT_MAX_RETRIES,
         default_headers: Optional[Mapping[str, str]] = None,
@@ -446,7 +438,7 @@ class LLM(LLMClient, OpenAI):
         azure_ad_token: Optional[str] = None,
         azure_ad_token_provider: Optional[AzureADTokenProvider] = None,
         mistral_api_key: Optional[str] = None,
-        deployment_configs: List[DeploymentConfig],
+        deployment_config: Optional[DeploymentConfig] = None,
         organization: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
@@ -537,11 +529,16 @@ class LLM(LLMClient, OpenAI):
                 base_url = "https://api.mistral.ai/v1"
 
         elif provider == PROVIDER_CUSTOM:
-            if not deployment_configs:
+            if not deployment_config:
                 raise ValueError("deployment_config is required for custom provider")
-            self.deployment_configs = deployment_configs
-            api_key = deployment_configs[0].token
-            base_url = deployment_configs[0].base_url
+            if "_type" not in deployment_config:
+                raise ValueError("deployment_config must have a _type field")
+            if deployment_config["_type"] == "hugging_face":
+                self.deployment_config = HuggingFaceDeploymentConfig(**deployment_config)
+            else:
+                raise ValueError("Unsupported deployment config type")
+            api_key = self.deployment_config.api_key
+            base_url = self.deployment_config.base_url
 
         if api_key is None:
             # define a sentinel value to avoid any typing issues
