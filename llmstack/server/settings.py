@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 from pathlib import Path
@@ -600,6 +601,10 @@ ENABLE_JOBS = os.getenv("ENABLE_JOBS", "True") == "True"
 
 CUSTOM_MODELS_DEPLOYMENT_CONFIG = {}
 try:
-    CUSTOM_MODELS_DEPLOYMENT_CONFIG = json.loads(os.getenv("CUSTOM_MODELS_DEPLOYMENT_CONFIG", "{}"))
+    CUSTOM_MODELS_DEPLOYMENT_CONFIG = (
+        json.loads(base64.b64decode(os.getenv("CUSTOM_MODELS_DEPLOYMENT_CONFIG")))
+        if os.getenv("CUSTOM_MODELS_DEPLOYMENT_CONFIG")
+        else {}
+    )
 except Exception:
     print("Error parsing CUSTOM_MODELS_DEPLOYMENT_CONFIG")
