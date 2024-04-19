@@ -767,7 +767,13 @@ export const PromptlyAppChatOutput = memo(
 );
 
 export const PromptlyAppWorkflowOutput = memo(
-  ({ showHeader, placeholder, sx, enableAutoScroll = true }) => {
+  ({
+    showHeader,
+    showAgentStepOutput,
+    placeholder,
+    sx,
+    enableAutoScroll = true,
+  }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const assistantImage = useMemo(
       () => appRunData?.assistantImage,
@@ -835,6 +841,16 @@ export const PromptlyAppWorkflowOutput = memo(
           !appRunData.errors &&
           appMessages.length === 0 &&
           placeholder}
+        {showAgentStepOutput &&
+          appMessages &&
+          appMessages.length > 0 &&
+          appMessages[appMessages.length - 1].subType === "agent-step" && (
+            <AgentStepMessage
+              message={appMessages[appMessages.length - 1]}
+              processors={appRunData?.processors}
+              assistantImage={assistantImage}
+            />
+          )}
         {appMessages.length > 0 &&
           appMessages[appMessages.length - 1].type === "app" && (
             <AppMessage
@@ -1073,6 +1089,7 @@ export default function LayoutRenderer({
         return (
           <PromptlyAppWorkflowOutput
             showHeader={props?.showheader}
+            showAgentStepOutput={props?.showagentstepoutput}
             placeholder={props.placeholder}
             sx={sx}
           />
