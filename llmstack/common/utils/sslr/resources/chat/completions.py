@@ -33,6 +33,7 @@ from ..._utils import (
 from ...constants import (
     PROVIDER_ANTHROPIC,
     PROVIDER_COHERE,
+    PROVIDER_CUSTOM,
     PROVIDER_GOOGLE,
     PROVIDER_MISTRAL,
 )
@@ -230,6 +231,9 @@ class Completions(OpenAICompletions):
 
             if "seed" in post_body_data:
                 post_body_data.pop("seed")
+
+        elif self._client._llm_router_provider == PROVIDER_CUSTOM:
+            post_body_data["model"] = self._client.deployment_config.model_name
 
         return self._post(
             path=path,
