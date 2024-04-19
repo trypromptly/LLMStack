@@ -5,11 +5,11 @@ from typing import Any
 
 import orjson as json
 from asgiref.sync import async_to_sync
-from liquid import Template
 from openai import OpenAI
 from pydantic import BaseModel
 
 from llmstack.apps.app_session_utils import save_agent_app_session_data
+from llmstack.common.utils.liquid import render_template
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.output import OutputResponse
 from llmstack.play.output_stream import Message, MessageType
@@ -104,17 +104,11 @@ class AgentActor(Actor):
             user_message_template = "{{task}}"
 
         try:
-            user_message = Template(user_message_template).render(
-                **self._input,
-            )
+            user_message = render_template(user_message_template, self._input)
 
             # Hydrate system_message_template with self._input
             if self._system_message and len(self._system_message) > 0 and "content" in self._system_message[0]:
-                self._system_message[0]["content"] = Template(
-                    self._system_message[0]["content"],
-                ).render(
-                    **self._input,
-                )
+                self._system_message[0]["content"] = render_template(self._system_message[0]["content"], self._input)
         except Exception as e:
             logger.error(f"Error rendering user message template: {e}")
             user_message = user_message_template
@@ -379,9 +373,8 @@ class AgentActor(Actor):
             try:
                 processor_template = self._processor_configs[message.message_from]["processor"]["output_template"]
 
-                processor_output = Template(
+                processor_output = render_template(
                     processor_template["markdown"],
-                ).render(
                     message.message,
                 )
 

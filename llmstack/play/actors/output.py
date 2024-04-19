@@ -2,8 +2,7 @@ import logging
 import time
 from typing import Any, NamedTuple
 
-from liquid import Template
-
+from llmstack.common.utils.liquid import render_template
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.utils import extract_jinja2_variables
 
@@ -45,7 +44,7 @@ class OutputActor(Actor):
     def input(self, message: Any) -> Any:
         if self._template:
             try:
-                self._data = Template(self._template).render(**message)
+                self._data = render_template(self._template, message)
             except Exception as e:
                 logger.error(
                     f"Error rendering template {self._template} with data {self._data}: {e}",
