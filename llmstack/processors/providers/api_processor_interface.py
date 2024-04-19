@@ -308,6 +308,7 @@ class ApiProcessorInterface(
             )
             output = self.process()
         except Exception as e:
+            logger.exception("Error processing input")
             output = {
                 "errors": [str(e)],
                 "raw_response": {
@@ -366,7 +367,7 @@ class ApiProcessorInterface(
             )
             output = self.process()
         except Exception as e:
-            logger.exception(e)
+            logger.exception("Error invoking tool")
             output = {
                 "errors": [str(e)],
                 "raw_response": {
