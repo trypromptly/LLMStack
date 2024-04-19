@@ -96,7 +96,10 @@
 
 .layout-chat-container ol {
   margin: 0;
-  padding-left: 12px;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .layout-chat-container ul {
@@ -104,7 +107,7 @@
 }
 
 .layout-chat-container li {
-  margin: 8px 0;
+  margin: 0;
 }
 
 .layout-chat_message_type_step {
