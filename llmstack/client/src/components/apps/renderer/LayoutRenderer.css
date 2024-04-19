@@ -72,6 +72,41 @@
   transition: max-height 0.5s ease-in-out;
 }
 
+.layout-chat-container h1 {
+  margin: 16px 0;
+  font-size: 24px;
+}
+
+.layout-chat-container h2 {
+  margin: 12px 0;
+  font-size: 20px;
+}
+
+.layout-chat-container h3 {
+  margin: 12px 0;
+}
+
+.layout-chat-container h4 {
+  margin: 8px 0;
+}
+
+.layout-chat-container p {
+  margin: 8px 0;
+}
+
+.layout-chat-container ol {
+  margin: 0;
+  padding-left: 12px;
+}
+
+.layout-chat-container ul {
+  margin: 0;
+}
+
+.layout-chat-container li {
+  margin: 8px 0;
+}
+
 .layout-chat_message_type_step {
   display: inline-block;
   background-color: transparent;
