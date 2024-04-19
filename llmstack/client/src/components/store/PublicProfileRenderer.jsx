@@ -38,7 +38,7 @@ const PublicProfileRenderer = ({ username, postSlug }) => {
         }}
       >
         {postSlug ? (
-          <SessionRenderer sessionData={sessionData} noHeader />
+          <SessionRenderer sessionData={sessionData} noHeader skipSteps />
         ) : (
           <PinnedPosts username={username} />
         )}
