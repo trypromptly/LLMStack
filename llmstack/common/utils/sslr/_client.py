@@ -1,6 +1,7 @@
 import json
 import os
-from typing import Any, Literal, Mapping, Optional, Type, Union, overload
+from enum import Enum
+from typing import Any, List, Literal, Mapping, Optional, Type, Union, overload
 
 import httpx
 from openai import OpenAI
@@ -9,6 +10,7 @@ from openai._client import SyncAPIClient
 from openai._models import FinalRequestOptions
 from openai._utils import is_given
 from openai.lib.azure import AzureADTokenProvider
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from ._exceptions import LLMError
@@ -27,6 +29,7 @@ from .constants import (
     PROVIDER_ANTHROPIC,
     PROVIDER_AZURE_OPENAI,
     PROVIDER_COHERE,
+    PROVIDER_CUSTOM,
     PROVIDER_GOOGLE,
     PROVIDER_LOCALAI,
     PROVIDER_MISTRAL,
@@ -34,6 +37,50 @@ from .constants import (
     PROVIDER_STABILITYAI,
 )
 from .resources import Audio, Chat, Completions, Embeddings, Images, Models
+
+
+class ModelDeploymentProvider(str, Enum):
+    HUGGINGFACE = "huggingface"
+    GCP = "gcp"
+    AZURE = "azure"
+    AWS = "aws"
+
+    def __str__(self):
+        return self.value
+
+
+class BearerAuthentication(BaseModel):
+    _type: Literal["bearer_authentication"] = "bearer_authentication"
+    bearer_token: str = Field(default="", description="The auth token to use.")
+
+
+class DeploymentConfig(BaseModel):
+    provider: ModelDeploymentProvider = Field(
+        default=ModelDeploymentProvider.HUGGINGFACE,
+        description="The provider of the Llama model.",
+    )
+    deployment_url: str = Field(
+        default="",
+        description="The URL of the deployed Llama model.",
+    )
+    credentials: Union[BearerAuthentication, None] = Field(
+        description="The API key to use for the deployed model.",
+    )
+    model_name: Optional[str] = Field(
+        default=None,
+        description="The name of the model to use.",
+    )
+
+    @property
+    def token(self):
+        if self.credentials._type == "bearer_authentication":
+            return self.credentials.bearer_token
+        else:
+            return None
+
+    @property
+    def base_url(self):
+        return self.deployment_url
 
 
 class LLMClient(SyncAPIClient):
@@ -68,9 +115,6 @@ class LLMClient(SyncAPIClient):
                 model = options.json_data.get("model")
                 if model is not None and "/deployments" not in str(self.base_url):
                     options.url = f"/deployments/{model}{options.url}"
-
-        elif self._llm_router_provider == PROVIDER_ANTHROPIC:
-            pass
 
         return super()._build_request(options)
 
@@ -238,6 +282,22 @@ class LLM(LLMClient, OpenAI):
     ) -> None:
         ...
 
+    # Custom model deployments
+    @overload
+    def __init__(
+        self,
+        *,
+        provider: Literal["custom"],
+        deployment_configs: List[DeploymentConfig],
+        timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        default_headers: Optional[Mapping[str, str]] = None,
+        default_query: Optional[Mapping[str, object]] = None,
+        http_client: Optional[httpx.Client] = None,
+        _strict_response_validation: bool = False,
+    ) -> None:
+        ...
+
     # Anthropic options
     @overload
     def __init__(
@@ -386,6 +446,7 @@ class LLM(LLMClient, OpenAI):
         azure_ad_token: Optional[str] = None,
         azure_ad_token_provider: Optional[AzureADTokenProvider] = None,
         mistral_api_key: Optional[str] = None,
+        deployment_configs: List[DeploymentConfig],
         organization: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
@@ -474,6 +535,13 @@ class LLM(LLMClient, OpenAI):
             api_key = mistral_api_key
             if base_url is None:
                 base_url = "https://api.mistral.ai/v1"
+
+        elif provider == PROVIDER_CUSTOM:
+            if not deployment_configs:
+                raise ValueError("deployment_config is required for custom provider")
+            self.deployment_configs = deployment_configs
+            api_key = deployment_configs[0].token
+            base_url = deployment_configs[0].base_url
 
         if api_key is None:
             # define a sentinel value to avoid any typing issues
