@@ -43,7 +43,7 @@ class BearerAuthentication(BaseModel):
     bearer_token: str = Field(default="", description="The auth token to use.")
 
 
-class BaseCustomDeplymentConfig(BaseModel):
+class BaseCustomDeploymentConfig(BaseModel):
     _type: str
     _base_url: str
     _api_key: str
@@ -56,10 +56,14 @@ class BaseCustomDeplymentConfig(BaseModel):
     def api_key(self):
         raise NotImplementedError
 
+    @property
+    def model_name(self):
+        raise NotImplementedError
 
-class HuggingFaceDeploymentConfig(BaseCustomDeplymentConfig):
+
+class HuggingFaceDeploymentConfig(BaseCustomDeploymentConfig):
     _type: Literal["hugging_face"] = "hugging_face"
-    model_name: str
+    custom_model_name: str
     token: BearerAuthentication
     deployment_url: str
 
@@ -71,8 +75,12 @@ class HuggingFaceDeploymentConfig(BaseCustomDeplymentConfig):
     def api_key(self):
         return self.token.bearer_token
 
+    @property
+    def model_name(self):
+        return self.custom_model_name
 
-DeploymentConfig = Union[HuggingFaceDeploymentConfig, BaseCustomDeplymentConfig]
+
+DeploymentConfig = Union[HuggingFaceDeploymentConfig, BaseCustomDeploymentConfig]
 
 
 class LLMClient(SyncAPIClient):
