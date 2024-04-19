@@ -107,6 +107,14 @@ class AgentActor(Actor):
             user_message = Template(user_message_template).render(
                 **self._input,
             )
+
+            # Hydrate system_message_template with self._input
+            if self._system_message and len(self._system_message) > 0 and "content" in self._system_message[0]:
+                self._system_message[0]["content"] = Template(
+                    self._system_message[0]["content"],
+                ).render(
+                    **self._input,
+                )
         except Exception as e:
             logger.error(f"Error rendering user message template: {e}")
             user_message = user_message_template
