@@ -316,10 +316,11 @@ class PromptlyHttpAPIProcessor(
             if parameter.location == ParameterLocation.COOKIE:
                 cookies[parameter.name] = input_json[parameter.name]
 
-        for parameter in self._config.request_body.parameters:
-            if parameter.name not in input_json:
-                continue
-            body_data[parameter.name] = input_json[parameter.name]
+        if self._config.request_body:
+            for parameter in self._config.request_body.parameters:
+                if parameter.name not in input_json:
+                    continue
+                body_data[parameter.name] = input_json[parameter.name]
 
         auth = None
         method = self._config.method
