@@ -596,3 +596,4 @@ ANONYMOUS_USER_RATELIMIT = os.getenv("ANONYMOUS_USER_RATELIMIT", None)
 LIMITER_MODULE = "llmstack.server.limiter"
 
 ENABLE_JOBS = os.getenv("ENABLE_JOBS", "True") == "True"
+CUSTOM_MODELS_DEPLOYMENT_CONFIG = {}

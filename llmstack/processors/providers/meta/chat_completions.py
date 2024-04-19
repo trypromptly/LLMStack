@@ -1,9 +1,9 @@
-import json
 import logging
 from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
+from django.conf import settings
 from pydantic import Field
 
 from llmstack.processors.providers.api_processor_interface import (
@@ -59,7 +59,7 @@ class MessagesOutput(ApiProcessorSchema):
 
 
 class MessagesConfiguration(ApiProcessorSchema):
-    system_prompt: str = Field(
+    system_message: str = Field(
         default="You are a helpful assistant.",
         description="A system prompt is a way of providing context and instructions to the model.",
         widget="textarea",
@@ -110,6 +110,11 @@ class MessagesConfiguration(ApiProcessorSchema):
         multiple_of=0.1,
         advanced_parameter=False,
     )
+    stop: Optional[List[str]] = Field(
+        default=["<|eot_id|>"],
+        description="A list of tokens at which to stop generation.",
+        advanced_parameter=False,
+    )
 
 
 class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, MessagesConfiguration]):
@@ -140,13 +145,21 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
     def process(self) -> MessagesOutput:
         from llmstack.common.utils.sslr import LLM
 
-        deployment_configs = json.loads(self._env.get("deployment_configs", "{}"))
-        model_deployment_config = deployment_configs.get(self._config.model.model_name(), {})
+        model_deployment_configs = (
+            settings.CUSTOM_MODELS_DEPLOYMENT_CONFIG.get(f"{self.provider_slug()}/{self._config.model.model_name()}")
+            if settings.CUSTOM_MODELS_DEPLOYMENT_CONFIG
+            else []
+        )
+
+        if not model_deployment_configs:
+            raise Exception(
+                f"Model deployment config not found for {self.provider_slug()}/{self._config.model.model_name()}"
+            )
 
         messages = []
 
-        if self._config.system_prompt:
-            messages.append({"role": "system", "content": self._config.system_prompt})
+        if self._config.system_message:
+            messages.append({"role": "system", "content": self._config.system_message})
 
         if self._chat_history:
             for message in self._chat_history:
@@ -155,7 +168,7 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         for message in self._input.messages:
             messages.append({"role": str(message.role), "content": str(message.message)})
 
-        client = LLM(provider="custom", deployment_config=model_deployment_config)
+        client = LLM(provider="custom", deployment_config=model_deployment_configs[0])
 
         result = client.chat.completions.create(
             messages=messages,
@@ -165,7 +178,7 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
             seed=self._config.seed,
             temperature=self._config.temperature,
             top_p=self._config.top_p,
-            stop=["<|eot_id|>"],
+            stop=self._config.stop,
             extra_body={"repetition_penalty": self._config.repetition_penalty},
         )
         for entry in result:
