@@ -3,6 +3,31 @@ import { Box, IconButton } from "@mui/material";
 import { DownloadOutlined } from "@mui/icons-material";
 import { axios } from "../../../data/axios";
 import loadingImage from "../../../assets/images/loading.gif";
+import LayoutRenderer from "./LayoutRenderer";
+
+const InlineMarkdownRenderer = (props) => {
+  const { url } = props;
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    if (url) {
+      axios()
+        .get(url)
+        .then((response) => {
+          setData(response.data);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  }, [url]);
+
+  if (!data) {
+    return <p>Loading...</p>;
+  }
+
+  return <LayoutRenderer>{data}</LayoutRenderer>;
+};
 
 const Image = (props) => {
   const { url, alt, noDownload, styleJson } = props;
@@ -61,23 +86,25 @@ export const AssetRenderer = (props) => {
   const [file, setFile] = useState(null);
 
   useEffect(() => {
-    try {
-      const urlParts = url.split("objref://")[1].split("/");
-      const [category, assetId] = [urlParts[0], urlParts[1]];
-      axios()
-        .get(`/api/assets/${category}/${assetId}`)
-        .then((response) => {
-          setFile(response.data);
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    } catch (error) {
-      console.error(error);
+    if (url && url.startsWith("objref://")) {
+      try {
+        const urlParts = url.split("objref://")[1].split("/");
+        const [category, assetId] = [urlParts[0], urlParts[1]];
+        axios()
+          .get(`/api/assets/${category}/${assetId}`)
+          .then((response) => {
+            setFile(response.data);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      } catch (error) {
+        console.error(error);
+      }
     }
   }, [url]);
 
-  if (type.startsWith("image")) {
+  if (type && type.startsWith("image")) {
     return (
       <Image
         url={file?.url || loadingImage}
@@ -86,6 +113,10 @@ export const AssetRenderer = (props) => {
         styleJson={styleJson}
       />
     );
+  }
+
+  if (type === "text/markdown" && file && file.url && props.inline) {
+    return <InlineMarkdownRenderer url={file.url} />;
   }
 
   return <p>AssetRenderer</p>;
