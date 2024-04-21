@@ -1,4 +1,6 @@
+import base64
 import logging
+import uuid
 from enum import Enum
 from typing import Literal, Optional, Union
 
@@ -38,11 +40,13 @@ class Provider(str, Enum):
 
 
 class LLMProcessorInput(ApiProcessorSchema):
-    input_message: str = Field(description="The input message for the LLM", widget="textarea")
+    input_message: str = Field(description="The input message for the LLM", widget="textarea", default="")
 
 
 class LLMProcessorOutput(ApiProcessorSchema):
-    output_str: str = ""
+    output_str: Optional[str] = Field(description="The output string from the LLM", widget="hidden")
+    text: Optional[str] = Field(description="The output text from the LLM", widget="textarea")
+    objref: Optional[str] = Field(description="The object reference for the output", widget="hidden")
 
 
 class OpenAIModel(str, Enum):
@@ -157,6 +161,12 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
         ge=0.0,
         advanced_parameter=False,
     )
+    objref: Optional[bool] = Field(
+        default=False,
+        title="Output as Object Reference",
+        description="Return output as object reference instead of raw text.",
+        advanced_parameter=True,
+    )
 
 
 class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, LLMProcessorConfiguration]):
@@ -212,11 +222,30 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             seed=self._config.seed,
             temperature=self._config.temperature,
         )
+
+        output_entries = []
         for entry in result:
+            # Stream the output if objref is not enabled
+            if not self._config.objref:
+                async_to_sync(output_stream.write)(
+                    LLMProcessorOutput(
+                        output_str=entry.choices[0].delta.content_str,
+                        text=entry.choices[0].delta.content_str,
+                    ),
+                )
+            output_entries.append(entry.choices[0].delta.content_str)
+
+        # Create data uri if objref is enabled and save the output
+        if self._config.objref and len(output_entries) > 0:
+            file_name = str(uuid.uuid4()) + ".txt"
+            data_uri = f"data:text/plain;name={file_name};base64,{base64.b64encode(''.join(output_entries).encode('utf-8')).decode('utf-8')}"
+            asset = self._upload_asset_from_url(asset=data_uri)
+
             async_to_sync(output_stream.write)(
                 LLMProcessorOutput(
-                    output_str=entry.choices[0].delta.content_str,
+                    objref=asset,
                 ),
             )
+
         output = output_stream.finalize()
         return output
