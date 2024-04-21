@@ -61,6 +61,25 @@ class BaseCustomDeploymentConfig(BaseModel):
         raise NotImplementedError
 
 
+class GroqDeploymentConfig(BaseCustomDeploymentConfig):
+    _type: Literal["groq"] = "groq"
+    custom_model_name: str
+    token: BearerAuthentication
+    deployment_url: str
+
+    @property
+    def base_url(self):
+        return self.deployment_url
+
+    @property
+    def api_key(self):
+        return self.token.bearer_token
+
+    @property
+    def model_name(self):
+        return self.custom_model_name
+
+
 class HuggingFaceDeploymentConfig(BaseCustomDeploymentConfig):
     _type: Literal["hugging_face"] = "hugging_face"
     custom_model_name: str
@@ -80,7 +99,7 @@ class HuggingFaceDeploymentConfig(BaseCustomDeploymentConfig):
         return self.custom_model_name
 
 
-DeploymentConfig = Union[HuggingFaceDeploymentConfig, BaseCustomDeploymentConfig]
+DeploymentConfig = Union[HuggingFaceDeploymentConfig, GroqDeploymentConfig, BaseCustomDeploymentConfig]
 
 
 class LLMClient(SyncAPIClient):
@@ -543,6 +562,8 @@ class LLM(LLMClient, OpenAI):
                 raise ValueError("deployment_config must have a _type field")
             if deployment_config["_type"] == "hugging_face":
                 self.deployment_config = HuggingFaceDeploymentConfig(**deployment_config)
+            elif deployment_config["_type"] == "groq":
+                self.deployment_config = GroqDeploymentConfig(**deployment_config)
             else:
                 raise ValueError("Unsupported deployment config type")
             api_key = self.deployment_config.api_key
