@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 class MessagesModel(str, Enum):
     LLAMA_3_8B = "llama-3-8b"
     LLAMA_3_8B_INSTRUCT = "llama-3-8b-instruct"
+    LLAMA_3_70B = "llama-3-70b"
 
     def __str__(self):
         return self.value
@@ -117,6 +118,7 @@ class MessagesConfiguration(ApiProcessorSchema):
         description="A list of tokens at which to stop generation.",
         advanced_parameter=False,
     )
+    deployment_names: Optional[List[str]] = Field(default=None, description="The deployment provider config to use.")
 
 
 class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, MessagesConfiguration]):
@@ -147,11 +149,23 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
     def process(self) -> MessagesOutput:
         from llmstack.common.utils.sslr import LLM
 
-        model_deployment_configs = (
-            settings.CUSTOM_MODELS_DEPLOYMENT_CONFIG.get(f"{self.provider_slug()}/{self._config.model.model_name()}")
-            if settings.CUSTOM_MODELS_DEPLOYMENT_CONFIG
-            else []
+        deployment_configs = settings.CUSTOM_MODELS_DEPLOYMENT_CONFIG.get(
+            f"{self.provider_slug()}/{self._config.model.model_name()}"
         )
+        if not deployment_configs:
+            raise Exception(
+                f"Model deployment config not found for {self.provider_slug()}/{self._config.model.model_name()}"
+            )
+
+        model_deployment_configs = []
+
+        if not self._config.deployment_names:
+            if deployment_configs.get("default"):
+                model_deployment_configs = [deployment_configs["default"]]
+        else:
+            for entry in self._config.deployment_names:
+                if deployment_configs.get(entry):
+                    model_deployment_configs.append(deployment_configs.get(entry))
 
         if not model_deployment_configs:
             raise Exception(
@@ -174,14 +188,13 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
 
         result = client.chat.completions.create(
             messages=messages,
-            model="tgi",
+            model="",
             max_tokens=self._config.max_tokens,
             stream=True,
             seed=self._config.seed,
             temperature=self._config.temperature,
             top_p=self._config.top_p,
             stop=self._config.stop,
-            extra_body={"repetition_penalty": self._config.repetition_penalty},
         )
         for entry in result:
             async_to_sync(self._output_stream.write)(
