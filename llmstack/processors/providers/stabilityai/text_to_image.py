@@ -158,21 +158,13 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
     def process(self) -> dict:
         from llmstack.common.utils.sslr import LLM
 
-        prompt = self._input.prompt
-        negative_prompt = self._input.negative_prompt
-
-        if not prompt:
-            raise Exception("Prompt is required")
-
-        prompts = []
-
         client = LLM(
             provider="stabilityai",
             stabilityai_api_key=self._env.get("stabilityai_api_key"),
         )
         result = client.images.generate(
-            prompt=" ".join(prompts),
-            negative_prompt=" ".join(negative_prompt) if negative_prompt else None,
+            prompt=" ".join(self._input.prompt),
+            negative_prompt=" ".join(self._input.negative_prompt) if self._input.negative_prompt else None,
             model=self._config.engine_id.model_name(),
             n=1,
             response_format="b64_json",
