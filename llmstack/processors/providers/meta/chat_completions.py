@@ -118,7 +118,7 @@ class MessagesConfiguration(ApiProcessorSchema):
         description="A list of tokens at which to stop generation.",
         advanced_parameter=False,
     )
-    deployment_provider_type: Optional[str] = Field(default=None, description="The deployment provider to use.")
+    deployment_names: Optional[List[str]] = Field(default=None, description="The deployment provider config to use.")
 
 
 class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, MessagesConfiguration]):
@@ -149,15 +149,24 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
     def process(self) -> MessagesOutput:
         from llmstack.common.utils.sslr import LLM
 
-        model_deployment_configs = (
-            settings.CUSTOM_MODELS_DEPLOYMENT_CONFIG.get(f"{self.provider_slug()}/{self._config.model.model_name()}")
-            if settings.CUSTOM_MODELS_DEPLOYMENT_CONFIG
-            else []
+        deployment_configs = settings.CUSTOM_MODELS_DEPLOYMENT_CONFIG.get(
+            f"{self.provider_slug()}/{self._config.model.model_name()}"
         )
-        if self._config.deployment_provider_type:
-            model_deployment_configs = list(
-                filter(lambda x: x["_type"] == self._config.deployment_provider_type, model_deployment_configs)
+        if not deployment_configs:
+            raise Exception(
+                f"Model deployment config not found for {self.provider_slug()}/{self._config.model.model_name()}"
             )
+
+        model_deployment_configs = []
+
+        if not self._config.deployment_names:
+            if deployment_configs.get("default"):
+                model_deployment_configs = [deployment_configs["default"]]
+        else:
+            for entry in self._config.deployment_names:
+                if deployment_configs.get(entry):
+                    model_deployment_configs.append(deployment_configs.get(entry))
+
         if not model_deployment_configs:
             raise Exception(
                 f"Model deployment config not found for {self.provider_slug()}/{self._config.model.model_name()}"
