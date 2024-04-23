@@ -2,6 +2,7 @@ import os
 import unittest
 
 from llmstack.common.utils.sslr import LLM
+from llmstack.common.utils.sslr._utils import resize_image_file
 from llmstack.common.utils.sslr.constants import (
     PROVIDER_ANTHROPIC,
     PROVIDER_COHERE,
@@ -429,6 +430,34 @@ class TestLLMImageGeneration(unittest.TestCase):
         )
         assert len(result.data) == 1
         assert result.data[0].b64_json is not None
+
+    def test_image_generation_stabilityai_sd3(self):
+        result = self._call_image_generation(PROVIDER_STABILITYAI, "sd3-turbo")
+        assert len(result.data) == 1
+        assert result.data[0].b64_json is not None
+
+
+class TestLLMImageEdit(unittest.TestCase):
+    def _initialize_client(self, provider):
+        return LLM(
+            provider=provider,
+            openai_api_key=os.environ.get("DEFAULT_OPENAI_KEY"),
+            stabilityai_api_key=os.environ.get("DEFAULT_STABILITYAI_KEY"),
+            google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
+            anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
+            cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
+        )
+
+    def test_image_edit_stabilityai(self):
+        import pathlib
+
+        image_file = f"{pathlib.Path(__file__).parent.resolve()}/test_image.jpg"
+        with open(image_file, "rb") as f:
+            data = f.read()
+            client = self._initialize_client(PROVIDER_STABILITYAI)
+            resized_img_file = resize_image_file(data, 4194304, 410094304)
+            result = client.images.edit(image=resized_img_file, model="core", operation="remove_background")
+            assert result.data[0].b64_json is not None
 
 
 if __name__ == "__main__":
