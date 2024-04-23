@@ -88,17 +88,6 @@ function Output(props) {
 }
 
 export default function PlaygroundPage() {
-  const app = {
-    name: "Playground",
-    uuid: null,
-    data: {
-      type_slug: "playground",
-      output_template: { markdown: "{{ processor | json }}" },
-      config: {
-        layout: defaultPlaygroundLayout,
-      },
-    },
-  };
   const [input] = useRecoilState(inputValueState);
   const appSessionId = useRef(null);
   const messagesRef = useRef(new Messages());
@@ -107,6 +96,19 @@ export default function PlaygroundPage() {
 
   const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
   const paramValues = useRecoilValue(endpointConfigValueState);
+  const app = {
+    name: "Playground",
+    uuid: null,
+    data: {
+      type_slug: "playground",
+      output_template: apiBackendSelected?.output_template || {
+        markdown: "{{ processor | json }}",
+      },
+      config: {
+        layout: defaultPlaygroundLayout,
+      },
+    },
+  };
 
   const [ws, setWs] = useState(null);
 

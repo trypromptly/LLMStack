@@ -82,6 +82,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
     chunkedOutput,
     outputTemplate,
     outputTemplates,
+    appTypeSlug,
   ) => {
     return new Promise((resolve, reject) => {
       if (message.output.agent) {
@@ -143,7 +144,12 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
           });
       } else {
         templateEngine
-          .render(outputTemplate, chunkedOutput)
+          .render(
+            outputTemplate,
+            appTypeSlug === "playground"
+              ? chunkedOutput["processor"]
+              : chunkedOutput,
+          )
           .then((response) => {
             resolve(
               new AppMessage(
@@ -300,6 +306,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
           chunkedOutput.current,
           outputTemplate,
           outputTemplates.current,
+          app?.data?.type_slug,
         )
           .then((newMessage) => {
             messagesRef.current.add(newMessage);

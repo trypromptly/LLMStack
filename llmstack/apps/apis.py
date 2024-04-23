@@ -951,6 +951,10 @@ class AppViewSet(viewsets.ViewSet):
             Profile.objects.get(user=request.user) if request.user.is_authenticated else AnonymousProfile()
         )
         processor_id = request.data["input"]["api_provider_slug"] + "_" + request.data["input"]["api_backend_slug"]
+        processor_cls = ApiProcessorFactory.get_api_processor(
+            request.data["input"]["api_backend_slug"],
+            request.data["input"]["api_provider_slug"],
+        )
 
         app = PlaygroundApp(
             id="",
@@ -970,7 +974,8 @@ class AppViewSet(viewsets.ViewSet):
                         "input": request.data["input"]["input"],
                         "config": request.data["input"]["config"],
                     }
-                ]
+                ],
+                "output_template": processor_cls.get_output_template(),
             },
             request_uuid=request_uuid,
             request=request,
