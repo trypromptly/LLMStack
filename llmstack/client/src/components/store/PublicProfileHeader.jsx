@@ -53,7 +53,12 @@ function PublicProfileHeader({ username, sessionData }) {
             src={publicProfile?.avatar}
             alt={publicProfile?.name}
             variant="square"
-            sx={{ borderRadius: 2, cursor: "pointer" }}
+            sx={{
+              borderRadius: 2,
+              cursor: "pointer",
+              width: sessionData?.metadata?.title ? "40px" : "80px",
+              height: sessionData?.metadata?.title ? "40px" : "80px",
+            }}
             onClick={() => (window.location.href = `/u/${username}`)}
           />
           <Box sx={{ width: "100%" }}>
@@ -77,6 +82,11 @@ function PublicProfileHeader({ username, sessionData }) {
             >
               {username}
             </Typography>
+            {publicProfile?.bio && !sessionData?.metadata?.title && (
+              <Typography sx={{ fontSize: "14px", padding: 0 }}>
+                {publicProfile?.bio}
+              </Typography>
+            )}
           </Box>
         </Box>
       </Box>
