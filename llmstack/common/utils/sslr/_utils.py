@@ -45,7 +45,7 @@ def resize_image_file(image_file: bytes, max_pixels: int, max_size: int):
 
 def generate_uuid(_str: str = None):
     if _str:
-        input_hash = hashlib.sha256(b"your_data_here").hexdigest()
+        input_hash = hashlib.sha256(_str.encode()).hexdigest()
         return str(uuid.uuid5(uuid.NAMESPACE_DNS, input_hash))
 
     return str(uuid.uuid4())
