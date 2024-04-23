@@ -67,7 +67,7 @@ class UpscaleProcessorInput(ApiProcessorSchema):
 
 class UpscaleProcessorOutput(ApiProcessorSchema):
     image: str = Field(
-        default=[],
+        default="",
         description="The generated images.",
     )
 
