@@ -63,6 +63,7 @@ const ThemedJsonForm = lazy(() => import("../../ThemedJsonForm"));
 const liquidEngine = new Liquid();
 
 const AppMessageToolbar = ({ message }) => {
+  const messageToolbarRef = useRef(null);
   return (
     <Box
       sx={{
@@ -74,9 +75,23 @@ const AppMessageToolbar = ({ message }) => {
         bottom: 0,
         right: 0,
       }}
+      ref={messageToolbarRef}
     >
       <IconButton
-        onClick={() => navigator.clipboard.writeText(message.content)}
+        onClick={() => {
+          navigator.clipboard.write([
+            new ClipboardItem({
+              "text/plain": new Blob(
+                [messageToolbarRef.current?.parentElement?.textContent],
+                { type: "text/plain" },
+              ),
+              "text/html": new Blob(
+                [messageToolbarRef.current?.parentElement?.innerHTML],
+                { type: "text/html" },
+              ),
+            }),
+          ]);
+        }}
         sx={{ color: "#999" }}
       >
         <ContentCopyOutlined fontSize="small" />
@@ -581,6 +596,8 @@ const AgentStepMessage = memo(
 
 const PromptlyAppOutputHeader = memo(
   ({ appMessages, isRunning }) => {
+    const buttonRef = useRef(null);
+
     return (
       <Typography
         variant="h6"
@@ -591,16 +608,36 @@ const PromptlyAppOutputHeader = memo(
         {appMessages?.length > 1 && !isRunning && (
           <Button
             startIcon={<ContentCopyOutlined />}
-            onClick={() =>
-              navigator.clipboard.writeText(
-                appMessages[appMessages.length - 1].content,
-              )
-            }
+            onClick={() => {
+              try {
+                navigator.clipboard.write([
+                  new ClipboardItem({
+                    "text/plain": new Blob(
+                      [
+                        buttonRef.current.parentElement.parentElement
+                          .children[1].textContent,
+                      ],
+                      { type: "text/plain" },
+                    ),
+                    "text/html": new Blob(
+                      [
+                        buttonRef.current.parentElement.parentElement
+                          .children[1].textContent,
+                      ],
+                      { type: "text/html" },
+                    ),
+                  }),
+                ]);
+              } catch (e) {
+                console.error("Failed to copy to clipboard", e);
+              }
+            }}
             sx={{
               textTransform: "none",
               float: "right",
               margin: "auto",
             }}
+            ref={buttonRef}
           >
             Copy
           </Button>
