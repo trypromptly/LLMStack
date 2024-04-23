@@ -165,7 +165,6 @@ class Images(OpenAIImages):
                         finish_reason = response.headers.get("finish_reason")
                         if finish_reason == "CONTENT_FILTERED":
                             raise self._client._make_status_error("Content filtered.", body=body, response=response)
-                        logger.info(response.json())
                         content_type = "image/png"
                         seed = response.headers.get("seed")
                         timestamp = int(datetime.now().timestamp())
