@@ -6,6 +6,7 @@ import openai
 from asgiref.sync import async_to_sync
 from pydantic import Field, conint
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     IMAGE_WIDGET_NAME,
     ApiProcessorInterface,
@@ -117,6 +118,14 @@ class ImagesGenerations(
     @staticmethod
     def provider_slug() -> str:
         return "openai"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""{% for image in data %}
+![Generated Image]({{image}})
+{% endfor %}""",
+        )
 
     def process(self) -> dict:
         _env = self._env

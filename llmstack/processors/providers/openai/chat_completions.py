@@ -6,6 +6,7 @@ from typing import Generator, List, Optional
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field, confloat, conint
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.llm.openai import ChatCompletionsModel
 from llmstack.common.blocks.llm.openai import FunctionCall as OpenAIFunctionCall
 from llmstack.common.blocks.llm.openai import (
@@ -229,6 +230,14 @@ class ChatCompletions(
     def provider_slug() -> str:
         return "openai"
 
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown="""{% for choice in choices %}
+{{choice.content}}
+{% endfor %}""",
+        )
+
     def session_data_to_persist(self) -> dict:
         if self._config.retain_history and self._config.auto_prune_chat_history:
             messages = []
@@ -282,11 +291,13 @@ class ChatCompletions(
                     OpenAIFunctionCall(
                         name=function.name,
                         description=function.description,
-                        parameters=json.loads(
-                            function.parameters,
-                        )
-                        if function.parameters is not None
-                        else {},
+                        parameters=(
+                            json.loads(
+                                function.parameters,
+                            )
+                            if function.parameters is not None
+                            else {}
+                        ),
                     ),
                 )
 
