@@ -176,7 +176,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
     @staticmethod
     def name() -> str:
-        return "LLM"
+        return "Chat Completions"
 
     @staticmethod
     def slug() -> str:
@@ -184,7 +184,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
     @staticmethod
     def description() -> str:
-        return "Simple LLM Chat completions processor"
+        return "LLM Chat completions processor"
 
     @staticmethod
     def provider_slug() -> str:
