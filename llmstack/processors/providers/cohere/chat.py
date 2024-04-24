@@ -6,6 +6,7 @@ import cohere
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -114,6 +115,12 @@ class CohereChatProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "cohere"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""{{output_message}}""",
+        )
 
     def process_session_data(self, session_data):
         self._chat_history = session_data.get("chat_history", [])

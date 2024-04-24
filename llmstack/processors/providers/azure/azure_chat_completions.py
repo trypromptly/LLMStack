@@ -6,6 +6,7 @@ import openai
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     CHAT_WIDGET_NAME,
     ApiProcessorInterface,
@@ -175,6 +176,12 @@ class AzureChatCompletions(
     @staticmethod
     def provider_slug() -> str:
         return "azure"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""{{ for choice in choices }}{{ choice }}{{ endfor }}""",
+        )
 
     def session_data_to_persist(self) -> dict:
         if self._config.retain_history and self._config.auto_prune_chat_history:

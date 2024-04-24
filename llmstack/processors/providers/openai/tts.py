@@ -1,13 +1,13 @@
 import base64
-import importlib
 import logging
 from enum import Enum
 from typing import Literal
 
-import openai
 from asgiref.sync import async_to_sync
+from openai import OpenAI
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -92,12 +92,17 @@ class TextToSpeechProcessor(
     def provider_slug() -> str:
         return "openai"
 
-    def process(self) -> dict:
-        importlib.reload(openai)
-        output_stream = self._output_stream
-        openai.api_key = self._env["openai_api_key"]
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""![Audio]({{result}})""",
+        )
 
-        response = openai.audio.speech.create(
+    def process(self) -> dict:
+        output_stream = self._output_stream
+        openai_client = OpenAI(api_key=self._env["openai_api_key"])
+
+        response = openai_client.audio.speech.create(
             input=self._input.input_text,
             model=self._config.model,
             voice=self._config.voice,

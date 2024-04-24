@@ -5,6 +5,7 @@ from typing import List, Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -118,6 +119,12 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
     @staticmethod
     def provider_slug() -> str:
         return "mistral"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""{{ result }}""",
+        )
 
     def process_session_data(self, session_data):
         self._chat_history = session_data["chat_history"] if "chat_history" in session_data else []

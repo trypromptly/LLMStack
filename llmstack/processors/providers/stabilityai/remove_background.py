@@ -6,6 +6,7 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.utils.sslr.constants import PROVIDER_STABILITYAI
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
@@ -85,6 +86,12 @@ class RemoveBackgroundProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "stabilityai"
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown="""![Generated Image]({{ image }})""",
+        )
 
     def process(self) -> dict:
         from llmstack.common.utils.sslr import LLM

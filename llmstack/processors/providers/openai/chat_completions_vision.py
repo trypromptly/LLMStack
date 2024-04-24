@@ -1,9 +1,7 @@
-import importlib
 import logging
 from enum import Enum
 from typing import Annotated, List, Literal, Optional, Union
 
-import openai
 from asgiref.sync import async_to_sync
 from openai import OpenAI
 from pydantic import BaseModel, Field, confloat, conint
@@ -156,7 +154,6 @@ class ChatCompletionsVision(
         return {"chat_history": self._chat_history}
 
     def process(self) -> dict:
-        importlib.reload(openai)
         output_stream = self._output_stream
 
         chat_history = self._chat_history if self._config.retain_history else []

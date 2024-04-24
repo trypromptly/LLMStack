@@ -122,7 +122,7 @@ class ImagesGenerations(
     @classmethod
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
-            markdown="""{% for image in data %}
+            markdown="""{% for image in answer %}
 ![Generated Image]({{image}})
 {% endfor %}""",
         )

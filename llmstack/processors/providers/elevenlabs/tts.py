@@ -7,6 +7,7 @@ import requests
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     AUDIO_WIDGET_NAME,
     ApiProcessorInterface,
@@ -91,6 +92,12 @@ class ElevenLabsTextToSpeechProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "elevenlabs"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""{{audio_content}}""",
+        )
 
     def process(self) -> dict:
         api_url = f"https://api.elevenlabs.io/v1/text-to-speech/{self._config.voice_id}/stream"
