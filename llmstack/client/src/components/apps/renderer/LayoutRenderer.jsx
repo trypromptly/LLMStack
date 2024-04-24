@@ -897,7 +897,9 @@ export const PromptlyAppWorkflowOutput = memo(
             />
           )}
         {appRunData?.errors && (
-          <Alert severity="error">{appRunData?.errors.join("\n")}</Alert>
+          <Alert severity="error" sx={{ textAlign: "left" }}>
+            {appRunData?.errors.join("\n")}
+          </Alert>
         )}
       </Box>
     );
