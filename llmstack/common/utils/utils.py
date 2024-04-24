@@ -5,12 +5,14 @@ import re
 import time
 from enum import Enum
 from functools import partial
+from io import BytesIO
 from typing import List
 from urllib.parse import urlparse
 
 import geoip2.database
 import requests
 from django.conf import settings
+from PIL import Image
 
 from llmstack.common.utils.crawlers import (
     run_sitemap_spider_in_process,
@@ -60,6 +62,18 @@ def get_location(ip):
     except Exception as e:
         logger.exception(e)
         return {}
+
+
+def generate_thumbnail(image_data, thumbnail_size=(100, 100), format="JPEG"):
+    image = Image.open(BytesIO(image_data))
+    image.thumbnail(thumbnail_size)
+
+    if format == "JPEG":
+        image = image.convert("RGB")
+
+    thumbnail_io = BytesIO()
+    image.save(thumbnail_io, format=format)
+    return thumbnail_io.getvalue()
 
 
 class MimeType(Enum):
