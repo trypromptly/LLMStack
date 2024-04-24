@@ -643,7 +643,7 @@ class AppSessionFiles(Assets):
 
     def is_accessible(asset, request_user, request_session):
         username = (
-            request_user.email
+            request_user.username
             if request_user.is_authenticated
             else request_session["_prid"]
             if "_prid" in request_session
