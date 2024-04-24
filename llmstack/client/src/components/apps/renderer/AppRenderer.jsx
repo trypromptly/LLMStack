@@ -207,9 +207,11 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
           isRunning: false,
           isStreaming: false,
         }));
+
         if (onEventDone) {
           onEventDone(chunkedOutput.current);
         }
+
         chunkedOutput.current = {};
       }
 

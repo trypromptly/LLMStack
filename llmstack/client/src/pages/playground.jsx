@@ -75,7 +75,9 @@ function Output(props) {
             isMobile={false}
             ws={props.ws}
             onEventDone={(message) => {
-              setJsonOutput(message?.processor || {});
+              if (message?.processor) {
+                setJsonOutput(message.processor);
+              }
             }}
           />
         </TabPanel>
