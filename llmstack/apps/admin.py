@@ -37,13 +37,18 @@ class AppDataAdmin(admin.ModelAdmin):
     search_fields = ["app_uuid"]
 
 
+class AppSessionFilesAdmin(admin.ModelAdmin):
+    search_fields = ["uuid", "ref_id"]
+    list_display = ["uuid", "ref_id", "metadata"]
+
+
 admin.site.register(AppType, AppTypeAdmin)
 admin.site.register(AppRunGraphEntry)
 admin.site.register(App, AppAdmin)
 admin.site.register(AppData)
 admin.site.register(AppSession)
 admin.site.register(AppSessionData)
-admin.site.register(AppSessionFiles)
+admin.site.register(AppSessionFiles, AppSessionFilesAdmin)
 admin.site.register(AppTemplate)
 admin.site.register(AppTemplateCategory)
 admin.site.register(AppHub, AppHubAdmin)
