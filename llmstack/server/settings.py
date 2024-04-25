@@ -631,15 +631,13 @@ if ENABLE_SAML_SOCIALACCOUNT:
 
     export SAML_APP_CERTIFICATE="
     -----BEGIN CERTIFICATE-----
-    MIIC8DCCAdi...
+    MIIC8...
     -----END CERTIFICATE-----
     "
     ```
     """
     # Microsoft Entra ID SAML Configuration
     SAML_APP_CONFIG = json.loads(os.getenv("SAML_APP_CONFIG") or "{}", strict=False)
-
-    # x509cert is configure in a separate env variable. JSON string does not support multiline strings
     SAML_APP_X509_CERTIFICATE = os.getenv("SAML_APP_CERTIFICATE", "")
 
     SAML_APP_SETTINGS_IDP = SAML_APP_CONFIG["settings_idp"]
