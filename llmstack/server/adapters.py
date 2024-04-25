@@ -35,3 +35,17 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             user.email = user.username
 
         return user
+
+    def pre_social_login(self, request, sociallogin):
+        if sociallogin.is_existing:
+            return
+
+        user = sociallogin.user
+
+        if not user.username:
+            user.username = user.email
+
+        if not user.email:
+            user.email = user.username
+
+        sociallogin.connect(request, user)

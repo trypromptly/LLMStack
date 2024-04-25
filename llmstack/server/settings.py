@@ -584,6 +584,80 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
+ENABLE_SAML_SOCIALACCOUNT = os.getenv("ENABLE_SAML_SOCIALACCOUNT", "False") == "True"
+if ENABLE_SAML_SOCIALACCOUNT:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+    if "allauth.socialaccount.providers.saml" not in INSTALLED_APPS:
+        INSTALLED_APPS.append("allauth.socialaccount.providers.saml")
+
+    """
+    SAMPLE CONFIG from .bashrc/.zshrc. x509cert is configure in a separate env variable
+
+    ```bash
+    export SAML_APP_NAME="Test Org Inc"
+    export SAML_APP_CLIENT_ID="test-org-inc"
+    export SAML_APP_TENANT_ID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    export SAML_APP_CONFIG=$(cat <<EOF
+    {
+        "name": "$SAML_APP_NAME",
+        "provider_id": "https://login.microsoftonline.com/$SAML_APP_TENANT_ID/",
+        "client_id": "$SAML_APP_CLIENT_ID",
+        "settings_attribute_mapping": {
+            "uid": "http://schemas.microsoft.com/identity/claims/objectidentifier",
+            "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+            "first_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+            "last_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+        },
+        "settings_idp": {
+            "entity_id": "https://sts.windows.net/$SAML_APP_TENANT_ID/",
+            "sso_url": "https://login.microsoftonline.com/$SAML_APP_TENANT_ID/saml2",
+            "slo_url": "https://login.microsoftonline.com/$SAML_APP_TENANT_ID/saml2"
+        },
+        "settings_advanced": {
+            "strict": false,
+            "authn_requests_signed": false,
+            "logout_request_signed": false,
+            "logout_response_signed": false,
+            "requested_authn_context": false,
+            "sign_metadata": false,
+            "want_assertion_encrypted": false,
+            "want_assertion_signed": false,
+            "want_messages_signed": false
+        }
+    }
+    EOF
+    )
+
+    export SAML_APP_CERTIFICATE="
+    -----BEGIN CERTIFICATE-----
+    MIIC8...
+    -----END CERTIFICATE-----
+    "
+    ```
+    """
+    # Microsoft Entra ID SAML Configuration
+    SAML_APP_CONFIG = json.loads(os.getenv("SAML_APP_CONFIG") or "{}", strict=False)
+    SAML_APP_X509_CERTIFICATE = os.getenv("SAML_APP_CERTIFICATE", "")
+
+    SAML_APP_SETTINGS_IDP = SAML_APP_CONFIG["settings_idp"]
+    SAML_APP_SETTINGS_IDP["x509cert"] = SAML_APP_X509_CERTIFICATE
+
+    SAML_APP = {
+        "name": SAML_APP_CONFIG["name"],
+        "provider_id": SAML_APP_CONFIG["provider_id"],
+        "client_id": SAML_APP_CONFIG["client_id"],
+        "settings": {
+            "attribute_mapping": SAML_APP_CONFIG["settings_attribute_mapping"],
+            "idp": SAML_APP_SETTINGS_IDP,
+            "advanced": SAML_APP_CONFIG["settings_advanced"],
+        },
+    }
+
+    SOCIALACCOUNT_PROVIDERS["saml"] = {
+        "APPS": [SAML_APP],
+    }
+
 EVENT_TOPIC_MAPPING = {
     "app.run.finished": [
         {
