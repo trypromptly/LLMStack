@@ -222,7 +222,7 @@ class ApiProcessorInterface(
         return None
 
     @classmethod
-    def api_backends(cls) -> Dict:
+    def api_backends(cls, context={}) -> Dict:
         return [
             {
                 "id": f"{cls.provider_slug()}/{cls.slug()}",  # Unique ID for the processor
