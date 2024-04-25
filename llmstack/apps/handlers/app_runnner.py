@@ -203,7 +203,7 @@ class AppRunner:
                     )
 
                 processor_cls = ApiProcessorFactory.get_api_processor(
-                    processor["processor_slug"],
+                    processor["processor_slug"].split("/")[0],
                     processor["provider_slug"],
                 )
                 app_session_data = get_app_session_data(
@@ -335,7 +335,7 @@ class AppRunner:
         for processor in self.app_data["processors"] if self.app_data and "processors" in self.app_data else []:
             if (
                 processor["provider_slug"],
-                processor["processor_slug"],
+                processor["processor_slug"].split("/")[0],
             ) not in processor_classes:
                 continue
             functions.append(
@@ -345,7 +345,7 @@ class AppRunner:
                     "parameters": processor_classes[
                         (
                             processor["provider_slug"],
-                            processor["processor_slug"],
+                            processor["processor_slug"].split("/")[0],
                         )
                     ].get_tool_input_schema(processor),
                 },
