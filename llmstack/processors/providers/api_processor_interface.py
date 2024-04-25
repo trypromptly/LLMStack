@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any, Optional, TypeVar
+from typing import Any, Dict, Optional, TypeVar
 
 import ujson as json
 from django import db
@@ -216,6 +216,31 @@ class ApiProcessorInterface(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         # Default output_template to use in tools and playground
         return None
+
+    @classmethod
+    def get_parent_processor_slug(cls):
+        return None
+
+    @classmethod
+    def api_backends(cls, context={}) -> Dict:
+        return [
+            {
+                "id": f"{cls.provider_slug()}/{cls.slug()}",  # Unique ID for the processor
+                "name": cls.name(),  # Name of the processor
+                "slug": cls.slug(),  # Slug of the processor
+                "description": cls.description(),  # Description of the processor
+                "api_provider_slug": cls.provider_slug(),
+                "input_schema": json.loads(cls.get_input_schema()),  # Input schema of the processor
+                "output_schema": json.loads(cls.get_output_schema()),  # Output schema of the processor
+                "config_schema": json.loads(cls.get_configuration_schema()),  # Configuration schema of the processor
+                "input_ui_schema": cls.get_input_ui_schema(),  # Input UI schema of the processor
+                "output_ui_schema": cls.get_output_ui_schema(),  # Output UI schema of the processor
+                "config_ui_schema": cls.get_configuration_ui_schema(),  # Configuration UI schema of the processor
+                "output_template": (
+                    cls.get_output_template().dict() if cls.get_output_template() else None
+                ),  # Output template of the processor
+            }
+        ]
 
     def disable_history(self) -> bool:
         return False

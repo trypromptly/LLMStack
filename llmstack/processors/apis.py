@@ -290,31 +290,10 @@ class ApiBackendViewSet(viewsets.ViewSet):
             if subclass.provider_slug() not in providers_map:
                 continue
 
-            try:
-                processor_name = subclass.name()
-            except NotImplementedError:
-                processor_name = subclass.slug().capitalize()
+            for entry in subclass.api_backends():
+                entry["api_provider"] = providers_map[entry["api_provider_slug"]]
+                processors.append(entry)
 
-            processors.append(
-                {
-                    "id": f"{subclass.provider_slug()}/{subclass.slug()}",
-                    "name": processor_name,
-                    "slug": subclass.slug(),
-                    "api_provider": providers_map[subclass.provider_slug()],
-                    "api_endpoint": {},
-                    "params": {},
-                    "description": subclass.description(),
-                    "input_schema": json.loads(subclass.get_input_schema()),
-                    "output_schema": json.loads(subclass.get_output_schema()),
-                    "config_schema": json.loads(subclass.get_configuration_schema()),
-                    "input_ui_schema": subclass.get_input_ui_schema(),
-                    "output_ui_schema": subclass.get_output_ui_schema(),
-                    "config_ui_schema": subclass.get_configuration_ui_schema(),
-                    "output_template": (
-                        subclass.get_output_template().dict() if subclass.get_output_template() else None
-                    ),
-                },
-            )
         return DRFResponse(processors)
 
 
