@@ -63,6 +63,7 @@ const ThemedJsonForm = lazy(() => import("../../ThemedJsonForm"));
 const liquidEngine = new Liquid();
 
 const AppMessageToolbar = ({ message }) => {
+  const messageToolbarRef = useRef(null);
   return (
     <Box
       sx={{
@@ -74,9 +75,23 @@ const AppMessageToolbar = ({ message }) => {
         bottom: 0,
         right: 0,
       }}
+      ref={messageToolbarRef}
     >
       <IconButton
-        onClick={() => navigator.clipboard.writeText(message.content)}
+        onClick={() => {
+          navigator.clipboard.write([
+            new ClipboardItem({
+              "text/plain": new Blob(
+                [messageToolbarRef.current?.parentElement?.textContent],
+                { type: "text/plain" },
+              ),
+              "text/html": new Blob(
+                [messageToolbarRef.current?.parentElement?.innerHTML],
+                { type: "text/html" },
+              ),
+            }),
+          ]);
+        }}
         sx={{ color: "#999" }}
       >
         <ContentCopyOutlined fontSize="small" />
@@ -581,6 +596,8 @@ const AgentStepMessage = memo(
 
 const PromptlyAppOutputHeader = memo(
   ({ appMessages, isRunning }) => {
+    const buttonRef = useRef(null);
+
     return (
       <Typography
         variant="h6"
@@ -591,16 +608,36 @@ const PromptlyAppOutputHeader = memo(
         {appMessages?.length > 1 && !isRunning && (
           <Button
             startIcon={<ContentCopyOutlined />}
-            onClick={() =>
-              navigator.clipboard.writeText(
-                appMessages[appMessages.length - 1].content,
-              )
-            }
+            onClick={() => {
+              try {
+                navigator.clipboard.write([
+                  new ClipboardItem({
+                    "text/plain": new Blob(
+                      [
+                        buttonRef.current.parentElement.parentElement
+                          .children[1].textContent,
+                      ],
+                      { type: "text/plain" },
+                    ),
+                    "text/html": new Blob(
+                      [
+                        buttonRef.current.parentElement.parentElement
+                          .children[1].textContent,
+                      ],
+                      { type: "text/html" },
+                    ),
+                  }),
+                ]);
+              } catch (e) {
+                console.error("Failed to copy to clipboard", e);
+              }
+            }}
             sx={{
               textTransform: "none",
               float: "right",
               margin: "auto",
             }}
+            ref={buttonRef}
           >
             Copy
           </Button>
@@ -734,7 +771,14 @@ export const PromptlyAppChatOutput = memo(
           appRunData?.suggestedMessages &&
           appRunData?.suggestedMessages?.length > 0 && (
             <SuggestedMessages
-              messages={appRunData?.suggestedMessages}
+              messages={
+                appRunData?.suggestedMessages
+                  ? appRunData?.suggestedMessages
+                      .slice()
+                      .sort(() => Math.random() - 0.5)
+                      .slice(0, 4)
+                  : []
+              }
               onClick={(message) =>
                 appRunData?.inputFields?.length > 0 &&
                 runApp(
@@ -760,7 +804,13 @@ export const PromptlyAppChatOutput = memo(
 );
 
 export const PromptlyAppWorkflowOutput = memo(
-  ({ showHeader, placeholder, sx, enableAutoScroll = true }) => {
+  ({
+    showHeader,
+    showAgentStepOutput,
+    placeholder,
+    sx,
+    enableAutoScroll = true,
+  }) => {
     const appRunData = useRecoilValue(appRunDataState);
     const assistantImage = useMemo(
       () => appRunData?.assistantImage,
@@ -828,6 +878,16 @@ export const PromptlyAppWorkflowOutput = memo(
           !appRunData.errors &&
           appMessages.length === 0 &&
           placeholder}
+        {showAgentStepOutput &&
+          appMessages &&
+          appMessages.length > 0 &&
+          appMessages[appMessages.length - 1].subType === "agent-step" && (
+            <AgentStepMessage
+              message={appMessages[appMessages.length - 1]}
+              processors={appRunData?.processors}
+              assistantImage={assistantImage}
+            />
+          )}
         {appMessages.length > 0 &&
           appMessages[appMessages.length - 1].type === "app" && (
             <AppMessage
@@ -837,7 +897,9 @@ export const PromptlyAppWorkflowOutput = memo(
             />
           )}
         {appRunData?.errors && (
-          <Alert severity="error">{appRunData?.errors.join("\n")}</Alert>
+          <Alert severity="error" sx={{ textAlign: "left" }}>
+            {appRunData?.errors.join("\n")}
+          </Alert>
         )}
       </Box>
     );
@@ -1066,6 +1128,7 @@ export default function LayoutRenderer({
         return (
           <PromptlyAppWorkflowOutput
             showHeader={props?.showheader}
+            showAgentStepOutput={props?.showagentstepoutput}
             placeholder={props.placeholder}
             sx={sx}
           />

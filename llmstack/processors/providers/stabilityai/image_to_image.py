@@ -1,86 +1,182 @@
-import json
 import logging
+from enum import Enum
 from typing import List, Optional
 
-import grpc
-import stability_sdk.interfaces.gooseai.generation.generation_pb2 as generation
-from google.protobuf.json_format import MessageToJson
+from asgiref.sync import async_to_sync
 from pydantic import Field
-from stability_sdk import client
 
-from llmstack.common.utils.utils import get_key_or_raise
+from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
-    IMAGE_WIDGET_NAME,
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
 
-from .utils import (
-    GuidancePreset,
-    Sampler,
-    get_guidance_preset_enum,
-    get_sampler_grpc_enum,
-)
-
 logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
+
+class StabilityAIModel(str, Enum):
+    STABLE_DIFFUSION_XL = "stable-diffusion-xl"
+    STABLE_DIFFUSION = "stable-diffusion"
+    ESRGAN_V1 = "esrgan-v1"
+    CORE = "core"
+    SD_3 = "sd3"
+    SD_3_TURBO = "sd3-turbo"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def model_name(self):
+        if self.value == "stable-diffusion-xl":
+            return "stable-diffusion-xl-1024-v1-0"
+        elif self.value == "stable-diffusion":
+            return "stable-diffusion-v1-6"
+        elif self.value == "core":
+            return "core"
+        elif self.value == "sd3":
+            return "sd3"
+        elif self.value == "sd3-turbo":
+            return "sd3-turbo"
+        elif self.value == "esrgan-v1":
+            return "esrgan-v1-x2plus"
+        else:
+            raise ValueError(f"Unknown model {self.value}")
+
+
+class Sampler(str, Enum):
+    ddim = "ddim"
+    plms = "plms"
+    k_euler = "k_euler"
+    k_euler_ancestral = "k_euler_ancestral"
+    k_heun = "k_heun"
+    k_dpm_2 = "k_dpm_2"
+    k_dpm_2_ancestral = "k_dpm_2_ancestral"
+    k_dpmpp_2m = "k_dpmpp_2m"
+
+    def __str__(self):
+        return self.value
+
+
+class GuidancePreset(str, Enum):
+    simple = "simple"
+    fast_blue = "fast_blue"
+    fast_green = "fast_green"
+    slow = "slow"
+    slower = "slower"
+    slowest = "slowest"
+
+    def __str__(self):
+        return self.value
+
+
+class StylePreset(str, Enum):
+    THREE_D = "3d-model"
+    ANALOG_FILM = "analog-film"
+    ANIME = "anime"
+    CINEMATIC = "cinematic"
+    COMIC_BOOK = "comic-book"
+    DIGITAL_ART = "digital-art"
+    ENHANCE = "enhance"
+    FANTASY_ART = "fantasy-art"
+    ISOMETRIC = "isometric"
+    LINE_ART = "line-art"
+    LOW_POLY = "low-poly"
+    MODELING_COMPOUND = "modeling-compound"
+    NEON_PUNK = "neon-punk"
+    ORIGAMI = "origami"
+    PHOTOGRAPHIC = "photographic"
+    PIXEL_ART = "pixel-art"
+    TILE_TEXTURE = "tile-texture"
 
 
 class ImageToImageConfiguration(ApiProcessorSchema):
-    engine_id: str = "stable-diffusion-512-v2-0"
-    """
-    Inference engine (model) to use.
-    """
-    height: Optional[int] = 512
-    """
-    Measured in pixels. Pixel limit is 1048576
-    """
-    width: Optional[int] = 512
-    """
-    Measured in pixels. Pixel limit is 1048576.
-    """
-    cfg_scale: Optional[int] = 7
-    """
-    Dictates how closely the engine attempts to match a generation to the provided prompt. v2-x models respond well to lower CFG (4-8), where as v1-x models respond well to a higher range (IE: 7-14).
-    """
-    sampler: Optional[Sampler] = Sampler.k_euler
-    """
-    Sampling engine to use. If no sampler is declared, an appropriate default sampler for the declared inference engine will be applied automatically.
-    """
-    steps: Optional[int] = None
-    """
-    Affects the number of diffusion steps performed on the requested generation.
-    """
-    seed: Optional[int] = None
-    """
-    Seed for random latent noise generation. Deterministic if not being used in concert with CLIP Guidance. If not specified, or set to 0, then a random value will be used.
-    """
-    num_samples: int = 1
-    """
-    Number of images to generate. Allows for batch image generations.
-    """
-    guidance_preset: Optional[GuidancePreset] = None
-    """
-    CLIP guidance preset, use with ancestral sampler for best results.
-    """
-    guidance_strength: Optional[float] = None
-    """
-    How strictly the diffusion process adheres to the prompt text (higher values keep your image closer to your prompt).
-    """
+    engine_id: StabilityAIModel = Field(
+        default=StabilityAIModel.STABLE_DIFFUSION_XL,
+        description="Inference engine (model) to use.",
+        advanced_parameter=False,
+    )
+    height: Optional[int] = Field(
+        default=512,
+        description="Measured in pixels. Pixel limit is 1048576",
+    )
+    width: Optional[int] = Field(
+        default=512,
+        description="Measured in pixels. Pixel limit is 1048576.",
+    )
+    init_image_mode: Optional[str] = Field(
+        default="image_strength",
+        description="Whether to use image_strength or step_schedule_* to control how much influence the init_image has on the result.",
+    )
+    image_strength: Optional[float] = Field(
+        default=0.35,
+        lte=1.0,
+        gte=0.0,
+        multiple_of=0.01,
+        description="How much influence the init_image has on the diffusion process. Values close to 1 will yield images very similar to the init_image while values close to 0 will yield images wildly different than the init_image.",
+    )
+    cfg_scale: Optional[int] = Field(
+        default=7,
+        description="Dictates how closely the engine attempts to match a generation to the provided prompt. v2-x models respond well to lower CFG (4-8), where as v1-x models respond well to a higher range (IE: 7-14).",
+    )
+    sampler: Sampler = Field(
+        default=Sampler.k_euler,
+        description="Sampling engine to use. If no sampler is declared, an appropriate default sampler for the declared inference engine will be applied automatically.",
+    )
+    steps: Optional[int] = Field(
+        default=30,
+        description="Affects the number of diffusion steps performed on the requested generation.",
+    )
+    seed: Optional[int] = Field(
+        default=0,
+        description="Seed for random latent noise generation. Deterministic if not being used in concert with CLIP Guidance. If not specified, or set to 0, then a random value will be used.",
+        advanced_parameter=False,
+    )
+    num_samples: int = Field(
+        default=1,
+        description="Number of images to generate. Allows for batch image generations.",
+        advanced_parameter=True,
+    )
+    guidance_preset: Optional[GuidancePreset] = Field(
+        default=None,
+        widget="hidden",
+        description="Guidance preset to use for image generation.",
+    )
 
 
 class ImageToImageInput(ApiProcessorSchema):
-    init_image: str
-    prompt: str
-    negative_prompt: Optional[str] = None
+    image_file: Optional[str] = Field(
+        default="",
+        description="The file to extract text from",
+        accepts={
+            "image/jpeg": [],
+            "image/png": [],
+        },
+        maxSize=50000000,
+        widget="file",
+    )
+    image_file_data: Optional[str] = Field(
+        default="",
+        description="The base64 encoded data of file",
+        pattern=r"data:(.*);name=(.*);base64,(.*)",
+    )
+
+    prompt: List[str] = Field(
+        default=[""],
+        description="Text prompt to use for image generation.",
+    )
+    negative_prompt: List[str] = Field(
+        default=[],
+        description="Negative text prompt to use for image generation.",
+    )
+    style_preset: Optional[StylePreset] = Field(
+        default=None,
+        description="Pass in a style preset to guide the image model towards a particular style. This list of style presets is subject to change.",
+    )
 
 
 class ImageToImageOutput(ApiProcessorSchema):
-    answer: List[str] = Field(
-        default=[],
-        description="The generated images.",
-        widget=IMAGE_WIDGET_NAME,
+    image: str = Field(
+        description="The generated image.",
     )
 
 
@@ -107,86 +203,43 @@ class ImageToImage(
     def provider_slug() -> str:
         return "stabilityai"
 
-    def process(self, input: dict) -> dict:
-        _env = self._env
-        stability_api_key = get_key_or_raise(
-            _env,
-            "stabilityai_api_key",
-            "No stabilityai_api_key found in _env",
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown="""![Generated Image]({{ image }})""",
         )
 
-        init_image = self._input.init_image
-        prompt = self._input.prompt
-        if not prompt or not init_image:
-            raise Exception("Prompt and init_image are required")
+    def process(self) -> dict:
+        from llmstack.common.utils.sslr import LLM
 
-        negative_prompt = self._input.negative_prompt
-        prompts = []
-        for p in prompt.split(","):
-            if p:
-                prompts.append(
-                    generation.Prompt(
-                        text=p,
-                        parameters=generation.PromptParameters(
-                            weight=1,
-                        ),
-                    ),
-                )
+        image_file = self._input.image_file or None
+        if (image_file is None or image_file == "") and self._input.image_file_data:
+            image_file = self._input.image_file_data
+        if image_file is None:
+            raise Exception("No file found in input")
 
-        for p in negative_prompt.split(","):
-            if p:
-                prompts.append(
-                    generation.Prompt(
-                        text=p,
-                        parameters=generation.PromptParameters(
-                            weight=-1,
-                        ),
-                    ),
-                )
+        # Extract from objref if it is one
+        image_file = self._get_session_asset_data_uri(image_file)
 
-        stability_api = client.StabilityInference(
-            key=stability_api_key,
-            verbose=True,
-            engine=self._config.engine_id,
+        mime_type, file_name, data = validate_parse_data_uri(image_file)
+
+        client = LLM(
+            provider="stabilityai",
+            stabilityai_api_key=self._env.get("stabilityai_api_key"),
         )
-        try:
-            grpc_response = stability_api.generate(
-                prompt=prompts,
-                init_image=init_image,
-                height=self._config.height,
-                width=self._config.width,
-                cfg_scale=self._config.cfg_scale,
-                sampler=get_sampler_grpc_enum(self._config.sampler),
-                steps=self._config.steps,
-                seed=self._config.seed,
-                samples=self._config.num_samples,
-                guidance_preset=get_guidance_preset_enum(
-                    self._config.guidance_preset,
-                ),
-                guidance_strength=self._config.guidance_strength,
-            )
-        except grpc.RpcError as grpc_ex:
-            logger.exception(grpc_ex)
-            raise Exception(grpc_ex.details())
-        except Exception as ex:
-            logger.exception(ex)
-            raise Exception(ex)
-
-        api_response = {"data": []}
-        for resp in grpc_response:
-            api_response["data"].append(json.loads(MessageToJson(resp)))
-
-        result = []
-        for entry in api_response["data"]:
-            if "artifacts" in entry:
-                for image_data in entry["artifacts"]:
-                    if image_data["type"] == "ARTIFACT_IMAGE":
-                        result.append(
-                            "data:{};base64, {}".format(
-                                image_data["mime"],
-                                image_data["binary"],
-                            ),
-                        )
-
-        response = ImageToImageOutput(answer=result)
-        return response
+        result = client.images.generate(
+            prompt=" ".join(self._input.prompt),
+            negative_prompt=" ".join(self._input.negative_prompt) if self._input.negative_prompt else None,
+            model=self._config.engine_id.model_name(),
+            n=1,
+            response_format="b64_json",
+            size=f"{self._config.width}x{self._config.height}",
+        )
+        image = result.data[0]
+        data_uri = image.data_uri(include_name=True)
+        object_ref = self._upload_asset_from_url(asset=data_uri)
+        async_to_sync(self._output_stream.write)(
+            ImageToImageOutput(image=object_ref),
+        )
+        output = self._output_stream.finalize()
+        return output

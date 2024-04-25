@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Literal, Optional, Union
 
@@ -14,6 +15,8 @@ from llmstack.common.utils.sslr.types.image import Image
 
 from .._utils import cached_property, maybe_transform
 from ..types import images_response
+
+logger = logging.getLogger(__name__)
 
 
 class Images(OpenAIImages):
@@ -37,7 +40,7 @@ class Images(OpenAIImages):
         extra_body: Body | None = None,
         timeout: Optional[float | httpx.Timeout | None] = NOT_GIVEN,
     ) -> images_response.ImagesResponse:
-        return self.create_variation(
+        return super().create_variation(
             image=image,
             model=model,
             n=n,
@@ -54,13 +57,16 @@ class Images(OpenAIImages):
         self,
         *,
         image: FileTypes,
-        prompt: str,
+        prompt: Optional[str] = None,
         mask: Union[FileTypes] = NOT_GIVEN,
         model: Union[str, Literal["dall-e-2"], None] = NOT_GIVEN,
         n: Optional[int] = NOT_GIVEN,
         response_format: Optional[Literal["url", "b64_json"]] = NOT_GIVEN,
         size: Optional[Literal["256x256", "512x512", "1024x1024"]] = NOT_GIVEN,
         user: str = NOT_GIVEN,
+        operation: Optional[
+            Literal["inpaint", "outpaint", "search_replace", "remove_background", "upscale"]
+        ] = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -68,20 +74,114 @@ class Images(OpenAIImages):
         extra_body: Body | None = None,
         timeout: Union[float, httpx.Timeout, None] = NOT_GIVEN,
     ) -> images_response.ImagesResponse:
-        return super().edit(
-            image=image,
-            prompt=prompt,
-            mask=mask,
-            model=model,
-            n=n,
-            response_format=response_format,
-            size=size,
-            user=user,
-            extra_headers=extra_headers,
-            extra_query=extra_query,
-            extra_body=extra_body,
-            timeout=timeout,
-        )
+        if self._client._llm_router_provider == PROVIDER_OPENAI:
+            raise NotImplementedError("Edit image is not supported by OpenAI")
+        elif self._client._llm_router_provider == PROVIDER_STABILITYAI:
+            if model == "core":
+                body = {"output_format": "png"}
+
+                if operation == "remove_background":
+                    path = "v2beta/stable-image/edit/remove-background"
+                    url = f"{self._client._base_url}{path}"
+                    header_accept = "application/json;type=image/png"
+                    response = requests.post(
+                        url=url,
+                        headers={"authorization": "Bearer " + self._client.api_key, "accept": header_accept},
+                        data=body,
+                        files={"image": image},
+                    )
+                    if response.status_code == 200:
+                        finish_reason = response.headers.get("finish_reason")
+                        if finish_reason == "CONTENT_FILTERED":
+                            raise self._client._make_status_error("Content filtered.", body=body, response=response)
+                        content_type = "image/png"
+                        seed = response.headers.get("seed")
+                        timestamp = int(datetime.now().timestamp())
+                        image_b64_str = response.json().get("image")
+                        timestamp = int(datetime.now().timestamp())
+                        return images_response.ImagesResponse(
+                            created=timestamp,
+                            data=[Image(b64_json=image_b64_str, mime_type=content_type, metadata={"seed": seed})],
+                        )
+                    else:
+                        raise self._client._make_status_error(
+                            "Error in generating image.", body=body, response=response
+                        )
+
+                elif operation == "search_replace":
+                    path = "v2beta/stable-image/edit/search-and-replace"
+                    body["prompt"] = prompt
+                    body["search_prompt"] = extra_body.get("search_prompt")
+                    url = f"{self._client._base_url}{path}"
+                    header_accept = "application/json;type=image/png"
+
+                    if "search_prompt" in extra_body:
+                        body["search_prompt"] = extra_body["search_prompt"]
+                    if "negative_prompt" in extra_body:
+                        body["negative_prompt"] = extra_body["negative_prompt"]
+                    if "seed" in extra_body:
+                        body["seed"] = extra_body["seed"]
+
+                    response = requests.post(
+                        url=url,
+                        headers={"authorization": "Bearer " + self._client.api_key, "accept": header_accept},
+                        data=body,
+                        files={"image": image},
+                    )
+
+                    if response.status_code == 200:
+                        finish_reason = response.headers.get("finish_reason")
+                        if finish_reason == "CONTENT_FILTERED":
+                            raise self._client._make_status_error("Content filtered.", body=body, response=response)
+                        content_type = "image/png"
+                        seed = response.headers.get("seed")
+                        timestamp = int(datetime.now().timestamp())
+                        image_b64_str = response.json().get("image")
+                        timestamp = int(datetime.now().timestamp())
+                        return images_response.ImagesResponse(
+                            created=timestamp,
+                            data=[Image(b64_json=image_b64_str, mime_type=content_type, metadata={"seed": seed})],
+                        )
+                    else:
+                        raise self._client._make_status_error(
+                            "Error in generating image.", body=body, response=response
+                        )
+
+                elif operation == "upscale":
+                    raise NotImplementedError("Upscale operation is not supported for StabilityAI core model")
+            elif model == "esrgan-v1-x2plus":
+                if operation == "upscale":
+                    path = "v1/generation/esrgan-v1-x2plus/image-to-image/upscale"
+                    url = f"{self._client._base_url}{path}"
+                    body = {"width": int(size.split("x")[0])}
+                    header_accept = "application/json"
+                    response = requests.post(
+                        url=url,
+                        headers={"authorization": "Bearer " + self._client.api_key, "accept": header_accept},
+                        data=body,
+                        files={"image": image},
+                    )
+                    if response.status_code == 200:
+                        finish_reason = response.headers.get("finish_reason")
+                        if finish_reason == "CONTENT_FILTERED":
+                            raise self._client._make_status_error("Content filtered.", body=body, response=response)
+                        content_type = "image/png"
+                        seed = response.headers.get("seed")
+                        timestamp = int(datetime.now().timestamp())
+                        image_b64_str = response.json().get("artifacts")[0]["base64"]
+                        timestamp = int(datetime.now().timestamp())
+                        return images_response.ImagesResponse(
+                            created=timestamp,
+                            data=[Image(b64_json=image_b64_str, mime_type=content_type, metadata={"seed": seed})],
+                        )
+                    else:
+                        raise self._client._make_status_error(
+                            "Error in generating image.", body=body, response=response
+                        )
+                else:
+                    raise NotImplementedError("Unsupported operation for StabilityAI esrgan-v1-x2plus model")
+        else:
+            raise ValueError("Invalid provider")
 
     def generate(
         self,
@@ -138,7 +238,6 @@ class Images(OpenAIImages):
                 if style:
                     body["style_preset"] = style
 
-                response_format = "url"
                 url = f"{self._client._base_url}{path}"
                 header_accept = "application/json;type=image/png"
                 response = requests.post(
@@ -160,9 +259,42 @@ class Images(OpenAIImages):
                         created=timestamp,
                         data=[Image(b64_json=image_b64_str, mime_type=content_type, metadata={"seed": seed})],
                     )
-
                 else:
                     raise self._client._make_status_error("Error in generating image.", body=body, response=response)
+            elif model == "sd3" or model == "sd3-turbo":
+                path = "v2beta/stable-image/generate/sd3"
+                body = {"prompt": prompt, "output_format": "png", "mode": "text-to-image", "model": model}
+                if aspect_ratio:
+                    body["aspect_ratio"] = aspect_ratio
+                if negative_prompt:
+                    body["negative_prompt"] = negative_prompt
+                if seed:
+                    body["seed"] = seed
+
+                url = f"{self._client._base_url}{path}"
+                header_accept = "application/json;type=image/png"
+                response = requests.post(
+                    url=url,
+                    headers={"authorization": "Bearer " + self._client.api_key, "accept": header_accept},
+                    data=body,
+                    files={"none": ""},
+                )
+                if response.status_code == 200:
+                    finish_reason = response.headers.get("finish_reason")
+                    if finish_reason == "CONTENT_FILTERED":
+                        raise self._client._make_status_error("Content filtered.", body=body, response=response)
+                    content_type = "image/png"
+                    seed = response.headers.get("seed")
+                    timestamp = int(datetime.now().timestamp())
+                    image_b64_str = response.json().get("image")
+                    timestamp = int(datetime.now().timestamp())
+                    return images_response.ImagesResponse(
+                        created=timestamp,
+                        data=[Image(b64_json=image_b64_str, mime_type=content_type, metadata={"seed": seed})],
+                    )
+                else:
+                    raise self._client._make_status_error("Error in generating image.", body=body, response=response)
+
             elif (
                 model == "stable-diffusion-xl-1024-v1-0"
                 or model == "stable-diffusion-v1-6"

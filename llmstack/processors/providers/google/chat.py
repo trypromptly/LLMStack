@@ -11,6 +11,7 @@ from google.ai.generativelanguage_v1beta.types import content as gag_content
 from google.generativeai.types import content_types
 from pydantic import BaseModel, Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -206,6 +207,12 @@ class ChatProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "google"
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown="""{{content}}""",
+        )
 
     def get_image_bytes_mime_type(self, image_url: str):
         response = requests.get(image_url)

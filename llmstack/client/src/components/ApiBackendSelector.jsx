@@ -26,6 +26,7 @@ import {
   endpointConfigValueState,
   endpointSelectedState,
   inputValueState,
+  isMobileState,
 } from "../data/atoms";
 import { ProviderIcon } from "./apps/ProviderIcon";
 
@@ -41,6 +42,7 @@ export default function ApiBackendSelector() {
   const resetEndpointConfigValueState = useResetRecoilState(
     endpointConfigValueState,
   );
+  const isMobile = useRecoilValue(isMobileState);
 
   const [apiProviderSelected, setApiProviderSelected] = useRecoilState(
     apiProviderSelectedState,
@@ -90,6 +92,7 @@ export default function ApiBackendSelector() {
             "& .MuiSelect-outlined": {
               display: "flex",
             },
+            width: isMobile ? "48%" : "auto",
           }}
         >
           <FormControl fullWidth>
@@ -126,7 +129,7 @@ export default function ApiBackendSelector() {
         </Box>
 
         {apiProviderSelected && (
-          <Box sx={{ minWidth: 150 }}>
+          <Box sx={{ minWidth: 150, width: isMobile ? "48%" : "auto" }}>
             <FormControl fullWidth>
               <InputLabel id="select-api-backend-label">API Backend</InputLabel>
               <Select
@@ -171,9 +174,9 @@ export default function ApiBackendSelector() {
             sx={{
               display: "flex",
               border: "solid 1px #ccc",
-              borderRadius: 1,
-              padding: 1,
-              maxWidth: "350px",
+              borderRadius: 2,
+              padding: "3px",
+              maxWidth: isMobile ? "100%" : "350px",
               color: "#666",
               alignItems: "center",
               textAlign: "left",

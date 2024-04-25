@@ -5,6 +5,7 @@ from anthropic import AI_PROMPT, HUMAN_PROMPT, Anthropic
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -14,8 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class CompletionsModel(str, Enum):
-    CLAUDE_2 = "claude-2"
-    CLAUDE_INSTANT = "claude-instant"
+    CLAUDE_2 = "claude-2.0"
+    CLAUDE_INSTANT = "claude-instant-1.2"
+    CLAUDE_2_1 = "claude-2.1"
 
     def __str__(self):
         return self.value
@@ -76,6 +78,12 @@ class CompletionsProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "anthropic"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""{{completion}}""",
+        )
 
     def process(self) -> dict:
         env = self._env

@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 
 from openai._models import BaseModel
@@ -31,7 +32,7 @@ class Image(BaseModel):
 
         if include_name:
             try:
-                name = self.name or f"image.{mime_type.split('/')[1]}"
+                name = self.name or f"{str(uuid.uuid4())}.{mime_type.split('/')[1]}"
             except Exception:
                 name = "image"
             return f"data:{mime_type};name={name};base64,{self.b64_json}"

@@ -9,11 +9,18 @@ from openai._client import SyncAPIClient
 from openai._models import FinalRequestOptions
 from openai._utils import is_given
 from openai.lib.azure import AzureADTokenProvider
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from ._exceptions import LLMError
 from ._response import LLMResponse
-from ._streaming import AsyncStream, LLMAnthropicStream, LLMGRPCStream, LLMRestStream
+from ._streaming import (
+    AsyncStream,
+    LLMAnthropicStream,
+    LLMCohereStream,
+    LLMGRPCStream,
+    LLMRestStream,
+)
 from ._types import NOT_GIVEN, NotGiven, ResponseT, Timeout
 from ._utils import LLMHttpResponse, is_mapping
 from .constants import (
@@ -21,12 +28,78 @@ from .constants import (
     PROVIDER_ANTHROPIC,
     PROVIDER_AZURE_OPENAI,
     PROVIDER_COHERE,
+    PROVIDER_CUSTOM,
     PROVIDER_GOOGLE,
     PROVIDER_LOCALAI,
+    PROVIDER_MISTRAL,
     PROVIDER_OPENAI,
     PROVIDER_STABILITYAI,
 )
 from .resources import Audio, Chat, Completions, Embeddings, Images, Models
+
+
+class BearerAuthentication(BaseModel):
+    _type: Literal["bearer_authentication"] = "bearer_authentication"
+    bearer_token: str = Field(default="", description="The auth token to use.")
+
+
+class BaseCustomDeploymentConfig(BaseModel):
+    _type: str
+    _base_url: str
+    _api_key: str
+
+    @property
+    def base_url(self):
+        raise NotImplementedError
+
+    @property
+    def api_key(self):
+        raise NotImplementedError
+
+    @property
+    def model_name(self):
+        raise NotImplementedError
+
+
+class GroqDeploymentConfig(BaseCustomDeploymentConfig):
+    _type: Literal["groq"] = "groq"
+    custom_model_name: str
+    token: BearerAuthentication
+    deployment_url: str
+
+    @property
+    def base_url(self):
+        return self.deployment_url
+
+    @property
+    def api_key(self):
+        return self.token.bearer_token
+
+    @property
+    def model_name(self):
+        return self.custom_model_name
+
+
+class HuggingFaceDeploymentConfig(BaseCustomDeploymentConfig):
+    _type: Literal["hugging_face"] = "hugging_face"
+    custom_model_name: str
+    token: BearerAuthentication
+    deployment_url: str
+
+    @property
+    def base_url(self):
+        return self.deployment_url
+
+    @property
+    def api_key(self):
+        return self.token.bearer_token
+
+    @property
+    def model_name(self):
+        return self.custom_model_name
+
+
+DeploymentConfig = Union[HuggingFaceDeploymentConfig, GroqDeploymentConfig, BaseCustomDeploymentConfig]
 
 
 class LLMClient(SyncAPIClient):
@@ -61,9 +134,6 @@ class LLMClient(SyncAPIClient):
                 model = options.json_data.get("model")
                 if model is not None and "/deployments" not in str(self.base_url):
                     options.url = f"/deployments/{model}{options.url}"
-
-        elif self._llm_router_provider == PROVIDER_ANTHROPIC:
-            pass
 
         return super()._build_request(options)
 
@@ -213,7 +283,41 @@ class LLM(LLMClient, OpenAI):
     audio: Audio
     models: Models
 
-    # Stability AI options
+    # Mistral options
+    @overload
+    def __init__(
+        self,
+        *,
+        provider: Literal["mistral"],
+        mistral_api_key: str,
+        base_url: str,
+        organization: Optional[str] = None,
+        timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        default_headers: Optional[Mapping[str, str]] = None,
+        default_query: Optional[Mapping[str, object]] = None,
+        http_client: Optional[httpx.Client] = None,
+        _strict_response_validation: bool = False,
+    ) -> None:
+        ...
+
+    # Custom model deployments
+    @overload
+    def __init__(
+        self,
+        *,
+        provider: Literal["custom"],
+        deployment_config: DeploymentConfig,
+        timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        default_headers: Optional[Mapping[str, str]] = None,
+        default_query: Optional[Mapping[str, object]] = None,
+        http_client: Optional[httpx.Client] = None,
+        _strict_response_validation: bool = False,
+    ) -> None:
+        ...
+
+    # Anthropic options
     @overload
     def __init__(
         self,
@@ -360,6 +464,8 @@ class LLM(LLMClient, OpenAI):
         anthropic_api_key: Optional[str] = None,
         azure_ad_token: Optional[str] = None,
         azure_ad_token_provider: Optional[AzureADTokenProvider] = None,
+        mistral_api_key: Optional[str] = None,
+        deployment_config: Optional[DeploymentConfig] = None,
         organization: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: Union[float, Timeout, None, NotGiven] = NOT_GIVEN,
@@ -444,6 +550,25 @@ class LLM(LLMClient, OpenAI):
             if base_url is None:
                 base_url = "https://api.cohere.ai/v1"
 
+        elif provider == PROVIDER_MISTRAL:
+            api_key = mistral_api_key
+            if base_url is None:
+                base_url = "https://api.mistral.ai/v1"
+
+        elif provider == PROVIDER_CUSTOM:
+            if not deployment_config:
+                raise ValueError("deployment_config is required for custom provider")
+            if "_type" not in deployment_config:
+                raise ValueError("deployment_config must have a _type field")
+            if deployment_config["_type"] == "hugging_face":
+                self.deployment_config = HuggingFaceDeploymentConfig(**deployment_config)
+            elif deployment_config["_type"] == "groq":
+                self.deployment_config = GroqDeploymentConfig(**deployment_config)
+            else:
+                raise ValueError("Unsupported deployment config type")
+            api_key = self.deployment_config.api_key
+            base_url = self.deployment_config.base_url
+
         if api_key is None:
             # define a sentinel value to avoid any typing issues
             raise ValueError("api_key is required")
@@ -468,6 +593,8 @@ class LLM(LLMClient, OpenAI):
             self._default_stream_cls = LLMGRPCStream
         elif provider == PROVIDER_ANTHROPIC:
             self._default_stream_cls = LLMAnthropicStream
+        elif provider == PROVIDER_COHERE:
+            self._default_stream_cls = LLMCohereStream
 
         self.chat = Chat(self)
         self.embeddings = Embeddings(self)

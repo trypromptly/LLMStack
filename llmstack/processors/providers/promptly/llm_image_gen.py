@@ -52,6 +52,8 @@ class StabilityAIModel(str, Enum):
     STABLE_DIFFUSION = "stable-diffusion"
     STABLE_DIFFUSION_XL_BETA = "stable-diffusion-xl-beta"
     CORE = "core"
+    SD_3 = "sd3"
+    SD_3_TURBO = "sd3-turbo"
 
     def __str__(self) -> str:
         return self.value
@@ -65,6 +67,10 @@ class StabilityAIModel(str, Enum):
             return "stable-diffusion-xl-beta-v2-2-2"
         elif self.value == "core":
             return "core"
+        elif self.value == "sd3":
+            return "sd3"
+        elif self.value == "sd3-turbo":
+            return "sd3-turbo"
         else:
             raise ValueError(f"Unknown model {self.value}")
 

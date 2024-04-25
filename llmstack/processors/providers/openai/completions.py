@@ -6,6 +6,7 @@ import openai
 from asgiref.sync import async_to_sync
 from pydantic import Field, confloat, conint
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     TEXT_WIDGET_NAME,
     ApiProcessorInterface,
@@ -126,6 +127,12 @@ class Completions(
     @staticmethod
     def provider_slug() -> str:
         return "openai"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""{{ for choice in choices }}{{ choice }}{{ endfor }}""",
+        )
 
     def process(self) -> dict:
         client = openai.OpenAI(api_key=self._env["openai_api_key"])

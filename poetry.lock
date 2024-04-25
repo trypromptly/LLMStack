@@ -5041,6 +5041,25 @@ files = [
 dev = ["black (==24.1.1)", "build (==1.0.3)", "flake8 (==7.0.0)", "pytest (==8.0.0)", "twine (==4.0.2)"]
 
 [[package]]
+name = "python-liquid"
+version = "1.12.1"
+description = "A Python engine for the Liquid template language."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "python_liquid-1.12.1-py3-none-any.whl", hash = "sha256:2224312944be16c1a44406398eb8a07c7e57398d5c0ef15ff950946dbefe7c33"},
+    {file = "python_liquid-1.12.1.tar.gz", hash = "sha256:7367e979125859fb4116f360f224a89a52ecb455fb26843c43e4d800b389d325"},
+]
+
+[package.dependencies]
+importlib-resources = ">=5.10.0"
+python-dateutil = ">=2.8.1"
+typing-extensions = ">=4.2.0"
+
+[package.extras]
+autoescape = ["markupsafe (>=2.0.0)"]
+
+[[package]]
 name = "python-magic"
 version = "0.4.27"
 description = "File type identification using libmagic"
@@ -8170,4 +8189,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "57abdf90b955d9a7541e16f38e3a2595705ef7fe1817096adc4eb8b46a2ec5c7"
+content-hash = "fdfb51b9e81128d387aca386020426d382a9c3620a43b27d2b6df649693c85d6"

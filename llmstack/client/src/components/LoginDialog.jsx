@@ -8,6 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import { styled } from "@mui/system";
+import ReactGA from "react-ga4";
 import logo from "../assets/icon-transparent.png";
 import googleIcon from "../assets/images/icons/google.svg";
 
@@ -53,6 +54,13 @@ function LoginDialog({ open, handleClose, redirectPath, loginMessage }) {
                 ? `/accounts/google/login/?next=${redirectPath}`
                 : "/accounts/google/login/"
             }
+            onClick={() => {
+              ReactGA.event({
+                category: "User",
+                action: "Sign In",
+                label: "Google",
+              });
+            }}
           >
             <Button
               variant="outlined"

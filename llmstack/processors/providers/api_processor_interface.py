@@ -2,7 +2,6 @@ import logging
 import time
 from typing import Any, Optional, TypeVar
 
-import jinja2
 import ujson as json
 from django import db
 from pydantic import AnyUrl, BaseModel
@@ -15,6 +14,7 @@ from llmstack.common.blocks.base.processor import (
     ProcessorInterface,
 )
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
+from llmstack.common.utils.liquid import render_template
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
@@ -33,16 +33,13 @@ FILE_WIDGET_NAME = "file"
 
 
 def hydrate_input(input, values):
-    env = jinja2.Environment()
-
     def render(value):
         if isinstance(value, str):
             try:
-                template = env.from_string(value)
-                return template.render(values)
-            except jinja2.exceptions.TemplateError as e:
-                logger.exception(e)
-                pass  # not a template, return as is
+                return render_template(value, values)
+            except Exception:
+                logger.exception("Error rendering template when hydrating input")
+
         return value
 
     def traverse(obj):
@@ -105,6 +102,22 @@ class ApiProcessorInterface(
             return asset["data_uri"]
 
         return objref
+
+    def _get_all_session_assets(self, include_name=True, include_data=False, include_objref=False):
+        from llmstack.assets.apis import AssetViewSet
+
+        response = AssetViewSet().get_by_ref_id(
+            self._request,
+            "sessionfiles",
+            self._metadata.get("session_id", ""),
+            include_data=include_data,
+            include_name=include_name,
+            include_objref=include_objref,
+        )
+        if response.status_code == 200:
+            return response.data
+
+        return None
 
     # Upload the asset to the session
     def _upload_asset_from_url(self, asset):
@@ -292,6 +305,7 @@ class ApiProcessorInterface(
             )
             output = self.process()
         except Exception as e:
+            logger.exception("Error processing input")
             output = {
                 "errors": [str(e)],
                 "raw_response": {
@@ -350,7 +364,7 @@ class ApiProcessorInterface(
             )
             output = self.process()
         except Exception as e:
-            logger.exception(e)
+            logger.exception("Error invoking tool")
             output = {
                 "errors": [str(e)],
                 "raw_response": {

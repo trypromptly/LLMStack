@@ -129,7 +129,7 @@ class Coordinator(ThreadingActor):
             return
 
         from_actor_config = self._actor_configs.get(message.message_from)
-        message.template_key = from_actor_config.template_key
+        message.template_key = from_actor_config.template_key if from_actor_config else None
         # Find actors that are dependent on the incoming stream and send the
         # message to them
         for actor_name in self._actor_dependents.get(message.message_from, []):

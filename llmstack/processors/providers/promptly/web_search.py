@@ -31,6 +31,11 @@ class WebSearchConfiguration(ApiProcessorSchema):
         description="Number of results to return",
         advanced_parameter=True,
     )
+    advanced_params: Optional[str] = Field(
+        default="",
+        description="Advanced parameters in url format to pass to the search engine",
+        advanced_parameter=True,
+    )
 
 
 class WebSearchInput(ApiProcessorSchema):
@@ -130,6 +135,13 @@ class WebSearch(
                 "cx": cx,
                 "q": query,
             }
+            advanced_params = self._config.advanced_params.strip().split("&")
+            for param in advanced_params:
+                if not param:
+                    continue
+                key, value = param.split("=")
+                params[key] = value
+
             response = requests.get(url, params=params)
             if response.ok:
                 response_data = response.json()

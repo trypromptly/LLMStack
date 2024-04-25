@@ -6,6 +6,7 @@ import cohere
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -48,6 +49,7 @@ class CohereChatConfiguration(ApiProcessorSchema):
         description="The system message to send to cohere as preamble",
         widget="textarea",
         default=None,
+        advanced_parameter=False,
     )
     temperature: float = Field(
         description="The temperature to use for sampling",
@@ -55,10 +57,12 @@ class CohereChatConfiguration(ApiProcessorSchema):
         multiple_of=0.1,
         ge=0.0,
         le=1.0,
+        advanced_parameter=False,
     )
     model: CohereModel = Field(
         description="The model to use for the chat",
         default=CohereModel.COMMAND,
+        advanced_parameter=False,
     )
     seed: Optional[int] = Field(
         description="The seed to use for sampling",
@@ -81,6 +85,7 @@ class CohereChatConfiguration(ApiProcessorSchema):
     enable_web_search: Optional[bool] = Field(
         description="Whether to enable web search",
         default=False,
+        advanced_parameter=False,
     )
 
 
@@ -105,11 +110,17 @@ class CohereChatProcessor(
 
     @staticmethod
     def description() -> str:
-        return "Cohere Chat Model Processor"
+        return "Cohere's Chat model, generates a text response to a user message."
 
     @staticmethod
     def provider_slug() -> str:
         return "cohere"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""{{output_message}}""",
+        )
 
     def process_session_data(self, session_data):
         self._chat_history = session_data.get("chat_history", [])

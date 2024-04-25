@@ -1,3 +1,5 @@
+import base64
+import json
 import os
 from pathlib import Path
 
@@ -310,6 +312,7 @@ DEFAULT_COHERE_API_KEY = os.getenv("DEFAULT_COHERE_API_KEY", "")
 DEFAULT_FOREFRONTAI_API_KEY = os.getenv("DEFAULT_FOREFRONTAI_API_KEY", "")
 DEFAULT_ELEVENLABS_API_KEY = os.getenv("DEFAULT_ELEVENLABS_API_KEY", "")
 DEFAULT_ANTHROPIC_API_KEY = os.getenv("DEFAULT_ANTHRIPOC_API_KEY", "")
+DEFAULT_MISTRAL_API_KEY = os.getenv("DEFAULT_MISTRAL_API_KEY", "")
 DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY = os.getenv(
     "DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY",
     "{}",
@@ -478,6 +481,11 @@ PROVIDERS = [
         "processor_packages": ["llmstack.processors.providers.heygen"],
         "slug": "heygen",
     },
+    {
+        "name": "Meta",
+        "processor_packages": ["llmstack.processors.providers.meta"],
+        "slug": "meta",
+    },
 ]
 
 # Include networking providers if they are enabled
@@ -638,3 +646,13 @@ ANONYMOUS_USER_RATELIMIT = os.getenv("ANONYMOUS_USER_RATELIMIT", None)
 LIMITER_MODULE = "llmstack.server.limiter"
 
 ENABLE_JOBS = os.getenv("ENABLE_JOBS", "True") == "True"
+
+CUSTOM_MODELS_DEPLOYMENT_CONFIG = {}
+try:
+    CUSTOM_MODELS_DEPLOYMENT_CONFIG = (
+        json.loads(base64.b64decode(os.getenv("CUSTOM_MODELS_DEPLOYMENT_CONFIG")))
+        if os.getenv("CUSTOM_MODELS_DEPLOYMENT_CONFIG")
+        else {}
+    )
+except Exception:
+    print("Error parsing CUSTOM_MODELS_DEPLOYMENT_CONFIG")

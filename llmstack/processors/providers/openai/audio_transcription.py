@@ -6,6 +6,7 @@ import openai
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -87,6 +88,12 @@ class AudioTranscription(
     @staticmethod
     def provider_slug() -> str:
         return "openai"
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown="""{{text}}""",
+        )
 
     def process(self) -> dict:
         file = self._input.file or self._input.file_data

@@ -5,6 +5,7 @@ import requests
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     AUDIO_WIDGET_NAME,
     ApiProcessorInterface,
@@ -93,6 +94,12 @@ class TextToSpeechProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "google"
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(
+            markdown="""{{audio_content}}""",
+        )
 
     def process(self) -> dict:
         api_url = "https://texttospeech.googleapis.com/v1/text:synthesize"

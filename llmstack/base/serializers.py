@@ -17,6 +17,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     localai_api_key = serializers.SerializerMethodField()
     localai_base_url = serializers.SerializerMethodField()
     anthropic_api_key = serializers.SerializerMethodField()
+    mistral_api_key = serializers.SerializerMethodField()
 
     avatar = serializers.SerializerMethodField()
 
@@ -50,6 +51,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_anthropic_api_key(self, obj):
         return obj.decrypt_value(obj.anthropic_api_key)
 
+    def get_mistral_api_key(self, obj):
+        return obj.decrypt_value(obj.mistral_api_key)
+
     def get_avatar(self, obj):
         return obj.user.socialaccount_set.first().get_avatar_url() if obj.user.socialaccount_set.first() else None
 
@@ -73,6 +77,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "localai_api_key",
             "localai_base_url",
             "anthropic_api_key",
+            "mistral_api_key",
             "logo",
             "organization",
             "avatar",

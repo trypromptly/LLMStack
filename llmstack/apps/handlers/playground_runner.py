@@ -128,12 +128,11 @@ class PlaygroundRunner(AppRunner):
 
         csp = self._get_csp()
 
-        template = ""
         processor_actor_configs, processor_configs = self._get_processor_actor_configs(
             processor_id,
         )
         actor_configs = self._get_actor_configs(
-            template,
+            self.app_data["output_template"].markdown,
             processor_configs,
             processor_actor_configs,
         )
@@ -143,5 +142,5 @@ class PlaygroundRunner(AppRunner):
             self.app_session,
             actor_configs,
             csp,
-            template,
+            self.app_data["output_template"].markdown,
         )

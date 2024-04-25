@@ -4,6 +4,7 @@ from typing import Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.llm.cohere import (
     CohereAPIInputEnvironment,
     CohereGenerateAPIProcessor,
@@ -70,6 +71,12 @@ class Generate(
     @staticmethod
     def provider_slug() -> str:
         return "cohere"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate:
+        return OutputTemplate(
+            markdown="""{{ for choice in choices }}{{ choice }}\n{{ endfor }}""",
+        )
 
     def process(self) -> dict:
         _env = self._env

@@ -75,7 +75,9 @@ function Output(props) {
             isMobile={false}
             ws={props.ws}
             onEventDone={(message) => {
-              setJsonOutput(message?.processor || {});
+              if (message?.processor) {
+                setJsonOutput(message.processor);
+              }
             }}
           />
         </TabPanel>
@@ -88,17 +90,6 @@ function Output(props) {
 }
 
 export default function PlaygroundPage() {
-  const app = {
-    name: "Playground",
-    uuid: null,
-    data: {
-      type_slug: "playground",
-      output_template: { markdown: "{{ processor | json }}" },
-      config: {
-        layout: defaultPlaygroundLayout,
-      },
-    },
-  };
   const [input] = useRecoilState(inputValueState);
   const appSessionId = useRef(null);
   const messagesRef = useRef(new Messages());
@@ -107,6 +98,19 @@ export default function PlaygroundPage() {
 
   const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
   const paramValues = useRecoilValue(endpointConfigValueState);
+  const app = {
+    name: "Playground",
+    uuid: null,
+    data: {
+      type_slug: "playground",
+      output_template: apiBackendSelected?.output_template || {
+        markdown: "{{ processor | json }}",
+      },
+      config: {
+        layout: defaultPlaygroundLayout,
+      },
+    },
+  };
 
   const [ws, setWs] = useState(null);
 
@@ -170,7 +174,7 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <Box sx={{ margin: "10px 2px" }}>
+    <Box sx={{ margin: "16px" }}>
       {showLoginDialog && (
         <LoginDialog
           open={showLoginDialog}

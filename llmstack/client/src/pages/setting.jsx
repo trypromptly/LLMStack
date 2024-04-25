@@ -73,6 +73,10 @@ const settingsSchema = {
       type: "string",
       title: "Anthropic API Key",
     },
+    mistral_api_key: {
+      type: "string",
+      title: "Mistral API Key",
+    },
     localai_base_url: {
       type: "string",
       title: "LocalAI Base URL",
@@ -128,6 +132,10 @@ const settingsUiSchema = {
     "ui:widget": "password",
     "ui:default": "",
   },
+  mistral_api_key: {
+    "ui:widget": "password",
+    "ui:default": "",
+  },
 };
 
 const SettingPage = () => {
@@ -144,6 +152,7 @@ const SettingPage = () => {
     azure_openai_api_key: "",
     google_service_account_json_key: "",
     anthropic_api_key: "",
+    mistral_api_key: "",
     logo: "",
   });
   const [loading, setLoading] = useState(false);

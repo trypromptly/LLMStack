@@ -1,4 +1,6 @@
+import base64
 import logging
+import uuid
 from enum import Enum
 from typing import Literal, Optional, Union
 
@@ -10,6 +12,9 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorSchema,
 )
 from llmstack.processors.providers.google import get_google_credential_from_env
+from llmstack.processors.providers.mistral.chat_completions import (
+    MessagesModel as MistralModel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +40,13 @@ class Provider(str, Enum):
 
 
 class LLMProcessorInput(ApiProcessorSchema):
-    input_message: str = Field(description="The input message for the LLM", widget="textarea")
+    input_message: str = Field(description="The input message for the LLM", widget="textarea", default="")
 
 
 class LLMProcessorOutput(ApiProcessorSchema):
-    output_str: str = ""
+    output_str: Optional[str] = Field(description="The output string from the LLM", widget="hidden")
+    text: Optional[str] = Field(description="The output text from the LLM", widget="textarea")
+    objref: Optional[str] = Field(description="The object reference for the output", widget="hidden")
 
 
 class OpenAIModel(str, Enum):
@@ -118,12 +125,19 @@ class CohereModelConfig(BaseModel):
     model: CohereModel = Field(default=CohereModel.COMMAND, description="The model for the LLM")
 
 
+class MistralModelConfig(BaseModel):
+    provider: Literal["mistral"] = "mistral"
+    model: MistralModel = Field(default=MistralModel.MIXTRAL_SMALL, description="The model for the LLM")
+
+
 class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         description="The system message for the LLM", widget="textarea", advanced_parameter=False
     )
 
-    provider_config: Union[OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig] = Field(
+    provider_config: Union[
+        OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig, MistralModelConfig
+    ] = Field(
         descrmination_field="provider",
         advanced_parameter=False,
     )
@@ -147,6 +161,26 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
         ge=0.0,
         advanced_parameter=False,
     )
+    objref: Optional[bool] = Field(
+        default=False,
+        title="Output as Object Reference",
+        description="Return output as object reference instead of raw text.",
+        advanced_parameter=True,
+    )
+    retain_history: Optional[bool] = Field(
+        default=False,
+        title="Retain History",
+        description="Retain the history of the conversation.",
+        advanced_parameter=True,
+    )
+    max_history: Optional[int] = Field(
+        default=5,
+        title="Max History",
+        description="The maximum number of messages to retain in the history.",
+        le=100,
+        ge=0,
+        advanced_parameter=True,
+    )
 
 
 class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, LLMProcessorConfiguration]):
@@ -156,7 +190,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
     @staticmethod
     def name() -> str:
-        return "LLM"
+        return "Chat Completions"
 
     @staticmethod
     def slug() -> str:
@@ -164,11 +198,17 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
     @staticmethod
     def description() -> str:
-        return "Simple LLM Chat completions processor"
+        return "LLM Chat completions processor"
 
     @staticmethod
     def provider_slug() -> str:
         return "promptly"
+
+    def session_data_to_persist(self) -> dict:
+        return {"chat_history": self._chat_history}
+
+    def process_session_data(self, session_data):
+        self._chat_history = session_data.get("chat_history", [])
 
     def process(self) -> dict:
         from llmstack.common.utils.sslr import LLM
@@ -185,11 +225,18 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             google_api_key=google_api_key,
             anthropic_api_key=self._env.get("anthropic_api_key"),
             cohere_api_key=self._env.get("cohere_api_key"),
+            mistral_api_key=self._env.get("mistral_api_key"),
         )
 
         messages = []
         if self._config.system_message:
             messages.append({"role": "system", "content": self._config.system_message})
+
+        if self._config.retain_history:
+            if self._config.max_history:
+                self._chat_history = self._chat_history[-self._config.max_history :]
+            messages.extend(self._chat_history)
+
         if self._input.input_message:
             messages.append({"role": "user", "content": self._input.input_message})
 
@@ -201,11 +248,36 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             seed=self._config.seed,
             temperature=self._config.temperature,
         )
+
+        output_entries = []
         for entry in result:
+            # Stream the output if objref is not enabled
+            if not self._config.objref:
+                async_to_sync(output_stream.write)(
+                    LLMProcessorOutput(
+                        output_str=entry.choices[0].delta.content_str,
+                        text=entry.choices[0].delta.content_str,
+                    ),
+                )
+            output_entries.append(entry.choices[0].delta.content_str)
+
+        # Create data uri if objref is enabled and save the output
+        if self._config.objref and len(output_entries) > 0:
+            file_name = str(uuid.uuid4()) + ".txt"
+            data_uri = f"data:text/plain;name={file_name};base64,{base64.b64encode(''.join(output_entries).encode('utf-8')).decode('utf-8')}"
+            asset = self._upload_asset_from_url(asset=data_uri)
+
             async_to_sync(output_stream.write)(
                 LLMProcessorOutput(
-                    output_str=entry.choices[0].delta.content_str,
+                    objref=asset,
                 ),
             )
+
         output = output_stream.finalize()
+
+        if self._config.retain_history:
+            self._chat_history.extend(
+                [{"role": "user", "content": self._input.input_message}, {"role": "assistant", "content": output.text}]
+            )
+
         return output

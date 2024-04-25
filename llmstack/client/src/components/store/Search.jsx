@@ -208,8 +208,17 @@ export default function Search({ appSlug }) {
       categorySlug === "recommended");
 
   useEffect(() => {
+    let listCategories = categoriesList;
+
+    if (!appSlug) {
+      listCategories = categoriesList.filter(
+        (category) => !(category.slug === "recommended"),
+      );
+    }
+
+    setAppCategories(listCategories);
+
     if (categoryFilter && searchTerm === "") {
-      setAppCategories(categoriesList);
       setQueryTerm(
         categoryFilter.toLowerCase().startsWith("recommended")
           ? `categories/recommended/${appSlug}/apps`

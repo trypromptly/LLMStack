@@ -5,6 +5,7 @@ from typing import List, Optional
 from asgiref.sync import async_to_sync
 from pydantic import Field, conint
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.llm.openai import (
     OpenAIAPIInputEnvironment,
     OpenAIFile,
@@ -89,6 +90,14 @@ class ImagesVariations(
     @staticmethod
     def provider_slug() -> str:
         return "openai"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate | None:
+        return OutputTemplate(
+            markdown="""{% for image in answer %}
+            ![Generated Image]({{ image }})
+            {% endfor %}""",
+        )
 
     def process(self) -> dict:
         image = self._input.image or self._input.image_data

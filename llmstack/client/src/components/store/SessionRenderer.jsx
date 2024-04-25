@@ -18,7 +18,11 @@ import {
   defaultWorkflowLayout,
 } from "../apps/renderer/AppRenderer";
 
-const SessionRenderer = ({ sessionData, noHeader = false }) => {
+const SessionRenderer = ({
+  sessionData,
+  noHeader = false,
+  skipSteps = false,
+}) => {
   const storeApp = sessionData?.store_app;
   const appTypeSlug = storeApp?.data?.type_slug || "agent";
   const setAppRunData = useSetRecoilState(appRunDataState);
@@ -53,7 +57,7 @@ const SessionRenderer = ({ sessionData, noHeader = false }) => {
         ),
       );
 
-      if (appTypeSlug === "agent") {
+      if (appTypeSlug === "agent" && !skipSteps) {
         for (const processorRun of runEntry.processor_runs) {
           messages.push(
             new AgentStepMessage(
@@ -98,6 +102,7 @@ const SessionRenderer = ({ sessionData, noHeader = false }) => {
     appTypeSlug,
     setAppRunData,
     renderAgentStepOutput,
+    skipSteps,
     storeApp,
     storeApp?.data?.config?.assistant_image,
     storeApp?.data?.input_fields,

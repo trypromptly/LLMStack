@@ -2,10 +2,12 @@ import os
 import unittest
 
 from llmstack.common.utils.sslr import LLM
+from llmstack.common.utils.sslr._utils import resize_image_file
 from llmstack.common.utils.sslr.constants import (
     PROVIDER_ANTHROPIC,
     PROVIDER_COHERE,
     PROVIDER_GOOGLE,
+    PROVIDER_MISTRAL,
     PROVIDER_OPENAI,
     PROVIDER_STABILITYAI,
 )
@@ -15,6 +17,7 @@ PROVIDER_MODEL_MAP = {
     PROVIDER_OPENAI: "gpt-3.5-turbo",
     PROVIDER_ANTHROPIC: "claude-2.1",
     PROVIDER_COHERE: "command",
+    PROVIDER_MISTRAL: "mistral-small-latest",
 }
 
 
@@ -71,6 +74,7 @@ class TestLLMChatCompletions(unittest.TestCase):
             google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
             anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
             cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
+            mistral_api_key=os.environ.get("DEFAULT_MISTRAL_KEY"),
         )
 
     def _call_chat_completions_single_text(self, provider, model):
@@ -101,6 +105,10 @@ class TestLLMChatCompletions(unittest.TestCase):
 
     def test_chat_completions_single_text_anthropic(self):
         result = self._call_chat_completions_single_text(PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC])
+        self.assertIsNotNone(result.choices[0].message.content_str)
+
+    def test_chat_completions_single_text_mistral(self):
+        result = self._call_chat_completions_single_text(PROVIDER_MISTRAL, PROVIDER_MODEL_MAP[PROVIDER_MISTRAL])
         self.assertIsNotNone(result.choices[0].message.content_str)
 
     def _call_chat_completions_multiple_parts(self, provider, model):
@@ -150,6 +158,7 @@ class TestLLMChatCompletionsStreaming(unittest.TestCase):
             google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
             anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
             cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
+            mistral_api_key=os.environ.get("DEFAULT_MISTRAL_KEY"),
         )
 
     def _call_chat_completions_single_text_streaming(self, provider, model):
@@ -199,6 +208,17 @@ class TestLLMChatCompletionsStreaming(unittest.TestCase):
 
         result = self._call_chat_completions_single_text_streaming(
             PROVIDER_ANTHROPIC, PROVIDER_MODEL_MAP[PROVIDER_ANTHROPIC]
+        )
+        self.assertIsInstance(result, openai.Stream)
+        for chunk in result:
+            if chunk.choices[0].finish_reason is None:
+                self.assertIsNotNone(chunk.choices[0].delta.content_str)
+
+    def test_chat_completions_single_text_streaming_mistral(self):
+        import openai
+
+        result = self._call_chat_completions_single_text_streaming(
+            PROVIDER_MISTRAL, PROVIDER_MODEL_MAP[PROVIDER_MISTRAL]
         )
         self.assertIsInstance(result, openai.Stream)
         for chunk in result:
@@ -410,6 +430,34 @@ class TestLLMImageGeneration(unittest.TestCase):
         )
         assert len(result.data) == 1
         assert result.data[0].b64_json is not None
+
+    def test_image_generation_stabilityai_sd3(self):
+        result = self._call_image_generation(PROVIDER_STABILITYAI, "sd3-turbo")
+        assert len(result.data) == 1
+        assert result.data[0].b64_json is not None
+
+
+class TestLLMImageEdit(unittest.TestCase):
+    def _initialize_client(self, provider):
+        return LLM(
+            provider=provider,
+            openai_api_key=os.environ.get("DEFAULT_OPENAI_KEY"),
+            stabilityai_api_key=os.environ.get("DEFAULT_STABILITYAI_KEY"),
+            google_api_key=os.environ.get("DEFAULT_GOOGLE_KEY"),
+            anthropic_api_key=os.environ.get("DEFAULT_ANTHROPIC_KEY"),
+            cohere_api_key=os.environ.get("DEFAULT_COHERE_KEY"),
+        )
+
+    def test_image_edit_stabilityai(self):
+        import pathlib
+
+        image_file = f"{pathlib.Path(__file__).parent.resolve()}/test_image.jpg"
+        with open(image_file, "rb") as f:
+            data = f.read()
+            client = self._initialize_client(PROVIDER_STABILITYAI)
+            resized_img_file = resize_image_file(data, 4194304, 410094304)
+            result = client.images.edit(image=resized_img_file, model="core", operation="remove_background")
+            assert result.data[0].b64_json is not None
 
 
 if __name__ == "__main__":
