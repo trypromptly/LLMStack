@@ -167,6 +167,20 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
         description="Return output as object reference instead of raw text.",
         advanced_parameter=True,
     )
+    retain_history: Optional[bool] = Field(
+        default=False,
+        title="Retain History",
+        description="Retain the history of the conversation.",
+        advanced_parameter=True,
+    )
+    max_history: Optional[int] = Field(
+        default=5,
+        title="Max History",
+        description="The maximum number of messages to retain in the history.",
+        le=100,
+        ge=0,
+        advanced_parameter=True,
+    )
 
 
 class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, LLMProcessorConfiguration]):
@@ -190,6 +204,12 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
     def provider_slug() -> str:
         return "promptly"
 
+    def session_data_to_persist(self) -> dict:
+        return {"chat_history": self._chat_history}
+
+    def process_session_data(self, session_data):
+        self._chat_history = session_data.get("chat_history", [])
+
     def process(self) -> dict:
         from llmstack.common.utils.sslr import LLM
 
@@ -211,6 +231,12 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
         messages = []
         if self._config.system_message:
             messages.append({"role": "system", "content": self._config.system_message})
+
+        if self._config.retain_history:
+            if self._config.max_history:
+                self._chat_history = self._chat_history[-self._config.max_history :]
+            messages.extend(self._chat_history)
+
         if self._input.input_message:
             messages.append({"role": "user", "content": self._input.input_message})
 
@@ -248,4 +274,10 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             )
 
         output = output_stream.finalize()
+
+        if self._config.retain_history:
+            self._chat_history.extend(
+                [{"role": "user", "content": self._input.input_message}, {"role": "assistant", "content": output.text}]
+            )
+
         return output
