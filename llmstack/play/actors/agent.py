@@ -222,6 +222,7 @@ class AgentActor(Actor):
                 stream=True,
                 functions=self._functions,
                 seed=self._config.get("seed", None),
+                temperature=self._config.get("temperature", 0.7),
             )
             agent_message_id = str(uuid.uuid4())
             agent_function_call_id = None

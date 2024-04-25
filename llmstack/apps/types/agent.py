@@ -109,6 +109,14 @@ class AgentConfigSchema(BaseSchema):
         description="Random seed to use for the agent",
         advanced_parameter=True,
     )
+    temperature: Optional[float] = Field(
+        title="Temperature",
+        default=0.7,
+        description="Temperature to use for the agent",
+        advanced_parameter=True,
+        ge=0.0,
+        le=1.0,
+    )
     layout: Optional[str] = Field(
         title="Layout",
         description="Layout to use for the app page",
