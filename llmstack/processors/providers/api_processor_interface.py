@@ -228,7 +228,6 @@ class ApiProcessorInterface(
                 "id": f"{cls.provider_slug()}/{cls.slug()}",  # Unique ID for the processor
                 "name": cls.name(),  # Name of the processor
                 "slug": cls.slug(),  # Slug of the processor
-                "parent_processor_slug": cls.get_parent_processor_slug(),  # Parent processor slug
                 "description": cls.description(),  # Description of the processor
                 "api_provider_slug": cls.provider_slug(),
                 "input_schema": json.loads(cls.get_input_schema()),  # Input schema of the processor
