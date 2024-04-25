@@ -291,6 +291,7 @@ class ApiBackendViewSet(viewsets.ViewSet):
                 continue
 
             for entry in subclass.api_backends():
+                entry["api_provider"] = providers_map[entry["api_provider_slug"]]
                 processors.append(entry)
 
         return DRFResponse(processors)
