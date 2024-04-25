@@ -591,40 +591,56 @@ if ENABLE_SAML_SOCIALACCOUNT:
     if "allauth.socialaccount.providers.saml" not in INSTALLED_APPS:
         INSTALLED_APPS.append("allauth.socialaccount.providers.saml")
 
+    """
+    SAMLE JSON CONFIG from env variable with prefill values. x509cert is configure in a separate env variable
+
+    ```json
+    {
+        "name": "Test Organization",
+        "provider_id": "https://login.microsoftonline.com/<SAML_APP_TENANT_ID>/",
+        "client_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "settings_attribute_mapping": {
+            "uid": "http://schemas.microsoft.com/identity/claims/objectidentifier",
+            "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+            "first_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+            "last_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+        },
+        "settings_idp": {
+            "entity_id": "https://sts.windows.net/<SAML_APP_TENANT_ID>/",
+            "sso_url": "https://login.microsoftonline.com/<SAML_APP_TENANT_ID>/saml2",
+            "slo_url": "https://login.microsoftonline.com/<SAML_APP_TENANT_ID>/saml2"
+        },
+        "settings_advanced": {
+            "strict": false,
+            "authn_requests_signed": false,
+            "logout_request_signed": false,
+            "logout_response_signed": false,
+            "requested_authn_context": false,
+            "sign_metadata": false,
+            "want_assertion_encrypted": false,
+            "want_assertion_signed": false,
+            "want_messages_signed": false,
+        }
+    }
+    ```
+    """
     # Microsoft Entra ID SAML Configuration
-    SAML_APP_NAME = os.getenv("SAML_APP_NAME", "")
-    SAML_APP_CLIENT_ID = os.getenv("SAML_APP_CLIENT_ID", "")
-    SAML_APP_TENANT_ID = os.getenv("SAML_APP_TENANT_ID", "")
-    SAML_APP_CERTIFICATE = os.getenv("SAML_APP_CERTIFICATE", "")
+    SAML_APP_CONFIG = json.loads(base64.b64decode(os.getenv("SAML_APP_CONFIG")))
+
+    # x509cert is configure in a separate env variable. JSON string does not support multiline strings
+    SAML_APP_X509CERT = os.getenv("SAML_APP_X509CERT", "")
+
+    SAML_APP_SETTINGS_IDP = SAML_APP_CONFIG["settings_idp"]
+    SAML_APP_SETTINGS_IDP["x509cert"] = SAML_APP_X509CERT
 
     SAML_APP = {
-        "name": SAML_APP_NAME,
-        "provider_id": f"https://login.microsoftonline.com/{SAML_APP_TENANT_ID}/",
-        "client_id": SAML_APP_CLIENT_ID,
+        "name": SAML_APP_CONFIG["name"],
+        "provider_id": SAML_APP_CONFIG["provider_id"],
+        "client_id": SAML_APP_CONFIG["client_id"],
         "settings": {
-            "attribute_mapping": {
-                "uid": "http://schemas.microsoft.com/identity/claims/objectidentifier",
-                "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
-                "first_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
-                "last_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
-            },
-            "idp": {
-                "entity_id": f"https://sts.windows.net/{SAML_APP_TENANT_ID}/",
-                "sso_url": f"https://login.microsoftonline.com/{SAML_APP_TENANT_ID}/saml2",
-                "slo_url": f"https://login.microsoftonline.com/{SAML_APP_TENANT_ID}/saml2",
-                "x509cert": SAML_APP_CERTIFICATE,
-            },
-            # "advanced": {
-            #     "strict": False,
-            #     "authn_requests_signed": False,
-            #     "logout_request_signed": False,
-            #     "logout_response_signed": False,
-            #     "requested_authn_context": False,
-            #     "sign_metadata": False,
-            #     "want_assertion_encrypted": False,
-            #     "want_assertion_signed": True,
-            #     "want_messages_signed": False,
-            # },
+            "attribute_mapping": SAML_APP_CONFIG["settings_attribute_mapping"],
+            "idp": SAML_APP_SETTINGS_IDP,
+            "advanced": SAML_APP_CONFIG["settings_advanced"],
         },
     }
 
