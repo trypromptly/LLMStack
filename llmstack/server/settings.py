@@ -592,13 +592,17 @@ if ENABLE_SAML_SOCIALACCOUNT:
         INSTALLED_APPS.append("allauth.socialaccount.providers.saml")
 
     """
-    SAMLE JSON CONFIG from env variable with prefill values. x509cert is configure in a separate env variable
+    SAMPLE CONFIG from .bashrc/.zshrc. x509cert is configure in a separate env variable
 
-    ```json
+    ```bash
+    export SAML_APP_NAME="Test Org Inc"
+    export SAML_APP_CLIENT_ID="test-org-inc"
+    export SAML_APP_TENANT_ID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    export SAML_APP_CONFIG=$(cat <<EOF
     {
-        "name": "Test Organization",
-        "provider_id": "https://login.microsoftonline.com/<SAML_APP_TENANT_ID>/",
-        "client_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "name": "$SAML_APP_NAME",
+        "provider_id": "https://login.microsoftonline.com/$SAML_APP_TENANT_ID/",
+        "client_id": "$SAML_APP_CLIENT_ID",
         "settings_attribute_mapping": {
             "uid": "http://schemas.microsoft.com/identity/claims/objectidentifier",
             "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
@@ -606,9 +610,9 @@ if ENABLE_SAML_SOCIALACCOUNT:
             "last_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
         },
         "settings_idp": {
-            "entity_id": "https://sts.windows.net/<SAML_APP_TENANT_ID>/",
-            "sso_url": "https://login.microsoftonline.com/<SAML_APP_TENANT_ID>/saml2",
-            "slo_url": "https://login.microsoftonline.com/<SAML_APP_TENANT_ID>/saml2"
+            "entity_id": "https://sts.windows.net/$SAML_APP_TENANT_ID/",
+            "sso_url": "https://login.microsoftonline.com/$SAML_APP_TENANT_ID/saml2",
+            "slo_url": "https://login.microsoftonline.com/$SAML_APP_TENANT_ID/saml2"
         },
         "settings_advanced": {
             "strict": false,
@@ -619,19 +623,27 @@ if ENABLE_SAML_SOCIALACCOUNT:
             "sign_metadata": false,
             "want_assertion_encrypted": false,
             "want_assertion_signed": false,
-            "want_messages_signed": false,
+            "want_messages_signed": false
         }
     }
+    EOF
+    )
+
+    export SAML_APP_CERTIFICATE="
+    -----BEGIN CERTIFICATE-----
+    MIIC8DCCAdi...
+    -----END CERTIFICATE-----
+    "
     ```
     """
     # Microsoft Entra ID SAML Configuration
     SAML_APP_CONFIG = json.loads(os.getenv("SAML_APP_CONFIG") or "{}", strict=False)
 
     # x509cert is configure in a separate env variable. JSON string does not support multiline strings
-    SAML_APP_X509CERT = os.getenv("SAML_APP_X509CERT", "")
+    SAML_APP_X509_CERTIFICATE = os.getenv("SAML_APP_CERTIFICATE", "")
 
     SAML_APP_SETTINGS_IDP = SAML_APP_CONFIG["settings_idp"]
-    SAML_APP_SETTINGS_IDP["x509cert"] = SAML_APP_X509CERT
+    SAML_APP_SETTINGS_IDP["x509cert"] = SAML_APP_X509_CERTIFICATE
 
     SAML_APP = {
         "name": SAML_APP_CONFIG["name"],
