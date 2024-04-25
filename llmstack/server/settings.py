@@ -625,7 +625,7 @@ if ENABLE_SAML_SOCIALACCOUNT:
     ```
     """
     # Microsoft Entra ID SAML Configuration
-    SAML_APP_CONFIG = json.loads(base64.b64decode(os.getenv("SAML_APP_CONFIG")))
+    SAML_APP_CONFIG = json.loads(os.getenv("SAML_APP_CONFIG") or "{}", strict=False)
 
     # x509cert is configure in a separate env variable. JSON string does not support multiline strings
     SAML_APP_X509CERT = os.getenv("SAML_APP_X509CERT", "")
