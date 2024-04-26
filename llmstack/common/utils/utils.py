@@ -6,13 +6,14 @@ import time
 from enum import Enum
 from functools import partial
 from io import BytesIO
-from typing import List
+from typing import List, Type
 from urllib.parse import urlparse
 
 import geoip2.database
 import requests
 from django.conf import settings
 from PIL import Image
+from pydantic import BaseModel, Field, create_model
 
 from llmstack.common.utils.crawlers import (
     run_sitemap_spider_in_process,
@@ -74,6 +75,89 @@ def generate_thumbnail(image_data, thumbnail_size=(100, 100), format="JPEG"):
     thumbnail_io = BytesIO()
     image.save(thumbnail_io, format=format)
     return thumbnail_io.getvalue()
+
+
+def get_input_model_from_fields(
+    name: str,
+    input_fields: list,
+) -> Type["BaseModel"]:
+    """
+    Dynamically creates a Pydantic model from a list of input fields.
+
+    Args:
+        name (str): The name of the model to be created.
+        input_fields (list): A list of dictionaries representing the input fields of the model.
+
+    Returns:
+        Type['BaseModel']: The dynamically created Pydantic model.
+    """
+    datatype_map = {
+        "int": int,
+        "string": str,
+        "bool": bool,
+        "float": float,
+        "dict": dict,
+        "list": list,
+        "file": str,
+        "image": str,
+        "text": str,
+        "richtext": str,
+        "datasource": list,
+        "color": str,
+        "voice": str,
+    }
+
+    fields = {}
+    for field in input_fields:
+        field_type = field["type"] if "type" in field else "string"
+        datatype = datatype_map[field_type] if field_type in datatype_map else str
+
+        if field_type == "file":
+            field["widget"] = "file"
+            field["format"] = "data-url"
+            field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
+        elif field_type == "image":
+            field["widget"] = "file"
+            field["format"] = "data-url"
+            field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
+        elif field_type == "text":
+            field["widget"] = "textarea"
+        elif field_type == "richtext":
+            field["widget"] = "richtext"
+        elif field_type == "datasource":
+            field["widget"] = "datasource"
+            if "default" not in field:
+                field["default"] = []
+        elif field_type == "connection":
+            field["widget"] = "connection"
+        elif field_type == "color":
+            field["widget"] = "color"
+        elif field_type == "voice":
+            field["widget"] = "voice"
+            field["format"] = "data-url"
+            field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
+
+        if (
+            field_type == "select"
+            and "options" in field
+            and len(
+                field["options"],
+            )
+            > 0
+        ):
+            field["widget"] = "select"
+
+            # For select fields, the datatype is the type of the first option
+            datatype = type(field["options"][0]["value"])
+
+        fields[field["name"]] = (
+            datatype,
+            Field(
+                **{k: field[k] for k in field},
+            ),
+        )
+
+    return create_model(f"{name}", **fields)
 
 
 class MimeType(Enum):
