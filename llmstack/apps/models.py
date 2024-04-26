@@ -1,8 +1,11 @@
+import base64
 import logging
 import uuid
 
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField as PGArrayField
+from django.core.files import storage
+from django.core.files.base import ContentFile
 from django.db import connection, models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -19,6 +22,8 @@ from llmstack.common.utils.db_models import ArrayField
 from llmstack.processors.models import Endpoint
 
 logger = logging.getLogger(__name__)
+
+public_file_storage = storage.storages["public_assets"]
 
 
 class AppVisibility(models.IntegerChoices):
@@ -456,6 +461,14 @@ class App(models.Model):
         return self.name + " - " + self.owner.username
 
 
+def create_image_asset_thumbnail_file(data_uri, dimensions=(300, 300), format="PNG"):
+    from llmstack.common.utils.utils import generate_thumbnail, validate_parse_data_uri
+
+    mimetype, filename, data = validate_parse_data_uri(data_uri)
+    asset_image_bytes = base64.b64decode(data)
+    return ContentFile(generate_thumbnail(asset_image_bytes, dimensions, format), name=f"public/apps/{filename}")
+
+
 class AppData(models.Model):
     """
     Represents versioned app data
@@ -507,13 +520,13 @@ class AppData(models.Model):
                 if self.data["config"]["assistant_image"] and self.data["config"]["assistant_image"].startswith(
                     "data:image"
                 ):
-                    app = App.objects.get(uuid=self.app_uuid)
-                    assistant_image_asset = AppDataAssets.create_from_data_uri(
-                        data_uri=self.data["config"]["assistant_image"],
-                        metadata={"app_uuid": str(self.app_uuid)},
-                        ref_id=str(app.published_uuid),
+                    thumbnail_content_file = create_image_asset_thumbnail_file(
+                        self.data["config"]["assistant_image"], (300, 300), "PNG"
                     )
-                    self.data["config"]["assistant_image"] = f"objref://appdata/{str(assistant_image_asset.uuid)}"
+                    stored_file_name = f"{thumbnail_content_file.name}_{str(uuid.uuid4())[:4]}_resized.png"
+                    result = public_file_storage.save(stored_file_name, thumbnail_content_file)
+                    url = public_file_storage.url(result)
+                    self.data["config"]["assistant_image"] = url
         return super().save(*args, **kwargs)
 
 

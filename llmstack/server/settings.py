@@ -214,6 +214,9 @@ STORAGES = {
     "assets": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
+    "public_assets": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
 }
 
 # Default primary key field type
