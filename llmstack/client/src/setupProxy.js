@@ -8,6 +8,7 @@ module.exports = function (app) {
       "/static/appdata",
       "/static/appstore",
       "/static/app_sessions",
+      "/static/public/apps/",
     ],
     createProxyMiddleware({
       target: process.env.REACT_APP_API_SERVER
