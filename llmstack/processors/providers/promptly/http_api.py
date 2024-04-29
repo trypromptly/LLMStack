@@ -8,6 +8,7 @@ from asgiref.sync import async_to_sync
 from pydantic import Field, HttpUrl, root_validator
 from requests.auth import HTTPBasicAuth
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.base.processor import Schema
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -278,6 +279,12 @@ class PromptlyHttpAPIProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "promptly"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate | None:
+        return OutputTemplate(
+            markdown="""{{text}}""",
+        )
 
     def session_data_to_persist(self) -> dict:
         return {}
