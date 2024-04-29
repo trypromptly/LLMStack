@@ -15,6 +15,8 @@ class ApiProcessorFactory:
         processor_slug,
         provider_slug=None,
     ) -> ApiProcessorInterface:
+        processor_slug = processor_slug.split("/")[0]
+
         subclasses = ApiProcessorInterface.__subclasses__()
         for subclass in subclasses:
             # Convert to lowercase to avoid case sensitivity
