@@ -529,7 +529,7 @@ const AgentStepToolHeader = memo(
 
 const AgentStepMessage = memo(
   (props) => {
-    const { message, processors, assistantImage } = props;
+    const { message, processors, assistantImage, workflow } = props;
     const [expanded, setExpanded] = useState(true);
 
     // A util function to format incomplete JSON strings
@@ -543,7 +543,11 @@ const AgentStepMessage = memo(
 
     return (
       <Box
-        className="layout-chat_message_type_step"
+        className={
+          workflow
+            ? "layout-workflow_message_type_step"
+            : "layout-chat_message_type_step"
+        }
         style={assistantImage ? { marginLeft: "48px" } : {}}
       >
         {message.content.name && (
@@ -886,6 +890,7 @@ export const PromptlyAppWorkflowOutput = memo(
               message={appMessages[appMessages.length - 1]}
               processors={appRunData?.processors}
               assistantImage={assistantImage}
+              workflow={true}
             />
           )}
         {appMessages.length > 0 &&
