@@ -335,7 +335,7 @@ export default function AppConsolePage(props) {
         discord_config: app?.discord_config || {},
         twilio_config: app?.twilio_config || {},
         processors: processors.map((processor, index) => ({
-          id: `_inputs${index + 1}`,
+          id: processor.id || `${processor.api_backend.slug}${index + 1}`,
           name: processor.name || processor.api_backend?.name,
           description:
             app?.data?.processors[index]?.description ||

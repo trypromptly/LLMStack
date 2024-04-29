@@ -47,7 +47,7 @@ export function AppEditor(props) {
             p.api_backend?.name
           } / `,
           items: p.api_backend?.output_schema,
-          id: p.id || `_inputs${index + 1}`,
+          id: p.id || `${p.api_backend.slug}${index + 1}`,
         };
       }),
     ]);
@@ -140,7 +140,7 @@ export function AppEditor(props) {
               setProcessorBackend={(apiBackend) => {
                 const newProcessors = [...processors];
                 newProcessors.push({
-                  id: `_inputs${newProcessors.length + 1}`,
+                  id: `${apiBackend?.slug}${newProcessors.length + 1}`,
                   api_backend: apiBackend,
                   processor_slug: apiBackend?.slug,
                   provider_slug: apiBackend?.api_provider?.slug,

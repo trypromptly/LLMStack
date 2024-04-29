@@ -220,7 +220,7 @@ class AppRunner:
                 processor_actor_configs.append(
                     ActorConfig(
                         name=processor["id"],
-                        template_key=f"_inputs{index}",
+                        template_key=processor["id"],
                         actor=processor_cls,
                         kwargs={
                             "id": processor["id"],
@@ -255,7 +255,7 @@ class AppRunner:
                     "app_session": self.app_session,
                     "app_session_data": app_session_data,
                     "processor": processor,
-                    "template_key": f"_inputs{index}",
+                    "template_key": processor["id"],
                 }
         else:
             # Get all processors from run_graph and remove empty ones
@@ -295,7 +295,7 @@ class AppRunner:
                         name=str(
                             processor.uuid,
                         ),
-                        template_key=f"_inputs{index}",
+                        template_key=processor["id"],
                         actor=processor_cls,
                         kwargs={
                             "env": vendor_env,
@@ -316,7 +316,7 @@ class AppRunner:
                     "app_session": self.app_session,
                     "app_session_data": app_session_data,
                     "processor": processor,
-                    "template_key": f"_inputs{index}",
+                    "template_key": processor["id"],
                 }
         return processor_actor_configs, processor_configs
 
