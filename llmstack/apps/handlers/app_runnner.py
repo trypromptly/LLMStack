@@ -203,7 +203,7 @@ class AppRunner:
                     )
 
                 processor_cls = ApiProcessorFactory.get_api_processor(
-                    processor["processor_slug"].split("/")[0],
+                    processor["processor_slug"],
                     processor["provider_slug"],
                 )
                 app_session_data = get_app_session_data(
