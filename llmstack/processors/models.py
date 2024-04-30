@@ -422,6 +422,14 @@ class RunEntry(models.Model):
         help_text="Platform data for the run",
     )
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["request_uuid"]),
+            models.Index(fields=["app_uuid"]),
+            models.Index(fields=["app_store_uuid"]),
+            models.Index(fields=["session_key"]),
+        ]
+
     def __str__(self):
         return self.request_uuid
 

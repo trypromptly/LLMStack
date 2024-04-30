@@ -71,6 +71,7 @@ class DataSource(models.Model):
         default=uuid.uuid4,
         editable=False,
         help_text="UUID of the data source",
+        unique=True,
     )
     type = models.ForeignKey(
         DataSourceType,
@@ -125,6 +126,7 @@ class DataSourceEntry(models.Model):
         default=uuid.uuid4,
         editable=False,
         help_text="UUID of the data source file",
+        unique=True,
     )
     datasource = models.ForeignKey(
         DataSource,

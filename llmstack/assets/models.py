@@ -8,7 +8,7 @@ from django.dispatch import receiver
 
 
 class Assets(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, help_text="UUID of the asset")
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, help_text="UUID of the asset", unique=True)
     ref_id = None
     file = None
     metadata = models.JSONField(

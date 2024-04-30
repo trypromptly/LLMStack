@@ -203,6 +203,7 @@ class App(models.Model):
     uuid = models.UUIDField(
         default=uuid.uuid4,
         help_text="Identifier for the app",
+        unique=True,
     )
     owner = models.ForeignKey(
         User,
@@ -511,6 +512,9 @@ class AppData(models.Model):
         help_text="Time at which the app instance was last updated",
     )
 
+    class Meta:
+        unique_together = ("app_uuid", "version")
+
     def __str__(self) -> str:
         return f'{self.app_uuid}_{"draft" if self.is_draft else "published"}_v{self.version}'
 
@@ -589,7 +593,7 @@ class AppSession(models.Model):
     Instance of an app
     """
 
-    uuid = models.UUIDField(default=uuid.uuid4, help_text="UUID for the run")
+    uuid = models.UUIDField(default=uuid.uuid4, help_text="UUID for the run", unique=True)
     app = models.ForeignKey(
         App,
         on_delete=models.DO_NOTHING,

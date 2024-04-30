@@ -53,7 +53,7 @@ class AbstractProfile(models.Model):
         help_text="User this profile belongs to",
         related_name="user",
     )
-    uuid = models.UUIDField(default=uuid.uuid4, help_text="User UUID")
+    uuid = models.UUIDField(default=uuid.uuid4, help_text="User UUID", unique=True)
     token = models.CharField(
         max_length=50,
         help_text="Token used to authenticate requests with",
