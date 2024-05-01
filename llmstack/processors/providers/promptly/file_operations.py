@@ -4,7 +4,9 @@ import os
 import shutil
 import tempfile
 import uuid
-from typing import Optional
+from enum import Enum
+from io import BytesIO
+from typing import Dict, Optional
 
 import grpc
 from asgiref.sync import async_to_sync
@@ -47,35 +49,29 @@ def _mime_type_from_file_ext(ext):
         return "application/octet-stream"
 
 
-class FileOperationsInput(ApiProcessorSchema):
-    content: str = Field(
-        default="",
-        description="The contents of the file. Skip this field if you want to create an archive of the directory",
-    )
-    filename: Optional[str] = Field(
-        description="The name of the file to create. If not provided, a random name will be generated",
-    )
-    directory: Optional[str] = Field(
-        description="The directory to create the file in. If not provided, the file will be created in a temporary directory and path is returned",
-    )
-    archive: bool = Field(
-        default=False,
-        description="If true, an archive with the contents of the directory will be created",
-    )
-    mimetype: Optional[str] = Field(
-        description="The mimetype of the file. If not provided, it will be inferred from the filename",
-    )
-
-    @root_validator
-    def validate_input(cls, values):
-        mimetype = values.get("mimetype")
-        if not mimetype:
-            filename = values.get("filename")
-            if filename:
-                file_extension = filename.split(".")[-1]
-                mimetype = _mime_type_from_file_ext(file_extension)
-                values["mimetype"] = mimetype
-        return values
+def _file_extension_from_mime_type(mime_type):
+    if mime_type == "text/plain":
+        return "txt"
+    elif mime_type == "text/html":
+        return "html"
+    elif mime_type == "text/css":
+        return "css"
+    elif mime_type == "application/javascript":
+        return "js"
+    elif mime_type == "application/json":
+        return "json"
+    elif mime_type == "application/xml":
+        return "xml"
+    elif mime_type == "text/csv":
+        return "csv"
+    elif mime_type == "text/tab-separated-values":
+        return "tsv"
+    elif mime_type == "text/markdown":
+        return "md"
+    elif mime_type == "application/pdf":
+        return "pdf"
+    else:
+        return "bin"
 
 
 def create_data_uri(data, mime_type="text/plain", base64_encode=False, filename=None):
@@ -94,22 +90,73 @@ def create_data_uri(data, mime_type="text/plain", base64_encode=False, filename=
     return data_uri
 
 
+class FileMimeType(str, Enum):
+    TEXT = "text/plain"
+    HTML = "text/html"
+    CSS = "text/css"
+    JAVASCRIPT = "application/javascript"
+    JSON = "application/json"
+    XML = "application/xml"
+    CSV = "text/csv"
+    TSV = "text/tab-separated-values"
+    MARKDOWN = "text/markdown"
+    PDF = "application/pdf"
+    OCTET_STREAM = "application/octet-stream"
+
+    def __str__(self):
+        return self.value
+
+
+class FileOperationsInput(ApiProcessorSchema):
+    content: str = Field(
+        default="",
+        description="The contents of the file. Skip this field if you want to create an archive of the directory",
+    )
+    content_mime_type: Optional[FileMimeType] = Field(
+        default=None,
+        description="The mimetype of the content.",
+    )
+    content_objref: Optional[str] = Field(
+        default=None,
+        description="Object ref of the content to be used to create the file",
+    )
+    filename: Optional[str] = Field(
+        description="The name of the file to create. If not provided, a random name will be generated",
+    )
+    directory: Optional[str] = Field(
+        description="The directory to create the file in. If not provided, the file will be created in a temporary directory and path is returned",
+    )
+    mimetype: str = Field(
+        description="The mimetype of the file. If not provided, it will be inferred from the filename",
+    )
+
+    @root_validator
+    def validate_input(cls, values):
+        mimetype = values.get("mimetype")
+        if not mimetype:
+            filename = values.get("filename")
+            if filename:
+                file_extension = filename.split(".")[-1]
+                mimetype = _mime_type_from_file_ext(file_extension)
+                values["mimetype"] = mimetype
+        return values
+
+
+class FileOperationOperation(str, Enum):
+    CREATE = "create"
+    ARCHIVE = "archive"
+    CONVERT = "convert"
+
+
 class FileOperationsOutput(ApiProcessorSchema):
     directory: str = Field(description="The directory the file was created in")
     filename: str = Field(description="The name of the file created")
     objref: Optional[str] = Field(default=None, description="Object ref of the file created")
-    archive: bool = Field(
-        default=False,
-        description="If true, then we just created an archive with contents from directory",
-    )
-    text: str = Field(
-        default="",
-        description="Textual description of the output",
-    )
 
 
 class FileOperationsConfiguration(ApiProcessorSchema):
-    pass
+    operation: FileOperationOperation = Field(description="The operation to perform")
+    operation_config: Dict[str, str] = Field(default={}, description="Configuration for the operation")
 
 
 def _create_archive(files, directory=""):
@@ -174,92 +221,77 @@ class FileOperationsProcessor(
     def provider_slug() -> str:
         return "promptly"
 
-    @staticmethod
-    def tool_only() -> bool:
-        return True
-
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(markdown="File: {{objref}}")
 
     def process(self) -> dict:
+        input_content_bytes = None
+        input_content_mime_type = None
+        data_uri = None
+
         output_stream = self._output_stream
-
-        content = self._input.content
-        filename = self._input.filename or str(uuid.uuid4())
         directory = self._input.directory or ""
-        archive = self._input.archive
+        operation = self._config.operation
 
-        # Create an archive if directory is provided but not content with
-        # archive flag set
-        if not content and archive:
+        filename = self._input.filename or f"{str(uuid.uuid4())}.{_file_extension_from_mime_type(self._input.mimetype)}"
+
+        if self._input.content:
+            input_content_bytes = self._input.content.encode("utf-8")
+            input_content_mime_type = self._input.content_mime_type or FileMimeType.TEXT
+
+        if self._input.content_objref:
+            # Get the content from the object ref
+            file_data_url = self._get_session_asset_data_uri(self._input.content_objref, include_name=True)
+            input_content_mime_type, _, input_content_bytes = validate_parse_data_uri(file_data_url)
+
+        full_file_path = f"{directory}/{filename}" if directory else filename
+
+        if operation == FileOperationOperation.CONVERT:
+            if input_content_bytes is None or input_content_mime_type is None:
+                raise ValueError("Content is missing or invalid")
+            with grpc.insecure_channel(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}") as channel:
+                stub = runner_pb2_grpc.RunnerStub(channel)
+                request = runner_pb2.FileConverterRequest(
+                    file=runner_pb2.Content(
+                        data=input_content_bytes,
+                        mime_type=input_content_mime_type,
+                    ),
+                    target_mime_type=self._input.mimetype,
+                    options={},
+                )
+                response_iter = stub.GetFileConverter(iter([request]))
+                response_buffer = BytesIO()
+                for response in response_iter:
+                    response_buffer.write(response.data)
+                response_buffer.seek(0)
+                data_uri = create_data_uri(
+                    response_buffer.read(), self._input.mimetype, base64_encode=True, filename=full_file_path
+                )
+
+        elif operation == FileOperationOperation.CREATE:
+            if input_content_bytes is None or input_content_mime_type is None:
+                raise ValueError("Content is missing or invalid")
+            if input_content_mime_type != self._input.mimetype:
+                raise ValueError("Source content mime type does not match provided mime type")
+
+            data_uri = create_data_uri(
+                input_content_bytes, input_content_mime_type, base64_encode=True, filename=full_file_path
+            )
+        elif operation == FileOperationOperation.ARCHIVE:
             result = self._get_all_session_assets(include_name=True, include_data=True)
             if result and "assets" in result and len(result["assets"]):
                 zipped_assets, archive_name = _create_archive(result["assets"], directory)
-                asset = self._upload_asset_from_url(asset=zipped_assets)
-                async_to_sync(output_stream.write)(
-                    FileOperationsOutput(
-                        directory="",
-                        filename=archive_name,
-                        objref=asset,
-                        archive=True,
-                        text="Archive created with contents from directory",
-                    ),
-                )
-            else:
-                async_to_sync(output_stream.write)(
-                    FileOperationsOutput(
-                        directory=directory,
-                        objref=None,
-                        filename=filename,
-                        archive=True,
-                        text="No files found to create an archive",
-                    ),
-                )
-        elif content and not archive:
-            data_uri = None
-            if self._input.mimetype == "application/pdf":
-                channel = grpc.insecure_channel(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}")
-                stub = runner_pb2_grpc.RunnerStub(channel)
-                request = runner_pb2.WordProcessorRequest(
-                    create=runner_pb2.WordProcessorFileCreate(
-                        filename=self._input.filename or f"{str(uuid.uuid4())}.pdf",
-                        mime_type=runner_pb2.ContentMimeType.PDF,
-                        html=self._input.content,
-                    )
-                )
-                response_iter = stub.GetWordProcessor(
-                    iter([request]),
-                )
-                file_data = response_iter.next().files[0].data
-                data_uri = create_data_uri(
-                    file_data, self._input.mimetype, base64_encode=True, filename=request.create.filename
-                )
+                data_uri = zipped_assets
 
-            else:
-                full_file_path = f"{directory}/{filename}" if directory else filename
-                # Create a dataURI for the file
-                data_uri = create_data_uri(
-                    self._input.content.encode("utf-8"),
-                    self._input.mimetype,
-                    base64_encode=True,
-                    filename=full_file_path,
-                )
+        if data_uri:
+            asset = self._upload_asset_from_url(asset=data_uri)
 
-            if data_uri:
-                asset = self._upload_asset_from_url(asset=data_uri)
-
-                async_to_sync(output_stream.write)(
-                    FileOperationsOutput(
-                        directory=directory,
-                        filename=filename,
-                        objref=asset,
-                        archive=False,
-                        text=content,
-                    ),
-                )
-            else:
-                raise ValueError("Failed to create data uri")
+            async_to_sync(output_stream.write)(
+                FileOperationsOutput(directory=directory, filename=filename, objref=asset)
+            )
+        else:
+            raise ValueError("Failed to create data uri")
 
         # Finalize the output stream
         output = output_stream.finalize()
