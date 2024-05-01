@@ -330,30 +330,21 @@ class RestrictedPythonCodeRunnerResponse(_message.Message):
     ) -> None: ...
 
 class CodeRunnerRequest(_message.Message):
-    __slots__ = ("source_code", "timeout_secs", "files")
+    __slots__ = ("source_code", "timeout_secs", "session_id", "files")
     SOURCE_CODE_FIELD_NUMBER: _ClassVar[int]
     TIMEOUT_SECS_FIELD_NUMBER: _ClassVar[int]
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
     FILES_FIELD_NUMBER: _ClassVar[int]
     source_code: str
     timeout_secs: int
+    session_id: str
     files: _containers.RepeatedCompositeFieldContainer[Content]
     def __init__(
         self,
         source_code: _Optional[str] = ...,
         timeout_secs: _Optional[int] = ...,
+        session_id: _Optional[str] = ...,
         files: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
-    ) -> None: ...
-
-class File(_message.Message):
-    __slots__ = ("name", "mime_type", "content")
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    MIME_TYPE_FIELD_NUMBER: _ClassVar[int]
-    CONTENT_FIELD_NUMBER: _ClassVar[int]
-    name: str
-    mime_type: str
-    content: bytes
-    def __init__(
-        self, name: _Optional[str] = ..., mime_type: _Optional[str] = ..., content: _Optional[bytes] = ...
     ) -> None: ...
 
 class CodeRunnerResponse(_message.Message):
@@ -365,11 +356,77 @@ class CodeRunnerResponse(_message.Message):
     state: RemoteBrowserState
     stdout: _containers.RepeatedCompositeFieldContainer[Content]
     stderr: str
-    files: _containers.RepeatedCompositeFieldContainer[File]
+    files: _containers.RepeatedCompositeFieldContainer[Content]
     def __init__(
         self,
         state: _Optional[_Union[RemoteBrowserState, str]] = ...,
         stdout: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
         stderr: _Optional[str] = ...,
-        files: _Optional[_Iterable[_Union[File, _Mapping]]] = ...,
+        files: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
+    ) -> None: ...
+
+class WordProcessorFileCreate(_message.Message):
+    __slots__ = ("filename", "mime_type", "html")
+    FILENAME_FIELD_NUMBER: _ClassVar[int]
+    MIME_TYPE_FIELD_NUMBER: _ClassVar[int]
+    HTML_FIELD_NUMBER: _ClassVar[int]
+    filename: str
+    mime_type: ContentMimeType
+    html: str
+    def __init__(
+        self,
+        filename: _Optional[str] = ...,
+        mime_type: _Optional[_Union[ContentMimeType, str]] = ...,
+        html: _Optional[str] = ...,
+    ) -> None: ...
+
+class WordProcessorFileRead(_message.Message):
+    __slots__ = ("file", "read_as_text", "read_as_html", "read_as_unstructured")
+    FILE_FIELD_NUMBER: _ClassVar[int]
+    READ_AS_TEXT_FIELD_NUMBER: _ClassVar[int]
+    READ_AS_HTML_FIELD_NUMBER: _ClassVar[int]
+    READ_AS_UNSTRUCTURED_FIELD_NUMBER: _ClassVar[int]
+    file: Content
+    read_as_text: bool
+    read_as_html: bool
+    read_as_unstructured: bool
+    def __init__(
+        self,
+        file: _Optional[_Union[Content, _Mapping]] = ...,
+        read_as_text: bool = ...,
+        read_as_html: bool = ...,
+        read_as_unstructured: bool = ...,
+    ) -> None: ...
+
+class WordProcessorRequest(_message.Message):
+    __slots__ = ("create", "read")
+    CREATE_FIELD_NUMBER: _ClassVar[int]
+    READ_FIELD_NUMBER: _ClassVar[int]
+    create: WordProcessorFileCreate
+    read: WordProcessorFileRead
+    def __init__(
+        self,
+        create: _Optional[_Union[WordProcessorFileCreate, _Mapping]] = ...,
+        read: _Optional[_Union[WordProcessorFileRead, _Mapping]] = ...,
+    ) -> None: ...
+
+class WordProcessorResponse(_message.Message):
+    __slots__ = ("data", "data_as_text", "data_as_html", "data_as_unstructured", "files")
+    DATA_FIELD_NUMBER: _ClassVar[int]
+    DATA_AS_TEXT_FIELD_NUMBER: _ClassVar[int]
+    DATA_AS_HTML_FIELD_NUMBER: _ClassVar[int]
+    DATA_AS_UNSTRUCTURED_FIELD_NUMBER: _ClassVar[int]
+    FILES_FIELD_NUMBER: _ClassVar[int]
+    data: bytes
+    data_as_text: bool
+    data_as_html: bool
+    data_as_unstructured: bool
+    files: _containers.RepeatedCompositeFieldContainer[Content]
+    def __init__(
+        self,
+        data: _Optional[bytes] = ...,
+        data_as_text: bool = ...,
+        data_as_html: bool = ...,
+        data_as_unstructured: bool = ...,
+        files: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
     ) -> None: ...

@@ -147,20 +147,47 @@ message RestrictedPythonCodeRunnerResponse {
 message CodeRunnerRequest {
   string source_code = 1; // code to run
   int32 timeout_secs = 2; // timeout in seconds
-  repeated Content files = 3; // files in the code run session
-}
-
-message File {
-  string name = 1; // name of file
-  string mime_type = 2; // mime type of file
-  bytes content = 3; // content of file
+  string session_id = 3; // session id
+  repeated Content files = 4; // files in the code run session
 }
 
 message CodeRunnerResponse {
   RemoteBrowserState state = 1; // state of runner
   repeated Content stdout = 2; // stdout of code
   string stderr = 3; // stderr of code
-  repeated File files = 4; // files in the code run session
+  repeated Content files = 4; // files in the code run session
+}
+
+message WordProcessorFileCreate {
+  string filename = 1; // filename
+  ContentMimeType mime_type = 2; // mime type of file
+  string html = 3; // html content
+}
+
+message WordProcessorFileRead {
+  Content file = 1; // file to read
+  oneof read_as {
+    bool read_as_text = 2; // read as text
+    bool read_as_html = 3; // read as html
+    bool read_as_unstructured = 4; // read as unstructured
+  }
+}
+
+message WordProcessorRequest {
+  oneof operation {
+    WordProcessorFileCreate create = 1; // create file
+    WordProcessorFileRead read = 2; // read file
+  }
+}
+
+message WordProcessorResponse {
+  bytes data = 1; // data of file
+  oneof data_as {
+    bool data_as_text = 2; // data as text
+    bool data_as_html = 3; // data as html
+    bool data_as_unstructured = 4; // data as unstructured
+  }
+  repeated Content files = 10; // files created
 }
 
 // Generic runner service
@@ -173,4 +200,6 @@ service Runner {
   rpc GetRestrictedPythonCodeRunner (RestrictedPythonCodeRunnerRequest) returns (stream RestrictedPythonCodeRunnerResponse) {}
 
   rpc GetCodeRunner (stream CodeRunnerRequest) returns (stream CodeRunnerResponse) {}
+
+  rpc GetWordProcessor (stream WordProcessorRequest) returns (stream WordProcessorResponse) {}
 }
