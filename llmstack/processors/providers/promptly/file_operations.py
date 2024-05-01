@@ -4,11 +4,16 @@ import os
 import shutil
 import tempfile
 import uuid
+from enum import Enum
 from typing import Optional
 
+import grpc
 from asgiref.sync import async_to_sync
+from django.conf import settings
 from pydantic import Field, root_validator
 
+from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -41,6 +46,13 @@ def _mime_type_from_file_ext(ext):
         return "application/octet-stream"
 
 
+class ExportAsType(str, Enum):
+    PDF = "pdf"
+
+    def __str__(self):
+        return self.value
+
+
 class FileOperationsInput(ApiProcessorSchema):
     content: str = Field(
         default="",
@@ -58,6 +70,10 @@ class FileOperationsInput(ApiProcessorSchema):
     )
     mimetype: Optional[str] = Field(
         description="The mimetype of the file. If not provided, it will be inferred from the filename",
+    )
+    export_as: Optional[str] = Field(
+        default=None,
+        description="The format to export the file as. If not provided, the file will be created as a text file",
     )
 
     @root_validator
@@ -172,6 +188,10 @@ class FileOperationsProcessor(
     def tool_only() -> bool:
         return True
 
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(markdown="File: {{objref}}")
+
     def process(self) -> dict:
         output_stream = self._output_stream
 
@@ -207,25 +227,54 @@ class FileOperationsProcessor(
                     ),
                 )
         elif content and not archive:
-            full_file_path = f"{directory}/{filename}" if directory else filename
-            # Create a dataURI for the file
-            data_uri = create_data_uri(
-                self._input.content.encode("utf-8"),
-                self._input.mimetype,
-                base64_encode=True,
-                filename=full_file_path,
-            )
-            asset = self._upload_asset_from_url(asset=data_uri)
+            data_uri = None
+            if self._input.export_as:
+                if self._input.export_as == ExportAsType.PDF:
+                    channel = grpc.insecure_channel(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}")
 
-            async_to_sync(output_stream.write)(
-                FileOperationsOutput(
-                    directory=directory,
-                    filename=filename,
-                    objref=asset,
-                    archive=False,
-                    text=content,
-                ),
-            )
+                    stub = runner_pb2_grpc.RunnerStub(channel)
+
+                    request = runner_pb2.WordProcessorRequest(
+                        create=runner_pb2.WordProcessorFileCreate(
+                            filename=self._input.filename or f"{str(uuid.uuid4())}.pdf",
+                            mime_type=runner_pb2.ContentMimeType.PDF,
+                            html=self._input.content,
+                        )
+                    )
+                    response_iter = stub.GetWordProcessor(
+                        iter([request]),
+                    )
+                    for response in response_iter:
+                        data = response.files[0].data
+                        data_uri = create_data_uri(
+                            data, "application/pdf", base64_encode=True, filename=request.create.filename
+                        )
+                else:
+                    raise ValueError(f"Unsupported export_as type: {self._config.export_as}")
+            else:
+                full_file_path = f"{directory}/{filename}" if directory else filename
+                # Create a dataURI for the file
+                data_uri = create_data_uri(
+                    self._input.content.encode("utf-8"),
+                    self._input.mimetype,
+                    base64_encode=True,
+                    filename=full_file_path,
+                )
+
+            if data_uri:
+                asset = self._upload_asset_from_url(asset=data_uri)
+
+                async_to_sync(output_stream.write)(
+                    FileOperationsOutput(
+                        directory=directory,
+                        filename=filename,
+                        objref=asset,
+                        archive=False,
+                        text=content,
+                    ),
+                )
+            else:
+                raise ValueError("Failed to create data uri")
 
         # Finalize the output stream
         output = output_stream.finalize()
