@@ -330,30 +330,21 @@ class RestrictedPythonCodeRunnerResponse(_message.Message):
     ) -> None: ...
 
 class CodeRunnerRequest(_message.Message):
-    __slots__ = ("source_code", "timeout_secs", "files")
+    __slots__ = ("source_code", "timeout_secs", "session_id", "files")
     SOURCE_CODE_FIELD_NUMBER: _ClassVar[int]
     TIMEOUT_SECS_FIELD_NUMBER: _ClassVar[int]
+    SESSION_ID_FIELD_NUMBER: _ClassVar[int]
     FILES_FIELD_NUMBER: _ClassVar[int]
     source_code: str
     timeout_secs: int
+    session_id: str
     files: _containers.RepeatedCompositeFieldContainer[Content]
     def __init__(
         self,
         source_code: _Optional[str] = ...,
         timeout_secs: _Optional[int] = ...,
+        session_id: _Optional[str] = ...,
         files: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
-    ) -> None: ...
-
-class File(_message.Message):
-    __slots__ = ("name", "mime_type", "content")
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    MIME_TYPE_FIELD_NUMBER: _ClassVar[int]
-    CONTENT_FIELD_NUMBER: _ClassVar[int]
-    name: str
-    mime_type: str
-    content: bytes
-    def __init__(
-        self, name: _Optional[str] = ..., mime_type: _Optional[str] = ..., content: _Optional[bytes] = ...
     ) -> None: ...
 
 class CodeRunnerResponse(_message.Message):
@@ -365,11 +356,41 @@ class CodeRunnerResponse(_message.Message):
     state: RemoteBrowserState
     stdout: _containers.RepeatedCompositeFieldContainer[Content]
     stderr: str
-    files: _containers.RepeatedCompositeFieldContainer[File]
+    files: _containers.RepeatedCompositeFieldContainer[Content]
     def __init__(
         self,
         state: _Optional[_Union[RemoteBrowserState, str]] = ...,
         stdout: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
         stderr: _Optional[str] = ...,
-        files: _Optional[_Iterable[_Union[File, _Mapping]]] = ...,
+        files: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
     ) -> None: ...
+
+class FileConverterRequest(_message.Message):
+    __slots__ = ("file", "target_mime_type", "options")
+
+    class OptionsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+
+    FILE_FIELD_NUMBER: _ClassVar[int]
+    TARGET_MIME_TYPE_FIELD_NUMBER: _ClassVar[int]
+    OPTIONS_FIELD_NUMBER: _ClassVar[int]
+    file: Content
+    target_mime_type: ContentMimeType
+    options: _containers.ScalarMap[str, str]
+    def __init__(
+        self,
+        file: _Optional[_Union[Content, _Mapping]] = ...,
+        target_mime_type: _Optional[_Union[ContentMimeType, str]] = ...,
+        options: _Optional[_Mapping[str, str]] = ...,
+    ) -> None: ...
+
+class FileConverterResponse(_message.Message):
+    __slots__ = ("file",)
+    FILE_FIELD_NUMBER: _ClassVar[int]
+    file: Content
+    def __init__(self, file: _Optional[_Union[Content, _Mapping]] = ...) -> None: ...

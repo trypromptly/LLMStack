@@ -147,20 +147,25 @@ message RestrictedPythonCodeRunnerResponse {
 message CodeRunnerRequest {
   string source_code = 1; // code to run
   int32 timeout_secs = 2; // timeout in seconds
-  repeated Content files = 3; // files in the code run session
-}
-
-message File {
-  string name = 1; // name of file
-  string mime_type = 2; // mime type of file
-  bytes content = 3; // content of file
+  string session_id = 3; // session id
+  repeated Content files = 4; // files in the code run session
 }
 
 message CodeRunnerResponse {
   RemoteBrowserState state = 1; // state of runner
   repeated Content stdout = 2; // stdout of code
   string stderr = 3; // stderr of code
-  repeated File files = 4; // files in the code run session
+  repeated Content files = 4; // files in the code run session
+}
+
+message FileConverterRequest {
+  Content file = 1; // file to convert
+  ContentMimeType target_mime_type = 2; // target mime type
+  map<string, string> options = 3; // options for conversion
+}
+
+message FileConverterResponse {
+  Content file = 1; // converted file
 }
 
 // Generic runner service
@@ -173,4 +178,6 @@ service Runner {
   rpc GetRestrictedPythonCodeRunner (RestrictedPythonCodeRunnerRequest) returns (stream RestrictedPythonCodeRunnerResponse) {}
 
   rpc GetCodeRunner (stream CodeRunnerRequest) returns (stream CodeRunnerResponse) {}
+
+  rpc GetFileConverter (stream FileConverterRequest) returns (stream FileConverterResponse) {}
 }
