@@ -158,28 +158,6 @@ message CodeRunnerResponse {
   repeated Content files = 4; // files in the code run session
 }
 
-message WordProcessorFileCreate {
-  string filename = 1; // filename
-  ContentMimeType mime_type = 2; // mime type of file
-  string html = 3; // html content
-}
-
-message WordProcessorFileRead {
-  Content file = 1; // file to read
-  oneof read_as {
-    bool read_as_text = 2; // read as text
-    bool read_as_html = 3; // read as html
-    bool read_as_unstructured = 4; // read as unstructured
-  }
-}
-
-message WordProcessorRequest {
-  oneof operation {
-    WordProcessorFileCreate create = 1; // create file
-    WordProcessorFileRead read = 2; // read file
-  }
-}
-
 message FileConverterRequest {
   Content file = 1; // file to convert
   ContentMimeType target_mime_type = 2; // target mime type
@@ -188,16 +166,6 @@ message FileConverterRequest {
 
 message FileConverterResponse {
   Content file = 1; // converted file
-}
-
-message WordProcessorResponse {
-  bytes data = 1; // data of file
-  oneof data_as {
-    bool data_as_text = 2; // data as text
-    bool data_as_html = 3; // data as html
-    bool data_as_unstructured = 4; // data as unstructured
-  }
-  repeated Content files = 10; // files created
 }
 
 // Generic runner service

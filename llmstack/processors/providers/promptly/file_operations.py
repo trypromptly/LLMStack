@@ -6,7 +6,7 @@ import tempfile
 import uuid
 from enum import Enum
 from io import BytesIO
-from typing import Dict, Optional
+from typing import Optional
 
 import grpc
 from asgiref.sync import async_to_sync
@@ -113,7 +113,7 @@ class FileOperationsInput(ApiProcessorSchema):
         description="The contents of the file. Skip this field if you want to create an archive of the directory",
     )
     content_mime_type: Optional[FileMimeType] = Field(
-        default=None,
+        default=FileMimeType.TEXT,
         description="The mimetype of the content.",
     )
     content_objref: Optional[str] = Field(
@@ -155,8 +155,8 @@ class FileOperationsOutput(ApiProcessorSchema):
 
 
 class FileOperationsConfiguration(ApiProcessorSchema):
-    operation: FileOperationOperation = Field(description="The operation to perform")
-    operation_config: Dict[str, str] = Field(default={}, description="Configuration for the operation")
+    operation: FileOperationOperation = Field(description="The operation to perform", advanced_parameter=False)
+    operation_config: str = Field(default="{}", description="Configuration for the operation", widget="textarea")
 
 
 def _create_archive(files, directory=""):

@@ -365,51 +365,6 @@ class CodeRunnerResponse(_message.Message):
         files: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
     ) -> None: ...
 
-class WordProcessorFileCreate(_message.Message):
-    __slots__ = ("filename", "mime_type", "html")
-    FILENAME_FIELD_NUMBER: _ClassVar[int]
-    MIME_TYPE_FIELD_NUMBER: _ClassVar[int]
-    HTML_FIELD_NUMBER: _ClassVar[int]
-    filename: str
-    mime_type: ContentMimeType
-    html: str
-    def __init__(
-        self,
-        filename: _Optional[str] = ...,
-        mime_type: _Optional[_Union[ContentMimeType, str]] = ...,
-        html: _Optional[str] = ...,
-    ) -> None: ...
-
-class WordProcessorFileRead(_message.Message):
-    __slots__ = ("file", "read_as_text", "read_as_html", "read_as_unstructured")
-    FILE_FIELD_NUMBER: _ClassVar[int]
-    READ_AS_TEXT_FIELD_NUMBER: _ClassVar[int]
-    READ_AS_HTML_FIELD_NUMBER: _ClassVar[int]
-    READ_AS_UNSTRUCTURED_FIELD_NUMBER: _ClassVar[int]
-    file: Content
-    read_as_text: bool
-    read_as_html: bool
-    read_as_unstructured: bool
-    def __init__(
-        self,
-        file: _Optional[_Union[Content, _Mapping]] = ...,
-        read_as_text: bool = ...,
-        read_as_html: bool = ...,
-        read_as_unstructured: bool = ...,
-    ) -> None: ...
-
-class WordProcessorRequest(_message.Message):
-    __slots__ = ("create", "read")
-    CREATE_FIELD_NUMBER: _ClassVar[int]
-    READ_FIELD_NUMBER: _ClassVar[int]
-    create: WordProcessorFileCreate
-    read: WordProcessorFileRead
-    def __init__(
-        self,
-        create: _Optional[_Union[WordProcessorFileCreate, _Mapping]] = ...,
-        read: _Optional[_Union[WordProcessorFileRead, _Mapping]] = ...,
-    ) -> None: ...
-
 class FileConverterRequest(_message.Message):
     __slots__ = ("file", "target_mime_type", "options")
 
@@ -439,24 +394,3 @@ class FileConverterResponse(_message.Message):
     FILE_FIELD_NUMBER: _ClassVar[int]
     file: Content
     def __init__(self, file: _Optional[_Union[Content, _Mapping]] = ...) -> None: ...
-
-class WordProcessorResponse(_message.Message):
-    __slots__ = ("data", "data_as_text", "data_as_html", "data_as_unstructured", "files")
-    DATA_FIELD_NUMBER: _ClassVar[int]
-    DATA_AS_TEXT_FIELD_NUMBER: _ClassVar[int]
-    DATA_AS_HTML_FIELD_NUMBER: _ClassVar[int]
-    DATA_AS_UNSTRUCTURED_FIELD_NUMBER: _ClassVar[int]
-    FILES_FIELD_NUMBER: _ClassVar[int]
-    data: bytes
-    data_as_text: bool
-    data_as_html: bool
-    data_as_unstructured: bool
-    files: _containers.RepeatedCompositeFieldContainer[Content]
-    def __init__(
-        self,
-        data: _Optional[bytes] = ...,
-        data_as_text: bool = ...,
-        data_as_html: bool = ...,
-        data_as_unstructured: bool = ...,
-        files: _Optional[_Iterable[_Union[Content, _Mapping]]] = ...,
-    ) -> None: ...
