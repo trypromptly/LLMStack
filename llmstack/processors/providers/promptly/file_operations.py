@@ -1,4 +1,5 @@
 import base64
+import json
 import logging
 import os
 import shutil
@@ -238,7 +239,7 @@ class FileOperationsProcessor(
                         mime_type=input_content_mime_type.grpc_mime_type(),
                     ),
                     target_mime_type=self._input.output_mime_type.grpc_mime_type(),
-                    options={},
+                    options=json.loads(self._config.operation_config),
                 )
                 response_iter = stub.GetFileConverter(iter([request]))
                 response_buffer = BytesIO()
