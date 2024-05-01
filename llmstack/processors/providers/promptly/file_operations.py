@@ -106,6 +106,18 @@ class FileMimeType(str, Enum):
     def __str__(self):
         return self.value
 
+    def grpc_mime_type(self):
+        if self == FileMimeType.TEXT:
+            return runner_pb2.ContentMimeType.TEXT
+        elif self == FileMimeType.HTML:
+            return runner_pb2.ContentMimeType.HTML
+        elif self == FileMimeType.JSON:
+            return runner_pb2.ContentMimeType.JSON
+        elif self == FileMimeType.PDF:
+            return runner_pb2.ContentMimeType.PDF
+        else:
+            return runner_pb2.ContentMimeType.TEXT
+
 
 class FileOperationsInput(ApiProcessorSchema):
     content: str = Field(
@@ -126,7 +138,8 @@ class FileOperationsInput(ApiProcessorSchema):
     directory: Optional[str] = Field(
         description="The directory to create the file in. If not provided, the file will be created in a temporary directory and path is returned",
     )
-    mimetype: str = Field(
+    mimetype: FileMimeType = Field(
+        default=FileMimeType.TEXT,
         description="The mimetype of the file. If not provided, it will be inferred from the filename",
     )
 
@@ -255,18 +268,18 @@ class FileOperationsProcessor(
                 request = runner_pb2.FileConverterRequest(
                     file=runner_pb2.Content(
                         data=input_content_bytes,
-                        mime_type=input_content_mime_type,
+                        mime_type=input_content_mime_type.grpc_mime_type(),
                     ),
-                    target_mime_type=self._input.mimetype,
+                    target_mime_type=self._input.mimetype.grpc_mime_type(),
                     options={},
                 )
                 response_iter = stub.GetFileConverter(iter([request]))
                 response_buffer = BytesIO()
                 for response in response_iter:
-                    response_buffer.write(response.data)
+                    response_buffer.write(response.file.data)
                 response_buffer.seek(0)
                 data_uri = create_data_uri(
-                    response_buffer.read(), self._input.mimetype, base64_encode=True, filename=full_file_path
+                    response_buffer.read(), str(self._input.mimetype), base64_encode=True, filename=full_file_path
                 )
 
         elif operation == FileOperationOperation.CREATE:
