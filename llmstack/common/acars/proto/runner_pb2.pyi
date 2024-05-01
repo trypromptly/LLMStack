@@ -410,6 +410,36 @@ class WordProcessorRequest(_message.Message):
         read: _Optional[_Union[WordProcessorFileRead, _Mapping]] = ...,
     ) -> None: ...
 
+class FileConverterRequest(_message.Message):
+    __slots__ = ("file", "target_mime_type", "options")
+
+    class OptionsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+
+    FILE_FIELD_NUMBER: _ClassVar[int]
+    TARGET_MIME_TYPE_FIELD_NUMBER: _ClassVar[int]
+    OPTIONS_FIELD_NUMBER: _ClassVar[int]
+    file: Content
+    target_mime_type: ContentMimeType
+    options: _containers.ScalarMap[str, str]
+    def __init__(
+        self,
+        file: _Optional[_Union[Content, _Mapping]] = ...,
+        target_mime_type: _Optional[_Union[ContentMimeType, str]] = ...,
+        options: _Optional[_Mapping[str, str]] = ...,
+    ) -> None: ...
+
+class FileConverterResponse(_message.Message):
+    __slots__ = ("file",)
+    FILE_FIELD_NUMBER: _ClassVar[int]
+    file: Content
+    def __init__(self, file: _Optional[_Union[Content, _Mapping]] = ...) -> None: ...
+
 class WordProcessorResponse(_message.Message):
     __slots__ = ("data", "data_as_text", "data_as_html", "data_as_unstructured", "files")
     DATA_FIELD_NUMBER: _ClassVar[int]

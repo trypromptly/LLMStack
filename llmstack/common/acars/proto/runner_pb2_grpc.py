@@ -34,10 +34,10 @@ class RunnerStub(object):
             request_serializer=runner__pb2.CodeRunnerRequest.SerializeToString,
             response_deserializer=runner__pb2.CodeRunnerResponse.FromString,
         )
-        self.GetWordProcessor = channel.stream_stream(
-            "/Runner/GetWordProcessor",
-            request_serializer=runner__pb2.WordProcessorRequest.SerializeToString,
-            response_deserializer=runner__pb2.WordProcessorResponse.FromString,
+        self.GetFileConverter = channel.stream_stream(
+            "/Runner/GetFileConverter",
+            request_serializer=runner__pb2.FileConverterRequest.SerializeToString,
+            response_deserializer=runner__pb2.FileConverterResponse.FromString,
         )
 
 
@@ -68,7 +68,7 @@ class RunnerServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
-    def GetWordProcessor(self, request_iterator, context):
+    def GetFileConverter(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
@@ -97,10 +97,10 @@ def add_RunnerServicer_to_server(servicer, server):
             request_deserializer=runner__pb2.CodeRunnerRequest.FromString,
             response_serializer=runner__pb2.CodeRunnerResponse.SerializeToString,
         ),
-        "GetWordProcessor": grpc.stream_stream_rpc_method_handler(
-            servicer.GetWordProcessor,
-            request_deserializer=runner__pb2.WordProcessorRequest.FromString,
-            response_serializer=runner__pb2.WordProcessorResponse.SerializeToString,
+        "GetFileConverter": grpc.stream_stream_rpc_method_handler(
+            servicer.GetFileConverter,
+            request_deserializer=runner__pb2.FileConverterRequest.FromString,
+            response_serializer=runner__pb2.FileConverterResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler("Runner", rpc_method_handlers)
@@ -228,7 +228,7 @@ class Runner(object):
         )
 
     @staticmethod
-    def GetWordProcessor(
+    def GetFileConverter(
         request_iterator,
         target,
         options=(),
@@ -243,9 +243,9 @@ class Runner(object):
         return grpc.experimental.stream_stream(
             request_iterator,
             target,
-            "/Runner/GetWordProcessor",
-            runner__pb2.WordProcessorRequest.SerializeToString,
-            runner__pb2.WordProcessorResponse.FromString,
+            "/Runner/GetFileConverter",
+            runner__pb2.FileConverterRequest.SerializeToString,
+            runner__pb2.FileConverterResponse.FromString,
             options,
             channel_credentials,
             insecure,

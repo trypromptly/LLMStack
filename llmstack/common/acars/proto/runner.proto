@@ -180,6 +180,16 @@ message WordProcessorRequest {
   }
 }
 
+message FileConverterRequest {
+  Content file = 1; // file to convert
+  ContentMimeType target_mime_type = 2; // target mime type
+  map<string, string> options = 3; // options for conversion
+}
+
+message FileConverterResponse {
+  Content file = 1; // converted file
+}
+
 message WordProcessorResponse {
   bytes data = 1; // data of file
   oneof data_as {
@@ -201,5 +211,5 @@ service Runner {
 
   rpc GetCodeRunner (stream CodeRunnerRequest) returns (stream CodeRunnerResponse) {}
 
-  rpc GetWordProcessor (stream WordProcessorRequest) returns (stream WordProcessorResponse) {}
+  rpc GetFileConverter (stream FileConverterRequest) returns (stream FileConverterResponse) {}
 }
