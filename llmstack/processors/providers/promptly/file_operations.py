@@ -184,7 +184,7 @@ class FileOperationsProcessor(
 
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
-        return OutputTemplate(markdown="File: {{objref}}")
+        return OutputTemplate(markdown="{{objref}}")
 
     def process(self) -> dict:
         input_content_bytes = None
