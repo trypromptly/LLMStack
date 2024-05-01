@@ -11,42 +11,17 @@ from typing import Optional
 import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from pydantic import Field, root_validator
+from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
-from llmstack.common.utils.utils import validate_parse_data_uri
+from llmstack.common.utils.utils import create_data_uri, validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _mime_type_from_file_ext(ext):
-    if ext == "txt":
-        return "text/plain"
-    elif ext == "html":
-        return "text/html"
-    elif ext == "css":
-        return "text/css"
-    elif ext == "js":
-        return "application/javascript"
-    elif ext == "json":
-        return "application/json"
-    elif ext == "xml":
-        return "application/xml"
-    elif ext == "csv":
-        return "text/csv"
-    elif ext == "tsv":
-        return "text/tab-separated-values"
-    elif ext == "md":
-        return "text/markdown"
-    elif ext == "pdf":
-        return "application/pdf"
-    else:
-        return "application/octet-stream"
 
 
 def _file_extension_from_mime_type(mime_type):
@@ -72,22 +47,6 @@ def _file_extension_from_mime_type(mime_type):
         return "pdf"
     else:
         return "bin"
-
-
-def create_data_uri(data, mime_type="text/plain", base64_encode=False, filename=None):
-    # Encode data in Base64 if requested
-    if base64_encode:
-        data = base64.b64encode(data).decode("utf-8")
-
-    # Build the Data URI
-    data_uri = f"data:{mime_type}"
-    if filename:
-        data_uri += f";name={filename}"
-    if base64_encode:
-        data_uri += ";base64"
-    data_uri += f",{data}"
-
-    return data_uri
 
 
 class FileMimeType(str, Enum):
@@ -120,7 +79,7 @@ class FileMimeType(str, Enum):
 
 
 class FileOperationsInput(ApiProcessorSchema):
-    content: str = Field(
+    content: Optional[str] = Field(
         default="",
         description="The contents of the file. Skip this field if you want to create an archive of the directory",
     )
@@ -132,27 +91,16 @@ class FileOperationsInput(ApiProcessorSchema):
         default=None,
         description="Object ref of the content to be used to create the file",
     )
-    filename: Optional[str] = Field(
+    output_filename: Optional[str] = Field(
         description="The name of the file to create. If not provided, a random name will be generated",
     )
-    directory: Optional[str] = Field(
+    output_directory: Optional[str] = Field(
         description="The directory to create the file in. If not provided, the file will be created in a temporary directory and path is returned",
     )
-    mimetype: FileMimeType = Field(
+    output_mime_type: FileMimeType = Field(
         default=FileMimeType.TEXT,
         description="The mimetype of the file. If not provided, it will be inferred from the filename",
     )
-
-    @root_validator
-    def validate_input(cls, values):
-        mimetype = values.get("mimetype")
-        if not mimetype:
-            filename = values.get("filename")
-            if filename:
-                file_extension = filename.split(".")[-1]
-                mimetype = _mime_type_from_file_ext(file_extension)
-                values["mimetype"] = mimetype
-        return values
 
 
 class FileOperationOperation(str, Enum):
@@ -244,10 +192,13 @@ class FileOperationsProcessor(
         data_uri = None
 
         output_stream = self._output_stream
-        directory = self._input.directory or ""
+        directory = self._input.output_directory or ""
         operation = self._config.operation
 
-        filename = self._input.filename or f"{str(uuid.uuid4())}.{_file_extension_from_mime_type(self._input.mimetype)}"
+        filename = (
+            self._input.output_filename
+            or f"{str(uuid.uuid4())}.{_file_extension_from_mime_type(self._input.output_mime_type)}"
+        )
 
         if self._input.content:
             input_content_bytes = self._input.content.encode("utf-8")
@@ -270,7 +221,7 @@ class FileOperationsProcessor(
                         data=input_content_bytes,
                         mime_type=input_content_mime_type.grpc_mime_type(),
                     ),
-                    target_mime_type=self._input.mimetype.grpc_mime_type(),
+                    target_mime_type=self._input.output_mime_type.grpc_mime_type(),
                     options={},
                 )
                 response_iter = stub.GetFileConverter(iter([request]))
@@ -279,13 +230,16 @@ class FileOperationsProcessor(
                     response_buffer.write(response.file.data)
                 response_buffer.seek(0)
                 data_uri = create_data_uri(
-                    response_buffer.read(), str(self._input.mimetype), base64_encode=True, filename=full_file_path
+                    response_buffer.read(),
+                    str(self._input.output_mime_type),
+                    base64_encode=True,
+                    filename=full_file_path,
                 )
 
         elif operation == FileOperationOperation.CREATE:
             if input_content_bytes is None or input_content_mime_type is None:
                 raise ValueError("Content is missing or invalid")
-            if input_content_mime_type != self._input.mimetype:
+            if input_content_mime_type != self._input.output_mime_type:
                 raise ValueError("Source content mime type does not match provided mime type")
 
             data_uri = create_data_uri(

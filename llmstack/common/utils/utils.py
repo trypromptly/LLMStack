@@ -1,3 +1,4 @@
+import base64
 import copy
 import hashlib
 import logging
@@ -186,6 +187,22 @@ def extract_urls_from_sitemap(sitemap_xml: str) -> List[str]:
     """
     result = scrape_sitemap(sitemap_xml)
     return list(map(lambda entry: entry["url"], result))
+
+
+def create_data_uri(data, mime_type="text/plain", base64_encode=False, filename=None):
+    # Encode data in Base64 if requested
+    if base64_encode:
+        data = base64.b64encode(data).decode("utf-8")
+
+    # Build the Data URI
+    data_uri = f"data:{mime_type}"
+    if filename:
+        data_uri += f";name={filename}"
+    if base64_encode:
+        data_uri += ";base64"
+    data_uri += f",{data}"
+
+    return data_uri
 
 
 def validate_parse_data_uri(
