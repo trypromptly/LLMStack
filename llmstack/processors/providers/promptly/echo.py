@@ -2,6 +2,7 @@ import logging
 
 from asgiref.sync import async_to_sync
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -45,6 +46,12 @@ class EchoProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "promptly"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate | None:
+        return OutputTemplate(
+            markdown="{{output_str}}",
+        )
 
     def process(self) -> dict:
         output_stream = self._output_stream
