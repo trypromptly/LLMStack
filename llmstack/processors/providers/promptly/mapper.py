@@ -1,3 +1,4 @@
+import ast
 import base64
 import json
 import logging
@@ -63,7 +64,7 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
         )
 
         self._config = self._get_configuration_class()(**config)
-        self._input = self._get_input_class()(**{"input": input})
+        self._input = self._get_input_class()(**input)
         self._env = env
         self._id = id
         self._output_stream = output_stream
@@ -117,9 +118,9 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
                 if promptly_app_data and promptly_app_data.data.get("config", {}).get("allowed_as_processor"):
                     api_backends.append(
                         {
-                            "id": f"{cls.provider_slug()}_{cls.slug()}_{published_app_uuid}-map",
+                            "id": f"{cls.provider_slug()}/{cls.slug()}/map/{published_app_uuid}",
                             "name": f"{promptly_app_data.data.get('name')} (Map)",
-                            "slug": f"{cls.slug()}_{published_app_uuid}-map",
+                            "slug": f"{cls.slug()}/map/{published_app_uuid}",
                             "api_provider_slug": cls.provider_slug(),
                             "description": promptly_app_data.data.get("description"),
                             "input_schema": {
@@ -227,6 +228,11 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
 
     def process(self) -> dict:
         from llmstack.apps.apis import AppViewSet
+
+        _input_list = ast.literal_eval(self._input.input_list)
+
+        logger.info(f"Processing {self.name()}")
+        logger.info(f"Input: {_input_list}")
 
         app = App.objects.filter(published_uuid=self._config.app_published_uuid).first()
         app_data = AppData.objects.filter(app_uuid=app.uuid, version=self._config.app_version).first()
