@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import os
+import re
 import shutil
 import tempfile
 import uuid
@@ -23,6 +24,9 @@ from llmstack.processors.providers.api_processor_interface import (
 )
 
 logger = logging.getLogger(__name__)
+
+IMAGE_HTTP_URI_REGEX = re.compile(r"^https?://.*\.(png|jpg|jpeg|gif|svg|bmp|webp)$")
+IMAGE_DATA_URI_REGEX = re.compile(r"^data:image/(png|jpg|jpeg|gif|svg|bmp|webp);.*$")
 
 
 def _file_extension_from_mime_type(mime_type):
@@ -62,6 +66,7 @@ class FileMimeType(str, Enum):
     MARKDOWN = "text/markdown"
     PDF = "application/pdf"
     OCTET_STREAM = "application/octet-stream"
+    IMAGE = "image/*"
 
     def __str__(self):
         return self.value
@@ -85,7 +90,7 @@ class FileOperationsInput(ApiProcessorSchema):
         description="The contents of the file. Skip this field if you want to create an archive of the directory",
     )
     content_mime_type: Optional[FileMimeType] = Field(
-        default=FileMimeType.TEXT,
+        default=None,
         description="The mimetype of the content.",
     )
     content_objref: Optional[str] = Field(
@@ -259,9 +264,20 @@ class FileOperationsProcessor(
             if input_content_mime_type != self._input.output_mime_type:
                 raise ValueError("Source content mime type does not match provided mime type")
 
-            data_uri = create_data_uri(
-                input_content_bytes, input_content_mime_type, base64_encode=True, filename=full_file_path
-            )
+            if (
+                self._input.content
+                and self._input.output_mime_type == FileMimeType.IMAGE
+                and (IMAGE_HTTP_URI_REGEX.match(self._input.content) or IMAGE_DATA_URI_REGEX.match(self._input.content))
+            ):
+                objref = self._upload_asset_from_url(self._input.content)
+                async_to_sync(output_stream.write)(
+                    FileOperationsOutput(directory=directory, filename=filename, objref=objref)
+                )
+                data_uri = None
+            else:
+                data_uri = create_data_uri(
+                    input_content_bytes, input_content_mime_type, base64_encode=True, filename=full_file_path
+                )
         elif operation == FileOperationOperation.ARCHIVE:
             result = self._get_all_session_assets(include_name=True, include_data=True)
             if result and "assets" in result and len(result["assets"]):
