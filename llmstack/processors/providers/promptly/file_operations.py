@@ -261,8 +261,6 @@ class FileOperationsProcessor(
         elif operation == FileOperationOperation.CREATE:
             if input_content_bytes is None or input_content_mime_type is None:
                 raise ValueError("Content is missing or invalid")
-            if input_content_mime_type != self._input.output_mime_type:
-                raise ValueError("Source content mime type does not match provided mime type")
 
             if (
                 self._input.content
@@ -274,7 +272,11 @@ class FileOperationsProcessor(
                     FileOperationsOutput(directory=directory, filename=filename, objref=objref)
                 )
                 data_uri = None
+
             else:
+                if input_content_mime_type != self._input.output_mime_type:
+                    raise ValueError("Source content mime type does not match provided mime type")
+
                 data_uri = create_data_uri(
                     input_content_bytes, input_content_mime_type, base64_encode=True, filename=full_file_path
                 )
@@ -290,8 +292,6 @@ class FileOperationsProcessor(
             async_to_sync(output_stream.write)(
                 FileOperationsOutput(directory=directory, filename=filename, objref=asset)
             )
-        else:
-            raise ValueError("Failed to create data uri")
 
         # Finalize the output stream
         output = output_stream.finalize()
