@@ -290,7 +290,7 @@ class ApiBackendViewSet(viewsets.ViewSet):
             if subclass.provider_slug() not in providers_map:
                 continue
 
-            for entry in subclass.api_backends():
+            for entry in subclass.api_backends(context={"request_user": request.user}):
                 entry["api_provider"] = providers_map[entry["api_provider_slug"]]
                 processors.append(entry)
 
