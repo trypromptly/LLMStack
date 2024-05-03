@@ -27,12 +27,13 @@ logger = logging.getLogger(__name__)
 
 
 class MapProcessorInput(Schema):
+    input_list: str = Field(default="[]", description="Input list")
     input: Dict = Field(default={}, description="Input")
-    input_list: str = "[]"
 
 
 class MapProcessorOutput(Schema):
     output_list: List[Union[str, Dict]] = []
+    output_list_text: str = ""
 
 
 class MapProcessorConfiguration(PromptlyAppConfiguration):
@@ -132,6 +133,7 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
                                     "input_list": {
                                         "type": "string",
                                         "title": "Input list",
+                                        "default": "[]",
                                     },
                                     "input": get_json_schema_from_input_fields(
                                         name="MapProcessorInput",
@@ -211,13 +213,15 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
 
         return api_backends
 
-    async def process_response_stream(self, response_stream, output_template, write_cb=None, write_idx=None):
+    async def process_response_stream(self, response_stream, output_template):
+        buf = ""
         async for resp in response_stream:
             if resp.get("session") and resp.get("csp") and resp.get("template"):
                 self._store_run_session_id = resp["session"]
                 continue
             rendered_output = render_template(output_template, resp)
-            await write_cb(rendered_output, write_idx)
+            buf += rendered_output
+        return buf
 
     async def process_response_stream_as_buffer(self, response_stream, output_template):
         buf = ""
@@ -237,11 +241,7 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
         app = App.objects.filter(published_uuid=self._config.app_published_uuid).first()
         app_data = AppData.objects.filter(app_uuid=app.uuid, version=self._config.app_version).first()
         output_template = app_data.data.get("output_template", {}).get("markdown")
-
-        def _write_list_to_output_stream(response, idx):
-            list_buf = [""] * len(_input_list)
-            list_buf[idx] = response
-            return self._output_stream.write(MapProcessorOutput(output_list=list_buf))
+        output_response = [""] * len(_input_list)
 
         for idx in range(len(_input_list)):
             item = _input_list[idx]
@@ -260,12 +260,11 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
                 app_store_uuid=None,
             )
 
-            async_to_sync(self.process_response_stream)(
-                response_stream,
-                output_template=output_template,
-                write_cb=_write_list_to_output_stream,
-                write_idx=idx,
-            )
+            result = async_to_sync(self.process_response_stream)(response_stream, output_template=output_template)
+            output_response[idx] = result
 
+        async_to_sync(self._output_stream.write)(
+            MapProcessorOutput(output_list=output_response, output_list_text=json.dumps(output_response))
+        )
         output = self._output_stream.finalize()
         return output
