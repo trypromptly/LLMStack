@@ -37,7 +37,7 @@ app:
     markdown: |
       {{_inputs2.choices[0].content}}
 
-      ![Audio]({{_inputs3.audio_content}})
+      <pa-asset url="{{_inputs3.audio_content}}" controls type="audio/mpeg"></pa-media>
   processors:
     - id: "_inputs1"
       provider_slug: "promptly"
