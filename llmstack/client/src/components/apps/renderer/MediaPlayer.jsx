@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { Ws } from "../../../data/ws";
+import { getObjStreamWs } from "./utils";
 
 const StreamingAudioPlayer = forwardRef(({ src, autoPlay }, ref) => {
   return (
@@ -106,20 +106,13 @@ function MediaPlayer(props) {
       streaming &&
       isSourceBufferReady
     ) {
-      // Connect to a websocket to stream the media
-      const urlParts = src.replace("objref://", "").split("/");
-      const [category, assetId] = [urlParts[0], urlParts[1]];
+      const srcStream = getObjStreamWs(src);
 
-      const wsUrlPrefix = `${
-        window.location.protocol === "https:" ? "wss" : "ws"
-      }://${
-        process.env.NODE_ENV === "development"
-          ? process.env.REACT_APP_API_SERVER || "localhost:9000"
-          : window.location.host
-      }/ws/assets/${category}/${assetId}`;
-      const ws = new Ws(wsUrlPrefix, "blob");
+      if (!srcStream) {
+        return;
+      }
 
-      ws.setOnMessage(async (message) => {
+      srcStream.setOnMessage(async (message) => {
         // Get the blob data from the message and append to the media source buffer
         const blob = message.data;
         try {
@@ -132,7 +125,7 @@ function MediaPlayer(props) {
       });
 
       // Send a binary blob "read" to the server to start streaming
-      ws.send(new Blob(["read"], { type: "text/plain" }));
+      srcStream.send(new Blob(["read"], { type: "text/plain" }));
     }
   }, [streaming, src, mimeType, isSourceBufferReady]);
 
