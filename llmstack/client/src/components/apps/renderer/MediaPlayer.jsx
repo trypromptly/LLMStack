@@ -52,7 +52,12 @@ function MediaPlayer(props) {
         return;
       }
 
-      sourceBufferRef.current.appendBuffer(arrayBuffer);
+      if (arrayBuffer.byteLength === 0) {
+        // End of stream. Close the media source
+        mediaSource.current.endOfStream();
+      } else {
+        sourceBufferRef.current.appendBuffer(arrayBuffer);
+      }
     }
   };
 

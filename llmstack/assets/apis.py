@@ -232,3 +232,5 @@ class AssetStream:
                         return
                     yield message[b"chunk"]
                     message_index = id
+
+        yield b""
