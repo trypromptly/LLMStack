@@ -1,4 +1,3 @@
-import base64
 import logging
 import uuid
 from enum import Enum
@@ -7,6 +6,7 @@ from typing import Literal, Optional, Union
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -204,6 +204,12 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
     def provider_slug() -> str:
         return "promptly"
 
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate | None:
+        return OutputTemplate(
+            markdown="""{{text}}""",
+        )
+
     def session_data_to_persist(self) -> dict:
         return {"chat_history": self._chat_history}
 
@@ -249,7 +255,16 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             temperature=self._config.temperature,
         )
 
-        output_entries = []
+        # Stream output to asset_stream if objref is enabled
+        asset_stream = None
+        if self._config.objref:
+            asset_stream = self._create_asset_stream(mime_type="text/plain", file_name=str(uuid.uuid4()) + ".txt")
+            async_to_sync(output_stream.write)(
+                LLMProcessorOutput(
+                    objref=asset_stream.objref,
+                ),
+            )
+
         for entry in result:
             # Stream the output if objref is not enabled
             if not self._config.objref:
@@ -259,19 +274,15 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
                         text=entry.choices[0].delta.content_str,
                     ),
                 )
-            output_entries.append(entry.choices[0].delta.content_str)
+            elif asset_stream:
+                try:
+                    asset_stream.append_chunk(str.encode(entry.choices[0].delta.content_str))
+                except Exception as e:
+                    logger.error(f"Error streaming output: {e}")
+                    break
 
-        # Create data uri if objref is enabled and save the output
-        if self._config.objref and len(output_entries) > 0:
-            file_name = str(uuid.uuid4()) + ".txt"
-            data_uri = f"data:text/plain;name={file_name};base64,{base64.b64encode(''.join(output_entries).encode('utf-8')).decode('utf-8')}"
-            objref = self._upload_asset_from_url(asset=data_uri).objref
-
-            async_to_sync(output_stream.write)(
-                LLMProcessorOutput(
-                    objref=objref,
-                ),
-            )
+        if asset_stream:
+            asset_stream.finalize()
 
         output = output_stream.finalize()
 
