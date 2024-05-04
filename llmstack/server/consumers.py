@@ -91,7 +91,9 @@ def run_coro_in_new_loop(coro):
     loop = asyncio.new_event_loop()
     t = threading.Thread(target=start_loop, args=(loop,))
     t.start()
-    asyncio.run_coroutine_threadsafe(coro, loop)
+    coro_future = asyncio.run_coroutine_threadsafe(coro, loop)
+
+    coro_future.add_done_callback(lambda f: loop.stop())
 
 
 class AppConsumer(AsyncWebsocketConsumer):
