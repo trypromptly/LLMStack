@@ -209,8 +209,6 @@ class AssetStream:
 
             for _, messages in stream:
                 for id, message in messages:
-                    if message[b"chunk"] == b"":
-                        return self.finalize_streaming_asset()
                     file_bytes += message[b"chunk"]
                     message_index = id
 
@@ -228,8 +226,6 @@ class AssetStream:
 
             for _, messages in stream:
                 for id, message in messages:
-                    if message[b"chunk"] == b"":
-                        return
                     yield message[b"chunk"]
                     message_index = id
 
