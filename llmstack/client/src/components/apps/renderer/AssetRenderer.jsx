@@ -3,34 +3,10 @@ import { Box, IconButton } from "@mui/material";
 import { DownloadOutlined } from "@mui/icons-material";
 import { axios } from "../../../data/axios";
 import loadingImage from "../../../assets/images/loading.gif";
-import LayoutRenderer from "./LayoutRenderer";
 import MediaPlayer from "./MediaPlayer";
+import InlineMarkdownRenderer from "./InlineMarkdownRenderer";
 
 const MemoizedMediaPlayer = memo(MediaPlayer);
-
-const InlineMarkdownRenderer = (props) => {
-  const { url } = props;
-  const [data, setData] = useState(null);
-
-  useEffect(() => {
-    if (url) {
-      axios()
-        .get(url)
-        .then((response) => {
-          setData(response.data);
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    }
-  }, [url]);
-
-  if (!data) {
-    return <p>Loading...</p>;
-  }
-
-  return <LayoutRenderer>{data}</LayoutRenderer>;
-};
 
 const Image = (props) => {
   const { url, alt, noDownload, styleJson } = props;
@@ -118,8 +94,13 @@ export const AssetRenderer = (props) => {
     );
   }
 
-  if (type === "text/markdown" && file && file.url && props.inline) {
-    return <InlineMarkdownRenderer url={file.url} />;
+  if (type === "text/markdown") {
+    return (
+      <InlineMarkdownRenderer
+        src={file?.url}
+        streaming={file?.streaming || false}
+      />
+    );
   }
 
   if (type.startsWith("audio") || type.startsWith("video")) {
