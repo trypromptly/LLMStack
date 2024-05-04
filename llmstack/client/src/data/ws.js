@@ -50,7 +50,7 @@ export class Ws {
   }
 
   close() {
-    this.ws.close();
+    this.ws?.close();
   }
 
   setOnMessage(onMessage) {
