@@ -53,7 +53,7 @@ export function ThemedJsonEditor({ data }) {
 
 function Output(props) {
   const [value, setValue] = React.useState("form");
-  const [jsonOutput, setJsonOutput] = useState({});
+  const jsonOutput = useRef({});
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -76,13 +76,13 @@ function Output(props) {
             ws={props.ws}
             onEventDone={(message) => {
               if (message?.processor) {
-                setJsonOutput(message.processor);
+                jsonOutput.current = message.processor;
               }
             }}
           />
         </TabPanel>
         <TabPanel value="json" sx={{ padding: "4px" }}>
-          <ThemedJsonEditor data={jsonOutput} />
+          <ThemedJsonEditor data={jsonOutput.current} />
         </TabPanel>
       </TabContext>
     </Box>
@@ -95,10 +95,9 @@ export default function PlaygroundPage() {
   const messagesRef = useRef(new Messages());
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const setAppRunData = useSetRecoilState(appRunDataState);
-
   const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
   const paramValues = useRecoilValue(endpointConfigValueState);
-  const app = {
+  const [app, setApp] = useState({
     name: "Playground",
     uuid: null,
     data: {
@@ -110,7 +109,7 @@ export default function PlaygroundPage() {
         layout: defaultPlaygroundLayout,
       },
     },
-  };
+  });
 
   const [ws, setWs] = useState(null);
 
@@ -121,6 +120,24 @@ export default function PlaygroundPage() {
       ? process.env.REACT_APP_API_SERVER || "localhost:9000"
       : window.location.host
   }/ws`;
+
+  useEffect(() => {
+    if (apiBackendSelected) {
+      setApp((prevState) => ({
+        ...prevState,
+        data: {
+          ...prevState.data,
+          output_template: apiBackendSelected.output_template || {
+            markdown: "{{ processor | json }}",
+          },
+        },
+      }));
+
+      if (ws) {
+        ws.close();
+      }
+    }
+  }, [apiBackendSelected, ws]);
 
   useEffect(() => {
     if (!ws) {
