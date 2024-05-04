@@ -1,5 +1,3 @@
-import base64
-import io
 import logging
 from typing import Optional
 
@@ -96,7 +94,7 @@ class ElevenLabsTextToSpeechProcessor(
     @classmethod
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
-            markdown="""{{audio_content}}""",
+            markdown="""<pa-asset url="{{audio_content}}" controls type="audio/mpeg"></pa-media>""",
         )
 
     def process(self) -> dict:
@@ -122,22 +120,18 @@ class ElevenLabsTextToSpeechProcessor(
         )
         response.raise_for_status()
 
+        asset_stream = self._create_asset_stream(mime_type="audio/mpeg")
         async_to_sync(self._output_stream.write)(
-            TextToSpeechOutput(audio_content="data:audio/mp3;base64,"),
+            TextToSpeechOutput(audio_content=asset_stream.objref),
         )
 
-        output_data = io.BytesIO()
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
-                output_data.write(chunk)
+                if asset_stream and chunk:
+                    asset_stream.append_chunk(chunk)
 
-        async_to_sync(self._output_stream.write)(
-            TextToSpeechOutput(
-                audio_content=base64.b64encode(
-                    output_data.getvalue(),
-                ).decode("utf-8"),
-            ),
-        )
+        if asset_stream:
+            asset_stream.finalize()
 
         output = self._output_stream.finalize()
         return output
