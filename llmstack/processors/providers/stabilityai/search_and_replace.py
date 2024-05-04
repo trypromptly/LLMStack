@@ -144,9 +144,9 @@ class SearchAndReplaceProcessor(
         )
         image = result.data[0]
         data_uri = image.data_uri(include_name=True)
-        object_ref = self._upload_asset_from_url(asset=data_uri)
+        objref = self._upload_asset_from_url(asset=data_uri).objref
         async_to_sync(self._output_stream.write)(
-            SearchAndReplaceProcessorOutput(image=object_ref),
+            SearchAndReplaceProcessorOutput(image=objref),
         )
         output = self._output_stream.finalize()
         return output

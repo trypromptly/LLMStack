@@ -19,6 +19,10 @@ class Assets(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def category(self):
+        raise NotImplementedError
+
     @classmethod
     def create_from_bytes(cls, file_bytes, filename, metadata=None, ref_id=""):
         from django.core.files.base import ContentFile
@@ -59,6 +63,39 @@ class Assets(models.Model):
         return cls.create_from_bytes(
             response.content, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name}, ref_id=ref_id
         )
+
+    @classmethod
+    def create_streaming_asset(cls, metadata, ref_id):
+        asset = cls(ref_id=ref_id)
+        asset.metadata = metadata or {}
+        asset.metadata["streaming"] = True
+        asset.save()
+        return asset
+
+    @property
+    def objref(self) -> str:
+        return f"objref://{self.category}/{self.uuid}"
+
+    def finalize_streaming_asset(self, file_bytes):
+        from django.core.files.base import ContentFile
+
+        file_name = self.metadata.get("file_name", str(uuid.uuid4()))
+
+        # If the filename doesn't have an extension, add one based on the mime_type
+        if "." not in file_name:
+            # Get the extension from the mime type
+            mime_type = self.metadata.get("mime_type", "application/octet-stream")
+            extension = mime_type.split("/")[-1]
+
+            # Add the extension to the filename
+            file_name = f"{file_name}.{extension}"
+
+        self.file.save(file_name, ContentFile(file_bytes))
+        bytes_size = len(file_bytes)
+        self.metadata = {**self.metadata, "file_size": bytes_size}
+        self.metadata["streaming"] = False
+        self.save()
+        return self
 
     @classmethod
     def is_accessible(asset, request_user, request_session):

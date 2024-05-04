@@ -269,10 +269,10 @@ class FileOperationsProcessor(
                 data_uri = zipped_assets
 
         if data_uri:
-            asset = self._upload_asset_from_url(asset=data_uri)
+            objref = self._upload_asset_from_url(asset=data_uri).objref
 
             async_to_sync(output_stream.write)(
-                FileOperationsOutput(directory=directory, filename=filename, objref=asset)
+                FileOperationsOutput(directory=directory, filename=filename, objref=objref)
             )
         else:
             raise ValueError("Failed to create data uri")

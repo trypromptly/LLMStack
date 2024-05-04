@@ -239,3 +239,7 @@ class DataSourceEntryFiles(Assets):
         null=True,
         blank=True,
     )
+
+    @property
+    def category(self):
+        return "datasource_entries"

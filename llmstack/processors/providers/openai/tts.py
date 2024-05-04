@@ -1,4 +1,3 @@
-import base64
 import logging
 from enum import Enum
 from typing import Literal
@@ -95,31 +94,37 @@ class TextToSpeechProcessor(
     @classmethod
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
-            markdown="""![Audio]({{result}})""",
+            markdown="""<pa-asset url="{{result}}" controls type="audio/mpeg"></pa-media>""",
         )
 
     def process(self) -> dict:
         output_stream = self._output_stream
         openai_client = OpenAI(api_key=self._env["openai_api_key"])
 
-        response = openai_client.audio.speech.create(
+        output = None
+
+        with openai_client.with_streaming_response.audio.speech.create(
             input=self._input.input_text,
             model=self._config.model,
             voice=self._config.voice,
             response_format=self._config.response_format,
             speed=self._config.speed,
-        )
-
-        for audio_bytes in response.iter_bytes():
-            base64_audio = base64.b64encode(audio_bytes).decode("utf-8")
-            data_uri = f"data:audio/{self._config.response_format};name=sample.{self._config.response_format};base64,{base64_audio}"
+        ) as response:
+            asset_stream = self._create_asset_stream(mime_type=f"audio/{self._config.response_format}")
             async_to_sync(
                 output_stream.write,
             )(
                 TextToSpeechOutput(
-                    result=data_uri,
+                    result=asset_stream.objref,
                 ),
             )
 
-        output = self._output_stream.finalize()
+            for audio_bytes in response.iter_bytes():
+                if asset_stream and audio_bytes:
+                    asset_stream.append_chunk(audio_bytes)
+
+            if asset_stream:
+                asset_stream.finalize()
+
+            output = self._output_stream.finalize()
         return output

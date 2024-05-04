@@ -265,11 +265,11 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
         if self._config.objref and len(output_entries) > 0:
             file_name = str(uuid.uuid4()) + ".txt"
             data_uri = f"data:text/plain;name={file_name};base64,{base64.b64encode(''.join(output_entries).encode('utf-8')).decode('utf-8')}"
-            asset = self._upload_asset_from_url(asset=data_uri)
+            objref = self._upload_asset_from_url(asset=data_uri).objref
 
             async_to_sync(output_stream.write)(
                 LLMProcessorOutput(
-                    objref=asset,
+                    objref=objref,
                 ),
             )
 

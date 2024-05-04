@@ -9,6 +9,7 @@ from django.urls import path
 
 from llmstack.server.consumers import (
     AppConsumer,
+    AssetStreamConsumer,
     ConnectionConsumer,
     PlaygroundConsumer,
 )
@@ -29,6 +30,7 @@ application = ProtocolTypeRouter(
                 [
                     path("ws/apps/<str:app_id>", AppConsumer.as_asgi()),
                     path("ws/apps/<str:app_id>/<str:preview>", AppConsumer.as_asgi()),
+                    path("ws/assets/<str:category>/<str:uuid>", AssetStreamConsumer.as_asgi()),
                     path(
                         "ws/connections/<str:conn_id>/activate",
                         ConnectionConsumer.as_asgi(),

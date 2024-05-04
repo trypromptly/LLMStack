@@ -2,6 +2,7 @@ import asyncio
 import importlib
 import json
 import logging
+import threading
 import uuid
 
 from channels.db import database_sync_to_async
@@ -12,6 +13,7 @@ from django.http import HttpRequest, QueryDict
 from django_ratelimit.exceptions import Ratelimited
 from flags.state import flag_enabled
 
+from llmstack.assets.utils import get_asset_by_objref
 from llmstack.connections.actors import ConnectionActivationActor
 from llmstack.connections.models import (
     Connection,
@@ -79,6 +81,17 @@ def _build_request_from_input(post_data, scope):
     http_request.data = post_data
 
     return http_request
+
+
+def run_coro_in_new_loop(coro):
+    def start_loop(loop):
+        asyncio.set_event_loop(loop)
+        loop.run_forever()
+
+    loop = asyncio.new_event_loop()
+    t = threading.Thread(target=start_loop, args=(loop,))
+    t.start()
+    asyncio.run_coroutine_threadsafe(coro, loop)
 
 
 class AppConsumer(AsyncWebsocketConsumer):
@@ -166,10 +179,45 @@ class AppConsumer(AsyncWebsocketConsumer):
                 self._coordinator_ref.stop()
 
     async def receive(self, text_data):
-        loop = asyncio.get_running_loop()
-        loop.create_task(
-            self._respond_to_event(text_data),
-        )
+        run_coro_in_new_loop(self._respond_to_event(text_data))
+
+
+class AssetStreamConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self._category = self.scope["url_route"]["kwargs"]["category"]
+        self._uuid = self.scope["url_route"]["kwargs"]["uuid"]
+        self._session = self.scope["session"]
+        self._request_user = self.scope["user"]
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        pass
+
+    async def _respond_to_event(self, bytes_data):
+        from llmstack.assets.apis import AssetStream
+
+        if bytes_data:
+            # Using b"\n" as delimiter
+            chunks = bytes_data.split(b"\n")
+            event = chunks[0]
+
+            if event == b"read":
+                asset = await database_sync_to_async(get_asset_by_objref)(
+                    f"objref://{self._category}/{self._uuid}", self._request_user, self._session
+                )
+                if not asset:
+                    # Close the connection
+                    await self.close(code=1008)
+                    return
+
+                asset_stream = AssetStream(asset)
+                for chunk in asset_stream.get_stream():
+                    await self.send(bytes_data=chunk)
+
+                await self.close()
+
+    async def receive(self, text_data=None, bytes_data=None):
+        run_coro_in_new_loop(self._respond_to_event(bytes_data))
 
 
 class ConnectionConsumer(AsyncWebsocketConsumer):

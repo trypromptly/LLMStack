@@ -147,7 +147,7 @@ class ImagesGenerations(
         # Convert images to objrefs
         for image in result.data:
             if image.url:
-                image.url = self._upload_asset_from_url(asset=image.url)
+                image.url = self._upload_asset_from_url(asset=image.url).objref
 
         async_to_sync(self._output_stream.write)(
             ImagesGenerationsOutput(

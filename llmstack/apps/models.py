@@ -553,6 +553,10 @@ class AppDataAssets(Assets):
         blank=True,
     )
 
+    @property
+    def category(self):
+        return "appdata"
+
     def is_accessible(asset, request_user, request_session):
         app = App.objects.get(published_uuid=asset.ref_id)
         return app and (
@@ -657,6 +661,10 @@ class AppSessionFiles(Assets):
         null=True,
         blank=True,
     )
+
+    @property
+    def category(self):
+        return "sessionfiles"
 
     def is_accessible(asset, request_user, request_session):
         username = (

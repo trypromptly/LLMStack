@@ -292,6 +292,14 @@ CACHES = {
         "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/3",
         "TIMEOUT": 3600,
     },
+    "objref_stream": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/4",
+        "TIMEOUT": 3600,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    },
 }
 
 APP_SESSION_TIMEOUT = int(os.getenv("APP_SESSION_TIMEOUT", 3600))

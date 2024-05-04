@@ -120,7 +120,7 @@ class ApiProcessorInterface(
         return None
 
     # Upload the asset to the session
-    def _upload_asset_from_url(self, asset):
+    def _upload_asset_from_url(self, asset=None, file_name=None, mime_type=None):
         from llmstack.apps.models import AppSessionFiles
 
         try:
@@ -128,7 +128,19 @@ class ApiProcessorInterface(
                 "app_uuid": self._metadata.get("app_uuid", ""),
                 "username": self._metadata.get("username", ""),
             }
-            if asset.startswith("data:"):
+
+            if file_name:
+                asset_metadata["file_name"] = file_name
+
+            if mime_type:
+                asset_metadata["mime_type"] = mime_type
+
+            if not asset:
+                # Defaults to streaming asset if no asset is provided
+                asset = AppSessionFiles.create_streaming_asset(
+                    metadata=asset_metadata, ref_id=self._metadata.get("session_id", "")
+                )
+            elif asset.startswith("data:"):
                 asset = AppSessionFiles.create_from_data_uri(
                     asset, metadata=asset_metadata, ref_id=self._metadata.get("session_id", "")
                 )
@@ -143,7 +155,20 @@ class ApiProcessorInterface(
 
         db.connection.close()
 
-        return f"objref://sessionfiles/{asset.uuid}"
+        return asset
+
+    def _create_asset_stream(self, mime_type, file_name=None):
+        """
+        Creates an asset stream that can processor can append binary data to. Once the stream is closed, the asset
+        will be saved to the storage and the asset will be available for download.
+        """
+        from llmstack.assets.apis import AssetStream
+
+        asset = self._upload_asset_from_url(mime_type=mime_type, file_name=file_name)
+
+        if asset:
+            return AssetStream(asset)
+        return None
 
     def __init__(
         self,

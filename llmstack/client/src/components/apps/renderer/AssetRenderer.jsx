@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Box, IconButton } from "@mui/material";
 import { DownloadOutlined } from "@mui/icons-material";
 import { axios } from "../../../data/axios";
 import loadingImage from "../../../assets/images/loading.gif";
 import LayoutRenderer from "./LayoutRenderer";
+import MediaPlayer from "./MediaPlayer";
+
+const MemoizedMediaPlayer = memo(MediaPlayer);
 
 const InlineMarkdownRenderer = (props) => {
   const { url } = props;
@@ -117,6 +120,18 @@ export const AssetRenderer = (props) => {
 
   if (type === "text/markdown" && file && file.url && props.inline) {
     return <InlineMarkdownRenderer url={file.url} />;
+  }
+
+  if (type.startsWith("audio") || type.startsWith("video")) {
+    return (
+      <MemoizedMediaPlayer
+        controls
+        src={file?.url}
+        streaming={file?.streaming || false}
+        autoPlay
+        mimeType={type}
+      />
+    );
   }
 
   return <p>AssetRenderer</p>;

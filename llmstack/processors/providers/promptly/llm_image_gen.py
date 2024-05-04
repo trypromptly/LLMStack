@@ -163,9 +163,9 @@ class LLMImageGeneratorProcessor(
         )
         image = result.data[0]
         data_uri = image.data_uri(include_name=True)
-        object_ref = self._upload_asset_from_url(asset=data_uri)
+        objref = self._upload_asset_from_url(asset=data_uri).objref
         async_to_sync(output_stream.write)(
-            LLMImageGeneratorProcessorOutput(output_str=object_ref),
+            LLMImageGeneratorProcessorOutput(output_str=objref),
         )
 
         output = output_stream.finalize()
