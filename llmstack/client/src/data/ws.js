@@ -1,9 +1,10 @@
 // A simple wrapper over websockets
 
 export class Ws {
-  constructor(url) {
+  constructor(url, binaryType = null) {
     this.url = url;
     this.ws = null;
+    this.binaryType = binaryType;
     this.onMessage = null;
     this.queue = []; // Queue to hold until messages are ready
   }
@@ -14,6 +15,11 @@ export class Ws {
 
   connect() {
     this.ws = new WebSocket(this.url);
+
+    if (this.binaryType) {
+      this.ws.binaryType = this.binaryType;
+    }
+
     this.ws.onmessage = this.onMessage;
     this.ws.onopen = () => {
       // Send all the queued messages
@@ -21,9 +27,11 @@ export class Ws {
         this.ws.send(msg);
       });
       this.queue = [];
+
+      console.log(`Websocket connected: ${this.url}`);
     };
     this.ws.onclose = () => {
-      console.log("Websocket closed");
+      console.log(`Websocket closed: ${this.url}`);
     };
   }
 
