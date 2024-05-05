@@ -2,7 +2,7 @@ import ast
 import json
 import logging
 import uuid
-from typing import List
+from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
@@ -30,7 +30,12 @@ class MapProcessorOutput(Schema):
 
 
 class MapProcessorConfiguration(PromptlyApp):
-    pass
+    objref: Optional[bool] = Field(
+        default=False,
+        title="Output as Object Reference",
+        description="Return output as object reference instead of raw text.",
+        advanced_parameter=True,
+    )
 
 
 class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, MapProcessorConfiguration]):
