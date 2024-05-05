@@ -1,42 +1,43 @@
-import json
+import ast
 import logging
+import re
+import uuid
 from functools import reduce
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Optional
 
-import jinja2
 from asgiref.sync import async_to_sync
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from llmstack.common.blocks.base.schema import BaseSchema as Schema
+from llmstack.common.utils.liquid import render_template
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
-    ApiProcessorSchema,
+    hydrate_input,
 )
+from llmstack.processors.providers.promptly.promptly_app import PromptlyApp
 
 logger = logging.getLogger(__name__)
 
-
-class PythonLambdaFn(BaseModel):
-    mapper_type: Literal["python_lambda"] = "python_lambda"
-    lambda_expr: str = Field(default="lambda x, y: x + ', ' + y")
+reducer_template_acc_var_regex = re.compile(r"\{\{\s*?_reduce_acc\s*?\s*?\}\}")
+reducer_template_item_var_regex = re.compile(r"\{\{\s*?_reduce_item\s*?\s*?\}\}")
 
 
-class JinjaReducerFilter(BaseModel):
-    mapper_type: Literal["jinja"] = "jinja"
-    jinja_expression: str = Field(default="join(', ')")
+class ReduceProcessorInput(Schema):
+    input_list: str = Field(default="[]", description="Input list")
 
 
-class ReduceProcessorInput(ApiProcessorSchema):
-    input_list: List[str] = []
-    input: Optional[str] = None
+class ReduceProcessorOutput(Schema):
+    output: str
+    objref: Optional[str] = None
 
 
-class ReduceProcessorOutput(ApiProcessorSchema):
-    output: Any
-    output_str: str = ""
-
-
-class ReduceProcessorConfiguration(ApiProcessorSchema):
-    reducer: Union[JinjaReducerFilter, PythonLambdaFn] = Field(discriminator="mapper_type")
+class ReduceProcessorConfiguration(PromptlyApp):
+    objref: Optional[bool] = Field(
+        default=False,
+        title="Output as Object Reference",
+        description="Return output as object reference instead of raw text.",
+        advanced_parameter=True,
+    )
 
 
 class ReduceProcessor(
@@ -62,33 +63,55 @@ class ReduceProcessor(
     def provider_slug() -> str:
         return "promptly"
 
+    async def process_response_stream(self, response_stream, output_template):
+        buf = ""
+        async for resp in response_stream:
+            if resp.get("session") and resp.get("csp") and resp.get("template"):
+                self._store_run_session_id = resp["session"]
+                continue
+            rendered_output = render_template(output_template, resp)
+            buf += rendered_output
+        return buf
+
+    def input(self, message: Any) -> Any:
+        self._reducer_dict = {}
+        config_input = self._config.input
+
+        for key, value in config_input.items():
+            if isinstance(value, str) and (
+                reducer_template_acc_var_regex.match(value) or reducer_template_item_var_regex.match(value)
+            ):
+                self._reducer_dict[key] = value
+        return super().input(message)
+
     def process(self) -> dict:
-        output_stream = self._output_stream
+        from llmstack.apps.apis import AppViewSet
+        from llmstack.apps.models import AppData
 
-        reducer = self._config.reducer
-        input_list = []
-        if self._input.input_list:
-            input_list = self._input.input_list
-        elif self._input.input:
-            input_list = eval(self._input.input)
+        _input_list = ast.literal_eval(self._input.input_list)
 
-        if isinstance(reducer, PythonLambdaFn):
-            output = None
-            lambda_expr = reducer.lambda_expr
-            if not lambda_expr.startswith("lambda"):
-                raise ValueError("Invalid lambda expression")
+        app_data = AppData.objects.filter(
+            app_uuid=self._config._promptly_app_uuid, version=self._config._promptly_app_version
+        ).first()
+        output_template = app_data.data.get("output_template").get("markdown")
 
-            reducer_fn = eval(reducer.lambda_expr)
-            output = reduce(reducer_fn, input_list) if input_list else ""
+        def reduce_fn(acc, item):
+            app_input = {**self._config.input, **self._reducer_dict}
+            hydrated_input = hydrate_input(app_input, {"_reduce_acc": acc, "_reduce_item": item})
+            self._request.data["input"] = hydrated_input
+            response_stream, _ = AppViewSet().run_app_internal(
+                self._config._promptly_app_uuid,
+                self._metadata.get("session_id"),
+                str(uuid.uuid4()),
+                self._request,
+                platform="promptly",
+                preview=False,
+                app_store_uuid=None,
+            )
+            result = async_to_sync(self.process_response_stream)(response_stream, output_template=output_template)
+            return result
 
-        elif isinstance(reducer, JinjaReducerFilter):
-            output = None
-            env = jinja2.Environment()
-            template_str = "{{ input_list | " + reducer.jinja_expression + " }}"
-            template = env.from_string(template_str)
-            output = template.render(input_list=input_list)
-
-        async_to_sync(output_stream.write)(ReduceProcessorOutput(output=output, output_str=json.dumps(output)))
-
-        output = output_stream.finalize()
+        reduced_result = reduce(reduce_fn, _input_list)
+        async_to_sync(self._output_stream.write)(ReduceProcessorOutput(output=reduced_result))
+        output = self._output_stream.finalize()
         return output
