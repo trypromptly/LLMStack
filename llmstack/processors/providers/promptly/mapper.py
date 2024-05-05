@@ -1,8 +1,9 @@
 import ast
 import json
 import logging
+import re
 import uuid
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
@@ -17,6 +18,8 @@ from llmstack.processors.providers.api_processor_interface import (
 from llmstack.processors.providers.promptly.promptly_app import PromptlyApp
 
 logger = logging.getLogger(__name__)
+
+mapper_template_item_var_regex = re.compile(r"\{\{\s*?_map_item\s*?\s*?\}\}")
 
 
 class MapProcessorInput(Schema):
@@ -94,6 +97,15 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
             buf += rendered_output
         return buf
 
+    def input(self, message: Any) -> Any:
+        self._mapper_dict = {}
+        config_input = self._config.input
+
+        for key, value in config_input.items():
+            if isinstance(value, str) and mapper_template_item_var_regex.match(value):
+                self._mapper_dict[key] = value
+        return super().input(message)
+
     def process(self) -> dict:
         from llmstack.apps.apis import AppViewSet
         from llmstack.apps.models import AppData
@@ -108,9 +120,8 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
 
         for idx in range(len(_input_list)):
             item = _input_list[idx]
-
-            hydrated_input = hydrate_input(self._config.input, {"_map_item": item})
-
+            app_input = {**self._config.input, **self._mapper_dict}
+            hydrated_input = hydrate_input(app_input, {"_map_item": item})
             self._request.data["input"] = hydrated_input
 
             response_stream, _ = AppViewSet().run_app_internal(
