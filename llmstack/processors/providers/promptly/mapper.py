@@ -1,4 +1,5 @@
 import ast
+import base64
 import json
 import logging
 import re
@@ -87,16 +88,6 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
             buf += rendered_output
         return buf
 
-    async def process_response_stream_as_buffer(self, response_stream, output_template):
-        buf = ""
-        async for resp in response_stream:
-            if resp.get("session") and resp.get("csp") and resp.get("template"):
-                self._store_run_session_id = resp["session"]
-                continue
-            rendered_output = render_template(output_template, resp)
-            buf += rendered_output
-        return buf
-
     def input(self, message: Any) -> Any:
         self._mapper_dict = {}
         config_input = self._config.input
@@ -137,8 +128,18 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
             result = async_to_sync(self.process_response_stream)(response_stream, output_template=output_template)
             output_response[idx] = result
 
-        async_to_sync(self._output_stream.write)(
-            MapProcessorOutput(outputs=output_response, outputs_text=json.dumps(output_response))
-        )
+        if self._config.objref:
+            objrefs = []
+            for result_text in output_response:
+                file_name = str(uuid.uuid4()) + ".txt"
+                data_uri = f"data:text/plain;name={file_name};base64,{base64.b64encode(result_text.encode('utf-8')).decode('utf-8')}"
+                objrefs.append(self._upload_asset_from_url(asset=data_uri))
+            async_to_sync(self._output_stream.write)(
+                MapProcessorOutput(objrefs=objrefs, outputs_text=json.dumps(output_response))
+            )
+        else:
+            async_to_sync(self._output_stream.write)(
+                MapProcessorOutput(outputs=output_response, outputs_text=json.dumps(output_response))
+            )
         output = self._output_stream.finalize()
         return output

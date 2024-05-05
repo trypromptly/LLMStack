@@ -1,4 +1,5 @@
 import ast
+import base64
 import logging
 import re
 import uuid
@@ -112,6 +113,12 @@ class ReduceProcessor(
             return result
 
         reduced_result = reduce(reduce_fn, _input_list)
-        async_to_sync(self._output_stream.write)(ReduceProcessorOutput(output=reduced_result))
+        if self._config.objref:
+            file_name = str(uuid.uuid4()) + ".txt"
+            data_uri = f"data:text/plain;name={file_name};base64,{base64.b64encode(reduced_result.encode('utf-8')).decode('utf-8')}"
+            asset = self._upload_asset_from_url(asset=data_uri)
+            async_to_sync(self._output_stream.write)(ReduceProcessorOutput(objref=asset))
+        else:
+            async_to_sync(self._output_stream.write)(ReduceProcessorOutput(output=reduced_result))
         output = self._output_stream.finalize()
         return output
