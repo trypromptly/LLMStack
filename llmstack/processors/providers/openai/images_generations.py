@@ -122,8 +122,8 @@ class ImagesGenerations(
     @classmethod
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
-            markdown="""{% for image in answer %}
-![Generated Image]({{image}})
+            markdown="""{% for image in data %}
+<pa-asset url="{{image}}" type="image/png"></pa-asset>
 {% endfor %}""",
         )
 
