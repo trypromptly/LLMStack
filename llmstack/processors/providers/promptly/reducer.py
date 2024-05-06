@@ -11,6 +11,7 @@ from pydantic import Field
 
 from llmstack.common.blocks.base.schema import BaseSchema as Schema
 from llmstack.common.utils.liquid import render_template
+from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     hydrate_input,
@@ -63,6 +64,30 @@ class ReduceProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "promptly"
+
+    @classmethod
+    def get_tool_input_schema(cls, processor_data) -> dict:
+        tool_input_schema = {"type": "object", "properties": {}}
+        tool_input_schema["properties"]["input_list"] = {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "A list of input message strings to reduce",
+        }
+        return tool_input_schema
+
+    def tool_invoke_input(self, tool_args: dict):
+        return ReduceProcessorOutput(input_list=tool_args["input_list"])
+
+    def invoke(self, message: ToolInvokeInput) -> Any:
+        self._reducer_dict = {}
+        config_input = self._config.input
+
+        for key, value in config_input.items():
+            if isinstance(value, str) and (
+                reducer_template_acc_var_regex.match(value) or reducer_template_item_var_regex.match(value)
+            ):
+                self._reducer_dict[key] = value
+        super().invoke(message)
 
     async def process_response_stream(self, response_stream, output_template):
         buf = ""
