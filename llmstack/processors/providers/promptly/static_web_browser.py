@@ -1,4 +1,5 @@
 import logging
+import uuid
 from typing import List, Optional
 
 import grpc
@@ -79,7 +80,7 @@ class StaticWebBrowser(
         return OutputTemplate(
             markdown="""
 <promptly-web-browser-embed wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
-
+<pa-asset url="{{content.screenshot}}" type="image/png"></pa-asset>
 {{text}}
 """,
         )
@@ -184,6 +185,14 @@ class StaticWebBrowser(
 
         except Exception as e:
             logger.exception(e)
+
+        # If browser_response contains screenshot, convert it to objref
+        if "screenshot" in browser_response:
+            screenshot_asset = self._upload_asset_from_url(
+                f"data:image/png;name={str(uuid.uuid4())};base64,{browser_response['screenshot']}",
+                mime_type="image/png",
+            )
+            browser_response["screenshot"] = screenshot_asset.objref
 
         async_to_sync(output_stream.write)(
             WebBrowserOutput(
