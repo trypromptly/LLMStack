@@ -199,9 +199,13 @@ class AssetStreamConsumer(AsyncWebsocketConsumer):
                     await self.close(code=1008)
                     return
 
-                asset_stream = AssetStream(asset)
-                for chunk in asset_stream.get_stream():
-                    await self.send(bytes_data=chunk)
+                try:
+                    asset_stream = AssetStream(asset)
+                    for chunk in asset_stream.get_stream():
+                        await self.send(bytes_data=chunk)
+                except Exception as e:
+                    logger.exception(e)
+                    await self.send(bytes_data=b"")
 
                 await self.close()
 
