@@ -15,7 +15,7 @@ def get_asset_by_objref(objref, request_user, request_session):
     asset = None
 
     try:
-        category, uuid = objref.split("//")[1].split("/")
+        category, uuid = objref.strip().split("//")[1].split("/")
         model_cls = None
 
         if category == "sessionfiles":
