@@ -1,3 +1,4 @@
+import base64
 import io
 import json
 import logging
@@ -184,11 +185,8 @@ class SplitterProcessor(
         partitions = partition(content_type=input_content_mime_type, file=file, file_filename=input_filename)
 
         if self._config.merge_strategy:
-            logger.info(f"Merge strategy: {self._config.merge_strategy}")
-            logger.info(f"Type: {type(self._config.merge_strategy)}")
             # Merge the partitions based on the merge strategy
             if isinstance(self._config.merge_strategy, BasicStartegy):
-                logger.info("Basic strategy")
                 from unstructured.chunking.basic import chunk_elements
 
                 partitions = chunk_elements(
@@ -199,7 +197,6 @@ class SplitterProcessor(
                     overlap_all=self._config.merge_strategy.overlap_all,
                 )
             elif isinstance(self._config.merge_strategy, ByTitleStartegy):
-                logger.info("By Title strategy")
                 from unstructured.chunking.title import chunk_by_title
 
                 partitions = chunk_by_title(
@@ -211,6 +208,17 @@ class SplitterProcessor(
                 )
         chunks = list(map(lambda x: x.text, partitions))
 
-        async_to_sync(output_stream.write)(SplitterProcessorOutput(outputs=chunks, outputs_text=json.dumps(chunks)))
+        if self._config.objref:
+            objrefs = []
+            for result_text in chunks:
+                file_name = str(uuid.uuid4()) + ".txt"
+                data_uri = f"data:text/plain;name={file_name};base64,{base64.b64encode(result_text.encode('utf-8')).decode('utf-8')}"
+                objrefs.append(self._upload_asset_from_url(asset=data_uri))
+            async_to_sync(output_stream.write)(
+                SplitterProcessorOutput(objrefs=objrefs, outputs_text=json.dumps(chunks))
+            )
+        else:
+            async_to_sync(output_stream.write)(SplitterProcessorOutput(outputs=chunks, outputs_text=json.dumps(chunks)))
+
         output = output_stream.finalize()
         return output
