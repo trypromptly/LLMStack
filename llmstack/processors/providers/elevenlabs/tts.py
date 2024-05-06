@@ -1,15 +1,23 @@
+import asyncio
+import base64
+import json
 import logging
-from typing import Optional
+import uuid
+from typing import Any, Optional
 
 import requests
-from asgiref.sync import async_to_sync
+import websockets
+from asgiref.sync import async_to_sync, sync_to_async
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.assets.apis import AssetStream
+from llmstack.play.utils import run_coro_in_new_loop
 from llmstack.processors.providers.api_processor_interface import (
     AUDIO_WIDGET_NAME,
     ApiProcessorInterface,
     ApiProcessorSchema,
+    hydrate_input,
 )
 
 logger = logging.getLogger(__name__)
@@ -72,6 +80,50 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
     )
 
 
+async def convert_text_to_speech(ws_uri, voice_settings, api_key, input_asset_stream, output_asset_stream):
+    """
+    Convert text to speech using Eleven Labs websocket API
+    """
+    async with websockets.connect(ws_uri) as websocket:
+        await websocket.send(
+            json.dumps(
+                {
+                    "text": " ",
+                    "voice_settings": voice_settings.dict(),
+                    "xi_api_key": api_key,
+                }
+            )
+        )
+
+        async def receive_audio():
+            while True:
+                try:
+                    message = await websocket.recv()
+                    data = json.loads(message)
+                    if data.get("audio"):
+                        chunk = base64.b64decode(data["audio"])
+                        output_asset_stream.append_chunk(chunk)
+                    elif data.get("isFinal"):
+                        break
+                except websockets.exceptions.ConnectionClosed as e:
+                    logger.error(f"Connection closed: {e}")
+                    break
+
+        # Start listening for audio data
+        listen_task = asyncio.create_task(receive_audio())
+
+        for chunk in input_asset_stream.get_stream():
+            if chunk:
+                await websocket.send(json.dumps({"text": chunk.decode("utf-8")}))
+            await asyncio.sleep(0.01)
+
+        await websocket.send(json.dumps({"text": ""}))
+
+        await listen_task
+
+        await sync_to_async(output_asset_stream.finalize)()
+
+
 class ElevenLabsTextToSpeechProcessor(
     ApiProcessorInterface[TextToSpeechInput, TextToSpeechOutput, TextToSpeechConfiguration],
 ):
@@ -97,7 +149,46 @@ class ElevenLabsTextToSpeechProcessor(
             markdown="""<pa-asset url="{{audio_content}}" controls type="audio/mpeg"></pa-media>""",
         )
 
+    def input_stream(self, message: Any):
+        # We only support streaming objref for now for input
+        input_data = (
+            hydrate_input(
+                self._input,
+                message,
+            )
+            if message
+            else self._input
+        )
+
+        if not input_data.input_text or not input_data.input_text.startswith("objref://"):
+            return
+
+        asset = self._get_session_asset_instance(input_data.input_text)
+        if not asset:
+            return
+
+        input_asset_stream = AssetStream(asset)
+        output_asset_stream = self._create_asset_stream(mime_type="audio/mpeg", file_name=f"{str(uuid.uuid4())}.mp3")
+
+        async_to_sync(self._output_stream.write)(
+            TextToSpeechOutput(audio_content=output_asset_stream.objref),
+        )
+
+        run_coro_in_new_loop(
+            convert_text_to_speech(
+                f"wss://api.elevenlabs.io/v1/text-to-speech/{self._config.voice_id}/stream-input?model_id={self._config.model_id}",
+                self._config.voice_settings,
+                self._env.get("elevenlabs_api_key", None),
+                input_asset_stream,
+                output_asset_stream,
+            )
+        )
+
     def process(self) -> dict:
+        # If we have already processed the input stream, return the output
+        if self._output_stream.get_data() and self._output_stream.get_data().get("audio_content"):
+            return self._output_stream.finalize()
+
         api_url = f"https://api.elevenlabs.io/v1/text-to-speech/{self._config.voice_id}/stream"
 
         headers = {
