@@ -7,6 +7,7 @@ from django import db
 from pydantic import AnyUrl, BaseModel
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.assets.utils import get_asset_by_objref
 from llmstack.common.blocks.base.processor import (
     BaseConfigurationType,
     BaseInputType,
@@ -91,6 +92,9 @@ class ApiProcessorInterface(
             return response.data
 
         return None
+
+    def _get_session_asset_instance(self, objref):
+        return get_asset_by_objref(objref, self._request.user, self._request.session)
 
     # Convert objref to data URI if it exists
     def _get_session_asset_data_uri(self, objref, include_name=True):
