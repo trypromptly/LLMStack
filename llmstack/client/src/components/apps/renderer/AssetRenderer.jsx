@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { Box, IconButton } from "@mui/material";
 import { DownloadOutlined } from "@mui/icons-material";
 import { axios } from "../../../data/axios";
@@ -63,8 +63,7 @@ const Image = (props) => {
 export const AssetRenderer = (props) => {
   const { url, type, noDownload, styleJson } = props;
   const [file, setFile] = useState(null);
-
-  useEffect(() => {
+  const loadFile = useCallback(async () => {
     if (url && url.startsWith("objref://")) {
       try {
         const urlParts = url.split("objref://")[1].split("/");
@@ -82,6 +81,25 @@ export const AssetRenderer = (props) => {
       }
     }
   }, [url]);
+
+  useEffect(() => {
+    loadFile();
+  }, [url, loadFile]);
+
+  useEffect(() => {
+    if (!window.MediaSource) {
+      console.error(
+        "MediaSource API is not supported in this browser. Asset streaming will not work. Will reload the file after 15 seconds to see if streaming asset is finalized.",
+      );
+
+      if (file && file.streaming) {
+        // Set a timer to reload the file after 5 seconds
+        setTimeout(() => {
+          loadFile();
+        }, 15000);
+      }
+    }
+  }, [file, loadFile]);
 
   if (type && type.startsWith("image")) {
     return (
@@ -104,6 +122,10 @@ export const AssetRenderer = (props) => {
   }
 
   if (type.startsWith("audio") || type.startsWith("video")) {
+    if (file?.streaming && !window.MediaSource) {
+      return null;
+    }
+
     return (
       <MemoizedMediaPlayer
         controls
