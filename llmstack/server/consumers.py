@@ -2,7 +2,6 @@ import asyncio
 import importlib
 import json
 import logging
-import threading
 import uuid
 
 from channels.db import database_sync_to_async
@@ -21,6 +20,7 @@ from llmstack.connections.models import (
     ConnectionActivationOutput,
     ConnectionStatus,
 )
+from llmstack.play.utils import run_coro_in_new_loop
 
 logger = logging.getLogger(__name__)
 
@@ -81,19 +81,6 @@ def _build_request_from_input(post_data, scope):
     http_request.data = post_data
 
     return http_request
-
-
-def run_coro_in_new_loop(coro):
-    def start_loop(loop):
-        asyncio.set_event_loop(loop)
-        loop.run_forever()
-
-    loop = asyncio.new_event_loop()
-    t = threading.Thread(target=start_loop, args=(loop,))
-    t.start()
-    coro_future = asyncio.run_coroutine_threadsafe(coro, loop)
-
-    coro_future.add_done_callback(lambda f: loop.stop())
 
 
 class AppConsumer(AsyncWebsocketConsumer):

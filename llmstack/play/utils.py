@@ -1,7 +1,21 @@
+import asyncio
 import re
 import threading
 
 from pydantic import BaseModel
+
+
+def run_coro_in_new_loop(coro):
+    def start_loop(loop):
+        asyncio.set_event_loop(loop)
+        loop.run_forever()
+
+    loop = asyncio.new_event_loop()
+    t = threading.Thread(target=start_loop, args=(loop,))
+    t.start()
+    coro_future = asyncio.run_coroutine_threadsafe(coro, loop)
+
+    coro_future.add_done_callback(lambda f: loop.stop())
 
 
 class ResettableTimer(threading.Thread):
