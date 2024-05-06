@@ -72,7 +72,7 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
 
     @classmethod
     def get_output_template(cls) -> OutputTemplate | None:
-        markdown_template = """{% for item in output_list %}{{ item }}{% endfor %}"""
+        markdown_template = """{{outputs_text}}"""
         return OutputTemplate(markdown=markdown_template)
 
     def disable_history(self) -> bool:
