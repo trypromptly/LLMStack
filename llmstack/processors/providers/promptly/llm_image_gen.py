@@ -5,6 +5,7 @@ from typing import Literal, Optional, Union
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -136,6 +137,12 @@ class LLMImageGeneratorProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "promptly"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate | None:
+        return OutputTemplate(
+            markdown="""<pa-asset url="{{output_str}}" type="image/png"></pa-asset>""",
+        )
 
     def process(self) -> dict:
         from llmstack.common.utils.sslr import LLM
