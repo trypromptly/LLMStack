@@ -201,7 +201,7 @@ class AssetStreamConsumer(AsyncWebsocketConsumer):
 
                 try:
                     asset_stream = AssetStream(asset)
-                    for chunk in asset_stream.get_stream():
+                    for chunk in asset_stream.get_stream(start_index=0, timeout=10000):
                         await self.send(bytes_data=chunk)
                 except Exception as e:
                     logger.exception(e)
