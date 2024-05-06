@@ -183,6 +183,7 @@ class AssetStream:
 
     def __init__(self, asset: Assets):
         self._asset = asset
+        self._id = 0
 
     @property
     def objref(self) -> str:
@@ -192,10 +193,14 @@ class AssetStream:
         return self._asset
 
     def append_chunk(self, chunk: bytes):
+        if chunk == b"":
+            return
+
         objref_stream_client.xadd(
             self.objref,
-            {"chunk": chunk},
+            {"chunk": chunk, "id": self._id},
         )
+        self._id += 1
 
     def finalize(self):
         # Read the stream and finalize the asset
@@ -212,21 +217,37 @@ class AssetStream:
                     file_bytes += message[b"chunk"]
                     message_index = id
 
+        # Add EOF marker to the stream
+        objref_stream_client.xadd(
+            self.objref,
+            {"chunk": b"", "id": -1},
+        )
+
         return self._asset.finalize_streaming_asset(file_bytes)
 
-    def get_stream(self, start_index=0):
+    def get_stream(self, start_index=0, timeout=1000):
         """
         Subscribe to the stream, read the chunks and return an iterator.
         """
         message_index = start_index
-        while True:
-            stream = objref_stream_client.xread(count=10, streams={self.objref: message_index}, block=1000)
-            if not stream:
-                break
+        chunk = b""
+        chunk_index = 0
 
-            for _, messages in stream:
-                for id, message in messages:
-                    yield message[b"chunk"]
-                    message_index = id
+        try:
+            while True:
+                stream = objref_stream_client.xread(count=10, streams={self.objref: message_index}, block=timeout)
+                if not stream:
+                    break
 
-        yield b""
+                for _, messages in stream:
+                    for id, message in messages:
+                        chunk_index = message[b"id"]
+                        chunk = message[b"chunk"]
+                        yield chunk
+                        message_index = id
+
+                if chunk_index == -1 or chunk == b"":
+                    break
+        except Exception as e:
+            logger.error(f"Error reading stream: {e}")
+            yield b""
