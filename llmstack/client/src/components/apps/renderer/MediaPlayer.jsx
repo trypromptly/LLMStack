@@ -33,10 +33,24 @@ const StreamingVideoPlayer = forwardRef(({ src, autoPlay }, ref) => {
   );
 });
 
+function getMediaSource() {
+  if (window.MediaSource) {
+    return new MediaSource();
+  }
+
+  if (window.ManagedMediaSource) {
+    return new window.ManagedMediaSource();
+  }
+
+  console.error("MediaSource API is not supported in this browser.");
+
+  return null;
+}
+
 function MediaPlayer(props) {
   const { src, mimeType, streaming, autoPlay } = props;
   const mediaRef = useRef(null);
-  const mediaSource = useRef(new MediaSource());
+  const mediaSource = useRef(new getMediaSource());
   const sourceBufferRef = useRef(null);
   const bufferQueue = useRef([]);
   const [isSourceBufferReady, setIsSourceBufferReady] = useState(false);
