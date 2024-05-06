@@ -76,7 +76,7 @@ const processFiles = (files) => {
 const MultiInputField = (props) => {
   const fileInputRef = useRef(null);
   const [value, setValue] = useState({});
-  const [multiline, setMultiline] = useState(false);
+  const [multiline, setMultiline] = useState(true);
   const [processedFiles, setProcessedFiles] = useState([]);
   const appRunData = useRecoilValue(appRunDataState);
 
