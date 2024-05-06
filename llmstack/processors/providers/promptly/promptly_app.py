@@ -86,8 +86,16 @@ class PromptlyApp(Schema):
         return values
 
 
-class PromptlyAppInput(PromptlyApp):
-    pass
+class PromptlyAppInput(Schema):
+    input: Dict = Field(default={}, description="Input", widget="hidden")
+    input_json: Optional[str] = Field(default="{}", description="Input JSON", widget="textarea")
+
+    @root_validator
+    def validate_input(cls, values):
+        parsed_input = json.loads(values.get("input_json", "{}"))
+        if parsed_input:
+            values["input"] = {**values["input"], **parsed_input}
+        return values
 
 
 class PromptlyAppOutput(Schema):
@@ -95,7 +103,7 @@ class PromptlyAppOutput(Schema):
     objref: Optional[str] = Field(default=None, description="Promptly App Output as Object Reference")
 
 
-class PromptlyAppConfiguration(Schema):
+class PromptlyAppConfiguration(PromptlyApp):
     objref: Optional[bool] = Field(
         default=False,
         title="Output as Object Reference",
@@ -123,10 +131,12 @@ class PromptlyAppProcessor(ApiProcessorInterface[PromptlyAppInput, PromptlyAppOu
 
     @classmethod
     def get_tool_input_schema(cls, processor_data) -> dict:
-        return json.loads(processor_data["config"]["input_schema"])
+        promptly_app_input_fields = json.loads(processor_data["config"]["promptly_app"])["promptly_app_input_fields"]
+        tool_input_schema = get_tool_json_schema_from_input_fields("PromptlyAppInput", promptly_app_input_fields)
+        return tool_input_schema
 
     def tool_invoke_input(self, tool_args: dict):
-        return PromptlyAppInput(input=tool_args)
+        return PromptlyAppInput(input=tool_args, input_json=json.dumps(tool_args))
 
     @classmethod
     def get_output_template(cls) -> OutputTemplate | None:
@@ -158,13 +168,13 @@ class PromptlyAppProcessor(ApiProcessorInterface[PromptlyAppInput, PromptlyAppOu
         from llmstack.apps.models import AppData
 
         app_data = AppData.objects.filter(
-            app_uuid=self._input._promptly_app_uuid, version=self._input._promptly_app_version
+            app_uuid=self._config._promptly_app_uuid, version=self._config._promptly_app_version
         ).first()
         output_template = app_data.data.get("output_template").get("markdown")
-        self._request.data["input"] = self._input.input
 
+        self._request.data["input"] = {**self._config.input, **self._input.input}
         response_stream, _ = AppViewSet().run_app_internal(
-            self._input._promptly_app_uuid,
+            self._config._promptly_app_uuid,
             self._metadata.get("session_id"),
             str(uuid.uuid4()),
             self._request,

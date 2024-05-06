@@ -4,19 +4,19 @@ import json
 import logging
 import re
 import uuid
-from typing import Any, List, Optional
+from typing import Dict, List, Optional
 
 from asgiref.sync import async_to_sync
-from pydantic import Field
+from pydantic import Field, root_validator
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.base.schema import BaseSchema as Schema
 from llmstack.common.utils.liquid import render_template
-from llmstack.processors.providers.api_processor_interface import (
-    ApiProcessorInterface,
-    hydrate_input,
+from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
+from llmstack.processors.providers.promptly.promptly_app import (
+    PromptlyApp,
+    get_tool_json_schema_from_input_fields,
 )
-from llmstack.processors.providers.promptly.promptly_app import PromptlyApp
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,15 @@ mapper_template_item_var_regex = re.compile(r"\{\{\s*?_map_item\s*?\s*?\}\}")
 
 
 class MapProcessorInput(Schema):
-    input_list: str = Field(default="[]", description="Input list")
+    input_list: List[Dict] = Field(default=[], description="Input list", widget="hidden")
+    input_list_json: str = Field(default="[]", description="Input list", widget="textarea")
+
+    @root_validator
+    def validate_input(cls, values):
+        parsed_input_list = ast.literal_eval(values.get("input_list_json", "[]"))
+        if parsed_input_list:
+            values["input_list"] = parsed_input_list
+        return values
 
 
 class MapProcessorOutput(Schema):
@@ -65,10 +73,18 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
 
     @classmethod
     def get_tool_input_schema(cls, processor_data) -> dict:
-        return json.loads(processor_data["config"]["input_schema"])
+        promptly_app_input_fields = json.loads(processor_data["config"]["promptly_app"])["promptly_app_input_fields"]
+        promptly_app_tool_schema = get_tool_json_schema_from_input_fields("PromptlyAppInput", promptly_app_input_fields)
+        tool_input_schema = {"type": "object", "properties": {}}
+        tool_input_schema["properties"]["input_list"] = {
+            "type": "array",
+            "items": promptly_app_tool_schema,
+            "description": "A list of input messages",
+        }
+        return tool_input_schema
 
     def tool_invoke_input(self, tool_args: dict):
-        return MapProcessorInput(input=tool_args)
+        return MapProcessorInput(input_list=tool_args["input_list"])
 
     @classmethod
     def get_output_template(cls) -> OutputTemplate | None:
@@ -88,20 +104,11 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
             buf += rendered_output
         return buf
 
-    def input(self, message: Any) -> Any:
-        self._mapper_dict = {}
-        config_input = self._config.input
-
-        for key, value in config_input.items():
-            if isinstance(value, str) and mapper_template_item_var_regex.match(value):
-                self._mapper_dict[key] = value
-        return super().input(message)
-
     def process(self) -> dict:
         from llmstack.apps.apis import AppViewSet
         from llmstack.apps.models import AppData
 
-        _input_list = ast.literal_eval(self._input.input_list)
+        _input_list = self._input.input_list
 
         app_data = AppData.objects.filter(
             app_uuid=self._config._promptly_app_uuid, version=self._config._promptly_app_version
@@ -110,10 +117,8 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
         output_response = [""] * len(_input_list)
 
         for idx in range(len(_input_list)):
-            item = _input_list[idx]
-            app_input = {**self._config.input, **self._mapper_dict}
-            hydrated_input = hydrate_input(app_input, {"_map_item": item})
-            self._request.data["input"] = hydrated_input
+            app_input = {**self._config.input, **_input_list[idx]}
+            self._request.data["input"] = app_input
 
             response_stream, _ = AppViewSet().run_app_internal(
                 self._config._promptly_app_uuid,
