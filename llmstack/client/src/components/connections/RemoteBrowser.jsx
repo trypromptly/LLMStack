@@ -244,9 +244,9 @@ export function RemoteBrowserEmbed({ wsUrl }) {
 
           // Get width of screenRef parent and set it to the screenRef
           const width =
-            isMobile || screenRef.current.clientWidth > 800
+            isMobile || screenRef.current.clientWidth > 400
               ? screenRef.current.clientWidth
-              : 800;
+              : 400;
           screenRef.current.style.width = `${width}px`;
           screenRef.current.style.height = `${(width * 720) / 1024}px`;
 
