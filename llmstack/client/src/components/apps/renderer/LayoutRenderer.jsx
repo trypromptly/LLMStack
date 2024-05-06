@@ -1042,7 +1042,9 @@ export default function LayoutRenderer({
         ({ node, ...props }) => {
           return <AssetRenderer {...props} />;
         },
-        (prev, next) => prev.props === next.props,
+        (prev, next) => {
+          return prev.props === next.props && prev?.url === next?.url;
+        },
       ),
       "pa-container": memo(
         ({ node, ...props }) => {
