@@ -1,5 +1,6 @@
 import { Box, Button, Grid, Stack, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
+import ReactGA from "react-ga4";
 import React, { lazy, useEffect, useState, useRef, useCallback } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
@@ -166,8 +167,15 @@ export default function PlaygroundPage() {
           session_id: sessionId,
         }),
       );
+
+      ReactGA.event({
+        category: "Playground",
+        action: "Run",
+        label: `${apiBackendSelected?.api_provider?.slug}/${apiBackendSelected?.slug}`,
+        transport: "beacon",
+      });
     },
-    [ws, setAppRunData],
+    [ws, setAppRunData, apiBackendSelected],
   );
 
   const Run = () => {
