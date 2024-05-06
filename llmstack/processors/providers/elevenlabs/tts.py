@@ -11,7 +11,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.assets.apis import AssetStream
+from llmstack.assets.stream import AssetStream
 from llmstack.play.utils import run_coro_in_new_loop
 from llmstack.processors.providers.api_processor_interface import (
     AUDIO_WIDGET_NAME,
@@ -112,7 +112,7 @@ async def convert_text_to_speech(ws_uri, voice_settings, api_key, input_asset_st
         # Start listening for audio data
         listen_task = asyncio.create_task(receive_audio())
 
-        for chunk in input_asset_stream.get_stream():
+        for chunk in input_asset_stream.read():
             if chunk:
                 await websocket.send(json.dumps({"text": chunk.decode("utf-8")}))
             await asyncio.sleep(0.01)

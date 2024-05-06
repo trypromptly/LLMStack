@@ -166,7 +166,7 @@ class ApiProcessorInterface(
         Creates an asset stream that can processor can append binary data to. Once the stream is closed, the asset
         will be saved to the storage and the asset will be available for download.
         """
-        from llmstack.assets.apis import AssetStream
+        from llmstack.assets.stream import AssetStream
 
         asset = self._upload_asset_from_url(mime_type=mime_type, file_name=file_name)
 

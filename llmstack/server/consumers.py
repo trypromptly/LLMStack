@@ -183,7 +183,7 @@ class AssetStreamConsumer(AsyncWebsocketConsumer):
         pass
 
     async def _respond_to_event(self, bytes_data):
-        from llmstack.assets.apis import AssetStream
+        from llmstack.assets.stream import AssetStream
 
         if bytes_data:
             # Using b"\n" as delimiter
@@ -201,7 +201,7 @@ class AssetStreamConsumer(AsyncWebsocketConsumer):
 
                 try:
                     asset_stream = AssetStream(asset)
-                    for chunk in asset_stream.get_stream(start_index=0, timeout=10000):
+                    for chunk in asset_stream.read(start_index=0, timeout=10000):
                         await self.send(bytes_data=chunk)
                 except Exception as e:
                     logger.exception(e)
