@@ -31,7 +31,7 @@ export default function PromptlyAppSelectorWidget(props) {
       );
       setSelectedApp(selectedApp);
     }
-  }, [jsonValue]);
+  }, [jsonValue, published_apps, setSelectedApp]);
 
   useEffect(() => {
     if (selectedApp) {
