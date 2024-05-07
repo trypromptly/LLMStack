@@ -23,6 +23,14 @@ from llmstack.processors.providers.promptly.file_operations import FileMimeType
 logger = logging.getLogger(__name__)
 
 
+def mime_type_to_extension(mime_type: str) -> str:
+    if mime_type.startswith("audio/"):
+        return "mp3"
+    if mime_type.startswith("video/"):
+        return "mp4"
+    return "txt"
+
+
 class SplitterProcessorInput(ApiProcessorSchema):
     content: Optional[str] = Field(
         default="",
@@ -173,7 +181,11 @@ class SplitterProcessor(
                 input_content_mime_type, _, input_content_bytes = validate_parse_data_uri(data_uri)
 
         file = io.BytesIO(input_content_bytes)
-        partitions = partition(content_type=input_content_mime_type, file=file, file_filename=input_filename)
+
+        if input_content_mime_type.startswith("audio/") or input_content_mime_type.startswith("video/"):
+            raise Exception("Unsupported content type")
+        else:
+            partitions = partition(content_type=input_content_mime_type, file=file, file_filename=input_filename)
 
         if self._config.merge_strategy:
             # Merge the partitions based on the merge strategy
