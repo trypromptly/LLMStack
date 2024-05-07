@@ -12,6 +12,7 @@ from unstructured.partition.auto import partition
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.base.schema import BaseSchema as Schema
+from llmstack.common.utils.prequests import requests
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -31,14 +32,6 @@ class SplitterProcessorInput(ApiProcessorSchema):
     content_uri: Optional[str] = Field(
         default=None,
         description="The URI of the content to be used to as file",
-    )
-    content_mime_type: Optional[FileMimeType] = Field(
-        default=FileMimeType.TEXT,
-        description="The mimetype of the content.",
-    )
-    content_objref: Optional[str] = Field(
-        default=None,
-        description="Object ref of the content to be used to create the file",
     )
 
 
@@ -167,19 +160,17 @@ class SplitterProcessor(
 
         if self._input.content:
             input_content_bytes = self._input.content.encode("utf-8")
-            input_content_mime_type = self._input.content_mime_type or FileMimeType.TEXT
+            input_content_mime_type = FileMimeType.TEXT
 
-        if self._input.content_uri:
-            if self._input.content_uri.startswith("data:"):
-                data_uri = self._input.content_uri
+        elif self._input.content_uri:
+            if self._input.content_uri.startswith("objref://"):
+                file_data_url = self._get_session_asset_data_uri(self._input.content_objref, include_name=True)
+                input_content_mime_type, _, input_content_bytes = validate_parse_data_uri(file_data_url)
+            elif self._input.content_uri.startswith("http://") or self._input.content_uri.startswith("https://"):
+                input_content_mime_type = requests.head(self._input.content_uri).headers.get("Content-Type")
+                input_content_bytes = requests.get(self._input.content_uri).content
+            elif self._input.content_uri.startswith("data://"):
                 input_content_mime_type, _, input_content_bytes = validate_parse_data_uri(data_uri)
-            else:
-                raise ValueError("Only data URI is supported for content URI")
-
-        if self._input.content_objref:
-            # Get the content from the object ref
-            file_data_url = self._get_session_asset_data_uri(self._input.content_objref, include_name=True)
-            input_content_mime_type, _, input_content_bytes = validate_parse_data_uri(file_data_url)
 
         file = io.BytesIO(input_content_bytes)
         partitions = partition(content_type=input_content_mime_type, file=file, file_filename=input_filename)
