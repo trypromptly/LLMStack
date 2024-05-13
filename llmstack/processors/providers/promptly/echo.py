@@ -1,6 +1,7 @@
 import logging
 
 from asgiref.sync import async_to_sync
+from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class EchoProcessorInput(ApiProcessorSchema):
-    input_str: str = "Hello World!"
+    input_str: str = Field(description="The input string to echo", widget="textarea", default="Hello, World!")
     stream: bool = False
 
 
