@@ -2,7 +2,6 @@ import ast
 import base64
 import json
 import logging
-import re
 import uuid
 from typing import Dict, List, Optional
 
@@ -19,8 +18,6 @@ from llmstack.processors.providers.promptly.promptly_app import (
 )
 
 logger = logging.getLogger(__name__)
-
-mapper_template_item_var_regex = re.compile(r"\{\{\s*?_map_item\s*?\s*?\}\}")
 
 
 class MapProcessorInput(Schema):
