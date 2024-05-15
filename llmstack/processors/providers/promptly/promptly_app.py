@@ -101,6 +101,7 @@ class PromptlyAppInput(Schema):
 class PromptlyAppOutput(Schema):
     text: str = Field(default="", description="Promptly App Output as Text")
     objref: Optional[str] = Field(default=None, description="Promptly App Output as Object Reference")
+    processing: Optional[bool] = Field(default=None, description="processing", widget="hidden")
 
 
 class PromptlyAppConfiguration(PromptlyApp):
@@ -161,6 +162,7 @@ class PromptlyAppProcessor(ApiProcessorInterface[PromptlyAppInput, PromptlyAppOu
                 continue
             rendered_output = render_template(output_template, resp)
             buf += rendered_output
+            async_to_sync(self._output_stream.write)(PromptlyAppOutput(processing=True))
         return buf
 
     def process(self) -> dict:

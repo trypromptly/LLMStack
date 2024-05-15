@@ -6,7 +6,7 @@ import uuid
 from typing import Dict, List, Optional
 
 from asgiref.sync import async_to_sync
-from pydantic import Field, root_validator
+from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.base.schema import BaseSchema as Schema
@@ -24,18 +24,12 @@ class MapProcessorInput(Schema):
     input_list: List[Dict] = Field(default=[], description="Input list", widget="hidden")
     input_list_json: str = Field(default="[]", description="Input list", widget="textarea")
 
-    @root_validator
-    def validate_input(cls, values):
-        parsed_input_list = ast.literal_eval(values.get("input_list_json", "[]"))
-        if parsed_input_list:
-            values["input_list"] = parsed_input_list
-        return values
-
 
 class MapProcessorOutput(Schema):
     outputs: List[str] = []
     objrefs: List[str] = []
     outputs_text: str = ""
+    processing: Optional[bool] = Field(default=None, description="processing", widget="hidden")
 
 
 class MapProcessorConfiguration(PromptlyApp):
@@ -99,11 +93,18 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
                 continue
             rendered_output = render_template(output_template, resp)
             buf += rendered_output
+            async_to_sync(self._output_stream.write)(MapProcessorOutput(processing=True))
         return buf
 
     def process(self) -> dict:
         from llmstack.apps.apis import AppViewSet
         from llmstack.apps.models import AppData
+
+        if self._input.input_list_json and not self._input.input_list:
+            try:
+                self._input.input_list = json.loads(self._input.input_list_json)
+            except json.JSONDecodeError:
+                self._input.input_list = ast.literal_eval(self._input.input_list_json)
 
         _input_list = self._input.input_list
 
