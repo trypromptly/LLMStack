@@ -236,7 +236,6 @@ class ChatProcessor(
             raise ValueError("Invalid token type. Gemini needs an API key.")
 
         genai.configure(api_key=token)
-        model = genai.GenerativeModel(self._config.model.value)
 
         messages = []
         # Add history to messages
@@ -309,6 +308,8 @@ class ChatProcessor(
         else:
             tools = None
 
+        model = genai.GenerativeModel(self._config.model.value, tools=tools)
+
         # Send it over to the model
         response = model.generate_content(
             contents=content_types.to_contents(messages),
@@ -316,7 +317,6 @@ class ChatProcessor(
                 "max_output_tokens": self._config.generation_config.max_output_tokens,
                 "temperature": self._config.generation_config.temperature,
             },
-            tools=tools,
             stream=True,
         )
 
