@@ -211,7 +211,6 @@ class RealtimeAvatarProcessor(
                 body = {
                     "session_id": session_id,
                     "text": self._messages_to_repeat[self._messages_repeated].strip(),
-                    "task_type": input_data.task_type,
                 }
 
                 response = post(url, json=body, _connection=connection)
@@ -297,7 +296,6 @@ class RealtimeAvatarProcessor(
                     if self._config.input_stream
                     else self._input.text
                 ),
-                "task_type": task_type,
             }
 
         response = post(url, json=body, _connection=connection)
