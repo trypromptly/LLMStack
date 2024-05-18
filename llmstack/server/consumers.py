@@ -4,6 +4,7 @@ import json
 import logging
 import uuid
 
+from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
@@ -108,6 +109,7 @@ class AppConsumer(AsyncWebsocketConsumer):
 
     async def _respond_to_event(self, text_data):
         from llmstack.apps.apis import AppViewSet
+        from llmstack.apps.models import AppSessionFiles
 
         json_data = json.loads(text_data)
         input = json_data.get("input", {})
@@ -118,6 +120,8 @@ class AppConsumer(AsyncWebsocketConsumer):
             "session_id",
             None,
         )
+        self._user = self.scope.get("user", None)
+        self._session = self.scope.get("session", None)
 
         if event == "run":
             try:
@@ -163,6 +167,69 @@ class AppConsumer(AsyncWebsocketConsumer):
             self._session_id = await AppViewSet().init_app_async(self.app_id)
             await self.send(text_data=json.dumps({"session": {"id": self._session_id}, "request_id": request_uuid}))
 
+        if event == "create_asset":
+            try:
+                # Create an asset in the session. Returns asset info for the other side to upload content to
+                session_created = False
+                if not self._session_id:
+                    self._session_id = await AppViewSet().init_app_async(self.app_id)
+                    session_created = True
+
+                asset_data = json_data.get("data", {})
+                asset_metadata = {
+                    "file_name": asset_data.get("file_name", str(uuid.uuid4())),
+                    "mime_type": asset_data.get("mime_type", "application/octet-stream"),
+                    "app_uuid": self.app_id,
+                    "username": (
+                        self._user.username
+                        if self._user and not self._user.is_anonymous
+                        else self._session.get("_prid", "")
+                    ),
+                }
+
+                asset = await sync_to_async(AppSessionFiles.create_asset)(
+                    asset_metadata, self._session_id, streaming=asset_data.get("streaming", False)
+                )
+
+                if not asset:
+                    await self.send(
+                        text_data=json.dumps(
+                            {
+                                "errors": ["Failed to create asset"],
+                                "reply_to": id,
+                                "request_id": request_uuid,
+                                "asset_request_id": id,
+                            }
+                        )
+                    )
+                    return
+
+                output = {
+                    "asset": asset.objref,
+                    "reply_to": id,
+                    "request_id": request_uuid,
+                    "asset_request_id": id,
+                }
+
+                if session_created:
+                    output["session"] = {"id": self._session_id}
+
+                await self.send(text_data=json.dumps(output))
+            except Exception as e:
+                logger.exception(e)
+                await self.send(
+                    text_data=json.dumps(
+                        {"errors": [str(e)], "reply_to": id, "request_id": request_uuid, "asset_request_id": id}
+                    )
+                )
+
+        if event == "delete_asset":
+            # Delete an asset in the session
+            if not self._session_id:
+                return
+
+            # TODO: Implement delete asset
+
         if event == "stop":
             if self._coordinator_ref:
                 self._coordinator_ref.stop()
@@ -189,24 +256,32 @@ class AssetStreamConsumer(AsyncWebsocketConsumer):
             # Using b"\n" as delimiter
             chunks = bytes_data.split(b"\n")
             event = chunks[0]
+            asset = await database_sync_to_async(get_asset_by_objref)(
+                f"objref://{self._category}/{self._uuid}", self._request_user, self._session
+            )
+            if not asset:
+                # Close the connection
+                await self.close(code=1008)
+                return
 
-            if event == b"read":
-                asset = await database_sync_to_async(get_asset_by_objref)(
-                    f"objref://{self._category}/{self._uuid}", self._request_user, self._session
-                )
-                if not asset:
-                    # Close the connection
-                    await self.close(code=1008)
-                    return
+            asset_stream = AssetStream(asset)
 
-                try:
-                    asset_stream = AssetStream(asset)
+            try:
+                if event == b"read":
                     for chunk in asset_stream.read(start_index=0, timeout=10000):
                         await self.send(bytes_data=chunk)
-                except Exception as e:
-                    logger.exception(e)
-                    await self.send(bytes_data=b"")
 
+                if event == b"write":
+                    if bytes_data == b"write\n":
+                        await sync_to_async(asset_stream.finalize)()
+                        await self.close()
+                        return
+
+                    await sync_to_async(asset_stream.append_chunk)(bytes_data[6:])
+
+            except Exception as e:
+                logger.exception(e)
+                await self.send(bytes_data=b"")
                 await self.close()
 
     async def receive(self, text_data=None, bytes_data=None):

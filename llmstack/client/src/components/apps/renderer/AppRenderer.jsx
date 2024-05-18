@@ -187,6 +187,17 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
         });
       }
 
+      // Handle asset creation response
+      if (message.asset_request_id) {
+        setAppRunData((prevState) => ({
+          ...prevState,
+          assets: {
+            ...prevState.assets,
+            [message.asset_request_id]: message.asset,
+          },
+        }));
+      }
+
       // If we get a templates message, parse it and save the templates
       if (message.templates) {
         let newTemplates = {};
@@ -408,6 +419,32 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
     [app?.uuid],
   );
 
+  const createAsset = useCallback(
+    (assetRequestId, fileName, mimeType, streaming = false) => {
+      ws.send(
+        JSON.stringify({
+          event: "create_asset",
+          data: {
+            file_name: fileName,
+            mime_type: mimeType,
+            streaming: streaming,
+          },
+          id: assetRequestId,
+        }),
+      );
+
+      ReactGA.event({
+        category: "App",
+        action: "Create Asset",
+        label: `${app?.name} - ${mimeType}`,
+        transport: "beacon",
+      });
+
+      return;
+    },
+    [ws, app],
+  );
+
   useEffect(() => {
     // Cancel app run and reset appRunData if location changes
     return () => {
@@ -482,6 +519,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
         prevProps.runApp === nextProps.runApp &&
         prevProps.runProcessor === nextProps.runProcessor &&
         prevProps.cancelAppRun === nextProps.cancelAppRun &&
+        prevProps.createAsset === nextProps.createAsset &&
         prevProps.children === nextProps.children
       );
     },
@@ -500,6 +538,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
         runApp={runApp}
         runProcessor={runProcessor}
         cancelAppRun={cancelAppRun}
+        createAsset={createAsset}
       >
         {layout}
       </MemoizedLayoutRenderer>

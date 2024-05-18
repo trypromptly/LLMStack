@@ -65,12 +65,19 @@ class Assets(models.Model):
         )
 
     @classmethod
-    def create_streaming_asset(cls, metadata, ref_id):
+    def create_asset(cls, metadata, ref_id, streaming=False):
         asset = cls(ref_id=ref_id)
         asset.metadata = metadata or {}
-        asset.metadata["streaming"] = True
+
+        if streaming:
+            asset.metadata["streaming"] = True
+
         asset.save()
         return asset
+
+    @classmethod
+    def create_streaming_asset(cls, metadata, ref_id):
+        return cls.create_asset(metadata, ref_id, streaming=True)
 
     @property
     def objref(self) -> str:

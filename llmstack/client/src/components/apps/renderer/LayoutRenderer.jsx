@@ -158,6 +158,7 @@ const PromptlyAppInputForm = memo(
     workflow,
     runApp,
     cancelAppRun,
+    createAsset,
     submitButtonOptions,
     sx,
     clearOnSubmit = false,
@@ -230,6 +231,7 @@ const PromptlyAppInputForm = memo(
           }}
           onCancel={() => cancelAppRun()}
           sx={sx}
+          createAsset={createAsset}
         />
       </Box>
     );
@@ -984,6 +986,7 @@ export default function LayoutRenderer({
   runApp,
   runProcessor,
   cancelAppRun,
+  createAsset,
   noInput = false,
   children,
 }) {
@@ -1000,6 +1003,7 @@ export default function LayoutRenderer({
   const memoizedRunApp = useCallback(runApp, [runApp]);
   const memoizedRunProcessor = useCallback(runProcessor, [runProcessor]);
   const memoizedCancelAppRun = useCallback(cancelAppRun, [cancelAppRun]);
+  const memoizedCreateAsset = useCallback(createAsset, [createAsset]);
   const memoizedComponents = useMemo(() => {
     return {
       "promptly-heygen-realtime-avatar": memo(
@@ -1122,6 +1126,7 @@ export default function LayoutRenderer({
           <PromptlyAppInputForm
             runApp={memoizedRunApp}
             cancelAppRun={memoizedCancelAppRun}
+            createAsset={memoizedCreateAsset}
             submitButtonOptions={props.submitbuttonoption}
             clearOnSubmit={props.clearonsubmit}
             sx={props.sx || {}}
@@ -1410,7 +1415,13 @@ export default function LayoutRenderer({
         (prev, next) => isEqual(prev, next),
       ),
     };
-  }, [memoizedRunApp, memoizedCancelAppRun, memoizedRunProcessor, noInput]);
+  }, [
+    memoizedRunApp,
+    memoizedCancelAppRun,
+    memoizedRunProcessor,
+    memoizedCreateAsset,
+    noInput,
+  ]);
 
   if (typeof children !== "string") {
     console.trace("LayoutRenderer: children must be a string", children);
