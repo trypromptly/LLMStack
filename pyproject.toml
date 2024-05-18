@@ -139,6 +139,7 @@ pikepdf = "^8.11.0"
 pypdf = "^4.0.1"
 python-docx = "^1.1.0"
 cohere = "5.0.0"
+google-cloud-speech = "^2.26.0"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
