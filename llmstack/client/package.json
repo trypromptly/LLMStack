@@ -55,6 +55,7 @@
     "recoil": "^0.7.7",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^3.0.1",
+    "styled-components": "^6.1.11",
     "ua-parser-js": "^1.0.36",
     "web-vitals": "^2.1.4"
   },
