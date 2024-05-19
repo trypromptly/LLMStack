@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import Form from "@rjsf/mui";
 import { getTemplate, getUiOptions } from "@rjsf/utils";
-import { lazy, useEffect, useState } from "react";
+import { lazy, useCallback, useEffect, useState } from "react";
 
 const TextFieldWithVars = lazy(() => import("./apps/TextFieldWithVars"));
 const AppVersionSelector = lazy(() => import("./apps/AppVersionSelector"));
@@ -38,6 +38,9 @@ const WebpageURLExtractorWidget = lazy(
 const VoiceRecorderWidget = lazy(() => import("./form/VoiceRecorderWidget"));
 const MuiCustomSelect = lazy(() => import("./MuiCustomSelect"));
 const MultiInputField = lazy(() => import("./form/MultiInputField"));
+const StreamingVoiceInputWidget = lazy(
+  () => import("./form/StreamingVoiceInputWidget"),
+);
 
 function CustomGdriveFileWidget(props) {
   return <GdriveFileSelector {...props} />;
@@ -151,10 +154,6 @@ function CustomselectWidget(props) {
 
 function CustomFileWidget(props) {
   return <FileUploadWidget {...props} />;
-}
-
-function CustomVoiceRecorderWidget(props) {
-  return <VoiceRecorderWidget {...props} />;
 }
 
 function ChatWidgetResponse({ chat_message }) {
@@ -320,6 +319,8 @@ const ThemedJsonForm = ({
   disableAdvanced = false,
   ...props
 }) => {
+  const { createAsset } = props;
+
   // disable the default form submit action on mount
   useEffect(() => {
     if (props.formRef?.current?.formElement?.current) {
@@ -331,6 +332,21 @@ const ThemedJsonForm = ({
       );
     }
   }, [props.formRef]);
+
+  const VoiceWidget = useCallback(
+    (fieldProps) => {
+      return fieldProps?.schema?.stream ? (
+        <StreamingVoiceInputWidget
+          {...fieldProps}
+          createAsset={createAsset}
+          formRef={props.formRef}
+        />
+      ) : (
+        <VoiceRecorderWidget {...fieldProps} />
+      );
+    },
+    [createAsset, props.formRef],
+  );
 
   return (
     <Form
@@ -373,7 +389,7 @@ const ThemedJsonForm = ({
           password: PasswordWidget,
           connection: ConnectionSelectorWidget,
           richtext: RichTextWidget,
-          voice: CustomVoiceRecorderWidget,
+          voice: VoiceWidget,
           app_version: AppVersionSelectorWidget,
         },
         ...widgets,

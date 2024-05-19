@@ -1,6 +1,7 @@
 """
 Utils to convert yaml to App and AppTemplate schema models and vice versa
 """
+
 import os
 from typing import List, Type
 
@@ -70,8 +71,10 @@ def get_input_model_from_fields(
             field["widget"] = "color"
         elif field_type == "voice":
             field["widget"] = "voice"
-            field["format"] = "data-url"
-            field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
+            if "stream" not in field:
+                field["format"] = "data-url"
+                field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
+                field["stream"] = False
 
         if (
             field_type == "select"

@@ -140,9 +140,14 @@ export function getJSONSchemaFromInputFields(inputFields) {
         uiSchema[field.name] = {
           "ui:widget": "voice",
         };
-        schema.properties[field.name].format = "data-url";
-        schema.properties[field.name].pattern =
-          "data:(.*);name=(.*);base64,(.*)";
+
+        if (!field.stream) {
+          schema.properties[field.name].format = "data-url";
+          schema.properties[field.name].pattern =
+            "data:(.*);name=(.*);base64,(.*)";
+        }
+
+        schema.properties[field.name].stream = field.stream || false;
       }
 
       if (field.type === "select") {
