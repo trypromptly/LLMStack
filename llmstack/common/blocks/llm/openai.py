@@ -129,11 +129,13 @@ class OpenAIAPIProcessor(
                 ),
             ),
             headers={},
-            authorization=BearerTokenAuth(
-                token=input.env.openai_api_key,
-            )
-            if input.env.openai_api_key
-            else NoAuth(),
+            authorization=(
+                BearerTokenAuth(
+                    token=input.env.openai_api_key,
+                )
+                if input.env.openai_api_key
+                else NoAuth()
+            ),
         )
 
         http_status_is_ok = True
@@ -185,11 +187,13 @@ class OpenAIAPIProcessor(
                 ),
             ),
             headers={},
-            authorization=BearerTokenAuth(
-                token=input.env.openai_api_key,
-            )
-            if input.env.openai_api_key
-            else NoAuth(),
+            authorization=(
+                BearerTokenAuth(
+                    token=input.env.openai_api_key,
+                )
+                if input.env.openai_api_key
+                else NoAuth()
+            ),
         )
 
         http_response = http_api_processor.process(
@@ -287,7 +291,9 @@ class OpenAIChatCompletionsAPIProcessorOutput(OpenAIAPIProcessorOutput):
 
 class ChatCompletionsModel(str, Enum):
     GPT_4 = "gpt-4"
+    GPT_4_O = "gpt-4o"
     GPT_4_32K = "gpt-4-32k"
+    GPT_4_TURBO = "gpt-4-turbo"
     GPT_3_5 = "gpt-3.5-turbo"
     GPT_3_5_16K = "gpt-3.5-turbo-16k"
     GPT_4_LATEST = "gpt-4-0125-preview"

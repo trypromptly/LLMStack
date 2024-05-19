@@ -16,6 +16,8 @@ from llmstack.processors.providers.api_processor_interface import (
 
 class ChatCompletionsModel(str, Enum):
     GPT_4 = "gpt-4"
+    GPT_4_O = "gpt-4o"
+    GPT_4_TURBO = "gpt-4-turbo"
     GPT_3_5 = "gpt-35-turbo"
     GPT_3_5_16 = "gpt-35-turbo-16k"
     GPT_4_32 = "gpt-4-32k"

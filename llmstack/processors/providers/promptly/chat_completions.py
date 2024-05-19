@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 class Model(str, Enum):
     GPT_3_5_TURBO = "gpt-3.5-turbo"
     GPT_4 = "gpt-4"
+    GPT_4_O = "gpt-4o"
     GPT_4_TURBO_PREVIEW = "gpt-4-turbo-preview"
     GEMINI_PRO = "gemini-pro"
     CLAUDE_2_1 = "claude-2.1"
@@ -53,6 +54,7 @@ class OpenAIModel(str, Enum):
     GPT_3_5_TURBO = "gpt-3.5-turbo"
     GPT_4 = "gpt-4"
     GPT_4_TURBO_PREVIEW = "gpt-4-turbo-preview"
+    GPT_4_O = "gpt-4o"
 
     def __str__(self):
         return self.value

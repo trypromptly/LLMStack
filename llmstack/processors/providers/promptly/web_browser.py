@@ -75,6 +75,7 @@ class Model(str, Enum):
     GPT_3_5 = "gpt-3.5-turbo"
     GPT_3_5_16K = "gpt-3.5-turbo-16k"
     GPT_4 = "gpt-4"
+    GPT_4_O = "gpt-4o"
     GPT_4_32K = "gpt-4-32k"
     GPT_4_LATEST = "gpt-4-turbo-latest"
     GPT_4_V_LATEST = "gpt-4-vision-latest"
@@ -394,7 +395,11 @@ class WebBrowser(
             if response.content.text or response.content.screenshot:
                 browser_text_response = self._process_browser_content(response)
                 browser_response = browser_text_response
-                if self._config.model == Model.GPT_4_V_LATEST or self._config.model == Model.GPT_4_LATEST:
+                if (
+                    self._config.model == Model.GPT_4_V_LATEST
+                    or self._config.model == Model.GPT_4_LATEST
+                    or self._config.model == Model.GPT_4_O
+                ):
                     browser_response = [
                         {
                             "type": "text",
@@ -563,7 +568,11 @@ class WebBrowser(
                             response,
                         )
                         browser_response = browser_text_response
-                        if self._config.model == Model.GPT_4_V_LATEST:
+                        if (
+                            self._config.model == Model.GPT_4_V_LATEST
+                            or self._config.model == Model.GPT_4_LATEST
+                            or self._config.model == Model.GPT_4_O
+                        ):
                             browser_response = [
                                 {
                                     "type": "text",

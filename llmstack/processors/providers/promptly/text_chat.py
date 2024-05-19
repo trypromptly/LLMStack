@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class TextChatCompletionsModel(str, Enum):
     GPT_4 = "gpt-4"
+    GPT_4_O = "gpt-4o"
     GPT_4_LATEST = "gpt-4-turbo-latest"
     GPT_3_5 = "gpt-3.5-turbo"
     GPT_3_5_LATEST = "gpt-3.5-turbo-latest"
@@ -191,9 +192,11 @@ Citations:
 
     def session_data_to_persist(self) -> dict:
         return {
-            "chat_history": self._chat_history[-self._config.chat_history_limit :]  # noqa: E203
-            if self._config.chat_history_limit > 0
-            else [],
+            "chat_history": (
+                self._chat_history[-self._config.chat_history_limit :]  # noqa: E203
+                if self._config.chat_history_limit > 0
+                else []
+            ),
             "context": self._context,
         }
 
@@ -407,12 +410,14 @@ Citations:
         self._chat_history.append(
             {
                 "role": "assistant",
-                "content": output["answer"]
-                if isinstance(
-                    output,
-                    dict,
-                )
-                else output.answer,
+                "content": (
+                    output["answer"]
+                    if isinstance(
+                        output,
+                        dict,
+                    )
+                    else output.answer
+                ),
             },
         )
 

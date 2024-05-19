@@ -117,7 +117,7 @@ class HTMLTranslationProcessor(
                 message = f"{self._input.instructions}{chunk}"
 
             result = openai_client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model="gpt-4-turbo",
                 messages=[system_message] + [{"role": "user", "content": message}],
                 temperature=0.5,
                 stream=False,
