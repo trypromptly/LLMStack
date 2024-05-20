@@ -187,7 +187,7 @@ class StaticWebBrowser(
             logger.exception(e)
 
         # If browser_response contains screenshot, convert it to objref
-        if "screenshot" in browser_response:
+        if browser_response and "screenshot" in browser_response:
             screenshot_asset = self._upload_asset_from_url(
                 f"data:image/png;name={str(uuid.uuid4())};base64,{browser_response['screenshot']}",
                 mime_type="image/png",
