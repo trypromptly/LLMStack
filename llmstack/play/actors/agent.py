@@ -87,6 +87,8 @@ class AgentActor(Actor):
         )
 
         self._agent_messages = []
+        self._tool_calls = []
+        self._tool_call_outputs = []
 
         if "chat_history_limit" in self._config and self._config["chat_history_limit"] > 0:
             self._chat_history_limit = self._config["chat_history_limit"]
@@ -216,11 +218,13 @@ class AgentActor(Actor):
             function_name = ""
             function_args = ""
             finish_reason = None
+            self._tool_calls = []
+            self._tool_call_outputs = []
             result = self._openai_client.chat.completions.create(
                 model=model,
                 messages=self._system_message + self._agent_messages,
                 stream=True,
-                functions=self._functions,
+                tools=[{"type": "function", "function": x} for x in self._functions],
                 seed=self._config.get("seed", None),
                 temperature=self._config.get("temperature", 0.7),
             )
@@ -239,6 +243,7 @@ class AgentActor(Actor):
                     finish_reason = data.choices[0].finish_reason
                     delta = data.choices[0].delta
                     function_call = delta.function_call
+                    tool_calls_chunk = delta.tool_calls
                     content = delta.content
 
                     if function_call and function_call.name:
@@ -266,6 +271,41 @@ class AgentActor(Actor):
                                 type="step",
                             ),
                         )
+                    elif tool_calls_chunk and len(tool_calls_chunk) > 0:
+                        for tool_call in tool_calls_chunk:
+                            if len(self._tool_calls) < tool_call.index + 1:
+                                # Insert at the index
+                                self._tool_calls.insert(
+                                    tool_call.index,
+                                    {
+                                        "id": tool_call.id,
+                                        "name": tool_call.function.name,
+                                        "arguments": tool_call.function.arguments,
+                                    },
+                                )
+                                async_to_sync(self._output_stream.write)(
+                                    AgentOutput(
+                                        content=FunctionCall(
+                                            name=tool_call.function.name,
+                                        ),
+                                        id=tool_call.id,
+                                        from_id=tool_call.function.name,
+                                        type="step",
+                                    ),
+                                )
+                            else:
+                                # Update at the index
+                                self._tool_calls[tool_call.index]["arguments"] += tool_call.function.arguments
+                                async_to_sync(self._output_stream.write)(
+                                    AgentOutput(
+                                        content=FunctionCall(
+                                            arguments=tool_call.function.arguments,
+                                        ),
+                                        id=self._tool_calls[tool_call.index]["id"],
+                                        from_id=self._tool_calls[tool_call.index]["name"],
+                                        type="step",
+                                    ),
+                                )
                     elif content:
                         full_content += content
                         async_to_sync(self._output_stream.write)(
@@ -316,6 +356,51 @@ class AgentActor(Actor):
                             message=f"Error invoking tool {function_name}: {e}",
                         ),
                     )
+            elif len(self._tool_calls) > 0 and finish_reason == "tool_calls":
+                logger.info(f"Agent tool calls: {self._tool_calls}")
+
+                self._agent_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": x["id"],
+                                "type": "function",
+                                "function": {
+                                    "name": x["name"],
+                                    "arguments": x["arguments"],
+                                },
+                            }
+                            for x in self._tool_calls
+                        ],
+                    },
+                )
+
+                for tool_call in self._tool_calls:
+                    try:
+                        tool_invoke_input = ToolInvokeInput(
+                            input=self._input,
+                            tool_name=tool_call["name"],
+                            tool_args=json.loads(tool_call["arguments"]),
+                        )
+                        async_to_sync(self._output_stream.write_raw)(
+                            Message(
+                                message_id=tool_call["id"],
+                                message_type=MessageType.TOOL_INVOKE,
+                                message=tool_invoke_input,
+                                message_to=tool_call["name"],
+                                message_from=self._id,
+                            ),
+                        )
+                    except Exception as e:
+                        logger.error(f"Error invoking tool {tool_call['name']}: {e}")
+                        self._on_error(
+                            Message(
+                                message_from="agent",
+                                message=f"Error invoking tool {tool_call['name']}: {e}",
+                            ),
+                        )
             elif full_content and finish_reason == "stop":
                 output_response = OutputResponse(
                     response_content_type="text/markdown",
@@ -379,21 +464,34 @@ class AgentActor(Actor):
                     message.message,
                 )
 
-                self._agent_messages.append(
-                    {
+                function_response = {}
+                if message.response_to and message.response_to.startswith("call_"):
+                    function_response = {
+                        "role": "tool",
+                        "tool_call_id": message.response_to,
+                        "name": message.message_from,
+                        "content": processor_output,
+                    }
+                else:
+                    function_response = {
                         "role": "function",
                         "content": processor_output,
                         "name": message.message_from,
-                    },
-                )
+                    }
 
-                self.actor_ref.tell(
-                    Message(
-                        message_type=MessageType.BEGIN,
-                        message=None,
-                        message_to=self._id,
-                    ),
-                )
+                self._agent_messages.append(function_response)
+                self._tool_call_outputs.append(function_response)
+
+                if len(self._tool_calls) == len(self._tool_call_outputs):
+                    self._tool_calls = []
+                    self._tool_call_outputs = []
+                    self.actor_ref.tell(
+                        Message(
+                            message_type=MessageType.BEGIN,
+                            message=None,
+                            message_to=self._id,
+                        ),
+                    )
             except Exception as e:
                 logger.error(f"Error getting tool output: {e}")
 
