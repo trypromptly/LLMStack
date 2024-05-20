@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useState } from "react";
-import { Box, IconButton } from "@mui/material";
+import { Box, CircularProgress, IconButton } from "@mui/material";
 import { DownloadOutlined } from "@mui/icons-material";
 import { axios } from "../../../data/axios";
 import loadingImage from "../../../assets/images/loading.gif";
@@ -16,7 +16,7 @@ const Image = (props) => {
     <Box
       onMouseEnter={() => setShowDownloadIcon(true)}
       onMouseLeave={() => setShowDownloadIcon(false)}
-      sx={{ position: "relative" }}
+      sx={{ position: "relative", marginBottom: "8px" }}
     >
       {showDownloadIcon && !noDownload && url && (
         <Box
@@ -102,13 +102,18 @@ export const AssetRenderer = (props) => {
   }, [file, loadFile]);
 
   if (type && type.startsWith("image")) {
-    return (
+    return file?.url ? (
       <Image
-        url={file?.url || loadingImage}
+        url={file?.url}
         alt={file?.name || "Loading"}
         noDownload={noDownload}
         styleJson={styleJson}
       />
+    ) : (
+      <Box>
+        <CircularProgress size={12} />
+        &nbsp; Loading image...
+      </Box>
     );
   }
 
