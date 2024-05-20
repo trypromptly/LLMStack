@@ -92,7 +92,7 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     )
     model: Model = Field(
         description="Backing model to use",
-        default=Model.GPT_4_V_LATEST,
+        default=Model.GPT_4_O,
         advanced_parameter=False,
     )
     stream_video: bool = Field(
