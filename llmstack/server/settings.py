@@ -23,10 +23,10 @@ ALLOWED_HOSTS = os.getenv(
 
 LLMSTACK_PORT = os.getenv("LLMSTACK_PORT", 3000)
 
-RUNNER_HOST = os.getenv("RUNNER_HOST", "localhost")
-RUNNER_PORT = os.getenv("RUNNER_PORT", 50051)
-RUNNER_PLAYWRIGHT_PORT = os.getenv("RUNNER_PLAYWRIGHT_PORT", 50053)
-PLAYWRIGHT_URL = f"ws://{RUNNER_HOST}:{RUNNER_PLAYWRIGHT_PORT}"
+RUNNER_HOST = os.getenv("RUNNER_HOST")
+RUNNER_PORT = os.getenv("RUNNER_PORT")
+RUNNER_PLAYWRIGHT_PORT = os.getenv("RUNNER_PLAYWRIGHT_PORT")
+PLAYWRIGHT_URL = f"ws://{RUNNER_HOST}:{RUNNER_PLAYWRIGHT_PORT}" if RUNNER_HOST and RUNNER_PLAYWRIGHT_PORT else ""
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
     "CSRF_TRUSTED_ORIGINS",
@@ -279,17 +279,17 @@ REST_FRAMEWORK = {
 CACHES = {
     "default": {
         "BACKEND": f"django.core.cache.backends.{os.getenv('CACHE_BACKEND', 'redis.RedisCache')}",
-        "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/1",
+        "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/1",
         "TIMEOUT": 3600,
     },
     "app_session": {
         "BACKEND": f"django.core.cache.backends.{os.getenv('CACHE_BACKEND', 'redis.RedisCache')}",
-        "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/2",
+        "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/2",
         "TIMEOUT": 3600,
     },
     "app_session_data": {
         "BACKEND": f"django.core.cache.backends.{os.getenv('CACHE_BACKEND', 'redis.RedisCache')}",
-        "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', 6379)}/3",
+        "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/3",
         "TIMEOUT": 3600,
     },
     "objref_stream": {
@@ -360,7 +360,7 @@ RQ_QUEUES = {
             "REDIS_HOST",
             os.getenv(
                 "RUNNER_RQ_REDIS_HOST",
-                "redis",
+                "localhost",
             ),
         ),
         "PORT": os.getenv(
