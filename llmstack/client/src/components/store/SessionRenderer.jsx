@@ -16,6 +16,7 @@ import { useCallback } from "react";
 import {
   defaultChatLayout,
   defaultWorkflowLayout,
+  webPageRenderLayout,
 } from "../apps/renderer/AppRenderer";
 
 const SessionRenderer = ({
@@ -24,6 +25,7 @@ const SessionRenderer = ({
   skipSteps = false,
 }) => {
   const storeApp = sessionData?.store_app;
+  const renderAsWebPage = sessionData?.metadata?.render_as_web_page || false;
   const appTypeSlug = storeApp?.data?.type_slug || "agent";
   const setAppRunData = useSetRecoilState(appRunDataState);
   const templateEngine = useMemo(() => new Liquid(), []);
@@ -112,11 +114,13 @@ const SessionRenderer = ({
   const memoizedLayoutRenderer = useMemo(
     () => (
       <LayoutRenderer noInput>
-        {storeApp?.data?.config?.layout ||
-          (appTypeSlug === "web" ? defaultWorkflowLayout : defaultChatLayout)}
+        {renderAsWebPage
+          ? webPageRenderLayout
+          : storeApp?.data?.config?.layout ||
+            (appTypeSlug === "web" ? defaultWorkflowLayout : defaultChatLayout)}
       </LayoutRenderer>
     ),
-    [storeApp, appTypeSlug],
+    [storeApp, appTypeSlug, renderAsWebPage],
   );
 
   if (!storeApp) {

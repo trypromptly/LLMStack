@@ -54,6 +54,14 @@ export const defaultChatLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin"
     </pa-grid>
 </pa-layout>`;
 
+export const webPageRenderLayout = `<pa-layout sx='{"maxWidth": "1200px", "margin": "10px auto"}'>  
+  <pa-grid container="true" spacing="2" style="width: 100%">
+    <pa-grid item="true" xs="12">
+      <pa-workflow-output></pa-workflow-output>
+    </pa-grid>
+  </pa-grid>
+</pa-layout>`;
+
 export default function AppRenderer({ app, ws, onEventDone = null }) {
   const appSessionId = useRef(null);
   const location = useLocation();

@@ -19,10 +19,13 @@ import {
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
+  FormGroup,
   IconButton,
   Stack,
   TextField,
@@ -58,6 +61,7 @@ export default function ShareModal({
   const [pinned, setPinned] = useState(null);
   const [pinToProfileLoading, setPinToProfileLoading] = useState(false);
   const [shareUrlLoading, setShareUrlLoading] = useState(false);
+  const [renderAsWebPage, setRenderAsWebPage] = useState(false);
 
   const getShareUrl = (code) => {
     if (code) {
@@ -67,7 +71,7 @@ export default function ShareModal({
     return window.location.href;
   };
 
-  const handleShare = (event, sessionId, isLoggedIn) => {
+  const handleShare = (event, sessionId, isLoggedIn, renderAsWebPage) => {
     event.stopPropagation();
 
     if (!isLoggedIn || !sessionId) {
@@ -97,6 +101,7 @@ export default function ShareModal({
         session_id: sessionId,
         app_store_uuid: appStoreUuid,
         run_entry_request_uuids: requestIds,
+        render_as_web_page: renderAsWebPage,
       };
 
       axios()
@@ -258,6 +263,19 @@ export default function ShareModal({
             </Stack>
           </Box>
         )}
+        {!shareCode && appRunData?.sessionId && (
+          <Box sx={{ paddingTop: 4 }}>
+            <FormGroup>
+              <Tooltip title="When checked, the output will be rendered as a web page irrespective of the app's layout">
+                <FormControlLabel
+                  control={<Checkbox checked={renderAsWebPage} size="small" />}
+                  label="Render the output as a web page"
+                  onChange={(e) => setRenderAsWebPage(e.target.checked)}
+                />
+              </Tooltip>
+            </FormGroup>
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
         <Button key="cancel" onClick={handleClose}>
@@ -271,7 +289,12 @@ export default function ShareModal({
             type="primary"
             onClick={(e) => {
               appRunData?.sessionId
-                ? handleShare(e, appRunData?.sessionId, isLoggedIn)
+                ? handleShare(
+                    e,
+                    appRunData?.sessionId,
+                    isLoggedIn,
+                    renderAsWebPage,
+                  )
                 : handleClose(e);
             }}
             loading={shareUrlLoading}
