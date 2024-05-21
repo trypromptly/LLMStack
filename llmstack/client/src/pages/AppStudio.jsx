@@ -8,12 +8,19 @@ import { SharedAppList } from "../components/apps/SharedAppList";
 import "../index.css";
 import GetAppOutlinedIcon from "@mui/icons-material/GetAppOutlined";
 import { AppImportModal } from "../components/apps/AppImporter";
+import { useRecoilValue } from "recoil";
+import { isLoggedInState } from "../data/atoms";
 
 const AppStudioPage = () => {
   const { steps, setSteps, setIsOpen } = useTour();
   const [cookies, setCookie] = useCookies(["app-studio-tour"]);
   const containerRef = useRef(null);
   const [appImportModalOpen, setAppImportModalOpen] = useState(false);
+  const isLoggedIn = useRecoilValue(isLoggedInState);
+
+  if (!process.env.REACT_APP_ENABLE_APP_STORE && !isLoggedIn) {
+    window.location.href = "/login";
+  }
 
   // Tour
   useEffect(() => {
