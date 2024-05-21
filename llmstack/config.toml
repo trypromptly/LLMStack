@@ -1,5 +1,7 @@
 [llmstack]
 llmstack_port=3000
+redis_host="localhost"
+redis_port=50379
 
 # Platform default keys (optional)
 default_openai_api_key=""
@@ -12,7 +14,7 @@ default_elevenlabs_api_key=""
 # Local installation
 vector_database_engine="chroma"
 vector_database_name="./llmstack.chromadb"
-use_remote_job_queue="False"
+use_remote_job_queue="True"
 cache_backend="locmem.LocMemCache"
 database_name="./llmstack.sqlite"
 database_engine="sqlite3"
@@ -20,11 +22,3 @@ debug="True"
 playwright_url=""
 generatedfiles_root="./generated_files"
 site_url="http://localhost:3000"
-
-[llmstack-runner]
-host = "localhost"
-port = 50051
-wss_port = 50052
-playwright_port = 50053
-rq_redis_port = 50379
-rq_redis_host = "localhost"

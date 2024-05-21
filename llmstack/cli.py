@@ -114,53 +114,21 @@ def prepare_env():
     with open(config_path) as f:
         config = toml.load(f)
 
-        if "generatedfiles_root" not in config:
-            config["generatedfiles_root"] = "./generatedfiles"
-
-        if "use_remote_job_queue" not in config:
-            config["use_remote_job_queue"] = True
-
-        if "llmstack-runner" not in config:
-            config["llmstack-runner"] = {}
-
-        if "host" not in config["llmstack-runner"]:
-            config["llmstack-runner"]["host"] = "localhost"
-
-        if "port" not in config["llmstack-runner"]:
-            config["llmstack-runner"]["port"] = 50051
-
-        if "wss_port" not in config["llmstack-runner"]:
-            config["llmstack-runner"]["wss_port"] = 50052
-
-        if "playwright_port" not in config["llmstack-runner"]:
-            config["llmstack-runner"]["playwright_port"] = 50053
-
-        if "rq_redis_port" not in config["llmstack-runner"]:
-            config["llmstack-runner"]["rq_redis_port"] = 50379
-
-        if "rq_redis_host" not in config["llmstack-runner"]:
-            config["llmstack-runner"]["rq_redis_host"] = "localhost"
-
     with open(config_path, "w") as f:
         toml.dump(config, f)
 
     return config_path
 
 
-def start_runner(environment):
-    """Start llmstack-runner container"""
-    print("[llmstack-runner] Starting LLMStack Runner")
+def pull_redis_image():
+    """Pull Redis image"""
     client = docker.from_env()
-    runner_container = None
-    image_name = environment.get(
-        "RUNNER_IMAGE_NAME",
-        "ghcr.io/trypromptly/llmstack-runner",
-    )
-    image_tag = environment.get("RUNNER_IMAGE_TAG", "main")
+    image_name = "redis"
+    image_tag = "latest"
 
     # Pull image if it is not locally available
     if not any(f"{image_name}:{image_tag}" in image.tags for image in client.images.list()):
-        print(f"[llmstack-runner] Pulling {image_name}:{image_tag}")
+        print(f"[Redis] Pulling {image_name}:{image_tag}")
 
         layers_status = defaultdict(dict)
         response = client.api.pull(
@@ -178,7 +146,48 @@ def start_runner(environment):
                 # Print the current status of all layers
                 for layer, status in layers_status.items():
                     print(
-                        f"[llmstack-runner] Layer {layer}: {status.get('status', '')} {status.get('progress', '')}",
+                        f"[Redis] Layer {layer}: {status.get('status', '')} {status.get('progress', '')}",
+                    )
+                print()  # Add a blank line for better readability
+
+            elif "status" in line and "id" not in line:
+                # Global status messages without a specific layer ID
+                print(line["status"])
+
+            elif "error" in line:
+                print(f"Error: {line['error']}")
+                break
+
+
+def start_redis(environment):
+    """Start Redis container"""
+    print("[Redis] Starting Redis")
+    client = docker.from_env()
+    redis_container = None
+    image_name = environment.get("REDIS_IMAGE_NAME", "redis")
+    image_tag = environment.get("REDIS_IMAGE_TAG", "latest")
+
+    # Pull image if it is not locally available
+    if not any(f"{image_name}:{image_tag}" in image.tags for image in client.images.list()):
+        print(f"[Redis] Pulling {image_name}:{image_tag}")
+
+        layers_status = defaultdict(dict)
+        response = client.api.pull(
+            image_name,
+            tag=image_tag,
+            stream=True,
+            decode=True,
+        )
+        for line in response:
+            if "id" in line:
+                layer_id = line["id"]
+                # Update the status of this layer
+                layers_status[layer_id].update(line)
+
+                # Print the current status of all layers
+                for layer, status in layers_status.items():
+                    print(
+                        f"[Redis] Layer {layer}: {status.get('status', '')} {status.get('progress', '')}",
                     )
                 print()  # Add a blank line for better readability
 
@@ -191,44 +200,41 @@ def start_runner(environment):
                 break
 
     try:
-        runner_container = client.containers.get("llmstack-runner")
+        redis_container = client.containers.get("llmstack-redis")
     except docker.errors.NotFound:
-        runner_container = client.containers.run(
+        redis_container = client.containers.run(
             f"{image_name}:{image_tag}",
-            name="llmstack-runner",
+            name="llmstack-redis",
             ports={
-                "50051/tcp": os.environ["RUNNER_PORT"],
-                "50052/tcp": os.environ["RUNNER_WSS_PORT"],
-                "50053/tcp": os.environ["RUNNER_PLAYWRIGHT_PORT"],
-                "6379/tcp": os.environ["RUNNER_RQ_REDIS_PORT"],
+                "6379/tcp": os.environ["REDIS_PORT"],
             },
             detach=True,
             remove=True,
             environment=environment,
         )
 
-    # Start runner container if not already running
-    print("[llmstack-runner] Started LLMStack Runner")
-    if runner_container.status != "running":
-        runner_container.start()
+    # Start Redis container if not already running
+    print("[Redis] Started Redis")
+    if redis_container.status != "running":
+        redis_container.start()
 
     # Stream logs starting from the end to stdout
-    for line in runner_container.logs(stream=True, follow=True):
-        print(f'[llmstack-runner] {line.decode("utf-8").strip()}')
+    for line in redis_container.logs(stream=True, follow=True):
+        print(f'[Redis] {line.decode("utf-8").strip()}')
 
 
-def stop_runner():
-    """Stop llmstack-runner container"""
-    print("\nStopping LLMStack Runner\n")
+def stop_redis():
+    """Stop Redis container"""
+    print("\nStopping Redis\n")
     client = docker.from_env()
-    runner_container = None
+    redis_container = None
     try:
-        runner_container = client.containers.get("llmstack-runner")
+        redis_container = client.containers.get("llmstack-redis")
     except docker.errors.NotFound:
         pass
 
-    if runner_container:
-        runner_container.stop()
+    if redis_container:
+        redis_container.stop()
 
     client.close()
 
@@ -237,12 +243,14 @@ def main():
     """Main entry point for the application script"""
 
     def signal_handler(sig, frame):
-        stop_runner()
-        if runner_thread.is_alive():
-            runner_thread.join()
         if server_process.poll() is None:  # Check if the process is still running
             server_process.terminate()
             server_process.wait()
+
+        stop_redis()
+        if redis_thread.is_alive():
+            redis_thread.join()
+
         sys.exit(0)
 
     # Get config file path
@@ -266,19 +274,18 @@ def main():
 
     # Load environment variables from config under [llmstack] section
     llmstack_environment = {}
-    runner_environment = {}
+    redis_environment = {}
     with open(env_path) as f:
         config = toml.load(f)
         for key in config["llmstack"]:
             os.environ[key.upper()] = str(config["llmstack"][key])
             llmstack_environment[key.upper()] = str(config["llmstack"][key])
-        for key in config["llmstack-runner"]:
-            os.environ[f"RUNNER_{key.upper()}"] = str(
-                config["llmstack-runner"][key],
-            )
-            runner_environment[f"RUNNER_{key.upper()}"] = str(
-                config["llmstack-runner"][key],
-            )
+
+        redis_environment["REDIS_PORT"] = (
+            llmstack_environment["REDIS_PORT"] if "REDIS_PORT" in llmstack_environment else "50379"
+        )
+
+        os.environ["REDIS_PORT"] = redis_environment["REDIS_PORT"]
 
     # Load CLI args
     args = parser.parse_args()
@@ -305,6 +312,7 @@ def main():
         run_django_command(sys.argv[1:])
         sys.exit(0)
 
+    run_django_command(["manage.py", "migrate", "--fake"])
     run_django_command(["manage.py", "migrate", "--noinput"])
     run_django_command(
         [
@@ -322,14 +330,17 @@ def main():
     # Install default playwright browsers
     subprocess.run(["playwright", "install", "chromium"])
 
-    # Start llmstack-runner container in a separate thread
+    # Pull redis before starting
+    pull_redis_image()
+
+    # Start llmstack-redis container in a separate thread
     import threading
 
-    runner_thread = threading.Thread(
-        target=start_runner,
-        args=([runner_environment]),
+    redis_thread = threading.Thread(
+        target=start_redis,
+        args=([redis_environment]),
     )
-    runner_thread.start()
+    redis_thread.start()
 
     # Run llmstack runserver in a separate process
     server_process = subprocess.Popen(["llmstack", "runserver"])
@@ -372,10 +383,6 @@ def main():
     else:
         signal.pause()
 
-    # Stop runner container
-    stop_runner()
-    runner_thread.join()
-
     # Stop server process
     server_process.terminate()
     server_process.wait()
@@ -383,6 +390,10 @@ def main():
     # Stop rqworker process
     rqworker_process.terminate()
     rqworker_process.wait()
+
+    # Stop redis container
+    stop_redis()
+    redis_thread.join()
 
 
 if __name__ == "__main__":
