@@ -79,7 +79,18 @@ def run_sitemap_spider_in_process(sitemap_url):
 class PromptlyScrapyPlaywrightDownloadHandler(ScrapyPlaywrightDownloadHandler):
     def __init__(self, settings):
         super().__init__(settings)
-        PLAYWRIGHT_URL = f'ws://{os.getenv("RUNNER_HOST", "runner")}:{os.getenv("RUNNER_PLAYWRIGHT_PORT", 50053)}'
+        PLAYWRIGHT_URL = (
+            f'ws://{os.getenv("RUNNER_HOST")}:{os.getenv("RUNNER_PLAYWRIGHT_PORT")}'
+            if os.getenv(
+                "RUNNER_HOST",
+                None,
+            )
+            and os.getenv(
+                "RUNNER_PLAYWRIGHT_PORT",
+                None,
+            )
+            else None
+        )
         self.browser_cdp_url = PLAYWRIGHT_URL
         logging.getLogger("scrapy-playwright").setLevel(logging.ERROR)
 
@@ -285,9 +296,9 @@ class URLSpider(CrawlSpider):
                     playwright=True,
                     cookies=cookies,
                     playwright_context_kwargs={
-                        "storage_state": json.loads(self.connection["configuration"]["_storage_state"])
-                        if self.connection
-                        else None,
+                        "storage_state": (
+                            json.loads(self.connection["configuration"]["_storage_state"]) if self.connection else None
+                        ),
                     },
                 ),
             )
@@ -355,9 +366,11 @@ class URLSpider(CrawlSpider):
                     meta=dict(
                         playwright=True,
                         playwright_context_kwargs={
-                            "storage_state": json.loads(self.connection["configuration"]["_storage_state"])
-                            if self.connection
-                            else None,
+                            "storage_state": (
+                                json.loads(self.connection["configuration"]["_storage_state"])
+                                if self.connection
+                                else None
+                            ),
                         },
                         cookies=cookies,
                     ),
