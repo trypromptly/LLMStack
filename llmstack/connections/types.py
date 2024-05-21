@@ -1,6 +1,8 @@
 from functools import cache
 from typing import Generic, Iterator, TypeVar
 
+from django.conf import settings
+
 from llmstack.common.utils.module_loader import get_all_sub_classes
 from llmstack.connections.models import Connection, ConnectionActivationInput
 
@@ -11,7 +13,7 @@ def get_connection_type_interface_subclasses():
         "llmstack.connections.handlers",
     ]
 
-    excluded_packages = []
+    excluded_packages = settings.CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES or []
 
     try:
         import jnpr.junos  # noqa: F401

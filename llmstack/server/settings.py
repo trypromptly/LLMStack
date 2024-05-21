@@ -619,3 +619,7 @@ try:
     )
 except Exception:
     print("Error parsing CUSTOM_MODELS_DEPLOYMENT_CONFIG")
+
+CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES = os.getenv(
+    "CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES", "llmstack.connections.handlers.web_login"
+).split(",")
