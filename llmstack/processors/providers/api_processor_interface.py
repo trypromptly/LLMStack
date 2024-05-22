@@ -16,6 +16,7 @@ from llmstack.common.blocks.base.processor import (
 )
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.utils.liquid import render_template
+from llmstack.common.utils.utils import get_tool_json_schema_from_input_fields
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
@@ -239,6 +240,9 @@ class ApiProcessorInterface(
 
     @classmethod
     def get_tool_input_schema(cls, processor_data) -> dict:
+        if processor_data and "input_fields" in processor_data:
+            return get_tool_json_schema_from_input_fields(name="", input_fields=processor_data["input_fields"])
+
         return json.loads(cls.get_input_schema())
 
     @classmethod
@@ -392,11 +396,12 @@ class ApiProcessorInterface(
         )
 
     def invoke(self, message: ToolInvokeInput) -> Any:
+        self._base_input = self._input
         try:
             self._input = (
                 hydrate_input(
                     self._input,
-                    message.input,
+                    {**message.input, **message.tool_args},
                 )
                 if message
                 else self._input
@@ -404,7 +409,7 @@ class ApiProcessorInterface(
             self._config = (
                 hydrate_input(
                     self._config,
-                    message.input,
+                    {**message.input, **message.tool_args},
                 )
                 if self._config
                 else self._config
@@ -445,6 +450,8 @@ class ApiProcessorInterface(
             bookkeeping_data.usage_data = self.usage_data()
 
         self._output_stream.bookkeep(bookkeeping_data)
+
+        self._input = self._base_input
 
     def input_stream(self, message: Any) -> Any:
         # We do not support input stream for this processor

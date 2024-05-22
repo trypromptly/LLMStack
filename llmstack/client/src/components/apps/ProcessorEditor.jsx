@@ -8,7 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
-import { lazy, useEffect, useState } from "react";
+import { lazy, useEffect, useRef, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 import { appsState } from "../../data/atoms";
@@ -18,6 +18,7 @@ const ThemedJsonForm = lazy(() => import("../ThemedJsonForm"));
 const AppSelector = lazy(() => import("./AppSelector"));
 const AppStepCard = lazy(() => import("./AppStepCard"));
 const TextFieldWithVars = lazy(() => import("./TextFieldWithVars"));
+const AppInputSchemaEditor = lazy(() => import("./AppInputSchemaEditor"));
 
 function PromptlyAppStepCard({
   appId,
@@ -195,6 +196,7 @@ export function ProcessorEditor({
   const processor = processors[index];
   const apiBackend = processor?.api_backend;
   const [errors, setErrors] = useState([]);
+  const inputFields = useRef(processor?.input_fields || []);
 
   useEffect(() => {
     let newErrors = [];
@@ -309,6 +311,33 @@ export function ProcessorEditor({
       }
     >
       <CardContent style={{ maxHeight: 400, overflow: "auto" }}>
+        {isTool && (
+          <Accordion defaultExpanded={inputFields.length > 0}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="input-fields-content"
+              id="input-fields-header"
+              style={{ backgroundColor: "#dce8fb" }}
+              className="app-editor-section-header"
+            >
+              Input Fields
+            </AccordionSummary>
+            <AccordionDetails>
+              <AppInputSchemaEditor
+                fields={inputFields.current}
+                setFields={(fields) => {
+                  inputFields.current = fields;
+                  processors[index].input_fields = fields;
+                  setProcessors([...processors]);
+                }}
+                setErrors={setErrors}
+                message={
+                  "Define the input fields you want to expose to the model. You must use these fields as input to the processor with template variables."
+                }
+              />
+            </AccordionDetails>
+          </Accordion>
+        )}
         <Accordion defaultExpanded={true}>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
@@ -388,8 +417,8 @@ export function ProcessorEditor({
           <Accordion defaultExpanded={true}>
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
-              aria-controls="config-content"
-              id="config-header"
+              aria-controls="output-template-content"
+              id="output-template-header"
               style={{ backgroundColor: "#dce8fb" }}
               className="app-editor-section-header"
             >

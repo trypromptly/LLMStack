@@ -129,9 +129,9 @@ export default function AppInputSchemaEditor({
   return (
     <Container>
       <Typography mb={3} style={{ margin: 10 }}>
-        Define the input fields you want this app to accept. These will be
-        rendered as a form for users to fill out. If using the app via the API,
-        the input fields will form the JSON schema for the input data.
+        {props?.message
+          ? props.message
+          : "Define the input fields you want this app to accept. These will be rendered as a form for users to fill out. If using the app via the API, the input fields will form the JSON schema for the input data."}
       </Typography>
       <Table
         sx={{

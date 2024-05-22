@@ -20,7 +20,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { ReactComponent as CodeIcon } from "../assets/images/icons/code.svg";
@@ -348,6 +348,7 @@ export default function AppConsolePage(props) {
             processor.api_backend?.slug || processor.processor_slug,
           config: processor.config,
           input: processor.input,
+          input_fields: processor.input_fields || [],
           output_template: processor.output_template || {},
         })),
       };
@@ -370,6 +371,18 @@ export default function AppConsolePage(props) {
       }
     });
   };
+
+  const setProcessorsCallback = useCallback(
+    (newProcessors) => {
+      setApp((app) => ({
+        ...app,
+        processors: newProcessors,
+        data: { ...app.data, processors: newProcessors },
+      }));
+      setProcessors(newProcessors);
+    },
+    [setApp, setProcessors],
+  );
 
   return isLoading ? (
     <CircularProgress />
@@ -663,14 +676,7 @@ export default function AppConsolePage(props) {
             {selectedMenuItem === "editor" && (
               <AppEditor
                 processors={processors}
-                setProcessors={(newProcessors) => {
-                  setApp((app) => ({
-                    ...app,
-                    processors: newProcessors,
-                    data: { ...app.data, processors: newProcessors },
-                  }));
-                  setProcessors(newProcessors);
-                }}
+                setProcessors={setProcessorsCallback}
                 appConfig={{
                   layout:
                     app?.data?.type_slug === "web"
