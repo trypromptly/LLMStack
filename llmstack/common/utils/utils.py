@@ -445,3 +445,20 @@ def get_ui_schema_from_jsonschema(schema):
         else:
             ui_schema[key] = copy.deepcopy(schema[key])
     return ui_schema["properties"]
+
+
+def get_json_schema_from_input_fields(name="", input_fields=[]):
+    return get_input_model_from_fields(name=name, input_fields=input_fields).schema()
+
+
+def get_tool_json_schema_from_input_fields(name="", input_fields=[]):
+    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).schema()
+    tool_schema = {"type": "object", "properties": {}}
+
+    for key, value in input_schema["properties"].items():
+        tool_schema["properties"][key] = {
+            "type": value["type"],
+            "description": value.get("description", ""),
+        }
+
+    return tool_schema
