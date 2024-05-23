@@ -311,7 +311,7 @@ export function ProcessorEditor({
       }
     >
       <CardContent style={{ maxHeight: 400, overflow: "auto" }}>
-        {isTool && (
+        {false && isTool && (
           <Accordion defaultExpanded={inputFields.length > 0}>
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
