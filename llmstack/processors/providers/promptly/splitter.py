@@ -2,9 +2,10 @@ import base64
 import io
 import json
 import logging
+import re
 import uuid
 from enum import Enum
-from typing import List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
@@ -17,10 +18,13 @@ from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
+    hydrate_input,
 )
 from llmstack.processors.providers.promptly.file_operations import FileMimeType
 
 logger = logging.getLogger(__name__)
+
+splitter_template_item_var_regex = re.compile(r"\{\{\s*?_splitter_item\s*?\s*?\}\}")
 
 
 def mime_type_to_extension(mime_type: str) -> str:
@@ -44,8 +48,7 @@ class SplitterProcessorInput(ApiProcessorSchema):
 
 
 class SplitterProcessorOutput(ApiProcessorSchema):
-    outputs: List[str] = []
-    objrefs: List[str] = []
+    outputs: List[Dict] = []
     outputs_text: str = ""
 
 
@@ -107,6 +110,15 @@ class ByTitleStartegy(Schema):
     )
 
 
+class FieldType(Schema):
+    name: str = Field(title="Field name")
+    value: str = Field(title="Field value")
+
+
+class OutputSchema(Schema):
+    fields: List[FieldType] = Field(title="Fields", description="Fields in transformed data", advanced_parameter=False)
+
+
 class SplitterProcessorConfiguration(ApiProcessorSchema):
     objref: Optional[bool] = Field(
         default=False,
@@ -126,6 +138,12 @@ class SplitterProcessorConfiguration(ApiProcessorSchema):
         title="Merge Strategy",
         description="Merge strategy",
         advanced_parameter=True,
+    )
+    output_schema: Optional[OutputSchema] = Field(
+        title="Output Schema",
+        description="Output schema",
+        advanced_parameter=True,
+        default=OutputSchema(fields=[FieldType(name="part", value="{{_splitter_item}}")]),
     )
 
 
@@ -156,6 +174,15 @@ class SplitterProcessor(
     def get_output_template(cls) -> OutputTemplate | None:
         markdown_template = """{{outputs_text}}"""
         return OutputTemplate(markdown=markdown_template)
+
+    def input(self, message: Any) -> Any:
+        self._splitter_dict = {}
+        schema_fields = self._config.output_schema.fields
+
+        for field in schema_fields:
+            if isinstance(field.value, str) and (splitter_template_item_var_regex.match(field.value)):
+                self._splitter_dict[field.name] = field.value
+        return super().input(message)
 
     def process(self) -> dict:
         input_content_bytes = None
@@ -209,19 +236,24 @@ class SplitterProcessor(
                     multipage_sections=self._config.merge_strategy.multipage_sections,
                     new_after_n_chars=self._config.merge_strategy.new_after_n_chars,
                 )
-        chunks = list(map(lambda x: x.text, partitions))
 
-        if self._config.objref:
-            objrefs = []
-            for result_text in chunks:
+        output_dict = {}
+        for entry in self._config.output_schema.fields:
+            output_dict[entry.name] = entry.value
+
+        output_dict = {**output_dict, **self._splitter_dict}
+        for x in partitions:
+            splitter_dict = {"_splitter_item": ""}
+
+            if self._config.objref:
                 file_name = str(uuid.uuid4()) + ".txt"
-                data_uri = f"data:text/plain;name={file_name};base64,{base64.b64encode(result_text.encode('utf-8')).decode('utf-8')}"
-                objrefs.append(self._upload_asset_from_url(asset=data_uri))
-            async_to_sync(output_stream.write)(
-                SplitterProcessorOutput(objrefs=objrefs, outputs_text=json.dumps(chunks))
-            )
-        else:
-            async_to_sync(output_stream.write)(SplitterProcessorOutput(outputs=chunks, outputs_text=json.dumps(chunks)))
+                data_uri = f"data:text/plain;name={file_name};base64,{base64.b64encode(x.text.encode('utf-8')).decode('utf-8')}"
+                objref = self._upload_asset_from_url(asset=data_uri).objref
+                splitter_dict["_splitter_item"] = objref
+            else:
+                splitter_dict["_splitter_item"] = x.text
+            chunks.append(hydrate_input(output_dict, splitter_dict))
 
+        async_to_sync(output_stream.write)(SplitterProcessorOutput(outputs=chunks, outputs_text=json.dumps(chunks)))
         output = output_stream.finalize()
         return output
