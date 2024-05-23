@@ -1,10 +1,11 @@
 import ast
 import base64
+import json
 import logging
 import re
 import uuid
 from functools import reduce
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
@@ -25,7 +26,8 @@ reducer_template_item_var_regex = re.compile(r"\{\{\s*?_reduce_item\s*?\s*?\}\}"
 
 
 class ReduceProcessorInput(Schema):
-    input_list: str = Field(default="[]", description="Input list")
+    input_list: List[Dict] = Field(default=[], description="Input list", widget="hidden")
+    input_list_json: str = Field(default="[]", description="Input list", widget="textarea")
 
 
 class ReduceProcessorOutput(Schema):
@@ -34,6 +36,12 @@ class ReduceProcessorOutput(Schema):
 
 
 class ReduceProcessorConfiguration(PromptlyApp):
+    reducer_liquid_template: Optional[str] = Field(
+        default=None,
+        title="Reducer Liquid Template",
+        description="Liquid template to apply to reduce the input list to a single result",
+        advanced_parameter=True,
+    )
     objref: Optional[bool] = Field(
         default=False,
         title="Output as Object Reference",
@@ -114,14 +122,24 @@ class ReduceProcessor(
         from llmstack.apps.apis import AppViewSet
         from llmstack.apps.models import AppData
 
-        _input_list = ast.literal_eval(self._input.input_list)
+        if self._input.input_list_json and not self._input.input_list:
+            try:
+                self._input.input_list = json.loads(self._input.input_list_json)
+            except json.JSONDecodeError:
+                self._input.input_list = ast.literal_eval(self._input.input_list_json)
 
-        app_data = AppData.objects.filter(
-            app_uuid=self._config._promptly_app_uuid, version=self._config._promptly_app_version
-        ).first()
-        output_template = app_data.data.get("output_template").get("markdown")
+        _input_list = self._input.input_list
+
+        if self._config._promptly_app_uuid:
+            app_data = AppData.objects.filter(
+                app_uuid=self._config._promptly_app_uuid, version=self._config._promptly_app_version
+            ).first()
+            output_template = app_data.data.get("output_template").get("markdown")
 
         def reduce_fn(acc, item):
+            if self._config.reducer_liquid_template:
+                return hydrate_input(self._config.reducer_liquid_template, {"_reduce_acc": acc, "_reduce_item": item})
+
             app_input = {**self._config.input, **self._reducer_dict}
             hydrated_input = hydrate_input(app_input, {"_reduce_acc": acc, "_reduce_item": item})
             self._request.data["input"] = hydrated_input
