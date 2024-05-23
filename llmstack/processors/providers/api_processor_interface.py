@@ -16,7 +16,6 @@ from llmstack.common.blocks.base.processor import (
 )
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.utils.liquid import render_template
-from llmstack.common.utils.utils import get_tool_json_schema_from_input_fields
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
@@ -240,6 +239,8 @@ class ApiProcessorInterface(
 
     @classmethod
     def get_tool_input_schema(cls, processor_data) -> dict:
+        from llmstack.common.utils.utils import get_tool_json_schema_from_input_fields
+
         if processor_data and "input_fields" in processor_data:
             return get_tool_json_schema_from_input_fields(name="", input_fields=processor_data["input_fields"])
 
