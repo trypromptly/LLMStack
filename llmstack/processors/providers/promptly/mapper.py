@@ -93,7 +93,6 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
                 continue
             rendered_output = render_template(output_template, resp)
             buf += rendered_output
-            async_to_sync(self._output_stream.write)(MapProcessorOutput(processing=True))
         return buf
 
     def process(self) -> dict:
@@ -129,6 +128,7 @@ class MapProcessor(ApiProcessorInterface[MapProcessorInput, MapProcessorOutput, 
             )
 
             result = async_to_sync(self.process_response_stream)(response_stream, output_template=output_template)
+            async_to_sync(self._output_stream.write)(MapProcessorOutput(processing=True))
             output_response[idx] = result
 
         if self._config.objref:
