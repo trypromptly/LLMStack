@@ -115,6 +115,7 @@ message PlaywrightBrowserRequest {
   int32 timeout = 3; // timeout in seconds
   string session_data = 4; // session data to restore
   bool stream_video = 5; // whether to stream video
+  bool skip_tags = 6; // whether to skip tags
 }
 
 message PlaywrightBrowserResponse {
