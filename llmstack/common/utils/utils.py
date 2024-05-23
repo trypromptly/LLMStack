@@ -460,5 +460,7 @@ def get_tool_json_schema_from_input_fields(name="", input_fields=[]):
             "type": value["type"],
             "description": value.get("description", ""),
         }
+        if value["type"] == "array":
+            tool_schema["properties"][key]["items"] = value["items"]
 
     return tool_schema
