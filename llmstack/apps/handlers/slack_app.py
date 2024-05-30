@@ -153,14 +153,16 @@ class SlackAppRunner(AppRunner):
 
     def _get_slack_processor_actor_configs(self, input_data):
         output_template = convert_template_vars_from_legacy_format(
-            self.app_data["output_template"].get(
-                "markdown",
-                "",
-            )
-            if self.app_data and "output_template" in self.app_data
-            else self.app.output_template.get(
-                "markdown",
-                "",
+            (
+                self.app_data["output_template"].get(
+                    "markdown",
+                    "",
+                )
+                if self.app_data and "output_template" in self.app_data
+                else self.app.output_template.get(
+                    "markdown",
+                    "",
+                )
             ),
         )
         vendor_env = self.app_owner_profile.get_vendor_env()
@@ -225,7 +227,7 @@ class SlackAppRunner(AppRunner):
                 # Only allow direct messages from users and not from bots
                 if channel_type == "im" and "subtype" not in event_data and "bot_id" not in event_data:
                     return True
-            raise Exception("Invalid Slack request")
+            raise Exception(f"Invalid Slack request type: {event_type}, channel_type: {channel_type}")
 
         return super()._is_app_accessible()
 
