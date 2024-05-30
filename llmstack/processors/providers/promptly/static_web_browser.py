@@ -40,6 +40,11 @@ class StaticWebBrowserConfiguration(ApiProcessorSchema):
         ge=1,
         le=100,
     )
+    skip_tags: bool = Field(
+        description="Skip extracting tags. This will skip processing HTML tags and only return text content to speed up processing",
+        default=True,
+        advanced_parameter=True,
+    )
 
 
 class StaticWebBrowserInput(ApiProcessorSchema):
@@ -132,7 +137,7 @@ class StaticWebBrowser(
                 )
             playwright_request.steps.append(input)
         playwright_request.url = self._input.url
-        playwright_request.skip_tags = True
+        playwright_request.skip_tags = self._config.skip_tags
         playwright_request.timeout = (
             self._config.timeout
             if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100
