@@ -187,7 +187,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
                 )
                 if asset_data and "url" in asset_data:
                     app_data.data["config"]["assistant_image"] = asset_data["url"]
-            return app_data.data
+            return {**app_data.data, "version": app_data.version}
         return None
 
     def get_has_live_version(self, obj):

@@ -42,12 +42,20 @@ const StreamingVoiceInputWidget = lazy(
   () => import("./form/StreamingVoiceInputWidget"),
 );
 
+const PromptlyAppSelector = lazy(
+  () => import("./form/PromptlyAppSelectorWidget"),
+);
+
 function CustomGdriveFileWidget(props) {
   return <GdriveFileSelector {...props} />;
 }
 
 function CustomWebpageURLExtractorWidget(props) {
   return <WebpageURLExtractorWidget {...props} />;
+}
+
+function PromptlyAppSelectorWidget(props) {
+  return <PromptlyAppSelector {...props} />;
 }
 
 function FieldTemplate(props) {
@@ -391,6 +399,7 @@ const ThemedJsonForm = ({
           richtext: RichTextWidget,
           voice: VoiceWidget,
           app_version: AppVersionSelectorWidget,
+          promptlyapp_select: PromptlyAppSelectorWidget,
         },
         ...widgets,
       }}
