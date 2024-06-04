@@ -141,6 +141,22 @@ python-docx = "^1.1.0"
 cohere = "5.0.0"
 google-cloud-speech = "^2.26.0"
 
+# Duplicate dependencies from server group
+django = {version = "^5.0", python = ">=3.10,<=3.12" }
+django-allauth = {version = "^0.61.1", allow-prereleases = true}
+django-environ = {version = "^0.10.0", allow-prereleases = true}
+django-picklefield = {version = "^3.1", allow-prereleases = true}
+django-redis = {version = "^5.2.0", allow-prereleases = true}
+django-rq = {version = "^2.8.1", allow-prereleases = true}
+djangorestframework = {version = "^3.14.0", allow-prereleases = true}
+django-flags = {version = "^5.0.12", allow-prereleases = true}
+psycopg2-binary = {version = "^2.9.5", allow-prereleases = true}
+ujson = {version = "^5.7.0", allow-prereleases = true}
+pykka = {version = "^3.1.1", allow-prereleases = true}
+orjson = {version = "^3.8.14", allow-prereleases = true}
+openai = "^1.13.3"
+python-liquid = "^1.12.1"
+
 [tool.poetry.extras]
 networking = ["junos-eznc"]
 
@@ -151,7 +167,7 @@ pre-commit = "^3.6.0"
 optional = false 
 
 [tool.poetry.group.server.dependencies]
-django = {version = "5.0", python = ">=3.10,<3.12" }
+django = {version = "^5.0", python = ">=3.10,<=3.12" }
 django-allauth = {version = "^0.61.1", allow-prereleases = true}
 django-environ = {version = "^0.10.0", allow-prereleases = true}
 django-picklefield = {version = "^3.1", allow-prereleases = true}
