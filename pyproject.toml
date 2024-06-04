@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llmstack"
-version = "0.1.1"
+version = "0.1.2"
 description = "Low-code platform to build generative AI apps, chatbots and agents with your data"
 authors = ["Ajay Chintala"]
 license = "ELv2"
@@ -25,7 +25,7 @@ llmstack = "llmstack.cli:main"
 llmstack-runner = "llmstack.common.runner.server:main"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.12"
 aiohttp = {version = "^3.8.4", allow-prereleases = true}
 aiosignal = {version = "^1.3.1", allow-prereleases = true}
 anyio = {version = "^3.6.2", allow-prereleases = true}
@@ -138,11 +138,11 @@ unstructured-pytesseract = "^0.3.12"
 pikepdf = "^8.11.0"
 pypdf = "^4.0.1"
 python-docx = "^1.1.0"
-cohere = "5.0.0"
+cohere = "^5.0.0"
 google-cloud-speech = "^2.26.0"
 
 # Duplicate dependencies from server group
-django = {version = "^5.0", python = ">=3.10,<=3.12" }
+django = {version = "^5.0", python = ">=3.10,<3.12" }
 django-allauth = {version = "^0.61.1", allow-prereleases = true}
 django-environ = {version = "^0.10.0", allow-prereleases = true}
 django-picklefield = {version = "^3.1", allow-prereleases = true}
@@ -167,7 +167,7 @@ pre-commit = "^3.6.0"
 optional = false 
 
 [tool.poetry.group.server.dependencies]
-django = {version = "^5.0", python = ">=3.10,<=3.12" }
+django = {version = "^5.0", python = ">=3.10,<3.12" }
 django-allauth = {version = "^0.61.1", allow-prereleases = true}
 django-environ = {version = "^0.10.0", allow-prereleases = true}
 django-picklefield = {version = "^3.1", allow-prereleases = true}
