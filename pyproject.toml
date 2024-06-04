@@ -138,7 +138,7 @@ unstructured-pytesseract = "^0.3.12"
 pikepdf = "^8.11.0"
 pypdf = "^4.0.1"
 python-docx = "^1.1.0"
-cohere = "^5.0.0"
+cohere = "5.5.4"
 google-cloud-speech = "^2.26.0"
 
 # Duplicate dependencies from server group
