@@ -534,17 +534,15 @@ class AppData(models.Model):
         return super().save(*args, **kwargs)
 
 
-def select_storage():
-    from django.core.files.storage import storages
-
-    return storages["assets"]
-
-
-def appstore_upload_to(instance, filename):
-    return "/".join(["appdata", str(instance.ref_id), filename])
-
-
 class AppDataAssets(Assets):
+    def select_storage():
+        from django.core.files.storage import storages
+
+        return storages["assets"]
+
+    def appstore_upload_to(instance, filename):
+        return "/".join(["appdata", str(instance.ref_id), filename])
+
     ref_id = models.UUIDField(help_text="Published UUID of the app this asset belongs to", null=False)
     file = models.FileField(
         storage=select_storage,
@@ -643,17 +641,15 @@ class AppSessionData(models.Model):
     )
 
 
-def select_storage():
-    from django.core.files.storage import storages
-
-    return storages["assets"]
-
-
-def appstore_upload_to(instance, filename):
-    return "/".join(["app_sessions", str(instance.ref_id), filename])
-
-
 class AppSessionFiles(Assets):
+    def select_storage():
+        from django.core.files.storage import storages
+
+        return storages["assets"]
+
+    def appstore_upload_to(instance, filename):
+        return "/".join(["app_sessions", str(instance.ref_id), filename])
+
     ref_id = models.UUIDField(help_text="App session_id this file belongs to", blank=True, null=False)
     file = models.FileField(
         storage=select_storage,

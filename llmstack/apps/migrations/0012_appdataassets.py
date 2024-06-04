@@ -27,8 +27,8 @@ class Migration(migrations.Migration):
                     models.FileField(
                         blank=True,
                         null=True,
-                        storage=llmstack.apps.models.select_storage,
-                        upload_to=llmstack.apps.models.appstore_upload_to,
+                        storage=llmstack.apps.models.AppDataAssets.select_storage,
+                        upload_to=llmstack.apps.models.AppDataAssets.appstore_upload_to,
                     ),
                 ),
             ],

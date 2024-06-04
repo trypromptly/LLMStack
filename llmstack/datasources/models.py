@@ -221,17 +221,15 @@ def register_data_delete(sender, instance: DataSourceEntry, **kwargs):
         )
 
 
-def select_storage():
-    from django.core.files.storage import storages
-
-    return storages["assets"]
-
-
-def datasource_upload_to(instance, filename):
-    return "/".join(["datasource_entries", str(instance.ref_id), filename])
-
-
 class DataSourceEntryFiles(Assets):
+    def select_storage():
+        from django.core.files.storage import storages
+
+        return storages["assets"]
+
+    def datasource_upload_to(instance, filename):
+        return "/".join(["datasource_entries", str(instance.ref_id), filename])
+
     ref_id = models.UUIDField(help_text="UUID of the datasource entry this file belongs to", blank=True, null=False)
     file = models.FileField(
         storage=select_storage,
