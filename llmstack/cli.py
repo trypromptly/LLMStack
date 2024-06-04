@@ -312,7 +312,6 @@ def main():
         run_django_command(sys.argv[1:])
         sys.exit(0)
 
-    run_django_command(["manage.py", "migrate", "--fake"])
     run_django_command(["manage.py", "migrate", "--noinput"])
     run_django_command(
         [
