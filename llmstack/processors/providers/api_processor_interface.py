@@ -241,7 +241,7 @@ class ApiProcessorInterface(
     def get_tool_input_schema(cls, processor_data) -> dict:
         from llmstack.common.utils.utils import get_tool_json_schema_from_input_fields
 
-        if processor_data and "input_fields" in processor_data:
+        if processor_data and processor_data.get("input_fields", None):
             return get_tool_json_schema_from_input_fields(name="", input_fields=processor_data["input_fields"])
 
         return json.loads(cls.get_input_schema())
