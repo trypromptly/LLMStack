@@ -1,6 +1,6 @@
 {
   "name": "promptmanager",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "proxy": "http://localhost:9000",
   "homepage": "https://llmstack.trypromptly.com",
