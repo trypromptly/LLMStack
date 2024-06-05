@@ -131,7 +131,9 @@ class Completions(
     @classmethod
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
-            markdown="""{{ for choice in choices }}{{ choice }}{{ endfor }}""",
+            markdown="""{% for choice in choices %}
+{{choice}}
+{% endfor %}""",
         )
 
     def process(self) -> dict:
