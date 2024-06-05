@@ -29,6 +29,10 @@ class Role(str, Enum):
 
 class ChatCompletionsVisionModel(str, Enum):
     GPT_4_Vision = "gpt-4-vision-preview"
+    GPT_4_TURBO = "gpt-4-turbo"
+    GPT_4_TURBO_240409 = "gpt-4-turbo-2024-04-09"
+    GPT_4_1106_VISION_PREVIEW = "gpt-4-1106-vision-preview"
+    GPT_4_O = "gpt-4o"
 
     def __str__(self):
         return self.value
@@ -171,12 +175,38 @@ class ChatCompletionsVision(
                 # Convert objref to data URI if it exists
                 msg.image_url = self._get_session_asset_data_uri(msg.image_url, include_name=False)
 
-        messages.append(
-            {
-                "role": "user",
-                "content": [msg.dict() for msg in self._input.messages],
-            },
-        )
+        if self._config.model == ChatCompletionsVisionModel.GPT_4_Vision:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": [msg.dict() for msg in self._input.messages],
+                },
+            )
+        else:
+            input_messages = []
+            for msg in self._input.messages:
+                if isinstance(msg, TextMessage):
+                    input_messages.append(
+                        {
+                            "type": "text",
+                            "text": msg.text,
+                        }
+                    )
+                elif isinstance(msg, UrlImageMessage):
+                    input_messages.append(
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": msg.image_url,
+                            },
+                        }
+                    )
+            messages.append(
+                {
+                    "role": "user",
+                    "content": input_messages,
+                },
+            )
 
         openai_client = OpenAI(api_key=self._env["openai_api_key"])
         result = openai_client.chat.completions.create(
