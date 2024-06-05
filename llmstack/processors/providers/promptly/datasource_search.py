@@ -7,6 +7,7 @@ from asgiref.sync import async_to_sync
 from django.shortcuts import get_object_or_404
 from pydantic import BaseModel, Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.datasources.models import DataSource
 from llmstack.datasources.types import DataSourceTypeFactory
 from llmstack.processors.providers.api_processor_interface import (
@@ -87,6 +88,10 @@ class DataSourceSearchProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "promptly"
+
+    @classmethod
+    def get_output_template(cls) -> Optional[OutputTemplate]:
+        return OutputTemplate(markdown="""{{ answers_text }}""")
 
     def process(self) -> DataSourceSearchOutput:
         input_data = self._input
