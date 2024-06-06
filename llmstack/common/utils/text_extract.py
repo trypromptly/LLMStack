@@ -186,7 +186,7 @@ def extract_text_elements(
     return merged_elements
 
 
-def extract_text_with_gpt(api_key, base64_encoded_data, mime_type, extraction_prompt):
+def extract_text_with_gpt(api_key, uri, extraction_prompt):
     from openai import OpenAI
 
     openai_client = OpenAI(api_key=api_key)
@@ -194,7 +194,7 @@ def extract_text_with_gpt(api_key, base64_encoded_data, mime_type, extraction_pr
     messages = [
         {
             "role": "user",
-            "content": [{"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{base64_encoded_data}"}}],
+            "content": [{"type": "image_url", "image_url": {"url": uri}}],
         },
     ]
     if extraction_prompt:

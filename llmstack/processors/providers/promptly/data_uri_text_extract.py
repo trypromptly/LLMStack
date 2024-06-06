@@ -151,8 +151,7 @@ class DataUriTextExtract(
                 api_key = self._env["openai_api_key"]
                 self.extracted_text = extract_text_with_gpt(
                     api_key=api_key,
-                    base64_encoded_data=data,
-                    mime_type=mime_type,
+                    uri=f"data:{mime_type};base64,{data}",
                     extraction_prompt=self._config.gpt_data_extraction_prompt,
                 )
             else:
