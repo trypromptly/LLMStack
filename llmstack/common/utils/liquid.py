@@ -13,7 +13,8 @@ def todict(value):
         return json.loads(value)
     except json.JSONDecodeError:
         return ast.literal_eval(value)
-    return {}
+    except Exception:
+        return {}
 
 
 env.add_filter("urlencode", quote_plus)
