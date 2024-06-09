@@ -9,11 +9,7 @@ from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
 from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.common.utils.text_extract import (
-    ExtraParams,
-    extract_text_from_b64_json,
-    extract_text_with_gpt,
-)
+from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_b64_json
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -33,14 +29,6 @@ class DataUriTextExtractorConfiguration(ApiProcessorSchema):
         description="Chunksize of document",
         default=1500,
         advanced_parameter=True,
-    )
-    use_gpt: Optional[bool] = Field(
-        description="Use GPT to extract text",
-        default=False,
-    )
-    gpt_data_extraction_prompt: Optional[str] = Field(
-        description="Prompt to use for GPT data extraction",
-        default=None,
     )
 
 
@@ -147,20 +135,12 @@ class DataUriTextExtract(
         mime_type, file_name, data = validate_parse_data_uri(file)
 
         if not self.extracted_text:
-            if self._config.use_gpt:
-                api_key = self._env["openai_api_key"]
-                self.extracted_text = extract_text_with_gpt(
-                    api_key=api_key,
-                    uri=f"data:{mime_type};base64,{data}",
-                    extraction_prompt=self._config.gpt_data_extraction_prompt,
-                )
-            else:
-                self.extracted_text = extract_text_from_b64_json(
-                    mime_type=mime_type,
-                    base64_encoded_data=data,
-                    file_name=file_name,
-                    extra_params=ExtraParams(openai_key=openai_api_key),
-                )
+            self.extracted_text = extract_text_from_b64_json(
+                mime_type=mime_type,
+                base64_encoded_data=data,
+                file_name=file_name,
+                extra_params=ExtraParams(openai_key=openai_api_key),
+            )
 
         if query:
             self.temp_store = Chroma(is_persistent=False)

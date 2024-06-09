@@ -8,11 +8,7 @@ from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
 from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.common.utils.text_extract import (
-    ExtraParams,
-    extract_text_from_url,
-    extract_text_with_gpt,
-)
+from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -31,14 +27,6 @@ class HttpUriTextExtractorConfiguration(ApiProcessorSchema):
         description="Chunksize of document",
         default=1500,
         advanced_parameter=True,
-    )
-    use_gpt: Optional[bool] = Field(
-        description="Use GPT to extract text",
-        default=False,
-    )
-    gpt_data_extraction_prompt: Optional[str] = Field(
-        description="Prompt to use for GPT data extraction",
-        default=None,
     )
 
 
@@ -113,18 +101,7 @@ class HttpUriTextExtract(
         url = self._input.url.strip().rstrip()
 
         if url != self.url:
-            if self._config.use_gpt:
-                api_key = self._env["openai_api_key"]
-                self.extracted_text = extract_text_with_gpt(
-                    api_key=api_key,
-                    uri=url,
-                    extraction_prompt=self._config.gpt_data_extraction_prompt,
-                )
-            else:
-                self.extracted_text = extract_text_from_url(
-                    url,
-                    extra_params=ExtraParams(openai_key=openai_api_key),
-                )
+            self.extracted_text = extract_text_from_url(url, extra_params=ExtraParams(openai_key=openai_api_key))
 
         self.url = url
 
