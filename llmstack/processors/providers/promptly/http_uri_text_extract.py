@@ -101,10 +101,7 @@ class HttpUriTextExtract(
         url = self._input.url.strip().rstrip()
 
         if url != self.url:
-            self.extracted_text = extract_text_from_url(
-                url,
-                extra_params=ExtraParams(openai_key=openai_api_key),
-            )
+            self.extracted_text = extract_text_from_url(url, extra_params=ExtraParams(openai_key=openai_api_key))
 
         self.url = url
 

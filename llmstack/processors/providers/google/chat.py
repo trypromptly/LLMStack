@@ -23,7 +23,10 @@ logger = logging.getLogger(__name__)
 
 class GeminiModel(str, Enum):
     GEMINI_PRO = "gemini-pro"
+    GEMINI_1_5_PRO = "gemini-1.5-pro"
+    GEMINI_1_5_FLASH = "gemini-1.5-flash"
     GEMINI_PRO_VISION = "gemini-pro-vision"
+    GEMINI_1_0_PRO = "gemini-1.0-pro"
 
     def __str__(self):
         return self.value
@@ -251,7 +254,7 @@ class ChatProcessor(
             else []
         )
 
-        if self._config.model.value == GeminiModel.GEMINI_PRO:
+        if self._config.model.value == GeminiModel.GEMINI_PRO or self._config.model.value == GeminiModel.GEMINI_1_0_PRO:
             for message in self._input.messages:
                 if message.type == "image_url":
                     raise ValueError(
@@ -260,7 +263,7 @@ class ChatProcessor(
                 elif message.type == "text":
                     message_params.append({"text": message.text})
 
-        elif self._config.model.value == GeminiModel.GEMINI_PRO_VISION:
+        else:
             for message in self._input.messages:
                 if message.type == "image_url":
                     image_url = message.image_url
@@ -278,8 +281,6 @@ class ChatProcessor(
                     )
                 elif message.type == "text":
                     message_params.append({"text": message.text})
-        else:
-            raise ValueError(f"Invalid model: {self._config.model.value}")
 
         # Add current user provided input to messages
         messages.append({"parts": message_params, "role": "user"})
