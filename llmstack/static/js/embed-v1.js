@@ -30,6 +30,7 @@
         "frameborder",
         this.getAttribute("frameborder") || "0"
       );
+      iframe.setAttribute("allow", "clipboard-read; clipboard-write");
 
       if (chatBubble) {
         iframe.setAttribute(
