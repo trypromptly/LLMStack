@@ -18,6 +18,7 @@ class MessagesModel(str, Enum):
     CLAUDE_3_Opus = "claude-3-opus"
     CLAUDE_3_Sonnet = "claude-3-sonnet"
     CLAUDE_3_Haiku = "claude-3-haiku"
+    CLAUDE_3_5_Sonnet = "claude-3-5-sonnet"
 
     def __str__(self):
         return self.value
@@ -29,6 +30,8 @@ class MessagesModel(str, Enum):
             return "claude-3-sonnet-20240229"
         elif self.value == "claude-3-haiku":
             return "claude-3-haiku-20240307"
+        elif self.value == "claude-3-5-sonnet":
+            return "claude-3-5-sonnet-20240620"
 
 
 class Role(str, Enum):
@@ -136,7 +139,7 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         )
         messages = []
         if self._config.system_prompt:
-            messages.append({"role": "system", "content": self._config.system_message})
+            messages.append({"role": "system", "content": self._config.system_prompt})
 
         if self._chat_history:
             for message in self._chat_history:

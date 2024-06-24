@@ -7,6 +7,9 @@ from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.processors.providers.anthropic.messages import (
+    MessagesModel as AnthropicModel,
+)
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -83,30 +86,9 @@ class GoogleModelConfig(BaseModel):
     model: GoogleModel = Field(default=GoogleModel.GEMINI_PRO, description="The model for the LLM")
 
 
-class AnthropicModel(str, Enum):
-    CLAUDE_2_1 = "claude-2.1"
-    CLAUDE_3_Opus = "claude-3-opus"
-    CLAUDE_3_Sonnet = "claude-3-sonnet"
-    CLAUDE_3_Haiku = "claude-3-haiku"
-
-    def __str__(self):
-        return self.value
-
-    def model_name(self):
-        if self.value == "claude-2.1":
-            return "claude-2.1"
-        elif self.value == "claude-3-opus":
-            return "claude-3-opus-20240229"
-        elif self.value == "claude-3-sonnet":
-            return "claude-3-sonnet-20240229"
-        elif self.value == "claude-3-haiku":
-            return "claude-3-haiku-20240307"
-        return self.value
-
-
 class AnthropicModelConfig(BaseModel):
     provider: Literal["anthropic"] = "anthropic"
-    model: AnthropicModel = Field(default=AnthropicModel.CLAUDE_2_1, description="The model for the LLM")
+    model: AnthropicModel = Field(default=AnthropicModel.CLAUDE_3_Haiku, description="The model for the LLM")
 
 
 class CohereModel(str, Enum):
