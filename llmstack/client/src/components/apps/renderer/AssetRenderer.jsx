@@ -142,5 +142,19 @@ export const AssetRenderer = (props) => {
     );
   }
 
+  if (type.startsWith("application")) {
+    return (
+      <a
+        href={file?.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        download={file?.name}
+        style={{ color: "blue" }}
+      >
+        {file?.name}
+      </a>
+    );
+  }
+
   return <p>AssetRenderer</p>;
 };
