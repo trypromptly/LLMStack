@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import tempfile
+import time
 import uuid
 from enum import Enum
 from io import BytesIO
@@ -17,6 +18,7 @@ from pydantic import Field, root_validator
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.common.utils.utils import create_data_uri, validate_parse_data_uri
+from llmstack.play.actor import BookKeepingData
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -203,10 +205,21 @@ class FileOperationsProcessor(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(markdown="{{objref}}")
 
+    def get_bookkeeping_data(self) -> BookKeepingData:
+        return BookKeepingData(
+            input=self._input.dict(exclude={"content"}),
+            config=self._config.dict(),
+            output=self._output if self._output else {},
+            session_data=self.session_data_to_persist() if self._session_enabled else {},
+            timestamp=time.time(),
+            disable_history=self.disable_history(),
+        )
+
     def process(self) -> dict:
         input_content_bytes = None
         input_content_mime_type = None
         data_uri = None
+        self._output = None
 
         output_stream = self._output_stream
         directory = self._input.output_directory or ""
@@ -278,5 +291,5 @@ class FileOperationsProcessor(
             raise ValueError("Failed to create data uri")
 
         # Finalize the output stream
-        output = output_stream.finalize()
-        return output
+        self._output = output_stream.finalize()
+        return self._output
