@@ -433,6 +433,24 @@ class RunEntry(models.Model):
     def __str__(self):
         return self.request_uuid
 
+    def clean_dict(self, data):
+        if isinstance(data, dict):
+            return {key: self.clean_dict(value) for key, value in data.items()}
+        elif isinstance(data, list):
+            return [self.clean_dict(element) for element in data]
+        elif isinstance(data, str):
+            return data.replace("\u0000", "")
+        return data
+
+    def clean_processor_runs(self):
+        if self.processor_runs:
+            self.processor_runs = [self.clean_dict(item) for item in self.processor_runs]
+
+    def save(self, *args, **kwargs):
+        # Clean the processor_runs field
+        self.clean_processor_runs()
+        super(RunEntry, self).save(*args, **kwargs)
+
     @property
     def is_store_request(self):
         return self.app_store_uuid is not None
