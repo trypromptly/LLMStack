@@ -26,136 +26,24 @@ llmstack-runner = "llmstack.common.runner.server:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-aiohttp = {version = "^3.8.4", allow-prereleases = true}
-aiosignal = {version = "^1.3.1", allow-prereleases = true}
-anyio = {version = "^3.6.2", allow-prereleases = true}
-asgiref = {version = "^3.6.0", allow-prereleases = true}
-async-timeout = {version = "^4.0.2", allow-prereleases = true}
-attrs = {version = "^22.2.0", allow-prereleases = true}
-autobahn = {version = "^23.1.2", allow-prereleases = true}
-authlib = {version = "^1.2.0", allow-prereleases = true}
-automat = {version = "^22.10.0", allow-prereleases = true}
-backoff = {version = "^2.2.1", allow-prereleases = true}
-chardet = {version = "^5.2.0", platform = "windows", allow-prereleases = true}
-channels = {version = "^4.0.0", allow-prereleases = true}
-chroma-hnswlib = {version = "^0.7.3", allow-prereleases = true}
-chromadb = {version = "^0.4.10", allow-prereleases = true}
-click = {version = "^8.1.3", allow-prereleases = true}
-constantly = {version = "^15.1.0", allow-prereleases = true}
-daphne = {version = "^4.0.0", allow-prereleases = true}
-defusedxml = {version = "^0.7.1", allow-prereleases = true}
-gunicorn = {version = "^20.1.0", allow-prereleases = true}
-h11 = {version = "^0.14.0", allow-prereleases = true}
-h2 = {version = "^4.1.0", allow-prereleases = true}
-httpcore = {version = "^0.16.3", allow-prereleases = true}
-httptools = {version = "^0.5.0", allow-prereleases = true}
-httpx = {version = "^0.23.3", allow-prereleases = true}
-hyperlink = {version = "^21.0.0", allow-prereleases = true}
-idna = {version = "^3.4", allow-prereleases = true}
-importlib-metadata = {version = "^6.0.0", allow-prereleases = true}
-incremental = {version = "^22.10.0", allow-prereleases = true}
-jinja2 = {version = "^3.1.2", allow-prereleases = true}
-joblib = {version = "^1.2.0", allow-prereleases = true}
-jsonschema = {version = "^4.17.3", allow-prereleases = true}
-lz4 = {version = "^4.3.2", allow-prereleases = true}
-marshmallow = {version = "^3.19.0", allow-prereleases = true}
-marshmallow-enum = {version = "^1.5.1", allow-prereleases = true}
-multidict = {version = "^6.0.4", allow-prereleases = true}
-oauthlib = {version = "^3.2.2", allow-prereleases = true}
-packaging = {version = "^23.0", allow-prereleases = true}
-pyasn1 = {version = "^0.4.8", allow-prereleases = true}
-pyasn1-modules = {version = "^0.2.8", allow-prereleases = true}
-pyjwt = {version = "^2.6.0", allow-prereleases = true}
-pyopenssl = {version = "^23.1.1", allow-prereleases = true}
-python-dateutil = {version = "^2.8.2", allow-prereleases = true}
-python3-openid = {version = "^3.2.0", allow-prereleases = true}
-pytz = {version = "^2022.7", allow-prereleases = true}
-pyyaml = {version = "^6.0", allow-prereleases = true}
-redis = {version = "^4.5.4", allow-prereleases = true}
-rfc3986 = {version = "^1.5.0", allow-prereleases = true}
-rq = {version = "^1.15.1", allow-prereleases = true}
-sendgrid = {version = "^6.10.0", allow-prereleases = true}
-service-identity = {version = "^21.1.0", allow-prereleases = true}
-sqlalchemy = {version = "^1.4.46", allow-prereleases = true}
-sqlparse = {version = "^0.4.3", allow-prereleases = true}
-tenacity = {version = "^8.2.2", allow-prereleases = true}
-typer = {version = "^0.7.0", allow-prereleases = true}
-typing-inspect = {version = "^0.9.0", allow-prereleases = true}
-typing-extensions = {version = "^4.5.0", allow-prereleases = true}
-twisted = {version = "^22.10.0", allow-prereleases = true}
-txaio = {version = "^23.1.1", allow-prereleases = true}
-urllib3 = {version = "^1.26.13", allow-prereleases = true}
-uvicorn = {version = "^0.21.0", allow-prereleases = true}
+docker = {version ="^6.1.3"}
+sqlalchemy = {version = "^1.4.46" }
+websockify = {version ="^0.11.0"}
+geoip2 = {version = "^4.7.0" }
+typing-extensions = {version = "^4.5.0" }
+twisted = {version = "^22.10.0" }
 uvloop = [
-  {version = "^0.17.0", allow-prereleases = true, platform = "darwin" },
-  {version = "^0.17.0", allow-prereleases = true, platform = "linux" }
+  {version = "^0.17.0",  platform = "darwin" },
+  {version = "^0.17.0",  platform = "linux" }
   ]
-validators = {version = "^0.19.0", allow-prereleases = true}
-websockets = {version = "^10.4", allow-prereleases = true}
-yarl = {version = "^1.8.2", allow-prereleases = true}
-zope-interface = {version = "^6.0", allow-prereleases = true}
-beautifulsoup4 = {version = "^4.12.2", allow-prereleases = true}
-django-jsonform = {version = "^2.17.4", allow-prereleases = true}
-playwright = "1.42.0"
-geoip2 = {version = "^4.7.0", allow-prereleases = true}
-weaviate-client = {version = "^3.22.1", allow-prereleases = true}
-google-auth = {version = "^2.22.0", allow-prereleases = true}
-pynacl = {version = "^1.5.0", allow-prereleases = true}
-scrapy = "^2.11.0"
-unstructured = {version = "0.12.6", python=">=3.10,<3.12"}
-scipy = {version = "1.12.0", python=">=3.10,<3.12"}
-spacy = {version = "^3.6.0", allow-prereleases = true}
-striprtf = {version = "^0.0.22", allow-prereleases = true}
-tiktoken = {version = "^0.4.0", allow-prereleases = true}
-ffmpeg-python = {version = "^0.2.0", allow-prereleases = true}
-pydub = {version = "^0.25.1", allow-prereleases = true}
-boto3 = {version = "^1.26.122", allow-prereleases = true}
-botocore = {version = "^1.29.122", allow-prereleases = true}
-yt-dlp = {version = "^2023.9.24", allow-prereleases = true}
-pdf2image = {version = "^1.16.3", allow-prereleases = true}
-pdfminer-six = {version = "^20221105", allow-prereleases = true}
-markdown = {version = "^3.4.4", allow-prereleases = true}
-python-pptx = {version = "^0.6.21", allow-prereleases = true}
-python-magic = {version = "^0.4.27", allow-prereleases = true}
-stability-sdk = {version = "^0.8.4", allow-prereleases = true}
-anthropic = "^0.5.0"
-toml = "^0.10.2"
-junos-eznc = {version="^2.6.8", optional=true}
-simplejson = "^3.19.2"
-websockify = "^0.11.0"
-docker = "^6.1.3"
-grpcio-health-checking = "^1.53.0"
-croniter = "^2.0.1"
-drf-yaml = "^3.0.1"
-google-generativeai = "^0.3.1"
-scrapy-playwright = "^0.0.33"
-mysqlclient = "^2.2.4"
-django-ratelimit = "^4.1.0"
-pillow-heif = "^0.15.0"
-opencv-python = "^4.9.0.80"
-unstructured-inference = "^0.7.23"
-unstructured-pytesseract = "^0.3.12"
-pikepdf = "^8.11.0"
-pypdf = "^4.0.1"
-python-docx = "^1.1.0"
-cohere = "5.5.4"
-google-cloud-speech = "^2.26.0"
+websockets = {version = "^10.4" }
+beautifulsoup4 = {version = "^4.12.2" }
+weaviate-client = {version = "^3.22.1" }
+google-auth = {version = "^2.22.0" }
+striprtf = {version = "^0.0.22" }
+toml = {version ="^0.10.2"}
 
-# Duplicate dependencies from server group
-django = {version = "^5.0", python = ">=3.10,<3.12" }
-django-allauth = {version = "^0.61.1", allow-prereleases = true}
-django-environ = {version = "^0.10.0", allow-prereleases = true}
-django-picklefield = {version = "^3.1", allow-prereleases = true}
-django-redis = {version = "^5.2.0", allow-prereleases = true}
-django-rq = {version = "^2.8.1", allow-prereleases = true}
-djangorestframework = {version = "^3.14.0", allow-prereleases = true}
-django-flags = {version = "^5.0.12", allow-prereleases = true}
-psycopg2-binary = {version = "^2.9.5", allow-prereleases = true}
-ujson = {version = "^5.7.0", allow-prereleases = true}
-pykka = {version = "^3.1.1", allow-prereleases = true}
-orjson = {version = "^3.8.14", allow-prereleases = true}
-openai = "^1.13.3"
-python-liquid = "^1.12.1"
+junos-eznc = {version="^2.6.8", optional=true}
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
@@ -164,23 +52,66 @@ networking = ["junos-eznc"]
 pre-commit = "^3.6.0"
 
 [tool.poetry.group.server]
-optional = false 
 
 [tool.poetry.group.server.dependencies]
 django = {version = "^5.0", python = ">=3.10,<3.12" }
-django-allauth = {version = "^0.61.1", allow-prereleases = true}
-django-environ = {version = "^0.10.0", allow-prereleases = true}
-django-picklefield = {version = "^3.1", allow-prereleases = true}
-django-redis = {version = "^5.2.0", allow-prereleases = true}
-django-rq = {version = "^2.8.1", allow-prereleases = true}
-djangorestframework = {version = "^3.14.0", allow-prereleases = true}
-django-flags = {version = "^5.0.12", allow-prereleases = true}
-psycopg2-binary = {version = "^2.9.5", allow-prereleases = true}
-ujson = {version = "^5.7.0", allow-prereleases = true}
-pykka = {version = "^3.1.1", allow-prereleases = true}
-orjson = {version = "^3.8.14", allow-prereleases = true}
-openai = "^1.13.3"
-python-liquid = "^1.12.1"
+drf-yaml = {version = "^3.0.1"}
+django-allauth = {version = "^0.61.1"}
+django-environ = {version = "^0.10.0"}
+django-picklefield = {version = "^3.1"}
+django-redis = {version = "^5.2.0"}
+django-rq = {version = "^2.8.1"}
+djangorestframework = {version = "^3.14.0"}
+django-flags = {version = "^5.0.12"}
+django-jsonform = {version = "^2.17.4"}
+django-ratelimit = {version = "^4.1.0"}
+pydantic = {version ="1.10.15" }
+croniter = {version ="^2.0.1"}
+pykka = {version = "^3.1.1" }
+asgiref = {version = "^3.6.0" }
+channels = {version = "^4.0.0" }
+importlib-metadata = {version = "^6.0.0" }
+pyyaml = {version = "^6.0" }
+redis = {version = "^4.5.4" }
+rq = {version = "^1.15.1" }
+sendgrid = {version = "^6.10.0" }
+python-liquid = {version ="^1.12.1"}
+orjson = {version = "^3.8.14" }
+ujson = {version = "^5.7.0" }
+openai = {version ="^1.13.3"}
+grpcio-health-checking = {version ="^1.53.0"}
+
+
+[tool.poetry.group.processors]
+
+[tool.poetry.group.processors.dependencies]
+scrapy = {version ="^2.11.0"}
+unstructured = {version = "0.12.6", python=">=3.10,<3.12"}
+spacy = {version = "^3.6.0" }
+google-generativeai = {version ="^0.3.1"}
+scrapy-playwright = {version ="^0.0.33"}
+pillow-heif = {version ="^0.15.0"}
+opencv-python = {version ="^4.9.0.80"}
+unstructured-inference = {version ="^0.7.23"}
+unstructured-pytesseract = {version ="^0.3.12"}
+python-docx = {version ="^1.1.0"}
+cohere = {version ="5.5.4"}
+google-cloud-speech = {version ="^2.26.0"}
+psycopg2-binary = {version = "^2.9.5" }
+mysqlclient = {version ="^2.2.4"}
+tiktoken = {version = "^0.4.0" }
+ffmpeg-python = {version = "^0.2.0" }
+pydub = {version = "^0.25.1" }
+boto3 = {version = "^1.26.122" }
+botocore = {version = "^1.29.122" }
+yt-dlp = {version = "^2023.9.24" }
+pdf2image = {version = "^1.16.3" }
+pdfminer-six = {version = "^20221105" }
+markdown = {version = "^3.4.4" }
+python-pptx = {version = "^0.6.21" }
+python-magic = {version = "^0.4.27" }
+anthropic = {version ="^0.5.0"}
+
 
 [tool.poetry-dynamic-versioning]
 enable = true
