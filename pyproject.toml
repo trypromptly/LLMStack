@@ -26,6 +26,8 @@ llmstack-runner = "llmstack.common.runner.server:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
+playwright = "1.42.0"
+spacy = {version = "^3.6.0"}
 docker = {version ="^6.1.3"}
 sqlalchemy = {version = "^1.4.46" }
 websockify = {version ="^0.11.0"}
@@ -44,6 +46,7 @@ striprtf = {version = "^0.0.22" }
 toml = {version ="^0.10.2"}
 
 junos-eznc = {version="^2.6.8", optional=true}
+chromadb = "^0.5.3"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
@@ -87,7 +90,6 @@ grpcio-health-checking = {version ="^1.53.0"}
 [tool.poetry.group.processors.dependencies]
 scrapy = {version ="^2.11.0"}
 unstructured = {version = "0.12.6", python=">=3.10,<3.12"}
-spacy = {version = "^3.6.0" }
 google-generativeai = {version ="^0.3.1"}
 scrapy-playwright = {version ="^0.0.33"}
 pillow-heif = {version ="^0.15.0"}
