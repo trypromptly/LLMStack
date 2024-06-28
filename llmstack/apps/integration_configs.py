@@ -41,15 +41,15 @@ class AppIntegrationConfig(BaseModel):
 
 
 class WebIntegrationConfig(AppIntegrationConfig):
-    config_type = "web"
-    is_encrypted = False
+    config_type: str = "web"
+    is_encrypted: bool = False
     allowed_sites: list = []
     domain: Optional[str] = None
 
 
 class SlackIntegrationConfig(AppIntegrationConfig):
-    config_type = "slack"
-    is_encrypted = True
+    config_type: str = "slack"
+    is_encrypted: bool = True
     app_id: str = ""
     bot_token: str = ""
     verification_token: str = ""
@@ -57,8 +57,8 @@ class SlackIntegrationConfig(AppIntegrationConfig):
 
 
 class DiscordIntegrationConfig(AppIntegrationConfig):
-    config_type = "discord"
-    is_encrypted = True
+    config_type: str = "discord"
+    is_encrypted: bool = True
     app_id: str = ""
     slash_command_name: str = ""
     slash_command_description: str = ""
@@ -68,8 +68,8 @@ class DiscordIntegrationConfig(AppIntegrationConfig):
 
 
 class TwilioIntegrationConfig(AppIntegrationConfig):
-    config_type = "twilio"
-    is_encrypted = True
+    config_type: str = "twilio"
+    is_encrypted: bool = True
     account_sid: str = ""
     auth_token: str = ""
     phone_numbers: List[str] = []
