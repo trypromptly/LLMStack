@@ -10,7 +10,7 @@ class ChatAppConfigSchema(BaseSchema):
         title="Page Content",
         default="",
         description="Content to show at the top of the chat window",
-        widget="richtext",
+        json_schema_extra={"widget": "richtext"},
     )
     welcome_message: str = Field(
         title="Welcome Message",
@@ -21,16 +21,13 @@ class ChatAppConfigSchema(BaseSchema):
         title="Assistant Image",
         default="",
         description="Icon to show for the messages from assistant",
-        accepts={
-            "image/*": [],
-        },
-        widget="image_generator",
+        json_schema_extra={"widget": "image_generator", "accepts": {"image/*": []}},
     )
     window_color: str = Field(
         title="Primary Color of Chat Window",
         default="#477195",
         description="Color of the chat window",
-        widget="color",
+        json_schema_extra={"widget": "color"},
     )
     chat_bubble_text: Optional[str] = Field(
         title="App Bubble Text",
@@ -56,8 +53,7 @@ class ChatAppConfigSchema(BaseSchema):
     init_on_load: Optional[bool] = Field(
         title="Initialize processors on load. Use this for apps like realtime avatars.",
         description="If checked, the app will be initialized when the page is loaded. This is useful for apps that need to be initialized before the user interacts with them.",
-        json_schema_extra={"advanced_parameter": True},
-        hidden=True,
+        json_schema_extra={"advanced_parameter": True, "hidden": True},
     )
 
 

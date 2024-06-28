@@ -28,10 +28,10 @@ class AppIntegrationConfig(BaseModel):
         # Use the data from the dict to populate the fields
         self.__dict__.update(json.loads(self.data))
 
-        return self.dict(exclude={"is_encrypted", "config_type", "data"})
+        return self.model_dump(exclude={"is_encrypted", "config_type", "data"})
 
     def get_data(self, encrypt_fn):
-        data = self.json(exclude={"is_encrypted", "config_type", "data"})
+        data = self.model_dump_json(exclude={"is_encrypted", "config_type", "data"})
         return encrypt_fn(data).decode("utf-8") if self.is_encrypted else data
 
     def set_data(self, data, decrypt_fn):

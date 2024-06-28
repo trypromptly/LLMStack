@@ -19,17 +19,17 @@ class SlackAppConfigSchema(BaseSchema):
     )
     bot_token: str = Field(
         title="Bot Token",
-        widget="password",
+        json_schema_extra={"widget": "password"},
         description="Bot token to use for sending messages to Slack. Make sure the Bot has access to app_mentions:read and chat:write scopes. This token is available at Features > OAuth & Permissions in your app page. More details https://api.slack.com/authentication/oauth-v2",
     )
     verification_token: SecretStr = Field(
         title="Verification Token",
-        widget="password",
+        json_schema_extra={"widget": "password"},
         description="Verification token to verify the request from Slack. This token is available at Features > Basic Information in your app page. More details https://api.slack.com/authentication/verifying-requests-from-slack",
     )
     signing_secret: SecretStr = Field(
         title="Signing Secret",
-        widget="password",
+        json_schema_extra={"widget": "password"},
         description="Signing secret to verify the request from Slack. This secret is available at Features > Basic Information in your app page. More details https://api.slack.com/authentication/verifying-requests-from-slack",
     )
 

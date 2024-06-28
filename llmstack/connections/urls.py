@@ -111,7 +111,7 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
             connection.status = ConnectionStatus.ACTIVE
             connection.configuration = result.dict()
 
-            profile.add_connection(connection.dict())
+            profile.add_connection(connection.model_dump())
 
             return HttpResponseRedirect("/settings")
         except (

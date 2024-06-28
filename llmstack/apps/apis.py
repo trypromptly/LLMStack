@@ -378,7 +378,7 @@ class AppViewSet(viewsets.ViewSet):
             json_data = []
             app_templates_from_yaml = get_app_templates_from_contrib()
             for app_template in app_templates_from_yaml:
-                app_template_dict = app_template.dict()
+                app_template_dict = app_template.model_dump()
                 app_template_dict.pop("pages")
                 app = app_template_dict.pop("app")
                 json_data.append(

@@ -27,8 +27,7 @@ logger = logging.getLogger(__name__)
 class StaticWebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
         description="Connection to use",
-        widget="connection",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
     )
     stream_video: bool = Field(
         description="Stream video of the browser",
@@ -43,7 +42,6 @@ class StaticWebBrowserConfiguration(ApiProcessorSchema):
     skip_tags: bool = Field(
         description="Skip extracting tags. This will skip processing HTML tags and only return text content to speed up processing",
         default=True,
-        advanced_parameter=True,
     )
 
 

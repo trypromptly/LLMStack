@@ -14,24 +14,21 @@ class TwilioSmsAppConfigSchema(BaseSchema):
     account_sid: str = Field(
         title="Account SID",
         description="Account SID of the Twilio account. Your account's SID can be found in the console.",
-        required=True,
     )
     auth_token: str = Field(
         title="Auth Token",
-        widget="password",
+        json_schema_extra={"widget": "password"},
         description="Auth token of the Twilio account. Your account's auth token can be found in the console.",
-        required=True,
     )
     phone_numbers: List[str] = Field(
         title="Phone Numbers",
         description="Phone numbers to send SMS messages from.",
-        required=True,
     )
     auto_create_sms_webhook: bool = Field(
         default=False,
         title="Auto Create SMS Webhook",
         description="Automatically create an SMS webhook for the phone numbers.",
-        required=False,
+        json_schema_extra={"required": False},
     )
 
 

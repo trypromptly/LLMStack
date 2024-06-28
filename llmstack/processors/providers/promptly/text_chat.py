@@ -38,14 +38,12 @@ class TextChatConfiguration(ApiProcessorSchema):
     model: TextChatCompletionsModel = Field(
         default=TextChatCompletionsModel.GPT_3_5,
         description="ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.",
-        widget="customselect",
-        advanced_parameter=True,
+        json_schema_extra={"widget": "customselect"},
     )
     datasource: List[str] = Field(
         default=None,
         description="Datasources to use",
-        widget="datasource",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "widget": "datasource"},
     )
     system_message_prefix: str = Field(
         """You are a helpful chat assistant""",
@@ -59,18 +57,15 @@ No answer should go out of the provided input. If the provided input is empty, r
 Keep the answers terse.""",
         description="Instructions for the chatbot",
         json_schema_extra={"widget": "textarea"},
-        advanced_parameter=True,
     )
     show_citations: bool = Field(
         title="Show citations",
         default=False,
         description="Show citations for the answer",
-        advanced_parameter=True,
     )
     citation_instructions: str = Field(
         """Use source value to provide citations for the answer. Citations must be in a new line after the answer.""",
         json_schema_extra={"widget": "textarea"},
-        advanced_parameter=True,
         description="Instructions for the chatbot",
     )
 
@@ -93,32 +88,21 @@ Keep the answers terse.""",
         title="Use Azure if available",
         default=True,
         description="Use Azure if available. Will fallback to OpenAI when unchecked",
-        advanced_parameter=True,
     )
     use_localai_if_available: bool = Field(
         title="Use LocalAI if available",
         default=False,
         description="Use LocalAI if available. Will fallback to OpenAI or Azure OpenAI when unchecked",
-        advanced_parameter=True,
     )
     chat_history_in_doc_search: int = Field(
         title="Chat history in doc search",
         default=0,
         description="Number of messages from chat history to include in doc search",
-        advanced_parameter=True,
     )
     hybrid_semantic_search_ratio: Optional[float] = Field(
-        default=0.75,
-        description="Ratio of semantic search to hybrid search",
-        ge=0.0,
-        le=1.0,
-        multiple_of=0.01,
-        advanced_parameter=True,
+        default=0.75, description="Ratio of semantic search to hybrid search", ge=0.0, le=1.0, multiple_of=0.01
     )
-    seed: Optional[int] = Field(
-        description="Seed for the model",
-        advanced_parameter=True,
-    )
+    seed: Optional[int] = Field(description="Seed for the model")
 
 
 class TextChatInput(ApiProcessorSchema):
@@ -127,7 +111,6 @@ class TextChatInput(ApiProcessorSchema):
         title="Search filters",
         default=None,
         description="Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata",
-        advanced_parameter=True,
     )
 
 
@@ -265,7 +248,7 @@ Citations:
         return docs
 
     def process(self) -> dict:
-        input = self._input.dict()
+        input = self._input.model_dump()
         output_stream = self._output_stream
         docs = self._search_datasources(input)
 
@@ -307,7 +290,7 @@ Citations:
             {"role": "user", "content": input["question"]},
         )
 
-        model = self._config.dict().get("model", "gpt-3.5-turbo")
+        model = self._config.model_dump().get("model", "gpt-3.5-turbo")
         if model == "gpt-3.5-turbo-latest":
             model = "gpt-3.5-turbo-1106"
         elif model == "gpt-4-turbo-latest":

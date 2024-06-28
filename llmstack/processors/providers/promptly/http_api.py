@@ -182,8 +182,7 @@ class HttpAPIProcessorConfiguration(Schema):
     )
 
     connection_id: Optional[str] = Field(
-        widget="connection",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
         description="Use your authenticated connection to make the request",
     )
 
@@ -200,7 +199,6 @@ class HttpAPIProcessorConfiguration(Schema):
     allow_redirects: Optional[bool] = True
     timeout: Optional[float] = Field(
         default=5,
-        advanced_parameter=True,
         ge=0,
         le=100,
         description="Timeout in seconds",
@@ -511,4 +509,4 @@ def parse_openapi_spec(spec_dict, path, method) -> dict:
         url=url,
         parameters=parameters,
         request_body=request_body,
-    ).dict()
+    ).model_dump()

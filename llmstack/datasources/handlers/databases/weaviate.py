@@ -105,7 +105,7 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
                         if self._configuration.connection.additional_headers
                         else {}
                     ),
-                ).dict(),
+                ).model_dump(),
             )
 
     # This static method returns the name of the datasource class as

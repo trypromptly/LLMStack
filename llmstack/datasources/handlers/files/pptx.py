@@ -20,13 +20,14 @@ logger = logging.getLogger(__name__)
 
 class PptxFileSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="file",
         description="File to be processed",
-        accepts={
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
+        json_schema_extra={
+            "widget": "file",
+            "accepts": {
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
+            },
+            "maxSize": 20000000,
         },
-        maxSize=20000000,
     )
 
     @staticmethod

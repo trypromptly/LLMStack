@@ -1,6 +1,7 @@
 """
 This module contains the OutputStream class.
 """
+
 import asyncio
 import logging
 from collections import defaultdict
@@ -31,14 +32,14 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
     if isinstance(obj1, dict) and isinstance(obj2, AgentOutput):
         return {
             **obj1,
-            **obj2.dict(),
+            **obj2.model_dump(),
             **{
                 "content": stitch_model_objects(
                     obj1.get(
                         "content",
                         {},
                     ),
-                    obj2.dict().get(
+                    obj2.model_dump().get(
                         "content",
                         {},
                     ),
@@ -47,9 +48,9 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
         }
 
     if isinstance(obj1, BaseModel):
-        obj1 = obj1.dict()
+        obj1 = obj1.model_dump()
     if isinstance(obj2, BaseModel):
-        obj2 = obj2.dict()
+        obj2 = obj2.model_dump()
 
     def stitch_fields(
         obj1_fields: Dict[str, Any],
@@ -185,12 +186,14 @@ class OutputStream:
                 message_id=message_id or self._message_id,
                 message_type=MessageType.STREAM_DATA,
                 message_from=self._stream_id,
-                message=orjson.loads(data.json())
-                if isinstance(
-                    data,
-                    BaseModel,
-                )
-                else data,
+                message=(
+                    orjson.loads(data.json())
+                    if isinstance(
+                        data,
+                        BaseModel,
+                    )
+                    else data
+                ),
                 message_to=message_to,
                 response_to=response_to or self._response_to,
             ),
@@ -198,7 +201,7 @@ class OutputStream:
 
         if self._data is None:
             self._data = (
-                data.dict()
+                data.model_dump()
                 if isinstance(
                     data,
                     BaseModel,
@@ -256,12 +259,14 @@ class OutputStream:
                 message_to=message_to,
                 message_type=MessageType.STREAM_CLOSED,
                 message_from=self._stream_id,
-                message=orjson.loads(output.json())
-                if isinstance(
-                    output,
-                    BaseModel,
-                )
-                else output,
+                message=(
+                    orjson.loads(output.json())
+                    if isinstance(
+                        output,
+                        BaseModel,
+                    )
+                    else output
+                ),
                 response_to=response_to or self._response_to,
             ),
         )
@@ -276,7 +281,7 @@ class OutputStream:
             Message(
                 message_type=MessageType.BOOKKEEPING,
                 message_from=self._stream_id,
-                message=data.dict(),
+                message=data.model_dump(),
                 message_id=self._message_id,
             ),
         )

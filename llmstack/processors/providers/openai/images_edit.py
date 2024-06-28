@@ -29,11 +29,7 @@ class ImagesEditInput(ApiProcessorSchema):
     image: Optional[str] = Field(
         default="",
         description="The image to edit. Must be a valid PNG file, less than 4MB, and square. If mask is not provided, image must have transparency, which will be used as the mask.",
-        accepts={
-            "image/png": [],
-        },
-        maxSize=4000000,
-        widget="file",
+        json_schema_extra={"maxSize": 4000000, "accepts": {"image/png": []}, "widget": "file"},
     )
     image_data: Optional[str] = Field(
         default="",
@@ -50,7 +46,7 @@ class ImagesEditOutput(ApiProcessorSchema):
     answer: List[str] = Field(
         default=[],
         description="The generated images.",
-        widget=IMAGE_WIDGET_NAME,
+        json_schema_extra={"widget": IMAGE_WIDGET_NAME},
     )
 
 
@@ -107,13 +103,13 @@ class ImagesEdit(
         _env = self._env
 
         prompt = get_key_or_raise(
-            self._input.dict(),
+            self._input.model_dump(),
             "prompt",
             "No prompt found in input",
         )
 
         image = self._input.image or None
-        if (image is None or image == "") and "image_data" in self._input.dict():
+        if (image is None or image == "") and "image_data" in self._input.model_dump():
             image = self._input.image_data
         if image is None or image == "":
             raise Exception("No image found in input")
@@ -142,8 +138,8 @@ class ImagesEdit(
             prompt=prompt,
         )
         response: OpenAIImageEditsProcessorOutput = OpenAIImageEditsProcessor(
-            self._config.dict(),
-        ).process(openai_images_edit_input.dict())
+            self._config.model_dump(),
+        ).process(openai_images_edit_input.model_dump())
         async_to_sync(self._output_stream.write)(
             ImagesEditOutput(answer=response.answer),
         )

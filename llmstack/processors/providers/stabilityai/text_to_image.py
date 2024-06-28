@@ -125,13 +125,12 @@ class TextToImageConfiguration(ApiProcessorSchema):
     num_samples: int = Field(
         default=1,
         description="Number of images to generate. Allows for batch image generations.",
-        advanced_parameter=True,
     )
 
     guidance_preset: Optional[GuidancePreset] = Field(
         default=None,
-        widget="hidden",
         description="Guidance preset to use for image generation.",
+        json_schema_extra={"widget": "hidden"},
     )
 
 

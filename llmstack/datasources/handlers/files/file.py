@@ -22,24 +22,25 @@ logger = logging.getLogger(__name__)
 
 class FileSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="file",
         description="File to be processed",
-        accepts={
-            "application/pdf": [],
-            "application/json": [],
-            "audio/mpeg": [],
-            "application/rtf": [],
-            "text/plain": [],
-            "text/csv": [],
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
-            "audio/mp3": [],
-            "video/mp4": [],
-            "video/webm": [],
+        json_schema_extra={
+            "widget": "file",
+            "maxSize": 25000000,
+            "maxFiles": 4,
+            "accepts": {
+                "application/pdf": [],
+                "application/json": [],
+                "audio/mpeg": [],
+                "application/rtf": [],
+                "text/plain": [],
+                "text/csv": [],
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
+                "audio/mp3": [],
+                "video/mp4": [],
+                "video/webm": [],
+            },
         },
-        maxSize=25000000,
-        maxFiles=4,
     )
 
     @staticmethod

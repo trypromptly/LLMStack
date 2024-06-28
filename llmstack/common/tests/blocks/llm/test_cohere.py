@@ -21,14 +21,14 @@ class CohereGenerateAPIProcessorTestCase(unittest.TestCase):
 
     def test_valid_generate(self):
         result = CohereGenerateAPIProcessor(
-            configuration=CohereGenerateAPIProcessorConfiguration().dict(),
+            configuration=CohereGenerateAPIProcessorConfiguration().model_dump(),
         ).process(
             input=CohereGenerateAPIProcessorInput(
                 prompt="Hi",
                 env=CohereAPIInputEnvironment(
                     cohere_api_key=self.api_key,
                 ),
-            ).dict(),
+            ).model_dump(),
         )
 
         self.assertTrue(len(result.choices) > 0)

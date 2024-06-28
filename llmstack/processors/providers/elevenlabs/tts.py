@@ -51,7 +51,7 @@ class TextToSpeechOutput(ApiProcessorSchema):
     audio_content: Optional[str] = Field(
         default=None,
         description="The output audio content in base64 format.",
-        widget=AUDIO_WIDGET_NAME,
+        json_schema_extra={"widget": AUDIO_WIDGET_NAME},
     )
 
 
@@ -89,7 +89,7 @@ async def convert_text_to_speech(ws_uri, voice_settings, api_key, input_asset_st
             json.dumps(
                 {
                     "text": " ",
-                    "voice_settings": voice_settings.dict(),
+                    "voice_settings": voice_settings.model_dump(),
                     "xi_api_key": api_key,
                 }
             )
@@ -200,7 +200,7 @@ class ElevenLabsTextToSpeechProcessor(
         data = {
             "text": sanitize_input(self._input.input_text),
             "model_id": self._config.tts_model_id,
-            "voice_settings": self._config.voice_settings.dict(),
+            "voice_settings": self._config.voice_settings.model_dump(),
         }
 
         response = requests.post(

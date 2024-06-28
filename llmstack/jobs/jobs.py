@@ -112,12 +112,12 @@ class AppRunTaskRunner(TaskRunner):
             kwargs=AppRunTaskRunner.SubTaskArgs(
                 app_id=job_meta.app_id,
                 use_session=job_meta.use_session,
-            ).dict(),
+            ).model_dump(),
             on_success=on_success_callback,
             on_failure=on_failure_callback,
             meta=job_meta.copy(
                 deep=True, update={"input_data_index": job_meta.input_data_index + job_meta.batch_size}
-            ).dict(),
+            ).model_dump(),
             result_ttl=job_meta.result_ttl,
         )
 
@@ -130,7 +130,7 @@ def _schedule_next_batch(task_run_log_uuid, input_data, input_data_index, batch_
             task_run_log_uuid,
             input_data_index,
             [
-                SubTaskResult(status=TaskStatus.FAILURE, output="Task cancelled by user").dict()
+                SubTaskResult(status=TaskStatus.FAILURE, output="Task cancelled by user").model_dump()
                 for _ in range(input_data_index, len(input_data))
             ],
         )
@@ -168,7 +168,7 @@ def on_failure_callback(job, connection, type, value, traceback):
         job.meta["task_run_log_uuid"],
         job.meta["input_data_index"],
         [
-            SubTaskResult(status=TaskStatus.FAILURE, error=f"Exception: {type}, detail: {value}").dict()
+            SubTaskResult(status=TaskStatus.FAILURE, error=f"Exception: {type}, detail: {value}").model_dump()
             for _ in range(job.meta["batch_size"])
         ],
     )
@@ -183,7 +183,7 @@ def run_subtask(task_run_type, task_run_log_uuid, input_data_index, batch_size, 
     if task_run_type == "app_run":
         subtask_results = AppRunTaskRunner.run_subtask(input_data_batch, *args, **kwargs)
 
-    return list(map(lambda x: x.dict(), subtask_results))
+    return list(map(lambda x: x.model_dump(), subtask_results))
 
 
 def run_app_task(app_id=None, input_data=None, *args, **kwargs):
@@ -208,7 +208,7 @@ def run_app_task(app_id=None, input_data=None, *args, **kwargs):
         kwargs=AppRunTaskRunner.SubTaskArgs(
             app_id=app_id,
             use_session=use_session,
-        ).dict(),
+        ).model_dump(),
         on_success=on_success_callback,
         on_failure=on_failure_callback,
         meta=AppRunTaskRunner.JobMetadata(
@@ -221,11 +221,11 @@ def run_app_task(app_id=None, input_data=None, *args, **kwargs):
             result_ttl=result_ttl,
             app_id=app_id,
             use_session=use_session,
-        ).dict(),
+        ).model_dump(),
         result_ttl=result_ttl,
     )
 
-    return [SubTaskResult().dict()] * len(input_data)
+    return [SubTaskResult().model_dump()] * len(input_data)
 
 
 def upsert_datasource_entry_subtask(datasource_id, input_data):
@@ -264,12 +264,12 @@ def post_upsert_datasource_task(
             task_run_log.result[input_index] = SubTaskResult(
                 status=TaskStatus.SUCCESS,
                 output="success",
-            ).dict()
+            ).model_dump()
         else:
             task_run_log.result[input_index] = SubTaskResult(
                 status=TaskStatus.FAILURE,
                 error=response,
-            ).dict()
+            ).model_dump()
         task_run_log.save()
 
     # If there are more input data to process, schedule the next task
@@ -373,4 +373,4 @@ def upsert_datasource_entries_task(datasource_id, input_data, *args, **kwargs):
         result_ttl=result_ttl,
     )
 
-    return [SubTaskResult().dict()] * len(input_data)
+    return [SubTaskResult().model_dump()] * len(input_data)

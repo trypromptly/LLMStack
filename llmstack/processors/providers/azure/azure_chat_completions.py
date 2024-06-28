@@ -52,7 +52,7 @@ class AzureChatCompletionsInput(ApiProcessorSchema):
     chat_history: List[ChatMessage] = Field(
         default=[],
         description="A list of messages, each with a role and message text.",
-        widget="hidden",
+        json_schema_extra={"widget": "hidden"},
     )
     messages: List[ChatMessage] = Field(
         default=[
@@ -66,7 +66,7 @@ class AzureChatCompletionsOutput(ApiProcessorSchema):
     choices: List[ChatMessage] = Field(
         default=[],
         description="Messages",
-        widget=CHAT_WIDGET_NAME,
+        json_schema_extra={"widget": CHAT_WIDGET_NAME},
     )
 
 
@@ -144,9 +144,8 @@ class AzureChatCompletionsConfiguration(ApiProcessorSchema):
     auto_prune_chat_history: Optional[bool] = Field(
         default=False,
         description="Automatically prune chat history. This is only applicable if 'retain_history' is set to 'true'.",
-        hidden=True,
     )
-    stream: Optional[bool] = Field(widget="hidden", default=True)
+    stream: Optional[bool] = Field(default=True, json_schema_extra={"widget": "hidden"})
 
 
 class AzureChatCompletions(

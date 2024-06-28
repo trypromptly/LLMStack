@@ -29,11 +29,7 @@ class ImagesVariationsInput(ApiProcessorSchema):
     image: Optional[str] = Field(
         default="",
         description="The image to use as the basis for the variation(s). Must be a valid PNG file, less than 4MB, and square.",
-        accepts={
-            "image/png": [],
-        },
-        maxSize=4000000,
-        widget="file",
+        json_schema_extra={"widget": "file", "maxSize": 4000000, "accepts": {"image/png": []}},
     )
     image_data: Optional[str] = Field(
         default="",
@@ -46,7 +42,7 @@ class ImagesVariationsOutput(ApiProcessorSchema):
     answer: List[str] = Field(
         default=[],
         description="The generated images.",
-        widget=IMAGE_WIDGET_NAME,
+        json_schema_extra={"widget": IMAGE_WIDGET_NAME},
     )
 
 
@@ -128,9 +124,9 @@ class ImagesVariations(
             ),
         )
         response: OpenAIImageVariationsProcessorOutput = OpenAIImageVariationsProcessor(
-            configuration=self._config.dict(),
+            configuration=self._config.model_dump(),
         ).process(
-            image_variations_api_processor_input.dict(),
+            image_variations_api_processor_input.model_dump(),
         )
 
         async_to_sync(self._output_stream.write)(

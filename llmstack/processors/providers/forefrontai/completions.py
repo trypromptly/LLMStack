@@ -28,7 +28,7 @@ class CompletionsInput(BaseModel):
 
 
 class CompletionsOutput(BaseModel):
-    result: str = Field(default="", widget=TEXT_WIDGET_NAME)
+    result: str = Field(default="", json_schema_extra={"widget": TEXT_WIDGET_NAME})
 
 
 class Completions(

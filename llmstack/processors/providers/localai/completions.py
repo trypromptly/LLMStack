@@ -25,15 +25,14 @@ class CompletionsInput(ApiProcessorSchema):
 
 
 class CompletionsOutput(ApiProcessorSchema):
-    choices: List[str] = Field(default=[], widget=TEXT_WIDGET_NAME)
+    choices: List[str] = Field(default=[], json_schema_extra={"widget": TEXT_WIDGET_NAME})
 
 
 class CompletionsConfiguration(ApiProcessorSchema):
     base_url: Optional[str] = Field(description="Base URL")
     model: str = Field(
         description="Model name",
-        widget="customselect",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "widget": "customselect"},
         options=["ggml-gpt4all-j"],
         default="ggml-gpt4all-j",
     )
@@ -107,12 +106,12 @@ class CompletionsProcessor(
                     top_p=self._config.top_p,
                     timeout=self._config.timeout,
                     stream=True,
-                ).dict(),
+                ).model_dump(),
             ).process_iter(
                 LocalAICompletionsAPIProcessorInput(
                     prompt=self._input.prompt,
                     env=OpenAIAPIInputEnvironment(openai_api_key=api_key),
-                ).dict(),
+                ).model_dump(),
             )
             for result in result_iter:
                 async_to_sync(self._output_stream.write)(
@@ -129,14 +128,14 @@ class CompletionsProcessor(
                     top_p=self._config.top_p,
                     timeout=self._config.timeout,
                     stream=False,
-                ).dict(),
+                ).model_dump(),
             ).process(
                 LocalAICompletionsAPIProcessorInput(
                     prompt=self._input.prompt,
                     env=OpenAIAPIInputEnvironment(
                         openai_api_key=api_key,
                     ),
-                ).dict(),
+                ).model_dump(),
             )
             choices = result.choices
             async_to_sync(self._output_stream.write)(

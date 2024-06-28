@@ -25,7 +25,7 @@ class Provider(str, Enum):
 
 
 class LLMImageGeneratorProcessorInput(ApiProcessorSchema):
-    input_message: str = Field(description="The input message for the LLM", widget="textarea")
+    input_message: str = Field(description="The input message for the LLM", json_schema_extra={"widget": "textarea"})
 
 
 class LLMImageGeneratorProcessorOutput(ApiProcessorSchema):
@@ -83,15 +83,10 @@ class StabilityAIModelConfig(BaseModel):
 
 class LLMImageGeneratorProcessorConfiguration(ApiProcessorSchema):
     provider_config: Union[OpenAIModelConfig, StabilityAIModelConfig] = Field(
-        descrmination_field="provider",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "descrmination_field": "provider"}
     )
 
-    seed: Optional[int] = Field(
-        default=None,
-        description="The seed used to generate the random number.",
-        advanced_parameter=True,
-    )
+    seed: Optional[int] = Field(default=None, description="The seed used to generate the random number.")
     height: Optional[int] = Field(
         default=1024,
         description="The height of the image to generate.",

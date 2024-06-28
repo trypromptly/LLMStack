@@ -36,7 +36,7 @@ class RealtimeAvatarInput(ApiProcessorSchema):
     task_input_json: Optional[Dict] = Field(
         description="The input of the task.",
         default=None,
-        widget="hidden",
+        json_schema_extra={"widget": "hidden"},
     )
     text: Optional[str] = Field(description="The text of the task.")
     session_id: Optional[str] = Field(
@@ -99,8 +99,7 @@ class RealtimeAvatarConfiguration(ApiProcessorSchema):
     )
 
     connection_id: Optional[str] = Field(
-        widget="connection",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
         description="Use your authenticated connection to make the request",
     )
 

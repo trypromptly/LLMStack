@@ -39,7 +39,7 @@ def process_datasource_add_entry_request(
         input_data,
     )
     datasource_entry_items = list(
-        map(lambda x: x.dict(), datasource_entry_items),
+        map(lambda x: x.model_dump(), datasource_entry_items),
     )
 
     datasource_entries = []

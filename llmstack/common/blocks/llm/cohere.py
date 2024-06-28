@@ -179,7 +179,7 @@ class CohereGenerateAPIProcessor(
                 ),
                 headers=self._get_api_headers(input, configuration),
                 authorization=APIKeyAuth(api_key=input.env.cohere_api_key),
-            ).dict(),
+            ).model_dump(),
         )
 
         # If the response is ok, return the choices

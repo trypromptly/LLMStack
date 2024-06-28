@@ -20,11 +20,7 @@ class AudioTranscriptionInput(ApiProcessorSchema):
     file: str = Field(
         default="",
         description="The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.",
-        accepts={
-            "audio/*": [],
-        },
-        maxSize=20000000,
-        widget="file",
+        json_schema_extra={"widget": "file", "accepts": {"audio/*": []}, "maxSize": 20000000},
     )
     file_data: Optional[str] = Field(
         default="",

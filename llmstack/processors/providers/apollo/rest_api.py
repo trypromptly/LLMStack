@@ -65,8 +65,7 @@ class RestApiConfiguration(ApiProcessorSchema):
     connection_id: str = Field(
         default="",
         description="Connection to use for the API call",
-        widget="connection",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
     )
 
 

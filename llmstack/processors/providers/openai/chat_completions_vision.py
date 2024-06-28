@@ -58,7 +58,7 @@ class UrlImageMessage(BaseModel):
 
 Message = Annotated[
     Union[TextMessage, UrlImageMessage],
-    Field(discriminator="type"),
+    Field(json_schema_extra={"descriminator": "type"}),
 ]
 
 
@@ -179,7 +179,7 @@ class ChatCompletionsVision(
             messages.append(
                 {
                     "role": "user",
-                    "content": [msg.dict() for msg in self._input.messages],
+                    "content": [msg.model_dump() for msg in self._input.messages],
                 },
             )
         else:

@@ -50,7 +50,7 @@ def hydrate_input(input, values):
             return [traverse(render(item)) for item in obj]
         elif isinstance(obj, BaseModel):
             cls = obj.__class__
-            return cls.parse_obj(traverse(obj.dict()))
+            return cls.model_validate(traverse(obj.model_dump()))
         elif isinstance(obj, str):
             return render(obj)
         return obj
@@ -260,7 +260,7 @@ class ApiProcessorInterface(
                 "output_ui_schema": cls.get_output_ui_schema(),  # Output UI schema of the processor
                 "config_ui_schema": cls.get_configuration_ui_schema(),  # Configuration UI schema of the processor
                 "output_template": (
-                    cls.get_output_template().dict() if cls.get_output_template() else None
+                    cls.get_output_template().model_dump() if cls.get_output_template() else None
                 ),  # Output template of the processor
             }
         ]
@@ -310,7 +310,7 @@ class ApiProcessorInterface(
         if isinstance(result, dict):
             return result
         elif isinstance(result, ApiProcessorSchema):
-            return result.dict()
+            return result.model_dump()
         else:
             logger.exception("Invalid result type")
             raise Exception("Invalid result type")
@@ -382,7 +382,7 @@ class ApiProcessorInterface(
 
     def tool_invoke_input(self, tool_args: dict) -> ToolInvokeInput:
         return self._get_input_class()(
-            **{**self._input.dict(), **tool_args},
+            **{**self._input.model_dump(), **tool_args},
         )
 
     def invoke(self, message: ToolInvokeInput) -> Any:

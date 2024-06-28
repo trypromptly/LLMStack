@@ -51,9 +51,9 @@ def get_database_configuration_class(engine: DatabaseEngineType) -> DatabaseConf
 def get_ssl_config(configuration: DatabaseConfigurationType) -> dict:
     ssl_config = {}
     if configuration.engine == DatabaseEngineType.POSTGRESQL:
-        ssl_config = get_pg_ssl_config(configuration.dict())
+        ssl_config = get_pg_ssl_config(configuration.model_dump())
     elif configuration.engine == DatabaseEngineType.MYSQL:
-        ssl_config = get_mysql_ssl_config(configuration.dict())
+        ssl_config = get_mysql_ssl_config(configuration.model_dump())
     return ssl_config
 
 

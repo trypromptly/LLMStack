@@ -109,10 +109,9 @@ class ImageToImageConfiguration(ApiProcessorSchema):
     )
     image_strength: Optional[float] = Field(
         default=0.35,
-        lte=1.0,
-        gte=0.0,
         multiple_of=0.01,
         description="How much influence the init_image has on the diffusion process. Values close to 1 will yield images very similar to the init_image while values close to 0 will yield images wildly different than the init_image.",
+        json_schema_extra={"lte": 1.0, "gte": 0.0},
     )
     cfg_scale: Optional[int] = Field(
         default=7,
@@ -134,12 +133,11 @@ class ImageToImageConfiguration(ApiProcessorSchema):
     num_samples: int = Field(
         default=1,
         description="Number of images to generate. Allows for batch image generations.",
-        advanced_parameter=True,
     )
     guidance_preset: Optional[GuidancePreset] = Field(
         default=None,
-        widget="hidden",
         description="Guidance preset to use for image generation.",
+        json_schema_extra={"widget": "hidden"},
     )
 
 
@@ -147,12 +145,7 @@ class ImageToImageInput(ApiProcessorSchema):
     image_file: Optional[str] = Field(
         default="",
         description="The file to extract text from",
-        accepts={
-            "image/jpeg": [],
-            "image/png": [],
-        },
-        maxSize=50000000,
-        widget="file",
+        json_schema_extra={"widget": "file", "accepts": {"image/*": []}, "maxSize": 50000000},
     )
     image_file_data: Optional[str] = Field(
         default="",

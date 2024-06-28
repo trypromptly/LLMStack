@@ -32,7 +32,7 @@ class Document(ApiProcessorSchema):
     content: str = Field(
         None,
         description="Content of the document",
-        widget="text",
+        json_schema_extra={"widget": "textarea"},
     )
     source: Optional[str] = Field(description="Source of the document")
     metadata: DocumentMetadata = Field(description="Metadata of the document")
@@ -48,8 +48,7 @@ class DataSourceSearchConfigurations(ApiProcessorSchema):
     datasources: List[str] = Field(
         None,
         description="Datasource to use",
-        widget="datasource",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "widget": "datasource"},
     )
     document_limit: int = Field(
         default=4,
@@ -59,7 +58,6 @@ class DataSourceSearchConfigurations(ApiProcessorSchema):
         title="Search filters",
         default=None,
         description="Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata",
-        advanced_parameter=True,
     )
     hybrid_semantic_search_ratio: Optional[float] = Field(
         default=0.75,

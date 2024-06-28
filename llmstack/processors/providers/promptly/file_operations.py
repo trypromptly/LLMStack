@@ -135,8 +135,15 @@ class FileOperationsOutput(ApiProcessorSchema):
 
 
 class FileOperationsConfiguration(ApiProcessorSchema):
-    operation: FileOperationOperation = Field(description="The operation to perform", advanced_parameter=False)
-    operation_config: str = Field(default="{}", description="Configuration for the operation", widget="textarea")
+    operation: FileOperationOperation = Field(
+        description="The operation to perform",
+        json_schema_extra={"advanced_parameter": False},
+    )
+    operation_config: str = Field(
+        default="{}",
+        description="Configuration for the operation",
+        json_schema_extra={"widget": "textarea"},
+    )
 
 
 def _create_archive(files, directory=""):
@@ -207,8 +214,8 @@ class FileOperationsProcessor(
 
     def get_bookkeeping_data(self) -> BookKeepingData:
         return BookKeepingData(
-            input=self._input.dict(exclude={"content"}),
-            config=self._config.dict(),
+            input=self._input.model_dump(exclude={"content"}),
+            config=self._config.model_dump(),
             output=self._output if self._output else {},
             session_data=self.session_data_to_persist() if self._session_enabled else {},
             timestamp=time.time(),

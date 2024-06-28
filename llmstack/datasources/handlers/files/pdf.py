@@ -27,13 +27,14 @@ logger = logging.getLogger(__name__)
 
 class PdfSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="file",
         description="File to be processed",
-        accepts={
-            "application/pdf": [],
+        json_schema_extra={
+            "widget": "file",
+            "accepts": {
+                "application/pdf": [],
+            },
+            "maxSize": 20000000,
         },
-        maxSize=20000000,
     )
 
     @staticmethod

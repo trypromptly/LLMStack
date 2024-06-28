@@ -26,7 +26,7 @@ class Chroma(VectorStoreInterface):
 
     def __init__(self, *args, **kwargs) -> None:
         configuration = ChromaConfiguration(**kwargs)
-        db_settings = chromadb.config.Settings(**configuration.dict())
+        db_settings = chromadb.config.Settings(**configuration.model_dump())
 
         if (
             db_settings.is_persistent

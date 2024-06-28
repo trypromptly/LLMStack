@@ -9,7 +9,7 @@ from llmstack.connections.types import ConnectionTypeInterface
 
 class APIKeyAuthenticationConfiguration(BaseSchema):
     api_key: str = Field(
-        widget="password",
+        json_schema_extra={"widget": "password"},
         description="Paste your API Key here",
     )
     header_key: Optional[str] = Field(

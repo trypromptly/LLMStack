@@ -50,9 +50,13 @@ class LLMProcessorInput(ApiProcessorSchema):
 
 
 class LLMProcessorOutput(ApiProcessorSchema):
-    output_str: Optional[str] = Field(description="The output string from the LLM", widget="hidden")
-    text: Optional[str] = Field(description="The output text from the LLM", widget="textarea")
-    objref: Optional[str] = Field(description="The object reference for the output", widget="hidden")
+    output_str: Optional[str] = Field(
+        description="The output string from the LLM", json_schema_extra={"widget": "hidden"}
+    )
+    text: Optional[str] = Field(description="The output text from the LLM", json_schema_extra={"widget": "textarea"})
+    objref: Optional[str] = Field(
+        description="The object reference for the output", json_schema_extra={"widget": "hidden"}
+    )
 
 
 class OpenAIModel(str, Enum):
@@ -118,15 +122,13 @@ class MistralModelConfig(BaseModel):
 
 class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
-        description="The system message for the LLM", json_schema_extra={"widget": "textarea"}, advanced_parameter=False
+        description="The system message for the LLM",
+        json_schema_extra={"widget": "textarea", "advanced_parameter": False},
     )
 
     provider_config: Union[
         OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig, MistralModelConfig
-    ] = Field(
-        descrmination_field="provider",
-        json_schema_extra={"advanced_parameter": False},
-    )
+    ] = Field(json_schema_extra={"advanced_parameter": False, "descrmination_field": "provider"})
 
     max_tokens: Optional[int] = Field(
         default=100,
@@ -151,13 +153,11 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
         default=False,
         title="Output as Object Reference",
         description="Return output as object reference instead of raw text.",
-        advanced_parameter=True,
     )
     retain_history: Optional[bool] = Field(
         default=False,
         title="Retain History",
         description="Retain the history of the conversation.",
-        advanced_parameter=True,
     )
     max_history: Optional[int] = Field(
         default=5,
@@ -165,7 +165,6 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
         description="The maximum number of messages to retain in the history.",
         le=100,
         ge=0,
-        advanced_parameter=True,
     )
 
 

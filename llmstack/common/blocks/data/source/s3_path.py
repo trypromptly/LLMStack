@@ -46,7 +46,7 @@ class S3Path(
         input: S3PathInput,
         configuration: S3PathConfiguration,
     ) -> DataSourceOutputSchema:
-        s3_client = boto3.client("s3", **configuration.dict())
+        s3_client = boto3.client("s3", **configuration.model_dump())
         data = s3_client.get_object(Bucket=input.bucket, Key=input.path)
         content = data["Body"].read()
         request_metadata = data["ResponseMetadata"]
@@ -54,18 +54,22 @@ class S3Path(
         return DataSourceOutputSchema(
             documents=[
                 DataDocument(
-                    content=content
-                    if isinstance(
-                        content,
-                        bytes,
-                    )
-                    else content.encode("utf-8"),
-                    context_text=content
-                    if isinstance(
-                        content,
-                        str,
-                    )
-                    else content.decode("utf-8"),
+                    content=(
+                        content
+                        if isinstance(
+                            content,
+                            bytes,
+                        )
+                        else content.encode("utf-8")
+                    ),
+                    context_text=(
+                        content
+                        if isinstance(
+                            content,
+                            str,
+                        )
+                        else content.decode("utf-8")
+                    ),
                     metadata={
                         "file_name": f"{input.bucket}/{input.path}",
                         **request_metadata,

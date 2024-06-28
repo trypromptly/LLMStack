@@ -19,22 +19,16 @@ logger = logging.getLogger(__name__)
 
 class HttpUriTextExtractorConfiguration(ApiProcessorSchema):
     document_limit: Optional[conint(ge=0, le=10)] = Field(
-        description="The maximum number of documents to return",
-        default=1,
-        advanced_parameter=True,
+        description="The maximum number of documents to return", default=1
     )
-    text_chunk_size: Optional[conint(ge=500, le=2000)] = Field(
-        description="Chunksize of document",
-        default=1500,
-        advanced_parameter=True,
-    )
+    text_chunk_size: Optional[conint(ge=500, le=2000)] = Field(description="Chunksize of document", default=1500)
 
 
 class HttpUriTextExtractorInput(ApiProcessorSchema):
     url: str = Field(
         default="",
         description="The URL to extract text from",
-        widget="text",
+        json_schema_extra={"widget": "text"},
     )
     query: Optional[str] = Field(
         default="",

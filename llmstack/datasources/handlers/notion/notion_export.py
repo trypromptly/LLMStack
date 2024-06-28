@@ -23,13 +23,14 @@ logger = logging.getLogger(__name__)
 
 class NotionExportSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="file",
         description="File to be processed",
-        accepts={
-            "application/zip": [],
+        json_schema_extra={
+            "widget": "file",
+            "accepts": {
+                "application/zip": [],
+            },
+            "maxSize": 10000000,
         },
-        maxSize=10000000,
     )
 
     @staticmethod

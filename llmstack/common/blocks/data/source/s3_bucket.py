@@ -39,7 +39,7 @@ class S3Bucket(
         configuration: S3BucketConfiguration,
     ) -> DataSourceOutputSchema:
         documents = []
-        s3_client = boto3.client("s3", **configuration.dict())
+        s3_client = boto3.client("s3", **configuration.model_dump())
         try:
             input_regex = re.compile(input.regex) if input.regex else None
         except Exception:

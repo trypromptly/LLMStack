@@ -20,14 +20,15 @@ logger = logging.getLogger(__name__)
 
 class TxtFileSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="file",
         description="File to be processed",
-        accepts={
-            "application/rtf": [],
-            "text/plain": [],
+        json_schema_extra={
+            "widget": "file",
+            "accepts": {
+                "application/rtf": [],
+                "text/plain": [],
+            },
+            "maxSize": 20000000,
         },
-        maxSize=20000000,
     )
 
     @staticmethod

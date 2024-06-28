@@ -63,7 +63,7 @@ class ImagesGenerationsOutput(ApiProcessorSchema):
     data: List[str] = Field(
         default=[],
         description="The generated images.",
-        widget=IMAGE_WIDGET_NAME,
+        json_schema_extra={"widget": IMAGE_WIDGET_NAME},
     )
 
 

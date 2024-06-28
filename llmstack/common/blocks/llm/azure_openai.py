@@ -151,7 +151,7 @@ class AzureOpenAIAPIProcessor(
         http_status_is_ok = True
         error_message = ""
         for http_response in http_api_processor.process_iter(
-            http_input.dict(),
+            http_input.model_dump(),
         ):
             if http_response.is_ok:
                 if http_response.text == "data: [DONE]":
@@ -203,7 +203,7 @@ class AzureOpenAIAPIProcessor(
         )
 
         http_response = http_api_processor.process(
-            http_input.dict(),
+            http_input.model_dump(),
         )
 
         # If the response is ok, return the choices

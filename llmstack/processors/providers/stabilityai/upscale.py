@@ -34,12 +34,14 @@ class UpscaleProcessorInput(ApiProcessorSchema):
     image_file: Optional[str] = Field(
         default="",
         description="The file to extract text from",
-        accepts={
-            "image/jpeg": [],
-            "image/png": [],
+        json_schema_extra={
+            "widget": "file",
+            "accepts": {
+                "image/jpeg": [],
+                "image/png": [],
+            },
+            "maxSize": 9000000,
         },
-        maxSize=9000000,
-        widget="file",
     )
     image_file_data: Optional[str] = Field(
         default="",

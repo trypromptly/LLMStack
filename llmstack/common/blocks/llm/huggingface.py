@@ -67,7 +67,7 @@ class HuggingfaceEndpointProcessor(
         configuration: HuggingfaceEndpointProcessorConfiguration,
     ) -> HuggingfaceEndpointProcessorOutput:
         huggingfacehub_api_token = input.env.huggingfacehub_api_key
-        model_params = input.dict().get("model_args", {})
+        model_params = input.model_dump().get("model_args", {})
         request_payload = {"inputs": input.inputs, "parameters": model_params}
 
         http_input = HttpAPIProcessorInput(
@@ -79,8 +79,8 @@ class HuggingfaceEndpointProcessor(
         http_response = HttpAPIProcessor(
             configuration=HttpAPIProcessorConfiguration(
                 timeout=120,
-            ).dict(),
-        ).process(input=http_input.dict())
+            ).model_dump(),
+        ).process(input=http_input.model_dump())
 
         if (
             isinstance(

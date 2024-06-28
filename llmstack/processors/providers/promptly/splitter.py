@@ -116,7 +116,11 @@ class FieldType(Schema):
 
 
 class OutputSchema(Schema):
-    fields: List[FieldType] = Field(title="Fields", description="Fields in transformed data", advanced_parameter=False)
+    fields: List[FieldType] = Field(
+        title="Fields",
+        description="Fields in transformed data",
+        json_schema_extra={"advanced_parameter": False},
+    )
 
 
 class SplitterProcessorConfiguration(ApiProcessorSchema):
@@ -124,25 +128,17 @@ class SplitterProcessorConfiguration(ApiProcessorSchema):
         default=False,
         title="Output as Object Reference",
         description="Return output as object reference instead of raw text.",
-        advanced_parameter=True,
     )
-    mode: SplitterMode = Field(
-        default=SplitterMode.TEXT,
-        title="Output Mode",
-        description="Output mode",
-        advanced_parameter=True,
-    )
+    mode: SplitterMode = Field(default=SplitterMode.TEXT, title="Output Mode", description="Output mode")
     merge_strategy: Optional[Union[NoStrategy, BasicStartegy, ByTitleStartegy]] = Field(
         default=None,
-        descriminator="type",
         title="Merge Strategy",
         description="Merge strategy",
-        advanced_parameter=True,
+        json_schema_extra={"descriminator": "type"},
     )
     output_schema: Optional[OutputSchema] = Field(
         title="Output Schema",
         description="Output schema",
-        advanced_parameter=True,
         default=OutputSchema(fields=[FieldType(name="part", value="{{_splitter_item}}")]),
     )
 

@@ -57,8 +57,7 @@ class PromptlyApp(Schema):
     promptly_app: str = Field(
         default="{}",
         description="Promptly App Configuration",
-        json_schema_extra={"advanced_parameter": False},
-        widget="promptlyapp_select",
+        json_schema_extra={"advanced_parameter": False, "widget": "promptlyapp_select"},
     )
     _input: Dict = {}
     _promptly_app_uuid: str = ""
@@ -90,8 +89,8 @@ class PromptlyApp(Schema):
 
 
 class PromptlyAppInput(Schema):
-    input: Dict = Field(default={}, description="Input", widget="hidden")
-    input_json: Optional[str] = Field(default="{}", description="Input JSON", widget="textarea")
+    input: Dict = Field(default={}, description="Input", json_schema_extra={"widget": "hidden"})
+    input_json: Optional[str] = Field(default="{}", description="Input JSON", json_schema_extra={"widget": "textarea"})
 
     @model_validator(mode="before")
     def validate_input(cls, values):
@@ -104,7 +103,7 @@ class PromptlyAppInput(Schema):
 class PromptlyAppOutput(Schema):
     text: str = Field(default="", description="Promptly App Output as Text")
     objref: Optional[str] = Field(default=None, description="Promptly App Output as Object Reference")
-    processing: Optional[bool] = Field(default=None, description="processing", widget="hidden")
+    processing: Optional[bool] = Field(default=None, description="processing", json_schema_extra={"widget": "hidden"})
 
 
 class PromptlyAppConfiguration(PromptlyApp):
@@ -112,7 +111,6 @@ class PromptlyAppConfiguration(PromptlyApp):
         default=False,
         title="Output as Object Reference",
         description="Return output as object reference instead of raw text.",
-        advanced_parameter=True,
     )
 
 

@@ -30,33 +30,28 @@ class DiscordAppConfigSchema(BaseSchema):
     app_id: str = Field(
         title="App ID",
         description="App ID of the Discord app. Your application's ID can be found in the URL of the your application console.",
-        required=True,
     )
     slash_command_name: str = Field(
         default="promptly",
         title="Slash Command Name",
         description="The name of the slash command that will be used to trigger the app.",
-        required=True,
     )
     slash_command_description: str = Field(
         title="Slash Command Description",
         default="Promptly App",
         description="The description of the slash command that will be used to trigger the app.",
-        required=True,
     )
     bot_token: str = Field(
         title="Bot Token",
-        widget="password",
+        json_schema_extra={"widget": "password"},
         description="Bot token of the Discord app. Your bot's token can be found in the Bot section of the your application console.",
-        required=True,
     )
     public_key: str = Field(
         title="Public Key",
-        widget="password",
+        json_schema_extra={"widget": "password"},
         description="Public key of the Discord app. Your public key can be found in the Bot section of the your application console.",
-        required=True,
     )
-    slash_command_id: Optional[str] = Field(widget="hidden")
+    slash_command_id: Optional[str] = Field(json_schema_extra={"widget": "hidden"})
 
 
 class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):

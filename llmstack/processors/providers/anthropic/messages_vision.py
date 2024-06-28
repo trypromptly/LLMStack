@@ -39,7 +39,7 @@ class UrlImageMessage(BaseModel):
 
 Message = Annotated[
     Union[TextMessage, UrlImageMessage],
-    Field(discriminator="type"),
+    Field(json_schema_extra={"descriminator": "type"}),
 ]
 
 

@@ -26,7 +26,7 @@ class Config(BaseModel):
         # Use the data from the dict to populate the fields
         self.__dict__.update(json.loads(self.data))
 
-        return self.dict(exclude={"is_encrypted", "config_type", "data"})
+        return self.model_dump(exclude={"is_encrypted", "config_type", "data"})
 
     def get_data(self, encrypt_fn):
         data = self.json(exclude={"is_encrypted", "config_type", "data"})

@@ -481,7 +481,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         logger.info(f"Adding {len(datasource_entry_items)} entries")
         for datasource_entry_item in datasource_entry_items:
             request.data["datasource_id"] = uid
-            request.data["input_data"] = datasource_entry_item.dict()
+            request.data["input_data"] = datasource_entry_item.model_dump()
 
             response = DataSourceEntryViewSet().upsert(request)
             logger.info(f"Response: {response}")

@@ -19,16 +19,17 @@ logger = logging.getLogger(__name__)
 
 class MediaFileSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="file",
         description="File to be processed",
-        accepts={
-            "audio/mpeg": [],
-            "audio/mp3": [],
-            "video/mp4": [],
-            "video/webm": [],
+        json_schema_extra={
+            "widget": "file",
+            "accepts": {
+                "audio/mpeg": [],
+                "audio/mp3": [],
+                "video/mp4": [],
+                "video/webm": [],
+            },
+            "maxSize": 20000000,
         },
-        maxSize=20000000,
     )
 
     @staticmethod
