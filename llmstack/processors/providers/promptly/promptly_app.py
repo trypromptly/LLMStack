@@ -5,7 +5,7 @@ import uuid
 from typing import Dict, List, Optional
 
 from asgiref.sync import async_to_sync
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.apps.yaml_loader import get_input_model_from_fields
@@ -66,7 +66,7 @@ class PromptlyApp(Schema):
     _input_schema: Dict = Field(default={}, description="Input Schema", widget="hidden")
     _tool_schema: Dict = Field(default={}, description="Tool Schema", widget="hidden")
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_input(cls, values):
         promptly_app = values.get("promptly_app", "{}")
         promptly_app_json = json.loads(promptly_app)
@@ -90,7 +90,7 @@ class PromptlyAppInput(Schema):
     input: Dict = Field(default={}, description="Input", widget="hidden")
     input_json: Optional[str] = Field(default="{}", description="Input JSON", widget="textarea")
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_input(cls, values):
         parsed_input = json.loads(values.get("input_json", "{}"))
         if parsed_input:

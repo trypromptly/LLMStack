@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import requests
 from asgiref.sync import async_to_sync
-from pydantic import Field, HttpUrl, root_validator
+from pydantic import Field, HttpUrl, model_validator
 from requests.auth import HTTPBasicAuth
 
 from llmstack.apps.schemas import OutputTemplate
@@ -197,7 +197,7 @@ class HttpAPIProcessorConfiguration(Schema):
         description="URL to the OpenAPI spec",
     )
     parse_openapi_spec: bool = Field(default=True)
-    _openapi_spec_parsed: bool = Field(default=False, widget="hidden")
+    _openapi_spec_parsed: bool = False
 
     allow_redirects: Optional[bool] = True
     timeout: Optional[float] = Field(
@@ -210,7 +210,7 @@ class HttpAPIProcessorConfiguration(Schema):
 
     _schema: Optional[str] = None
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_input(cls, values):
         openapi_spec = values.get("openapi_spec", None)
         openapi_spec_url = values.get("openapi_spec_url", None)

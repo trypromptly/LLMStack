@@ -13,7 +13,7 @@ from typing import Optional
 import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
@@ -105,7 +105,7 @@ class FileOperationsInput(ApiProcessorSchema):
         description="The mimetype of the file. If not provided, it will be inferred from the filename",
     )
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_content(cls, values):
         output_directory = values.get("output_directory", "")
         output_filename = values.get("output_filename")

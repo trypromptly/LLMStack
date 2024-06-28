@@ -4,7 +4,7 @@ import re
 from typing import Dict
 
 import requests
-from pydantic import root_validator
+from pydantic import model_validator
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.data.source import (
@@ -43,7 +43,7 @@ def validate_parse_data_uri(
 class UriInput(DataSourceInputSchema):
     uri: str
 
-    @root_validator()
+    @model_validator(mode="before")
     @classmethod
     def validate_url(cls, field_values) -> str:
         value = field_values.get("uri")

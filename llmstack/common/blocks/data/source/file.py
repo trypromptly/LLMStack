@@ -1,7 +1,7 @@
 import re
 
 import magic
-from pydantic import root_validator
+from pydantic import model_validator
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.data.source import (
@@ -21,7 +21,7 @@ class FileInput(DataSourceInputSchema):
     file: str
 
     @classmethod
-    @root_validator()
+    @model_validator(mode="before")
     def validate_file(cls, field_values) -> str:
         value = field_values.get("file")
         # TODO: Validate that file is a valid file path and the file exists

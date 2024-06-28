@@ -51,7 +51,7 @@ class Connection(BaseModel):
         return value.isoformat() if value else None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     def __str__(self):
         return f"{self.name} ({self.id})"
