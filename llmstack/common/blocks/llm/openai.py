@@ -796,10 +796,6 @@ class OpenAIImageVariationsProcessor(
             raise Exception(process_openai_error_response(http_response))
 
 
-class InputItem(Schema):
-    __root__: List[Any]
-
-
 class OpenAIEmbeddingsProcessorInput(OpenAIAPIProcessorInput):
     class Config:
         extra = Extra.forbid
@@ -808,7 +804,7 @@ class OpenAIEmbeddingsProcessorInput(OpenAIAPIProcessorInput):
         str,
         List[str],
         List[int],
-        List[InputItem],
+        List[Any],
     ] = Field(
         ...,
         description="Input text to get embeddings for, encoded as a string or array of tokens. To get embeddings for multiple inputs in a single request, pass an array of strings or array of token arrays. Each input must not exceed 8192 tokens in length.\n",
