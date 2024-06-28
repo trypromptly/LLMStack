@@ -47,6 +47,9 @@ toml = {version ="^0.10.2"}
 
 junos-eznc = {version="^2.6.8", optional=true}
 chromadb = "^0.5.3"
+psycopg2-binary = "^2.9.9"
+pydantic = "2.7.4"
+daphne = "^4.1.2"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
@@ -68,7 +71,6 @@ djangorestframework = {version = "^3.14.0"}
 django-flags = {version = "^5.0.12"}
 django-jsonform = {version = "^2.17.4"}
 django-ratelimit = {version = "^4.1.0"}
-pydantic = {version ="1.10.15" }
 croniter = {version ="^2.0.1"}
 pykka = {version = "^3.1.1" }
 asgiref = {version = "^3.6.0" }
@@ -112,7 +114,7 @@ pdfminer-six = {version = "^20221105" }
 markdown = {version = "^3.4.4" }
 python-pptx = {version = "^0.6.21" }
 python-magic = {version = "^0.4.27" }
-anthropic = {version ="^0.5.0"}
+anthropic = "^0.30.0"
 
 
 [tool.poetry-dynamic-versioning]
