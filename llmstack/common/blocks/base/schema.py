@@ -86,17 +86,13 @@ def get_ui_schema_from_json_schema(json_schema):
 
 
 class BaseSchema(BaseModel):
-    class Config:
-        json_dumps = custom_json_dumps
-        json_loads = custom_json_loads
-
     @classmethod
     def get_json_schema(cls):
-        return super().schema_json(indent=2)
+        return custom_json_dumps(super().model_json_schema())
 
     @classmethod
     def get_schema(cls):
-        schema = super().schema()
+        schema = super().model_json_schema()
         if "title" in schema:
             # Convert camel case to title case
             schema["title"] = (

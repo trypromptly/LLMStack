@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_json_schema_from_input_fields(name="", input_fields=[]):
-    return get_input_model_from_fields(name=name, input_fields=input_fields).schema()
+    return get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema()
 
 
 def get_tool_json_schema_from_input_fields(name="", input_fields=[]):
-    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).schema()
+    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema()
     tool_schema = {"type": "object", "properties": {}}
 
     for key, value in input_schema["properties"].items():
@@ -57,14 +57,14 @@ class PromptlyApp(Schema):
     promptly_app: str = Field(
         default="{}", description="Promptly App Configuration", advanced_parameter=False, widget="promptlyapp_select"
     )
-    _input: Dict = Field(default={}, description="Input", widget="hidden")
-    _promptly_app_uuid: str = Field(default="", description="Promptly App ID", widget="hidden")
-    _promptly_app_published_uuid: str = Field(default="", description="Promptly Published App ID", widget="hidden")
-    _promptly_app_version = Field(default="", description="Promptly App Version", widget="hidden")
-    _promptl_app_input_fields: List[Dict] = Field(default=[], description="Promptly App Input Fields", widget="hidden")
-    _proptly_app: Dict = Field(default={}, description="Promptly App Configuration", widget="hidden")
-    _input_schema: Dict = Field(default={}, description="Input Schema", widget="hidden")
-    _tool_schema: Dict = Field(default={}, description="Tool Schema", widget="hidden")
+    _input: Dict = {}
+    _promptly_app_uuid: str = ""
+    _promptly_app_published_uuid: str = ""
+    _promptly_app_version: str = ""
+    _promptl_app_input_fields: List[Dict] = []
+    _proptly_app: Dict = {}
+    _input_schema: Dict = {}
+    _tool_schema: Dict = {}
 
     @model_validator(mode="before")
     def validate_input(cls, values):

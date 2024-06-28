@@ -1,3 +1,4 @@
+import json
 import logging
 from abc import ABC, abstractmethod
 from typing import Generator, Generic, Optional, TypeVar
@@ -97,17 +98,17 @@ class ProcessorInterface(
     @classmethod
     def _get_input_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
-        return api_processor_interface_class.__args__[0].schema_json()
+        return json.dumps(api_processor_interface_class.__args__[0].model_json_schema())
 
     @classmethod
     def _get_output_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
-        return api_processor_interface_class.__args__[1].schema_json()
+        return json.dumps(api_processor_interface_class.__args__[1].model_json_schema())
 
     @classmethod
     def _get_configuration_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
-        return api_processor_interface_class.__args__[2].schema_json()
+        return json.dumps(api_processor_interface_class.__args__[2].model_json_schema())
 
     @classmethod
     def _get_input_ui_schema(cls) -> dict:

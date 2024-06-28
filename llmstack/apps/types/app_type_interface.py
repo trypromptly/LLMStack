@@ -1,4 +1,5 @@
 import copy
+import json
 from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
@@ -15,11 +16,11 @@ class BaseSchema(BaseModel):
 
     @classmethod
     def get_json_schema(cls):
-        return super().schema_json(indent=2)
+        return json.dumps(super().model_json_schema(), indent=2)
 
     @classmethod
     def get_schema(cls):
-        return super().schema()
+        return super().model_json_schema()
 
     # TODO: This is a copy of the same method in DataSourceTypeInterface.
     # Refactor to a common place.

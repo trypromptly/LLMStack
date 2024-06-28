@@ -448,11 +448,11 @@ def get_ui_schema_from_jsonschema(schema):
 
 
 def get_json_schema_from_input_fields(name="", input_fields=[]):
-    return get_input_model_from_fields(name=name, input_fields=input_fields).schema()
+    return get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema()
 
 
 def get_tool_json_schema_from_input_fields(name="", input_fields=[]):
-    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).schema()
+    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema()
     tool_schema = {"type": "object", "properties": {}}
 
     for key, value in input_schema["properties"].items():
