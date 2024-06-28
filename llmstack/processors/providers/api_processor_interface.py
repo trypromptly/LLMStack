@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, TypeVar
 
 import ujson as json
 from django import db
-from pydantic import AnyUrl, BaseModel
+from pydantic import BaseModel
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.assets.utils import get_asset_by_objref
@@ -56,17 +56,6 @@ def hydrate_input(input, values):
         return obj
 
     return traverse(input)
-
-
-class DataUrl(AnyUrl):
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(
-            {
-                "format": "data-url",
-                "pattern": r"data:(.*);name=(.*);base64,(.*)",
-            },
-        )
 
 
 class ApiProcessorSchema(_Schema):

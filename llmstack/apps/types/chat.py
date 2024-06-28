@@ -3,7 +3,6 @@ from typing import List, Optional
 from pydantic import Field
 
 from llmstack.apps.types.app_type_interface import AppTypeInterface, BaseSchema
-from llmstack.processors.providers.api_processor_interface import DataUrl
 
 
 class ChatAppConfigSchema(BaseSchema):
@@ -18,7 +17,7 @@ class ChatAppConfigSchema(BaseSchema):
         default="",
         description="Welcome message from assistant to show when the chat session starts",
     )
-    assistant_image: DataUrl = Field(
+    assistant_image: str = Field(
         title="Assistant Image",
         default="",
         description="Icon to show for the messages from assistant",
