@@ -41,7 +41,7 @@ class AudioTranslationsOutput(ApiProcessorSchema):
     text: str = Field(
         default="",
         description="The translated text",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 
@@ -49,7 +49,7 @@ class AudioTranslationsConfiguration(ApiProcessorSchema):
     model: str = Field(
         default="whisper-1",
         description="ID of the model to use. Only `whisper-1` is currently available.\n",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     response_format: Optional[str] = Field(
         "json",

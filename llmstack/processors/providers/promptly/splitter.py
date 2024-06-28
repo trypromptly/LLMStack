@@ -39,7 +39,7 @@ class SplitterProcessorInput(ApiProcessorSchema):
     content: Optional[str] = Field(
         default="",
         description="The contents of the file. Skip this field if you want to create an archive of the directory",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     content_uri: Optional[str] = Field(
         default=None,

@@ -45,13 +45,12 @@ class TextChatConfiguration(ApiProcessorSchema):
         default=None,
         description="Datasources to use",
         widget="datasource",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     system_message_prefix: str = Field(
         """You are a helpful chat assistant""",
         description="System message that defines the character of the assistant",
-        widget="textarea",
-        advanced_parameter=True,
+        json_schema_extra={"widget": "textarea"},
     )
     instructions: str = Field(
         """You are a chatbot that uses the provided context to answer the user's question.
@@ -59,7 +58,7 @@ If you cannot answer the question based on the provided context, say you don't k
 No answer should go out of the provided input. If the provided input is empty, return saying you don't know the answer.
 Keep the answers terse.""",
         description="Instructions for the chatbot",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         advanced_parameter=True,
     )
     show_citations: bool = Field(
@@ -70,7 +69,7 @@ Keep the answers terse.""",
     )
     citation_instructions: str = Field(
         """Use source value to provide citations for the answer. Citations must be in a new line after the answer.""",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         advanced_parameter=True,
         description="Instructions for the chatbot",
     )
@@ -141,9 +140,8 @@ class Citation(ApiProcessorSchema):
 
 class TextChatOutput(ApiProcessorSchema):
     answer: str = Field(
-        ...,
         description="Answer to the question",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     citations: Optional[List[Citation]]
 

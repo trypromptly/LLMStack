@@ -55,7 +55,10 @@ def get_input_ui_schema(input_fields=[]):
 
 class PromptlyApp(Schema):
     promptly_app: str = Field(
-        default="{}", description="Promptly App Configuration", advanced_parameter=False, widget="promptlyapp_select"
+        default="{}",
+        description="Promptly App Configuration",
+        json_schema_extra={"advanced_parameter": False},
+        widget="promptlyapp_select",
     )
     _input: Dict = {}
     _promptly_app_uuid: str = ""

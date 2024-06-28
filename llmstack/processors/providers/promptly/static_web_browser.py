@@ -28,7 +28,7 @@ class StaticWebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
         description="Connection to use",
         widget="connection",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     stream_video: bool = Field(
         description="Stream video of the browser",

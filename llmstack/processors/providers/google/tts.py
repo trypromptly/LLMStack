@@ -64,7 +64,7 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
     voice: VoiceConfig = Field(
         default=VoiceConfig(),
         description="Voice configuration.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     project_id: Optional[str] = Field(description="Google project ID.")
     audio_config: AudioConfig = Field(

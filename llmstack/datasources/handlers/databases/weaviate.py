@@ -38,7 +38,7 @@ class WeaviateConnection(_Schema):
     api_key: Optional[str] = Field(description="Weaviate API key")
     additional_headers: Optional[str] = Field(
         description="Weaviate headers. Please enter a JSON string.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         default="{}",
     )
 
@@ -98,11 +98,13 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
                     username=self._configuration.connection.username,
                     password=self._configuration.connection.password,
                     api_key=self._configuration.connection.api_key,
-                    additional_headers=json.loads(
-                        self._configuration.connection.additional_headers,
-                    )
-                    if self._configuration.connection.additional_headers
-                    else {},
+                    additional_headers=(
+                        json.loads(
+                            self._configuration.connection.additional_headers,
+                        )
+                        if self._configuration.connection.additional_headers
+                        else {}
+                    ),
                 ).dict(),
             )
 

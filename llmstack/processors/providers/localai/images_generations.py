@@ -48,7 +48,7 @@ class ImagesGenerationsConfiguration(ApiProcessorSchema):
     timeout: int = Field(
         default=60,
         description="Timeout in seconds",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
 

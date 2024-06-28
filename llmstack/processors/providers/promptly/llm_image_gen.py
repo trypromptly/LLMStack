@@ -84,7 +84,7 @@ class StabilityAIModelConfig(BaseModel):
 class LLMImageGeneratorProcessorConfiguration(ApiProcessorSchema):
     provider_config: Union[OpenAIModelConfig, StabilityAIModelConfig] = Field(
         descrmination_field="provider",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
     seed: Optional[int] = Field(
@@ -97,19 +97,19 @@ class LLMImageGeneratorProcessorConfiguration(ApiProcessorSchema):
         description="The height of the image to generate.",
         le=2048,
         ge=0,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     width: Optional[int] = Field(
         default=1024,
         description="The width of the image to generate.",
         le=2048,
         ge=0,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     aspect_ratio: Optional[str] = Field(
         default="1:1",
         description="The aspect ratio of the image to generate.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
 

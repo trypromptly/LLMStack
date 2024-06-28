@@ -49,7 +49,7 @@ class DataSourceSearchConfigurations(ApiProcessorSchema):
         None,
         description="Datasource to use",
         widget="datasource",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     document_limit: int = Field(
         default=4,

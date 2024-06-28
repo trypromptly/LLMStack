@@ -60,7 +60,7 @@ class ChatMessage(BaseModel):
     content: Optional[str] = Field(
         default="",
         description="The message text.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     name: Optional[str] = Field(
         default="",
@@ -84,7 +84,7 @@ class FunctionCall(ApiProcessorSchema):
     )
     parameters: Optional[str] = Field(
         title="Parameters",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         default=None,
         description="The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format.",
     )
@@ -94,7 +94,7 @@ class ChatCompletionsInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default="",
         description="A message from the system, which will be prepended to the chat history.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     chat_history: List[ChatMessage] = Field(
         default=[],
@@ -131,19 +131,19 @@ class ChatCompletionsConfiguration(
     model: ChatCompletionsModel = Field(
         default=ChatCompletionsModel.GPT_3_5,
         description="ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(
         1024,
         description="The maximum number of tokens allowed for the generated answer. By default, the number of tokens the model can return will be (4096 - prompt tokens).\n",
         example=1024,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
         default=0.7,
         description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
         example=1,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     n: Optional[conint(ge=1, le=128)] = Field(
         1,
@@ -154,7 +154,7 @@ class ChatCompletionsConfiguration(
     retain_history: Optional[bool] = Field(
         default=False,
         description="Retain and use the chat history. (Only works in apps)",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
     auto_prune_chat_history: Optional[bool] = Field(

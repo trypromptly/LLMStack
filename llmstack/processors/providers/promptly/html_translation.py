@@ -32,7 +32,7 @@ class HTMLTranslationInput(ApiProcessorSchema):
         description="Instructions for the translations",
         default="The output should be a JSON list without any code blocks. Translate the English content below between 2 lines of 0CigC9JQ9VLKOSYDkAfJVEnPv to German, and follow the guidelines below.",
         advanced_parameter=True,
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 

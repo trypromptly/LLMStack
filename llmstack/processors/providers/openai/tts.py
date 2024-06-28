@@ -46,12 +46,12 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
     model: TextToSpeechModel = Field(
         default=TextToSpeechModel.TTS_1,
         description="OpenAI model to use.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     voice: TextToSpeechVoice = Field(
         default=TextToSpeechVoice.ALLOY,
         description="Voice to use.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     response_format: Literal["mp3", "opus", "aac", "flac"] = Field(
         default="mp3",

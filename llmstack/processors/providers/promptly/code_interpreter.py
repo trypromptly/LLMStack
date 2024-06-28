@@ -28,7 +28,7 @@ class CodeInterpreterLanguage(str, Enum):
 
 
 class CodeInterpreterInput(ApiProcessorSchema):
-    code: str = Field(description="The code to run", widget="textarea", default="")
+    code: str = Field(description="The code to run", json_schema_extra={"widget": "textarea"}, default="")
     language: CodeInterpreterLanguage = Field(
         title="Language", description="The language of the code", default=CodeInterpreterLanguage.PYTHON
     )

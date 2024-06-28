@@ -46,7 +46,7 @@ class ChatMessage(BaseModel):
     content: Optional[str] = Field(
         default="",
         description="The message text.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     name: Optional[str] = Field(
         default="",
@@ -70,7 +70,7 @@ class FunctionCall(ApiProcessorSchema):
     )
     parameters: Optional[str] = Field(
         title="Parameters",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         default=None,
         description="The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format.",
     )
@@ -80,7 +80,7 @@ class ChatCompletionInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default="",
         description="A message from the system, which will be prepended to the chat history.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     messages: List[ChatMessage] = Field(
         default=[
@@ -107,7 +107,7 @@ class ChatCompletionsConfiguration(ApiProcessorSchema):
     model: str = Field(
         description="Model name",
         widget="customselect",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         options=["ggml-gpt4all-j"],
         default="ggml-gpt4all-j",
     )
@@ -120,7 +120,7 @@ class ChatCompletionsConfiguration(ApiProcessorSchema):
         default=0.7,
         description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
         example=1,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     stream: Optional[bool] = Field(
         default=False,

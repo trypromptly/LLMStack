@@ -34,7 +34,7 @@ class TestSchema(BaseSchema):
     test_password: str = Field("test", widget="password")
     test_non_advanced_parameter_str: str = Field(
         "test",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
     test_enum: TestEnum = TestEnum.TEST1

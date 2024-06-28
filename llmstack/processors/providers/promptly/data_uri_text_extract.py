@@ -65,7 +65,7 @@ class DataUriTextExtractorOutput(ApiProcessorSchema):
     text: str = Field(
         default="",
         description="The extracted text from the file",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 

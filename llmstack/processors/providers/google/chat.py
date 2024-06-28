@@ -73,7 +73,7 @@ class FunctionCall(ApiProcessorSchema):
     )
     parameters: Optional[str] = Field(
         title="Parameters",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         default=None,
         description="The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format.",
     )
@@ -83,7 +83,7 @@ class ChatInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default="",
         description="A message from the system, which will be prepended to the chat history.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     messages: List[Message] = Field(
         default=[],
@@ -117,12 +117,12 @@ class GenerationConfig(BaseModel):
 
 class ChatConfiguration(ApiProcessorSchema):
     model: GeminiModel = Field(
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         default=GeminiModel.GEMINI_PRO,
     )
     safety_settings: List[SafetySetting]
     generation_config: GenerationConfig = Field(
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         default=GenerationConfig(),
     )
     retain_history: bool = Field(

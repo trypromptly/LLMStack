@@ -47,7 +47,7 @@ class AzureChatCompletionsInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default="",
         description="A message from the system, which will be prepended to the chat history.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     chat_history: List[ChatMessage] = Field(
         default=[],
@@ -125,7 +125,7 @@ class AzureChatCompletionsConfiguration(ApiProcessorSchema):
     )
     base_url: Optional[str] = Field(
         description="This value can be found in the Keys & Endpoint section when examining your resource from the Azure portal. An example endpoint is: https://docs-test-001.openai.azure.com/.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     api_version: Optional[str] = Field(
         description="The API version to use",
@@ -133,13 +133,13 @@ class AzureChatCompletionsConfiguration(ApiProcessorSchema):
     )
     deployment_name: ChatCompletionsModel = Field(
         description="This value will correspond to the custom name you chose for your deployment when you deployed a model. This value can be found under Resource Management > Deployments in the Azure portal or alternatively under Management > Deployments in Azure OpenAI Studio.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         default=ChatCompletionsModel.GPT_4,
     )
     retain_history: Optional[bool] = Field(
         default=True,
         description="Retain and use the chat history. (Only works in apps)",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     auto_prune_chat_history: Optional[bool] = Field(
         default=False,

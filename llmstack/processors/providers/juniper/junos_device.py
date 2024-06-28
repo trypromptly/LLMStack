@@ -24,7 +24,7 @@ class JunosDeviceConfiguration(ApiProcessorSchema):
     connection_id: str = Field(
         description="Junos login connection to use",
         required=True,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         widget="connection",
     )
 

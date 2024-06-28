@@ -21,11 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class WebLoginBaseConfiguration(BaseSchema):
-    _storage_state: str = Field(
-        description="Storage state",
-        widget="textarea",
-        hidden=True,
-    )
+    _storage_state: str
 
 
 class WebLoginConfiguration(WebLoginBaseConfiguration):

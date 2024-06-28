@@ -41,7 +41,7 @@ class SpeechToTextConfiguration(ApiProcessorSchema):
     objref: Optional[bool] = Field(
         default=False,
         description="Return output as object reference instead of raw text.",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
     )
     project_id: Optional[str] = Field(description="Google project ID.")
     auth_token: Optional[str] = Field(

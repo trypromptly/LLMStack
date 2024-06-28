@@ -93,7 +93,7 @@ class ImageToImageConfiguration(ApiProcessorSchema):
     engine_id: StabilityAIModel = Field(
         default=StabilityAIModel.STABLE_DIFFUSION_XL,
         description="Inference engine (model) to use.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     height: Optional[int] = Field(
         default=512,
@@ -129,7 +129,7 @@ class ImageToImageConfiguration(ApiProcessorSchema):
     seed: Optional[int] = Field(
         default=0,
         description="Seed for random latent noise generation. Deterministic if not being used in concert with CLIP Guidance. If not specified, or set to 0, then a random value will be used.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     num_samples: int = Field(
         default=1,

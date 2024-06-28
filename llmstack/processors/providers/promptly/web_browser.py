@@ -88,12 +88,12 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
         description="Connection to use",
         widget="connection",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     model: Model = Field(
         description="Backing model to use",
         default=Model.GPT_4_O,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     stream_video: bool = Field(
         description="Stream video of the browser",
@@ -118,7 +118,7 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     system_message: str = Field(
         description="System message to use",
         default=DEFAULT_SYSTEM_MESSAGE,
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     seed: Optional[int] = Field(
         description="Seed to use for random number generator",

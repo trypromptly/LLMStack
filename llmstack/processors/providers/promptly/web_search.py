@@ -42,7 +42,7 @@ class WebSearchInput(ApiProcessorSchema):
     query: str = Field(
         default="",
         description="Query to search for",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 

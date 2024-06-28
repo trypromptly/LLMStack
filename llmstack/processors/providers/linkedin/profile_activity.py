@@ -48,7 +48,7 @@ class ProfileActivityConfiguration(ApiProcessorSchema):
     connection_id: str = Field(
         description="LinkedIn login session connection to use",
         required=True,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         widget="connection",
     )
     n_posts: int = Field(

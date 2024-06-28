@@ -16,18 +16,18 @@ class WebAppConfigSchema(BaseSchema):
         title="Allowed Sites to Embed this App",
         default=[],
         description="List of domains that are allowed to embed this app. Leave empty to allow all sites.",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
         hidden=True,
     )
     layout: Optional[str] = Field(
         title="Layout",
         description="Layout to use for the app page",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     init_on_load: Optional[bool] = Field(
         title="Initialize processors on load. Use this for apps like realtime avatars.",
         description="If checked, the app will be initialized when the page is loaded. This is useful for apps that need to be initialized before the user interacts with them.",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
         hidden=True,
     )
 

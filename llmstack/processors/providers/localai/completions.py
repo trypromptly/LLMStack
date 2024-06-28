@@ -33,7 +33,7 @@ class CompletionsConfiguration(ApiProcessorSchema):
     model: str = Field(
         description="Model name",
         widget="customselect",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         options=["ggml-gpt4all-j"],
         default="ggml-gpt4all-j",
     )
@@ -47,7 +47,7 @@ class CompletionsConfiguration(ApiProcessorSchema):
         default=0.7,
         description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
         example=1,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     top_p: Optional[confloat(ge=0.0, le=1.0, multiple_of=0.1)] = Field(
         default=1,

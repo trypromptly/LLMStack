@@ -59,12 +59,12 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
     voice_id: str = Field(
         default="21m00Tcm4TlvDq8ikWAM",
         description="Voice ID to be used, you can use https://api.elevenlabs.io/v1/voices to list all the available voices.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     tts_model_id: str = Field(
         default="eleven_monolingual_v1",
         description="Identifier of the model that will be used, you can query them using GET https://api.elevenlabs.io/v1/models.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     optimize_streaming_latency: int = Field(
         default=0,

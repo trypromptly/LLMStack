@@ -35,30 +35,28 @@ class ChatAppConfigSchema(BaseSchema):
     chat_bubble_text: Optional[str] = Field(
         title="App Bubble Text",
         description="Text to show in the app bubble when embedded in another page. If not provided, it shows chat bubble icon.",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
     )
     chat_bubble_style: Optional[str] = Field(
         title="App Bubble Style",
         description="CSS style object to apply to the app bubble when embedded in another page",
-        advanced_parameter=True,
-        widget="textarea",
+        json_schema_extra={"widget": "textarea", "advanced_parameter": True},
     )
     suggested_messages: List[str] = Field(
         title="Suggested messages",
         default=[],
         description="List of upto 3 suggested messages to show to the user",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
     )
     layout: Optional[str] = Field(
         title="Layout",
         description="Layout to use for the app page",
-        widget="textarea",
-        advanced_parameter=True,
+        json_schema_extra={"widget": "textarea", "advanced_parameter": True},
     )
     init_on_load: Optional[bool] = Field(
         title="Initialize processors on load. Use this for apps like realtime avatars.",
         description="If checked, the app will be initialized when the page is loaded. This is useful for apps that need to be initialized before the user interacts with them.",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
         hidden=True,
     )
 

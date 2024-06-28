@@ -44,7 +44,9 @@ class Provider(str, Enum):
 
 
 class LLMProcessorInput(ApiProcessorSchema):
-    input_message: str = Field(description="The input message for the LLM", widget="textarea", default="")
+    input_message: str = Field(
+        description="The input message for the LLM", json_schema_extra={"widget": "textarea"}, default=""
+    )
 
 
 class LLMProcessorOutput(ApiProcessorSchema):
@@ -116,14 +118,14 @@ class MistralModelConfig(BaseModel):
 
 class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
-        description="The system message for the LLM", widget="textarea", advanced_parameter=False
+        description="The system message for the LLM", json_schema_extra={"widget": "textarea"}, advanced_parameter=False
     )
 
     provider_config: Union[
         OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig, MistralModelConfig
     ] = Field(
         descrmination_field="provider",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
     max_tokens: Optional[int] = Field(
@@ -131,19 +133,19 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
         description="The maximum number of tokens to generate before stopping.",
         le=8192,
         ge=0,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     seed: Optional[int] = Field(
         default=None,
         description="The seed used to generate the random number.",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
     )
     temperature: Optional[float] = Field(
         default=0.7,
         description="The temperature of the random number generator.",
         le=1.0,
         ge=0.0,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     objref: Optional[bool] = Field(
         default=False,
