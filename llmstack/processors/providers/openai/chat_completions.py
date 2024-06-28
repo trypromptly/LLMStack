@@ -122,10 +122,6 @@ class ChatCompletionsOutput(ApiProcessorSchema):
         description="Messages",
         widget=CHAT_WIDGET_NAME,
     )
-    _api_response: Optional[dict] = Field(
-        default={},
-        description="Raw processor output.",
-    )
 
 
 class ChatCompletionsConfiguration(

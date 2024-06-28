@@ -68,10 +68,6 @@ class AzureChatCompletionsOutput(ApiProcessorSchema):
         description="Messages",
         widget=CHAT_WIDGET_NAME,
     )
-    _api_response: Optional[dict] = Field(
-        default={},
-        description="Raw processor output.",
-    )
 
 
 def num_tokens_from_messages(messages, model="gpt-35-turbo"):

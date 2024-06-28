@@ -100,10 +100,6 @@ class ChatCompletionsOutput(ApiProcessorSchema):
         description="Messages",
         widget=CHAT_WIDGET_NAME,
     )
-    _api_response: Optional[dict] = Field(
-        default={},
-        description="Raw processor output.",
-    )
 
 
 class ChatCompletionsConfiguration(ApiProcessorSchema):
@@ -190,11 +186,13 @@ class ChatCompletions(
                     OpenAIFunctionCall(
                         name=function.name,
                         description=function.description,
-                        parameters=json.loads(
-                            function.parameters,
-                        )
-                        if function.parameters is not None
-                        else {},
+                        parameters=(
+                            json.loads(
+                                function.parameters,
+                            )
+                            if function.parameters is not None
+                            else {}
+                        ),
                     ),
                 )
 
