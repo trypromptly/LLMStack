@@ -14,9 +14,9 @@ from llmstack.common.blocks.data.store.vectorstore import (
 
 
 class ChromaConfiguration(BaseModel):
-    _type = "Chroma"
-    anonymized_telemetry = False
-    is_persistent = True
+    _type: str = "Chroma"
+    anonymized_telemetry: bool = False
+    is_persistent: bool = True
 
 
 class Chroma(VectorStoreInterface):
@@ -121,11 +121,13 @@ class Chroma(VectorStoreInterface):
         return Document(
             content_key,
             result["documents"][0] if len(result["documents"]) > 0 else None,
-            {
-                **result["metadatas"][0],
-            }
-            if len(result["metadatas"]) > 0
-            else None,
+            (
+                {
+                    **result["metadatas"][0],
+                }
+                if len(result["metadatas"]) > 0
+                else None
+            ),
         )
 
     def hybrid_search(

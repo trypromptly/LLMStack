@@ -103,7 +103,7 @@ class ChatCompletionsInput(ApiProcessorSchema):
     )
     messages: List[ChatMessage] = Field(
         default=[
-            ChatMessage(),
+            ChatMessage(role=Role.USER, function_call=None),
         ],
         description="A list of messages, each with a role and message text.",
     )

@@ -61,7 +61,7 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
         description="Voice ID to be used, you can use https://api.elevenlabs.io/v1/voices to list all the available voices.",
         advanced_parameter=False,
     )
-    model_id: str = Field(
+    tts_model_id: str = Field(
         default="eleven_monolingual_v1",
         description="Identifier of the model that will be used, you can query them using GET https://api.elevenlabs.io/v1/models.",
         advanced_parameter=False,
@@ -176,7 +176,7 @@ class ElevenLabsTextToSpeechProcessor(
 
         run_coro_in_new_loop(
             convert_text_to_speech(
-                f"wss://api.elevenlabs.io/v1/text-to-speech/{self._config.voice_id}/stream-input?model_id={self._config.model_id}",
+                f"wss://api.elevenlabs.io/v1/text-to-speech/{self._config.voice_id}/stream-input?model_id={self._config.tts_model_id}",
                 self._config.voice_settings,
                 self._env.get("elevenlabs_api_key", None),
                 input_asset_stream,
@@ -199,7 +199,7 @@ class ElevenLabsTextToSpeechProcessor(
 
         data = {
             "text": sanitize_input(self._input.input_text),
-            "model_id": self._config.model_id,
+            "model_id": self._config.tts_model_id,
             "voice_settings": self._config.voice_settings.dict(),
         }
 
