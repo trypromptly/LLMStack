@@ -5207,7 +5207,7 @@ files = [
 name = "pynacl"
 version = "1.5.0"
 description = "Python binding to the Networking and Cryptography (NaCl) library"
-optional = true
+optional = false
 python-versions = ">=3.6"
 files = [
     {file = "PyNaCl-1.5.0-cp36-abi3-macosx_10_10_universal2.whl", hash = "sha256:401002a4aaa07c9414132aaed7f6836ff98f59277a234704ff66878c2ee4a0d1"},
@@ -8404,4 +8404,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "2f07514ea42db5bf90003a16462c15dc61e29bcbaa3cfb21cd05271a36a72b3b"
+content-hash = "ac310e0ef2e69934f02f7cddd3979fae76b86be8327297b517999f8e66d7e678"
