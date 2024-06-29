@@ -141,20 +141,20 @@ class Citation(BaseModel):
 
 
 class CitationMetadata(BaseModel):
-    citations: Optional[List[Citation]]
+    citations: Optional[List[Citation]] = None
 
 
 class SafetyAttributes(BaseModel):
-    categories: Optional[List[str]]
+    categories: Optional[List[str]] = None
     blocked: bool
     scores: List[float]
 
 
 class ToolCall(BaseModel):
-    id: Optional[str]
+    id: Optional[str] = None
     """The ID of the tool call."""
 
-    function: Optional[FunctionCall]
+    function: Optional[FunctionCall] = None
     """The function that the model called."""
 
     type: Literal["function"]
@@ -162,12 +162,16 @@ class ToolCall(BaseModel):
 
 
 class ChatOutput(ApiProcessorSchema):
-    content: Optional[str] = Field(description="Generated prediction content.")
-    function_calls: Optional[List[ToolCall]] = Field()
+    content: Optional[str] = Field(default=None, description="Generated prediction content.")
+    function_calls: Optional[List[ToolCall]] = Field(
+        default=None,
+    )
     citationMetadata: Optional[CitationMetadata] = Field(
+        default=None,
         description="Metadata for the citations found in the response.",
     )
     safetyAttributes: Optional[SafetyAttributes] = Field(
+        default=None,
         description="Safety attributes for the response.",
     )
 

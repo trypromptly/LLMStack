@@ -73,10 +73,10 @@ def convert_to_json(input_string):
 class WeaviateConfiguration(BaseModel):
     _type = "weaviate"
     url: str
-    openai_key: Optional[str]
-    cohere_api_key: Optional[str]
-    huggingface_api_key: Optional[str]
-    azure_openai_key: Optional[str]
+    openai_key: Optional[str] = None
+    cohere_api_key: Optional[str] = None
+    huggingface_api_key: Optional[str] = None
+    azure_openai_key: Optional[str] = None
     weaviate_rw_api_key: Optional[str] = None
     embeddings_rate_limit: Optional[int] = 3000
     default_batch_size: Optional[int] = 20

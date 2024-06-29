@@ -36,9 +36,11 @@ class HTMLTranslationInput(ApiProcessorSchema):
 
 
 class HTMLTranslationOutput(ApiProcessorSchema):
-    translated_html: Optional[str] = Field(description="Translated HTML", json_schema_extra={"widget": "textarea"})
-    total_extracted_strings: Optional[int] = Field(description="Total extracted strings")
-    total_translated_strings: Optional[int] = Field(description="Total translated strings")
+    translated_html: Optional[str] = Field(
+        default=None, description="Translated HTML", json_schema_extra={"widget": "textarea"}
+    )
+    total_extracted_strings: Optional[int] = Field(default=0, description="Total extracted strings")
+    total_translated_strings: Optional[int] = Field(default=0, description="Total translated strings")
 
 
 class HTMLSelectorAttribute(BaseSchema):

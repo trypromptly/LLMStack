@@ -26,6 +26,7 @@ class SingleStoreConnection(BaseSchema):
 
 class SingleStoreDatabaseSchema(DataSourceSchema):
     connection: Optional[SingleStoreConnection] = Field(
+        default=None,
         description="SingleStore connection details",
     )
 
@@ -33,7 +34,7 @@ class SingleStoreDatabaseSchema(DataSourceSchema):
 class SingleStoreConnectionConfiguration(Config):
     config_type = "singlestore_connection"
     is_encrypted = True
-    singlestore_config: Optional[Dict]
+    singlestore_config: Optional[Dict] = None
 
 
 class SingleStoreDataSource(DataSourceProcessor[SingleStoreDatabaseSchema]):

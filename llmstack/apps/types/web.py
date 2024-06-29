@@ -19,11 +19,13 @@ class WebAppConfigSchema(BaseSchema):
         json_schema_extra={"advanced_parameter": True, "hidden": True},
     )
     layout: Optional[str] = Field(
+        default=None,
         title="Layout",
         description="Layout to use for the app page",
         json_schema_extra={"widget": "textarea"},
     )
     init_on_load: Optional[bool] = Field(
+        default=None,
         title="Initialize processors on load. Use this for apps like realtime avatars.",
         description="If checked, the app will be initialized when the page is loaded. This is useful for apps that need to be initialized before the user interacts with them.",
         json_schema_extra={"advanced_parameter": True, "hidden": True},

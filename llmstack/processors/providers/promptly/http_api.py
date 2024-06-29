@@ -57,8 +57,8 @@ class ParameterType(Schema):
         description="Where to pass the parameter",
     )
     required: bool = Field(default=True, title="Is parameter required")
-    description: Optional[str] = Field(title="Parameter description")
-    value: Optional[str] = Field(title="Parameter default value")
+    description: Optional[str] = Field(default=None, title="Parameter description")
+    value: Optional[str] = Field(default=None, title="Parameter default value")
 
 
 class RequestBodyParameterType(Schema):
@@ -69,11 +69,12 @@ class RequestBodyParameterType(Schema):
         description="Parameter data type",
     )
     required: bool = Field(default=True, title="Is parameter required")
-    description: Optional[str] = Field(title="Parameter description")
+    description: Optional[str] = Field(default=None, title="Parameter description")
 
 
 class HttpAPIProcessorInput(Schema):
     input_data: Optional[str] = Field(
+        default=None,
         description="Input for parameter keys as JSON",
         json_schema_extra={"widget": "textarea", "advanced_parameter": False},
     )
@@ -154,6 +155,7 @@ class ContentType(str, Enum):
 
 class HttpAPIProcessorConfiguration(Schema):
     url: Optional[HttpUrl] = Field(
+        default=None,
         description="URL to make the request to",
         json_schema_extra={"advanced_parameter": False},
     )
@@ -182,15 +184,18 @@ class HttpAPIProcessorConfiguration(Schema):
     )
 
     connection_id: Optional[str] = Field(
+        default=None,
         json_schema_extra={"advanced_parameter": False, "widget": "connection"},
         description="Use your authenticated connection to make the request",
     )
 
     openapi_spec: Optional[str] = Field(
+        default=None,
         description="OpenAPI spec",
         json_schema_extra={"widget": "textarea"},
     )
     openapi_spec_url: Optional[HttpUrl] = Field(
+        default=None,
         description="URL to the OpenAPI spec",
     )
     parse_openapi_spec: bool = Field(default=True)

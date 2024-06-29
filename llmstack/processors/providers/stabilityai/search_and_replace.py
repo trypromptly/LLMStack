@@ -51,6 +51,7 @@ class SearchAndReplaceProcessorInput(ApiProcessorSchema):
     )
 
     negative_prompt: Optional[str] = Field(
+        default=None,
         description="Negative text prompt to use for image generation.",
     )
 

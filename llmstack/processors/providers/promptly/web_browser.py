@@ -86,6 +86,7 @@ class Model(str, Enum):
 
 class WebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
+        default=None,
         description="Connection to use",
         json_schema_extra={"advanced_parameter": False, "widget": "connection"},
     )
@@ -120,6 +121,7 @@ class WebBrowserConfiguration(ApiProcessorSchema):
         json_schema_extra={"widget": "textarea"},
     )
     seed: Optional[int] = Field(
+        default=None,
         description="Seed to use for random number generator",
     )
 

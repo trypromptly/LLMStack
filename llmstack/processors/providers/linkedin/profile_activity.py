@@ -40,6 +40,7 @@ class ProfileActivityOutput(ApiProcessorSchema):
         default="",
     )
     error: Optional[str] = Field(
+        default=None,
         description="Error message if something went wrong",
     )
 

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class StaticWebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
+        default=None,
         description="Connection to use",
         json_schema_extra={"advanced_parameter": False, "widget": "connection"},
     )

@@ -33,9 +33,9 @@ logger = logging.getLogger(__name__)
 
 class WeaviateConnection(_Schema):
     weaviate_url: str = Field(description="Weaviate URL")
-    username: Optional[str] = Field(description="Weaviate username")
-    password: Optional[str] = Field(description="Weaviate password")
-    api_key: Optional[str] = Field(description="Weaviate API key")
+    username: Optional[str] = Field(default=None, description="Weaviate username")
+    password: Optional[str] = Field(default=None, description="Weaviate password")
+    api_key: Optional[str] = Field(default=None, description="Weaviate API key")
     additional_headers: Optional[str] = Field(
         description="Weaviate headers. Please enter a JSON string.",
         json_schema_extra={"widget": "textarea"},
@@ -63,6 +63,7 @@ class WeaviateDatabaseSchema(DataSourceSchema):
         default=[],
     )
     connection: Optional[WeaviateConnection] = Field(
+        default=None,
         description="Weaviate connection string",
     )
 
@@ -70,7 +71,7 @@ class WeaviateDatabaseSchema(DataSourceSchema):
 class WeaviateConnectionConfiguration(Config):
     config_type = "weaviate_connection"
     is_encrypted = True
-    weaviate_config: Optional[Dict]
+    weaviate_config: Optional[Dict] = None
 
 
 # This class helps to manage and interact with a Weaviate Data Source.

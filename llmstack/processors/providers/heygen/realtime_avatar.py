@@ -90,15 +90,18 @@ class RealtimeAvatarConfiguration(ApiProcessorSchema):
         default=Quality.MEDIUM,
     )
     avatar_name: Optional[str] = Field(
+        default=None,
         description="The name of the avatar to be used.",
         json_schema_extra={"advanced_parameter": False},
     )
     voice_id: Optional[str] = Field(
+        default=None,
         description="Voice to use. selected from voice list",
         json_schema_extra={"advanced_parameter": False},
     )
 
     connection_id: Optional[str] = Field(
+        default=None,
         json_schema_extra={"advanced_parameter": False, "widget": "connection"},
         description="Use your authenticated connection to make the request",
     )

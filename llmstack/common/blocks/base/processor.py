@@ -17,7 +17,7 @@ class BaseInputEnvironment(Schema):
 
 class BaseInput(Schema):
     env: Optional[BaseInputEnvironment] = Field(
-        None,
+        default=None,
         description="Environment variables (metadata) to be passed with input",
         alias="_env",
     )

@@ -95,9 +95,11 @@ class FileOperationsInput(ApiProcessorSchema):
         description="Object ref of the content to be used to create the file",
     )
     output_filename: Optional[str] = Field(
+        default=None,
         description="The name of the file to create. If not provided, a random name will be generated",
     )
     output_directory: Optional[str] = Field(
+        default=None,
         description="The directory to create the file in. If not provided, the file will be created in a temporary directory and path is returned",
     )
     output_mime_type: FileMimeType = Field(

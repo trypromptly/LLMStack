@@ -62,4 +62,4 @@ class ConnectionActivationOutput(BaseModel):
 
 
 class ConnectionActivationInput(BaseModel):
-    data: Optional[str]
+    data: Optional[str] = None

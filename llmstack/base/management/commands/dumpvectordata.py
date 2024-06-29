@@ -18,7 +18,7 @@ class WeaviateClassObject(BaseModel):
     lastUpdateTimeUnix: int = Field(..., alias="lastUpdateTimeUnix")
     properties: Dict[str, Any]
     vectorWeights: Optional[Dict[str, Any]] = None
-    vector: Optional[List[Any]]
+    vector: Optional[List[Any]] = None
 
 
 class WeaviateClass(BaseModel):

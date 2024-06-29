@@ -45,7 +45,7 @@ class MimeType(str, Enum):
 
 class S3BucketSchema(DataSourceSchema):
     bucket: str = Field(description="S3 bucket name")
-    regex: Optional[str] = Field(description="Regex to filter files")
+    regex: Optional[str] = Field(default=None, description="Regex to filter files")
     mime_type: Optional[MimeType] = Field(
         default=MimeType.CSV,
         description="Mime type of the files",

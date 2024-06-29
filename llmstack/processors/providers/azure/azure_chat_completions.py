@@ -124,6 +124,7 @@ class AzureChatCompletionsConfiguration(ApiProcessorSchema):
         le=32000,
     )
     base_url: Optional[str] = Field(
+        default=None,
         description="This value can be found in the Keys & Endpoint section when examining your resource from the Azure portal. An example endpoint is: https://docs-test-001.openai.azure.com/.",
         json_schema_extra={"advanced_parameter": False},
     )

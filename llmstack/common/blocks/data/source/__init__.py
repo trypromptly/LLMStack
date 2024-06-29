@@ -9,7 +9,7 @@ class DataSourceEnvironmentSchema(BaseSchema):
 
 
 class DataSourceInputSchema(BaseSchema):
-    env: Optional[DataSourceEnvironmentSchema]
+    env: Optional[DataSourceEnvironmentSchema] = None
 
 
 class DataSourceConfigurationSchema(BaseSchema):

@@ -65,10 +65,12 @@ SQLConnection = Union[PostgreSQLConnection, MySQLConnection, SQLiteConnection]
 
 class SQLDatabaseSchema(DataSourceSchema):
     connection: Optional[SQLConnection] = Field(
+        default=None,
         title="Database",
         # description="Database details",
     )
     connection_id: Optional[str] = Field(
+        default=None,
         json_schema_extra={"advanced_parameter": False, "widget": "connection"},
         description="Use your authenticated connection to the database",
         # Filters is a list of strings, each formed by the combination of the connection attributes 'base_connection_type', 'provider_slug', and 'connection_type_slug', separated by '/'.
@@ -80,7 +82,7 @@ class SQLDatabaseSchema(DataSourceSchema):
 class SQLConnectionConfiguration(Config):
     config_type: Optional[str] = "sql_connection"
     is_encrypted = True
-    config: Optional[Dict]
+    config: Optional[Dict] = None
 
 
 class SQLDataSource(DataSourceProcessor[SQLDatabaseSchema]):

@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class TwilioCreateMessageInput(ApiProcessorSchema):
-    body: Optional[str]
-    to: Optional[str]
+    body: Optional[str] = None
+    to: Optional[str] = None
 
 
 class TwilioCreateMessageOutput(ApiProcessorSchema):
@@ -30,9 +30,9 @@ class TwilioCreateMessageOutput(ApiProcessorSchema):
 
 
 class TwilioCreateMessageConfiguration(ApiProcessorSchema):
-    account_sid: Optional[str]
-    auth_token: Optional[str]
-    phone_number: Optional[str]
+    account_sid: Optional[str] = None
+    auth_token: Optional[str] = None
+    phone_number: Optional[str] = None
 
 
 class TwilioCreateMessageProcessor(

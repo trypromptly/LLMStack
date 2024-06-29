@@ -29,7 +29,7 @@ class CompletionsOutput(ApiProcessorSchema):
 
 
 class CompletionsConfiguration(ApiProcessorSchema):
-    base_url: Optional[str] = Field(description="Base URL")
+    base_url: Optional[str] = Field(default=None, description="Base URL")
     model: str = Field(
         description="Model name",
         json_schema_extra={"advanced_parameter": False, "widget": "customselect"},

@@ -51,7 +51,7 @@ class DiscordAppConfigSchema(BaseSchema):
         json_schema_extra={"widget": "password"},
         description="Public key of the Discord app. Your public key can be found in the Bot section of the your application console.",
     )
-    slash_command_id: Optional[str] = Field(json_schema_extra={"widget": "hidden"})
+    slash_command_id: Optional[str] = Field(default=None, json_schema_extra={"widget": "hidden"})
 
 
 class DiscordApp(AppTypeInterface[DiscordAppConfigSchema]):

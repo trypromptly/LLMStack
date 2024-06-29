@@ -152,7 +152,7 @@ class HttpAPIError(Schema):
 
 
 class BaseErrorOutput(Schema):
-    error: Optional[HttpAPIError] = Field(None, description="Error Object")
+    error: Optional[HttpAPIError] = Field(default=None, description="Error Object")
 
 
 class HttpAPIProcessor(

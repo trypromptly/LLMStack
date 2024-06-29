@@ -30,11 +30,13 @@ class ChatAppConfigSchema(BaseSchema):
         json_schema_extra={"widget": "color"},
     )
     chat_bubble_text: Optional[str] = Field(
+        default=None,
         title="App Bubble Text",
         description="Text to show in the app bubble when embedded in another page. If not provided, it shows chat bubble icon.",
         json_schema_extra={"advanced_parameter": True},
     )
     chat_bubble_style: Optional[str] = Field(
+        default=None,
         title="App Bubble Style",
         description="CSS style object to apply to the app bubble when embedded in another page",
         json_schema_extra={"widget": "textarea", "advanced_parameter": True},
@@ -46,11 +48,13 @@ class ChatAppConfigSchema(BaseSchema):
         json_schema_extra={"advanced_parameter": True},
     )
     layout: Optional[str] = Field(
+        default=None,
         title="Layout",
         description="Layout to use for the app page",
         json_schema_extra={"widget": "textarea", "advanced_parameter": True},
     )
     init_on_load: Optional[bool] = Field(
+        default=None,
         title="Initialize processors on load. Use this for apps like realtime avatars.",
         description="If checked, the app will be initialized when the page is loaded. This is useful for apps that need to be initialized before the user interacts with them.",
         json_schema_extra={"advanced_parameter": True, "hidden": True},

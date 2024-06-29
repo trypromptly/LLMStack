@@ -4,23 +4,23 @@ from llmstack.processors.providers.api_processor_interface import ApiProcessorSc
 
 
 class TwilioSmsWebhookRequest(ApiProcessorSchema):
-    ToCountry: Optional[str]
-    ToState: Optional[str]
-    SmsMessageSid: Optional[str]
-    NumMedia: Optional[str]
-    ToCity: Optional[str]
-    FromZip: Optional[str]
-    SmsSid: Optional[str]
-    FromState: Optional[str]
-    SmsStatus: Optional[str]
-    FromCity: Optional[str]
-    Body: Optional[str]
-    FromCountry: Optional[str]
-    To: Optional[str]
-    ToZip: Optional[str]
-    NumSegments: Optional[str]
-    MessageSid: Optional[str]
-    AccountSid: Optional[str]
-    From: Optional[str]
-    ApiVersion: Optional[str]
-    input: Optional[str]
+    ToCountry: Optional[str] = None
+    ToState: Optional[str] = None
+    SmsMessageSid: Optional[str] = None
+    NumMedia: Optional[str] = None
+    ToCity: Optional[str] = None
+    FromZip: Optional[str] = None
+    SmsSid: Optional[str] = None
+    FromState: Optional[str] = None
+    SmsStatus: Optional[str] = None
+    FromCity: Optional[str] = None
+    Body: Optional[str] = None
+    FromCountry: Optional[str] = None
+    To: Optional[str] = None
+    ToZip: Optional[str] = None
+    NumSegments: Optional[str] = None
+    MessageSid: Optional[str] = None
+    AccountSid: Optional[str] = None
+    From: Optional[str] = None
+    ApiVersion: Optional[str] = None
+    input: Optional[str] = None

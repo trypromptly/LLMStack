@@ -102,7 +102,7 @@ Keep the answers terse.""",
     hybrid_semantic_search_ratio: Optional[float] = Field(
         default=0.75, description="Ratio of semantic search to hybrid search", ge=0.0, le=1.0, multiple_of=0.01
     )
-    seed: Optional[int] = Field(description="Seed for the model")
+    seed: Optional[int] = Field(default=None, description="Seed for the model")
 
 
 class TextChatInput(ApiProcessorSchema):
@@ -116,9 +116,9 @@ class TextChatInput(ApiProcessorSchema):
 
 class Citation(ApiProcessorSchema):
     text: str
-    source: Optional[str]
-    certainty: Optional[float]
-    distance: Optional[float]
+    source: Optional[str] = None
+    certainty: Optional[float] = None
+    distance: Optional[float] = None
 
 
 class TextChatOutput(ApiProcessorSchema):
@@ -126,7 +126,7 @@ class TextChatOutput(ApiProcessorSchema):
         description="Answer to the question",
         json_schema_extra={"widget": "textarea"},
     )
-    citations: Optional[List[Citation]]
+    citations: Optional[List[Citation]] = None
 
 
 class TextChat(

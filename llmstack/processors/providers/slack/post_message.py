@@ -147,10 +147,10 @@ class SlackPostMessageInput(ApiProcessorSchema):
     token: str
     channel: str
     response_type: str = Field(default="text")
-    atachments: Optional[List[Attachment]]
-    blocks: Optional[List[Block]]
-    text: Optional[str]
-    thread_ts: Optional[str]
+    atachments: Optional[List[Attachment]] = None
+    blocks: Optional[List[Block]] = None
+    text: Optional[str] = None
+    thread_ts: Optional[str] = None
 
 
 class SlackPostMessageOutput(ApiProcessorSchema):

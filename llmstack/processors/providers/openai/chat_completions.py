@@ -48,8 +48,8 @@ class Role(str, Enum):
 
 
 class FunctionCallResponse(BaseModel):
-    name: Optional[str]
-    arguments: Optional[str]
+    name: Optional[str] = None
+    arguments: Optional[str] = None
 
 
 class ChatMessage(BaseModel):
