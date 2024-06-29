@@ -1,5 +1,9 @@
-import ContentCopy from "@mui/icons-material/ContentCopy";
-import FileUpload from "@mui/icons-material/FileUpload";
+import {
+  ContentCopy,
+  FileUpload,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -138,6 +142,57 @@ const settingsUiSchema = {
   },
 };
 
+const TokenField = ({ token }) => {
+  const [showToken, setShowToken] = useState(false);
+
+  return (
+    <Box sx={{ padding: "15px 0" }}>
+      <TextField
+        label="Promptly Token"
+        value={token}
+        fullWidth
+        variant="outlined"
+        size="medium"
+        type={showToken ? "text" : "password"}
+        InputProps={{
+          readOnly: true,
+          endAdornment: (
+            <Stack direction={"row"}>
+              <IconButton
+                onClick={() => setShowToken(!showToken)}
+                aria-label="toggle token visibility"
+              >
+                {showToken ? (
+                  <Visibility fontSize="small" />
+                ) : (
+                  <VisibilityOff fontSize="small" />
+                )}
+              </IconButton>
+              <IconButton
+                onClick={(e) => {
+                  navigator.clipboard.writeText(token);
+                  enqueueSnackbar("Token copied successfully", {
+                    variant: "success",
+                  });
+                }}
+              >
+                <Tooltip title="Copy Promptly API Token">
+                  <ContentCopy fontSize="small" />
+                </Tooltip>
+              </IconButton>
+            </Stack>
+          ),
+        }}
+      />
+      <Typography variant="caption">
+        This is your API token. You can use this token to access the{" "}
+        {process.env.REACT_APP_SITE_NAME} API directly. Please do not share this
+        token with anyone.
+      </Typography>
+    </Box>
+  );
+};
+
 const SettingPage = () => {
   const [formData, setFormData] = useState({
     username: "",
@@ -209,37 +264,7 @@ const SettingPage = () => {
               <Typography variant="h6" className="section-header">
                 Settings
               </Typography>
-              <Box sx={{ padding: "15px 0" }}>
-                <TextField
-                  label="Promptly Token"
-                  value={formData.token}
-                  fullWidth
-                  variant="outlined"
-                  size="medium"
-                  InputProps={{
-                    readOnly: true,
-                    endAdornment: (
-                      <IconButton
-                        onClick={(e) => {
-                          navigator.clipboard.writeText(formData.token);
-                          enqueueSnackbar("Token copied successfully", {
-                            variant: "success",
-                          });
-                        }}
-                      >
-                        <Tooltip title="Copy Promptly API Token">
-                          <ContentCopy fontSize="small" />
-                        </Tooltip>
-                      </IconButton>
-                    ),
-                  }}
-                />
-                <Typography variant="caption">
-                  This is your API token. You can use this token to access
-                  {process.env.REACT_APP_SITE_NAME} API directly. Please do not
-                  share this token with anyone.
-                </Typography>
-              </Box>
+              <TokenField token={formData.token} />
               <Paper sx={{ width: "100%" }}>
                 <Stack gap={2} padding={1} spacing={2}>
                   <ThemedJsonForm
