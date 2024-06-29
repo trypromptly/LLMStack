@@ -16,6 +16,7 @@ from django.conf import settings
 from PIL import Image
 from pydantic import BaseModel, Field, create_model
 
+from llmstack.common.blocks.base.schema import CustomGenerateJsonSchema
 from llmstack.common.utils.crawlers import (
     run_sitemap_spider_in_process,
     run_url_spider_in_process,
@@ -487,11 +488,15 @@ def get_ui_schema_from_jsonschema(schema):
 
 
 def get_json_schema_from_input_fields(name="", input_fields=[]):
-    return get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema()
+    return get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema(
+        schema_generator=CustomGenerateJsonSchema
+    )
 
 
 def get_tool_json_schema_from_input_fields(name="", input_fields=[]):
-    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema()
+    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema(
+        schema_generator=CustomGenerateJsonSchema
+    )
     tool_schema = {"type": "object", "properties": {}}
 
     for key, value in input_schema["properties"].items():

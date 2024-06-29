@@ -10,6 +10,7 @@ from pydantic import Field, model_validator
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.apps.yaml_loader import get_input_model_from_fields
 from llmstack.common.blocks.base.schema import BaseSchema as Schema
+from llmstack.common.blocks.base.schema import CustomGenerateJsonSchema
 from llmstack.common.utils.liquid import render_template
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 
@@ -17,11 +18,15 @@ logger = logging.getLogger(__name__)
 
 
 def get_json_schema_from_input_fields(name="", input_fields=[]):
-    return get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema()
+    return get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema(
+        schema_generator=CustomGenerateJsonSchema
+    )
 
 
 def get_tool_json_schema_from_input_fields(name="", input_fields=[]):
-    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema()
+    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema(
+        schema_generator=CustomGenerateJsonSchema
+    )
     tool_schema = {"type": "object", "properties": {}}
 
     for key, value in input_schema["properties"].items():

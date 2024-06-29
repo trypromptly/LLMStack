@@ -4,6 +4,8 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
+from llmstack.common.blocks.base.schema import CustomGenerateJsonSchema
+
 AppConfigurationSchemaType = TypeVar("AppConfigurationSchemaType")
 
 
@@ -16,11 +18,11 @@ class BaseSchema(BaseModel):
 
     @classmethod
     def get_json_schema(cls):
-        return json.dumps(super().model_json_schema(), indent=2)
+        return json.dumps(cls.get_schema(), indent=2)
 
     @classmethod
     def get_schema(cls):
-        return super().model_json_schema()
+        return super().model_json_schema(schema_generator=CustomGenerateJsonSchema)
 
     # TODO: This is a copy of the same method in DataSourceTypeInterface.
     # Refactor to a common place.

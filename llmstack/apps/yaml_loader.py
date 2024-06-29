@@ -11,7 +11,10 @@ from django.core.cache import cache
 from pydantic import BaseModel, Field, create_model
 
 from llmstack.apps.schemas import AppTemplate
-from llmstack.common.blocks.base.schema import get_ui_schema_from_json_schema
+from llmstack.common.blocks.base.schema import (
+    CustomGenerateJsonSchema,
+    get_ui_schema_from_json_schema,
+)
 
 
 def get_input_model_from_fields(
@@ -159,10 +162,8 @@ def get_app_template_from_yaml(yaml_file: str) -> dict:
                 page["title"],
                 input_fields,
             )
-            page["input_schema"] = input_model.model_json_schema()
-            page["input_ui_schema"] = get_ui_schema_from_json_schema(
-                input_model.model_json_schema(),
-            )
+            page["input_schema"] = input_model.model_json_schema(schema_generator=CustomGenerateJsonSchema)
+            page["input_ui_schema"] = get_ui_schema_from_json_schema(page["input_schema"])
             page.pop("input_fields")
 
         return AppTemplate(**yaml_dict)

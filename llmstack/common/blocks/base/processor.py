@@ -6,6 +6,7 @@ from typing import Generator, Generic, Optional, TypeVar
 from pydantic import BaseModel, Field
 
 from llmstack.common.blocks.base.schema import BaseSchema as Schema
+from llmstack.common.blocks.base.schema import CustomGenerateJsonSchema
 
 LOGGER = logging.getLogger(__name__)
 
@@ -98,17 +99,23 @@ class ProcessorInterface(
     @classmethod
     def _get_input_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
-        return json.dumps(api_processor_interface_class.__args__[0].model_json_schema())
+        return json.dumps(
+            api_processor_interface_class.__args__[0].model_json_schema(schema_generator=CustomGenerateJsonSchema)
+        )
 
     @classmethod
     def _get_output_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
-        return json.dumps(api_processor_interface_class.__args__[1].model_json_schema())
+        return json.dumps(
+            api_processor_interface_class.__args__[1].model_json_schema(schema_generator=CustomGenerateJsonSchema)
+        )
 
     @classmethod
     def _get_configuration_schema(cls) -> dict:
         api_processor_interface_class = cls.__orig_bases__[0]
-        return json.dumps(api_processor_interface_class.__args__[2].model_json_schema())
+        return json.dumps(
+            api_processor_interface_class.__args__[2].model_json_schema(schema_generator=CustomGenerateJsonSchema)
+        )
 
     @classmethod
     def _get_input_ui_schema(cls) -> dict:
