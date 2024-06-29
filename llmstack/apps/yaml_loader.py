@@ -89,11 +89,50 @@ def get_input_model_from_fields(
             # For select fields, the datatype is the type of the first option
             datatype = type(field["options"][0]["value"])
 
+        field_members = {}
+        json_schema_extra_field_members = {}
+        for k in field:
+            if k in [
+                "alias",
+                "alias_priority",
+                "validation_alias",
+                "serialization_alias",
+                "title",
+                "description",
+                "examples",
+                "exclude",
+                "discriminator",
+                "deprecated",
+                "frozen",
+                "validate_default",
+                "repr",
+                "init",
+                "init_var",
+                "kw_only",
+                "pattern",
+                "strict",
+                "coerce_numbers_to_str",
+                "gt",
+                "lt",
+                "ge",
+                "le",
+                "multiple_of",
+                "allow_inf_nan",
+                "max_digits",
+                "decimal_places",
+                "min_length",
+                "max_length",
+                "union_mode",
+            ]:
+                field_members[k] = field[k]
+            elif k == "json_schema_extra":
+                json_schema_extra_field_members = {**field[k]}
+            else:
+                json_schema_extra_field_members[k] = field[k]
+
         fields[field["name"]] = (
             datatype,
-            Field(
-                **{k: field[k] for k in field},
-            ),
+            Field(**field_members, json_schema_extra={**json_schema_extra_field_members}),
         )
 
     return create_model(f"{name}", **fields)
