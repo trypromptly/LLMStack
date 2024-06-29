@@ -30,8 +30,8 @@ class TestSchema(BaseSchema):
         le=10,
         description="test_int_range description",
     )
-    test_textarea: str = Field("test", widget="textarea")
-    test_password: str = Field("test", widget="password")
+    test_textarea: str = Field("test", json_schema_extra={"widget": "textarea"})
+    test_password: str = Field("test", json_schema_extra={"widget": "password"})
     test_non_advanced_parameter_str: str = Field(
         "test",
         json_schema_extra={"advanced_parameter": False},
