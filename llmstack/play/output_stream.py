@@ -6,7 +6,7 @@ import asyncio
 import logging
 from collections import defaultdict
 from enum import Enum
-from typing import Any, Dict, Type
+from typing import Any, Dict, Optional, Type
 
 import orjson
 from pydantic import BaseModel
@@ -107,13 +107,13 @@ class MessageType(str, Enum):
 
 
 class Message(BaseModel):
-    message_id: str = None
+    message_id: Optional[str] = None
     message_type: MessageType = MessageType.BEGIN
-    message_from: str = None
-    message_to: str = None
-    response_to: str = None  # This is used to send a response to a message
-    message: Any = None
-    template_key: str = None
+    message_from: Optional[str] = None
+    message_to: Optional[str] = None
+    response_to: Optional[str] = None  # This is used to send a response to a message
+    message: Optional[Any] = None
+    template_key: Optional[str] = None
 
 
 class StreamClosedException(Exception):
