@@ -380,12 +380,8 @@ class OpenAIChatCompletionsAPIProcessor(
         input: OpenAIChatCompletionsAPIProcessorInput,
         configuration: OpenAIChatCompletionsAPIProcessorConfiguration,
     ) -> dict:
-        input_json = json.loads(
-            input.copy(
-                exclude={"env"},
-            ).json(),
-        )
-        configuration_json = json.loads(configuration.json())
+        input_json = input.model_dump(exclude={"env"})
+        configuration_json = configuration.model_dump()
         if "functions" in input_json and (
             input_json["functions"] is None
             or len(

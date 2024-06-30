@@ -52,7 +52,7 @@ class FunctionCallResponse(BaseModel):
 
 class ChatMessage(BaseModel):
     role: Optional[Role] = Field(
-        default=Role.USER,
+        default=None,
         description="The role of the message sender. Can be 'user' or 'assistant' or 'system'.",
     )
     content: Optional[str] = Field(

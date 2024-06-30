@@ -8,7 +8,6 @@ from collections import defaultdict
 from enum import Enum
 from typing import Any, Dict, Optional, Type
 
-import orjson
 from pydantic import BaseModel
 from pykka import ActorProxy, ActorRegistry
 
@@ -187,7 +186,7 @@ class OutputStream:
                 message_type=MessageType.STREAM_DATA,
                 message_from=self._stream_id,
                 message=(
-                    orjson.loads(data.json())
+                    data.model_dump()
                     if isinstance(
                         data,
                         BaseModel,
@@ -260,7 +259,7 @@ class OutputStream:
                 message_type=MessageType.STREAM_CLOSED,
                 message_from=self._stream_id,
                 message=(
-                    orjson.loads(output.json())
+                    output.model_dump()
                     if isinstance(
                         output,
                         BaseModel,

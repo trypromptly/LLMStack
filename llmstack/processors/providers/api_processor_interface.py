@@ -366,11 +366,19 @@ class ApiProcessorInterface(
             self._output_stream.error(e)
 
         bookkeeping_data = self.get_bookkeeping_data()
+        input_dict = self._input.model_dump() if self._input and isinstance(self._input, BaseModel) else self._input
+        config_dict = (
+            self._config.model_dump() if self._config and isinstance(self._config, BaseModel) else self._config
+        )
+        output_dict = {}
+        if output:
+            output_dict = output.model_dump() if isinstance(output, BaseModel) else output
+
         if not bookkeeping_data:
             bookkeeping_data = BookKeepingData(
-                input=self._input,
-                config=self._config,
-                output=output or {},
+                input=input_dict,
+                config=config_dict,
+                output=output_dict,
                 session_data=self.session_data_to_persist() if self._session_enabled else {},
                 timestamp=time.time(),
                 disable_history=self.disable_history(),

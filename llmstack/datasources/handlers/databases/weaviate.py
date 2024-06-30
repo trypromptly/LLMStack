@@ -218,4 +218,4 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
         raise NotImplementedError
 
     def get_entry_text(self, data: dict) -> str:
-        return None, self._configuration.json()
+        return None, self._configuration.model_dump_json()

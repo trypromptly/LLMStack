@@ -1,4 +1,3 @@
-import json
 import logging
 import uuid
 
@@ -619,13 +618,10 @@ class AppViewSet(viewsets.ViewSet):
         try:
             for processor in processors_data:
                 processor_cls = ApiProcessorFactory.get_api_processor(
-                    processor["processor_slug"],
-                    processor["provider_slug"],
+                    processor["processor_slug"], processor["provider_slug"]
                 )
                 configuration_cls = processor_cls.get_configuration_cls()
-                config_dict = json.loads(
-                    configuration_cls(**processor["config"]).json(),
-                )
+                config_dict = configuration_cls(**processor["config"]).model_dump()
                 processed_processors_data.append(
                     {**processor, **{"config": config_dict}},
                 )

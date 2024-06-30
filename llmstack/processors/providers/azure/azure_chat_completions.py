@@ -1,4 +1,3 @@
-import json
 from enum import Enum
 from typing import List, Optional
 
@@ -235,7 +234,7 @@ class AzureChatCompletions(
                 messages.append(message)
 
         for message in self._input.messages:
-            messages.append(json.loads(message.json()))
+            messages.append(message.model_dump())
 
         result_iter = client.chat.completions.create(
             messages=messages,
