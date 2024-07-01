@@ -68,7 +68,7 @@ class ConnectionTypeInterface(Generic[ConnectionConfigurationSchemaType]):
     @classmethod
     def parse_config(cls, config: dict) -> ConnectionConfigurationSchemaType:
         connection_type_interface = cls.__orig_bases__[0]
-        return connection_type_interface.__args__[0].parse_obj(config)
+        return connection_type_interface.__args__[0].model_validate(config)
 
     async def activate(self, connection: Connection) -> Iterator[str]:
         # Establish connection and persist any connection artifacts

@@ -6,18 +6,13 @@ from llmstack.assets.apis import AssetViewSet
 from llmstack.base.models import Profile
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.processors.models import ApiBackend, Endpoint
-from llmstack.processors.serializers import (
-    ApiBackendSerializer,
-    ApiProviderSerializer,
-    EndpointSerializer,
-)
+from llmstack.processors.serializers import ApiProviderSerializer
 
 from .models import (
     App,
     AppAccessPermission,
     AppData,
     AppHub,
-    AppRunGraphEntry,
     AppSession,
     AppTemplate,
     AppTemplateCategory,
@@ -70,15 +65,6 @@ class AppTypeSerializer(serializers.ModelSerializer):
             "config_schema",
             "config_ui_schema",
         ]
-
-
-class AppRunGraphEntrySerializer(serializers.ModelSerializer):
-    entry_endpoint = EndpointSerializer()
-    exit_endpoint = EndpointSerializer()
-
-    class Meta:
-        model = AppRunGraphEntry
-        fields = ["id", "entry_endpoint", "exit_endpoint", "data_transformer"]
 
 
 class AppSerializer(DynamicFieldsModelSerializer):
@@ -204,40 +190,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return obj.type.slug
 
     def get_processors(self, obj):
-        data = self.get_data(obj)
-        if data:
-            return None
-
-        processors = []
-        if obj.has_write_permission(self._request_user) and obj.run_graph:
-            nodes = obj.run_graph.all()
-
-            entry_nodes = list(
-                filter(
-                    lambda x: x.entry_endpoint is None,
-                    nodes,
-                ),
-            )
-            node = entry_nodes[0].exit_endpoint if entry_nodes else None
-            while node:
-                processors.append(
-                    {
-                        "input": node.input,
-                        "config": node.config,
-                        "api_backend": ApiBackendSerializer(instance=node.api_backend).data,
-                        "endpoint": str(node.uuid),
-                    },
-                )
-                node_to_find = node
-                edge = list(
-                    filter(
-                        lambda x: x.entry_endpoint == node_to_find,
-                        nodes,
-                    ),
-                )[0]
-
-                node = edge.exit_endpoint if edge else None
-        return processors
+        return []
 
     def get_unique_processors(self, obj):
         if obj.has_write_permission(self._request_user):
@@ -320,7 +273,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
         if obj.template_slug is not None:
             app_template = get_app_template_by_slug(obj.template_slug)
             if app_template:
-                return app_template.dict(exclude_none=True)
+                return app_template.model_dump(exclude_none=True)
         return None
 
     def get_web_config(self, obj):

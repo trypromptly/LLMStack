@@ -109,7 +109,7 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
 
             connection = Connection(**latest_connection)
             connection.status = ConnectionStatus.ACTIVE
-            connection.configuration = result.dict()
+            connection.configuration = result.model_dump()
 
             profile.add_connection(connection.model_dump())
 

@@ -28,7 +28,7 @@ class ConnectionActivationActor(ThreadingActor):
         from llmstack.base.models import Profile
 
         profile = Profile.objects.get(user=self.user)
-        profile.add_connection(connection.dict())
+        profile.add_connection(connection.model_dump())
 
     def activate(self) -> Iterator[str]:
         from llmstack.base.models import Profile

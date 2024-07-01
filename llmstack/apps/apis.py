@@ -37,7 +37,6 @@ from llmstack.base.models import AnonymousProfile, Profile
 from llmstack.common.utils.utils import get_location
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
-from llmstack.processors.apis import EndpointViewSet
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 from .models import (
@@ -45,7 +44,6 @@ from .models import (
     AppAccessPermission,
     AppData,
     AppHub,
-    AppRunGraphEntry,
     AppTemplate,
     AppType,
     AppVisibility,
@@ -310,7 +308,7 @@ class AppViewSet(viewsets.ViewSet):
         if slug:
             object = get_app_template_by_slug(slug)
             if object:
-                object_dict = object.dict(exclude_none=True)
+                object_dict = object.model_dump(exclude_none=True)
                 # For backward compatibility with old app templates
                 for page in object_dict["pages"]:
                     page["schema"] = page["input_schema"]
@@ -453,51 +451,6 @@ class AppViewSet(viewsets.ViewSet):
 
         if app.owner != request.user:
             return DRFResponse(status=404)
-
-        # Cleanup app run_graph
-        run_graph_entries = app.run_graph.all()
-        endpoint_entries = list(
-            filter(
-                lambda x: x is not None,
-                set(
-                    list(
-                        map(
-                            lambda x: x.entry_endpoint,
-                            run_graph_entries,
-                        ),
-                    )
-                    + list(
-                        map(
-                            lambda x: x.exit_endpoint,
-                            run_graph_entries,
-                        ),
-                    ),
-                ),
-            ),
-        )
-
-        # Cleanup rungraph
-        # Delete all the run_graph entries
-        run_graph_entries.delete()
-
-        app_run_graph_entries = AppRunGraphEntry.objects.filter(
-            Q(entry_endpoint__in=endpoint_entries)
-            | Q(
-                exit_endpoint__in=endpoint_entries,
-            ),
-        )
-        app_run_graph_entries.delete()
-
-        # Delete all the endpoint entries
-        for entry in endpoint_entries:
-            EndpointViewSet.delete(
-                self,
-                request,
-                id=str(
-                    entry.parent_uuid,
-                ),
-                force_delete_app=True,
-            )
 
         app.delete()
 

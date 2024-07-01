@@ -54,7 +54,7 @@ class ConnectionsViewSet(viewsets.ViewSet):
                 )()
                 connection["configuration"] = connection_type_handler.parse_config(
                     connection["configuration"],
-                ).dict()
+                ).model_dump()
                 connections.append(connection)
             except BaseException:
                 logger.error(
@@ -75,7 +75,7 @@ class ConnectionsViewSet(viewsets.ViewSet):
         )()
         connection["configuration"] = connection_type_handler.parse_config(
             connection["configuration"],
-        ).dict()
+        ).model_dump()
 
         return Response(connection)
 
@@ -150,10 +150,10 @@ class ConnectionsViewSet(viewsets.ViewSet):
         )()
         connection.configuration = connection_type_handler.parse_config(
             connection.configuration,
-        ).dict()
+        ).model_dump()
 
         new_connection = connection_type_handler.get_access_token(connection)
-        profile.add_connection(new_connection.dict())
+        profile.add_connection(new_connection.model_dump())
 
         return Response(
             {"access_token": new_connection.configuration["token"]},
