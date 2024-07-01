@@ -20,13 +20,14 @@ logger = logging.getLogger(__name__)
 
 class DocxFileSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="file",
         description="File to be processed",
-        accepts={
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
+        json_schema_extra={
+            "widget": "file",
+            "accepts": {
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
+            },
+            "maxSize": 20000000,
         },
-        maxSize=20000000,
     )
 
     @staticmethod

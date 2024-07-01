@@ -3,7 +3,7 @@ import logging
 from io import BytesIO
 from typing import List, Optional
 
-from pydantic import AnyUrl, Field
+from pydantic import Field
 from unstructured.documents.elements import PageBreak
 from unstructured.partition.pdf import partition_pdf
 
@@ -25,26 +25,16 @@ DATA_URL_REGEX = r"data:application\/(\w+);name=(.*);base64,(.*)"
 logger = logging.getLogger(__name__)
 
 
-class DataUrl(AnyUrl):
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(
-            {
-                "format": "data-url",
-                "pattern": r"data:(.*);name=(.*);base64,(.*)",
-            },
-        )
-
-
 class PdfSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="file",
         description="File to be processed",
-        accepts={
-            "application/pdf": [],
+        json_schema_extra={
+            "widget": "file",
+            "accepts": {
+                "application/pdf": [],
+            },
+            "maxSize": 20000000,
         },
-        maxSize=20000000,
     )
 
     @staticmethod

@@ -8,24 +8,24 @@ This file contains YAML schemas for the apps and app templates.
 
 
 class InputField(BaseModel):
-    advanced_parameter: Optional[bool]
-    default: Optional[Any]
-    description: Optional[str]
-    enum: Optional[List[Any]]
-    enumNames: Optional[List[str]]
-    format: Optional[str]
-    items: Optional[Dict[str, Any]]
-    maximum: Optional[int]
-    minimum: Optional[int]
-    multipleOf: Optional[int]
+    advanced_parameter: Optional[bool] = None
+    default: Optional[Any] = None
+    description: Optional[str] = None
+    enum: Optional[List[Any]] = None
+    enumNames: Optional[List[str]] = None
+    format: Optional[str] = None
+    items: Optional[Dict[str, Any]] = None
+    maximum: Optional[int] = None
+    minimum: Optional[int] = None
+    multipleOf: Optional[int] = None
     name: str
-    path: Optional[str]
-    pattern: Optional[str]
-    required: Optional[bool]
+    path: Optional[str] = None
+    pattern: Optional[str] = None
+    required: Optional[bool] = None
     title: str
     type: str = "string"
-    widget: Optional[str]
-    options: Optional[List[Any]]
+    widget: Optional[str] = None
+    options: Optional[List[Any]] = None
 
 
 class OutputTemplate(BaseModel):
@@ -84,27 +84,27 @@ class App(BaseModel):
     type_slug: str = Field(None, description="Slug of the app type")
     description: str = Field(None, description="Description of the app")
     config: Optional[dict] = Field(
-        None,
+        default=None,
         description="Configuration for the app",
     )
     input_fields: Optional[List[InputField]] = Field(
-        None,
+        default=None,
         description="Input fields for the app",
     )
     input_schema: Optional[dict] = Field(
-        None,
+        default=None,
         description="Input schema for the app",
     )
     input_ui_schema: Optional[dict] = Field(
-        None,
+        default=None,
         description="Input UI schema for the app",
     )
     output_template: OutputTemplate = Field(
-        None,
+        default=None,
         description="Output template for the app",
     )
     processors: List[Processor] = Field(
-        None,
+        default=None,
         description="Processors for the app",
     )
 
@@ -117,15 +117,15 @@ class AppTemplatePage(BaseModel):
     title: str = Field(None, description="Title of the page")
     description: str = Field(None, description="Description of the page")
     input_fields: Optional[List[InputField]] = Field(
-        None,
+        default=None,
         description="Input fields for the page",
     )
     input_schema: Optional[dict] = Field(
-        None,
+        default=None,
         description="Schema for the page",
     )
     input_ui_schema: Optional[dict] = Field(
-        None,
+        default=None,
         description="UI schema for the page",
     )
 

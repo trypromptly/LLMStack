@@ -40,6 +40,7 @@ class ProfileActivityOutput(ApiProcessorSchema):
         default="",
     )
     error: Optional[str] = Field(
+        default=None,
         description="Error message if something went wrong",
     )
 
@@ -47,9 +48,7 @@ class ProfileActivityOutput(ApiProcessorSchema):
 class ProfileActivityConfiguration(ApiProcessorSchema):
     connection_id: str = Field(
         description="LinkedIn login session connection to use",
-        required=True,
-        advanced_parameter=False,
-        widget="connection",
+        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
     )
     n_posts: int = Field(
         description="Number of posts to get",

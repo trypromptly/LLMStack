@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, TypeVar
 
 import ujson as json
 from django import db
-from pydantic import AnyUrl, BaseModel
+from pydantic import BaseModel
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.assets.utils import get_asset_by_objref
@@ -50,23 +50,12 @@ def hydrate_input(input, values):
             return [traverse(render(item)) for item in obj]
         elif isinstance(obj, BaseModel):
             cls = obj.__class__
-            return cls.parse_obj(traverse(obj.dict()))
+            return cls.model_validate(traverse(obj.model_dump()))
         elif isinstance(obj, str):
             return render(obj)
         return obj
 
     return traverse(input)
-
-
-class DataUrl(AnyUrl):
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(
-            {
-                "format": "data-url",
-                "pattern": r"data:(.*);name=(.*);base64,(.*)",
-            },
-        )
 
 
 class ApiProcessorSchema(_Schema):
@@ -271,7 +260,7 @@ class ApiProcessorInterface(
                 "output_ui_schema": cls.get_output_ui_schema(),  # Output UI schema of the processor
                 "config_ui_schema": cls.get_configuration_ui_schema(),  # Configuration UI schema of the processor
                 "output_template": (
-                    cls.get_output_template().dict() if cls.get_output_template() else None
+                    cls.get_output_template().model_dump() if cls.get_output_template() else None
                 ),  # Output template of the processor
             }
         ]
@@ -321,7 +310,7 @@ class ApiProcessorInterface(
         if isinstance(result, dict):
             return result
         elif isinstance(result, ApiProcessorSchema):
-            return result.dict()
+            return result.model_dump()
         else:
             logger.exception("Invalid result type")
             raise Exception("Invalid result type")
@@ -377,11 +366,19 @@ class ApiProcessorInterface(
             self._output_stream.error(e)
 
         bookkeeping_data = self.get_bookkeeping_data()
+        input_dict = self._input.model_dump() if self._input and isinstance(self._input, BaseModel) else self._input
+        config_dict = (
+            self._config.model_dump() if self._config and isinstance(self._config, BaseModel) else self._config
+        )
+        output_dict = {}
+        if output:
+            output_dict = output.model_dump() if isinstance(output, BaseModel) else output
+
         if not bookkeeping_data:
             bookkeeping_data = BookKeepingData(
-                input=self._input,
-                config=self._config,
-                output=output or {},
+                input=input_dict,
+                config=config_dict,
+                output=output_dict,
                 session_data=self.session_data_to_persist() if self._session_enabled else {},
                 timestamp=time.time(),
                 disable_history=self.disable_history(),
@@ -393,7 +390,7 @@ class ApiProcessorInterface(
 
     def tool_invoke_input(self, tool_args: dict) -> ToolInvokeInput:
         return self._get_input_class()(
-            **{**self._input.dict(), **tool_args},
+            **{**self._input.model_dump(), **tool_args},
         )
 
     def invoke(self, message: ToolInvokeInput) -> Any:

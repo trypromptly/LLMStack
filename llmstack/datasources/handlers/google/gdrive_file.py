@@ -39,26 +39,28 @@ class GoogleDocument(DataSourceSchema):
 
 class GdriveFileSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="gdrive",
         description="File to be processed",
-        accepts={
-            "application/pdf": [],
-            "application/json": [],
-            "audio/mpeg": [],
-            "application/rtf": [],
-            "text/plain": [],
-            "text/csv": [],
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
-            "application/vnd.google-apps.presentation": [],
-            "application/vnd.google-apps.document": [],
-            "application/vnd.google-apps.spreadsheet": [],
-            "audio/mp3": [],
-            "video/mp4": [],
-            "video/webm": [],
+        json_schema_extra={
+            "widget": "file",
+            "maxSize": 10000000,
+            "maxFiles": 4,
+            "accepts": {
+                "application/pdf": [],
+                "application/json": [],
+                "audio/mpeg": [],
+                "application/rtf": [],
+                "text/plain": [],
+                "text/csv": [],
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
+                "application/vnd.google-apps.presentation": [],
+                "application/vnd.google-apps.document": [],
+                "application/vnd.google-apps.spreadsheet": [],
+                "audio/mp3": [],
+                "video/mp4": [],
+                "video/webm": [],
+            },
         },
-        maxSize=10000000,
     )
 
     @staticmethod
@@ -110,7 +112,7 @@ class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
                         "mime_type": x.mimeType,
                         "file_name": x.name,
                         "file_data": {
-                            **x.dict(),
+                            **x.model_dump(),
                             "connection_id": file_json_data["connection_id"],
                         },
                     },

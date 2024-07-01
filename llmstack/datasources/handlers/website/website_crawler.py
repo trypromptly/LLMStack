@@ -22,12 +22,12 @@ class WebsiteCrawlerSchema(DataSourceSchema):
     allow_regex: Optional[str] = Field(
         default=".*",
         description="Regex to allow urls",
-        widget="hidden",
+        json_schema_extra={"widget": "hidden"},
     )
     deny_regex: Optional[str] = Field(
         default=".*",
         description="Regex to deny urls",
-        widget="hidden",
+        json_schema_extra={"widget": "hidden"},
     )
 
     @staticmethod

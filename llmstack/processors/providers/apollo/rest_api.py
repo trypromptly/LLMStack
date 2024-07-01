@@ -24,7 +24,7 @@ class RestApiInput(ApiProcessorSchema):
     input: str = Field(
         default="{}",
         description="JSON dictionary of key value pairs to use in the API call",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 
@@ -32,12 +32,12 @@ class RestApiOutput(ApiProcessorSchema):
     text: str = Field(
         default="",
         description="Text returned by the API call",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     json_data: dict = Field(
         default={},
         description="JSON returned by the API call",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         alias="json",
     )
     code: int = Field(
@@ -50,23 +50,22 @@ class RestApiConfiguration(ApiProcessorSchema):
     url: str = Field(
         default="https://api.apollo.io/v1/",
         description="URL of the API endpoint",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     method: HTTPMethod = Field(
         default=HTTPMethod.GET,
         description="HTTP method to use",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     body: str = Field(
         default="",
         description="Body of the request in JSON",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     connection_id: str = Field(
         default="",
         description="Connection to use for the API call",
-        widget="connection",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
     )
 
 

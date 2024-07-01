@@ -6,7 +6,7 @@ from llmstack.connections.types import ConnectionTypeInterface
 
 
 class BearerAuthenticationConfiguration(BaseSchema):
-    token: str = Field(widget="textarea")
+    token: str = Field(json_schema_extra={"widget": "textarea"})
     token_prefix: str = "Bearer"
 
 

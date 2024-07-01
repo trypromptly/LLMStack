@@ -58,7 +58,7 @@ class UrlImageMessage(BaseModel):
 
 Message = Annotated[
     Union[TextMessage, UrlImageMessage],
-    Field(discriminator="type"),
+    Field(json_schema_extra={"descriminator": "type"}),
 ]
 
 
@@ -77,7 +77,7 @@ class ChatCompletionsVisionInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default="",
         description="A message from the system, which will be prepended to the chat history.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     messages: List[Message] = Field(
         default=[],
@@ -96,24 +96,24 @@ class ChatCompletionsVisionConfiguration(
     model: ChatCompletionsVisionModel = Field(
         default=ChatCompletionsVisionModel.GPT_4_Vision,
         description="ID of the model to use. Currently, only `gpt-4-vision-preview` is supported.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(
         1024,
         description="The maximum number of tokens allowed for the generated answer. By default, the number of tokens the model can return will be (4096 - prompt tokens).\n",
         example=1024,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
         default=0.7,
         description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
         example=1,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     retain_history: Optional[bool] = Field(
         default=False,
         description="Retain and use the chat history. (Only works in apps)",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
     auto_prune_chat_history: Optional[bool] = Field(
@@ -179,7 +179,7 @@ class ChatCompletionsVision(
             messages.append(
                 {
                     "role": "user",
-                    "content": [msg.dict() for msg in self._input.messages],
+                    "content": [msg.model_dump() for msg in self._input.messages],
                 },
             )
         else:

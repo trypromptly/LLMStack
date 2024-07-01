@@ -29,16 +29,16 @@ class LocalAICompletionsAPIProcessorOutput(OpenAIAPIProcessorOutput):
 class LocalAICompletionsAPIProcessorConfiguration(
     OpenAIAPIProcessorConfiguration,
 ):
-    base_url: Optional[str]
+    base_url: Optional[str] = None
     model: str
 
-    max_tokens: Optional[conint(ge=1, le=4096)]
+    max_tokens: Optional[conint(ge=1, le=4096)] = 1024
 
-    temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)]
-    top_p: Optional[confloat(ge=0.0, le=1.0, multiple_of=0.1)]
-    stream: Optional[bool]
+    temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = 0.7
+    top_p: Optional[confloat(ge=0.0, le=1.0, multiple_of=0.1)] = None
+    stream: Optional[bool] = False
 
-    timeout: Optional[int]
+    timeout: Optional[int] = 60
 
 
 class LocalAICompletionsAPIProcessor(
@@ -191,12 +191,8 @@ class LocalAIChatCompletionsAPIProcessor(
         input: LocalAIChatCompletionsAPIProcessorInput,
         configuration: LocalAIChatCompletionsAPIProcessorConfiguration,
     ) -> dict:
-        input_json = json.loads(
-            input.copy(
-                exclude={"env"},
-            ).json(),
-        )
-        configuration_json = json.loads(configuration.json())
+        input_json = input.model_dump(exclude={"env"})
+        configuration_json = configuration.model_dump()
         if "functions" in input_json and (
             input_json["functions"] is None
             or len(

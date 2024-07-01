@@ -33,12 +33,12 @@ logger = logging.getLogger(__name__)
 
 class WeaviateConnection(_Schema):
     weaviate_url: str = Field(description="Weaviate URL")
-    username: Optional[str] = Field(description="Weaviate username")
-    password: Optional[str] = Field(description="Weaviate password")
-    api_key: Optional[str] = Field(description="Weaviate API key")
+    username: Optional[str] = Field(default=None, description="Weaviate username")
+    password: Optional[str] = Field(default=None, description="Weaviate password")
+    api_key: Optional[str] = Field(default=None, description="Weaviate API key")
     additional_headers: Optional[str] = Field(
         description="Weaviate headers. Please enter a JSON string.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         default="{}",
     )
 
@@ -63,14 +63,15 @@ class WeaviateDatabaseSchema(DataSourceSchema):
         default=[],
     )
     connection: Optional[WeaviateConnection] = Field(
+        default=None,
         description="Weaviate connection string",
     )
 
 
 class WeaviateConnectionConfiguration(Config):
-    config_type = "weaviate_connection"
-    is_encrypted = True
-    weaviate_config: Optional[Dict]
+    config_type: str = "weaviate_connection"
+    is_encrypted: bool = True
+    weaviate_config: Optional[Dict] = None
 
 
 # This class helps to manage and interact with a Weaviate Data Source.
@@ -98,12 +99,14 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
                     username=self._configuration.connection.username,
                     password=self._configuration.connection.password,
                     api_key=self._configuration.connection.api_key,
-                    additional_headers=json.loads(
-                        self._configuration.connection.additional_headers,
-                    )
-                    if self._configuration.connection.additional_headers
-                    else {},
-                ).dict(),
+                    additional_headers=(
+                        json.loads(
+                            self._configuration.connection.additional_headers,
+                        )
+                        if self._configuration.connection.additional_headers
+                        else {}
+                    ),
+                ).model_dump(),
             )
 
     # This static method returns the name of the datasource class as
@@ -215,4 +218,4 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
         raise NotImplementedError
 
     def get_entry_text(self, data: dict) -> str:
-        return None, self._configuration.json()
+        return None, self._configuration.model_dump_json()

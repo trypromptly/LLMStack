@@ -50,7 +50,7 @@ class ChatMessage(ApiProcessorSchema):
     message: str = Field(
         default="",
         description="The message text.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 
@@ -71,20 +71,19 @@ class MessagesConfiguration(ApiProcessorSchema):
     system_prompt: str = Field(
         default="",
         description="A system prompt is a way of providing context and instructions to Claude, such as specifying a particular goal or role.",
-        widget="textarea",
-        advanced_parameter=False,
+        json_schema_extra={"widget": "textarea", "advanced_parameter": False},
     )
 
     model: MessagesModel = Field(
         default=MessagesModel.CLAUDE_3_Opus,
         description="The model that will generate the responses.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     max_tokens: int = Field(
         ge=1,
         default=256,
         description="The maximum number of tokens to generate before stopping.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     temperature: float = Field(
         default=0.5,
@@ -92,7 +91,7 @@ class MessagesConfiguration(ApiProcessorSchema):
         multiple_of=0.1,
         ge=0.0,
         le=1.0,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     retain_history: Optional[bool] = Field(
         default=False,

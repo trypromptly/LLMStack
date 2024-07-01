@@ -11,7 +11,7 @@ class ApolloRESTAPIConfiguration(BaseSchema):
     api_key: str = Field(
         description="API Key for Apollo REST API",
         default="",
-        widget="password",
+        json_schema_extra={"widget": "password"},
     )
 
 

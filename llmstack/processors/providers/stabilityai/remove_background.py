@@ -34,12 +34,7 @@ class RemoveBackgroundProcessorInput(ApiProcessorSchema):
     image_file: Optional[str] = Field(
         default="",
         description="The file to remove background from",
-        accepts={
-            "image/jpeg": [],
-            "image/png": [],
-        },
-        maxSize=9000000,
-        widget="file",
+        json_schema_extra={"widget": "file", "accepts": {"image/*": []}, "maxSize": 9000000},
     )
     image_file_data: Optional[str] = Field(
         default="",

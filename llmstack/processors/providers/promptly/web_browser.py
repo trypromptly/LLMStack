@@ -9,7 +9,7 @@ import openai
 import orjson as json
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
@@ -86,14 +86,14 @@ class Model(str, Enum):
 
 class WebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
+        default=None,
         description="Connection to use",
-        widget="connection",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
     )
     model: Model = Field(
         description="Backing model to use",
         default=Model.GPT_4_O,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     stream_video: bool = Field(
         description="Stream video of the browser",
@@ -118,9 +118,10 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     system_message: str = Field(
         description="System message to use",
         default=DEFAULT_SYSTEM_MESSAGE,
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     seed: Optional[int] = Field(
+        default=None,
         description="Seed to use for random number generator",
     )
 
@@ -151,7 +152,7 @@ class BrowserInstruction(BaseModel):
     selector: Optional[str] = None
     data: Optional[str] = None
 
-    @validator("type", pre=True, always=True)
+    @field_validator("type")
     def validate_type(cls, v):
         return v.lower().capitalize()
 

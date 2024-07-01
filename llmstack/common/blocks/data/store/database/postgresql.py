@@ -22,16 +22,16 @@ class SSLMode(str, Enum):
 
 class PostgresConfiguration(BaseSchema):
     engine: Literal[DatabaseEngineType.POSTGRESQL] = DatabaseEngineType.POSTGRESQL
-    user: Optional[str]
-    password: Optional[str]
+    user: Optional[str] = None
+    password: Optional[str] = None
     host: str = "127.0.0.1"
     port: int = 5432
     dbname: str
     use_ssl: bool = False
     sslmode: SSLMode = "prefer"
-    sslrootcertFile: Optional[str]
-    sslcertFile: Optional[str]
-    sslkeyFile: Optional[str]
+    sslrootcertFile: Optional[str] = None
+    sslcertFile: Optional[str] = None
+    sslkeyFile: Optional[str] = None
 
     class Config:
         schema_extra = {
@@ -43,7 +43,7 @@ class PostgresConfiguration(BaseSchema):
 
 
 class PostgresOutput(BaseSchema):
-    documents: List[DataDocument]
+    documents: List[DataDocument] = []
 
 
 def _create_cert_file(configuration, key, ssl_config):

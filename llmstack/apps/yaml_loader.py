@@ -11,7 +11,10 @@ from django.core.cache import cache
 from pydantic import BaseModel, Field, create_model
 
 from llmstack.apps.schemas import AppTemplate
-from llmstack.common.blocks.base.schema import get_ui_schema_from_json_schema
+from llmstack.common.blocks.base.schema import (
+    CustomGenerateJsonSchema,
+    get_ui_schema_from_json_schema,
+)
 
 
 def get_input_model_from_fields(
@@ -89,11 +92,50 @@ def get_input_model_from_fields(
             # For select fields, the datatype is the type of the first option
             datatype = type(field["options"][0]["value"])
 
+        field_members = {}
+        json_schema_extra_field_members = {}
+        for k in field:
+            if k in [
+                "alias",
+                "alias_priority",
+                "validation_alias",
+                "serialization_alias",
+                "title",
+                "description",
+                "examples",
+                "exclude",
+                "discriminator",
+                "deprecated",
+                "frozen",
+                "validate_default",
+                "repr",
+                "init",
+                "init_var",
+                "kw_only",
+                "pattern",
+                "strict",
+                "coerce_numbers_to_str",
+                "gt",
+                "lt",
+                "ge",
+                "le",
+                "multiple_of",
+                "allow_inf_nan",
+                "max_digits",
+                "decimal_places",
+                "min_length",
+                "max_length",
+                "union_mode",
+            ]:
+                field_members[k] = field[k]
+            elif k == "json_schema_extra":
+                json_schema_extra_field_members = {**field[k]}
+            else:
+                json_schema_extra_field_members[k] = field[k]
+
         fields[field["name"]] = (
             datatype,
-            Field(
-                **{k: field[k] for k in field},
-            ),
+            Field(**field_members, json_schema_extra={**json_schema_extra_field_members}),
         )
 
     return create_model(f"{name}", **fields)
@@ -120,10 +162,8 @@ def get_app_template_from_yaml(yaml_file: str) -> dict:
                 page["title"],
                 input_fields,
             )
-            page["input_schema"] = input_model.schema()
-            page["input_ui_schema"] = get_ui_schema_from_json_schema(
-                input_model.schema(),
-            )
+            page["input_schema"] = input_model.model_json_schema(schema_generator=CustomGenerateJsonSchema)
+            page["input_ui_schema"] = get_ui_schema_from_json_schema(page["input_schema"])
             page.pop("input_fields")
 
         return AppTemplate(**yaml_dict)

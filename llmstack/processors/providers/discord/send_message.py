@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class DiscordEmbed(ApiProcessorSchema):
     title: str
     description: str
-    color: Optional[int]
+    color: Optional[int] = None
 
 
 class DiscordSendMessageInput(ApiProcessorSchema):
@@ -35,7 +35,7 @@ class DiscordSendMessageInput(ApiProcessorSchema):
     bot_token: str
     channel_id: str
     text: str
-    embeds: Optional[List[DiscordEmbed]]
+    embeds: Optional[List[DiscordEmbed]] = None
 
 
 class DiscordSendMessageOutput(ApiProcessorSchema):
@@ -87,12 +87,12 @@ class DiscordSendMessageProcessor(
                         "content": message,
                     },
                 ),
-            ).dict(),
+            ).model_dump(),
         )
         return response
 
     def process(self) -> dict:
-        input = self._input.dict()
+        input = self._input.model_dump()
         self._send_message(
             input["app_id"],
             input["text"],
@@ -106,7 +106,7 @@ class DiscordSendMessageProcessor(
         return self._output_stream.finalize()
 
     def on_error(self, error: Any) -> None:
-        input = self._input.dict()
+        input = self._input.model_dump()
         logger.error(f"Error in DiscordSendMessageProcessor: {error}")
         error_msg = (
             "\n".join(error.values())

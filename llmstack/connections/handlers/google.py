@@ -67,12 +67,12 @@ class GoogleAdapter(GoogleOAuth2Adapter):
 
 
 class GoogleLoginConfiguration(Oauth2BaseConfiguration):
-    refresh_token: Optional[str]
-    scope: Optional[str]
-    token_type: Optional[str]
-    expires_at: Optional[float]
-    client_id: Optional[str]
-    client_secret: Optional[str]
+    refresh_token: Optional[str] = None
+    scope: Optional[str] = None
+    token_type: Optional[str] = None
+    expires_at: Optional[float] = None
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
 
 
 class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration]):

@@ -147,10 +147,10 @@ class SlackPostMessageInput(ApiProcessorSchema):
     token: str
     channel: str
     response_type: str = Field(default="text")
-    atachments: Optional[List[Attachment]]
-    blocks: Optional[List[Block]]
-    text: Optional[str]
-    thread_ts: Optional[str]
+    atachments: Optional[List[Attachment]] = None
+    blocks: Optional[List[Block]] = None
+    text: Optional[str] = None
+    thread_ts: Optional[str] = None
 
 
 class SlackPostMessageOutput(ApiProcessorSchema):
@@ -208,12 +208,12 @@ class SlackPostMessageProcessor(
                         "blocks": rich_text,
                     },
                 ),
-            ).dict(),
+            ).model_dump(),
         )
         return response
 
     def process(self) -> dict:
-        input = self._input.dict()
+        input = self._input.model_dump()
 
         try:
             rich_text = json.dumps(
@@ -239,7 +239,7 @@ class SlackPostMessageProcessor(
         return self._output_stream.finalize()
 
     def on_error(self, error: Any) -> None:
-        input = self._input.dict()
+        input = self._input.model_dump()
 
         logger.error(f"Error in SlackPostMessageProcessor: {error}")
         error_msg = (

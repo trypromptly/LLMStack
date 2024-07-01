@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class TwilioCreateMessageInput(ApiProcessorSchema):
-    body: Optional[str]
-    to: Optional[str]
+    body: Optional[str] = None
+    to: Optional[str] = None
 
 
 class TwilioCreateMessageOutput(ApiProcessorSchema):
@@ -30,9 +30,9 @@ class TwilioCreateMessageOutput(ApiProcessorSchema):
 
 
 class TwilioCreateMessageConfiguration(ApiProcessorSchema):
-    account_sid: Optional[str]
-    auth_token: Optional[str]
-    phone_number: Optional[str]
+    account_sid: Optional[str] = None
+    auth_token: Optional[str] = None
+    phone_number: Optional[str] = None
 
 
 class TwilioCreateMessageProcessor(
@@ -82,12 +82,12 @@ class TwilioCreateMessageProcessor(
                 },
             ),
         )
-        response = http_processor.process(input.dict()).dict()
+        response = http_processor.process(input.model_dump()).model_dump()
         return response
 
     def process(self) -> dict:
         self._twilio_api_response = None
-        input = self._input.dict()
+        input = self._input.model_dump()
         response = self._send_message(
             message=input["body"],
             to_=input["to"],
@@ -109,7 +109,7 @@ class TwilioCreateMessageProcessor(
 
     def on_error(self, error: Any) -> None:
         self._twilio_api_response = None
-        input = self._input.dict()
+        input = self._input.model_dump()
 
         logger.error(f"Error in TwilioCreateMessageProcessor: {error}")
 

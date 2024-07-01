@@ -5,11 +5,12 @@ import uuid
 from typing import Dict, List, Optional
 
 from asgiref.sync import async_to_sync
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.apps.yaml_loader import get_input_model_from_fields
 from llmstack.common.blocks.base.schema import BaseSchema as Schema
+from llmstack.common.blocks.base.schema import CustomGenerateJsonSchema
 from llmstack.common.utils.liquid import render_template
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 
@@ -17,11 +18,15 @@ logger = logging.getLogger(__name__)
 
 
 def get_json_schema_from_input_fields(name="", input_fields=[]):
-    return get_input_model_from_fields(name=name, input_fields=input_fields).schema()
+    return get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema(
+        schema_generator=CustomGenerateJsonSchema
+    )
 
 
 def get_tool_json_schema_from_input_fields(name="", input_fields=[]):
-    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).schema()
+    input_schema = get_input_model_from_fields(name=name, input_fields=input_fields).model_json_schema(
+        schema_generator=CustomGenerateJsonSchema
+    )
     tool_schema = {"type": "object", "properties": {}}
 
     for key, value in input_schema["properties"].items():
@@ -55,18 +60,20 @@ def get_input_ui_schema(input_fields=[]):
 
 class PromptlyApp(Schema):
     promptly_app: str = Field(
-        default="{}", description="Promptly App Configuration", advanced_parameter=False, widget="promptlyapp_select"
+        default="{}",
+        description="Promptly App Configuration",
+        json_schema_extra={"advanced_parameter": False, "widget": "promptlyapp_select"},
     )
-    _input: Dict = Field(default={}, description="Input", widget="hidden")
-    _promptly_app_uuid: str = Field(default="", description="Promptly App ID", widget="hidden")
-    _promptly_app_published_uuid: str = Field(default="", description="Promptly Published App ID", widget="hidden")
-    _promptly_app_version = Field(default="", description="Promptly App Version", widget="hidden")
-    _promptl_app_input_fields: List[Dict] = Field(default=[], description="Promptly App Input Fields", widget="hidden")
-    _proptly_app: Dict = Field(default={}, description="Promptly App Configuration", widget="hidden")
-    _input_schema: Dict = Field(default={}, description="Input Schema", widget="hidden")
-    _tool_schema: Dict = Field(default={}, description="Tool Schema", widget="hidden")
+    _input: Dict = {}
+    _promptly_app_uuid: str = ""
+    _promptly_app_published_uuid: str = ""
+    _promptly_app_version: str = ""
+    _promptl_app_input_fields: List[Dict] = []
+    _proptly_app: Dict = {}
+    _input_schema: Dict = {}
+    _tool_schema: Dict = {}
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_input(cls, values):
         promptly_app = values.get("promptly_app", "{}")
         promptly_app_json = json.loads(promptly_app)
@@ -87,10 +94,10 @@ class PromptlyApp(Schema):
 
 
 class PromptlyAppInput(Schema):
-    input: Dict = Field(default={}, description="Input", widget="hidden")
-    input_json: Optional[str] = Field(default="{}", description="Input JSON", widget="textarea")
+    input: Dict = Field(default={}, description="Input", json_schema_extra={"widget": "hidden"})
+    input_json: Optional[str] = Field(default="{}", description="Input JSON", json_schema_extra={"widget": "textarea"})
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_input(cls, values):
         parsed_input = json.loads(values.get("input_json", "{}"))
         if parsed_input:
@@ -101,7 +108,7 @@ class PromptlyAppInput(Schema):
 class PromptlyAppOutput(Schema):
     text: str = Field(default="", description="Promptly App Output as Text")
     objref: Optional[str] = Field(default=None, description="Promptly App Output as Object Reference")
-    processing: Optional[bool] = Field(default=None, description="processing", widget="hidden")
+    processing: Optional[bool] = Field(default=None, description="processing", json_schema_extra={"widget": "hidden"})
 
 
 class PromptlyAppConfiguration(PromptlyApp):
@@ -109,7 +116,6 @@ class PromptlyAppConfiguration(PromptlyApp):
         default=False,
         title="Output as Object Reference",
         description="Return output as object reference instead of raw text.",
-        advanced_parameter=True,
     )
 
 

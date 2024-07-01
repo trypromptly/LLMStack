@@ -37,11 +37,11 @@ class CompletionsInput(ApiProcessorSchema):
 
 
 class CompletionsOutput(ApiProcessorSchema):
-    choices: List[str] = Field(default=[], widget=TEXT_WIDGET_NAME)
+    choices: List[str] = Field(default=[], json_schema_extra={"widget": TEXT_WIDGET_NAME})
     api_response: Optional[dict] = Field(
         default={},
         description="Raw processor output.",
-        widget="hidden",
+        json_schema_extra={"widget": "hidden"},
     )
 
 
@@ -49,8 +49,7 @@ class CompletionsConfiguration(ApiProcessorSchema):
     model: CompletionsModel = Field(
         default=CompletionsModel.GPT_3_5_TURBO_INSTRUCT,
         description="ID of the model to use. You can use the [List models](/docs/api-reference/models/list) API to see all of your available models, or see our [Model overview](/docs/models/overview) for descriptions of them.",
-        widget="customselect",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False, "widget": "customselect"},
     )
     suffix: Optional[str] = Field(
         None,
@@ -77,7 +76,6 @@ class CompletionsConfiguration(ApiProcessorSchema):
         1,
         description="How many completions to generate for each prompt.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n",
         example=1,
-        hidden=True,
     )
     logprobs: Optional[conint(ge=0, le=5)] = Field(
         None,

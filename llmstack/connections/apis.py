@@ -95,9 +95,9 @@ class ConnectionsViewSet(viewsets.ViewSet):
             created_at=datetime.datetime.now(),
             updated_at=datetime.datetime.now(),
         )
-        profile.add_connection(connection.dict())
+        profile.add_connection(connection.model_dump())
 
-        return Response(connection.dict())
+        return Response(connection.model_dump())
 
     def patch(self, request, uid):
         profile = get_object_or_404(Profile, user=request.user)
@@ -121,9 +121,9 @@ class ConnectionsViewSet(viewsets.ViewSet):
         if "status" in request.data:
             connection.status = request.data.get("status")
 
-        profile.add_connection(connection.dict())
+        profile.add_connection(connection.model_dump())
 
-        return Response(connection.dict())
+        return Response(connection.model_dump())
 
     def delete(self, request, uid):
         profile = get_object_or_404(Profile, user=request.user)

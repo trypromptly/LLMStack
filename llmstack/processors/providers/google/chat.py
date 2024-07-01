@@ -52,7 +52,7 @@ class UrlImageMessage(BaseModel):
 
 Message = Annotated[
     Union[TextMessage, UrlImageMessage],
-    Field(discriminator="type"),
+    Field(json_schema_extra={"discriminator": "type"}),
 ]
 
 
@@ -73,7 +73,7 @@ class FunctionCall(ApiProcessorSchema):
     )
     parameters: Optional[str] = Field(
         title="Parameters",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         default=None,
         description="The parameters the functions accepts, described as a JSON Schema object. See the guide for examples, and the JSON Schema reference for documentation about the format.",
     )
@@ -83,7 +83,7 @@ class ChatInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default="",
         description="A message from the system, which will be prepended to the chat history.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     messages: List[Message] = Field(
         default=[],
@@ -117,12 +117,12 @@ class GenerationConfig(BaseModel):
 
 class ChatConfiguration(ApiProcessorSchema):
     model: GeminiModel = Field(
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         default=GeminiModel.GEMINI_PRO,
     )
     safety_settings: List[SafetySetting]
     generation_config: GenerationConfig = Field(
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         default=GenerationConfig(),
     )
     retain_history: bool = Field(
@@ -141,20 +141,20 @@ class Citation(BaseModel):
 
 
 class CitationMetadata(BaseModel):
-    citations: Optional[List[Citation]]
+    citations: Optional[List[Citation]] = None
 
 
 class SafetyAttributes(BaseModel):
-    categories: Optional[List[str]]
+    categories: Optional[List[str]] = None
     blocked: bool
     scores: List[float]
 
 
 class ToolCall(BaseModel):
-    id: Optional[str]
+    id: Optional[str] = None
     """The ID of the tool call."""
 
-    function: Optional[FunctionCall]
+    function: Optional[FunctionCall] = None
     """The function that the model called."""
 
     type: Literal["function"]
@@ -162,12 +162,16 @@ class ToolCall(BaseModel):
 
 
 class ChatOutput(ApiProcessorSchema):
-    content: Optional[str] = Field(description="Generated prediction content.")
-    function_calls: Optional[List[ToolCall]] = Field()
+    content: Optional[str] = Field(default=None, description="Generated prediction content.")
+    function_calls: Optional[List[ToolCall]] = Field(
+        default=None,
+    )
     citationMetadata: Optional[CitationMetadata] = Field(
+        default=None,
         description="Metadata for the citations found in the response.",
     )
     safetyAttributes: Optional[SafetyAttributes] = Field(
+        default=None,
         description="Safety attributes for the response.",
     )
 

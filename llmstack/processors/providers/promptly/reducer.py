@@ -26,8 +26,8 @@ reducer_template_item_var_regex = re.compile(r"\{\{\s*?_reduce_item\s*?\s*?\}\}"
 
 
 class ReduceProcessorInput(Schema):
-    input_list: List[Dict] = Field(default=[], description="Input list", widget="hidden")
-    input_list_json: str = Field(default="[]", description="Input list", widget="textarea")
+    input_list: List[Dict] = Field(default=[], description="Input list", json_schema_extra={"widget": "hidden"})
+    input_list_json: str = Field(default="[]", description="Input list", json_schema_extra={"widget": "textarea"})
 
 
 class ReduceProcessorOutput(Schema):
@@ -40,13 +40,11 @@ class ReduceProcessorConfiguration(PromptlyApp):
         default=None,
         title="Reducer Liquid Template",
         description="Liquid template to apply to reduce the input list to a single result",
-        advanced_parameter=True,
     )
     objref: Optional[bool] = Field(
         default=False,
         title="Output as Object Reference",
         description="Return output as object reference instead of raw text.",
-        advanced_parameter=True,
     )
 
 

@@ -25,8 +25,8 @@ class SSLMode(str, Enum):
 
 class MySQLConfiguration(BaseSchema):
     engine: Literal[DatabaseEngineType.MYSQL] = DatabaseEngineType.MYSQL
-    user: Optional[str]
-    password: Optional[str]
+    user: Optional[str] = None
+    password: Optional[str] = None
     host: str = "127.0.0.1"
     port: int = 3306
     dbname: str

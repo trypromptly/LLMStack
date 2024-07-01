@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any, Dict, Optional
 
 from asgiref.sync import async_to_sync
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from llmstack.common.utils.prequests import post
 from llmstack.processors.providers.api_processor_interface import (
@@ -36,7 +36,7 @@ class RealtimeAvatarInput(ApiProcessorSchema):
     task_input_json: Optional[Dict] = Field(
         description="The input of the task.",
         default=None,
-        widget="hidden",
+        json_schema_extra={"widget": "hidden"},
     )
     text: Optional[str] = Field(description="The text of the task.")
     session_id: Optional[str] = Field(
@@ -44,7 +44,7 @@ class RealtimeAvatarInput(ApiProcessorSchema):
         default=None,
     )
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_input(cls, values):
         if (
             values.get("task_type") == TaskType.REPEAT
@@ -90,17 +90,19 @@ class RealtimeAvatarConfiguration(ApiProcessorSchema):
         default=Quality.MEDIUM,
     )
     avatar_name: Optional[str] = Field(
+        default=None,
         description="The name of the avatar to be used.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     voice_id: Optional[str] = Field(
+        default=None,
         description="Voice to use. selected from voice list",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
     connection_id: Optional[str] = Field(
-        widget="connection",
-        advanced_parameter=False,
+        default=None,
+        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
         description="Use your authenticated connection to make the request",
     )
 

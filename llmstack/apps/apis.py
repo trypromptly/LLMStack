@@ -1,4 +1,3 @@
-import json
 import logging
 import uuid
 
@@ -378,7 +377,7 @@ class AppViewSet(viewsets.ViewSet):
             json_data = []
             app_templates_from_yaml = get_app_templates_from_contrib()
             for app_template in app_templates_from_yaml:
-                app_template_dict = app_template.dict()
+                app_template_dict = app_template.model_dump()
                 app_template_dict.pop("pages")
                 app = app_template_dict.pop("app")
                 json_data.append(
@@ -619,13 +618,10 @@ class AppViewSet(viewsets.ViewSet):
         try:
             for processor in processors_data:
                 processor_cls = ApiProcessorFactory.get_api_processor(
-                    processor["processor_slug"],
-                    processor["provider_slug"],
+                    processor["processor_slug"], processor["provider_slug"]
                 )
                 configuration_cls = processor_cls.get_configuration_cls()
-                config_dict = json.loads(
-                    configuration_cls(**processor["config"]).json(),
-                )
+                config_dict = configuration_cls(**processor["config"]).model_dump()
                 processed_processors_data.append(
                     {**processor, **{"config": config_dict}},
                 )

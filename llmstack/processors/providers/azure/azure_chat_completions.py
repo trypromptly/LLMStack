@@ -1,4 +1,3 @@
-import json
 from enum import Enum
 from typing import List, Optional
 
@@ -47,12 +46,12 @@ class AzureChatCompletionsInput(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         default="",
         description="A message from the system, which will be prepended to the chat history.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     chat_history: List[ChatMessage] = Field(
         default=[],
         description="A list of messages, each with a role and message text.",
-        widget="hidden",
+        json_schema_extra={"widget": "hidden"},
     )
     messages: List[ChatMessage] = Field(
         default=[
@@ -66,11 +65,7 @@ class AzureChatCompletionsOutput(ApiProcessorSchema):
     choices: List[ChatMessage] = Field(
         default=[],
         description="Messages",
-        widget=CHAT_WIDGET_NAME,
-    )
-    _api_response: Optional[dict] = Field(
-        default={},
-        description="Raw processor output.",
+        json_schema_extra={"widget": CHAT_WIDGET_NAME},
     )
 
 
@@ -128,8 +123,9 @@ class AzureChatCompletionsConfiguration(ApiProcessorSchema):
         le=32000,
     )
     base_url: Optional[str] = Field(
+        default=None,
         description="This value can be found in the Keys & Endpoint section when examining your resource from the Azure portal. An example endpoint is: https://docs-test-001.openai.azure.com/.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     api_version: Optional[str] = Field(
         description="The API version to use",
@@ -137,20 +133,19 @@ class AzureChatCompletionsConfiguration(ApiProcessorSchema):
     )
     deployment_name: ChatCompletionsModel = Field(
         description="This value will correspond to the custom name you chose for your deployment when you deployed a model. This value can be found under Resource Management > Deployments in the Azure portal or alternatively under Management > Deployments in Azure OpenAI Studio.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
         default=ChatCompletionsModel.GPT_4,
     )
     retain_history: Optional[bool] = Field(
         default=True,
         description="Retain and use the chat history. (Only works in apps)",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     auto_prune_chat_history: Optional[bool] = Field(
         default=False,
         description="Automatically prune chat history. This is only applicable if 'retain_history' is set to 'true'.",
-        hidden=True,
     )
-    stream: Optional[bool] = Field(widget="hidden", default=True)
+    stream: Optional[bool] = Field(default=True, json_schema_extra={"widget": "hidden"})
 
 
 class AzureChatCompletions(
@@ -239,7 +234,7 @@ class AzureChatCompletions(
                 messages.append(message)
 
         for message in self._input.messages:
-            messages.append(json.loads(message.json()))
+            messages.append(message.model_dump())
 
         result_iter = client.chat.completions.create(
             messages=messages,

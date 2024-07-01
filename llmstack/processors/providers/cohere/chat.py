@@ -39,7 +39,7 @@ class CoherePromptTruncation(str, Enum):
 class CohereChatInput(ApiProcessorSchema):
     message: str = Field(
         description="The input message to send to cohere",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         default="",
     )
 
@@ -47,9 +47,8 @@ class CohereChatInput(ApiProcessorSchema):
 class CohereChatConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         description="The system message to send to cohere as preamble",
-        widget="textarea",
         default=None,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False, "widget": "textarea"},
     )
     temperature: float = Field(
         description="The temperature to use for sampling",
@@ -57,12 +56,12 @@ class CohereChatConfiguration(ApiProcessorSchema):
         multiple_of=0.1,
         ge=0.0,
         le=1.0,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     model: CohereModel = Field(
         description="The model to use for the chat",
         default=CohereModel.COMMAND,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     seed: Optional[int] = Field(
         description="The seed to use for sampling",
@@ -85,14 +84,14 @@ class CohereChatConfiguration(ApiProcessorSchema):
     enable_web_search: Optional[bool] = Field(
         description="Whether to enable web search",
         default=False,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
 
 class CohereChatOutput(ApiProcessorSchema):
     output_message: str = Field(
         description="The output message from cohere",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
         default="",
     )
 

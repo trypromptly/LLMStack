@@ -3,7 +3,6 @@ import datetime
 import json
 import uuid
 
-import sqlalchemy
 from psycopg2.extras import Range
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
@@ -76,6 +75,8 @@ class DatabaseReader(
         input: DatabaseReaderInput,
         configuration: DatabaseConfigurationType,
     ) -> DatabaseOutput:
+        import sqlalchemy
+
         connection = get_database_connection(configuration=configuration)
         try:
             result = connection.execute(sqlalchemy.text(input.sql))

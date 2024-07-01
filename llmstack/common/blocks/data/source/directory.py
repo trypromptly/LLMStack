@@ -1,7 +1,7 @@
 import os
 import re
 
-from pydantic import root_validator
+from pydantic import model_validator
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.data import DataDocument
@@ -16,7 +16,7 @@ class DirectoryTextLoaderInputSchema(DataSourceInputSchema):
     directory: str
     recursive: bool = False
 
-    @root_validator()
+    @model_validator(mode="before")
     @classmethod
     def validate_directory(cls, field_values) -> str:
         value = field_values.get("directory")

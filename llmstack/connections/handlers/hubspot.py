@@ -40,14 +40,14 @@ class HubspotAdapter(HubspotOAuth2Adapter):
 
 
 class HubspotLoginConfiguration(Oauth2BaseConfiguration):
-    user: Optional[str]
-    hub_domain: Optional[str]
-    scopes: Optional[List[str]]
-    hub_id: Optional[str]
-    app_id: Optional[str]
-    expires_in: Optional[int]
-    user_id: Optional[int]
-    token_type: Optional[str]
+    user: Optional[str] = None
+    hub_domain: Optional[str] = None
+    scopes: Optional[List[str]] = None
+    hub_id: Optional[str] = None
+    app_id: Optional[str] = None
+    expires_in: Optional[int] = None
+    user_id: Optional[int] = None
+    token_type: Optional[str] = None
 
 
 class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration]):

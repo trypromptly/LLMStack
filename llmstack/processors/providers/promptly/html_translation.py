@@ -27,19 +27,20 @@ def has_non_text_nodes(element):
 
 
 class HTMLTranslationInput(ApiProcessorSchema):
-    html: str = Field(description="Input HTML to translate", widget="textarea")
+    html: str = Field(description="Input HTML to translate", json_schema_extra={"widget": "textarea"})
     instructions: str = Field(
         description="Instructions for the translations",
         default="The output should be a JSON list without any code blocks. Translate the English content below between 2 lines of 0CigC9JQ9VLKOSYDkAfJVEnPv to German, and follow the guidelines below.",
-        advanced_parameter=True,
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 
 class HTMLTranslationOutput(ApiProcessorSchema):
-    translated_html: Optional[str] = Field(description="Translated HTML", widget="textarea")
-    total_extracted_strings: Optional[int] = Field(description="Total extracted strings")
-    total_translated_strings: Optional[int] = Field(description="Total translated strings")
+    translated_html: Optional[str] = Field(
+        default=None, description="Translated HTML", json_schema_extra={"widget": "textarea"}
+    )
+    total_extracted_strings: Optional[int] = Field(default=0, description="Total extracted strings")
+    total_translated_strings: Optional[int] = Field(default=0, description="Total translated strings")
 
 
 class HTMLSelectorAttribute(BaseSchema):
@@ -49,10 +50,16 @@ class HTMLSelectorAttribute(BaseSchema):
 
 class HTMLTranslationConfiguration(ApiProcessorSchema):
     system_message: str = Field(
-        description="System message to use for LLM", default="You are a language translator.", advanced_parameter=False
+        description="System message to use for LLM",
+        default="You are a language translator.",
+        json_schema_extra={"widget": "textarea", "advanced_parameter": False},
     )
 
-    chunk_size: int = Field(description="Chunk size for translation", default=1000, advanced_parameter=False)
+    chunk_size: int = Field(
+        description="Chunk size for translation",
+        default=1000,
+        json_schema_extra={"advanced_parameter": False},
+    )
 
     html_selectors: List[str] = Field(
         description="List of HTML selectors to translate",
@@ -66,12 +73,10 @@ class HTMLTranslationConfiguration(ApiProcessorSchema):
     placeholder_variable: str = Field(
         description="Placeholder variable to replace in the processed text",
         default="<CHUNK_PLACEHOLDER>",
-        advanced_parameter=True,
     )
     max_parallel_requests: int = Field(
         description="Max parallel requests to make to the translation provider",
         default=4,
-        advanced_parameter=True,
         le=10,
     )
 

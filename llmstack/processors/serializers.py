@@ -84,7 +84,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
         )
         if processor_cls is None:
             return None
-        return processor_cls.get_output_template().dict() if processor_cls.get_output_template() else None
+        return processor_cls.get_output_template().model_dump() if processor_cls.get_output_template() else None
 
     class Meta:
         model = ApiBackend

@@ -44,7 +44,7 @@ class ChatMessage(ApiProcessorSchema):
     message: str = Field(
         default="",
         description="The message text.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 
@@ -65,20 +65,18 @@ class MessagesConfiguration(ApiProcessorSchema):
     system_message: str = Field(
         default="You are a helpful assistant.",
         description="A system prompt is a way of providing context and instructions to the model.",
-        widget="textarea",
-        advanced_parameter=False,
+        json_schema_extra={"widget": "textarea", "advanced_parameter": False},
     )
     model: MessagesModel = Field(
         default=MessagesModel.LLAMA_3_8B,
         description="The Llama model that will generate the responses.",
-        advanced_parameter=False,
-        widget="customselect",
+        json_schema_extra={"widget": "customselect", "advanced_parameter": False},
     )
     max_tokens: int = Field(
         ge=1,
         default=256,
         description="The maximum number of tokens to generate before stopping.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     temperature: float = Field(
         default=0.5,
@@ -86,7 +84,7 @@ class MessagesConfiguration(ApiProcessorSchema):
         multiple_of=0.1,
         ge=0.0,
         le=1.0,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     retain_history: Optional[bool] = Field(
         default=False,
@@ -106,18 +104,18 @@ class MessagesConfiguration(ApiProcessorSchema):
         multiple_of=0.1,
         ge=0.0,
         le=1.0,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     repetition_penalty: Optional[float] = Field(
         default=1.0,
         description="The penalty for repeating the same token.",
         multiple_of=0.1,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     stop: Optional[List[str]] = Field(
         default=["<|eot_id|>"],
         description="A list of tokens at which to stop generation.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     deployment_names: Optional[List[str]] = Field(default=None, description="The deployment provider config to use.")
 

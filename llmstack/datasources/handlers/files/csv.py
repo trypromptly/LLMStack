@@ -20,13 +20,14 @@ logger = logging.getLogger(__name__)
 
 class CSVFileSchema(DataSourceSchema):
     file: str = Field(
-        ...,
-        widget="file",
         description="File to be processed",
-        accepts={
-            "text/csv": [],
+        json_schema_extra={
+            "widget": "file",
+            "accept": {
+                "text/csv": [],
+            },
+            "maxSize": 20000000,
         },
-        maxSize=20000000,
     )
 
     @staticmethod

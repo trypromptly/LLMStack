@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from pydantic.json_schema import GenerateJsonSchema
 
 
 def custom_json_dumps(v, **kwargs):
@@ -85,18 +86,31 @@ def get_ui_schema_from_json_schema(json_schema):
     return ui_schema["properties"]
 
 
-class BaseSchema(BaseModel):
-    class Config:
-        json_dumps = custom_json_dumps
-        json_loads = custom_json_loads
+class CustomGenerateJsonSchema(GenerateJsonSchema):
+    def nullable_schema(self, schema):
+        # Source: https://github.com/pydantic/pydantic/issues/7161#issuecomment-1840346757
+        null_schema = {"type": "null"}
+        inner_json_schema = self.generate_inner(schema["schema"])
 
+        if inner_json_schema == null_schema:
+            return null_schema
+        else:
+            # Thanks to the equality check against `null_schema` above, I think 'oneOf' would also be valid here;
+            # I'll use 'anyOf' for now, but it could be changed it if it would work better with some external tooling
+            flattened_anyof = self.get_flattened_anyof([inner_json_schema, null_schema])
+            if len(flattened_anyof["anyOf"]) == 2:
+                return inner_json_schema
+            return flattened_anyof
+
+
+class BaseSchema(BaseModel):
     @classmethod
     def get_json_schema(cls):
-        return super().schema_json(indent=2)
+        return custom_json_dumps(cls.get_schema(), indent=2)
 
     @classmethod
     def get_schema(cls):
-        schema = super().schema()
+        schema = super().model_json_schema(schema_generator=CustomGenerateJsonSchema)
         if "title" in schema:
             # Convert camel case to title case
             schema["title"] = (

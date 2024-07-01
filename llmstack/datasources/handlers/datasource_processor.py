@@ -227,7 +227,7 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
         if self.profile.use_custom_embedding:
             self._embeddings_endpoint = OpenAIEmbeddingsProcessor(
-                configuration=embedding_endpoint_configuration.dict(),
+                configuration=embedding_endpoint_configuration.model_dump(),
             )
         else:
             self._embeddings_endpoint = None
@@ -241,7 +241,7 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
     def _get_document_embeddings(self, text: str) -> OpenAIEmbeddingOutput:
         if self.embeddings_endpoint:
             return self.embeddings_endpoint.process(
-                OpenAIEmbeddingInput(text=text).dict(),
+                OpenAIEmbeddingInput(text=text).model_dump(),
             ).embeddings
         else:
             return None

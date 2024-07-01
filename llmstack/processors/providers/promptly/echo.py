@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class EchoProcessorInput(ApiProcessorSchema):
-    input_str: str = Field(description="The input string to echo", widget="textarea", default="Hello, World!")
+    input_str: str = Field(
+        description="The input string to echo", json_schema_extra={"widget": "textarea"}, default="Hello, World!"
+    )
     stream: bool = False
 
 

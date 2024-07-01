@@ -26,13 +26,17 @@ Entry configuration schema for url data source type
 
 class URLSchema(DataSourceSchema):
     urls: str = Field(
-        widget="webpageurls",
         description="URLs to scrape, List of URL can be comma or newline separated. If site.xml is present, it will be used to scrape the site.",
         max_length=1600,
+        json_schema_extra={
+            "widget": "webpageurls",
+        },
     )
     connection_id: Optional[str] = Field(
         description="Select connection if parsing loggedin page",
-        widget="connection",
+        json_schema_extra={
+            "widget": "connection",
+        },
     )
 
     @staticmethod
@@ -73,7 +77,7 @@ class URLDataSource(DataSourceProcessor[URLSchema]):
     def get_sync_configuration(cls) -> Optional[dict]:
         return DataSourceSyncConfiguration(
             sync_type=DataSourceSyncType.FULL,
-        ).dict()
+        ).model_dump()
 
     def get_url_data(
         self,

@@ -51,7 +51,7 @@ class TextToSpeechOutput(ApiProcessorSchema):
     audio_content: Optional[str] = Field(
         default=None,
         description="The output audio content in base64 format.",
-        widget=AUDIO_WIDGET_NAME,
+        json_schema_extra={"widget": AUDIO_WIDGET_NAME},
     )
 
 
@@ -59,12 +59,12 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
     voice_id: str = Field(
         default="21m00Tcm4TlvDq8ikWAM",
         description="Voice ID to be used, you can use https://api.elevenlabs.io/v1/voices to list all the available voices.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
-    model_id: str = Field(
+    tts_model_id: str = Field(
         default="eleven_monolingual_v1",
         description="Identifier of the model that will be used, you can query them using GET https://api.elevenlabs.io/v1/models.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     optimize_streaming_latency: int = Field(
         default=0,
@@ -89,7 +89,7 @@ async def convert_text_to_speech(ws_uri, voice_settings, api_key, input_asset_st
             json.dumps(
                 {
                     "text": " ",
-                    "voice_settings": voice_settings.dict(),
+                    "voice_settings": voice_settings.model_dump(),
                     "xi_api_key": api_key,
                 }
             )
@@ -176,7 +176,7 @@ class ElevenLabsTextToSpeechProcessor(
 
         run_coro_in_new_loop(
             convert_text_to_speech(
-                f"wss://api.elevenlabs.io/v1/text-to-speech/{self._config.voice_id}/stream-input?model_id={self._config.model_id}",
+                f"wss://api.elevenlabs.io/v1/text-to-speech/{self._config.voice_id}/stream-input?model_id={self._config.tts_model_id}",
                 self._config.voice_settings,
                 self._env.get("elevenlabs_api_key", None),
                 input_asset_stream,
@@ -199,8 +199,8 @@ class ElevenLabsTextToSpeechProcessor(
 
         data = {
             "text": sanitize_input(self._input.input_text),
-            "model_id": self._config.model_id,
-            "voice_settings": self._config.voice_settings.dict(),
+            "model_id": self._config.tts_model_id,
+            "voice_settings": self._config.voice_settings.model_dump(),
         }
 
         response = requests.post(

@@ -13,7 +13,7 @@ from typing import Optional
 import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
@@ -95,9 +95,11 @@ class FileOperationsInput(ApiProcessorSchema):
         description="Object ref of the content to be used to create the file",
     )
     output_filename: Optional[str] = Field(
+        default=None,
         description="The name of the file to create. If not provided, a random name will be generated",
     )
     output_directory: Optional[str] = Field(
+        default=None,
         description="The directory to create the file in. If not provided, the file will be created in a temporary directory and path is returned",
     )
     output_mime_type: FileMimeType = Field(
@@ -105,7 +107,7 @@ class FileOperationsInput(ApiProcessorSchema):
         description="The mimetype of the file. If not provided, it will be inferred from the filename",
     )
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_content(cls, values):
         output_directory = values.get("output_directory", "")
         output_filename = values.get("output_filename")
@@ -135,8 +137,15 @@ class FileOperationsOutput(ApiProcessorSchema):
 
 
 class FileOperationsConfiguration(ApiProcessorSchema):
-    operation: FileOperationOperation = Field(description="The operation to perform", advanced_parameter=False)
-    operation_config: str = Field(default="{}", description="Configuration for the operation", widget="textarea")
+    operation: FileOperationOperation = Field(
+        description="The operation to perform",
+        json_schema_extra={"advanced_parameter": False},
+    )
+    operation_config: str = Field(
+        default="{}",
+        description="Configuration for the operation",
+        json_schema_extra={"widget": "textarea"},
+    )
 
 
 def _create_archive(files, directory=""):
@@ -207,8 +216,8 @@ class FileOperationsProcessor(
 
     def get_bookkeeping_data(self) -> BookKeepingData:
         return BookKeepingData(
-            input=self._input.dict(exclude={"content"}),
-            config=self._config.dict(),
+            input=self._input.model_dump(exclude={"content"}),
+            config=self._config.model_dump(),
             output=self._output if self._output else {},
             session_data=self.session_data_to_persist() if self._session_enabled else {},
             timestamp=time.time(),

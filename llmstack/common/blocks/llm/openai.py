@@ -141,7 +141,7 @@ class OpenAIAPIProcessor(
         http_status_is_ok = True
         error_message = ""
         for http_response in http_api_processor.process_iter(
-            http_input.dict(),
+            http_input.model_dump(),
         ):
             if http_response.is_ok:
                 if http_response.text == "data: [DONE]":
@@ -197,7 +197,7 @@ class OpenAIAPIProcessor(
         )
 
         http_response = http_api_processor.process(
-            http_input.dict(),
+            http_input.model_dump(),
         )
 
         # If the response is ok, return the choices
@@ -380,12 +380,8 @@ class OpenAIChatCompletionsAPIProcessor(
         input: OpenAIChatCompletionsAPIProcessorInput,
         configuration: OpenAIChatCompletionsAPIProcessorConfiguration,
     ) -> dict:
-        input_json = json.loads(
-            input.copy(
-                exclude={"env"},
-            ).json(),
-        )
-        configuration_json = json.loads(configuration.json())
+        input_json = input.model_dump(exclude={"env"})
+        configuration_json = configuration.model_dump()
         if "functions" in input_json and (
             input_json["functions"] is None
             or len(
@@ -634,7 +630,7 @@ class OpenAIImageEditsProcessor(
                 authorization=BearerTokenAuth(
                     token=input.env.openai_api_key,
                 ),
-            ).dict(),
+            ).model_dump(),
         )
 
         # If the response is ok, return the choices
@@ -775,7 +771,7 @@ class OpenAIImageVariationsProcessor(
                 authorization=BearerTokenAuth(
                     token=input.env.openai_api_key,
                 ),
-            ).dict(),
+            ).model_dump(),
         )
 
         # If the response is ok, return the choices
@@ -796,10 +792,6 @@ class OpenAIImageVariationsProcessor(
             raise Exception(process_openai_error_response(http_response))
 
 
-class InputItem(Schema):
-    __root__: List[Any]
-
-
 class OpenAIEmbeddingsProcessorInput(OpenAIAPIProcessorInput):
     class Config:
         extra = Extra.forbid
@@ -808,7 +800,7 @@ class OpenAIEmbeddingsProcessorInput(OpenAIAPIProcessorInput):
         str,
         List[str],
         List[int],
-        List[InputItem],
+        List[Any],
     ] = Field(
         ...,
         description="Input text to get embeddings for, encoded as a string or array of tokens. To get embeddings for multiple inputs in a single request, pass an array of strings or array of token arrays. Each input must not exceed 8192 tokens in length.\n",

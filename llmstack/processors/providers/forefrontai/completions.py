@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -29,11 +28,7 @@ class CompletionsInput(BaseModel):
 
 
 class CompletionsOutput(BaseModel):
-    result: str = Field(default="", widget=TEXT_WIDGET_NAME)
-    _api_response: Optional[dict] = Field(
-        default={},
-        description="Raw processor output.",
-    )
+    result: str = Field(default="", json_schema_extra={"widget": TEXT_WIDGET_NAME})
 
 
 class Completions(

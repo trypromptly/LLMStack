@@ -21,15 +21,15 @@ logger = logging.getLogger(__name__)
 
 
 class MapProcessorInput(Schema):
-    input_list: List[Dict] = Field(default=[], description="Input list", widget="hidden")
-    input_list_json: str = Field(default="[]", description="Input list", widget="textarea")
+    input_list: List[Dict] = Field(default=[], description="Input list", json_schema_extra={"widget": "hidden"})
+    input_list_json: str = Field(default="[]", description="Input list", json_schema_extra={"widget": "hidden"})
 
 
 class MapProcessorOutput(Schema):
     outputs: List[str] = []
     objrefs: List[str] = []
     outputs_text: str = ""
-    processing: Optional[bool] = Field(default=None, description="processing", widget="hidden")
+    processing: Optional[bool] = Field(default=None, description="processing", json_schema_extra={"widget": "hidden"})
 
 
 class MapProcessorConfiguration(PromptlyApp):
@@ -37,7 +37,6 @@ class MapProcessorConfiguration(PromptlyApp):
         default=False,
         title="Output as Object Reference",
         description="Return output as object reference instead of raw text.",
-        advanced_parameter=True,
     )
 
 

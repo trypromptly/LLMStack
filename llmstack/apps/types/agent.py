@@ -4,7 +4,6 @@ from typing import List, Optional
 from pydantic import Field
 
 from llmstack.apps.types.app_type_interface import AppTypeInterface, BaseSchema
-from llmstack.processors.providers.api_processor_interface import DataUrl
 
 
 class AgentModel(str, Enum):
@@ -28,21 +27,22 @@ class AgentConfigSchema(BaseSchema):
         description="The model to use for the agent.",
     )
     user_message: Optional[str] = Field(
+        default=None,
         title="User Message",
         description="The user message to use with the Agent. This is the message that the user provides to the agent in the input.",
-        widget="textwithvars",
+        json_schema_extra={"widget": "textwithvars"},
     )
     system_message: str = Field(
         title="System Message",
         default="You are a helpful assistant that uses provided tools to perform actions.",
         description="The system message to use with the Agent.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
     max_steps: int = Field(
         title="Max Steps",
         default=10,
         description="The maximum number of steps the agent can take.",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
         le=100,
         ge=1,
     )
@@ -50,57 +50,55 @@ class AgentConfigSchema(BaseSchema):
         title="Split Tasks",
         default=True,
         description="Whether to split tasks into subtasks.",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
     )
     input_template: str = Field(
         title="Page Content",
         default="",
         description="Content to show at the top of the window",
-        widget="richtext",
-        advanced_parameter=True,
+        json_schema_extra={"widget": "richtext", "advanced_parameter": True},
     )
     welcome_message: str = Field(
         title="Welcome Message",
         default="",
         description="Welcome message from assistant to show when the chat session starts",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
     )
-    assistant_image: DataUrl = Field(
+    assistant_image: str = Field(
         title="Assistant Image",
         default="",
         description="Icon to show for the messages from assistant",
-        widget="image_generator",
-        advanced_parameter=True,
+        json_schema_extra={"widget": "image_generator", "advanced_parameter": True},
     )
     window_color: str = Field(
         title="Primary Color of Chat Window",
         default="#477195",
         description="Color of the chat window",
-        widget="color",
-        advanced_parameter=True,
+        json_schema_extra={"widget": "color", "advanced_parameter": True},
     )
     chat_bubble_text: Optional[str] = Field(
+        default=None,
         title="App Bubble Text",
         description="Text to show in the app bubble when embedded in another page. If not provided, it shows chat bubble icon.",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
     )
     chat_bubble_style: Optional[str] = Field(
+        default=None,
         title="App Bubble Style",
         description="CSS style object to apply to the app bubble when embedded in another page",
-        advanced_parameter=True,
-        widget="textarea",
+        json_schema_extra={"widget": "textarea", "advanced_parameter": True},
     )
     suggested_messages: List[str] = Field(
         title="Suggested messages",
         default=[],
         description="List of upto 3 suggested messages to show to the user",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
     )
     chat_history_limit: Optional[int] = Field(
         title="Chat History Limit",
         default=0,
         description="Number of messages to keep in chat history",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
         le=1000,
         ge=0,
     )
@@ -108,27 +106,27 @@ class AgentConfigSchema(BaseSchema):
         title="Random Seed",
         default=None,
         description="Random seed to use for the agent",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
     )
     temperature: Optional[float] = Field(
         title="Temperature",
         default=0.7,
         description="Temperature to use for the agent",
-        advanced_parameter=True,
+        json_schema_extra={"advanced_parameter": True},
         ge=0.0,
         le=1.0,
     )
     layout: Optional[str] = Field(
+        default=None,
         title="Layout",
         description="Layout to use for the app page",
-        widget="textarea",
-        advanced_parameter=True,
+        json_schema_extra={"widget": "textarea", "advanced_parameter": True},
     )
     init_on_load: Optional[bool] = Field(
+        default=None,
         title="Initialize processors on load. Use this for apps like realtime avatars.",
         description="If checked, the app will be initialized when the page is loaded. This is useful for apps that need to be initialized before the user interacts with them.",
-        advanced_parameter=True,
-        hidden=True,
+        json_schema_extra={"advanced_parameter": True, "hidden": True},
     )
 
 

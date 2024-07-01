@@ -56,7 +56,7 @@ class TextToSpeechOutput(ApiProcessorSchema):
     audio_content: Optional[str] = Field(
         default=None,
         description="The output audio content in base64 format.",
-        widget=AUDIO_WIDGET_NAME,
+        json_schema_extra={"widget": AUDIO_WIDGET_NAME},
     )
 
 
@@ -64,14 +64,15 @@ class TextToSpeechConfiguration(ApiProcessorSchema):
     voice: VoiceConfig = Field(
         default=VoiceConfig(),
         description="Voice configuration.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
-    project_id: Optional[str] = Field(description="Google project ID.")
+    project_id: Optional[str] = Field(default=None, description="Google project ID.")
     audio_config: AudioConfig = Field(
         default=AudioConfig(),
         description="Audio configuration.",
     )
     auth_token: Optional[str] = Field(
+        default=None,
         description="Authentication credentials.",
     )
 
@@ -137,8 +138,8 @@ class TextToSpeechProcessor(
 
         data = {
             "input": {"text": self._input.input_text},
-            "voice": self._config.voice.dict(),
-            "audioConfig": self._config.audio_config.dict(),
+            "voice": self._config.voice.model_dump(),
+            "audioConfig": self._config.audio_config.model_dump(),
         }
 
         response = requests.post(api_url, headers=headers, json=data)

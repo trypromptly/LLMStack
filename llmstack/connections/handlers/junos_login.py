@@ -16,7 +16,7 @@ class JunosLoginConfiguration(WebLoginBaseConfiguration):
     username: str = Field(description="Username for the device")
     password: str = Field(
         description="Password for the account",
-        widget="password",
+        json_schema_extra={"widget": "password"},
     )
 
 

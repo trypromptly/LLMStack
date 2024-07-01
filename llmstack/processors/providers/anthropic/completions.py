@@ -34,7 +34,7 @@ class CompletionsOutput(ApiProcessorSchema):
     completion: str = Field(
         default="",
         description="The generated completion.",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 
@@ -42,13 +42,13 @@ class CompletionsConfiguration(ApiProcessorSchema):
     model: CompletionsModel = Field(
         default=CompletionsModel.CLAUDE_2,
         description="The model that will complete your prompt.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     max_tokens_to_sample: int = Field(
         ge=1,
         default=256,
         description="The maximum number of tokens to generate before stopping.",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     temperature: float = Field(
         default=0.0,
@@ -56,7 +56,7 @@ class CompletionsConfiguration(ApiProcessorSchema):
         multiple_of=0.1,
         ge=0.0,
         le=1.0,
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
 

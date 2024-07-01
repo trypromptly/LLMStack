@@ -23,12 +23,10 @@ class DataUriTextExtractorConfiguration(ApiProcessorSchema):
     document_limit: Optional[conint(ge=0, le=10)] = Field(
         description="The maximum number of documents to return",
         default=1,
-        advanced_parameter=True,
     )
     text_chunk_size: Optional[conint(ge=500, le=2000)] = Field(
         description="Chunksize of document",
         default=1500,
-        advanced_parameter=True,
     )
 
 
@@ -36,19 +34,21 @@ class DataUriTextExtractorInput(ApiProcessorSchema):
     file: str = Field(
         default="",
         description="The file to extract text from",
-        accepts={
-            "application/pdf": [],
-            "application/rtf": [],
-            "text/plain": [],
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
-            "application/msword": [],
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
-            "application/vnd.ms-powerpoint": [],
-            "image/jpeg": [],
-            "image/png": [],
+        json_schema_extra={
+            "widget": "file",
+            "maxSize": 50000000,
+            "accepts": {
+                "application/pdf": [],
+                "application/rtf": [],
+                "text/plain": [],
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
+                "application/msword": [],
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
+                "application/vnd.ms-powerpoint": [],
+                "image/jpeg": [],
+                "image/png": [],
+            },
         },
-        maxSize=50000000,
-        widget="file",
     )
     file_data: Optional[str] = Field(
         default="",
@@ -65,7 +65,7 @@ class DataUriTextExtractorOutput(ApiProcessorSchema):
     text: str = Field(
         default="",
         description="The extracted text from the file",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 

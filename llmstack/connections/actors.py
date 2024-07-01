@@ -53,7 +53,7 @@ class ConnectionActivationActor(ThreadingActor):
         )()
 
         connection.status = ConnectionStatus.CONNECTING
-        profile.add_connection(connection.dict())
+        profile.add_connection(connection.model_dump())
 
         return self.connection_handler.activate(connection)
 

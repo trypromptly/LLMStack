@@ -23,18 +23,15 @@ class WebSearchConfiguration(ApiProcessorSchema):
     search_engine: SearchEngine = Field(
         default=SearchEngine.GOOGLE,
         description="Search engine to use",
-        widget="customselect",
-        advanced_parameter=True,
+        json_schema_extra={"widget": "customselect"},
     )
     k: int = Field(
         default=5,
         description="Number of results to return",
-        advanced_parameter=True,
     )
     advanced_params: Optional[str] = Field(
         default="",
         description="Advanced parameters in url format to pass to the search engine",
-        advanced_parameter=True,
     )
 
 
@@ -42,7 +39,7 @@ class WebSearchInput(ApiProcessorSchema):
     query: str = Field(
         default="",
         description="Query to search for",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 

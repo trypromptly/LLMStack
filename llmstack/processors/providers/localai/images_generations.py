@@ -33,12 +33,12 @@ class ImagesGenerationsOutput(ApiProcessorSchema):
     data: List[str] = Field(
         default=[],
         description="The generated images.",
-        widget=IMAGE_WIDGET_NAME,
+        json_schema_extra={"widget": IMAGE_WIDGET_NAME},
     )
 
 
 class ImagesGenerationsConfiguration(ApiProcessorSchema):
-    base_url: str = Field(description="Base URL", advanced_parameter=False)
+    base_url: str = Field(description="Base URL", json_schema_extra={"advanced_parameter": False})
 
     size: Optional[Size] = Field(
         "256x256",
@@ -48,7 +48,7 @@ class ImagesGenerationsConfiguration(ApiProcessorSchema):
     timeout: int = Field(
         default=60,
         description="Timeout in seconds",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
 
 
@@ -96,7 +96,7 @@ class ImagesGenerations(
             {"timeout": self._config.timeout},
         )
         http_response = http_api_processor.process(
-            http_input.dict(),
+            http_input.model_dump(),
         )
         # If the response is ok, return the choices
         if (

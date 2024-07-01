@@ -20,11 +20,7 @@ class AudioTranscriptionInput(ApiProcessorSchema):
     file: str = Field(
         default="",
         description="The audio file to transcribe, in one of these formats: mp3, mp4, mpeg, mpga, m4a, wav, or webm.",
-        accepts={
-            "audio/*": [],
-        },
-        maxSize=20000000,
-        widget="file",
+        json_schema_extra={"widget": "file", "accepts": {"audio/*": []}, "maxSize": 20000000},
     )
     file_data: Optional[str] = Field(
         default="",
@@ -45,7 +41,7 @@ class AudioTranscriptionOutput(ApiProcessorSchema):
     text: str = Field(
         default="",
         description="The transcribed text",
-        widget="textarea",
+        json_schema_extra={"widget": "textarea"},
     )
 
 
@@ -53,7 +49,7 @@ class AudioTranscriptionConfiguration(ApiProcessorSchema):
     model: str = Field(
         default="whisper-1",
         description="ID of the model to use. Only `whisper-1` is currently available.\n",
-        advanced_parameter=False,
+        json_schema_extra={"advanced_parameter": False},
     )
     response_format: Optional[str] = Field(
         "json",

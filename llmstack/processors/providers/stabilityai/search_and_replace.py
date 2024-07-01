@@ -34,12 +34,7 @@ class SearchAndReplaceProcessorInput(ApiProcessorSchema):
     image_file: Optional[str] = Field(
         default="",
         description="The file to extract text from",
-        accepts={
-            "image/jpeg": [],
-            "image/png": [],
-        },
-        maxSize=9000000,
-        widget="file",
+        json_schema_extra={"widget": "file", "accepts": {"image/*": []}, "maxSize": 9000000},
     )
     image_file_data: Optional[str] = Field(
         default="",
@@ -56,6 +51,7 @@ class SearchAndReplaceProcessorInput(ApiProcessorSchema):
     )
 
     negative_prompt: Optional[str] = Field(
+        default=None,
         description="Negative text prompt to use for image generation.",
     )
 

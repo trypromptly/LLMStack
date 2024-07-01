@@ -1,4 +1,4 @@
-from pydantic import root_validator
+from pydantic import model_validator
 
 from llmstack.common.blocks.base.processor import ProcessorInterface
 from llmstack.common.blocks.data import DataDocument
@@ -14,7 +14,7 @@ class WhisperTextExtractorInput(TextExtractorInput):
     openai_api_key: str
 
     @classmethod
-    @root_validator()
+    @model_validator(mode="before")
     def validate(cls, field_values):
         mime_type = field_values.get("mime_type")
         openai_api_key = field_values.get("openai_api_key")

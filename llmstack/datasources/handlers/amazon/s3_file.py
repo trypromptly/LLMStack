@@ -55,9 +55,9 @@ class S3FileSchema(DataSourceSchema):
         default=None,
     )
     aws_secret_access_key: Optional[SecretStr] = Field(
-        ...,
         description="AWS secret access key",
-        widget="password",
+        json_schema_extra={"widget": "password"},
+        default=None,
     )
     region_name: Optional[str] = Field(
         description="AWS region name",
