@@ -32,8 +32,8 @@ class SingleStoreDatabaseSchema(DataSourceSchema):
 
 
 class SingleStoreConnectionConfiguration(Config):
-    config_type = "singlestore_connection"
-    is_encrypted = True
+    config_type: str = "singlestore_connection"
+    is_encrypted: bool = True
     singlestore_config: Optional[Dict] = None
 
 

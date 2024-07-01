@@ -26,7 +26,7 @@ Entry configuration schema for url data source type
 class SitemapURLSchema(DataSourceSchema):
     url: str = Field(
         description="Sitemap URL to scrape. URL should end with .xml",
-        regex=r"^.*\.xml$",
+        pattern=r"^.*\.xml$",
     )
 
     @staticmethod

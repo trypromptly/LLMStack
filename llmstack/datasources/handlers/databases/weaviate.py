@@ -69,8 +69,8 @@ class WeaviateDatabaseSchema(DataSourceSchema):
 
 
 class WeaviateConnectionConfiguration(Config):
-    config_type = "weaviate_connection"
-    is_encrypted = True
+    config_type: str = "weaviate_connection"
+    is_encrypted: bool = True
     weaviate_config: Optional[Dict] = None
 
 

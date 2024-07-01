@@ -81,7 +81,7 @@ class SQLDatabaseSchema(DataSourceSchema):
 
 class SQLConnectionConfiguration(Config):
     config_type: Optional[str] = "sql_connection"
-    is_encrypted = True
+    is_encrypted: bool = True
     config: Optional[Dict] = None
 
 
