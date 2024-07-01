@@ -71,11 +71,14 @@ class SQLDatabaseSchema(DataSourceSchema):
     )
     connection_id: Optional[str] = Field(
         default=None,
-        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
-        description="Use your authenticated connection to the database",
         # Filters is a list of strings, each formed by the combination of the connection attributes 'base_connection_type', 'provider_slug', and 'connection_type_slug', separated by '/'.
         # The pattern followed is: base_connection_type/provider_slug/connection_type_slug. We may skip provider_slug or connection_type_slug if they are not present in the filter string.
-        json_schema_extra={"filters": [ConnectionType.CREDENTIALS + "/basic_authentication"]},
+        json_schema_extra={
+            "advanced_parameter": False,
+            "widget": "connection",
+            "filters": [ConnectionType.CREDENTIALS + "/basic_authentication"],
+        },
+        description="Use your authenticated connection to the database",
     )
 
 
