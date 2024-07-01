@@ -34,7 +34,6 @@ class ImagesEditInput(ApiProcessorSchema):
     image_data: Optional[str] = Field(
         default="",
         description="The base64 encoded data of image",
-        pattern=r"data:(.*);name=(.*);base64,(.*)",
     )
     prompt: str = Field(
         default="",

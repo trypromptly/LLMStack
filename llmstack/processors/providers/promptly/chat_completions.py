@@ -51,11 +51,13 @@ class LLMProcessorInput(ApiProcessorSchema):
 
 class LLMProcessorOutput(ApiProcessorSchema):
     output_str: Optional[str] = Field(
-        description="The output string from the LLM", json_schema_extra={"widget": "hidden"}
+        default=None, description="The output string from the LLM", json_schema_extra={"widget": "hidden"}
     )
-    text: Optional[str] = Field(description="The output text from the LLM", json_schema_extra={"widget": "textarea"})
+    text: Optional[str] = Field(
+        default=None, description="The output text from the LLM", json_schema_extra={"widget": "textarea"}
+    )
     objref: Optional[str] = Field(
-        description="The object reference for the output", json_schema_extra={"widget": "hidden"}
+        default=None, description="The object reference for the output", json_schema_extra={"widget": "hidden"}
     )
 
 

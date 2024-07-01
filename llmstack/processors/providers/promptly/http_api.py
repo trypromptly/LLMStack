@@ -125,7 +125,7 @@ class HttpAPIProcessorOutput(Schema):
         default=None,
         json_schema_extra={"advanced_parameter": False},
     )
-    elapsed: Optional[int] = Field(
+    elapsed: Optional[float] = Field(
         description="Response elapsed time",
         default=None,
         json_schema_extra={"advanced_parameter": False},
@@ -239,22 +239,22 @@ class HttpAPIProcessorConfiguration(Schema):
         schema = {"type": "object", "properties": {}}
         required_fields = []
         for parameter in values["parameters"]:
-            param_name = parameter.name
+            param_name = parameter["name"]
             schema["properties"][param_name] = {
                 "type": "string",
-                "description": parameter.description,
+                "description": parameter.get("description", ""),
             }
-            if parameter.required:
+            if parameter.get("required", False):
                 required_fields.append(param_name)
 
         if values["request_body"]:
-            for parameter in values["request_body"].parameters:
-                param_name = parameter.name
+            for parameter in values["request_body"].get("parameters", []):
+                param_name = parameter["name"]
                 schema["properties"][param_name] = {
-                    "type": parameter.type,
-                    "description": parameter.description,
+                    "type": parameter["type"],
+                    "description": parameter.get("description", ""),
                 }
-                if parameter.required:
+                if parameter.get("required", False):
                     required_fields.append(param_name)
 
         schema["required"] = required_fields

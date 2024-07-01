@@ -4,7 +4,7 @@ import uuid
 from types import TracebackType
 from typing import Any, Type
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from pykka import ThreadingActor
 
 from llmstack.play.output_stream import Message, MessageType
@@ -26,6 +26,15 @@ class BookKeepingData(BaseModel):
     message_id: str = None
     disable_history: bool = False
     usage_data: dict = {}
+
+    @model_validator(mode="before")
+    def validate_input(cls, values):
+        if values.get("input") and not isinstance(values["input"], dict):
+            values["input"] = values["input"].model_dump()
+
+        if values.get("config") and not isinstance(values["config"], dict):
+            values["config"] = values["config"].model_dump()
+        return values
 
 
 class ActorConfig(BaseModel):
