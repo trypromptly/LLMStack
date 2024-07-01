@@ -24,8 +24,9 @@ const generateTreeItemsFromSchema = (
 ) => {
   if (!schema || !schema.properties) return [null, []];
 
-  const { properties, definitions } = schema;
+  const { properties, $defs } = schema;
   const currentKeys = [];
+  const definitions = $defs || {};
 
   const treeItems = Object.keys(properties).map((key) => {
     const currentKey = parentKey ? `${parentKey}.${key}` : key;
