@@ -53,7 +53,6 @@ class DataUriTextExtractorInput(ApiProcessorSchema):
     file_data: Optional[str] = Field(
         default="",
         description="The base64 encoded data of file",
-        pattern=r"data:(.*);name=(.*);base64,(.*)",
     )
     query: Optional[str] = Field(
         default="",

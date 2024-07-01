@@ -150,7 +150,6 @@ class ImageToImageInput(ApiProcessorSchema):
     image_file_data: Optional[str] = Field(
         default="",
         description="The base64 encoded data of file",
-        pattern=r"data:(.*);name=(.*);base64,(.*)",
     )
 
     prompt: List[str] = Field(

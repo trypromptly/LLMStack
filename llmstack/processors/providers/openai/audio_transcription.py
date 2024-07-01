@@ -25,7 +25,6 @@ class AudioTranscriptionInput(ApiProcessorSchema):
     file_data: Optional[str] = Field(
         default="",
         description="The base64 encoded data of audio file to transcribe",
-        pattern=r"data:(.*);name=(.*);base64,(.*)",
     )
     prompt: Optional[str] = Field(
         default=None,
