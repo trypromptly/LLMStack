@@ -88,6 +88,7 @@ def get_ui_schema_from_json_schema(json_schema):
 
 class CustomGenerateJsonSchema(GenerateJsonSchema):
     def nullable_schema(self, schema):
+        # Source: https://github.com/pydantic/pydantic/issues/7161#issuecomment-1840346757
         null_schema = {"type": "null"}
         inner_json_schema = self.generate_inner(schema["schema"])
 
