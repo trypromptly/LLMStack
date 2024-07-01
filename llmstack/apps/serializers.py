@@ -431,52 +431,6 @@ class AppHubSerializer(serializers.ModelSerializer):
         fields = ["published_uuid", "categories", "name", "description"]
 
 
-class CloneableAppSerializer(serializers.ModelSerializer):
-    class CloneableAppRunGraphEntrySerializer(serializers.ModelSerializer):
-        class CloneableAppEndpointSerializer(serializers.ModelSerializer):
-            api_backend = ApiBackendSerializer()
-
-            class Meta:
-                model = Endpoint
-                fields = [
-                    "name",
-                    "api_backend",
-                    "description",
-                    "is_app",
-                    "config",
-                    "input",
-                ]
-
-        entry_endpoint = CloneableAppEndpointSerializer()
-        exit_endpoint = CloneableAppEndpointSerializer()
-
-        class Meta:
-            model = AppRunGraphEntry
-            fields = ["id", "entry_endpoint", "exit_endpoint"]
-
-    type = AppTypeSerializer()
-    run_graph = CloneableAppRunGraphEntrySerializer(many=True)
-
-    class Meta:
-        model = App
-        fields = [
-            "name",
-            "description",
-            "config",
-            "input_schema",
-            "data_transformer",
-            "type",
-            "input_ui_schema",
-            "output_template",
-            "run_graph",
-            "published_uuid",
-            "is_published",
-            "domain",
-            "created_at",
-            "last_updated_at",
-        ]
-
-
 class AppSessionSerializer(serializers.ModelSerializer):
     app = AppSerializer()
 

@@ -8,14 +8,6 @@ urlpatterns = [
     path("api/app_types", apis.AppTypeViewSet.as_view({"get": "get"})),
     # Apps
     path(
-        "api/apps/clone",
-        apis.AppViewSet.as_view({"get": "getCloneableApps"}),
-    ),
-    path(
-        "api/apps/clone/<str:uid>",
-        apis.AppViewSet.as_view({"get": "getCloneableApps"}),
-    ),
-    path(
         "api/apps/templates",
         apis.AppViewSet.as_view({"get": "getTemplates"}),
     ),
@@ -79,10 +71,6 @@ urlpatterns = [
     path(
         "api/app/<str:published_uuid>",
         apis.AppViewSet.as_view({"get": "getByPublishedUUID"}),
-    ),
-    path(
-        "api/cloneable_apps",
-        apis.AppViewSet.as_view({"get": "getCloneableApps"}),
     ),
     # App Hub
     path("api/appHub", apis.AppHubViewSet.as_view({"get": "list"})),

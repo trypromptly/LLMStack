@@ -57,7 +57,6 @@ from .serializers import (
     AppHubSerializer,
     AppSerializer,
     AppTypeSerializer,
-    CloneableAppSerializer,
     TestCaseSerializer,
     TestSetSerializer,
 )
@@ -97,37 +96,6 @@ class AppViewSet(viewsets.ViewSet):
         ):
             return [AllowAny()]
         return [IsAuthenticated()]
-
-    def get_processors_from_run_graph(self, run_graph):
-        processors = []
-        if not run_graph:
-            return processors
-
-        entry_node = list(
-            filter(
-                lambda x: x["entry_endpoint"] is None,
-                run_graph,
-            ),
-        )[0]
-        node = entry_node["exit_endpoint"]
-        while node:
-            processors.append(
-                {
-                    "input": node["input"],
-                    "config": {},
-                    "api_backend": node["api_backend"],
-                },
-            )
-            node_to_find = node
-            edge = list(
-                filter(
-                    lambda x: x["entry_endpoint"] == node_to_find,
-                    run_graph,
-                ),
-            )[0]
-
-            node = edge["exit_endpoint"] if edge else None
-        return processors
 
     def get(self, request, uid=None):
         fields = request.query_params.get("fields", None)
@@ -336,31 +304,6 @@ class AppViewSet(viewsets.ViewSet):
                     "message": "Nothing found here. Please check our app hub for more apps.",
                 },
             )
-
-    def getCloneableApps(self, request, uid=None):
-        json_data = None
-        if uid:
-            object = get_object_or_404(
-                App,
-                uuid=uuid.UUID(uid),
-                is_cloneable=True,
-            )
-            serializer = CloneableAppSerializer(instance=object)
-            json_data = serializer.data
-            json_data["processors"] = self.get_processors_from_run_graph(
-                json_data["run_graph"],
-            )
-            del json_data["run_graph"]
-        else:
-            queryset = App.objects.all().filter(is_cloneable=True)
-            serializer = CloneableAppSerializer(queryset, many=True)
-            json_data = serializer.data
-            for app in json_data:
-                app["processors"] = self.get_processors_from_run_graph(
-                    app["run_graph"],
-                )
-                del app["run_graph"]
-        return DRFResponse(json_data)
 
     def getTemplates(self, request, slug=None):
         json_data = None
