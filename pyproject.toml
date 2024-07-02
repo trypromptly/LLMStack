@@ -118,6 +118,8 @@ markdown = {version = "^3.4.4" }
 python-pptx = {version = "^0.6.21" }
 python-magic = {version = "^0.4.27" }
 anthropic = "^0.30.0"
+pypdf = "^4.2.0"
+pikepdf = "^9.0.0"
 
 
 [tool.poetry-dynamic-versioning]
