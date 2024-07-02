@@ -33,10 +33,9 @@ class URLSchema(DataSourceSchema):
         },
     )
     connection_id: Optional[str] = Field(
+        default=None,
         description="Select connection if parsing loggedin page",
-        json_schema_extra={
-            "widget": "connection",
-        },
+        json_schema_extra={"widget": "connection"},
     )
 
     @staticmethod
