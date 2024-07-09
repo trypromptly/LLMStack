@@ -271,15 +271,10 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
     def post(self, request):
         owner = request.user
-        datasource_type = get_object_or_404(
-            DataSourceType,
-            id=request.data["type"],
-        )
-
+        # Validation for slug
+        datasource_type = get_object_or_404(DataSourceType, slug=request.data["type_slug"])
         datasource = DataSource(
-            name=request.data["name"],
-            owner=owner,
-            type=datasource_type,
+            name=request.data["name"], owner=owner, type=datasource_type, type_slug=request.data["type_slug"]
         )
         # If this is an external data source, then we need to save the config
         # in datasource object

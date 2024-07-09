@@ -39,6 +39,7 @@ class DataSourceTypeSerializer(serializers.ModelSerializer):
         model = DataSourceType
         fields = [
             "id",
+            "slug",
             "name",
             "description",
             "entry_config_schema",
