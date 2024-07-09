@@ -181,7 +181,7 @@ const defaultTheme = createTheme({
             textOverflow: "ellipsis",
             whiteSpace: "normal",
             textAlign: "left",
-            margin: "2px",
+            margin: "2px 2px 8px 4px",
             lineHeight: "1.6em",
             maxHeight: "3.2em",
           },
