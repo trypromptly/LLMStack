@@ -54,7 +54,7 @@ class DataSourceSearchConfigurations(ApiProcessorSchema):
         default=4,
         description="Limit of documents to return",
     )
-    search_filters: str = Field(
+    search_filters: Optional[str] = Field(
         title="Search filters",
         default=None,
         description="Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata",
