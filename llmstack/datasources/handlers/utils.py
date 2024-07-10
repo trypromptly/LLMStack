@@ -1,10 +1,6 @@
-import logging
-
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.text_extract import extract_text_elements
-
-_logger = logging.getLogger(__name__)
 
 
 def extract_documents(
