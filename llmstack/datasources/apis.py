@@ -3,6 +3,7 @@ import logging
 import time
 import uuid
 from concurrent.futures import Future
+from functools import cache
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
@@ -36,6 +37,22 @@ from .serializers import (
 from .tasks import extract_urls_task
 
 logger = logging.getLogger(__name__)
+
+
+@cache
+def get_data_source_type(slug):
+    for subclass in get_data_source_type_interface_subclasses():
+        if subclass.slug() == slug:
+            return {
+                "slug": subclass.slug(),
+                "name": subclass.name(),
+                "description": subclass.description(),
+                "entry_config_schema": json.loads(subclass.get_input_schema()),
+                "entry_config_ui_schema": subclass.get_input_ui_schema(),
+                "sync_config": subclass.get_sync_configuration(),
+                "is_external_datasource": subclass.is_external(),
+            }
+    return None
 
 
 class DataSourceTypeViewSet(viewsets.ModelViewSet):
