@@ -19,7 +19,6 @@ from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.blocks.data.store.vectorstore.weaviate import (
     Weaviate as PromptlyWeaviate,
 )
-from llmstack.common.blocks.embeddings.openai_embedding import OpenAIEmbeddingOutput
 from llmstack.datasources.models import DataSource
 
 logger = logging.getLogger(__name__)
@@ -213,9 +212,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
     def get_data_documents(self, data: dict) -> List[Document]:
         raise NotImplementedError
 
-    def _get_document_embeddings(self, text: str) -> OpenAIEmbeddingOutput:
-        return None
-
     def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         documents = self.get_data_documents(data)
 
@@ -227,9 +223,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
                     **document.metadata,
                     **data.metadata,
                 },
-                embeddings=self._get_document_embeddings(
-                    document.page_content,
-                ),
             ),
             documents,
         )

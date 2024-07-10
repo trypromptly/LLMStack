@@ -305,7 +305,9 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         # Validation for slug
         datasource_type = get_object_or_404(DataSourceType, slug=request.data["type_slug"])
         datasource = DataSource(
-            name=request.data["name"], owner=owner, type=datasource_type, type_slug=request.data["type_slug"]
+            name=request.data["name"],
+            owner=owner,
+            type=datasource_type,
         )
         # If this is an external data source, then we need to save the config
         # in datasource object
@@ -337,8 +339,12 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                 request.data["config"],
                 datasource,
             )
+            config["type_slug"] = request.data["type_slug"]
             datasource.config = config
 
+        datasource_config = datasource.config or {}
+        datasource_config["type_slug"] = request.data["type_slug"]
+        datasource.config = datasource_config
         datasource.save()
         return DRFResponse(
             DataSourceSerializer(
