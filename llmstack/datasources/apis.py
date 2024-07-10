@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 import uuid
@@ -59,7 +60,7 @@ class DataSourceTypeViewSet(viewsets.ModelViewSet):
                     "slug": subclass.slug(),
                     "name": subclass.name(),
                     "description": subclass.description(),
-                    "entry_config_schema": subclass.get_input_ui_schema(),
+                    "entry_config_schema": json.loads(subclass.get_input_schema()),
                     "entry_config_ui_schema": subclass.get_input_ui_schema(),
                     "sync_config": subclass.get_sync_configuration(),
                     "is_external_datasource": subclass.is_external(),
