@@ -62,9 +62,9 @@ export function AddDataSourceModal({
           >
             {dataSourceTypes.map((dst) => (
               <Button
-                key={dst.id}
+                key={dst.slug}
                 variant={
-                  dataSourceType?.id === dst.id ? "contained" : "outlined"
+                  dataSourceType?.slug === dst.slug ? "contained" : "outlined"
                 }
                 onClick={(e) => {
                   setDataSourceType(dst);
