@@ -1,11 +1,13 @@
 import json
 import logging
+import sys
 from collections import namedtuple
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Max
 from django.http import Http404, HttpResponseForbidden, StreamingHttpResponse
+from django.views.decorators.cache import cache_page
 from flags.state import flag_enabled
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -25,23 +27,38 @@ logger = logging.getLogger(__name__)
 
 class ApiProviderViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
+    method = ["GET"]
 
+    @cache_page(60 * 60 * 12)
     def list(self, request):
-        processor_providers = list(
-            filter(
-                lambda provider: provider.get(
-                    "processor_packages",
-                ),
-                settings.PROVIDERS,
-            ),
-        )
         data = list(
             map(
                 lambda provider: {
                     "name": provider.get("name"),
                     "slug": provider.get("slug"),
+                    "has_processors": bool(
+                        provider.get(
+                            "processor_packages",
+                        ),
+                    ),
+                    "config_schema": (
+                        getattr(
+                            sys.modules[".".join(provider.get("config_schema").rsplit(".", 1)[:-1])],
+                            provider.get("config_schema").split(".")[-1],
+                        ).get_config_schema()
+                        if provider.get("config_schema")
+                        else None
+                    ),
+                    "config_ui_schema": (
+                        getattr(
+                            sys.modules[".".join(provider.get("config_schema").rsplit(".", 1)[:-1])],
+                            provider.get("config_schema").split(".")[-1],
+                        ).get_config_ui_schema()
+                        if provider.get("config_schema")
+                        else None
+                    ),
                 },
-                processor_providers,
+                settings.PROVIDERS,
             ),
         )
 

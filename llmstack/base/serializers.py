@@ -81,4 +81,5 @@ class ProfileSerializer(serializers.ModelSerializer):
             "logo",
             "organization",
             "avatar",
+            "provider_configs",
         ]

@@ -70,15 +70,25 @@ export const apiProviderDropdownListState = selector({
   key: "apiProviderDropdownList",
   get: async ({ get }) => {
     const apiProviders = await get(apiProvidersState);
-    return apiProviders.map((x) => {
-      return { label: x.name, value: x.name };
-    });
+    return apiProviders
+      .filter((x) => x.has_processors)
+      .map((x) => {
+        return { label: x.name, value: x.name };
+      });
   },
 });
 
 export const apiProviderSelectedState = atom({
   key: "apiProviderSelected",
   default: null,
+});
+
+export const providerSchemasSelector = selector({
+  key: "providerSchemas",
+  get: async ({ get }) => {
+    const providers = await get(apiProvidersState);
+    return providers.filter((x) => x.config_schema);
+  },
 });
 
 export const apiBackendsState = atom({

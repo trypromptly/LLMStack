@@ -247,6 +247,9 @@ class ProfileViewSet(viewsets.ViewSet):
         if should_update:
             profile.save(update_fields=request.data.keys())
 
+        if "provider_configs" in request.data:
+            profile.update_provider_configs(request.data["provider_configs"])
+
         queryset = Profile.objects.get(user=request.user)
         serializer = ProfileSerializer(queryset)
         return DRFResponse(serializer.data)

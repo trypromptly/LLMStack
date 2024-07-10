@@ -451,6 +451,7 @@ PROVIDERS = [
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "slug": "openai",
+        "config_schema": "llmstack.processors.providers.openai.OpenAIProviderConfig",
     },
     {
         "name": "Promptly",

@@ -127,10 +127,14 @@ class ChatCompletionsConfiguration(
     OpenAIChatCompletionsAPIProcessorConfiguration,
     ApiProcessorSchema,
 ):
-    model: ChatCompletionsModel = Field(
+    model: str = Field(
         default=ChatCompletionsModel.GPT_3_5,
         description="ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={
+            "advanced_parameter": False,
+            "widget": "customselect",
+            "options": [x.value for x in ChatCompletionsModel],
+        },
     )
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(
         1024,
@@ -327,7 +331,9 @@ class ChatCompletions(
                         ),
                     ),
                 )
-        openai_client = openai.OpenAI(api_key=self._env["openai_api_key"])
+
+        provider_config = self.get_provider_config(model_slug=self._config.model)
+        openai_client = openai.OpenAI(api_key=provider_config.api_key, base_url=provider_config.base_url)
         result = openai_client.chat.completions.create(
             model=str(self._config.model),
             messages=messages,

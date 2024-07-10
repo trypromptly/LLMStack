@@ -14,6 +14,9 @@ from django.db import models
 from django.utils.module_loading import import_string
 from rest_framework.authtoken.models import Token
 
+from llmstack.common.utils.provider_config import (
+    get_provider_config_class_by_slug_cached,
+)
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
 
@@ -176,6 +179,9 @@ class AbstractProfile(models.Model):
         null=True,
         blank=True,
     )
+    _provider_configs = models.JSONField(
+        default=dict, help_text="Encrypted providers config to use with processors", null=True, blank=True
+    )
 
     def __str__(self):
         return self.user.__str__()
@@ -253,6 +259,16 @@ class AbstractProfile(models.Model):
         return settings.WEAVIATE_EMBEDDINGS_BATCH_SIZE
 
     @property
+    def provider_configs(self):
+        return (
+            json.loads(
+                self.decrypt_value(self._provider_configs),
+            )
+            if self._provider_configs
+            else {}
+        )
+
+    @property
     def connections(self):
         return (
             {
@@ -323,6 +339,40 @@ class AbstractProfile(models.Model):
             )["connection_type_slug"]
             == connection_type_slug
         ]
+
+    def update_provider_configs(self, provider_configs):
+        if not self._provider_configs:
+            self._provider_configs = {}
+
+        # Iterate through the provider configs, validate them against the schema and encrypt the values
+        for provider_key, provider_config in provider_configs.items():
+            if not provider_config:
+                continue
+
+            # provider_key is of the form provider_slug/processor_slug/model_slug/deployment_key where processor_slug and model_slug can be regex
+            provider_key_parts = provider_key.split("/")
+            [provider_slug, processor_slug, model_slug, deployment_key] = provider_key_parts
+
+            # Get schema class for the provider
+            provider_schema_cls = get_provider_config_class_by_slug_cached(provider_slug)
+            if not provider_schema_cls:
+                raise Exception(f"Provider schema class not found for {provider_slug}")
+
+            # Validate the key against the schema
+            if (
+                provider_slug != provider_config["provider_slug"]
+                or processor_slug != provider_config["processor_slug"]
+                or model_slug != provider_config["model_slug"]
+                or deployment_key != provider_config["deployment_key"]
+            ):
+                raise Exception(f"Provider config key {provider_key} does not match the schema")
+
+            # Validate the config against the schema
+            provider_schema_cls.model_validate(provider_config)
+
+        # Once all the configs are validated, encrypt the data
+        self._provider_configs = self.encrypt_value(json.dumps(provider_configs)).decode("utf-8")
+        self.save(update_fields=["_provider_configs"])
 
     def _vendor_key_or_promptly_default(self, attrname, api_key_value):
         if attrname == "azure_openai_api_key":
@@ -488,6 +538,9 @@ class AbstractProfile(models.Model):
             "weaviate_text2vec_config": self.weaviate_text2vec_config,
             "promptly_token": self.token,
             "connections": self.connections,
+            "provider_configs": (
+                json.loads(self.decrypt_value(self._provider_configs)) if self._provider_configs else {}
+            ),
             "google_custom_search_api_key": self.get_vendor_key("google_custom_search_api_key"),
             "google_custom_search_cx": self.get_vendor_key("google_custom_search_cx"),
         }

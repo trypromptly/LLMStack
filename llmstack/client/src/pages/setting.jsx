@@ -29,6 +29,7 @@ import ThemedJsonForm from "../components/ThemedJsonForm";
 import { profileFlagsState, profileSelector } from "../data/atoms";
 import { axios } from "../data/axios";
 import "../index.css";
+import ProviderConfigs from "../components/settings/ProviderConfigs";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -48,46 +49,6 @@ const settingsSchema = {
     username: {
       type: "string",
       title: "Username",
-    },
-    openai_key: {
-      type: "string",
-      title: "OpenAI API Key",
-    },
-    stabilityai_key: {
-      type: "string",
-      title: "StabilityAI API Key",
-    },
-    cohere_key: {
-      type: "string",
-      title: "Cohere API Key",
-    },
-    elevenlabs_key: {
-      type: "string",
-      title: "Elevenlabs API Key",
-    },
-    google_service_account_json_key: {
-      type: "string",
-      title: "Google Credentials",
-    },
-    azure_openai_api_key: {
-      type: "string",
-      title: "Azure OpenAI API Key",
-    },
-    anthropic_api_key: {
-      type: "string",
-      title: "Anthropic API Key",
-    },
-    mistral_api_key: {
-      type: "string",
-      title: "Mistral API Key",
-    },
-    localai_base_url: {
-      type: "string",
-      title: "LocalAI Base URL",
-    },
-    localai_api_key: {
-      type: "string",
-      title: "LocalAI API Key",
     },
   },
 };
@@ -344,6 +305,11 @@ const SettingPage = () => {
               >
                 Update
               </Button>
+              <p>&nbsp;</p>
+              <Typography variant="h6" className="section-header">
+                Model Providers
+              </Typography>
+              <ProviderConfigs />
             </Stack>
           </Grid>
 
