@@ -75,7 +75,7 @@ export function AddDataSourceModal({
             ))}
           </ButtonGroup>
           <ThemedJsonForm
-            schema={dataSourceType?.entry_config_schema || {}}
+            schema={dataSourceType?.input_schema || {}}
             validator={validator}
             uiSchema={{
               ...(dataSourceType?.entry_config_ui_schema || {}),

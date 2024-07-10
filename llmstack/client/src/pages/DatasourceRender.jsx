@@ -162,7 +162,7 @@ function DatasourceRenderPage({ headless = false }) {
                 style={{ width: "100%", marginTop: "6px" }}
               />
               <ThemedJsonForm
-                schema={datasource?.type?.entry_config_schema || {}}
+                schema={datasource?.type?.input_schema || {}}
                 validator={validator}
                 uiSchema={{
                   ...(datasource?.type?.entry_config_ui_schema || {}),

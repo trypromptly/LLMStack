@@ -29,11 +29,7 @@ from llmstack.jobs.adhoc import ExtractURLJob
 from llmstack.jobs.models import AdhocJob
 
 from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
-from .serializers import (
-    DataSourceEntrySerializer,
-    DataSourceSerializer,
-    DataSourceTypeSerializer,
-)
+from .serializers import DataSourceEntrySerializer, DataSourceSerializer
 from .tasks import extract_urls_task
 
 logger = logging.getLogger(__name__)
@@ -47,8 +43,8 @@ def get_data_source_type(slug):
                 "slug": subclass.slug(),
                 "name": subclass.name(),
                 "description": subclass.description(),
-                "entry_config_schema": json.loads(subclass.get_input_schema()),
-                "entry_config_ui_schema": subclass.get_input_ui_schema(),
+                "input_schema": json.loads(subclass.get_input_schema()),
+                "input_ui_schema": subclass.get_input_ui_schema(),
                 "sync_config": subclass.get_sync_configuration(),
                 "is_external_datasource": subclass.is_external(),
             }
@@ -56,8 +52,6 @@ def get_data_source_type(slug):
 
 
 class DataSourceTypeViewSet(viewsets.ModelViewSet):
-    serializer_class = DataSourceTypeSerializer
-
     def get(self, request):
         processors = []
         slugs = set()
@@ -71,8 +65,8 @@ class DataSourceTypeViewSet(viewsets.ModelViewSet):
                     "slug": subclass.slug(),
                     "name": subclass.name(),
                     "description": subclass.description(),
-                    "entry_config_schema": json.loads(subclass.get_input_schema()),
-                    "entry_config_ui_schema": subclass.get_input_ui_schema(),
+                    "input_schema": json.loads(subclass.get_input_schema()),
+                    "input_ui_schema": subclass.get_input_ui_schema(),
                     "sync_config": subclass.get_sync_configuration(),
                     "is_external_datasource": subclass.is_external(),
                 }
