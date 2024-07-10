@@ -78,11 +78,6 @@ class DataSource(models.Model):
         on_delete=models.DO_NOTHING,
         help_text="Type of the data source",
     )
-    type_slug = models.CharField(
-        max_length=50,
-        default="",
-        help_text="Slug of the data source type",
-    )
     owner = models.ForeignKey(
         User,
         on_delete=models.DO_NOTHING,
@@ -120,6 +115,10 @@ class DataSource(models.Model):
     @property
     def profile(self):
         return Profile.objects.get(user=self.owner)
+
+    @property
+    def type_slug(self):
+        return self.config.get("type_slug", "")
 
 
 class DataSourceEntry(models.Model):
