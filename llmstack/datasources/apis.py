@@ -41,20 +41,14 @@ logger = logging.getLogger(__name__)
 class DataSourceTypeViewSet(viewsets.ModelViewSet):
     serializer_class = DataSourceTypeSerializer
 
-    def get_queryset(self):
-        return DataSourceType.objects.all()
-
     def get(self, request):
-        queryset = self.get_queryset()
-        serialzer = self.serializer_class(instance=queryset, many=True)
-        return DRFResponse(serialzer.data)
-
-    def getV2(self, request):
         processors = []
+        slugs = set()
         for subclass in get_data_source_type_interface_subclasses():
             if f"{subclass.__module__}.{subclass.__qualname__}" in settings.DATASOURCE_PROCESSOR_EXCLUDE_LIST:
                 continue
-
+            if subclass.slug() in slugs:
+                continue
             processors.append(
                 {
                     "slug": subclass.slug(),
@@ -66,6 +60,7 @@ class DataSourceTypeViewSet(viewsets.ModelViewSet):
                     "is_external_datasource": subclass.is_external(),
                 }
             )
+            slugs.add(subclass.slug())
 
         return DRFResponse(processors)
 
