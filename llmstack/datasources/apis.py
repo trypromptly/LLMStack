@@ -1,9 +1,13 @@
+import json
 import logging
 import time
 import uuid
 from concurrent.futures import Future
+from functools import cache
 
+from django.conf import settings
 from django.shortcuts import get_object_or_404
+from django.views.decorators.cache import cache_page
 from flags.state import flag_enabled
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
@@ -18,31 +22,60 @@ from llmstack.datasources.handlers.datasource_processor import (
     DataSourceEntryItem,
     DataSourceProcessor,
 )
-from llmstack.datasources.types import DataSourceTypeFactory
+from llmstack.datasources.types import (
+    DataSourceTypeFactory,
+    get_data_source_type_interface_subclasses,
+)
 from llmstack.jobs.adhoc import ExtractURLJob
 from llmstack.jobs.models import AdhocJob
 
 from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
-from .serializers import (
-    DataSourceEntrySerializer,
-    DataSourceSerializer,
-    DataSourceTypeSerializer,
-)
+from .serializers import DataSourceEntrySerializer, DataSourceSerializer
 from .tasks import extract_urls_task
 
 logger = logging.getLogger(__name__)
 
 
+@cache
+def get_data_source_type(slug):
+    for subclass in get_data_source_type_interface_subclasses():
+        if subclass.slug() == slug:
+            return {
+                "slug": subclass.slug(),
+                "name": subclass.name(),
+                "description": subclass.description(),
+                "input_schema": json.loads(subclass.get_input_schema()),
+                "input_ui_schema": subclass.get_input_ui_schema(),
+                "sync_config": subclass.get_sync_configuration(),
+                "is_external_datasource": subclass.is_external(),
+            }
+    return None
+
+
 class DataSourceTypeViewSet(viewsets.ModelViewSet):
-    serializer_class = DataSourceTypeSerializer
-
-    def get_queryset(self):
-        return DataSourceType.objects.all()
-
+    @cache_page(60 * 60 * 24)
     def get(self, request):
-        queryset = self.get_queryset()
-        serialzer = self.serializer_class(instance=queryset, many=True)
-        return DRFResponse(serialzer.data)
+        processors = []
+        slugs = set()
+        for subclass in get_data_source_type_interface_subclasses():
+            if f"{subclass.__module__}.{subclass.__qualname__}" in settings.DATASOURCE_PROCESSOR_EXCLUDE_LIST:
+                continue
+            if subclass.slug() in slugs:
+                continue
+            processors.append(
+                {
+                    "slug": subclass.slug(),
+                    "name": subclass.name(),
+                    "description": subclass.description(),
+                    "input_schema": json.loads(subclass.get_input_schema()),
+                    "input_ui_schema": subclass.get_input_ui_schema(),
+                    "sync_config": subclass.get_sync_configuration(),
+                    "is_external_datasource": subclass.is_external(),
+                }
+            )
+            slugs.add(subclass.slug())
+
+        return DRFResponse(processors)
 
 
 class DataSourceEntryViewSet(viewsets.ModelViewSet):
@@ -271,11 +304,8 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
     def post(self, request):
         owner = request.user
-        datasource_type = get_object_or_404(
-            DataSourceType,
-            id=request.data["type"],
-        )
-
+        # Validation for slug
+        datasource_type = get_object_or_404(DataSourceType, slug=request.data["type_slug"])
         datasource = DataSource(
             name=request.data["name"],
             owner=owner,
@@ -311,8 +341,12 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                 request.data["config"],
                 datasource,
             )
+            config["type_slug"] = request.data["type_slug"]
             datasource.config = config
 
+        datasource_config = datasource.config or {}
+        datasource_config["type_slug"] = request.data["type_slug"]
+        datasource.config = datasource_config
         datasource.save()
         return DRFResponse(
             DataSourceSerializer(

@@ -62,9 +62,9 @@ export function AddDataSourceModal({
           >
             {dataSourceTypes.map((dst) => (
               <Button
-                key={dst.id}
+                key={dst.slug}
                 variant={
-                  dataSourceType?.id === dst.id ? "contained" : "outlined"
+                  dataSourceType?.slug === dst.slug ? "contained" : "outlined"
                 }
                 onClick={(e) => {
                   setDataSourceType(dst);
@@ -75,7 +75,7 @@ export function AddDataSourceModal({
             ))}
           </ButtonGroup>
           <ThemedJsonForm
-            schema={dataSourceType?.entry_config_schema || {}}
+            schema={dataSourceType?.input_schema || {}}
             validator={validator}
             uiSchema={{
               ...(dataSourceType?.entry_config_ui_schema || {}),
@@ -135,6 +135,7 @@ export function AddDataSourceModal({
                 .post("/api/datasources", {
                   name: dataSourceName,
                   type: dataSourceType.id,
+                  type_slug: dataSourceType.slug,
                   config: dataSourceType.is_external_datasource ? formData : {},
                 })
                 .then((response) => {

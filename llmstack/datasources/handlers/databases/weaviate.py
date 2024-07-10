@@ -124,6 +124,10 @@ class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
     def description() -> str:
         return "Connect to a Weaviate database"
 
+    @classmethod
+    def is_external(cls) -> bool:
+        return True
+
     # This static method takes a dictionary for configuration and a DataSource object as inputs.
     # Validation of these inputs is performed and a dictionary containing the
     # Weaviate Connection Configuration is returned.

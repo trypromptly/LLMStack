@@ -1,59 +1,20 @@
-import json
-
 from rest_framework import serializers
 
-from .models import DataSource, DataSourceEntry, DataSourceType
+from .models import DataSource, DataSourceEntry
 from .types import DataSourceTypeFactory
 
 
-class DataSourceTypeSerializer(serializers.ModelSerializer):
-    entry_config_schema = serializers.SerializerMethodField()
-    entry_config_ui_schema = serializers.SerializerMethodField()
-    sync_config = serializers.SerializerMethodField()
-
-    def get_entry_config_schema(self, obj):
-        datasource_type_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-            obj,
-        )
-        if datasource_type_handler_cls is None:
-            return {}
-        return json.loads(datasource_type_handler_cls.get_input_schema())
-
-    def get_entry_config_ui_schema(self, obj):
-        datasource_type_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-            obj,
-        )
-        if datasource_type_handler_cls is None:
-            return {}
-        return datasource_type_handler_cls.get_input_ui_schema()
-
-    def get_sync_config(self, obj):
-        datasource_type_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-            obj,
-        )
-        if datasource_type_handler_cls is None:
-            return None
-        return datasource_type_handler_cls.get_sync_configuration()
-
-    class Meta:
-        model = DataSourceType
-        fields = [
-            "id",
-            "name",
-            "description",
-            "entry_config_schema",
-            "entry_config_ui_schema",
-            "sync_config",
-            "is_external_datasource",
-        ]
-
-
 class DataSourceSerializer(serializers.ModelSerializer):
-    type = DataSourceTypeSerializer()
+    type = serializers.SerializerMethodField()
     owner_email = serializers.SerializerMethodField()
 
     def get_owner_email(self, obj):
         return obj.owner.email
+
+    def get_type(self, obj):
+        from llmstack.datasources.apis import get_data_source_type
+
+        return get_data_source_type(obj.type_slug)
 
     class Meta:
         model = DataSource

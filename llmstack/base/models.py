@@ -253,10 +253,6 @@ class AbstractProfile(models.Model):
         return settings.WEAVIATE_EMBEDDINGS_BATCH_SIZE
 
     @property
-    def use_custom_embedding(self):
-        return settings.USE_CUSTOM_EMBEDDING
-
-    @property
     def connections(self):
         return (
             {

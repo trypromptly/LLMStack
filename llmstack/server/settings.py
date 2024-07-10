@@ -350,7 +350,6 @@ WEAVIATE_REPLICATION_FACTOR = int(
     os.getenv("WEAVIATE_REPLICATION_FACTOR", "1"),
 )
 WEAVIATE_SHARD_COUNT = int(os.getenv("WEAVIATE_SHARD_COUNT", "1"))
-USE_CUSTOM_EMBEDDING = os.getenv("USE_CUSTOM_EMBEDDING", "False") == "True"
 
 PLAYWRIGHT_URL = os.getenv("PLAYWRIGHT_URL", "ws://playwright:30000/ws")
 

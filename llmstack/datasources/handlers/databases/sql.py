@@ -152,6 +152,10 @@ class SQLDataSource(DataSourceProcessor[SQLDatabaseSchema]):
     def description() -> str:
         return "Connect to a SQL Database"
 
+    @classmethod
+    def is_external(cls) -> bool:
+        return True
+
     # This static method takes a dictionary for configuration and a DataSource object as inputs.
     # Validation of these inputs is performed and a dictionary containing the
     # Database Connection Configuration is returned.

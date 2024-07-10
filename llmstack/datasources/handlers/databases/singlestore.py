@@ -66,6 +66,10 @@ class SingleStoreDataSource(DataSourceProcessor[SingleStoreDatabaseSchema]):
     def provider_slug() -> str:
         return "singlestore"
 
+    @classmethod
+    def is_external(cls) -> bool:
+        return True
+
     @staticmethod
     def process_validate_config(
         config_data: dict,

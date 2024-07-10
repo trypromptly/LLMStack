@@ -116,6 +116,10 @@ class DataSource(models.Model):
     def profile(self):
         return Profile.objects.get(user=self.owner)
 
+    @property
+    def type_slug(self):
+        return self.config.get("type_slug", "")
+
 
 class DataSourceEntry(models.Model):
     """

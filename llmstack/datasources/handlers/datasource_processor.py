@@ -19,13 +19,6 @@ from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.blocks.data.store.vectorstore.weaviate import (
     Weaviate as PromptlyWeaviate,
 )
-from llmstack.common.blocks.embeddings.openai_embedding import (
-    EmbeddingAPIProvider,
-    OpenAIEmbeddingConfiguration,
-    OpenAIEmbeddingInput,
-    OpenAIEmbeddingOutput,
-    OpenAIEmbeddingsProcessor,
-)
 from llmstack.datasources.models import DataSource
 
 logger = logging.getLogger(__name__)
@@ -136,6 +129,10 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         return datasource_type_interface.__args__[0].get_content_key()
 
     @classmethod
+    def is_external(cls) -> bool:
+        return False
+
+    @classmethod
     def get_sync_configuration(cls) -> Optional[dict]:
         return None
 
@@ -166,7 +163,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         vectorstore_embedding_rate_limit = self.profile.weaviate_embeddings_api_rate_limit
 
         promptly_weaviate = None
-        embedding_endpoint_configuration = None
 
         default_vector_database = settings.VECTOR_DATABASES.get("default")["ENGINE"]
 
@@ -179,11 +175,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
                     embeddings_batch_size=vectorstore_embeddings_batch_size,
                     api_key=self.profile.weaviate_api_key,
                 )
-                embedding_endpoint_configuration = OpenAIEmbeddingConfiguration(
-                    api_type=EmbeddingAPIProvider.OPENAI,
-                    model="text-embedding-ada-002",
-                    api_key=self.profile.get_vendor_key("openai_key"),
-                )
             else:
                 promptly_weaviate = PromptlyWeaviate(
                     url=self.profile.weaviate_url,
@@ -193,15 +184,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
                     weaviate_rw_api_key=self.profile.weaviate_api_key,
                     embeddings_rate_limit=vectorstore_embedding_rate_limit,
                     embeddings_batch_size=vectorstore_embeddings_batch_size,
-                )
-                embedding_endpoint_configuration = OpenAIEmbeddingConfiguration(
-                    api_type=EmbeddingAPIProvider.AZURE_OPENAI,
-                    endpoint=self.profile.weaviate_text2vec_config["resourceName"],
-                    deploymentId=self.profile.weaviate_text2vec_config["deploymentId"],
-                    apiVersion="2022-12-01",
-                    api_key=self.profile.get_vendor_key(
-                        "azure_openai_api_key",
-                    ),
                 )
 
             # Get Weaviate schema
@@ -213,8 +195,7 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
             weaviate_schema["classes"][0]["shardingConfig"]["desiredCount"] = settings.WEAVIATE_SHARD_COUNT
             # Create an index for the datasource
             promptly_weaviate.get_or_create_index(
-                index_name=self.datasource_class_name,
-                schema=json.dumps(weaviate_schema),
+                index_name=self.datasource_class_name, schema=json.dumps(weaviate_schema)
             )
 
             self._vectorstore = promptly_weaviate
@@ -225,26 +206,11 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
                 schema="",
             )
 
-        if self.profile.use_custom_embedding:
-            self._embeddings_endpoint = OpenAIEmbeddingsProcessor(
-                configuration=embedding_endpoint_configuration.model_dump(),
-            )
-        else:
-            self._embeddings_endpoint = None
-
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         raise NotImplementedError
 
     def get_data_documents(self, data: dict) -> List[Document]:
         raise NotImplementedError
-
-    def _get_document_embeddings(self, text: str) -> OpenAIEmbeddingOutput:
-        if self.embeddings_endpoint:
-            return self.embeddings_endpoint.process(
-                OpenAIEmbeddingInput(text=text).model_dump(),
-            ).embeddings
-        else:
-            return None
 
     def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         documents = self.get_data_documents(data)
@@ -257,9 +223,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
                     **document.metadata,
                     **data.metadata,
                 },
-                embeddings=self._get_document_embeddings(
-                    document.page_content,
-                ),
             ),
             documents,
         )
