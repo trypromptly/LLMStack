@@ -254,7 +254,7 @@ class AbstractProfile(models.Model):
 
     @property
     def use_custom_embedding(self):
-        return settings.USE_CUSTOM_EMBEDDING
+        return False
 
     @property
     def connections(self):
