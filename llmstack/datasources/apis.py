@@ -7,6 +7,7 @@ from functools import cache
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from django.views.decorators.cache import cache_page
 from flags.state import flag_enabled
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
@@ -52,6 +53,7 @@ def get_data_source_type(slug):
 
 
 class DataSourceTypeViewSet(viewsets.ModelViewSet):
+    @cache_page(60 * 60 * 24)
     def get(self, request):
         processors = []
         slugs = set()
