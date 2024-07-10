@@ -3,6 +3,7 @@ import time
 import uuid
 from concurrent.futures import Future
 
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from flags.state import flag_enabled
 from rest_framework import viewsets
@@ -18,7 +19,10 @@ from llmstack.datasources.handlers.datasource_processor import (
     DataSourceEntryItem,
     DataSourceProcessor,
 )
-from llmstack.datasources.types import DataSourceTypeFactory
+from llmstack.datasources.types import (
+    DataSourceTypeFactory,
+    get_data_source_type_interface_subclasses,
+)
 from llmstack.jobs.adhoc import ExtractURLJob
 from llmstack.jobs.models import AdhocJob
 
@@ -43,6 +47,26 @@ class DataSourceTypeViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         serialzer = self.serializer_class(instance=queryset, many=True)
         return DRFResponse(serialzer.data)
+
+    def getV2(self, request):
+        processors = []
+        for subclass in get_data_source_type_interface_subclasses():
+            if f"{subclass.__module__}.{subclass.__qualname__}" in settings.DATASOURCE_PROCESSOR_EXCLUDE_LIST:
+                continue
+
+            processors.append(
+                {
+                    "slug": subclass.slug(),
+                    "name": subclass.name(),
+                    "description": subclass.description(),
+                    "entry_config_schema": subclass.get_input_ui_schema(),
+                    "entry_config_ui_schema": subclass.get_input_ui_schema(),
+                    "sync_config": subclass.get_sync_configuration(),
+                    "is_external_datasource": subclass.is_external(),
+                }
+            )
+
+        return DRFResponse(processors)
 
 
 class DataSourceEntryViewSet(viewsets.ModelViewSet):

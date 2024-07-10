@@ -136,6 +136,10 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         return datasource_type_interface.__args__[0].get_content_key()
 
     @classmethod
+    def is_external(cls) -> bool:
+        return False
+
+    @classmethod
     def get_sync_configuration(cls) -> Optional[dict]:
         return None
 
