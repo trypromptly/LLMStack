@@ -68,16 +68,17 @@ export function ProviderConfigList({ providerConfigs }) {
 
   return (
     <Paper>
-      {!providerConfigs && (
-        <Alert severity="info" sx={{ textAlign: "left" }}>
-          <AlertTitle>No provider configurations found</AlertTitle>
-          Add a provider configuration using the <strong>
-            Add Provider
-          </strong>{" "}
-          button
-        </Alert>
-      )}
-      {providerConfigs && (
+      {!providerConfigs ||
+        (!Object.keys(providerConfigs).length && (
+          <Alert severity="info" sx={{ textAlign: "left" }}>
+            <AlertTitle>No provider configurations found</AlertTitle>
+            Add a provider configuration using the <strong>
+              Add Provider
+            </strong>{" "}
+            button
+          </Alert>
+        ))}
+      {providerConfigs && Object.keys(providerConfigs).length > 0 && (
         <TableContainer>
           <Table>
             <TableHead>
