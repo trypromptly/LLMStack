@@ -3,6 +3,7 @@ import json
 import logging
 import uuid
 from enum import Enum
+from functools import cache
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -21,7 +22,90 @@ from llmstack.emails.templates.factory import EmailTemplateFactory
 logger = logging.getLogger(__name__)
 
 
+@cache
 def get_vendor_env_platform_defaults():
+    from llmstack.processors.providers.anthropic import AnthropicProviderConfig
+    from llmstack.processors.providers.azure import AzureProviderConfig
+    from llmstack.processors.providers.cohere import CohereProviderConfig
+    from llmstack.processors.providers.config import ProviderConfigSource
+    from llmstack.processors.providers.elevenlabs import ElevenLabsProviderConfig
+    from llmstack.processors.providers.google import GoogleProviderConfig
+    from llmstack.processors.providers.meta import MetaProviderConfig
+    from llmstack.processors.providers.mistral import MistralProviderConfig
+    from llmstack.processors.providers.openai import OpenAIProviderConfig
+    from llmstack.processors.providers.promptly import (
+        GoogleSearchEngineConfig,
+        PromptlyProviderConfig,
+    )
+    from llmstack.processors.providers.stabilityai import StabilityAIProviderConfig
+
+    # Populate the default provider configs
+    provider_configs = {}
+    if settings.DEFAULT_AZURE_OPENAI_API_KEY:
+        provider_configs["azure/*/*/*"] = AzureProviderConfig(
+            api_key=settings.DEFAULT_AZURE_OPENAI_API_KEY,
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+        ).model_dump()
+    if settings.DEFAULT_OPENAI_API_KEY:
+        provider_configs["openai/*/*/*"] = OpenAIProviderConfig(
+            api_key=settings.DEFAULT_OPENAI_API_KEY,
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+        ).model_dump()
+    if settings.DEFAULT_DREAMSTUDIO_API_KEY:
+        provider_configs["stabilityai/*/*/*"] = StabilityAIProviderConfig(
+            api_key=settings.DEFAULT_DREAMSTUDIO_API_KEY,
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+        ).model_dump()
+    if settings.DEFAULT_COHERE_API_KEY:
+        provider_configs["cohere/*/*/*"] = CohereProviderConfig(
+            api_key=settings.DEFAULT_COHERE_API_KEY,
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+        ).model_dump()
+    if settings.DEFAULT_ELEVENLABS_API_KEY:
+        provider_configs["elevenlabs/*/*/*"] = ElevenLabsProviderConfig(
+            api_key=settings.DEFAULT_ELEVENLABS_API_KEY,
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+        ).model_dump()
+    if settings.DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY:
+        provider_configs["google/*/*/*"] = GoogleProviderConfig(
+            service_account_json_key=settings.DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY,
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+        ).model_dump()
+    if settings.DEFAULT_MISTRAL_API_KEY:
+        provider_configs["mistral/*/*/*"] = MistralProviderConfig(
+            api_key=settings.DEFAULT_MISTRAL_API_KEY,
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+        ).model_dump()
+    if settings.DEFAULT_ANTHROPIC_API_KEY:
+        provider_configs["anthropic/*/*/*"] = AnthropicProviderConfig(
+            api_key=settings.DEFAULT_ANTHROPIC_API_KEY,
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+        ).model_dump()
+    if settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY:
+        provider_configs["promptly/*/*/*"] = PromptlyProviderConfig(
+            search_engine=GoogleSearchEngineConfig(
+                api_key=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY,
+                cx=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_CX,
+            ),
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+        ).model_dump()
+    if settings.DEFAULT_META_PROVIDER_CONFIG:
+        meta_provider_configs = {}
+        try:
+            meta_provider_configs = json.loads(settings.DEFAULT_META_PROVIDER_CONFIG)
+        except json.JSONDecodeError as e:
+            logger.error(
+                f"Error parsing DEFAULT_META_PROVIDER_CONFIG: {settings.DEFAULT_META_PROVIDER_CONFIG}",
+            )
+            logger.error(e)
+
+        # Iterate over the meta provider config and add the provider configs
+        for k, v in meta_provider_configs.items():
+            provider_configs[k] = MetaProviderConfig(
+                deployment_config=v,
+                provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
+            ).model_dump()
+
     return {
         "azure_openai_api_key": settings.DEFAULT_AZURE_OPENAI_API_KEY,
         "openai_api_key": settings.DEFAULT_OPENAI_API_KEY,
@@ -32,6 +116,7 @@ def get_vendor_env_platform_defaults():
         "google_service_account_json_key": settings.DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY,
         "aws_access_key_id": settings.DEFAULT_AWS_ACCESS_KEY_ID,
         "mistral_api_key": settings.DEFAULT_MISTRAL_API_KEY,
+        "provider_configs": provider_configs,
     }
 
 
@@ -491,6 +576,24 @@ class AbstractProfile(models.Model):
                 encrypted_key,
             )
 
+    def get_merged_provider_configs(self):
+        from llmstack.processors.providers.config import ProviderConfigSource
+
+        provider_configs = self.provider_configs
+        if self.organization and self.organization.settings:
+            org_provider_configs = self.organization.settings.provider_configs
+            for k, v in org_provider_configs.items():
+                if k not in provider_configs:
+                    provider_configs[k] = {**v, **{"provider_config_source": ProviderConfigSource.ORGANIZATION.value}}
+
+        # Add platform defaults
+        platform_defaults = get_vendor_env_platform_defaults()
+        for k, v in platform_defaults.items():
+            if k not in provider_configs:
+                provider_configs[k] = v
+
+        return provider_configs
+
     def get_vendor_env(self):
         return {
             "azure_openai_api_key": self.get_vendor_key("azure_openai_api_key"),
@@ -514,9 +617,7 @@ class AbstractProfile(models.Model):
             "weaviate_text2vec_config": self.weaviate_text2vec_config,
             "promptly_token": self.token,
             "connections": self.connections,
-            "provider_configs": (
-                json.loads(self.decrypt_value(self._provider_configs)) if self._provider_configs else {}
-            ),
+            "provider_configs": self.get_merged_provider_configs(),
             "google_custom_search_api_key": self.get_vendor_key("google_custom_search_api_key"),
             "google_custom_search_cx": self.get_vendor_key("google_custom_search_cx"),
         }
@@ -645,6 +746,7 @@ class AnonymousProfile:
     mistral_api_key = None
     logo = None
     _connections = None
+    _provider_configs = None
 
     def get_vendor_env(self):
         return get_vendor_env_platform_defaults()
