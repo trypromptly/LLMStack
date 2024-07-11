@@ -48,7 +48,10 @@ function ProviderConfigItem({ providerConfigKey, onEdit, onDelete }) {
   );
 }
 
-export function ProviderConfigList({ providerConfigs }) {
+export function ProviderConfigList({
+  providerConfigs,
+  handleProviderConfigChange,
+}) {
   const [deleteConfig, setDeleteConfig] = useState(false);
   const [selectedProviderConfigKey, setSelectedProviderConfigKey] =
     useState(null);
@@ -110,6 +113,8 @@ export function ProviderConfigList({ providerConfigs }) {
         open={showProviderConfigModal}
         handleCancelCb={() => setShowProviderConfigModal(false)}
         configUpdatedCb={() => window.location.reload()}
+        providerConfigs={providerConfigs}
+        handleProviderConfigChange={handleProviderConfigChange}
         modalTitle={
           deleteConfig
             ? "Delete Provider Configuration"

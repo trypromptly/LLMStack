@@ -14,95 +14,24 @@ import {
   Typography,
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
-import { enqueueSnackbar } from "notistack";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { providerSchemasSelector, profileSelector } from "../../data/atoms";
-import { axios } from "../../data/axios";
+import { providerSchemasSelector } from "../../data/atoms";
 import { ProviderIcon } from "../apps/ProviderIcon";
 import ThemedJsonForm from "../ThemedJsonForm";
 
 export function ProviderConfigModal({
   open,
   handleCancelCb,
-  configUpdatedCb,
+  handleProviderConfigChange,
+  providerConfigs,
   modalTitle = "Add Provider Configuration",
   providerConfigKey = null,
   toDelete = false,
 }) {
   const [formData, setFormData] = useState({});
   const providerSchemas = useRecoilValue(providerSchemasSelector);
-  const profileData = useRecoilValue(profileSelector);
-  const providerConfigs = useMemo(
-    () => profileData?.provider_configs || {},
-    [profileData],
-  );
   const [selectedProvider, setSelectedProvider] = useState("");
-
-  const handleProviderConfigChange = useCallback(
-    async (providerSlug, providerConfigs, config) => {
-      // Verify that the provider slug is valid
-      if (
-        !providerSlug ||
-        !providerSchemas.find((schema) => schema.slug === providerSlug)
-      ) {
-        enqueueSnackbar("Please select a valid provider", { variant: "error" });
-        return;
-      }
-
-      // Build the provider configuration object
-      const providerConfig = toDelete
-        ? {}
-        : {
-            [`${providerSlug}/${config["processor_slug"]}/${config["model_slug"]}/${config["deployment_key"]}`]:
-              {
-                ...config,
-                provider_slug: providerSlug,
-              },
-          };
-
-      let updatedProviderConfigs = {};
-
-      if (toDelete && providerConfigKey) {
-        updatedProviderConfigs = { ...providerConfigs };
-        delete updatedProviderConfigs[providerConfigKey];
-      } else {
-        updatedProviderConfigs = {
-          ...providerConfigs,
-          ...providerConfig,
-        };
-      }
-
-      try {
-        await axios().patch("/api/profiles/me", {
-          provider_configs: updatedProviderConfigs,
-        });
-
-        if (providerConfigKey) {
-          enqueueSnackbar("Provider configuration updated", {
-            variant: "success",
-          });
-        } else {
-          enqueueSnackbar("Provider configuration added", {
-            variant: "success",
-          });
-        }
-
-        configUpdatedCb();
-      } catch (error) {
-        if (providerConfigKey) {
-          enqueueSnackbar("Failed to update provider configuration", {
-            variant: "error",
-          });
-        } else {
-          enqueueSnackbar("Failed to add provider configuration", {
-            variant: "error",
-          });
-        }
-      }
-    },
-    [providerConfigKey, toDelete, configUpdatedCb, providerSchemas],
-  );
 
   useEffect(() => {
     const providerConfig = providerConfigs[providerConfigKey];
@@ -194,9 +123,11 @@ export function ProviderConfigModal({
           variant="contained"
           onClick={() => {
             handleProviderConfigChange(
+              providerConfigKey,
               selectedProvider,
               providerConfigs,
               formData,
+              toDelete,
             );
           }}
         >

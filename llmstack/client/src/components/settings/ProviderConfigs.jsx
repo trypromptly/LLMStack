@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { Button, Stack } from "@mui/material";
-import { useRecoilValue } from "recoil";
 import { ProviderConfigModal } from "./ProviderConfigModal";
 import { ProviderConfigList } from "./ProviderConfigList";
-import { profileSelector } from "../../data/atoms";
 
-function ProviderConfigs() {
+function ProviderConfigs({ configs, handleProviderConfigChange }) {
   const [showAddProviderConfigModal, setShowAddProviderConfigModal] =
     useState(false);
-  const profileData = useRecoilValue(profileSelector);
 
   return (
     <Stack>
@@ -27,12 +24,15 @@ function ProviderConfigs() {
         Add Provider
       </Button>
       <ProviderConfigList
-        providerConfigs={profileData?.provider_configs || {}}
+        providerConfigs={configs}
+        handleProviderConfigChange={handleProviderConfigChange}
       />
       <ProviderConfigModal
         open={showAddProviderConfigModal}
         handleCancelCb={() => setShowAddProviderConfigModal(false)}
         configUpdatedCb={() => window.location.reload()}
+        providerConfigs={configs}
+        handleProviderConfigChange={handleProviderConfigChange}
       />
     </Stack>
   );

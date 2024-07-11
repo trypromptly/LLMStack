@@ -21,12 +21,16 @@ import {
 import { styled } from "@mui/material/styles";
 import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
-import { createRef, useEffect, useState } from "react";
+import { createRef, useCallback, useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import Connections from "../components/Connections";
 import Subscription from "../components/Subscription";
 import ThemedJsonForm from "../components/ThemedJsonForm";
-import { profileFlagsState, profileSelector } from "../data/atoms";
+import {
+  profileFlagsState,
+  profileSelector,
+  providerSchemasSelector,
+} from "../data/atoms";
 import { axios } from "../data/axios";
 import "../index.css";
 import ProviderConfigs from "../components/settings/ProviderConfigs";
@@ -175,6 +179,7 @@ const SettingPage = () => {
   const [updateKeys, setUpdateKeys] = useState(new Set());
   const profileFlags = useRecoilValue(profileFlagsState);
   const profileData = useRecoilValue(profileSelector);
+  const providerSchemas = useRecoilValue(providerSchemasSelector);
   const formRef = createRef();
 
   useEffect(() => {
@@ -209,6 +214,77 @@ const SettingPage = () => {
         window.location.reload();
       });
   };
+
+  const handleProviderConfigChange = useCallback(
+    async (
+      providerConfigKey,
+      providerSlug,
+      providerConfigs,
+      config,
+      toDelete,
+    ) => {
+      // Verify that the provider slug is valid
+      if (
+        !providerSlug ||
+        !providerSchemas.find((schema) => schema.slug === providerSlug)
+      ) {
+        enqueueSnackbar("Please select a valid provider", { variant: "error" });
+        return;
+      }
+
+      // Build the provider configuration object
+      const providerConfig = toDelete
+        ? {}
+        : {
+            [`${providerSlug}/${config["processor_slug"]}/${config["model_slug"]}/${config["deployment_key"]}`]:
+              {
+                ...config,
+                provider_slug: providerSlug,
+              },
+          };
+
+      let updatedProviderConfigs = {};
+
+      if (toDelete && providerConfigKey) {
+        updatedProviderConfigs = { ...providerConfigs };
+        delete updatedProviderConfigs[providerConfigKey];
+      } else {
+        updatedProviderConfigs = {
+          ...providerConfigs,
+          ...providerConfig,
+        };
+      }
+
+      try {
+        await axios().patch("/api/profiles/me", {
+          provider_configs: updatedProviderConfigs,
+        });
+
+        if (providerConfigKey) {
+          enqueueSnackbar("Provider configuration updated", {
+            variant: "success",
+          });
+        } else {
+          enqueueSnackbar("Provider configuration added", {
+            variant: "success",
+          });
+        }
+
+        window.location.reload();
+      } catch (error) {
+        if (providerConfigKey) {
+          enqueueSnackbar("Failed to update provider configuration", {
+            variant: "error",
+          });
+        } else {
+          enqueueSnackbar("Failed to add provider configuration", {
+            variant: "error",
+          });
+        }
+      }
+    },
+    [providerSchemas],
+  );
 
   function settingsValidate(formData, errors, uiSchema) {
     return errors;
@@ -309,7 +385,10 @@ const SettingPage = () => {
               <Typography variant="h6" className="section-header">
                 Model Providers
               </Typography>
-              <ProviderConfigs />
+              <ProviderConfigs
+                configs={profileData?.provider_configs || {}}
+                handleProviderConfigChange={handleProviderConfigChange}
+              />
             </Stack>
           </Grid>
 
