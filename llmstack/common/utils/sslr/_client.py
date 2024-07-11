@@ -39,12 +39,12 @@ from .resources import Audio, Chat, Completions, Embeddings, Images, Models
 
 
 class BearerAuthentication(BaseModel):
-    _type: Literal["bearer_authentication"] = "bearer_authentication"
+    auth_type: Literal["bearer_authentication"] = "bearer_authentication"
     bearer_token: str = Field(default="", description="The auth token to use.")
 
 
 class BaseCustomDeploymentConfig(BaseModel):
-    _type: str
+    type: str
     _base_url: str
     _api_key: str
 
@@ -62,7 +62,10 @@ class BaseCustomDeploymentConfig(BaseModel):
 
 
 class GroqDeploymentConfig(BaseCustomDeploymentConfig):
-    _type: Literal["groq"] = "groq"
+    type: Literal["groq"] = Field(
+        default="groq",
+        json_schema_extra={"widget": "hidden"},
+    )
     custom_model_name: str
     token: BearerAuthentication
     deployment_url: str
@@ -81,7 +84,7 @@ class GroqDeploymentConfig(BaseCustomDeploymentConfig):
 
 
 class HuggingFaceDeploymentConfig(BaseCustomDeploymentConfig):
-    _type: Literal["hugging_face"] = "hugging_face"
+    type: Literal["hugging_face"] = Field(default="hugging_face", json_schema_extra={"widget": "hidden"})
     custom_model_name: str
     token: BearerAuthentication
     deployment_url: str
@@ -566,11 +569,11 @@ class LLM(LLMClient, OpenAI):
         elif provider == PROVIDER_CUSTOM:
             if not deployment_config:
                 raise ValueError("deployment_config is required for custom provider")
-            if "_type" not in deployment_config:
+            if "type" not in deployment_config:
                 raise ValueError("deployment_config must have a _type field")
-            if deployment_config["_type"] == "hugging_face":
+            if deployment_config["type"] == "hugging_face":
                 self.deployment_config = HuggingFaceDeploymentConfig(**deployment_config)
-            elif deployment_config["_type"] == "groq":
+            elif deployment_config["type"] == "groq":
                 self.deployment_config = GroqDeploymentConfig(**deployment_config)
             else:
                 raise ValueError("Unsupported deployment config type")
