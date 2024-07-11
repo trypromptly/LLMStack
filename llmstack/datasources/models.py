@@ -8,7 +8,7 @@ from django.dispatch import receiver
 from django.utils.timezone import now
 
 from llmstack.assets.models import Assets
-from llmstack.base.models import Profile
+from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
 from llmstack.events.apis import EventsViewSet
 
 logger = logging.getLogger(__name__)
@@ -119,6 +119,38 @@ class DataSource(models.Model):
     @property
     def type_slug(self):
         return self.config.get("type_slug", "")
+
+    @property
+    def vector_store_config(self):
+        vector_store = self.config.get("vector_store", {})
+        if not vector_store:
+            # For Legacy Data Sources
+            from django.conf import settings
+
+            if settings.VECTOR_DATABASES.get("default")["ENGINE"] == "weaviate":
+                vector_store = {
+                    "type": "promptly_legacy_weaviate",
+                    "url": self.profile.weaviate_url,
+                    "host": None,
+                    "http_port": None,
+                    "grpc_port": None,
+                    "embeddings_rate_limit": None,
+                    "embeddings_batch_size": None,
+                    "additional_headers": None,
+                    "api_key": self.profile.weaviate_api_key,
+                }
+                if self.profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
+                    vector_store["additional_headers"] = {"X-OpenAI-Api-Key": self.profile.get_vendor_key("openai_key")}
+                else:
+                    vector_store["additional_headers"] = {
+                        "X-Azure-Api-Key": self.profile.get_vendor_key(
+                            "azure_openai_api_key",
+                        )
+                    }
+            elif settings.VECTOR_DATABASES.get("default")["ENGINE"] == "chroma":
+                vector_store = {"type": "chromadb"}
+
+        return vector_store
 
 
 class DataSourceEntry(models.Model):
