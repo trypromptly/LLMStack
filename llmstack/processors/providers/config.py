@@ -1,6 +1,21 @@
+from enum import Enum
+
 from pydantic import ConfigDict, Field
 
 from llmstack.common.blocks.base.schema import BaseSchema, CustomGenerateJsonSchema
+
+
+class ProviderConfigSource(str, Enum):
+    """
+    Provider configuration source
+    """
+
+    PROFILE = "profile"
+    PLATFORM_DEFAULT = "platform_default"
+    ORGANIZATION = "organization"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class ProviderConfig(BaseSchema):
@@ -25,6 +40,12 @@ class ProviderConfig(BaseSchema):
         title="Deployment Key",
         description="Unique key for the deployment configuration",
         default="*",
+        json_schema_extra={"widget": "hidden"},
+    )
+    provider_config_source: ProviderConfigSource = Field(
+        title="Provider Configuration Source",
+        description="Source of the provider configuration",
+        default=ProviderConfigSource.PROFILE,
         json_schema_extra={"widget": "hidden"},
     )
 
