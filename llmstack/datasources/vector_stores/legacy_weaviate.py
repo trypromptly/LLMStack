@@ -213,7 +213,7 @@ class PromptlyLegacyWeaviateVectorStore(BasePydanticVectorStore):
             for node in nodes:
                 content_key = self._text_key
                 content = node.text
-                metadata = node.extra_info
+                metadata = node.metadata
                 id = node.node_id
                 properties = {content_key: content}
                 for metadata_key in metadata.keys():

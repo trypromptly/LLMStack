@@ -183,9 +183,11 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
     def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         documents = self.get_data_documents(data)
-        documents = map(
-            lambda document: TextNode(text=document.page_content, extra_info={**document.metadata, **data.metadata}),
-            documents,
+        documents = list(
+            map(
+                lambda document: TextNode(text=document.page_content, metadata={**document.metadata, **data.metadata}),
+                documents,
+            )
         )
         document_ids = self.vectorstore.add(nodes=documents)
         logger.info(f"Added {len(document_ids)} documents to vectorstore.")
