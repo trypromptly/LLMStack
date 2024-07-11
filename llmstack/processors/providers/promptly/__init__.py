@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -26,6 +26,7 @@ class Content(BaseModel):
 
 
 class GoogleSearchEngineConfig(BaseModel):
+    type: Literal["google"] = "google"
     api_key: str = Field(
         title="Google Custom Search API Key",
         description="API Key for Google Custom Search API",
