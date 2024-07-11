@@ -408,6 +408,7 @@ PROVIDERS = [
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "slug": "anthropic",
+        "config_schema": "llmstack.processors.providers.anthropic.AnthropicProviderConfig",
     },
     {
         "name": "Azure",
@@ -415,6 +416,7 @@ PROVIDERS = [
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "slug": "azure",
+        "config_schema": "llmstack.processors.providers.azure.AzureProviderConfig",
     },
     {
         "name": "Cohere",
@@ -422,6 +424,7 @@ PROVIDERS = [
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "slug": "cohere",
+        "config_schema": "llmstack.processors.providers.cohere.CohereProviderConfig",
     },
     {
         "name": "ElevenLabs",
@@ -429,6 +432,7 @@ PROVIDERS = [
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "slug": "elevenlabs",
+        "config_schema": "llmstack.processors.providers.elevenlabs.ElevenLabsProviderConfig",
     },
     {
         "name": "Google",
@@ -437,13 +441,7 @@ PROVIDERS = [
         "datasource_packages": ["llmstack.datasources.handlers.google"],
         "processor_exclude": [],
         "datasource_processors_exclude": [],
-    },
-    {
-        "name": "LocalAI",
-        "processor_packages": ["llmstack.processors.providers.localai"],
-        "processor_exclude": [],
-        "datasource_processors_exclude": [],
-        "slug": "localai",
+        "config_schema": "llmstack.processors.providers.google.GoogleProviderConfig",
     },
     {
         "name": "Open AI",
@@ -469,6 +467,7 @@ PROVIDERS = [
         ],
         "datasource_processors_exclude": [],
         "slug": "promptly",
+        "config_schema": "llmstack.processors.providers.promptly.PromptlyProviderConfig",
     },
     {
         "name": "Stability AI",
@@ -476,6 +475,7 @@ PROVIDERS = [
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "slug": "stabilityai",
+        "config_schema": "llmstack.processors.providers.stabilityai.StabilityAIProviderConfig",
     },
     {
         "name": "LinkedIn",
@@ -493,9 +493,16 @@ PROVIDERS = [
         "slug": "heygen",
     },
     {
+        "name": "Mistral",
+        "processor_packages": ["llmstack.processors.providers.mistral"],
+        "slug": "mistral",
+        "config_schema": "llmstack.processors.providers.mistral.MistralProviderConfig",
+    },
+    {
         "name": "Meta",
         "processor_packages": ["llmstack.processors.providers.meta"],
         "slug": "meta",
+        "config_schema": "llmstack.processors.providers.meta.MetaProviderConfig",
     },
 ]
 

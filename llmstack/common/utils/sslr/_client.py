@@ -99,25 +99,7 @@ class HuggingFaceDeploymentConfig(BaseCustomDeploymentConfig):
         return self.custom_model_name
 
 
-class OlamaDeploymentConfig(BaseCustomDeploymentConfig):
-    _type: Literal["ollama"] = "ollama"
-    custom_model_name: str
-    deployment_url: str
-
-    @property
-    def base_url(self):
-        return self.deployment_url
-
-    @property
-    def api_key(self):
-        return "N/A"
-
-    @property
-    def model_name(self):
-        return self.custom_model_name
-
-
-DeploymentConfig = Union[HuggingFaceDeploymentConfig, GroqDeploymentConfig, BaseCustomDeploymentConfig]
+DeploymentConfig = Union[HuggingFaceDeploymentConfig, GroqDeploymentConfig]
 
 
 class LLMClient(SyncAPIClient):
@@ -590,8 +572,6 @@ class LLM(LLMClient, OpenAI):
                 self.deployment_config = HuggingFaceDeploymentConfig(**deployment_config)
             elif deployment_config["_type"] == "groq":
                 self.deployment_config = GroqDeploymentConfig(**deployment_config)
-            elif deployment_config["_type"] == "ollama":
-                self.deployment_config = OlamaDeploymentConfig(**deployment_config)
             else:
                 raise ValueError("Unsupported deployment config type")
             api_key = self.deployment_config.api_key
