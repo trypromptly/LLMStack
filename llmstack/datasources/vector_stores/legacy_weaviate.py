@@ -300,6 +300,6 @@ class PromptlyLegacyWeaviateVectorStoreConfiguration(VectorStoreConfiguration):
         return PromptlyLegacyWeaviateVectorStore(
             weaviate_client=weaviate_client,
             text_key=kwargs.get("text_key", DEFAULT_TEXT_KEY),
-            index_name=kwargs.get("index_name", None),
+            index_name=kwargs.get("index_name", "text"),
             index_schema=weaviate_schema,
         )
