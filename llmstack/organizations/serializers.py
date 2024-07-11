@@ -45,6 +45,7 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
     aws_secret_access_key = serializers.SerializerMethodField()
     vectorstore_weaviate_api_key = serializers.SerializerMethodField()
     disabled_api_backends = serializers.SerializerMethodField()
+    provider_configs = serializers.SerializerMethodField()
 
     def get_disabled_api_backends(self, obj):
         return [backend.slug for backend in obj.disabled_api_backends.all()]
@@ -76,6 +77,9 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
     def get_vectorstore_weaviate_api_key(self, obj):
         return obj.decrypt_value(obj.vectorstore_weaviate_api_key)
 
+    def get_provider_configs(self, obj):
+        return obj.provider_configs
+
     class Meta:
         model = OrganizationSettings
         fields = [
@@ -105,4 +109,5 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
             "use_azure_openai_embeddings",
             "embeddings_api_rate_limit",
             "default_api_backend",
+            "provider_configs",
         ]

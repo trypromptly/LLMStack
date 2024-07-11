@@ -12,9 +12,12 @@ import {
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
+import { providerSchemasSelector } from "../data/atoms";
 import ThemedJsonForm from "../components/ThemedJsonForm";
 import { axios } from "../data/axios";
+import ProviderConfigs from "../components/settings/ProviderConfigs";
 
 const pageHeaderStyle = {
   textAlign: "left",
@@ -127,71 +130,6 @@ const settingsSchema = {
       description: "Rate limit for embeddings requests as requests/min",
       title: "Embeddings API Rate Limit",
     },
-    openai_key: {
-      type: ["string", "null"],
-      description: "OpenAI API key",
-      title: "OpenAI API Key",
-    },
-    stabilityai_key: {
-      type: ["string", "null"],
-      description: "StabilityAI API key",
-      title: "StabilityAI API Key",
-    },
-    cohere_key: {
-      type: ["string", "null"],
-      description: "Cohere API key",
-      title: "Cohere API Key",
-    },
-    forefrontai_key: {
-      type: ["string", "null"],
-      description: "ForefrontAI API key",
-      title: "ForefrontAI API Key",
-    },
-    elevenlabs_key: {
-      type: ["string", "null"],
-      description: "Elevenlabs API key",
-      title: "Elevenlabs API Key",
-    },
-    azure_openai_endpoint: {
-      type: ["string", "null"],
-      description: "Azure OpenAI API endpoint",
-      title: "Azure OpenAI Endpoint",
-    },
-    azure_openai_api_key: {
-      type: ["string", "null"],
-      description: "Azure OpenAI API key",
-      title: "Azure OpenAI API Key",
-    },
-    aws_access_key_id: {
-      type: ["string", "null"],
-      description: "AWS access key ID",
-      title: "AWS Access Key ID",
-    },
-    aws_secret_access_key: {
-      type: ["string", "null"],
-      description: "AWS secret access key",
-      title: "AWS Secret Access Key",
-    },
-    aws_default_region: {
-      type: ["string", "null"],
-      description: "AWS default region",
-      title: "AWS Default Region",
-    },
-    localai_api_key: {
-      type: ["string", "null"],
-      description: "LocalAI API key",
-      title: "LocalAI API Key",
-    },
-    localai_base_url: {
-      type: ["string", "null"],
-      description: "LocalAI base URL",
-      title: "LocalAI Base URL",
-    },
-    anthropic_api_key: {
-      type: ["string", "null"],
-      description: "Anthropic API key",
-      title: "Anthropic API Key",
-    },
     vectorstore_weaviate_url: {
       type: ["string", "null"],
       description: "Vectorstore Weaviate URL",
@@ -266,6 +204,7 @@ const settingsUiSchema = {
 };
 
 export default function OrganizationPage() {
+  const providerSchemas = useRecoilValue(providerSchemasSelector);
   const [organizationSettings, setOrganizationSettings] = useState({});
   const [organizationMembers, setOrganizationMembers] = useState([]);
   const [orgMembersRowsPerPage, setOrgMembersRowsPerPage] = useState(10);
@@ -302,6 +241,77 @@ export default function OrganizationPage() {
         setOrganizationMembers(response.data);
       });
   }, []);
+
+  const handleProviderConfigChange = useCallback(
+    async (
+      providerConfigKey,
+      providerSlug,
+      providerConfigs,
+      config,
+      toDelete,
+    ) => {
+      // Verify that the provider slug is valid
+      if (
+        !providerSlug ||
+        !providerSchemas.find((schema) => schema.slug === providerSlug)
+      ) {
+        enqueueSnackbar("Please select a valid provider", { variant: "error" });
+        return;
+      }
+
+      // Build the provider configuration object
+      const providerConfig = toDelete
+        ? {}
+        : {
+            [`${providerSlug}/${config["processor_slug"]}/${config["model_slug"]}/${config["deployment_key"]}`]:
+              {
+                ...config,
+                provider_slug: providerSlug,
+              },
+          };
+
+      let updatedProviderConfigs = {};
+
+      if (toDelete && providerConfigKey) {
+        updatedProviderConfigs = { ...providerConfigs };
+        delete updatedProviderConfigs[providerConfigKey];
+      } else {
+        updatedProviderConfigs = {
+          ...providerConfigs,
+          ...providerConfig,
+        };
+      }
+
+      try {
+        await axios().patch("/api/org/settings", {
+          provider_configs: updatedProviderConfigs,
+        });
+
+        if (providerConfigKey) {
+          enqueueSnackbar("Provider configuration updated", {
+            variant: "success",
+          });
+        } else {
+          enqueueSnackbar("Provider configuration added", {
+            variant: "success",
+          });
+        }
+
+        window.location.reload();
+      } catch (error) {
+        if (providerConfigKey) {
+          enqueueSnackbar("Failed to update provider configuration", {
+            variant: "error",
+          });
+        } else {
+          enqueueSnackbar("Failed to add provider configuration", {
+            variant: "error",
+          });
+        }
+      }
+    },
+    [providerSchemas],
+  );
 
   return (
     <div id="organization-page" style={{ margin: 10 }}>
@@ -356,6 +366,7 @@ export default function OrganizationPage() {
             color="primary"
             sx={{
               textTransform: "none",
+              float: "right",
             }}
             onClick={() => {
               saveSettings();
@@ -363,6 +374,14 @@ export default function OrganizationPage() {
           >
             Save Settings
           </Button>
+          <p>&nbsp;</p>
+          <Typography variant="h6" className="section-header">
+            Model Providers
+          </Typography>
+          <ProviderConfigs
+            configs={organizationSettings?.provider_configs || {}}
+            handleProviderConfigChange={handleProviderConfigChange}
+          />
         </Grid>
         <Grid item md={6} xs={12}>
           <Typography style={sectionHeaderStyle} variant="h6">

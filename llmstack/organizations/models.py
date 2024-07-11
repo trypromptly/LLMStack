@@ -1,4 +1,5 @@
 import base64
+import json
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -228,6 +229,9 @@ class OrganizationSettings(models.Model):
         related_name="default_api_backend",
         help_text="Default API backend to use for the organization",
     )
+    _provider_configs = models.JSONField(
+        default=dict, help_text="Encrypted providers config to use with processors", null=True, blank=True
+    )
 
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
@@ -292,6 +296,16 @@ class OrganizationSettings(models.Model):
             self.salt(),
         )
         return cipher.decrypt(value).decode()
+
+    @property
+    def provider_configs(self):
+        return (
+            json.loads(
+                self.decrypt_value(self._provider_configs),
+            )
+            if self._provider_configs
+            else {}
+        )
 
 
 @receiver(post_save, sender=Organization)

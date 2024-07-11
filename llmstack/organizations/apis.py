@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 
@@ -10,6 +11,7 @@ from rest_framework.response import Response as DRFResponse
 from llmstack.apps.models import App, AppVisibility
 from llmstack.apps.serializers import AppSerializer
 from llmstack.base.models import Profile
+from llmstack.common.utils.provider_config import validate_provider_configs
 from llmstack.datasources.models import (
     DataSource,
     DataSourceEntry,
@@ -194,6 +196,13 @@ class OrganizationSettingsViewSet(viewsets.ModelViewSet):
             "embeddings_api_rate_limit",
             300,
         )
+
+        if "provider_configs" in request.data:
+            provider_configs = request.data.get("provider_configs")
+            validate_provider_configs(provider_configs)
+
+            # Once all the configs are validated, encrypt the data
+            organization_settings._provider_configs = organization_settings.encrypt_value(json.dumps(provider_configs))
 
         organization_settings.save()
 

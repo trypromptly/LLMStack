@@ -14,9 +14,7 @@ from django.db import models
 from django.utils.module_loading import import_string
 from rest_framework.authtoken.models import Token
 
-from llmstack.common.utils.provider_config import (
-    get_provider_config_class_by_slug_cached,
-)
+from llmstack.common.utils.provider_config import validate_provider_configs
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
 
@@ -344,31 +342,9 @@ class AbstractProfile(models.Model):
         if not self._provider_configs:
             self._provider_configs = {}
 
-        # Iterate through the provider configs, validate them against the schema and encrypt the values
-        for provider_key, provider_config in provider_configs.items():
-            if not provider_config:
-                continue
-
-            # provider_key is of the form provider_slug/processor_slug/model_slug/deployment_key where processor_slug and model_slug can be regex
-            provider_key_parts = provider_key.split("/")
-            [provider_slug, processor_slug, model_slug, deployment_key] = provider_key_parts
-
-            # Get schema class for the provider
-            provider_schema_cls = get_provider_config_class_by_slug_cached(provider_slug)
-            if not provider_schema_cls:
-                raise Exception(f"Provider schema class not found for {provider_slug}")
-
-            # Validate the key against the schema
-            if (
-                provider_slug != provider_config["provider_slug"]
-                or processor_slug != provider_config["processor_slug"]
-                or model_slug != provider_config["model_slug"]
-                or deployment_key != provider_config["deployment_key"]
-            ):
-                raise Exception(f"Provider config key {provider_key} does not match the schema")
-
-            # Validate the config against the schema
-            provider_schema_cls.model_validate(provider_config)
+        # Validate the provider configs. Raises an exception if the configs are
+        # invalid
+        validate_provider_configs(provider_configs)
 
         # Once all the configs are validated, encrypt the data
         self._provider_configs = self.encrypt_value(json.dumps(provider_configs)).decode("utf-8")
