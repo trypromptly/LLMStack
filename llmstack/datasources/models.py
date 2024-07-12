@@ -8,7 +8,8 @@ from django.dispatch import receiver
 from django.utils.timezone import now
 
 from llmstack.assets.models import Assets
-from llmstack.base.models import Profile
+from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
+from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.events.apis import EventsViewSet
 
 logger = logging.getLogger(__name__)
@@ -119,6 +120,47 @@ class DataSource(models.Model):
     @property
     def type_slug(self):
         return self.config.get("type_slug", "")
+
+    @property
+    def vector_store_config(self):
+        vector_store = self.config.get("vector_store", {})
+        if not vector_store:
+            # For Legacy Data Sources
+            from django.conf import settings
+
+            if settings.VECTOR_DATABASES.get("default")["ENGINE"] == "weaviate":
+                vector_store = {
+                    "type": "promptly_legacy_weaviate",
+                    "url": self.profile.weaviate_url,
+                    "host": None,
+                    "http_port": None,
+                    "grpc_port": None,
+                    "embeddings_rate_limit": None,
+                    "embeddings_batch_size": None,
+                    "additional_headers": None,
+                    "api_key": self.profile.weaviate_api_key,
+                }
+                if self.profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
+                    openai_provider_config = get_matched_provider_config(
+                        provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
+                        provider_slug="openai",
+                    )
+                    vector_store["additional_headers"] = {"X-OpenAI-Api-Key": openai_provider_config.api_key}
+                else:
+                    azure_provider_config = get_matched_provider_config(
+                        provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
+                        provider_slug="azure",
+                    )
+
+                    vector_store["additional_headers"] = {"X-Azure-Api-Key": azure_provider_config.api_key}
+            elif settings.VECTOR_DATABASES.get("default")["ENGINE"] == "chroma":
+                vector_store = {
+                    "type": "chromadb",
+                    "path": settings.VECTOR_DATABASES.get("default", {}).get("NAME", "chromadb"),
+                    "settings": {"anonymized_telemetry": False, "is_persistent": True},
+                }
+
+        return vector_store
 
 
 class DataSourceEntry(models.Model):

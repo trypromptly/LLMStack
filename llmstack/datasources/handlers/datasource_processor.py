@@ -5,22 +5,20 @@ from string import Template
 from typing import List, Optional, TypeVar
 
 from django.conf import settings
+from llama_index.core.schema import TextNode
+from llama_index.core.vector_stores.types import (
+    BasePydanticVectorStore,
+    VectorStoreQuery,
+    VectorStoreQueryMode,
+)
 from pydantic import BaseModel
 
-from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
+from llmstack.base.models import Profile
 from llmstack.common.blocks.base.processor import BaseInputType, ProcessorInterface
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
-from llmstack.common.blocks.data.store.vectorstore import (
-    Document,
-    DocumentQuery,
-    VectorStoreInterface,
-)
-from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
-from llmstack.common.blocks.data.store.vectorstore.weaviate import (
-    Weaviate as PromptlyWeaviate,
-)
-from llmstack.common.utils.provider_config import get_matched_provider_config
+from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.datasources.models import DataSource
+from llmstack.datasources.vector_stores.types import get_vector_store_configuration
 
 logger = logging.getLogger(__name__)
 
@@ -147,70 +145,35 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         return "Datasource_" + str(self.datasource.uuid).replace("-", "_")
 
     @property
-    def vectorstore(self) -> VectorStoreInterface:
+    def vectorstore(self) -> BasePydanticVectorStore:
         return self._vectorstore
-
-    @property
-    def embeddings_endpoint(self):
-        return self._embeddings_endpoint
 
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
         self.profile = Profile.objects.get(user=self.datasource.owner)
 
-        vectorstore_embedding_endpoint = self.profile.vectostore_embedding_endpoint
-        vectorstore_embeddings_batch_size = self.profile.vectorstore_embeddings_batch_size
-        vectorstore_embedding_rate_limit = self.profile.weaviate_embeddings_api_rate_limit
+        self._vectorstore = self.initialize_vector_datastore()
 
-        promptly_weaviate = None
+    def initialize_vector_datastore(self):
+        vector_store = None
+        vector_data_store_config = self.datasource.vector_store_config
+        if not vector_data_store_config:
+            raise Exception("Vector store configuration is missing")
 
-        default_vector_database = settings.VECTOR_DATABASES.get("default")["ENGINE"]
+        vector_store_config = get_vector_store_configuration(vector_data_store_config)
 
-        if default_vector_database == "weaviate":
-            if vectorstore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
-                openai_provider_config = get_matched_provider_config(
-                    provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
-                    provider_slug="openai",
-                )
-                promptly_weaviate = PromptlyWeaviate(
-                    url=self.profile.weaviate_url,
-                    openai_key=openai_provider_config.api_key,
-                    embeddings_rate_limit=vectorstore_embedding_rate_limit,
-                    embeddings_batch_size=vectorstore_embeddings_batch_size,
-                    api_key=self.profile.weaviate_api_key,
-                )
-            else:
-                azure_provider_config = get_matched_provider_config(
-                    provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
-                    provider_slug="azure",
-                )
-                promptly_weaviate = PromptlyWeaviate(
-                    url=self.profile.weaviate_url,
-                    azure_openai_key=azure_provider_config.api_key,
-                    weaviate_rw_api_key=self.profile.weaviate_api_key,
-                    embeddings_rate_limit=vectorstore_embedding_rate_limit,
-                    embeddings_batch_size=vectorstore_embeddings_batch_size,
-                )
+        # Get Weaviate schema (For Legacy Data Sources)
+        legacy_weaviate_schema = json.loads(self.get_weaviate_schema(self.datasource_class_name))
+        legacy_weaviate_schema["classes"][0]["moduleConfig"]["text2vec-openai"] = self.profile.weaviate_text2vec_config
+        legacy_weaviate_schema["classes"][0]["replicationConfig"]["factor"] = settings.WEAVIATE_REPLICATION_FACTOR
+        legacy_weaviate_schema["classes"][0]["shardingConfig"]["desiredCount"] = settings.WEAVIATE_SHARD_COUNT
 
-            # Get Weaviate schema
-            weaviate_schema = json.loads(
-                self.get_weaviate_schema(self.datasource_class_name),
-            )
-            weaviate_schema["classes"][0]["moduleConfig"]["text2vec-openai"] = self.profile.weaviate_text2vec_config
-            weaviate_schema["classes"][0]["replicationConfig"]["factor"] = settings.WEAVIATE_REPLICATION_FACTOR
-            weaviate_schema["classes"][0]["shardingConfig"]["desiredCount"] = settings.WEAVIATE_SHARD_COUNT
-            # Create an index for the datasource
-            promptly_weaviate.get_or_create_index(
-                index_name=self.datasource_class_name, schema=json.dumps(weaviate_schema)
-            )
-
-            self._vectorstore = promptly_weaviate
-        elif default_vector_database == "chroma":
-            self._vectorstore = Chroma()
-            self._vectorstore.get_or_create_index(
-                index_name=self.datasource_class_name,
-                schema="",
-            )
+        vector_store = vector_store_config.initialize_client(
+            legacy_weaviate_schema=legacy_weaviate_schema,
+            index_name=self.datasource_class_name,
+            text_key=self.get_content_key(),
+        )
+        return vector_store
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
         raise NotImplementedError
@@ -220,23 +183,13 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
     def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         documents = self.get_data_documents(data)
-
-        documents = map(
-            lambda document: Document(
-                page_content_key=document.page_content_key,
-                page_content=document.page_content,
-                metadata={
-                    **document.metadata,
-                    **data.metadata,
-                },
-            ),
-            documents,
+        documents = list(
+            map(
+                lambda document: TextNode(text=document.page_content, metadata={**document.metadata, **data.metadata}),
+                documents,
+            )
         )
-
-        document_ids = self.vectorstore.add_texts(
-            index_name=self.datasource_class_name,
-            documents=documents,
-        )
+        document_ids = self.vectorstore.add(nodes=documents)
         logger.info(f"Added {len(document_ids)} documents to vectorstore.")
         return data.copy(
             update={
@@ -253,70 +206,28 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         use_hybrid_search=True,
         **kwargs,
     ) -> List[dict]:
-        if use_hybrid_search:
-            return self.hybrid_search(query, **kwargs)
-        else:
-            return self.similarity_search(query, **kwargs)
+        if kwargs.get("search_filters", None):
+            raise NotImplementedError("Search filters are not supported for this data source.")
 
-    def similarity_search(self, query: str, **kwargs) -> List[dict]:
-        document_query = DocumentQuery(
-            query=query,
-            page_content_key=self.get_content_key(),
-            limit=kwargs.get(
-                "limit",
-                2,
-            ),
-            metadata={
-                "additional_properties": ["source"],
-            },
-            search_filters=kwargs.get(
-                "search_filters",
-                None,
-            ),
+        vector_store_query = VectorStoreQuery(
+            query_str=query,
+            mode=VectorStoreQueryMode.HYBRID if use_hybrid_search else VectorStoreQueryMode.DEFAULT,
+            alpha=kwargs.get("alpha", 0.75),
+            hybrid_top_k=kwargs.get("limit", 2),
         )
-
-        return self.vectorstore.similarity_search(
-            index_name=self.datasource_class_name,
-            document_query=document_query,
-            **kwargs,
+        query_result = self.vectorstore.query(query=vector_store_query)
+        documents = list(
+            map(
+                lambda x: Document(page_content_key=self.get_content_key(), page_content=x.text, metadata={}),
+                query_result.nodes,
+            )
         )
-
-    def hybrid_search(self, query: str, **kwargs) -> List[dict]:
-        document_query = DocumentQuery(
-            query=query,
-            page_content_key=self.get_content_key(),
-            limit=kwargs.get(
-                "limit",
-                2,
-            ),
-            metadata={
-                "additional_properties": ["source"],
-            },
-            search_filters=kwargs.get(
-                "search_filters",
-                None,
-            ),
-            alpha=kwargs.get(
-                "alpha",
-                0.75,
-            ),
-        )
-        return self.vectorstore.hybrid_search(
-            index_name=self.datasource_class_name,
-            document_query=document_query,
-            **kwargs,
-        )
+        return documents
 
     def delete_entry(self, data: dict) -> None:
         if "document_ids" in data and isinstance(data["document_ids"], list):
             for document_id in data["document_ids"]:
-                logger.info(
-                    f"Deleting document {document_id} from vectorstore.",
-                )
-                self.vectorstore.delete_document(
-                    document_id,
-                    index_name=self.datasource_class_name,
-                )
+                self.vectorstore.delete(ref_doc_id=document_id)
 
     def resync_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         # Delete old data
@@ -330,30 +241,12 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
         return self.add_entry(DataSourceEntryItem(**data["input"]))
 
     def delete_all_entries(self) -> None:
-        self.vectorstore.delete_index(
-            index_name=self.datasource_class_name,
-        )
+        self.vectorstore.delete_index()
 
     def get_entry_text(self, data: dict) -> str:
-        documents = []
+        documents = [TextNode(metadata={}, text="")]
+
         if "document_ids" in data and isinstance(data["document_ids"], list):
-            for document_id in data["document_ids"][:20]:
-                content_key = self.get_content_key()
-                logger.debug(
-                    f"Fetching document {content_key} {self.datasource_class_name} from vectorstore.",
-                )
-                document = self.vectorstore.get_document_by_id(
-                    index_name=self.datasource_class_name,
-                    document_id=document_id,
-                    content_key=content_key,
-                )
+            documents = self.vectorstore.get_nodes(data["document_ids"][:20])
 
-                if documents is not None:
-                    documents.append(document)
-
-        if len(documents) > 0:
-            return documents[0].metadata, "\n".join(
-                list(map(lambda x: x.page_content, documents)),
-            )
-        else:
-            return {}, ""
+        return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))
