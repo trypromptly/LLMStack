@@ -15,7 +15,7 @@ class OpenAIProviderConfig(ProviderConfig):
 
     api_key: str = Field(
         title="API Key",
-        default=" ",
+        default="",
         description="API Key for the OpenAI API",
         json_schema_extra={"widget": "password", "advanced_parameter": False},
     )
