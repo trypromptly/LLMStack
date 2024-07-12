@@ -121,6 +121,7 @@ anthropic = "^0.30.0"
 pypdf = "^4.2.0"
 pikepdf = "^9.0.0"
 llama-index-readers-file = "0.1.30"
+llama-index-vector-stores-chroma = "^0.1.10"
 
 
 [tool.poetry-dynamic-versioning]
