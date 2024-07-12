@@ -99,8 +99,6 @@ class ImagesEdit(
         )
 
     def process(self) -> dict:
-        _env = self._env
-
         prompt = get_key_or_raise(
             self._input.model_dump(),
             "prompt",
@@ -120,13 +118,10 @@ class ImagesEdit(
             image,
         )
         image_data = base64.b64decode(base64_encoded_data)
+        openai_provider_config = self.get_provider_config()
         openai_images_edit_input = OpenAIImageEditsProcessorInput(
             env=OpenAIAPIInputEnvironment(
-                openai_api_key=get_key_or_raise(
-                    _env,
-                    "openai_api_key",
-                    "No openai_api_key found in _env",
-                ),
+                openai_api_key=openai_provider_config.api_key,
             ),
             image=OpenAIFile(
                 name=file_name,

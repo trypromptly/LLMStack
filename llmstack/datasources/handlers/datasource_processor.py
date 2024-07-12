@@ -19,6 +19,7 @@ from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.blocks.data.store.vectorstore.weaviate import (
     Weaviate as PromptlyWeaviate,
 )
+from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.datasources.models import DataSource
 
 logger = logging.getLogger(__name__)
@@ -156,7 +157,6 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
         self.profile = Profile.objects.get(user=self.datasource.owner)
-        self._env = self.profile.get_vendor_env()
 
         vectorstore_embedding_endpoint = self.profile.vectostore_embedding_endpoint
         vectorstore_embeddings_batch_size = self.profile.vectorstore_embeddings_batch_size
@@ -168,19 +168,25 @@ class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
 
         if default_vector_database == "weaviate":
             if vectorstore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
+                openai_provider_config = get_matched_provider_config(
+                    provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
+                    provider_slug="openai",
+                )
                 promptly_weaviate = PromptlyWeaviate(
                     url=self.profile.weaviate_url,
-                    openai_key=self.profile.get_vendor_key("openai_key"),
+                    openai_key=openai_provider_config.api_key,
                     embeddings_rate_limit=vectorstore_embedding_rate_limit,
                     embeddings_batch_size=vectorstore_embeddings_batch_size,
                     api_key=self.profile.weaviate_api_key,
                 )
             else:
+                azure_provider_config = get_matched_provider_config(
+                    provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
+                    provider_slug="azure",
+                )
                 promptly_weaviate = PromptlyWeaviate(
                     url=self.profile.weaviate_url,
-                    azure_openai_key=self.profile.get_vendor_key(
-                        "azure_openai_api_key",
-                    ),
+                    azure_openai_key=azure_provider_config.api_key,
                     weaviate_rw_api_key=self.profile.weaviate_api_key,
                     embeddings_rate_limit=vectorstore_embedding_rate_limit,
                     embeddings_batch_size=vectorstore_embeddings_batch_size,

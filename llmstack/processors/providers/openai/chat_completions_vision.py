@@ -208,7 +208,10 @@ class ChatCompletionsVision(
                 },
             )
 
-        openai_client = OpenAI(api_key=self._env["openai_api_key"])
+        provider_config = self.get_provider_config(
+            model_slug=self._config.model,
+        )
+        openai_client = OpenAI(api_key=provider_config.api_key)
         result = openai_client.chat.completions.create(
             model=self._config.model,
             messages=messages,

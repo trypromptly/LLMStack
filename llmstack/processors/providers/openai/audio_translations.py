@@ -100,7 +100,8 @@ class AudioTranslations(
             raise Exception("No file or file_data found in input")
 
         file_data = base64.b64decode(base64_encoded_data)
-        client = openai.OpenAI(api_key=self._env["openai_api_key"])
+        provider_config = self.get_provider_config(model_slug=self._config.model)
+        client = openai.OpenAI(api_key=provider_config.api_key)
 
         translation = client.audio.translations.create(
             file=(file_name, file_data),

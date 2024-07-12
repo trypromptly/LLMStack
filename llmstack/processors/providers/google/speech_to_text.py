@@ -14,7 +14,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.processors.providers.google import get_project_id_from_env
+from llmstack.processors.providers.google import get_project_id_from_json_key
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class SpeechToTextProcessor(
 
     async def _recognize_speech(self, input_asset_stream):
         client = SpeechAsyncClient.from_service_account_info(
-            json.loads(self._env.get("google_service_account_json_key", "{}")),
+            json.loads(self._google_provider_config.service_account_json_key or "{}"),
         )
 
         recognition_config = cloud_speech_types.RecognitionConfig(
@@ -112,11 +112,12 @@ class SpeechToTextProcessor(
 
     def process(self) -> dict:
         self._project_id = None
+        self._google_provider_config = self.get_provider_config()
 
         if self._config.project_id:
             self._project_id = self._config.project_id
         else:
-            self._project_id = get_project_id_from_env(self._env)
+            self._project_id = get_project_id_from_json_key(self._google_provider_config.service_account_json_key)
 
         if not self._input.audio or not self._input.audio.startswith("objref://"):
             return

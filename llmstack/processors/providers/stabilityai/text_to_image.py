@@ -164,9 +164,12 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
     def process(self) -> dict:
         from llmstack.common.utils.sslr import LLM
 
+        provider_config = self.get_provider_config(
+            model_slug=self._config.engine_id.model_name(),
+        )
         client = LLM(
             provider="stabilityai",
-            stabilityai_api_key=self._env.get("stabilityai_api_key"),
+            stabilityai_api_key=provider_config.api_key,
         )
         result = client.images.generate(
             prompt=" ".join(self._input.prompt),

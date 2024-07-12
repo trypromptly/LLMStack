@@ -296,7 +296,7 @@ Citations:
         elif model == "gpt-4-turbo-latest":
             model = "gpt-4-0125-preview"
 
-        if self._env["azure_openai_api_key"] and self._config.use_azure_if_available:
+        if self._config.use_azure_if_available:
             if model == "gpt-3.5-turbo":
                 model = "gpt-35-turbo"
             elif model == "gpt-3.5-turbo-16k":
@@ -304,41 +304,19 @@ Citations:
             elif model == "gpt-3.5-turbo-latest":
                 model = "gpt-35-turbo-1106"
 
+            provider_config = self.get_provider_config(
+                provider_slug="azure",
+                processor_slug="*",
+                model_slug=model,
+            )
             openai_client = AzureOpenAI(
-                api_key=self._env["azure_openai_api_key"],
-                api_version="2023-03-15-preview",
-                azure_endpoint=f'https://{self._env["azure_openai_endpoint"]}.openai.azure.com',
-            )
-
-            result = openai_client.chat.completions.create(
-                model=model,
-                messages=[system_message] + [context_message] + self._chat_history,
-                temperature=self._config.temperature,
-                stream=True,
-                seed=self._config.seed,
-            )
-        elif self._env["localai_base_url"] and self._config.use_localai_if_available:
-            openai_client = (
-                OpenAI(
-                    api_key=self._env["localai_api_key"],
-                    base_url=self._env["localai_base_url"],
-                )
-                if self._env["localai_api_key"]
-                else OpenAI(
-                    base_url=self._env["localai_base_url"],
-                )
-            )
-
-            result = openai_client.chat.completions.create(
-                model=model,
-                messages=[system_message] + [context_message] + self._chat_history,
-                temperature=self._config.temperature,
-                stream=True,
-                seed=self._config.seed,
-            )
-        elif self._env["openai_api_key"] is not None:
-            openai_client = OpenAI(
-                api_key=self._env["openai_api_key"],
+                api_key=provider_config.api_key,
+                api_version=provider_config.api_version,
+                azure_endpoint=(
+                    provider_config.azure_endpoint
+                    if provider_config.azure_endpoint.startswith("https")
+                    else f"https://{provider_config.azure_endpoint}.openai.azure.com"
+                ),
             )
 
             result = openai_client.chat.completions.create(
@@ -349,7 +327,26 @@ Citations:
                 seed=self._config.seed,
             )
         else:
-            raise Exception("No OpenAI API key provided")
+            provider_config = self.get_provider_config(
+                provider_slug="openai",
+                processor_slug="*",
+                model_slug=model,
+            )
+
+            if not provider_config:
+                raise Exception(f"Model deployment config not found for {self.provider_slug()}/{model}")
+
+            openai_client = OpenAI(
+                api_key=provider_config.api_key,
+            )
+
+            result = openai_client.chat.completions.create(
+                model=model,
+                messages=[system_message] + [context_message] + self._chat_history,
+                temperature=self._config.temperature,
+                stream=True,
+                seed=self._config.seed,
+            )
 
         for data in result:
             if (

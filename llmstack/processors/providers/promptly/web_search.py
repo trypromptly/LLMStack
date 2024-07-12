@@ -119,8 +119,9 @@ class WebSearch(
 
     def process(self) -> dict:
         output_stream = self._output_stream
-        api_key = self._env.get("google_custom_search_api_key", None)
-        cx = self._env.get("google_custom_search_cx", None)
+        provider_config = self.get_provider_config()
+        api_key = provider_config.search_engine.api_key or None
+        cx = provider_config.search_engine.cx or None
 
         query = self._input.query
         k = self._config.k

@@ -131,7 +131,8 @@ class CohereChatProcessor(
         history = self._chat_history if self._config.retain_history else []
 
         output_stream = self._output_stream
-        client = cohere.Client(self._env["cohere_api_key"])
+        provider_config = self.get_provider_config(model_slug=self._config.model)
+        client = cohere.Client(api_key=provider_config.api_key)
         response = client.chat_stream(
             preamble=self._config.system_message,
             chat_history=list(map(lambda x: cohere.types.ChatMessage(**x), history)),

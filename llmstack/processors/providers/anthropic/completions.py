@@ -86,10 +86,9 @@ class CompletionsProcessor(
         )
 
     def process(self) -> dict:
-        env = self._env
-        api_key = env.get("anthropic_api_key")
+        anthropic_provider_config = self.get_provider_config(model_slug=self._config.model.value)
 
-        for chunk in Anthropic(api_key=api_key).completions.create(
+        for chunk in Anthropic(api_key=anthropic_provider_config.api_key).completions.create(
             prompt=f"{HUMAN_PROMPT}\n{self._input.prompt}\n{AI_PROMPT}",
             max_tokens_to_sample=self._config.max_tokens_to_sample,
             model=self._config.model.value,

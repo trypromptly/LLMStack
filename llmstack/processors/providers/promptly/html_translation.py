@@ -110,7 +110,11 @@ class HTMLTranslationProcessor(
 
             json_input = json.loads(chunk)
 
-            openai_client = OpenAI(api_key=self._env["openai_api_key"])
+            openai_provider_config = self._config.provider_config(
+                provider_slug="openai",
+                processor_slug="*",
+            )
+            openai_client = OpenAI(api_key=openai_provider_config.api_key)
             system_message = {
                 "role": "system",
                 "content": self._config.system_message,

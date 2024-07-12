@@ -128,13 +128,13 @@ class ImagesGenerations(
         )
 
     def process(self) -> dict:
-        _env = self._env
         prompt = self._input.prompt
 
         if not prompt:
             raise Exception("No prompt found in input")
 
-        client = openai.OpenAI(api_key=_env["openai_api_key"])
+        provider_config = self.get_provider_config(model_slug=self._config.model)
+        client = openai.OpenAI(api_key=provider_config.api_key)
         result = client.images.generate(
             prompt=prompt,
             model=self._config.model,

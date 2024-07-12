@@ -136,9 +136,10 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
     def process(self) -> MessagesOutput:
         from llmstack.common.utils.sslr import LLM
 
+        mistral_provider_config = self.get_provider_config(model_slug=self._config.model.model_name())
         client = LLM(
             provider="mistral",
-            mistral_api_key=self._env.get("mistral_api_key"),
+            mistral_api_key=mistral_provider_config.api_key,
         )
         messages = []
 

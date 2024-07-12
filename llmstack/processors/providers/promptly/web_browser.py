@@ -441,7 +441,12 @@ class WebBrowser(
                 output_text = response.content.text
             self._terminated = True
 
-        openai_client = openai.OpenAI(api_key=self._env["openai_api_key"])
+        provider_config = self.get_provider_config(
+            provider_slug="openai",
+            processor_slug="*",
+            model_slug=model,
+        )
+        openai_client = openai.OpenAI(api_key=provider_config.api_key)
         total_steps = 1
         while not self._terminated:
             if total_steps > self._config.max_steps:

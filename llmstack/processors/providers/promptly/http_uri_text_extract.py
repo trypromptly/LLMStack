@@ -89,13 +89,17 @@ class HttpUriTextExtract(
         }
 
     def process(self) -> HttpUriTextExtractorOutput:
-        openai_api_key = self._env.get("openai_api_key", None)
+        openai_provider_config = self.get_provider_config(
+            provider_slug="openai",
+        )
 
         query = self._input.query
         url = self._input.url.strip().rstrip()
 
         if url != self.url:
-            self.extracted_text = extract_text_from_url(url, extra_params=ExtraParams(openai_key=openai_api_key))
+            self.extracted_text = extract_text_from_url(
+                url, extra_params=ExtraParams(openai_key=openai_provider_config.api_key)
+            )
 
         self.url = url
 

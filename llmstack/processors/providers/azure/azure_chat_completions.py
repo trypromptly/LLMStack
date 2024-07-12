@@ -209,18 +209,11 @@ class AzureChatCompletions(
             )
 
         chat_history = self._chat_history if self._config.retain_history else []
-        azure_openai_api_key = self._env.get("azure_openai_api_key", None)
-        endpoint = (
-            self._config.base_url
-            if self._config.base_url
-            else self._env.get(
-                "azure_openai_endpoint",
-                None,
-            )
-        )
+        azure_provider_config = self.get_provider_config(model_slug=self._config.deployment_name.value)
+        endpoint = self._config.base_url if self._config.base_url else azure_provider_config.base_url
         client = openai.AzureOpenAI(
             azure_endpoint=endpoint if endpoint.startswith("https://") else f"https://{endpoint}.openai.azure.com",
-            api_key=azure_openai_api_key,
+            api_key=azure_provider_config.api_key,
             api_version=self._config.api_version,
         )
 

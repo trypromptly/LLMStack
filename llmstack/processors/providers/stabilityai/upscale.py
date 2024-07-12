@@ -134,7 +134,8 @@ class UpscaleProcessor(
         data_bytes = base64.b64decode(data)
         data_bytes = resize_image_file(data_bytes, max_pixels=9437184, max_size=10485760)
 
-        client = LLM(provider=PROVIDER_STABILITYAI, stabilityai_api_key=self._env.get("stabilityai_api_key"))
+        provider_config = self.get_provider_config(model_slug=self._config.engine_id.model_name())
+        client = LLM(provider=PROVIDER_STABILITYAI, stabilityai_api_key=provider_config.api_key)
 
         result = client.images.edit(
             prompt="Upscale" if self._input.prompt is None else self._input.prompt,

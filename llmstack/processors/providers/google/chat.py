@@ -16,7 +16,10 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.processors.providers.google import API_KEY, get_google_credential_from_env
+from llmstack.processors.providers.google import (
+    API_KEY,
+    get_google_credentials_from_json_key,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -238,7 +241,8 @@ class ChatProcessor(
     def process(self) -> dict:
         history = self._chat_history if self._config.retain_history else []
 
-        token, token_type = get_google_credential_from_env(self._env)
+        google_provider_config = self.get_provider_config(model_slug=self._config.model.value)
+        token, token_type = get_google_credentials_from_json_key(google_provider_config.service_account_json_key)
         if token_type != API_KEY:
             raise ValueError("Invalid token type. Gemini needs an API key.")
 

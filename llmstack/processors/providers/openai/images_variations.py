@@ -15,7 +15,7 @@ from llmstack.common.blocks.llm.openai import (
     OpenAIImageVariationsProcessorOutput,
     Size,
 )
-from llmstack.common.utils.utils import get_key_or_raise, validate_parse_data_uri
+from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     IMAGE_WIDGET_NAME,
     ApiProcessorInterface,
@@ -108,13 +108,10 @@ class ImagesVariations(
         )
 
         image_data = base64.b64decode(base64_encoded_data)
+        openai_provider_config = self.get_provider_config()
         image_variations_api_processor_input = OpenAIImageVariationsProcessorInput(
             env=OpenAIAPIInputEnvironment(
-                openai_api_key=get_key_or_raise(
-                    self._env,
-                    "openai_api_key",
-                    "No openai_api_key found in _env",
-                ),
+                openai_api_key=openai_provider_config.api_key,
             ),
             image=OpenAIFile(
                 name=file_name,

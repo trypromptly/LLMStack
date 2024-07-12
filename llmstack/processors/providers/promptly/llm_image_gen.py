@@ -10,7 +10,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.processors.providers.google import get_google_credential_from_env
+from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
 
@@ -140,20 +140,12 @@ class LLMImageGeneratorProcessor(
         )
 
     def process(self) -> dict:
-        from llmstack.common.utils.sslr import LLM
-
         output_stream = self._output_stream
-        google_api_key, token_type = (
-            get_google_credential_from_env(self._env) if self._env.get("google_service_account_json_key") else None
-        )
 
-        client = LLM(
+        client = get_llm_client_from_provider_config(
             provider=self._config.provider_config.provider,
-            openai_api_key=self._env.get("openai_api_key"),
-            stabilityai_api_key=self._env.get("stabilityai_api_key"),
-            google_api_key=google_api_key,
-            anthropic_api_key=self._env.get("anthropic_api_key"),
-            cohere_api_key=self._env.get("cohere_api_key"),
+            model_slug=self._config.provider_config.model.model_name(),
+            get_provider_config_fn=self.get_provider_config,
         )
 
         result = client.images.generate(

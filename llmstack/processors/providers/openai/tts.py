@@ -99,7 +99,10 @@ class TextToSpeechProcessor(
 
     def process(self) -> dict:
         output_stream = self._output_stream
-        openai_client = OpenAI(api_key=self._env["openai_api_key"])
+        provider_config = self.get_provider_config(
+            model_slug=self._config.model,
+        )
+        openai_client = OpenAI(api_key=provider_config.api_key)
 
         output = None
 

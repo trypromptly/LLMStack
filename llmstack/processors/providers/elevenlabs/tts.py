@@ -160,6 +160,9 @@ class ElevenLabsTextToSpeechProcessor(
             else self._input
         )
 
+        if "_elevenlabs_provider_config" not in self.__dict__:  # noqa
+            self._elevenlabs_provider_config = self.get_provider_config(model_slug=self._config.tts_model_id)
+
         if not input_data.input_text or not input_data.input_text.startswith("objref://"):
             return
 
@@ -178,7 +181,7 @@ class ElevenLabsTextToSpeechProcessor(
             convert_text_to_speech(
                 f"wss://api.elevenlabs.io/v1/text-to-speech/{self._config.voice_id}/stream-input?model_id={self._config.tts_model_id}",
                 self._config.voice_settings,
-                self._env.get("elevenlabs_api_key", None),
+                self._elevenlabs_provider_config.api_key,
                 input_asset_stream,
                 output_asset_stream,
             )
@@ -186,6 +189,7 @@ class ElevenLabsTextToSpeechProcessor(
 
     def process(self) -> dict:
         # If we have already processed the input stream, return the output
+        self._elevenlabs_provider_config = self.get_provider_config(model_slug=self._config.tts_model_id)
         if self._output_stream.get_data() and self._output_stream.get_data().get("audio_content"):
             return self._output_stream.finalize()
 
@@ -193,7 +197,7 @@ class ElevenLabsTextToSpeechProcessor(
 
         headers = {
             "accept": "audio/mpeg",
-            "xi-api-key": self._env.get("elevenlabs_api_key", None),
+            "xi-api-key": self._elevenlabs_provider_config.api_key,
             "Content-Type": "application/json",
         }
 

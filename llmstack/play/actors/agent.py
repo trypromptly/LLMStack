@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from llmstack.apps.app_session_utils import save_agent_app_session_data
 from llmstack.common.utils.liquid import render_template
+from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.output import OutputResponse
 from llmstack.play.output_stream import Message, MessageType
@@ -82,8 +83,13 @@ class AgentActor(Actor):
         else:
             self._chat_history = []
 
+        openai_provider_config = get_matched_provider_config(
+            provider_configs=self._env.get("provider_configs", {}),
+            provider_slug="openai",
+            model_slug=self._config.get("model", "gpt-3.5-turbo"),
+        )
         self._openai_client = OpenAI(
-            api_key=self._env["openai_api_key"],
+            api_key=openai_provider_config.api_key,
         )
 
         self._agent_messages = []

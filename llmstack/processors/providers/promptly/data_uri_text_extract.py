@@ -118,7 +118,7 @@ class DataUriTextExtract(
         }
 
     def process(self) -> str:
-        openai_api_key = self._env.get("openai_api_key", None)
+        openai_provider_config = self.get_provider_config(provider_slug="openai")
         query = self._input.query
 
         file = self._input.file or None
@@ -138,7 +138,7 @@ class DataUriTextExtract(
                 mime_type=mime_type,
                 base64_encoded_data=data,
                 file_name=file_name,
-                extra_params=ExtraParams(openai_key=openai_api_key),
+                extra_params=ExtraParams(openai_key=openai_provider_config.api_key),
             )
 
         if query:

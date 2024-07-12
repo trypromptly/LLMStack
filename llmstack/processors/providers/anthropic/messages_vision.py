@@ -15,6 +15,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +82,9 @@ class MessagesVisionProcessor(ApiProcessorInterface[MessagesVisionInput, Message
             return {"chat_history": self._chat_history}
 
     def process(self) -> MessagesOutput:
-        from llmstack.common.utils.sslr import LLM
-
-        client = LLM(provider="anthropic", anthropic_api_key=self._env.get("anthropic_api_key"))
+        client = get_llm_client_from_provider_config(
+            "anthropic", self._config.model.model_name(), self.get_provider_config
+        )
         messages = []
 
         if self._config.system_prompt:

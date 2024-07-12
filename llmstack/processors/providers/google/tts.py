@@ -13,8 +13,8 @@ from llmstack.processors.providers.api_processor_interface import (
 )
 from llmstack.processors.providers.google import (
     API_KEY,
-    get_google_credential_from_env,
-    get_project_id_from_env,
+    get_google_credentials_from_json_key,
+    get_project_id_from_json_key,
 )
 
 SCOPES = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -107,17 +107,18 @@ class TextToSpeechProcessor(
 
         token = None
         project_id = None
+        google_provider_config = self.get_provider_config()
 
         if self._config.project_id:
             project_id = self._config.project_id
         else:
-            project_id = get_project_id_from_env(self._env)
+            project_id = get_project_id_from_json_key(google_provider_config.service_account_json_key)
 
         if self._config.auth_token:
             token = self._config.auth_token
             token_type = API_KEY
         else:
-            token, token_type = get_google_credential_from_env(self._env)
+            token, token_type = get_google_credentials_from_json_key(google_provider_config.service_account_json_key)
 
         if token is None:
             raise Exception("No auth token provided.")

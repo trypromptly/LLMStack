@@ -135,7 +135,8 @@ class Completions(
         )
 
     def process(self) -> dict:
-        client = openai.OpenAI(api_key=self._env["openai_api_key"])
+        provider_config = self.get_provider_config(model_slug=self._config.model)
+        client = openai.OpenAI(api_key=provider_config.api_key)
         result = client.completions.create(
             stream=True,
             model=self._config.model,
