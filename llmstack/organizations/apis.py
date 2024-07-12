@@ -12,16 +12,9 @@ from llmstack.apps.models import App, AppVisibility
 from llmstack.apps.serializers import AppSerializer
 from llmstack.base.models import Profile
 from llmstack.common.utils.provider_config import validate_provider_configs
-from llmstack.datasources.models import (
-    DataSource,
-    DataSourceEntry,
-    DataSourceVisibility,
-)
-from llmstack.datasources.serializers import (
-    DataSourceEntrySerializer,
-    DataSourceSerializer,
-)
-from llmstack.datasources.types import DataSourceTypeFactory
+from llmstack.data.models import DataSource, DataSourceEntry, DataSourceVisibility
+from llmstack.data.serializers import DataSourceEntrySerializer, DataSourceSerializer
+from llmstack.data.types import DataSourceTypeFactory
 from llmstack.organizations.models import Organization, OrganizationSettings
 from llmstack.organizations.serializers import (
     OrganizationSerializer,

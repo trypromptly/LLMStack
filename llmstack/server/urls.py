@@ -8,7 +8,7 @@ urlpatterns = [
     path("", include("llmstack.assets.urls")),
     path("", include("llmstack.processors.urls")),
     path("", include("llmstack.organizations.urls")),
-    path("", include("llmstack.datasources.urls")),
+    path("", include("llmstack.data.urls")),
     path("", include("llmstack.connections.urls")),
     path("", include("llmstack.jobs.urls")),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

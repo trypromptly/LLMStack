@@ -8,8 +8,8 @@ from django.shortcuts import get_object_or_404
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.datasources.models import DataSource
-from llmstack.datasources.types import DataSourceTypeFactory
+from llmstack.data.models import DataSource
+from llmstack.data.types import DataSourceTypeFactory
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
