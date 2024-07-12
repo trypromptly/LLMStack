@@ -588,7 +588,7 @@ class AbstractProfile(models.Model):
 
         # Add platform defaults
         platform_defaults = get_vendor_env_platform_defaults()
-        for k, v in platform_defaults.items():
+        for k, v in platform_defaults.get("provider_configs", {}).items():
             if k not in provider_configs:
                 provider_configs[k] = v
 
