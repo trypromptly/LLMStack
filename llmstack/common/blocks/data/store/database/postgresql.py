@@ -34,7 +34,7 @@ class PostgresConfiguration(BaseSchema):
     sslkeyFile: Optional[str] = None
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "order": ["host", "port", "user", "password"],
             "required": ["dbname"],
             "secret": ["password", "sslrootcertFile", "sslcertFile", "sslkeyFile"],

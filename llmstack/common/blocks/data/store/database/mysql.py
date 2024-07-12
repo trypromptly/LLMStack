@@ -37,7 +37,7 @@ class MySQLConfiguration(BaseSchema):
     ssl_key: Optional[str] = None
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "order": ["host", "port", "user", "password"],
             "required": ["dbname"],
             "secret": ["password", "ssl_ca", "ssl_cert", "ssl_key"],
