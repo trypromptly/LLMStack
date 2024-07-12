@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 
+from pydantic import ConfigDict
 from typing_extensions import Literal
 
 from llmstack.common.blocks.base.schema import BaseSchema
@@ -36,13 +37,14 @@ class MySQLConfiguration(BaseSchema):
     ssl_cert: Optional[str] = None
     ssl_key: Optional[str] = None
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "order": ["host", "port", "user", "password"],
             "required": ["dbname"],
             "secret": ["password", "ssl_ca", "ssl_cert", "ssl_key"],
             "extra_options": ["sslmode", "ssl_ca", "ssl_cert", "ssl_key"],
         }
+    )
 
 
 class MySQLOutput(BaseSchema):

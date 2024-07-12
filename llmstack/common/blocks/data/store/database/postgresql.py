@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile
 from typing import List, Optional
 
 import psycopg2
+from pydantic import ConfigDict
 from typing_extensions import Literal
 
 from llmstack.common.blocks.base.schema import BaseSchema
@@ -33,13 +34,14 @@ class PostgresConfiguration(BaseSchema):
     sslcertFile: Optional[str] = None
     sslkeyFile: Optional[str] = None
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "order": ["host", "port", "user", "password"],
             "required": ["dbname"],
             "secret": ["password", "sslrootcertFile", "sslcertFile", "sslkeyFile"],
             "extra_options": ["sslmode", "sslrootcertFile", "sslcertFile", "sslkeyFile"],
         }
+    )
 
 
 class PostgresOutput(BaseSchema):
