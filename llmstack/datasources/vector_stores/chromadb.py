@@ -12,9 +12,12 @@ class PromptlyChromaVectorStore(ChromaVectorStore):
 
         for node in nodes:
             if node.embedding is None:
-                node.embedding = embedding_functions.DefaultEmbeddingFunction([node.text])[0]
+                node.embedding = embedding_functions.DefaultEmbeddingFunction()([node.text])[0]
 
         return super().add(nodes, **add_kwargs)
+
+    def delete_index(self):
+        self._collection._client.delete_collection(self.collection_name)
 
 
 class ChromaDBVectorStoreConfiguration(VectorStoreConfiguration):
