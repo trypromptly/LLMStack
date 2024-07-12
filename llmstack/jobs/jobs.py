@@ -10,8 +10,8 @@ from pydantic import BaseModel
 
 from llmstack.apps.apis import AppViewSet
 from llmstack.apps.models import App
-from llmstack.datasources.apis import DataSourceEntryViewSet
-from llmstack.datasources.models import DataSource
+from llmstack.data.apis import DataSourceEntryViewSet
+from llmstack.data.models import DataSource
 from llmstack.jobs.models import AdhocJob, TaskRunLog, TaskStatus
 
 logger = logging.getLogger(__name__)

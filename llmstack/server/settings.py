@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "llmstack.processors.apps.ProcessorsConfig",
-    "llmstack.datasources.apps.DatasourcesConfig",
+    "llmstack.data.apps.DatasourcesConfig",
     "llmstack.apps.apps.AppsConfig",
     "llmstack.base.apps.BaseConfig",
     "llmstack.connections.apps.ConnectionsConfig",
@@ -398,7 +398,7 @@ FLAG_SOURCES = ["llmstack.base.flags.FlagSource"]
 PROVIDERS = [
     {
         "name": "Amazon",
-        "datasource_packages": ["llmstack.datasources.handlers.amazon"],
+        "datasource_packages": ["llmstack.data.handlers.amazon"],
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "slug": "amazon",
@@ -439,7 +439,7 @@ PROVIDERS = [
         "name": "Google",
         "processor_packages": ["llmstack.processors.providers.google"],
         "slug": "google",
-        "datasource_packages": ["llmstack.datasources.handlers.google"],
+        "datasource_packages": ["llmstack.data.handlers.google"],
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "config_schema": "llmstack.processors.providers.google.GoogleProviderConfig",
@@ -456,10 +456,10 @@ PROVIDERS = [
         "name": "Promptly",
         "processor_packages": ["llmstack.processors.providers.promptly"],
         "datasource_packages": [
-            "llmstack.datasources.handlers.databases",
-            "llmstack.datasources.handlers.files",
-            "llmstack.datasources.handlers.text",
-            "llmstack.datasources.handlers.website",
+            "llmstack.data.handlers.databases",
+            "llmstack.data.handlers.files",
+            "llmstack.data.handlers.text",
+            "llmstack.data.handlers.website",
         ],
         "processor_exclude": [
             "llmstack.processors.providers.promptly.code_interpreter.CodeInterpreterProcessor",
