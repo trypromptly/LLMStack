@@ -78,7 +78,7 @@ export function AddDataSourceModal({
             schema={dataSourceType?.input_schema || {}}
             validator={validator}
             uiSchema={{
-              ...(dataSourceType?.entry_config_ui_schema || {}),
+              ...(dataSourceType?.input_ui_schema || {}),
               ...{
                 "ui:submitButtonOptions": {
                   norender: true,

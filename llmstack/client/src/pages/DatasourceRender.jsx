@@ -165,7 +165,7 @@ function DatasourceRenderPage({ headless = false }) {
                 schema={datasource?.type?.input_schema || {}}
                 validator={validator}
                 uiSchema={{
-                  ...(datasource?.type?.entry_config_ui_schema || {}),
+                  ...(datasource?.type?.input_ui_schema || {}),
                   ...{
                     "ui:submitButtonOptions": {
                       norender: true,
