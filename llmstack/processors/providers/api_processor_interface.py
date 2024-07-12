@@ -1,5 +1,6 @@
 import logging
 import time
+from functools import cache
 from typing import Any, Dict, Optional, TypeVar
 
 import ujson as json
@@ -16,9 +17,7 @@ from llmstack.common.blocks.base.processor import (
 )
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.utils.liquid import render_template
-from llmstack.common.utils.provider_config import (
-    get_provider_config_class_by_slug_cached,
-)
+from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
@@ -269,47 +268,20 @@ class ApiProcessorInterface(
             }
         ]
 
-    def get_provider_config(self, model_slug: str = "*", deployment_key: str = "*") -> ProviderConfig:
+    @cache
+    def get_provider_config(
+        self, model_slug: str = "*", deployment_key: str = "*", provider_slug=None, processor_slug=None
+    ) -> ProviderConfig:
         """
         Finds the provider config schema class and get the
         """
-        provider_config_cls = get_provider_config_class_by_slug_cached(self.provider_slug())
-        provider_config_key = f"{self.provider_slug()}/{self.slug()}/{model_slug}/{deployment_key}"
-        processor_slug = self.slug()
-
-        if not provider_config_cls or "provider_configs" not in self._env:
-            raise Exception(f"Configuration for this provider doesn't exist: {self.provider_slug()}")
-
-        # Get all the provider config keys for this provider
-        config_keys_with_parts = list(map(lambda key: (key, key.split("/")), self._env["provider_configs"].keys()))
-        config_keys_with_parts = list(filter(lambda key: key[1][0] == self.provider_slug(), config_keys_with_parts))
-
-        # Filter config_keys that the processor slug matches the regex in the config key split 1
-        config_keys_with_parts = list(
-            filter(lambda key: key[1][1] == "*" or key[1][1] == processor_slug, config_keys_with_parts)
+        return get_matched_provider_config(
+            provider_configs=self._env.get("provider_configs", {}),
+            provider_slug=provider_slug or self.provider_slug(),
+            processor_slug=processor_slug or self.slug(),
+            model_slug=model_slug,
+            deployment_key=deployment_key,
         )
-
-        # Filter config_keys that the model slug matches the regex in the config key split 2
-        config_keys_with_parts = list(
-            filter(lambda key: key[1][2] == "*" or key[1][2] == model_slug, config_keys_with_parts)
-        )
-
-        # Filter config_keys that the deployment key matches the regex in the config key split 3
-        config_keys_with_parts = list(
-            filter(lambda key: key[1][3] == "*" or key[1][3] == deployment_key, config_keys_with_parts)
-        )
-
-        # Sort the remaning config keys by the number of * in the key in descending order and we take the first one
-        config_key = (
-            sorted(config_keys_with_parts, key=lambda key: key[1].count("*"))[0][0]
-            if len(config_keys_with_parts) > 0
-            else None
-        )
-
-        if not config_key:
-            raise Exception(f"Configuration for this provider doesn't exist: {provider_config_key}")
-
-        return provider_config_cls(**self._env["provider_configs"][config_key])
 
     def disable_history(self) -> bool:
         return False
