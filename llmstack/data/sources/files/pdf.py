@@ -11,13 +11,13 @@ from llmstack.base.models import Profile
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.models import DataSource
-from llmstack.data.sources.datasource_processor import (
+from llmstack.data.datasource_processor import (
     WEAVIATE_SCHEMA,
     DataSourceEntryItem,
     DataSourceProcessor,
     DataSourceSchema,
 )
+from llmstack.data.models import DataSource
 
 DATA_URL_REGEX = r"data:application\/(\w+);name=(.*);base64,(.*)"
 

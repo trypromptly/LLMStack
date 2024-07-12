@@ -7,8 +7,7 @@ from llmstack.base.models import Profile
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
-from llmstack.data.models import DataSource
-from llmstack.data.sources.datasource_processor import (
+from llmstack.data.datasource_processor import (
     WEAVIATE_SCHEMA,
     DataSourceEntryItem,
     DataSourceProcessor,
@@ -16,6 +15,7 @@ from llmstack.data.sources.datasource_processor import (
     DataSourceSyncConfiguration,
     DataSourceSyncType,
 )
+from llmstack.data.models import DataSource
 
 logger = logging.getLogger(__file__)
 

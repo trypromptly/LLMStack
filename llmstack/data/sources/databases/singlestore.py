@@ -7,11 +7,8 @@ from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.models import Config
 from llmstack.common.utils.prequests import post
+from llmstack.data.datasource_processor import DataSourceProcessor, DataSourceSchema
 from llmstack.data.models import DataSource
-from llmstack.data.sources.datasource_processor import (
-    DataSourceProcessor,
-    DataSourceSchema,
-)
 
 
 class SingleStoreConnection(BaseSchema):

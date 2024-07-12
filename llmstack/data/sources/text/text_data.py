@@ -3,7 +3,7 @@ from typing import List
 
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.data.sources.datasource_processor import (
+from llmstack.data.datasource_processor import (
     WEAVIATE_SCHEMA,
     DataSourceEntryItem,
     DataSourceProcessor,

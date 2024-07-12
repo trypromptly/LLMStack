@@ -19,10 +19,7 @@ from llmstack.apps.tasks import (
     delete_data_source_task,
     resync_data_entry_task,
 )
-from llmstack.data.sources.datasource_processor import (
-    DataSourceEntryItem,
-    DataSourceProcessor,
-)
+from llmstack.data.datasource_processor import DataSourceEntryItem, DataSourceProcessor
 from llmstack.data.types import (
     DataSourceTypeFactory,
     get_data_source_type_interface_subclasses,
