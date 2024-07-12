@@ -131,9 +131,13 @@ class AzureChatCompletionsConfiguration(ApiProcessorSchema):
         description="The API version to use",
         default="2023-05-15",
     )
-    deployment_name: ChatCompletionsModel = Field(
+    deployment_name: str = Field(
         description="This value will correspond to the custom name you chose for your deployment when you deployed a model. This value can be found under Resource Management > Deployments in the Azure portal or alternatively under Management > Deployments in Azure OpenAI Studio.",
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={
+            "advanced_parameter": False,
+            "widget": "customselect",
+            "options": [x.value for x in ChatCompletionsModel],
+        },
         default=ChatCompletionsModel.GPT_4,
     )
     retain_history: Optional[bool] = Field(
@@ -177,7 +181,9 @@ class AzureChatCompletions(
     @classmethod
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
-            markdown="""{{ for choice in choices }}{{ choice }}{{ endfor }}""",
+            markdown="""{% for choice in choices %}
+{{choice.content}}
+{% endfor %}""",
         )
 
     def session_data_to_persist(self) -> dict:
@@ -209,8 +215,9 @@ class AzureChatCompletions(
             )
 
         chat_history = self._chat_history if self._config.retain_history else []
-        azure_provider_config = self.get_provider_config(model_slug=self._config.deployment_name.value)
-        endpoint = self._config.base_url if self._config.base_url else azure_provider_config.base_url
+        azure_provider_config = self.get_provider_config(model_slug=self._config.deployment_name)
+        endpoint = self._config.base_url if self._config.base_url else azure_provider_config.azure_endpoint
+
         client = openai.AzureOpenAI(
             azure_endpoint=endpoint if endpoint.startswith("https://") else f"https://{endpoint}.openai.azure.com",
             api_key=azure_provider_config.api_key,
@@ -231,7 +238,7 @@ class AzureChatCompletions(
 
         result_iter = client.chat.completions.create(
             messages=messages,
-            model=self._config.deployment_name.value,
+            model=self._config.deployment_name,
             temperature=self._config.temperature,
             max_tokens=self._config.max_tokens,
             stream=True,
