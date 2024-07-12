@@ -44,7 +44,6 @@ toml = {version ="^0.10.2"}
 
 junos-eznc = {version="^2.6.8", optional=true}
 chromadb = "^0.5.3"
-psycopg2-binary = "^2.9.9"
 pydantic = "^2.7.4"
 daphne = "^4.1.2"
 pynacl = "^1.5.0"
@@ -88,6 +87,7 @@ ujson = {version = "^5.7.0" }
 openai = {version ="^1.13.3"}
 grpcio-health-checking = {version ="^1.53.0"}
 pyjwt = "^2.8.0"
+psycopg2-binary = "^2.9.9"
 
 
 [tool.poetry.group.processors]
@@ -104,7 +104,6 @@ unstructured-pytesseract = {version ="^0.3.12"}
 python-docx = {version ="^1.1.0"}
 cohere = {version ="5.5.4"}
 google-cloud-speech = {version ="^2.26.0"}
-psycopg2-binary = {version = "^2.9.5" }
 mysqlclient = {version ="^2.2.4"}
 tiktoken = {version = "^0.4.0" }
 ffmpeg-python = {version = "^0.2.0" }
