@@ -5,8 +5,8 @@ from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.data.datasource_processor import (
     WEAVIATE_SCHEMA,
+    DataPipeline,
     DataSourceEntryItem,
-    DataSourceProcessor,
     DataSourceSchema,
 )
 
@@ -33,7 +33,7 @@ class TextSchema(DataSourceSchema):
         )
 
 
-class TextDataSource(DataSourceProcessor[TextSchema]):
+class TextDataSource(DataPipeline[TextSchema]):
     @staticmethod
     def name() -> str:
         return "text"

@@ -13,8 +13,8 @@ from llmstack.common.utils.text_extract import ExtraParams, extract_text_element
 from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.data.datasource_processor import (
     WEAVIATE_SCHEMA,
+    DataPipeline,
     DataSourceEntryItem,
-    DataSourceProcessor,
     DataSourceSchema,
 )
 from llmstack.data.models import DataSource
@@ -75,7 +75,7 @@ class GdriveFileSchema(DataSourceSchema):
         )
 
 
-class GdriveFileDataSource(DataSourceProcessor[GdriveFileSchema]):
+class GdriveFileDataSource(DataPipeline[GdriveFileSchema]):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)

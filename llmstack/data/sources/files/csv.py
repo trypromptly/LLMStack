@@ -10,8 +10,8 @@ from llmstack.common.utils.splitter import CSVTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.data.datasource_processor import (
     WEAVIATE_SCHEMA,
+    DataPipeline,
     DataSourceEntryItem,
-    DataSourceProcessor,
     DataSourceSchema,
 )
 
@@ -42,7 +42,7 @@ class CSVFileSchema(DataSourceSchema):
         )
 
 
-class CSVFileDataSource(DataSourceProcessor[CSVFileSchema]):
+class CSVFileDataSource(DataPipeline[CSVFileSchema]):
     @staticmethod
     def name() -> str:
         return "csv_file"

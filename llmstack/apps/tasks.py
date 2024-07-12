@@ -2,7 +2,7 @@ import logging
 
 import weaviate
 
-from llmstack.data.datasource_processor import DataSourceProcessor
+from llmstack.data.datasource_processor import DataPipeline
 from llmstack.data.models import DataSource, DataSourceEntry, DataSourceEntryStatus
 from llmstack.data.types import DataSourceTypeFactory
 
@@ -59,7 +59,7 @@ def resync_data_entry_task(
     datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
         datasource.type,
     )
-    datasource_entry_handler: DataSourceProcessor = datasource_entry_handler_cls(
+    datasource_entry_handler: DataPipeline = datasource_entry_handler_cls(
         datasource,
     )
     entry_data.status = DataSourceEntryStatus.PROCESSING

@@ -13,8 +13,8 @@ from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.data.datasource_processor import (
     WEAVIATE_SCHEMA,
+    DataPipeline,
     DataSourceEntryItem,
-    DataSourceProcessor,
     DataSourceSchema,
 )
 from llmstack.data.models import DataSource
@@ -49,7 +49,7 @@ class PdfSchema(DataSourceSchema):
         )
 
 
-class PDFDataSource(DataSourceProcessor[PdfSchema]):
+class PDFDataSource(DataPipeline[PdfSchema]):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)

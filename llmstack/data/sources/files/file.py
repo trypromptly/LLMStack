@@ -11,8 +11,8 @@ from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.data.datasource_processor import (
     WEAVIATE_SCHEMA,
+    DataPipeline,
     DataSourceEntryItem,
-    DataSourceProcessor,
     DataSourceSchema,
 )
 from llmstack.data.models import DataSource
@@ -55,7 +55,7 @@ class FileSchema(DataSourceSchema):
         )
 
 
-class FileDataSource(DataSourceProcessor[FileSchema]):
+class FileDataSource(DataPipeline[FileSchema]):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)

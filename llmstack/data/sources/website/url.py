@@ -9,8 +9,8 @@ from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
 from llmstack.data.datasource_processor import (
     WEAVIATE_SCHEMA,
+    DataPipeline,
     DataSourceEntryItem,
-    DataSourceProcessor,
     DataSourceSchema,
     DataSourceSyncConfiguration,
     DataSourceSyncType,
@@ -50,7 +50,7 @@ class URLSchema(DataSourceSchema):
         )
 
 
-class URLDataSource(DataSourceProcessor[URLSchema]):
+class URLDataSource(DataPipeline[URLSchema]):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)

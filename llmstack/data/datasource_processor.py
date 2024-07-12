@@ -123,7 +123,7 @@ class DataSourceSyncConfiguration(_Schema):
     sync_type: DataSourceSyncType = "full"
 
 
-class DataSourceProcessor(ProcessorInterface[BaseInputType, None, None]):
+class DataPipeline(ProcessorInterface[BaseInputType, None, None]):
     @classmethod
     def get_content_key(cls) -> str:
         datasource_type_interface = cls.__orig_bases__[0]

@@ -19,7 +19,7 @@ from llmstack.apps.tasks import (
     delete_data_source_task,
     resync_data_entry_task,
 )
-from llmstack.data.datasource_processor import DataSourceEntryItem, DataSourceProcessor
+from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
 from llmstack.data.types import (
     DataSourceTypeFactory,
     get_data_source_type_interface_subclasses,
@@ -324,7 +324,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                     status=400,
                 )
 
-            datasource_handler: DataSourceProcessor = datasource_type_cls(
+            datasource_handler: DataPipeline = datasource_type_cls(
                 datasource,
             )
             if not datasource_handler:
@@ -372,7 +372,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                     status=400,
                 )
 
-            datasource_handler: DataSourceProcessor = datasource_type_cls(
+            datasource_handler: DataPipeline = datasource_type_cls(
                 datasource,
             )
             if not datasource_handler:
@@ -492,7 +492,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                 status=400,
             )
 
-        datasource_entry_handler: DataSourceProcessor = datasource_entry_handler_cls(
+        datasource_entry_handler: DataPipeline = datasource_entry_handler_cls(
             datasource,
         )
 

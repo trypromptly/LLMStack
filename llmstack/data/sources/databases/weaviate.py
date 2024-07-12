@@ -12,8 +12,8 @@ from llmstack.common.blocks.data.store.vectorstore.weaviate import (
 )
 from llmstack.common.utils.models import Config
 from llmstack.data.datasource_processor import (
+    DataPipeline,
     DataSourceEntryItem,
-    DataSourceProcessor,
     DataSourceSchema,
 )
 from llmstack.data.models import DataSource
@@ -75,11 +75,11 @@ class WeaviateConnectionConfiguration(Config):
 
 
 # This class helps to manage and interact with a Weaviate Data Source.
-# It inherits from the DataSourceProcessor class and operates on a
+# It inherits from the DataPipeline class and operates on a
 # WeaviateDatabaseSchema.
 
 
-class WeaviateDataSource(DataSourceProcessor[WeaviateDatabaseSchema]):
+class WeaviateDataSource(DataPipeline[WeaviateDatabaseSchema]):
     # Initializer for the class.
     # It requires a datasource object as input, checks if it has a 'data'
     # configuration, and sets up Weaviate Database Configuration.
