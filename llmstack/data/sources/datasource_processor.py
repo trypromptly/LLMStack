@@ -17,8 +17,10 @@ from llmstack.base.models import Profile
 from llmstack.common.blocks.base.processor import BaseInputType, ProcessorInterface
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.data.destinations.vector_stores.types import (
+    get_vector_store_configuration,
+)
 from llmstack.data.models import DataSource
-from llmstack.data.vector_stores.types import get_vector_store_configuration
 
 logger = logging.getLogger(__name__)
 

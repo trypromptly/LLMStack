@@ -2,8 +2,10 @@ from typing import Annotated, Union
 
 from pydantic import Field
 
-from llmstack.data.vector_stores.chromadb import ChromaDBVectorStoreConfiguration
-from llmstack.data.vector_stores.legacy_weaviate import (
+from llmstack.data.destinations.vector_stores.chromadb import (
+    ChromaDBVectorStoreConfiguration,
+)
+from llmstack.data.destinations.vector_stores.legacy_weaviate import (
     PromptlyLegacyWeaviateVectorStoreConfiguration,
 )
 

@@ -20,7 +20,7 @@ from llama_index.core.vector_stores.utils import (
 )
 from weaviate import Client
 
-from llmstack.data.vector_stores.base import VectorStoreConfiguration
+from llmstack.data.destinations.vector_stores.base import VectorStoreConfiguration
 
 _logger = logging.getLogger(__name__)
 
