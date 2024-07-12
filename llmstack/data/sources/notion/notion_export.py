@@ -9,14 +9,14 @@ from pydantic import Field
 
 from llmstack.base.models import Profile
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.handlers.datasource_processor import (
+from llmstack.data.models import DataSource
+from llmstack.data.sources.datasource_processor import (
     WEAVIATE_SCHEMA,
     DataSourceEntryItem,
     DataSourceProcessor,
     DataSourceSchema,
 )
-from llmstack.data.handlers.utils import extract_documents
-from llmstack.data.models import DataSource
+from llmstack.data.sources.utils import extract_documents
 
 logger = logging.getLogger(__name__)
 

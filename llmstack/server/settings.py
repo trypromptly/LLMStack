@@ -398,7 +398,7 @@ FLAG_SOURCES = ["llmstack.base.flags.FlagSource"]
 PROVIDERS = [
     {
         "name": "Amazon",
-        "datasource_packages": ["llmstack.data.handlers.amazon"],
+        "datasource_packages": ["llmstack.data.sources.amazon"],
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "slug": "amazon",
@@ -439,7 +439,7 @@ PROVIDERS = [
         "name": "Google",
         "processor_packages": ["llmstack.processors.providers.google"],
         "slug": "google",
-        "datasource_packages": ["llmstack.data.handlers.google"],
+        "datasource_packages": ["llmstack.data.sources.google"],
         "processor_exclude": [],
         "datasource_processors_exclude": [],
         "config_schema": "llmstack.processors.providers.google.GoogleProviderConfig",
@@ -456,10 +456,10 @@ PROVIDERS = [
         "name": "Promptly",
         "processor_packages": ["llmstack.processors.providers.promptly"],
         "datasource_packages": [
-            "llmstack.data.handlers.databases",
-            "llmstack.data.handlers.files",
-            "llmstack.data.handlers.text",
-            "llmstack.data.handlers.website",
+            "llmstack.data.sources.databases",
+            "llmstack.data.sources.files",
+            "llmstack.data.sources.text",
+            "llmstack.data.sources.website",
         ],
         "processor_exclude": [
             "llmstack.processors.providers.promptly.code_interpreter.CodeInterpreterProcessor",

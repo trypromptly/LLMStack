@@ -4,8 +4,8 @@ from django.conf import settings
 
 from llmstack.common.utils.module_loader import get_all_sub_classes
 
-from .handlers.datasource_processor import DataSourceProcessor
 from .models import DataSourceType
+from .sources.datasource_processor import DataSourceProcessor
 
 # Import all data source types here
 

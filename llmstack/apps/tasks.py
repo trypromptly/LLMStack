@@ -2,8 +2,8 @@ import logging
 
 import weaviate
 
-from llmstack.data.handlers.datasource_processor import DataSourceProcessor
 from llmstack.data.models import DataSource, DataSourceEntry, DataSourceEntryStatus
+from llmstack.data.sources.datasource_processor import DataSourceProcessor
 from llmstack.data.types import DataSourceTypeFactory
 
 logger = logging.getLogger(__name__)

@@ -6,7 +6,7 @@ from pydantic import Field
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.crawlers import run_url_spider_in_process
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.data.handlers.datasource_processor import (
+from llmstack.data.sources.datasource_processor import (
     WEAVIATE_SCHEMA,
     DataSourceEntryItem,
     DataSourceProcessor,

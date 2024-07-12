@@ -9,13 +9,13 @@ from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInp
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.handlers.datasource_processor import (
+from llmstack.data.models import DataSource
+from llmstack.data.sources.datasource_processor import (
     WEAVIATE_SCHEMA,
     DataSourceEntryItem,
     DataSourceProcessor,
     DataSourceSchema,
 )
-from llmstack.data.models import DataSource
 
 logger = logging.getLogger(__name__)
 

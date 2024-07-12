@@ -11,12 +11,12 @@ from llmstack.common.blocks.data.store.vectorstore.weaviate import (
     WeaviateConfiguration,
 )
 from llmstack.common.utils.models import Config
-from llmstack.data.handlers.datasource_processor import (
+from llmstack.data.models import DataSource
+from llmstack.data.sources.datasource_processor import (
     DataSourceEntryItem,
     DataSourceProcessor,
     DataSourceSchema,
 )
-from llmstack.data.models import DataSource
 
 logger = logging.getLogger(__name__)
 
