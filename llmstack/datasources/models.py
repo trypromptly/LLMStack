@@ -148,7 +148,11 @@ class DataSource(models.Model):
                         )
                     }
             elif settings.VECTOR_DATABASES.get("default")["ENGINE"] == "chroma":
-                vector_store = {"type": "chromadb"}
+                vector_store = {
+                    "type": "chromadb",
+                    "path": settings.VECTOR_DATABASES.get("default", {}).get("NAME", "chromadb"),
+                    "settings": {"anonymized_telemetry": False, "is_persistent": True},
+                }
 
         return vector_store
 
