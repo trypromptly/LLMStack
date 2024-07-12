@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
-from llmstack.data.vector_stores.base import VectorStoreConfiguration
+from llmstack.data.destinations.vector_stores.base import VectorStoreConfiguration
 
 
 class PromptlyChromaVectorStore(ChromaVectorStore):
