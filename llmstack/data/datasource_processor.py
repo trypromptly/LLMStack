@@ -62,11 +62,6 @@ class DataSourceSyncConfiguration(_Schema):
 
 class DataPipeline(ProcessorInterface[BaseInputType, None, None]):
     @classmethod
-    def get_content_key(cls) -> str:
-        datasource_type_interface = cls.__orig_bases__[0]
-        return datasource_type_interface.__args__[0].get_content_key()
-
-    @classmethod
     def is_external(cls) -> bool:
         return False
 
@@ -81,6 +76,11 @@ class DataPipeline(ProcessorInterface[BaseInputType, None, None]):
     @property
     def vectorstore(self) -> BasePydanticVectorStore:
         return self._vectorstore
+
+    def get_content_key(self) -> str:
+        if self.datasource.type_slug == "url":
+            return "page_content"
+        return "content"
 
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
