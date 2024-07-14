@@ -20,9 +20,10 @@ class PromptlyChromaVectorStore(ChromaVectorStore):
         self._collection._client.delete_collection(self.collection_name)
 
 
-class ChromaDBVectorStoreConfiguration(VectorStoreConfiguration):
-    type: Literal["chromadb"] = "chromadb"
+class PromptlyLegacyChromaDBVectorStoreConfiguration(VectorStoreConfiguration):
+    type: Literal["promptly_legacy_chromadb"] = "promptly_legacy_chromadb"
     path: str
+    index_name: str
     settings: Dict[str, Any]
 
     def initialize_client(self, *args, **kwargs) -> PromptlyChromaVectorStore:
