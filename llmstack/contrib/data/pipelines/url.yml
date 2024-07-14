@@ -1,0 +1,7 @@
+name: URL
+slug: url
+description: Read data from a website URL
+pipeline:
+  source:
+    slug: url
+    provider_slug: promptly

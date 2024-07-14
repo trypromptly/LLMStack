@@ -1,0 +1,7 @@
+name: File
+slug: file
+description: Read data from a file
+pipeline:
+  source:
+    slug: file
+    provider_slug: promptly
