@@ -70,10 +70,6 @@ class DataPipeline(ProcessorInterface[BaseInputType, None, None]):
         return None
 
     @property
-    def datasource_class_name(self):
-        return "Datasource_" + str(self.datasource.uuid).replace("-", "_")
-
-    @property
     def vectorstore(self) -> BasePydanticVectorStore:
         return self._vectorstore
 

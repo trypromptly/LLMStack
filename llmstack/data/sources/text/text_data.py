@@ -3,11 +3,8 @@ from typing import List
 
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.data.datasource_processor import (
-    DataPipeline,
-    DataSourceEntryItem,
-    DataSourceSchema,
-)
+from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__file__)
 
@@ -16,13 +13,17 @@ Entry configuration schema for text data source type
 """
 
 
-class TextSchema(DataSourceSchema):
+class TextSchema(BaseSource):
     name: str = "Untitled"
     content: str = ""
 
-    @staticmethod
-    def get_content_key() -> str:
-        return "content"
+    @classmethod
+    def slug(cls):
+        return "text"
+
+    @classmethod
+    def provider_slug(cls):
+        return "promptly"
 
 
 class TextDataSource(DataPipeline[TextSchema]):

@@ -10,11 +10,11 @@ from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_ur
 from llmstack.data.datasource_processor import (
     DataPipeline,
     DataSourceEntryItem,
-    DataSourceSchema,
     DataSourceSyncConfiguration,
     DataSourceSyncType,
 )
 from llmstack.data.models import DataSource
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__file__)
 
@@ -23,7 +23,7 @@ Entry configuration schema for url data source type
 """
 
 
-class URLSchema(DataSourceSchema):
+class URLSchema(BaseSource):
     urls: str = Field(
         description="URLs to scrape, List of URL can be comma or newline separated. If site.xml is present, it will be used to scrape the site.",
         max_length=1600,
@@ -36,10 +36,6 @@ class URLSchema(DataSourceSchema):
         description="Select connection if parsing loggedin page",
         json_schema_extra={"widget": "connection"},
     )
-
-    @staticmethod
-    def get_content_key() -> str:
-        return "page_content"
 
 
 class URLDataSource(DataPipeline[URLSchema]):

@@ -8,16 +8,13 @@ from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInp
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.datasource_processor import (
-    DataPipeline,
-    DataSourceEntryItem,
-    DataSourceSchema,
-)
+from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
 
 
-class CSVFileSchema(DataSourceSchema):
+class CSVFileSchema(BaseSource):
     file: str = Field(
         description="File to be processed",
         json_schema_extra={
@@ -28,10 +25,6 @@ class CSVFileSchema(DataSourceSchema):
             "maxSize": 20000000,
         },
     )
-
-    @staticmethod
-    def get_content_key() -> str:
-        return "content"
 
 
 class CSVFileDataSource(DataPipeline[CSVFileSchema]):

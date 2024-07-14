@@ -50,6 +50,23 @@ def get_data_source_type(slug):
     return None
 
 
+def load_sources():
+    from llmstack.data.sources.files.file import FileSchema
+    from llmstack.data.sources.files.pdf import PdfSchema
+    from llmstack.data.sources.text.text_data import TextSchema
+
+    sources = {}
+    for cls in [FileSchema, PdfSchema, TextSchema]:
+        if not sources.get(cls.provider_slug()):
+            sources[cls.provider_slug()] = {}
+        sources[cls.provider_slug()][cls.slug()] = {
+            "slug": cls.slug(),
+            "input_schema": cls.get_schema(),
+            "input_ui_schema": cls.get_ui_schema(),
+        }
+    return sources
+
+
 class DataSourceTypeViewSet(viewsets.ViewSet):
     @method_decorator(cache_page(60 * 60 * 24))
     def get(self, request):
@@ -74,6 +91,16 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
             slugs.add(subclass.slug())
 
         return DRFResponse(processors)
+
+
+@cache
+def load_transformations():
+    return {}
+
+
+@cache
+def load_destinations():
+    return {}
 
 
 class DataSourceEntryViewSet(viewsets.ModelViewSet):

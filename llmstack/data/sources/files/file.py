@@ -9,17 +9,14 @@ from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInp
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.datasource_processor import (
-    DataPipeline,
-    DataSourceEntryItem,
-    DataSourceSchema,
-)
+from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
 from llmstack.data.models import DataSource
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
 
 
-class FileSchema(DataSourceSchema):
+class FileSchema(BaseSource):
     file: str = Field(
         description="File to be processed",
         json_schema_extra={
@@ -42,9 +39,13 @@ class FileSchema(DataSourceSchema):
         },
     )
 
-    @staticmethod
-    def get_content_key() -> str:
-        return "content"
+    @classmethod
+    def slug(cls):
+        return "file"
+
+    @classmethod
+    def provider_slug(cls):
+        return "promptly"
 
 
 class FileDataSource(DataPipeline[FileSchema]):

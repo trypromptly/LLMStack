@@ -17,6 +17,7 @@ from llmstack.data.datasource_processor import (
     DataSourceSchema,
 )
 from llmstack.data.models import DataSource
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class GoogleDocument(DataSourceSchema):
     url: Optional[str] = None
 
 
-class GdriveFileSchema(DataSourceSchema):
+class GdriveFileSchema(BaseSource):
     file: str = Field(
         description="File to be processed",
         json_schema_extra={
