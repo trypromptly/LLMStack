@@ -8,7 +8,6 @@ from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
 from llmstack.data.datasource_processor import (
-    WEAVIATE_SCHEMA,
     DataPipeline,
     DataSourceEntryItem,
     DataSourceSchema,
@@ -41,13 +40,6 @@ class URLSchema(DataSourceSchema):
     @staticmethod
     def get_content_key() -> str:
         return "page_content"
-
-    @staticmethod
-    def get_weaviate_schema(class_name: str) -> dict:
-        return WEAVIATE_SCHEMA.safe_substitute(
-            class_name=class_name,
-            content_key=URLSchema.get_content_key(),
-        )
 
 
 class URLDataSource(DataPipeline[URLSchema]):

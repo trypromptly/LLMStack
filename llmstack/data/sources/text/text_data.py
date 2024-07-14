@@ -4,7 +4,6 @@ from typing import List
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.data.datasource_processor import (
-    WEAVIATE_SCHEMA,
     DataPipeline,
     DataSourceEntryItem,
     DataSourceSchema,
@@ -24,13 +23,6 @@ class TextSchema(DataSourceSchema):
     @staticmethod
     def get_content_key() -> str:
         return "content"
-
-    @staticmethod
-    def get_weaviate_schema(class_name: str) -> dict:
-        return WEAVIATE_SCHEMA.safe_substitute(
-            class_name=class_name,
-            content_key=TextSchema.get_content_key(),
-        )
 
 
 class TextDataSource(DataPipeline[TextSchema]):

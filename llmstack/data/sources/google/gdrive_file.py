@@ -12,7 +12,6 @@ from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.data.datasource_processor import (
-    WEAVIATE_SCHEMA,
     DataPipeline,
     DataSourceEntryItem,
     DataSourceSchema,
@@ -66,13 +65,6 @@ class GdriveFileSchema(DataSourceSchema):
     @staticmethod
     def get_content_key() -> str:
         return "content"
-
-    @staticmethod
-    def get_weaviate_schema(class_name: str) -> dict:
-        return WEAVIATE_SCHEMA.safe_substitute(
-            class_name=class_name,
-            content_key=GdriveFileSchema.get_content_key(),
-        )
 
 
 class GdriveFileDataSource(DataPipeline[GdriveFileSchema]):

@@ -1,10 +1,7 @@
-import json
 import logging
 from enum import Enum
-from string import Template
 from typing import List, Optional, TypeVar
 
-from django.conf import settings
 from llama_index.core.schema import TextNode
 from llama_index.core.vector_stores.types import (
     BasePydanticVectorStore,
@@ -25,66 +22,6 @@ from llmstack.data.models import DataSource
 logger = logging.getLogger(__name__)
 
 EntryConfigurationSchemaType = TypeVar("EntryConfigurationSchemaType")
-
-WEAVIATE_SCHEMA = Template(
-    """
-{
-    "classes": [
-        {
-            "class": "$class_name",
-            "description": "Text data source",
-            "vectorizer": "text2vec-openai",
-            "moduleConfig": {
-                "text2vec-openai": {
-                    "model": "ada",
-                    "type": "text"
-                }
-            },
-            "vectorIndexConfig": {
-                "pq": {
-                    "enabled": true
-                }
-            },
-            "replicationConfig": {
-                "factor": 1
-            },
-            "shardingConfig": {
-                "desiredCount": 1
-            },
-            "properties": [
-                {
-                    "name": "$content_key",
-                    "dataType": [
-                        "text"
-                    ],
-                    "description": "Text",
-                    "moduleConfig": {
-                        "text2vec-openai": {
-                            "skip": false,
-                            "vectorizePropertyName": false
-                        }
-                    }
-                },
-                {
-                    "name": "source",
-                    "dataType": [
-                        "string"
-                    ],
-                    "description": "Document source"
-                },
-                {
-                    "name": "metadata",
-                    "dataType": [
-                        "string[]"
-                    ],
-                    "description": "Document metadata"
-                }
-            ]
-        }
-    ]
-}
-""",
-)
 
 
 class DataSourceSchema(_Schema):
@@ -137,11 +74,6 @@ class DataPipeline(ProcessorInterface[BaseInputType, None, None]):
     def get_sync_configuration(cls) -> Optional[dict]:
         return None
 
-    @classmethod
-    def get_weaviate_schema(cls, class_name: str) -> dict:
-        datasource_type_interface = cls.__orig_bases__[0]
-        return datasource_type_interface.__args__[0].get_weaviate_schema(class_name)
-
     @property
     def datasource_class_name(self):
         return "Datasource_" + str(self.datasource.uuid).replace("-", "_")
@@ -165,16 +97,8 @@ class DataPipeline(ProcessorInterface[BaseInputType, None, None]):
         vector_store_config = get_vector_store_configuration(vector_data_store_config)
 
         # Get Weaviate schema (For Legacy Data Sources)
-        legacy_weaviate_schema = json.loads(self.get_weaviate_schema(self.datasource_class_name))
-        legacy_weaviate_schema["classes"][0]["moduleConfig"]["text2vec-openai"] = self.profile.weaviate_text2vec_config
-        legacy_weaviate_schema["classes"][0]["replicationConfig"]["factor"] = settings.WEAVIATE_REPLICATION_FACTOR
-        legacy_weaviate_schema["classes"][0]["shardingConfig"]["desiredCount"] = settings.WEAVIATE_SHARD_COUNT
 
-        vector_store = vector_store_config.initialize_client(
-            legacy_weaviate_schema=legacy_weaviate_schema,
-            index_name=self.datasource_class_name,
-            text_key=self.get_content_key(),
-        )
+        vector_store = vector_store_config.initialize_client()
         return vector_store
 
     def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
