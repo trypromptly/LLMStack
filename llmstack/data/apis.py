@@ -1,14 +1,10 @@
-import json
 import logging
 import time
 import uuid
 from concurrent.futures import Future
 from functools import cache
 
-from django.conf import settings
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from flags.state import flag_enabled
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
@@ -20,10 +16,8 @@ from llmstack.apps.tasks import (
     resync_data_entry_task,
 )
 from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
-from llmstack.data.types import (
-    DataSourceTypeFactory,
-    get_data_source_type_interface_subclasses,
-)
+from llmstack.data.types import DataSourceTypeFactory
+from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
 from llmstack.jobs.adhoc import ExtractURLJob
 from llmstack.jobs.models import AdhocJob
 
@@ -36,69 +30,76 @@ logger = logging.getLogger(__name__)
 
 @cache
 def get_data_source_type(slug):
-    for subclass in get_data_source_type_interface_subclasses():
-        if subclass.slug() == slug:
-            return {
-                "slug": subclass.slug(),
-                "name": subclass.name(),
-                "description": subclass.description(),
-                "input_schema": json.loads(subclass.get_input_schema()),
-                "input_ui_schema": subclass.get_input_ui_schema(),
-                "sync_config": subclass.get_sync_configuration(),
-                "is_external_datasource": subclass.is_external(),
-            }
-    return None
+    return DataSourceTypeViewSet().get(None, slug).data
 
 
 def load_sources():
     from llmstack.data.sources.files.file import FileSchema
     from llmstack.data.sources.files.pdf import PdfSchema
     from llmstack.data.sources.text.text_data import TextSchema
+    from llmstack.data.sources.website.url import URLSchema
 
     sources = {}
-    for cls in [FileSchema, PdfSchema, TextSchema]:
+    for cls in [FileSchema, PdfSchema, TextSchema, URLSchema]:
         if not sources.get(cls.provider_slug()):
             sources[cls.provider_slug()] = {}
         sources[cls.provider_slug()][cls.slug()] = {
             "slug": cls.slug(),
-            "input_schema": cls.get_schema(),
-            "input_ui_schema": cls.get_ui_schema(),
+            "schema": cls.get_schema(),
+            "ui_schema": cls.get_ui_schema(),
         }
     return sources
 
 
 class DataSourceTypeViewSet(viewsets.ViewSet):
-    @method_decorator(cache_page(60 * 60 * 24))
-    def get(self, request):
+    def list(self, request):
         processors = []
-        slugs = set()
-        for subclass in get_data_source_type_interface_subclasses():
-            if f"{subclass.__module__}.{subclass.__qualname__}" in settings.DATASOURCE_PROCESSOR_EXCLUDE_LIST:
-                continue
-            if subclass.slug() in slugs:
-                continue
+
+        sources = load_sources()
+        pipeline_templates = get_data_pipelines_from_contrib()
+
+        for pipeline_template in pipeline_templates:
+            source = pipeline_template.pipeline.source
+            if source:
+                source_schema = sources.get(source.provider_slug, {}).get(source.slug, {}).get("schema", {})
+                source_ui_schema = sources.get(source.provider_slug, {}).get(source.slug, {}).get("ui_schema", {})
+            else:
+                source_schema = {}
+                source_ui_schema = {}
+            is_external_datasource = (
+                pipeline_template.pipeline.source is None
+                and pipeline_template.pipeline.transfromations is None
+                and pipeline_template.pipeline.destination
+            )
             processors.append(
                 {
-                    "slug": subclass.slug(),
-                    "name": subclass.name(),
-                    "description": subclass.description(),
-                    "input_schema": json.loads(subclass.get_input_schema()),
-                    "input_ui_schema": subclass.get_input_ui_schema(),
-                    "sync_config": subclass.get_sync_configuration(),
-                    "is_external_datasource": subclass.is_external(),
+                    "slug": pipeline_template.slug,
+                    "name": pipeline_template.name,
+                    "description": pipeline_template.description,
+                    "input_schema": source_schema,
+                    "input_ui_schema": source_ui_schema,
+                    "sync_config": None,
+                    "is_external_datasource": is_external_datasource,
                 }
             )
-            slugs.add(subclass.slug())
 
         return DRFResponse(processors)
 
+    def get(self, request, slug):
+        data = self.list(request)
+        response = None
+        for item in data.data:
+            if item["slug"] == slug:
+                response = item
+                break
 
-@cache
+        return DRFResponse(response) if response else DRFResponse(status=404)
+
+
 def load_transformations():
     return {}
 
 
-@cache
 def load_destinations():
     return {}
 
