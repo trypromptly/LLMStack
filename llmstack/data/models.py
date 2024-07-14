@@ -139,6 +139,7 @@ class DataSource(models.Model):
                     "embeddings_batch_size": None,
                     "additional_headers": None,
                     "api_key": self.profile.weaviate_api_key,
+                    "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
                 }
                 if self.profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
                     openai_provider_config = get_matched_provider_config(
@@ -155,9 +156,10 @@ class DataSource(models.Model):
                     vector_store["additional_headers"] = {"X-Azure-Api-Key": azure_provider_config.api_key}
             elif settings.VECTOR_DATABASES.get("default")["ENGINE"] == "chroma":
                 vector_store = {
-                    "type": "chromadb",
+                    "type": "promptly_legacy_chromadb",
                     "path": settings.VECTOR_DATABASES.get("default", {}).get("NAME", "chromadb"),
                     "settings": {"anonymized_telemetry": False, "is_persistent": True},
+                    "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
                 }
 
         return vector_store
