@@ -42,7 +42,7 @@ class SingleStoreConnectionConfiguration(Config):
         return "singlestore"
 
 
-class SingleStoreDataSource(DataPipeline[SingleStoreDatabaseSchema]):
+class SingleStoreDataSource(DataPipeline):
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
         if self.datasource.config and "data" in self.datasource.config:

@@ -88,7 +88,7 @@ class SQLConnectionConfiguration(Config):
     config: Optional[Dict] = None
 
 
-class SQLDataSource(DataPipeline[SQLDatabaseSchema]):
+class SQLDataSource(DataPipeline):
     # Initializer for the class.
     # It requires a datasource object as input, checks if it has a 'data'
     # configuration, and sets up Weaviate Database Configuration.

@@ -46,7 +46,7 @@ class URLSchema(BaseSource):
         return "promptly"
 
 
-class URLDataSource(DataPipeline[URLSchema]):
+class URLDataSource(DataPipeline):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)

@@ -26,7 +26,7 @@ class TextSchema(BaseSource):
         return "promptly"
 
 
-class TextDataSource(DataPipeline[TextSchema]):
+class TextDataSource(DataPipeline):
     @staticmethod
     def name() -> str:
         return "text"

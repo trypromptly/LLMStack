@@ -11,7 +11,6 @@ from llama_index.core.vector_stores.types import (
 from pydantic import BaseModel
 
 from llmstack.base.models import Profile
-from llmstack.common.blocks.base.processor import BaseInputType, ProcessorInterface
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.data.destinations.vector_stores.types import (
@@ -60,7 +59,7 @@ class DataSourceSyncConfiguration(_Schema):
     sync_type: DataSourceSyncType = "full"
 
 
-class DataPipeline(ProcessorInterface[BaseInputType, None, None]):
+class DataPipeline:
     @classmethod
     def is_external(cls) -> bool:
         return False

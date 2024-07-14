@@ -79,7 +79,7 @@ class WeaviateConnectionConfiguration(Config):
 # WeaviateDatabaseSchema.
 
 
-class WeaviateDataSource(DataPipeline[WeaviateDatabaseSchema]):
+class WeaviateDataSource(DataPipeline):
     # Initializer for the class.
     # It requires a datasource object as input, checks if it has a 'data'
     # configuration, and sets up Weaviate Database Configuration.

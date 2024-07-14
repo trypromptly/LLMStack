@@ -68,7 +68,7 @@ class GdriveFileSchema(BaseSource):
         return "content"
 
 
-class GdriveFileDataSource(DataPipeline[GdriveFileSchema]):
+class GdriveFileDataSource(DataPipeline):
     def __init__(self, datasource: DataSource):
         super().__init__(datasource)
         profile = Profile.objects.get(user=self.datasource.owner)

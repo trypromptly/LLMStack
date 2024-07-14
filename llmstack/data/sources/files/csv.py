@@ -27,7 +27,7 @@ class CSVFileSchema(BaseSource):
     )
 
 
-class CSVFileDataSource(DataPipeline[CSVFileSchema]):
+class CSVFileDataSource(DataPipeline):
     @staticmethod
     def name() -> str:
         return "csv_file"
