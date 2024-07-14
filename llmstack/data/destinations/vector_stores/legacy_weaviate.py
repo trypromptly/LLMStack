@@ -1,3 +1,4 @@
+import json
 import logging
 from string import Template
 from typing import Any, Dict, List, Literal, Optional, Union
@@ -251,13 +252,14 @@ class PromptlyLegacyWeaviateVectorStore(BasePydanticVectorStore):
         for node_id in node_ids:
             try:
                 object_data = self.client.data_object.get_by_id(node_id, class_name=self._index_name)
-                result.append(
-                    TextNode(
-                        id_=node_id,
-                        text=object_data["properties"].get(self._text_key, ""),
-                        metadata={k: v for k, v in object_data["properties"].items() if k != self._text_key},
+                if object_data:
+                    result.append(
+                        TextNode(
+                            id_=node_id,
+                            text=object_data["properties"].get(self._text_key, ""),
+                            metadata={k: v for k, v in object_data["properties"].items() if k != self._text_key},
+                        )
                     )
-                )
             except weaviate.exceptions.UnexpectedStatusCodeException:
                 pass
         return result
@@ -351,9 +353,19 @@ class PromptlyLegacyWeaviateVectorStoreConfiguration(VectorStoreConfiguration):
     embeddings_batch_size: Optional[int] = None
     additional_headers: Optional[dict] = None
     api_key: Optional[str] = None
+    text2vec_openai_config: Optional[dict] = {
+        "model": "ada",
+        "type": "text",
+    }
 
     def initialize_client(self, *args, **kwargs) -> BasePydanticVectorStore:
-        weaviate_schema = WEAVIATE_SCHEMA.safe_substitute(class_name=self.index_name, content_key=self.text_key)
+        weaviate_schema = json.loads(
+            WEAVIATE_SCHEMA.safe_substitute(class_name=self.index_name, content_key=self.text_key)
+        )
+        weaviate_schema["classes"][0]["moduleConfig"]["text2vec-openai"] = self.text2vec_openai_config
+        weaviate_schema["classes"][0]["replicationConfig"]["factor"] = 1
+        weaviate_schema["classes"][0]["shardingConfig"]["desiredCount"] = 1
+
         weaviate_client = weaviate.Client(
             url=self.url,
             additional_headers=self.additional_headers,

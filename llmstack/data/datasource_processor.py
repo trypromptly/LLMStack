@@ -249,6 +249,8 @@ class DataPipeline(ProcessorInterface[BaseInputType, None, None]):
         documents = [TextNode(metadata={}, text="")]
 
         if "document_ids" in data and isinstance(data["document_ids"], list):
-            documents = self.vectorstore.get_nodes(data["document_ids"][:20])
+            result = self.vectorstore.get_nodes(data["document_ids"][:20])
+            if result:
+                documents = result
 
         return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))

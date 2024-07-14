@@ -156,6 +156,7 @@ class DataSource(models.Model):
                     "api_key": self.profile.weaviate_api_key,
                     "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
                     "text_key": content_key,
+                    "text2vec_openai_config": self.profile.weaviate_text2vec_config,
                 }
                 if self.profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
                     openai_provider_config = get_matched_provider_config(
