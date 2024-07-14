@@ -33,6 +33,14 @@ class SingleStoreConnectionConfiguration(Config):
     is_encrypted: bool = True
     singlestore_config: Optional[Dict] = None
 
+    @classmethod
+    def slug(cls):
+        return "singlestore"
+
+    @classmethod
+    def provider_slug(cls):
+        return "singlestore"
+
 
 class SingleStoreDataSource(DataPipeline[SingleStoreDatabaseSchema]):
     def __init__(self, datasource: DataSource):

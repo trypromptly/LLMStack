@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 def get_data_pipeline_from_yaml(yaml_file: str) -> dict:
     with open(yaml_file, "r") as f:
         yaml_dict = yaml.safe_load(f)
-        logger.info(f"Loaded data pipeline from {yaml_dict}")
-
         return DataPipelineTemplate(**yaml_dict)
 
 
@@ -23,6 +21,7 @@ def get_data_pipelines_from_contrib() -> List[DataPipelineTemplate]:
     """
     Loads app templates from yaml files in settings.APP_TEMPLATES_DIR and caches them in memory.
     """
+    cache.delete("data_pipelines")
     data_pipelines = cache.get("data_pipelines")
     if data_pipelines:
         return data_pipelines
