@@ -37,6 +37,14 @@ class URLSchema(BaseSource):
         json_schema_extra={"widget": "connection"},
     )
 
+    @classmethod
+    def slug(cls):
+        return "url"
+
+    @classmethod
+    def provider_slug(cls):
+        return "promptly"
+
 
 class URLDataSource(DataPipeline[URLSchema]):
     def __init__(self, datasource: DataSource):
