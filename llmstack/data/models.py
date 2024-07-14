@@ -123,10 +123,25 @@ class DataSource(models.Model):
 
     @property
     def vector_store_config(self):
+        content_key = "text"
         vector_store = self.config.get("vector_store", {})
         if not vector_store:
+            content_key = "content"
             # For Legacy Data Sources
             from django.conf import settings
+
+            if self.type_slug == "csv_file":
+                content_key = "content"
+            elif self.type_slug == "file":
+                content_key = "content"
+            elif self.type_slug == "pdf":
+                content_key = "content"
+            elif self.type_slug == "gdrive_file":
+                content_key = "content"
+            elif self.type_slug == "text":
+                content_key = "content"
+            elif self.type_slug == "url":
+                content_key = "page_content"
 
             if settings.VECTOR_DATABASES.get("default")["ENGINE"] == "weaviate":
                 vector_store = {
@@ -140,6 +155,7 @@ class DataSource(models.Model):
                     "additional_headers": None,
                     "api_key": self.profile.weaviate_api_key,
                     "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
+                    "text_key": content_key,
                 }
                 if self.profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
                     openai_provider_config = get_matched_provider_config(
@@ -160,6 +176,7 @@ class DataSource(models.Model):
                     "path": settings.VECTOR_DATABASES.get("default", {}).get("NAME", "chromadb"),
                     "settings": {"anonymized_telemetry": False, "is_persistent": True},
                     "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
+                    "text_key": content_key,
                 }
 
         return vector_store

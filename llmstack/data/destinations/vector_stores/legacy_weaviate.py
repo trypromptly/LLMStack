@@ -1,4 +1,5 @@
 import logging
+from string import Template
 from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import uuid4
 
@@ -23,6 +24,66 @@ from weaviate import Client
 from llmstack.data.destinations.vector_stores.base import VectorStoreConfiguration
 
 _logger = logging.getLogger(__name__)
+
+WEAVIATE_SCHEMA = Template(
+    """
+{
+    "classes": [
+        {
+            "class": "$class_name",
+            "description": "Text data source",
+            "vectorizer": "text2vec-openai",
+            "moduleConfig": {
+                "text2vec-openai": {
+                    "model": "ada",
+                    "type": "text"
+                }
+            },
+            "vectorIndexConfig": {
+                "pq": {
+                    "enabled": true
+                }
+            },
+            "replicationConfig": {
+                "factor": 1
+            },
+            "shardingConfig": {
+                "desiredCount": 1
+            },
+            "properties": [
+                {
+                    "name": "$content_key",
+                    "dataType": [
+                        "text"
+                    ],
+                    "description": "Text",
+                    "moduleConfig": {
+                        "text2vec-openai": {
+                            "skip": false,
+                            "vectorizePropertyName": false
+                        }
+                    }
+                },
+                {
+                    "name": "source",
+                    "dataType": [
+                        "string"
+                    ],
+                    "description": "Document source"
+                },
+                {
+                    "name": "metadata",
+                    "dataType": [
+                        "string[]"
+                    ],
+                    "description": "Document metadata"
+                }
+            ]
+        }
+    ]
+}
+""",
+)
 
 
 def _transform_weaviate_filter_condition(condition: str) -> str:
@@ -282,6 +343,7 @@ class PromptlyLegacyWeaviateVectorStoreConfiguration(VectorStoreConfiguration):
     type: Literal["promptly_legacy_weaviate"] = "promptly_legacy_weaviate"
     url: str
     index_name: str
+    text_key: Optional[str] = "content"
     host: Optional[str] = None
     http_port: Optional[int] = None
     grpc_port: Optional[int] = None
@@ -291,7 +353,7 @@ class PromptlyLegacyWeaviateVectorStoreConfiguration(VectorStoreConfiguration):
     api_key: Optional[str] = None
 
     def initialize_client(self, *args, **kwargs) -> BasePydanticVectorStore:
-        weaviate_schema = kwargs.get("legacy_weaviate_schema", {})
+        weaviate_schema = WEAVIATE_SCHEMA.safe_substitute(class_name=self.index_name, content_key=self.text_key)
         weaviate_client = weaviate.Client(
             url=self.url,
             additional_headers=self.additional_headers,
