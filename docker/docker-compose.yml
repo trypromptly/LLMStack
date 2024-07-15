@@ -1,0 +1,70 @@
+name: llmstack
+services:
+  api:
+    image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-api:latest
+    command: apiserver
+    links:
+      - postgres:postgres
+    expose:
+      - 9000
+    env_file:
+      - .env
+    cap_add:
+      - SYS_PTRACE
+  rqworker:
+    image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-api:latest
+    command: rqworker
+    depends_on:
+      - redis
+      - postgres
+    links:
+      - redis:redis
+      - postgres:postgres
+    env_file:
+      - .env
+  app:
+    image: ${REGISTRY:-ghcr.io/trypromptly/}llmstack-app:latest
+    ports:
+      - 3000:80
+    env_file:
+      - .env
+    depends_on:
+      - api
+  redis:
+    image: redis:latest
+    command: redis-server
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    env_file:
+      - .env
+  postgres:
+    image: postgres:16-alpine
+    command: "postgres -c fsync=off -c full_page_writes=off -c synchronous_commit=OFF"
+    restart: unless-stopped
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "password"
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${DATABASE_USERNAME:-llmstack}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-llmstack}
+    env_file:
+      - .env
+  weaviate:
+    image: semitechnologies/weaviate:1.25.7
+    volumes:
+      - weaviatedata:/var/lib/weaviate
+    environment:
+      QUERY_DEFAULTS_LIMIT: 20
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+      DEFAULT_VECTORIZER_MODULE: text2vec-openai
+      ENABLE_MODULES: text2vec-openai
+      CLUSTER_HOSTNAME: "weaviate-node"
+    env_file:
+      - .env
+volumes:
+  redisdata:
+  postgresdata:
+  weaviatedata:
