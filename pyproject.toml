@@ -5,19 +5,9 @@ description = "Low-code platform to build generative AI apps, chatbots and agent
 authors = ["Ajay Chintala"]
 license = "ELv2"
 readme = "README.md"
-include = [
-  "llmstack/client/build/*",
-  "llmstack/client/build/static/css/*",
-  "llmstack/client/build/static/images/*",
-  "llmstack/client/build/static/js/*",
-  "llmstack/client/build/static/media/*",
-]
-exclude = [
-  "llmstack/client/src/*",
-  "llmstack/client/public/*",
-]
 packages = [
-    {include = "llmstack"},
+    {include = "docker/docker-compose.yml"},
+    {include = "llmstack/config.toml"},
 ]
 
 [tool.poetry.scripts]
