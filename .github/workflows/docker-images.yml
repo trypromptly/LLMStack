@@ -41,12 +41,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      # Setup python cache
+      - name: Setup Python pip
+        uses: actions/setup-python@v4
         with:
-          node-version: 20
-          cache: "npm"
-          cache-dependency-path: "llmstack/client/package-lock.json"
+          python-version: "3.10"
+          cache: "pip"
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
@@ -71,13 +71,6 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME_APP }}
-
-      # Build client
-      - name: Build client
-        run: |
-          cd llmstack/client
-          npm install
-          npm run build
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
