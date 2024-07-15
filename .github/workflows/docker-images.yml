@@ -73,6 +73,10 @@ jobs:
           npm run build
           cd ../../
 
+      # Cleanup
+      - name: Delete huge unnecessary tools folder
+        run: rm -rf /opt/hostedtoolcache
+
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
       - name: Build and push LLMStack API Docker image
