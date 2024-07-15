@@ -2,7 +2,7 @@
 
 import logging
 
-from django.db import migrations
+from django.db import migrations, models
 
 logger = logging.getLogger(__name__)
 
@@ -77,5 +77,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AddField(
+            model_name="defaultprofile",
+            name="_provider_configs",
+            field=models.JSONField(
+                blank=True, default=dict, help_text="Encrypted providers config to use with processors", null=True
+            ),
+        ),
         migrations.RunPython(populate_provider_configs, reverse_code=migrations.RunPython.noop),
     ]
