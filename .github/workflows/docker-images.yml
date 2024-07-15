@@ -71,6 +71,7 @@ jobs:
           cd llmstack/client
           npm install
           npm run build
+          rm -rf node_modules
           cd ../../
 
       # Cleanup
