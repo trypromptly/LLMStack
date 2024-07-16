@@ -185,7 +185,7 @@ class DataSource(models.Model):
             data = self.config.get("destination_data")
         elif self.type_slug in ["csv_file", "file", "pdf", "gdrive_file", "text", "url"]:
             # For Legacy Data Sources
-            content_key = "content" if self.type_slug == "url" else "page_content"
+            content_key = "page_content" if self.type_slug == "url" else "content"
             if settings.VECTOR_DATABASES.get("default")["ENGINE"] == "weaviate":
                 data = {
                     "type": "promptly_legacy_weaviate",
