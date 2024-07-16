@@ -104,36 +104,23 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
 
     def get(self, request, uid=None):
         if uid:
-            datasource_entry_object = get_object_or_404(
-                DataSourceEntry,
-                uuid=uuid.UUID(uid),
-            )
+            datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
             if not datasource_entry_object.user_can_read(request.user):
                 return DRFResponse(status=404)
 
             return DRFResponse(
-                DataSourceEntrySerializer(
-                    instance=datasource_entry_object,
-                ).data,
+                DataSourceEntrySerializer(instance=datasource_entry_object).data,
             )
         datasources = DataSource.objects.filter(owner=request.user)
-        datasource_entries = DataSourceEntry.objects.filter(
-            datasource__in=datasources,
-        )
+        datasource_entries = DataSourceEntry.objects.filter(datasource__in=datasources)
         return DRFResponse(
-            DataSourceEntrySerializer(
-                instance=datasource_entries,
-                many=True,
-            ).data,
+            DataSourceEntrySerializer(instance=datasource_entries, many=True).data,
         )
 
     def multiGet(self, request, uids):
         datasource_entries = DataSourceEntry.objects.filter(uuid__in=uids)
         return DRFResponse(
-            DataSourceEntrySerializer(
-                instance=datasource_entries,
-                many=True,
-            ).data,
+            DataSourceEntrySerializer(instance=datasource_entries, many=True).data,
         )
 
     def delete(self, request, uid):
@@ -143,19 +130,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         if datasource_entry_object.datasource.owner != request.user:
             return DRFResponse(status=404)
 
-        destination_data = request.data.get("destination_data", {})
-        if not destination_data and datasource_entry_object.datasource.type_slug in [
-            "csv_file",
-            "file",
-            "pdf",
-            "gdrive_file",
-            "text",
-            "url",
-        ]:
-            destination_data = datasource_entry_object.datasource.destination_data
-
         pipeline = datasource_entry_object.datasource.create_data_pipeline()
-
         pipeline.delete_entry(data=datasource_entry_object.config)
         datasource.size = max(datasource.size - datasource_entry_object.size, 0)
         datasource_entry_object.delete()
@@ -169,7 +144,6 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
             return DRFResponse(status=404)
 
         pipeline = datasource_entry_object.datasource.create_data_pipeline()
-
         metadata, content = pipeline.get_entry_text(datasource_entry_object.config)
         return DRFResponse({"content": content, "metadata": metadata})
 
