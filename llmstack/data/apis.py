@@ -130,8 +130,12 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         if datasource_entry_object.datasource.owner != request.user:
             return DRFResponse(status=404)
 
-        pipeline = datasource_entry_object.datasource.create_data_pipeline()
-        pipeline.delete_entry(data=datasource_entry_object.config)
+        try:
+            pipeline = datasource_entry_object.datasource.create_data_pipeline()
+            pipeline.delete_entry(data=datasource_entry_object.config)
+        except Exception as e:
+            logger.error(f"Error pipeline data for entry {datasource_entry_object.config}: {e}")
+
         datasource.size = max(datasource.size - datasource_entry_object.size, 0)
         datasource_entry_object.delete()
         datasource.save()
@@ -197,8 +201,11 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         for entry in datasource_entries:
             DataSourceEntryViewSet().delete(request=request, uid=str(entry.uuid))
 
-        pipeline = datasource.create_data_pipeline()
-        pipeline.delete_all_entries()
+        try:
+            pipeline = datasource.create_data_pipeline()
+            pipeline.delete_all_entries()
+        except Exception as e:
+            logger.error(f"Error deleting all entries for datasource {datasource.uuid}: {e}")
 
         datasource.delete()
         return DRFResponse(status=204)
