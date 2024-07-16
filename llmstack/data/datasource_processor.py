@@ -66,6 +66,8 @@ class DataPipeline:
         return result
 
     def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
+        content_key = self.datasource.destination_text_content_key
+
         if kwargs.get("search_filters", None):
             raise NotImplementedError("Search filters are not supported for this data source.")
 
@@ -83,7 +85,7 @@ class DataPipeline:
             query_result = destination_client.query(query=vector_store_query)
             documents = list(
                 map(
-                    lambda x: Document(page_content_key=self.get_content_key(), page_content=x.text, metadata={}),
+                    lambda x: Document(page_content_key=content_key, page_content=x.text, metadata=x.metadata),
                     query_result.nodes,
                 )
             )

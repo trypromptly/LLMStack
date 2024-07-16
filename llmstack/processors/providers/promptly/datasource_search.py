@@ -91,33 +91,22 @@ class DataSourceSearchProcessor(
         return OutputTemplate(markdown="""{{ answers_text }}""")
 
     def process(self) -> DataSourceSearchOutput:
-        from llmstack.data.types import DataSourceTypeFactory
-
         input_data = self._input
         hybrid_semantic_search_ratio = self._config.hybrid_semantic_search_ratio
 
         documents = []
         for datasource_uuid in self._config.datasources:
-            datasource = get_object_or_404(
-                DataSource,
-                uuid=uuid.UUID(datasource_uuid),
-            )
-
-            datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-                datasource.type,
-            )
-            datasource_entry_handler = datasource_entry_handler_cls(datasource)
-
+            datasource = get_object_or_404(DataSource, uuid=uuid.UUID(datasource_uuid))
+            pipeline = datasource.create_data_pipeline()
             try:
-                documents.extend(
-                    datasource_entry_handler.search(
-                        query=input_data.query,
-                        alpha=hybrid_semantic_search_ratio,
-                        limit=self._config.document_limit,
-                        search_filters=self._config.search_filters,
-                        use_hybrid_search=True,
-                    ),
+                result = pipeline.search(
+                    query=input_data.query,
+                    alpha=hybrid_semantic_search_ratio,
+                    limit=self._config.document_limit,
+                    search_filters=self._config.search_filters,
+                    use_hybrid_search=True,
                 )
+                documents.extend(result)
             except BaseException:
                 logger.exception("Error while searching")
                 raise Exception("Error while searching")

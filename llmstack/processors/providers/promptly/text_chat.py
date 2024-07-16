@@ -106,7 +106,7 @@ Keep the answers terse.""",
 
 class TextChatInput(ApiProcessorSchema):
     question: str = Field(..., description="Question to answer")
-    search_filters: str = Field(
+    search_filters: Optional[str] = Field(
         title="Search filters",
         default=None,
         description="Search filters on datasource entry metadata. You can provide search filters like `source == url1 || source == url2`. Click on your data entries to get your metadata",
@@ -181,8 +181,6 @@ Citations:
         }
 
     def _search_datasources(self, input):
-        from llmstack.data.types import DataSourceTypeFactory
-
         docs = []
 
         def fetch_datasource_docs(datasource_uuid):
@@ -191,13 +189,7 @@ Citations:
                 datasource = DataSource.objects.get(
                     uuid=uuid.UUID(datasource_uuid),
                 )
-                datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-                    datasource.type,
-                )
-                datasource_entry_handler = datasource_entry_handler_cls(
-                    datasource,
-                )
-
+                pipeline = datasource.create_data_pipeline()
                 search_query = input["question"]
                 search_filters = input["search_filters"]
                 if (
@@ -218,7 +210,7 @@ Citations:
                         )
                     )
 
-                output_docs = datasource_entry_handler.search(
+                output_docs = pipeline.search(
                     alpha=self._config.hybrid_semantic_search_ratio,
                     query=search_query,
                     limit=self._config.k,
@@ -364,7 +356,6 @@ Citations:
                         answer=data.choices[0].delta.content,
                     ),
                 )
-
         if len(docs) > 0:
             async_to_sync(
                 output_stream.write,

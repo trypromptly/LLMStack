@@ -177,6 +177,19 @@ class DataSource(models.Model):
         )
 
     @property
+    def destination_text_content_key(self):
+        if not self.config.get("destination_data") and self.type_slug in [
+            "csv_file",
+            "file",
+            "pdf",
+            "gdrive_file",
+            "text",
+            "url",
+        ]:
+            return "page_content" if self.type_slug == "url" else "content"
+        return None
+
+    @property
     def destination_data(self):
         from django.conf import settings
 
@@ -185,7 +198,7 @@ class DataSource(models.Model):
             data = self.config.get("destination_data")
         elif self.type_slug in ["csv_file", "file", "pdf", "gdrive_file", "text", "url"]:
             # For Legacy Data Sources
-            content_key = "page_content" if self.type_slug == "url" else "content"
+            content_key = self.destination_text_content_key
             if settings.VECTOR_DATABASES.get("default")["ENGINE"] == "weaviate":
                 data = {
                     "type": "promptly_legacy_weaviate",
