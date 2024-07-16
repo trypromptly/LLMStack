@@ -21,7 +21,7 @@ ENV NLTK_DATA=/usr/local/share/nltk_data
 ARG UNIQUE_IDENTIFIER=promptly
 
 # Install processors
-RUN poetry install --no-root --with processors
+RUN poetry install --no-root --only processors
 
 RUN python -m nltk.downloader -d /usr/local/share/nltk_data 'punkt'
 RUN python -m nltk.downloader -d /usr/local/share/nltk_data 'averaged_perceptron_tagger'
@@ -82,8 +82,22 @@ RUN set -ex \
 COPY --from=builder /code/llmstack/client/build/index.html /code/client/build/index.html
 COPY --from=builder /code/llmstack/client/build/static /code/client/build/static
 COPY --from=builder /code/llmstack/contrib/apps /code/llmstack/contrib/apps
-COPY --from=builder /code/llmstack /code/llmstack
 COPY --from=builder /code/llmstack/static /code/llmstack/static
+COPY --from=builder /code/llmstack/apps /code/llmstack/apps
+COPY --from=builder /code/llmstack/assets /code/llmstack/assets
+COPY --from=builder /code/llmstack/base /code/llmstack/base
+COPY --from=builder /code/llmstack/common /code/llmstack/common
+COPY --from=builder /code/llmstack/connections /code/llmstack/connections
+COPY --from=builder /code/llmstack/data /code/llmstack/data
+COPY --from=builder /code/llmstack/emails /code/llmstack/emails
+COPY --from=builder /code/llmstack/events /code/llmstack/events
+COPY --from=builder /code/llmstack/fixtures /code/llmstack/fixtures
+COPY --from=builder /code/llmstack/generated_files /code/llmstack/generated_files
+COPY --from=builder /code/llmstack/jobs /code/llmstack/jobs
+COPY --from=builder /code/llmstack/organizations /code/llmstack/organizations
+COPY --from=builder /code/llmstack/play /code/llmstack/play
+COPY --from=builder /code/llmstack/processors /code/llmstack/processors
+COPY --from=builder /code/llmstack/server /code/llmstack/server
 COPY --from=builder /code/manage.py /code/manage.py
 COPY --from=builder /code/docker/api/docker-entrypoint.sh /code/docker-entrypoint.sh
 
