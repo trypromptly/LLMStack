@@ -17,7 +17,6 @@ llmstack-runner = "llmstack.common.runner.server:main"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 playwright = "1.42.0"
-docker = "^7.1.0"
 sqlalchemy = "^2.0.31"
 websockify = "^0.12.0"
 geoip2 = "^4.8.0"
@@ -41,6 +40,7 @@ llama-index-vector-stores-weaviate = "^1.0.0"
 llama-index-core = "^0.10.51"
 spacy = "^3.7.5"
 striprtf = "^0.0.26"
+python-on-whales = "^0.71.0"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
