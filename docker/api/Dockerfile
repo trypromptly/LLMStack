@@ -92,7 +92,6 @@ COPY --from=builder /code/llmstack/data /code/llmstack/data
 COPY --from=builder /code/llmstack/emails /code/llmstack/emails
 COPY --from=builder /code/llmstack/events /code/llmstack/events
 COPY --from=builder /code/llmstack/fixtures /code/llmstack/fixtures
-COPY --from=builder /code/llmstack/generated_files /code/llmstack/generated_files
 COPY --from=builder /code/llmstack/jobs /code/llmstack/jobs
 COPY --from=builder /code/llmstack/organizations /code/llmstack/organizations
 COPY --from=builder /code/llmstack/play /code/llmstack/play
