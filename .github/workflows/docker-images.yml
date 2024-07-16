@@ -12,7 +12,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: large-runner
 
     permissions:
       contents: read
@@ -95,6 +95,16 @@ jobs:
           file: docker/api/Dockerfile
           platforms: linux/amd64,linux/arm64
 
+      - name: Sign the published LLMStack API Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          TAGS: ${{ steps.meta-api.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push-api.outputs.digest }}
+        # This step uses the identity token to provision an ephemeral certificate
+        # against the sigstore community Fulcio instance.
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
       - name: Build and push LLMStack app Docker image
         id: build-and-push-app
         uses: docker/build-push-action@v4
@@ -110,16 +120,6 @@ jobs:
           build-args: |
             REGISTRY=${{ env.REGISTRY }}/${{ env.ORG }}/
             TAG=main
-
-      - name: Sign the published LLMStack API Docker image
-        if: ${{ github.event_name != 'pull_request' }}
-        env:
-          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: ${{ steps.meta-api.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push-api.outputs.digest }}
-        # This step uses the identity token to provision an ephemeral certificate
-        # against the sigstore community Fulcio instance.
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
       - name: Sign the published LLMStack app Docker image
         if: ${{ github.event_name != 'pull_request' }}
