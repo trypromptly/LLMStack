@@ -7,7 +7,6 @@ from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.models import Config
 from llmstack.common.utils.prequests import post
-from llmstack.data.datasource_processor import DataPipeline
 from llmstack.data.models import DataSource
 from llmstack.data.sources.base import BaseSource
 
@@ -46,7 +45,7 @@ class SingleStoreConnectionConfiguration(Config):
         return []
 
 
-class SingleStoreDataSource(DataPipeline):
+class SingleStoreDataSource:
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
         if self.datasource.config and "data" in self.datasource.config:

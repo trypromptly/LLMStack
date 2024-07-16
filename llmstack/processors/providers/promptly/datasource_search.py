@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.data.models import DataSource
-from llmstack.data.types import DataSourceTypeFactory
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -92,6 +91,8 @@ class DataSourceSearchProcessor(
         return OutputTemplate(markdown="""{{ answers_text }}""")
 
     def process(self) -> DataSourceSearchOutput:
+        from llmstack.data.types import DataSourceTypeFactory
+
         input_data = self._input
         hybrid_semantic_search_ratio = self._config.hybrid_semantic_search_ratio
 

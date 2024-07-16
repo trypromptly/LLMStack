@@ -15,9 +15,7 @@ urlpatterns = [
     # Data sources
     path(
         "api/datasources",
-        apis.DataSourceViewSet.as_view(
-            {"get": "get", "post": "post", "put": "put"},
-        ),
+        apis.DataSourceViewSet.as_view({"get": "get", "post": "post"}),
     ),
     path(
         "api/datasources/url/extract_urls",
@@ -38,10 +36,6 @@ urlpatterns = [
     path(
         "api/datasources/<str:uid>/add_entry_async",
         apis.DataSourceViewSet.as_view({"post": "add_entry_async"}),
-    ),
-    path(
-        "api/datasources/<str:uid>/add_entry_jobs",
-        apis.DataSourceViewSet.as_view({"get": "add_entry_jobs"}),
     ),
     # Data source entries
     path(

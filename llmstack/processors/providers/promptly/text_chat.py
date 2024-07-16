@@ -11,7 +11,6 @@ from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.data.models import DataSource
-from llmstack.data.types import DataSourceTypeFactory
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -182,6 +181,8 @@ Citations:
         }
 
     def _search_datasources(self, input):
+        from llmstack.data.types import DataSourceTypeFactory
+
         docs = []
 
         def fetch_datasource_docs(datasource_uuid):

@@ -54,11 +54,11 @@ def get_data_pipelines_from_contrib() -> List[DataPipelineTemplate]:
     return data_pipelines
 
 
-def get_data_pipeline_template_by_slug(slug: str) -> dict:
+def get_data_pipeline_template_by_slug(slug: str) -> DataPipelineTemplate:
     """
     Returns an app template by slug.
     """
-    for app_template in get_data_pipelines_from_contrib():
-        if app_template.slug == slug:
-            return app_template
+    for data_pipeline_template in get_data_pipelines_from_contrib():
+        if data_pipeline_template.slug == slug:
+            return data_pipeline_template
     return None

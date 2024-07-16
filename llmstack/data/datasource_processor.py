@@ -1,16 +1,12 @@
 import logging
-from enum import Enum
 from typing import List, Optional
 
 from llama_index.core.schema import TextNode
 from llama_index.core.vector_stores.types import VectorStoreQuery, VectorStoreQueryMode
 from pydantic import BaseModel
 
-from llmstack.base.models import Profile
-from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.data.models import DataSource
-from llmstack.data.sources.utils import get_destination_cls, get_source_cls
 
 logger = logging.getLogger(__name__)
 
@@ -28,60 +24,32 @@ class DataSourceEntryItem(BaseModel):
     data: Optional[dict] = None
 
 
-class DataSourceSyncType(str, Enum):
-    FULL = "full"
-    INCREMENTAL = "incremental"
-
-
-class DataSourceSyncConfiguration(_Schema):
-    sync_type: DataSourceSyncType = "full"
-
-
 class DataPipeline:
-    def __init__(self, datasource: DataSource, source_data={}, destination_data={}, transformations_data=[]):
+    def __init__(self, datasource: DataSource):
         self.datasource = datasource
-        self.profile = Profile.objects.get(user=self.datasource.owner)
-        self._pipeline_source_cls = self._get_source_cls()
-        self._pipeline_source_obj = self._pipeline_source_cls(**source_data) if self._pipeline_source_cls else None
+        self.profile = datasource.profile
+        self._source_cls = self.datasource.source_cls
+        self._destination_cls = self.datasource.destination_cls
+        self._transformation_cls = self.datasource.transformation_cls
 
-        self._pipeline_destination_cls = self._get_destination_cls()
-        self._pipeline_destination_obj = (
-            self._pipeline_destination_cls(**destination_data) if self._pipeline_destination_cls else None
-        )
+        self._destination = None
+        self._transformation = None
 
-    @property
-    def source_data(self):
-        return self._pipeline_source_obj.model_dump() if self._pipeline_source_obj else {}
+        if self._destination_cls:
+            self._destination = self._destination_cls(**self.datasource.destination_data)
 
-    @property
-    def destination_data(self):
-        return self._pipeline_destination_obj.model_dump() if self._pipeline_destination_obj else {}
+        if self._transformation_cls:
+            self._transformation = self._transformation_cls(**self.datasource.transformation_data)
 
-    def _get_source_cls(self):
-        source_cls = None
-        source_config = self.datasource.source_config
-        if source_config:
-            source_cls = get_source_cls(source_config.slug, source_config.provider_slug)
+    def run(self, source_data_dict={}):
+        source = None
 
-        return source_cls
+        if self._source_cls:
+            source = self._source_cls(**source_data_dict)
 
-    def _get_destination_cls(self):
-        destination_cls = None
-        destination_config = self.datasource.destination_config
-        if destination_config:
-            destination_cls = get_destination_cls(destination_config.slug, destination_config.provider_slug)
-
-        return destination_cls
-
-    def run_name(self):
-        return self._pipeline_source_obj.name or self._pipeline_source_obj.display_name()
-
-    def run(self):
         result = {
-            "name": self.run_name(),
-            "source_data": self.source_data,
-            "destination_data": self.destination_data,
-            "transformations_data": [],
+            "name": source.name or source.display_name(),
+            "source_data": source.model_dump(),
             "dataprocessed_size": 0,
             "metadata": {},
             "status_code": 200,
@@ -90,24 +58,20 @@ class DataPipeline:
 
         nodes = []
         try:
-            if self._pipeline_source_obj:
+            if source:
                 # Get data from the source
-                documents = self._pipeline_source_obj.get_data_documents()
-
+                documents = source.get_data_documents()
                 nodes = list(
                     map(
                         lambda document: TextNode(text=document.page_content, metadata={**document.metadata}),
                         documents,
                     )
                 )
-
-            if self._pipeline_destination_obj:
-                destination_client = self._pipeline_destination_obj.initialize_client()
+            if self._destination:
+                destination_client = self._destination.initialize_client()
                 # Ids of the documents added to the destination
                 document_ids = destination_client.add(nodes=nodes)
-
                 result["dataprocessed_size"] = 1536 * 4 * len(document_ids)
-
                 result["metadata"]["destination"] = {"document_ids": document_ids, "size": 1536 * 4 * len(document_ids)}
         except Exception as e:
             result["status_code"] = 500
@@ -126,8 +90,8 @@ class DataPipeline:
 
         documents = []
 
-        if self._pipeline_destination_obj:
-            destination_client = self._pipeline_destination_obj.initialize_client()
+        if self._destination:
+            destination_client = self._destination.initialize_client()
 
             vector_store_query = VectorStoreQuery(
                 query_str=query,
@@ -145,36 +109,27 @@ class DataPipeline:
         return documents
 
     def delete_entry(self, data: dict) -> None:
-        if self._pipeline_destination_obj:
-            destination_client = self._pipeline_destination_obj.initialize_client()
+        if self._destination:
+            destination_client = self._destination.initialize_client()
             if "document_ids" in data and isinstance(data["document_ids"], list):
                 for document_id in data["document_ids"]:
                     destination_client.delete(ref_doc_id=document_id)
 
     def resync_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
-        # Delete old data
-        try:
-            self.delete_entry(data)
-        except Exception as e:
-            logger.error(
-                f"Error while deleting old data for data_source_entry: {data} - {e}",
-            )
-        # Add new data
-        return self.add_entry(DataSourceEntryItem(**data["input"]))
+        raise NotImplementedError
 
     def delete_all_entries(self) -> None:
-        if self._pipeline_destination_obj:
-            destination_client = self._pipeline_destination_obj.initialize_client()
+        if self._destination:
+            destination_client = self._destination.initialize_client()
             destination_client.delete_index()
 
     def get_entry_text(self, data: dict) -> str:
         documents = [TextNode(metadata={}, text="")]
 
-        if self._pipeline_destination_obj:
-            destination_client = self._pipeline_destination_obj.initialize_client()
+        if self._destination:
+            destination_client = self._destination.initialize_client()
             if "document_ids" in data and isinstance(data["document_ids"], list):
                 result = destination_client.get_nodes(data["document_ids"][:20])
                 if result:
                     documents = result
-
         return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))

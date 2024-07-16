@@ -1,4 +1,4 @@
-def get_source_cls(slug, provider_slug):
+def get_destination_cls(slug, provider_slug):
     from llmstack.data.destinations.vector_stores.legacy_chromadb import (
         PromptlyLegacyChromaDBVectorStoreConfiguration,
     )

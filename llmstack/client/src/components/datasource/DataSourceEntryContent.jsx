@@ -21,6 +21,7 @@ function DataSourceEntryContent({ onCancel, dataSourceEntry, open }) {
       axios()
         .get(`/api/datasource_entries/${dataSourceEntry.uuid}/text_content`)
         .then((response) => {
+          console.log(response);
           setData(
             <TextareaAutosize
               value={response.data?.content}

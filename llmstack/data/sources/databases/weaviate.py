@@ -11,7 +11,7 @@ from llmstack.common.blocks.data.store.vectorstore.weaviate import (
     WeaviateConfiguration,
 )
 from llmstack.common.utils.models import Config
-from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
+from llmstack.data.datasource_processor import DataSourceEntryItem
 from llmstack.data.models import DataSource
 from llmstack.data.sources.base import BaseSource
 
@@ -87,7 +87,7 @@ class WeaviateConnectionConfiguration(Config):
 # WeaviateDatabaseSchema.
 
 
-class WeaviateDataSource(DataPipeline):
+class WeaviateDataSource:
     # Initializer for the class.
     # It requires a datasource object as input, checks if it has a 'data'
     # configuration, and sets up Weaviate Database Configuration.

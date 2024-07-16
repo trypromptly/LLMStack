@@ -14,7 +14,6 @@ from llmstack.base.models import Profile
 from llmstack.common.utils.provider_config import validate_provider_configs
 from llmstack.data.models import DataSource, DataSourceEntry, DataSourceVisibility
 from llmstack.data.serializers import DataSourceEntrySerializer, DataSourceSerializer
-from llmstack.data.types import DataSourceTypeFactory
 from llmstack.organizations.models import Organization, OrganizationSettings
 from llmstack.organizations.serializers import (
     OrganizationSerializer,
@@ -431,6 +430,8 @@ class OrganizationDataSourceEntryViewSet(viewsets.ModelViewSet):
         )
 
     def text_content(self, request, uid):
+        from llmstack.data.types import DataSourceTypeFactory
+
         datasource_entry_object = self._get_datasource_entry_object_or_404(
             request,
             uid,

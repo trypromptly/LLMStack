@@ -1,78 +1,33 @@
 import logging
-import uuid
-
-from rq import get_current_job
-
-from llmstack.data.models import DataSource, DataSourceEntry, DataSourceEntryStatus
-from llmstack.data.types import DataSourceTypeFactory
-from llmstack.jobs.models import AdhocJob, TaskRunLog
 
 logger = logging.getLogger(__name__)
 
 
 def process_datasource_add_entry_request(
-    datasource_id,
-    input_data,
-    job_id,
-    **kwargs,
+    user_email,
+    request_data,
+    datasource_uuid,
 ):
-    from llmstack.jobs.jobs import upsert_datasource_entries_task
+    from django.contrib.auth.models import User
+    from django.test import RequestFactory
 
-    job = get_current_job()
-    adhoc_job = AdhocJob.objects.get(uuid=uuid.UUID(job_id))
+    from llmstack.data.apis import DataSourceViewSet
 
-    adhoc_job.job_id = job.id
-    adhoc_job.status = "started"
-    adhoc_job.save()
+    user = User.objects.get(email=user_email)
 
-    datasource = DataSource.objects.get(uuid=uuid.UUID(datasource_id))
-    datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-        datasource.type,
+    request = RequestFactory().post(
+        f"/api/datasources/{datasource_uuid}/add_entry",
+        data=request_data,
+        format="json",
     )
-    datasource_entry_handler = datasource_entry_handler_cls(datasource)
+    request.user = user
+    request.data = request_data
+    response = DataSourceViewSet().add_entry(request, datasource_uuid)
 
-    datasource_entry_items = datasource_entry_handler.validate_and_process(
-        input_data,
-    )
-    datasource_entry_items = list(
-        map(lambda x: x.model_dump(), datasource_entry_items),
-    )
-
-    datasource_entries = []
-    for item in datasource_entry_items:
-        datasourceentry_obj = DataSourceEntry.objects.create(
-            datasource=datasource,
-            name=item.get("name"),
-            status=DataSourceEntryStatus.PROCESSING,
-        )
-        item["uuid"] = str(datasourceentry_obj.uuid)
-        datasource_entries.append(item)
-
-    task_run_log = TaskRunLog(
-        task_type=adhoc_job.TASK_TYPE,
-        task_id=adhoc_job.id,
-        job_id=job.id,
-        status="started",
-    )
-    task_run_log.save()
-
-    kwargs = {
-        "_job_metadata": {
-            "task_run_log_uuid": str(task_run_log.uuid),
-            "task_job_uuid": job_id,
-        },
+    return {
+        "status_code": response.status_code,
+        "data": response.data,
     }
-
-    results = upsert_datasource_entries_task(
-        datasource_id,
-        datasource_entries,
-        **kwargs,
-    )
-
-    task_run_log.result = results
-    task_run_log.save()
-
-    return task_run_log.uuid
 
 
 def extract_urls_task(url):

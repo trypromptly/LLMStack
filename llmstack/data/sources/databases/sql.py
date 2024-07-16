@@ -18,7 +18,7 @@ from llmstack.common.blocks.data.store.database.utils import (
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.models import Config
 from llmstack.connections.models import ConnectionType
-from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
+from llmstack.data.datasource_processor import DataSourceEntryItem
 from llmstack.data.models import DataSource
 from llmstack.data.sources.base import BaseSource
 
@@ -96,7 +96,7 @@ class SQLConnectionConfiguration(Config):
     config: Optional[Dict] = None
 
 
-class SQLDataSource(DataPipeline):
+class SQLDataSource:
     # Initializer for the class.
     # It requires a datasource object as input, checks if it has a 'data'
     # configuration, and sets up Weaviate Database Configuration.
