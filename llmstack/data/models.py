@@ -182,6 +182,104 @@ class DataSource(models.Model):
 
         return vector_store
 
+    @property
+    def default_destination_request_data(self):
+        from django.conf import settings
+
+        content_key = "text"
+        destination_request_data = {}
+        content_key = "content"
+
+        if self.type_slug == "url":
+            content_key = "page_content"
+
+        if settings.VECTOR_DATABASES.get("default")["ENGINE"] == "weaviate":
+            destination_request_data = {
+                "type": "promptly_legacy_weaviate",
+                "url": self.profile.weaviate_url,
+                "host": None,
+                "http_port": None,
+                "grpc_port": None,
+                "embeddings_rate_limit": None,
+                "embeddings_batch_size": None,
+                "additional_headers": None,
+                "api_key": self.profile.weaviate_api_key,
+                "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
+                "text_key": content_key,
+                "text2vec_openai_config": self.profile.weaviate_text2vec_config,
+            }
+            if self.profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
+                openai_provider_config = get_matched_provider_config(
+                    provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
+                    provider_slug="openai",
+                )
+                destination_request_data["additional_headers"] = {"X-OpenAI-Api-Key": openai_provider_config.api_key}
+            else:
+                azure_provider_config = get_matched_provider_config(
+                    provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
+                    provider_slug="azure",
+                )
+
+                destination_request_data["additional_headers"] = {"X-Azure-Api-Key": azure_provider_config.api_key}
+        elif settings.VECTOR_DATABASES.get("default")["ENGINE"] == "chroma":
+            destination_request_data = {
+                "type": "promptly_legacy_chromadb",
+                "path": settings.VECTOR_DATABASES.get("default", {}).get("NAME", "chromadb"),
+                "settings": {"anonymized_telemetry": False, "is_persistent": True},
+                "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
+                "text_key": content_key,
+            }
+
+        return destination_request_data
+
+    @property
+    def source_config(self):
+        from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
+
+        source_config = None
+
+        data_pipelines = get_data_pipelines_from_contrib()
+        for pipeline in data_pipelines:
+            if pipeline.slug == self.type.slug:
+                source_config = pipeline.pipeline.source
+        return source_config
+
+    @property
+    def transformations_config(self):
+        from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
+
+        transformations_config = None
+
+        data_pipelines = get_data_pipelines_from_contrib()
+        for pipeline in data_pipelines:
+            if pipeline.slug == self.type.slug:
+                transformations_config = pipeline.pipeline.transformations
+        return transformations_config
+
+    @property
+    def destination_config(self):
+        from django.conf import settings
+
+        from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
+
+        destination_config = None
+
+        data_pipelines = get_data_pipelines_from_contrib()
+        for pipeline in data_pipelines:
+            if pipeline.slug == self.type.slug:
+                destination_config = pipeline.pipeline.destination
+
+        if destination_config is None and self.type_slug in ["csv_file", "file", "pdf", "gdrive_file", "text", "url"]:
+            # For Legacy Data Sources
+            from llmstack.data.schemas import BaseProcessorBlock
+
+            if settings.VECTOR_DATABASES.get("default")["ENGINE"] == "weaviate":
+                return BaseProcessorBlock(slug="promptly_legacy_weaviate", provider_slug="promptly")
+            elif settings.VECTOR_DATABASES.get("default")["ENGINE"] == "chroma":
+                return BaseProcessorBlock(slug="promptly_legacy_chromadb", provider_slug="promptly")
+
+        return destination_config
+
 
 class DataSourceEntry(models.Model):
     """

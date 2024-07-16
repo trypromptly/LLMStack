@@ -358,6 +358,14 @@ class PromptlyLegacyWeaviateVectorStoreConfiguration(VectorStoreConfiguration):
         "type": "text",
     }
 
+    @classmethod
+    def slug(cls):
+        return "promptly_legacy_weaviate"
+
+    @classmethod
+    def provider_slug(cls):
+        return "promptly"
+
     def initialize_client(self, *args, **kwargs) -> BasePydanticVectorStore:
         weaviate_schema = json.loads(
             WEAVIATE_SCHEMA.safe_substitute(class_name=self.index_name, content_key=self.text_key)

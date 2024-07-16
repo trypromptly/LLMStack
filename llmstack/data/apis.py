@@ -2,7 +2,6 @@ import logging
 import time
 import uuid
 from concurrent.futures import Future
-from functools import cache
 
 from django.shortcuts import get_object_or_404
 from flags.state import flag_enabled
@@ -15,7 +14,7 @@ from llmstack.apps.tasks import (
     delete_data_source_task,
     resync_data_entry_task,
 )
-from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
+from llmstack.data.datasource_processor import DataPipeline
 from llmstack.data.types import DataSourceTypeFactory
 from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
 from llmstack.jobs.adhoc import ExtractURLJob
@@ -28,7 +27,6 @@ from .tasks import extract_urls_task
 logger = logging.getLogger(__name__)
 
 
-@cache
 def get_data_source_type(slug):
     return DataSourceTypeViewSet().get(None, slug).data
 
@@ -45,6 +43,7 @@ def load_sources():
             sources[cls.provider_slug()] = {}
         sources[cls.provider_slug()][cls.slug()] = {
             "slug": cls.slug(),
+            "provider_slug": cls.provider_slug(),
             "schema": cls.get_schema(),
             "ui_schema": cls.get_ui_schema(),
         }
@@ -68,7 +67,7 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                 source_ui_schema = {}
             is_external_datasource = (
                 pipeline_template.pipeline.source is None
-                and pipeline_template.pipeline.transfromations is None
+                and pipeline_template.pipeline.transformations is None
                 and pipeline_template.pipeline.destination
             )
             processors.append(
@@ -80,6 +79,9 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                     "input_ui_schema": source_ui_schema,
                     "sync_config": None,
                     "is_external_datasource": is_external_datasource,
+                    "source": sources.get(source.provider_slug, {}).get(source.slug, {}) if source else {},
+                    "transformation": [],
+                    "destination": {},
                 }
             )
 
@@ -143,10 +145,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         )
 
     def delete(self, request, uid):
-        datasource_entry_object = get_object_or_404(
-            DataSourceEntry,
-            uuid=uuid.UUID(uid),
-        )
+        datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
         if datasource_entry_object.datasource.owner != request.user:
             return DRFResponse(status=404)
 
@@ -193,98 +192,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         return DRFResponse(status=202)
 
     def upsert(self, request):
-        if "datasource_id" not in request.data:
-            return DRFResponse(
-                {"errors": ["No datasource_id provided"]},
-                status=400,
-            )
-
-        input_data = request.data.get("input_data")
-        if not input_data:
-            return DRFResponse(
-                {"errors": ["No input_data provided"]},
-                status=400,
-            )
-
-        name = input_data["name"] if "name" in input_data else ""
-        data = input_data["data"] if "data" in input_data else ""
-        entry_uuid = input_data["uuid"] if "uuid" in input_data else None
-
-        if not name or not data:
-            return DRFResponse(
-                {"errors": ["No name or data provided"]},
-                status=400,
-            )
-
-        datasource = get_object_or_404(
-            DataSource,
-            uuid=request.data["datasource_id"],
-            owner=request.user,
-        )
-
-        datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-            datasource.type,
-        )
-        if not datasource_entry_handler_cls:
-            logger.error(
-                "No handler found for data source type {datasource.type}",
-            )
-            return DRFResponse(
-                {"errors": ["No handler found for data source type"]},
-                status=400,
-            )
-
-        datasource_entry_handler = datasource_entry_handler_cls(datasource)
-        if not datasource_entry_handler:
-            logger.error(
-                "Error while creating handler for data source type {datasource.type}",
-            )
-            return DRFResponse(
-                {"errors": ["Error while creating handler for data source type"]},
-                status=400,
-            )
-
-        # Create an entry in the database with status as processing
-        if entry_uuid:
-            datasource_entry_obj = DataSourceEntry.objects.get(
-                uuid=entry_uuid,
-            )
-        else:
-            datasource_entry_obj = DataSourceEntry.objects.create(
-                name=name,
-                datasource=datasource,
-                status=DataSourceEntryStatus.PROCESSING,
-            )
-            datasource_entry_obj.save()
-
-        try:
-            result = datasource_entry_handler.add_entry(
-                DataSourceEntryItem(**input_data),
-            )
-            datasource_entry_config = result.config
-            datasource_entry_config["input"] = input_data
-
-            datasource_entry_obj.config = datasource_entry_config
-            datasource_entry_obj.size = result.size
-            datasource_entry_obj.status = DataSourceEntryStatus.READY
-        except Exception as e:
-            logger.exception(
-                "Error adding data_source_entry: %s" % str(input_data["name"]),
-            )
-
-            datasource_entry_obj.config = {"errors": {"message": str(e)}}
-            datasource_entry_obj.status = DataSourceEntryStatus.FAILED
-
-        datasource_entry_obj.save()
-        datasource.size += datasource_entry_obj.size
-        datasource.save(update_fields=["size"])
-
-        return DRFResponse(
-            DataSourceEntrySerializer(
-                instance=datasource_entry_obj,
-            ).data,
-            status=200,
-        )
+        raise NotImplementedError
 
 
 class DataSourceViewSet(viewsets.ModelViewSet):
@@ -332,54 +240,12 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         owner = request.user
         # Validation for slug
         datasource_type = get_object_or_404(DataSourceType, slug=request.data["type_slug"])
-        datasource = DataSource(
-            name=request.data["name"],
-            owner=owner,
-            type=datasource_type,
-        )
-        # If this is an external data source, then we need to save the config
-        # in datasource object
-        if datasource_type.is_external_datasource:
-            datasource_type_cls = DataSourceTypeFactory.get_datasource_type_handler(
-                datasource.type,
-            )
-            if not datasource_type_cls:
-                logger.error(
-                    "No handler found for data source type {datasource.type}",
-                )
-                return DRFResponse(
-                    {"errors": ["No handler found for data source type"]},
-                    status=400,
-                )
-
-            datasource_handler: DataPipeline = datasource_type_cls(
-                datasource,
-            )
-            if not datasource_handler:
-                logger.error(
-                    f"Error while creating handler for data source {datasource.name}",
-                )
-                return DRFResponse(
-                    {"errors": ["Error while creating handler for data source type"]},
-                    status=400,
-                )
-            config = datasource_type_cls.process_validate_config(
-                request.data["config"],
-                datasource,
-            )
-            config["type_slug"] = request.data["type_slug"]
-            datasource.config = config
-
+        datasource = DataSource(name=request.data["name"], owner=owner, type=datasource_type)
         datasource_config = datasource.config or {}
         datasource_config["type_slug"] = request.data["type_slug"]
         datasource.config = datasource_config
         datasource.save()
-        return DRFResponse(
-            DataSourceSerializer(
-                instance=datasource,
-            ).data,
-            status=201,
-        )
+        return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
 
     def put(self, request, uid):
         datasource = get_object_or_404(
@@ -448,18 +314,11 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         return DRFResponse(status=204)
 
     def add_entry_async(self, request, uid):
-        datasource = get_object_or_404(
-            DataSource,
-            uuid=uuid.UUID(uid),
-            owner=request.user,
-        )
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
 
         # Check if flag_enabled("has_exceeded_storage_quota") is True and deny the request
         if flag_enabled("HAS_EXCEEDED_STORAGE_QUOTA", request=request):
-            return DRFResponse(
-                "Storage quota exceeded",
-                status=400,
-            )
+            return DRFResponse("Storage quota exceeded", status=400)
 
         adhoc_job = AdhocJob(
             name=f"add_entry_{datasource.uuid}",
@@ -490,61 +349,44 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         return DRFResponse({"job_id": adhoc_job.uuid}, status=202)
 
     def add_entry(self, request, uid):
-        datasource = get_object_or_404(
-            DataSource,
-            uuid=uuid.UUID(uid),
-            owner=request.user,
-        )
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
         if datasource and datasource.type.is_external_datasource:
-            return DRFResponse(
-                {"errors": ["Cannot add entry to external data source"]},
-                status=400,
-            )
+            return DRFResponse({"errors": ["Cannot add entry to external data source"]}, status=400)
 
         entry_data = request.data["entry_data"]
         if not entry_data:
-            return DRFResponse(
-                {"errors": ["No entry_data provided"]},
-                status=400,
-            )
+            return DRFResponse({"errors": ["No entry_data provided"]}, status=400)
 
-        datasource_entry_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-            datasource.type,
-        )
-        if not datasource_entry_handler_cls:
-            logger.error(
-                "No handler found for data source type {datasource.type}",
-            )
-            return DRFResponse(
-                {"errors": ["No handler found for data source type"]},
-                status=400,
-            )
+        source_data = request.data.get("entry_data", {})
+        destination_data = request.data.get("destination_data", {})
+        if not destination_data and datasource.type_slug in ["csv_file", "file", "pdf", "gdrive_file", "text", "url"]:
+            destination_data = datasource.default_destination_request_data
 
-        datasource_entry_handler: DataPipeline = datasource_entry_handler_cls(
-            datasource,
-        )
-
-        if not datasource_entry_handler:
-            logger.error(
-                "Error while creating handler for data source type {datasource.type}",
+        pipeline = DataPipeline(datasource, source_data=source_data, destination_data=destination_data)
+        result = pipeline.run()
+        entry_config = {
+            "input": result["source_data"],
+            "document_ids": result.get("metadata", {}).get("destination", {}).get("document_ids", []),
+            "pipeline_result": result,
+        }
+        if result.get("status_code", 200) != 200:
+            DataSourceEntry.objects.create(
+                name=result.get("name", "Entry"),
+                datasource=datasource,
+                status=DataSourceEntryStatus.FAILED,
+                config=entry_config,
+                size=0,
             )
-            return DRFResponse(
-                {"errors": ["Error while creating handler for data source type"]},
-                status=400,
+            datasource.size += 0
+        else:
+            DataSourceEntry.objects.create(
+                name=result.get("name", "Entry"),
+                datasource=datasource,
+                status=DataSourceEntryStatus.READY,
+                config=entry_config,
+                size=result.get("dataprocessed_size", 0),
             )
-
-        # Validate the entry data against the data source type and add the
-        # entry
-        datasource_entry_items = datasource_entry_handler.validate_and_process(
-            entry_data,
-        )
-        logger.info(f"Adding {len(datasource_entry_items)} entries")
-        for datasource_entry_item in datasource_entry_items:
-            request.data["datasource_id"] = uid
-            request.data["input_data"] = datasource_entry_item.model_dump()
-
-            response = DataSourceEntryViewSet().upsert(request)
-            logger.info(f"Response: {response}")
+            datasource.size += result.get("dataprocessed_size", 0)
 
         return DRFResponse({"status": "success"}, status=200)
 

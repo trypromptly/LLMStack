@@ -1,16 +1,14 @@
 import logging
-from typing import List, Optional
+from typing import List
 
 from pydantic import Field
 
-from llmstack.base.models import Profile
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
 from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
-from llmstack.data.models import DataSource
+from llmstack.data.datasource_processor import DataSourceEntryItem
 from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
@@ -47,94 +45,38 @@ class FileSchema(BaseSource):
     def provider_slug(cls):
         return "promptly"
 
+    def display_name(self):
+        files = self.file.split("|")
+        mime_type, file_name, file_data = validate_parse_data_uri(files[0])
+        return file_name
 
-class FileDataSource(DataPipeline):
-    def __init__(self, datasource: DataSource):
-        super().__init__(datasource)
-        profile = Profile.objects.get(user=self.datasource.owner)
-        self.openai_key = profile.get_vendor_key("openai_key")
-
-    @staticmethod
-    def name() -> str:
-        return "file"
-
-    @staticmethod
-    def slug() -> str:
-        return "file"
-
-    @staticmethod
-    def description() -> str:
-        return "File"
-
-    @staticmethod
-    def provider_slug() -> str:
-        return "promptly"
-
-    def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        entry = FileSchema(**data)
-        files = entry.file.split("|")
-        data_source_entries = []
+    def get_data_documents(self) -> List[DataSourceEntryItem]:
+        files = self.file.split("|")
+        docs = []
         for file in files:
             mime_type, file_name, file_data = validate_parse_data_uri(file)
-
-            data_source_entry = DataSourceEntryItem(
-                name=file_name,
-                data={
-                    "mime_type": mime_type,
-                    "file_name": file_name,
-                    "file_data": file_data,
-                },
+            data_uri = f"data:{mime_type};name={file_name};base64,{file_data}"
+            result = Uri().process(
+                input=UriInput(env=DataSourceEnvironmentSchema(openai_key=self.openai_key), uri=data_uri),
+                configuration=UriConfiguration(),
             )
-            data_source_entries.append(data_source_entry)
+            file_text = ""
+            for doc in result.documents:
+                file_text += doc.content.decode() + "\n"
 
-        return data_source_entries
-
-    def get_data_documents(
-        self,
-        data: DataSourceEntryItem,
-    ) -> Optional[DataSourceEntryItem]:
-        data_uri = f"data:{data.data['mime_type']};name={data.data['file_name']};base64,{data.data['file_data']}"
-
-        result = Uri().process(
-            input=UriInput(
-                env=DataSourceEnvironmentSchema(
-                    openai_key=self.openai_key,
-                ),
-                uri=data_uri,
-            ),
-            configuration=UriConfiguration(),
-        )
-
-        file_text = ""
-        for doc in result.documents:
-            file_text += doc.content.decode() + "\n"
-
-        if data.data["mime_type"] == "text/csv":
-            docs = [
-                Document(
-                    page_content_key=self.get_content_key(),
-                    page_content=t,
-                    metadata={
-                        "source": data.data["file_name"],
-                    },
-                )
-                for t in CSVTextSplitter(
-                    chunk_size=2,
-                    length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
-                ).split_text(file_text)
-            ]
-        else:
-            docs = [
-                Document(
-                    page_content_key=self.get_content_key(),
-                    page_content=t,
-                    metadata={
-                        "source": data.data["file_name"],
-                    },
-                )
-                for t in SpacyTextSplitter(
-                    chunk_size=1500,
-                ).split_text(file_text)
-            ]
+            if mime_type == "text/csv":
+                for document in [
+                    Document(page_content_key=self.get_content_key(), page_content=t, metadata={"source": file_name})
+                    for t in CSVTextSplitter(
+                        chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken
+                    ).split_text(file_text)
+                ]:
+                    docs.append(document)
+            else:
+                for document in [
+                    Document(page_content_key=self.get_content_key(), page_content=t, metadata={"source": file_name})
+                    for t in SpacyTextSplitter(chunk_size=1500).split_text(file_text)
+                ]:
+                    docs.append(document)
 
         return docs

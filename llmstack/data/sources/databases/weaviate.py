@@ -11,12 +11,9 @@ from llmstack.common.blocks.data.store.vectorstore.weaviate import (
     WeaviateConfiguration,
 )
 from llmstack.common.utils.models import Config
-from llmstack.data.datasource_processor import (
-    DataPipeline,
-    DataSourceEntryItem,
-    DataSourceSchema,
-)
+from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
 from llmstack.data.models import DataSource
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +50,7 @@ class WeaviateConnection(_Schema):
 # It inherits structure and behaviour from the `DataSourceSchema` class.
 
 
-class WeaviateDatabaseSchema(DataSourceSchema):
+class WeaviateDatabaseSchema(BaseSource):
     index_name: str = Field(description="Weaviate index name")
     content_property_name: str = Field(
         description="Weaviate content property name",
@@ -66,6 +63,17 @@ class WeaviateDatabaseSchema(DataSourceSchema):
         default=None,
         description="Weaviate connection string",
     )
+
+    @classmethod
+    def slug(cls):
+        return "weaviate"
+
+    @classmethod
+    def provider_slug(cls):
+        return "weaviate"
+
+    def get_data_documents(self) -> List[DataSourceEntryItem]:
+        return []
 
 
 class WeaviateConnectionConfiguration(Config):
@@ -147,9 +155,6 @@ class WeaviateDataSource(DataPipeline):
     @staticmethod
     def provider_slug() -> str:
         return "weaviate"
-
-    def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        raise NotImplementedError
 
     def get_data_documents(self, data: dict) -> List[Document]:
         raise NotImplementedError

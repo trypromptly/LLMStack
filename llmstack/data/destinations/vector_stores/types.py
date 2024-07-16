@@ -13,12 +13,3 @@ VectorStore = Annotated[
     Union[PromptlyLegacyWeaviateVectorStoreConfiguration, PromptlyLegacyChromaDBVectorStoreConfiguration],
     Field(discriminator="type"),
 ]
-
-
-def get_vector_store_configuration(data):
-    if data["type"] == "promptly_legacy_weaviate":
-        return PromptlyLegacyWeaviateVectorStoreConfiguration(**data)
-    elif data["type"] == "promptly_legacy_chromadb":
-        return PromptlyLegacyChromaDBVectorStoreConfiguration(**data)
-
-    raise NotImplementedError(f"Unknown vector store type: {data['type']}")

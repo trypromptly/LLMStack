@@ -9,10 +9,7 @@ from llmstack.data.types import DataSourceTypeFactory
 logger = logging.getLogger(__name__)
 
 
-def delete_data_entry_task(
-    datasource: DataSource,
-    entry_data: DataSourceEntry,
-):
+def delete_data_entry_task(datasource: DataSource, entry_data: DataSourceEntry):
     logger.error("Deleting data_source_entry: %s" % str(entry_data.uuid))
     entry_data.status = DataSourceEntryStatus.MARKED_FOR_DELETION
     entry_data.save()

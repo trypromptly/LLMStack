@@ -10,7 +10,7 @@ class BaseProcessorBlock(BaseModel):
 
 class PipelineBlock(BaseModel):
     source: Optional[BaseProcessorBlock] = None
-    transfromations: Optional[List[BaseProcessorBlock]] = []
+    transformations: Optional[List[BaseProcessorBlock]] = []
     destination: Optional[BaseProcessorBlock] = None
 
 

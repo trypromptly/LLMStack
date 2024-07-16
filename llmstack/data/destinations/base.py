@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 from llmstack.common.blocks.base.schema import (
@@ -8,9 +6,7 @@ from llmstack.common.blocks.base.schema import (
 )
 
 
-class BaseSource(BaseModel):
-    name: Optional[str] = None
-
+class BaseDestination(BaseModel):
     @classmethod
     def slug(cls):
         raise NotImplementedError
@@ -26,7 +22,3 @@ class BaseSource(BaseModel):
     @classmethod
     def get_ui_schema(cls):
         return get_ui_schema_from_json_schema(cls.get_schema())
-
-    def display_name(self):
-        if self.name:
-            return self.name

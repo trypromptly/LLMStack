@@ -1,40 +1,18 @@
 import logging
 from enum import Enum
-from typing import List, Optional, TypeVar
+from typing import List, Optional
 
 from llama_index.core.schema import TextNode
-from llama_index.core.vector_stores.types import (
-    BasePydanticVectorStore,
-    VectorStoreQuery,
-    VectorStoreQueryMode,
-)
+from llama_index.core.vector_stores.types import VectorStoreQuery, VectorStoreQueryMode
 from pydantic import BaseModel
 
 from llmstack.base.models import Profile
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
 from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.data.destinations.vector_stores.types import (
-    get_vector_store_configuration,
-)
 from llmstack.data.models import DataSource
+from llmstack.data.sources.utils import get_destination_cls, get_source_cls
 
 logger = logging.getLogger(__name__)
-
-EntryConfigurationSchemaType = TypeVar("EntryConfigurationSchemaType")
-
-
-class DataSourceSchema(_Schema):
-    """
-    This is Base Schema model for all data source type schemas
-    """
-
-    @staticmethod
-    def get_vector_fields() -> list:
-        raise NotImplementedError
-
-    @staticmethod
-    def get_content_key() -> str:
-        raise NotImplementedError
 
 
 class DataSourceEntryItem(BaseModel):
@@ -60,66 +38,82 @@ class DataSourceSyncConfiguration(_Schema):
 
 
 class DataPipeline:
-    @classmethod
-    def is_external(cls) -> bool:
-        return False
-
-    @classmethod
-    def get_sync_configuration(cls) -> Optional[dict]:
-        return None
-
-    @property
-    def vectorstore(self) -> BasePydanticVectorStore:
-        return self._vectorstore
-
-    def get_content_key(self) -> str:
-        if self.datasource.type_slug == "url":
-            return "page_content"
-        return "content"
-
-    def __init__(self, datasource: DataSource):
+    def __init__(self, datasource: DataSource, source_data={}, destination_data={}, transformations_data=[]):
         self.datasource = datasource
         self.profile = Profile.objects.get(user=self.datasource.owner)
+        self._pipeline_source_cls = self._get_source_cls()
+        self._pipeline_source_obj = self._pipeline_source_cls(**source_data) if self._pipeline_source_cls else None
 
-        self._vectorstore = self.initialize_vector_datastore()
-
-    def initialize_vector_datastore(self):
-        vector_store = None
-        vector_data_store_config = self.datasource.vector_store_config
-        if not vector_data_store_config:
-            raise Exception("Vector store configuration is missing")
-
-        vector_store_config = get_vector_store_configuration(vector_data_store_config)
-
-        # Get Weaviate schema (For Legacy Data Sources)
-
-        vector_store = vector_store_config.initialize_client()
-        return vector_store
-
-    def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        raise NotImplementedError
-
-    def get_data_documents(self, data: dict) -> List[Document]:
-        raise NotImplementedError
-
-    def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
-        documents = self.get_data_documents(data)
-        documents = list(
-            map(
-                lambda document: TextNode(text=document.page_content, metadata={**document.metadata, **data.metadata}),
-                documents,
-            )
+        self._pipeline_destination_cls = self._get_destination_cls()
+        self._pipeline_destination_obj = (
+            self._pipeline_destination_cls(**destination_data) if self._pipeline_destination_cls else None
         )
-        document_ids = self.vectorstore.add(nodes=documents)
-        logger.info(f"Added {len(document_ids)} documents to vectorstore.")
-        return data.copy(
-            update={
-                "config": {
-                    "document_ids": document_ids,
-                },
-                "size": 1536 * 4 * len(document_ids),
-            },
-        )
+
+    @property
+    def source_data(self):
+        return self._pipeline_source_obj.model_dump() if self._pipeline_source_obj else {}
+
+    @property
+    def destination_data(self):
+        return self._pipeline_destination_obj.model_dump() if self._pipeline_destination_obj else {}
+
+    def _get_source_cls(self):
+        source_cls = None
+        source_config = self.datasource.source_config
+        if source_config:
+            source_cls = get_source_cls(source_config.slug, source_config.provider_slug)
+
+        return source_cls
+
+    def _get_destination_cls(self):
+        destination_cls = None
+        destination_config = self.datasource.destination_config
+        if destination_config:
+            destination_cls = get_destination_cls(destination_config.slug, destination_config.provider_slug)
+
+        return destination_cls
+
+    def run_name(self):
+        return self._pipeline_source_obj.name or self._pipeline_source_obj.display_name()
+
+    def run(self):
+        result = {
+            "name": self.run_name(),
+            "source_data": self.source_data,
+            "destination_data": self.destination_data,
+            "transformations_data": [],
+            "dataprocessed_size": 0,
+            "metadata": {},
+            "status_code": 200,
+            "detail": "Success",
+        }
+
+        nodes = []
+        try:
+            if self._pipeline_source_obj:
+                # Get data from the source
+                documents = self._pipeline_source_obj.get_data_documents()
+
+                nodes = list(
+                    map(
+                        lambda document: TextNode(text=document.page_content, metadata={**document.metadata}),
+                        documents,
+                    )
+                )
+
+            if self._pipeline_destination_obj:
+                destination_client = self._pipeline_destination_obj.initialize_client()
+                # Ids of the documents added to the destination
+                document_ids = destination_client.add(nodes=nodes)
+
+                result["dataprocessed_size"] = 1536 * 4 * len(document_ids)
+
+                result["metadata"]["destination"] = {"document_ids": document_ids, "size": 1536 * 4 * len(document_ids)}
+        except Exception as e:
+            result["status_code"] = 500
+            result["detail"] = str(e)
+
+        return result
 
     def search(
         self,

@@ -1,8 +1,9 @@
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
-from pydantic import BaseModel
+
+from llmstack.data.destinations.base import BaseDestination
 
 
-class VectorStoreConfiguration(BaseModel):
+class VectorStoreConfiguration(BaseDestination):
     pass
 
     def initialize_client(self, *args, **kwargs) -> BasePydanticVectorStore:

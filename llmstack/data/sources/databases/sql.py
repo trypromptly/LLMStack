@@ -18,12 +18,9 @@ from llmstack.common.blocks.data.store.database.utils import (
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.models import Config
 from llmstack.connections.models import ConnectionType
-from llmstack.data.datasource_processor import (
-    DataPipeline,
-    DataSourceEntryItem,
-    DataSourceSchema,
-)
+from llmstack.data.datasource_processor import DataPipeline, DataSourceEntryItem
 from llmstack.data.models import DataSource
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +60,7 @@ class SQLiteConnection(_Schema):
 SQLConnection = Union[PostgreSQLConnection, MySQLConnection, SQLiteConnection]
 
 
-class SQLDatabaseSchema(DataSourceSchema):
+class SQLDatabaseSchema(BaseSource):
     connection: Optional[SQLConnection] = Field(
         default=None,
         title="Database",
@@ -80,6 +77,17 @@ class SQLDatabaseSchema(DataSourceSchema):
         },
         description="Use your authenticated connection to the database",
     )
+
+    @classmethod
+    def slug(cls):
+        return "sql"
+
+    @classmethod
+    def provider_slug(cls):
+        return "promptly"
+
+    def get_data_documents(self) -> List[DataSourceEntryItem]:
+        return []
 
 
 class SQLConnectionConfiguration(Config):
@@ -173,9 +181,6 @@ class SQLDataSource(DataPipeline):
     @staticmethod
     def provider_slug() -> str:
         return "promptly"
-
-    def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        raise NotImplementedError
 
     def get_data_documents(self, data: dict) -> List[Document]:
         raise NotImplementedError

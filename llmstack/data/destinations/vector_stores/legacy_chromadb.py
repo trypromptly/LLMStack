@@ -27,6 +27,14 @@ class PromptlyLegacyChromaDBVectorStoreConfiguration(VectorStoreConfiguration):
     text_key: Optional[str] = "content"
     settings: Dict[str, Any]
 
+    @classmethod
+    def slug(cls):
+        return "promptly_legacy_chromadb"
+
+    @classmethod
+    def provider_slug(cls):
+        return "promptly"
+
     def initialize_client(self, *args, **kwargs) -> PromptlyChromaVectorStore:
         client = chromadb.PersistentClient(path=self.path, settings=chromadb.config.Settings(**self.settings))
         chroma_collection = client.get_or_create_collection(self.index_name)

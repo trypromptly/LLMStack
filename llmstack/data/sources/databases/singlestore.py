@@ -7,8 +7,9 @@ from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.models import Config
 from llmstack.common.utils.prequests import post
-from llmstack.data.datasource_processor import DataPipeline, DataSourceSchema
+from llmstack.data.datasource_processor import DataPipeline
 from llmstack.data.models import DataSource
+from llmstack.data.sources.base import BaseSource
 
 
 class SingleStoreConnection(BaseSchema):
@@ -21,7 +22,7 @@ class SingleStoreConnection(BaseSchema):
     database: str = Field(description="SingleStore database name")
 
 
-class SingleStoreDatabaseSchema(DataSourceSchema):
+class SingleStoreDatabaseSchema(BaseSource):
     connection: Optional[SingleStoreConnection] = Field(
         default=None,
         description="SingleStore connection details",
@@ -40,6 +41,9 @@ class SingleStoreConnectionConfiguration(Config):
     @classmethod
     def provider_slug(cls):
         return "singlestore"
+
+    def get_documents(self):
+        return []
 
 
 class SingleStoreDataSource(DataPipeline):
@@ -85,9 +89,6 @@ class SingleStoreDataSource(DataPipeline):
         ).to_dict(
             encrypt_fn=datasource.profile.encrypt_value,
         )
-
-    def validate_and_process(self, data: dict):
-        raise NotImplementedError
 
     def get_data_documents(self, data: dict):
         raise NotImplementedError
