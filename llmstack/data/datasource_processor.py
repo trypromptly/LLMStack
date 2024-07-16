@@ -124,25 +124,32 @@ class DataPipeline:
         if kwargs.get("search_filters", None):
             raise NotImplementedError("Search filters are not supported for this data source.")
 
-        vector_store_query = VectorStoreQuery(
-            query_str=query,
-            mode=VectorStoreQueryMode.HYBRID if use_hybrid_search else VectorStoreQueryMode.DEFAULT,
-            alpha=kwargs.get("alpha", 0.75),
-            hybrid_top_k=kwargs.get("limit", 2),
-        )
-        query_result = self.vectorstore.query(query=vector_store_query)
-        documents = list(
-            map(
-                lambda x: Document(page_content_key=self.get_content_key(), page_content=x.text, metadata={}),
-                query_result.nodes,
+        documents = []
+
+        if self._pipeline_destination_obj:
+            destination_client = self._pipeline_destination_obj.initialize_client()
+
+            vector_store_query = VectorStoreQuery(
+                query_str=query,
+                mode=VectorStoreQueryMode.HYBRID if use_hybrid_search else VectorStoreQueryMode.DEFAULT,
+                alpha=kwargs.get("alpha", 0.75),
+                hybrid_top_k=kwargs.get("limit", 2),
             )
-        )
+            query_result = destination_client.query(query=vector_store_query)
+            documents = list(
+                map(
+                    lambda x: Document(page_content_key=self.get_content_key(), page_content=x.text, metadata={}),
+                    query_result.nodes,
+                )
+            )
         return documents
 
     def delete_entry(self, data: dict) -> None:
-        if "document_ids" in data and isinstance(data["document_ids"], list):
-            for document_id in data["document_ids"]:
-                self.vectorstore.delete(ref_doc_id=document_id)
+        if self._pipeline_destination_obj:
+            destination_client = self._pipeline_destination_obj.initialize_client()
+            if "document_ids" in data and isinstance(data["document_ids"], list):
+                for document_id in data["document_ids"]:
+                    destination_client.delete(ref_doc_id=document_id)
 
     def resync_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
         # Delete old data
@@ -156,14 +163,18 @@ class DataPipeline:
         return self.add_entry(DataSourceEntryItem(**data["input"]))
 
     def delete_all_entries(self) -> None:
-        self.vectorstore.delete_index()
+        if self._pipeline_destination_obj:
+            destination_client = self._pipeline_destination_obj.initialize_client()
+            destination_client.delete_index()
 
     def get_entry_text(self, data: dict) -> str:
         documents = [TextNode(metadata={}, text="")]
 
-        if "document_ids" in data and isinstance(data["document_ids"], list):
-            result = self.vectorstore.get_nodes(data["document_ids"][:20])
-            if result:
-                documents = result
+        if self._pipeline_destination_obj:
+            destination_client = self._pipeline_destination_obj.initialize_client()
+            if "document_ids" in data and isinstance(data["document_ids"], list):
+                result = destination_client.get_nodes(data["document_ids"][:20])
+                if result:
+                    documents = result
 
         return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))

@@ -9,11 +9,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 from rq.job import Job
 
-from llmstack.apps.tasks import (
-    delete_data_entry_task,
-    delete_data_source_task,
-    resync_data_entry_task,
-)
+from llmstack.apps.tasks import resync_data_entry_task
 from llmstack.data.datasource_processor import DataPipeline
 from llmstack.data.types import DataSourceTypeFactory
 from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
@@ -146,34 +142,55 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
 
     def delete(self, request, uid):
         datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
+        datasource = datasource_entry_object.datasource
+
         if datasource_entry_object.datasource.owner != request.user:
             return DRFResponse(status=404)
 
-        delete_data_entry_task(
-            datasource_entry_object.datasource,
-            datasource_entry_object,
+        source_data = datasource_entry_object.config.get("input", {}).get("data", {})
+        destination_data = request.data.get("destination_data", {})
+        if not destination_data and datasource_entry_object.datasource.type_slug in [
+            "csv_file",
+            "file",
+            "pdf",
+            "gdrive_file",
+            "text",
+            "url",
+        ]:
+            destination_data = datasource_entry_object.datasource.default_destination_request_data
+
+        pipeline = DataPipeline(
+            datasource_entry_object.datasource, source_data=source_data, destination_data=destination_data
         )
+        pipeline.delete_entry(data=datasource_entry_object.config)
+        datasource.size = max(datasource.size - datasource_entry_object.size, 0)
+        datasource_entry_object.delete()
+        datasource.save()
 
         return DRFResponse(status=202)
 
     def text_content(self, request, uid):
-        datasource_entry_object = get_object_or_404(
-            DataSourceEntry,
-            uuid=uuid.UUID(uid),
-        )
+        datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
         if not datasource_entry_object.user_can_read(request.user):
             return DRFResponse(status=404)
 
-        datasource_type = datasource_entry_object.datasource.type
-        datasource_handler_cls = DataSourceTypeFactory.get_datasource_type_handler(
-            datasource_type,
+        source_data = datasource_entry_object.config.get("input", {}).get("data", {})
+        destination_data = request.data.get("destination_data", {})
+        if not destination_data and datasource_entry_object.datasource.type_slug in [
+            "csv_file",
+            "file",
+            "pdf",
+            "gdrive_file",
+            "text",
+            "url",
+        ]:
+            destination_data = datasource_entry_object.datasource.default_destination_request_data
+
+        pipeline = DataPipeline(
+            datasource_entry_object.datasource, source_data=source_data, destination_data=destination_data
         )
-        datasource_handler = datasource_handler_cls(
-            datasource_entry_object.datasource,
-        )
-        metadata, content = datasource_handler.get_entry_text(
-            datasource_entry_object.config,
-        )
+        logger.info(f"Config: {datasource_entry_object.config}")
+        metadata, content = pipeline.get_entry_text(datasource_entry_object.config)
         return DRFResponse({"content": content, "metadata": metadata})
 
     def resync(self, request, uid):
@@ -190,9 +207,6 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         )
 
         return DRFResponse(status=202)
-
-    def upsert(self, request):
-        raise NotImplementedError
 
 
 class DataSourceViewSet(viewsets.ModelViewSet):
@@ -294,21 +308,12 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         )
 
     def delete(self, request, uid):
-        datasource = get_object_or_404(
-            DataSource,
-            uuid=uuid.UUID(uid),
-            owner=request.user,
-        )
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
 
         # Delete all datasource entries associated with the datasource
-        datasource_entries = DataSourceEntry.objects.filter(
-            datasource=datasource,
-        )
+        datasource_entries = DataSourceEntry.objects.filter(datasource=datasource)
         for entry in datasource_entries:
             DataSourceEntryViewSet().delete(request=request, uid=str(entry.uuid))
-
-        # Delete the data from data store
-        delete_data_source_task(datasource)
 
         datasource.delete()
         return DRFResponse(status=204)
@@ -365,9 +370,13 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         pipeline = DataPipeline(datasource, source_data=source_data, destination_data=destination_data)
         result = pipeline.run()
         entry_config = {
-            "input": result["source_data"],
+            "input": {
+                "data": entry_data,
+                "name": result.get("name", "Entry"),
+                "size": result.get("dataprocessed_size", 0),
+            },
             "document_ids": result.get("metadata", {}).get("destination", {}).get("document_ids", []),
-            "pipeline_result": result,
+            "pipeline_data": result,
         }
         if result.get("status_code", 200) != 200:
             DataSourceEntry.objects.create(
