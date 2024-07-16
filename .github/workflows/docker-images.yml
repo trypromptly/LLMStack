@@ -103,7 +103,7 @@ jobs:
         id: build-and-push-app
         uses: docker/build-push-action@v4
         with:
-          context: app
+          context: .
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-app.outputs.tags }}
           labels: ${{ steps.meta-app.outputs.labels }}
