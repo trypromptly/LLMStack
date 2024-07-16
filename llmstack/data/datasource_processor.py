@@ -1,27 +1,13 @@
 import logging
-from typing import List, Optional
+from typing import List
 
 from llama_index.core.schema import TextNode
 from llama_index.core.vector_stores.types import VectorStoreQuery, VectorStoreQueryMode
-from pydantic import BaseModel
 
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.data.models import DataSource
 
 logger = logging.getLogger(__name__)
-
-
-class DataSourceEntryItem(BaseModel):
-    """
-    This is the response model for a single data source entry
-    """
-
-    uuid: str = ""
-    name: str = ""
-    config: dict = {}
-    size: int = 0
-    metadata: dict = {}
-    data: Optional[dict] = None
 
 
 class DataPipeline:
@@ -79,12 +65,7 @@ class DataPipeline:
 
         return result
 
-    def search(
-        self,
-        query: str,
-        use_hybrid_search=True,
-        **kwargs,
-    ) -> List[dict]:
+    def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
         if kwargs.get("search_filters", None):
             raise NotImplementedError("Search filters are not supported for this data source.")
 
@@ -115,7 +96,7 @@ class DataPipeline:
                 for document_id in data["document_ids"]:
                     destination_client.delete(ref_doc_id=document_id)
 
-    def resync_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
+    def resync_entry(self, data: dict):
         raise NotImplementedError
 
     def delete_all_entries(self) -> None:

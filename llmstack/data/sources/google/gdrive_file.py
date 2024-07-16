@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import List, Optional
+from typing import Optional
 
 import requests
 from django.test import RequestFactory
@@ -10,7 +10,6 @@ from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 from llmstack.connections.apis import ConnectionsViewSet
-from llmstack.data.datasource_processor import DataSourceEntryItem
 from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
@@ -104,7 +103,7 @@ class GdriveFileSchema(BaseSource):
     def provider_slug(cls) -> str:
         return "promptly"
 
-    def get_data_documents(self, **kwargs) -> List[DataSourceEntryItem]:
+    def get_data_documents(self, **kwargs):
         file_json_data = json.loads(self.file)
         gdrive_files = list(map(lambda x: GoogleDocument(**x), file_json_data["files"]))
         docs = []

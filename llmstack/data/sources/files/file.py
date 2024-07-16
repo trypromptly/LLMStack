@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from pydantic import Field
 
@@ -8,7 +7,6 @@ from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInp
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.datasource_processor import DataSourceEntryItem
 from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
@@ -50,7 +48,7 @@ class FileSchema(BaseSource):
         mime_type, file_name, file_data = validate_parse_data_uri(files[0])
         return file_name
 
-    def get_data_documents(self) -> List[DataSourceEntryItem]:
+    def get_data_documents(self):
         files = self.file.split("|")
         docs = []
         for file in files:

@@ -11,7 +11,6 @@ from llmstack.common.blocks.data.store.vectorstore.weaviate import (
     WeaviateConfiguration,
 )
 from llmstack.common.utils.models import Config
-from llmstack.data.datasource_processor import DataSourceEntryItem
 from llmstack.data.models import DataSource
 from llmstack.data.sources.base import BaseSource
 
@@ -72,7 +71,7 @@ class WeaviateDatabaseSchema(BaseSource):
     def provider_slug(cls):
         return "weaviate"
 
-    def get_data_documents(self) -> List[DataSourceEntryItem]:
+    def get_data_documents(self):
         return []
 
 
@@ -159,7 +158,7 @@ class WeaviateDataSource:
     def get_data_documents(self, data: dict) -> List[Document]:
         raise NotImplementedError
 
-    def add_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
+    def add_entry(self, data: dict):
         raise NotImplementedError
 
     def search(
@@ -220,7 +219,7 @@ class WeaviateDataSource:
     def delete_entry(self, data: dict) -> None:
         raise NotImplementedError
 
-    def resync_entry(self, data: dict) -> Optional[DataSourceEntryItem]:
+    def resync_entry(self, data: dict):
         raise NotImplementedError
 
     def delete_all_entries(self) -> None:
