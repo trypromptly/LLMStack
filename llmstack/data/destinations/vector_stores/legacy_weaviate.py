@@ -377,7 +377,7 @@ class PromptlyLegacyWeaviateVectorStoreConfiguration(VectorStoreConfiguration):
         weaviate_client = weaviate.Client(
             url=self.url,
             additional_headers=self.additional_headers,
-            auth_client_secret=weaviate.auth.AuthApiKey(api_key=self.api_key),
+            auth_client_secret=weaviate.auth.AuthApiKey(api_key=self.api_key) if self.api_key else None,
         )
 
         return PromptlyLegacyWeaviateVectorStore(
