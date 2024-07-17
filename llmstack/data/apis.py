@@ -230,6 +230,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                 document_entry.get("document_size", 0) if document_entry.get("status") == "success" else 0
             )
             DataSourceEntry.objects.create(
+                uuid=document_entry.get("id", uuid.uuid4()),
                 name=datasource_entry_name,
                 datasource=datasource,
                 status=(

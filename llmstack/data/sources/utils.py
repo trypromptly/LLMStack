@@ -59,16 +59,29 @@ def get_source_cls(slug, provider_slug):
     return None
 
 
-def get_destination_cls(slug, provider_slug):
-    from llmstack.data.destinations.vector_stores.legacy_chromadb import (
-        PromptlyLegacyChromaDBVectorStoreConfiguration,
-    )
-    from llmstack.data.destinations.vector_stores.legacy_weaviate import (
-        PromptlyLegacyWeaviateVectorStoreConfiguration,
+def create_source_document_asset(file, datasource_uuid, document_id):
+    from llmstack.data.models import DataSourceEntryFiles
+
+    if not file:
+        return None
+
+    file_obj = DataSourceEntryFiles.create_from_data_uri(
+        file, ref_id=document_id, metadata={"datasource_uuid": datasource_uuid}
     )
 
-    for cls in [PromptlyLegacyWeaviateVectorStoreConfiguration, PromptlyLegacyChromaDBVectorStoreConfiguration]:
-        if cls.slug() == slug and cls.provider_slug() == provider_slug:
-            return cls
+    return f"objref://datasource_entries/{file_obj.uuid}"
 
-    return None
+
+def get_source_document_asset_by_objref(objref):
+    from llmstack.data.models import DataSourceEntryFiles
+
+    if not objref:
+        return None
+    asset = None
+    try:
+        category, uuid = objref.strip().split("//")[1].split("/")
+        asset = DataSourceEntryFiles.get_asset_data_uri(DataSourceEntryFiles.objects.get(uuid=uuid), include_name=True)
+    except Exception:
+        pass
+
+    return asset

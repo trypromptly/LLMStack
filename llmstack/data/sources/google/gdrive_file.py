@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 from typing import Optional
 
 import requests
@@ -9,6 +10,7 @@ from pydantic import Field
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.data.sources.base import BaseSource, SourceDataDocument
+from llmstack.data.sources.utils import create_source_document_asset
 
 logger = logging.getLogger(__name__)
 
@@ -105,10 +107,17 @@ class GdriveFileSchema(BaseSource):
         documents = []
         for file in gdrive_files:
             mime_type, file_data = export_gdrive_file(kwargs.get("user"), file.name, file.mimeType, file.model_dump())
+            data_uri = f"data:{mime_type};name={file.name};base64,{file_data}"
+            id = str(uuid.uuid4())
+            file_objref = create_source_document_asset(
+                data_uri, datasource_uuid=kwargs.get("datasource_uuid", None), document_id=id
+            )
+
             documents.append(
                 SourceDataDocument(
+                    id_=id,
                     name=file.name,
-                    content=file_data,
+                    content=file_objref,
                     mimetype=mime_type,
                     metadata={"file_name": file.name, "source": file.name, "mime_type": mime_type},
                 ),

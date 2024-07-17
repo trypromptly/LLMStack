@@ -49,7 +49,7 @@ class URLSchema(BaseSource):
     def display_name(self):
         return f"{self.urls[0]} and {len(self.urls) - 1} more"
 
-    def get_data_documents(self):
+    def get_data_documents(self, **kwargs):
         urls = self.urls.split("\n")
         urls = [url.strip().rstrip() for url_list in [url.split(",") for url in urls] for url in url_list]
         # Filter out empty urls
@@ -58,14 +58,9 @@ class URLSchema(BaseSource):
         urls = list(filter(lambda url: not url.endswith(".xml"), urls))
         documents = []
         for url in urls:
-            documents.append(
-                SourceDataDocument(
-                    name=url,
-                    metadata={"source": url},
-                )
-            )
+            documents.append(SourceDataDocument(name=url, content=url, metadata={"source": url}))
         return documents
 
     def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
-        url_text_data = get_url_data(document.name, connection=self.connection_id)
+        url_text_data = get_url_data(document.content, connection=self.connection_id)
         return document.model_copy(update={"text": url_text_data, "content": url_text_data.encode()})

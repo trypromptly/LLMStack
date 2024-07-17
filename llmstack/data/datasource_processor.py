@@ -37,9 +37,10 @@ class DataPipeline:
             source = self._source_cls(**source_data_dict)
 
         if source:
-            documents: List[SourceDataDocument] = source.get_data_documents()
+            documents: List[SourceDataDocument] = source.get_data_documents(datasource_uuid=str(self.datasource.uuid))
             for document in documents:
                 process_result = {
+                    "id": document.id_,
                     "name": document.name,
                     "size": len(document.content),
                     "document_ids": [],
@@ -64,7 +65,7 @@ class DataPipeline:
                         process_result["document_size"] = 1536 * 4 * len(document_ids)
                         process_result["document_ids"] = document_ids
 
-                    process_result["document_data"] = document.model_dump(exclude=["content"])
+                    process_result["document_data"] = document.model_dump()
                     process_result["status"] = "success"
                 except Exception as e:
                     process_result["status"] = "failed"

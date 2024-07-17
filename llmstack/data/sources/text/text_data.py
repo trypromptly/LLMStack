@@ -1,6 +1,9 @@
+import base64
 import logging
+import uuid
 
 from llmstack.data.sources.base import BaseSource, SourceDataDocument
+from llmstack.data.sources.utils import create_source_document_asset
 
 logger = logging.getLogger(__file__)
 
@@ -22,10 +25,17 @@ class TextSchema(BaseSource):
         return "promptly"
 
     def get_data_documents(self, **kwargs):
+        id = str(uuid.uuid4())
+        data_uri = f"data:text/plain;name={self.name}.txt;base64,{base64.b64encode(self.content.encode('utf-8')).decode('utf-8')}"
+        file_objref = create_source_document_asset(
+            data_uri, datasource_uuid=kwargs.get("datasource_uuid", None), document_id=id
+        )
+
         return [
             SourceDataDocument(
+                id_=id,
                 name=self.name,
-                content=self.content.encode("utf-8"),
+                content=file_objref,
                 text=self.content,
                 mimetype="text/plain",
                 metadata={"source": self.name, "mime_type": "text/plain"},
