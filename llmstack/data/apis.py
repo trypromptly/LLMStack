@@ -12,7 +12,7 @@ from rq.job import Job
 from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
 from llmstack.jobs.adhoc import AddDataSourceEntryJob, ExtractURLJob
 
-from .models import DataSource, DataSourceEntry, DataSourceType
+from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
 from .serializers import DataSourceEntrySerializer, DataSourceSerializer
 from .tasks import extract_urls_task
 
@@ -216,42 +216,41 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         if datasource and datasource.type.is_external_datasource:
             return DRFResponse({"errors": ["Cannot add entry to external data source"]}, status=400)
 
-        entry_data = request.data["entry_data"]
-        if not entry_data:
+        source_data = request.data.get("entry_data", {})
+
+        if not source_data:
             return DRFResponse({"errors": ["No entry_data provided"]}, status=400)
 
-        source_data = request.data.get("entry_data", {})
         pipeline = datasource.create_data_pipeline()
-        pipeline.run(source_data_dict=source_data)
+        result = pipeline.add_data(source_data_dict=source_data)
 
-        # entry_config = {
-        #     "input": {
-        #         "data": entry_data,
-        #         "name": result.get("name", "Entry"),
-        #         "size": result.get("dataprocessed_size", 0),
-        #     },
-        #     "document_ids": result.get("metadata", {}).get("destination", {}).get("document_ids", []),
-        #     "pipeline_data": result,
-        # }
+        for document_entry in result:
+            datasource_entry_name = document_entry.get("name", "Entry")
+            datasource_entry_size = (
+                document_entry.get("document_size", 0) if document_entry.get("status") == "success" else 0
+            )
+            DataSourceEntry.objects.create(
+                name=datasource_entry_name,
+                datasource=datasource,
+                status=(
+                    DataSourceEntryStatus.READY
+                    if document_entry.get("status") == "success"
+                    else DataSourceEntryStatus.FAILED
+                ),
+                config={
+                    "input": {
+                        "data": source_data,
+                        "name": datasource_entry_name,
+                        "size": datasource_entry_size,
+                    },
+                    "document_ids": document_entry.get("document_ids", []),
+                    "document_data": document_entry.get("document_data", {}),
+                },
+                size=datasource_entry_size,
+            )
+            datasource.size += datasource_entry_size
 
-        # if result.get("status_code", 200) != 200:
-        #     DataSourceEntry.objects.create(
-        #         name=result.get("name", "Entry"),
-        #         datasource=datasource,
-        #         status=DataSourceEntryStatus.FAILED,
-        #         config=entry_config,
-        #         size=0,
-        #     )
-        #     datasource.size += 0
-        # else:
-        #     DataSourceEntry.objects.create(
-        #         name=result.get("name", "Entry"),
-        #         datasource=datasource,
-        #         status=DataSourceEntryStatus.READY,
-        #         config=entry_config,
-        #         size=result.get("dataprocessed_size", 0),
-        #     )
-        #     datasource.size += result.get("dataprocessed_size", 0)
+        datasource.save()
 
         return DRFResponse({"status": "success"}, status=200)
 

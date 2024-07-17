@@ -6,10 +6,9 @@ import requests
 from django.test import RequestFactory
 from pydantic import Field
 
-from llmstack.common.blocks.data import DataDocument
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 from llmstack.connections.apis import ConnectionsViewSet
-from llmstack.data.sources.base import BaseSource
+from llmstack.data.sources.base import BaseSource, SourceDataDocument
 
 logger = logging.getLogger(__name__)
 
@@ -103,27 +102,24 @@ class GdriveFileSchema(BaseSource):
     def get_data_documents(self, **kwargs):
         file_json_data = json.loads(self.file)
         gdrive_files = list(map(lambda x: GoogleDocument(**x), file_json_data["files"]))
-        docs = []
+        documents = []
         for file in gdrive_files:
             mime_type, file_data = export_gdrive_file(kwargs.get("user"), file.name, file.mimeType, file.model_dump())
-            file_text = "\n\n".join(
-                [
-                    str(el)
-                    for el in extract_text_elements(
-                        mime_type=mime_type,
-                        data=file_data,
-                        file_name=file.name,
-                        extra_params=ExtraParams(openai_key=self.openai_key),
-                    )
-                ],
-            )
-            docs.append(
-                DataDocument(
+            documents.append(
+                SourceDataDocument(
                     name=file.name,
-                    content=file_text,
-                    content_text=file_text,
-                    metadata={"source": file.name, "mime_type": mime_type},
-                )
+                    content=file_data,
+                    mimetype=mime_type,
+                    metadata={"file_name": file.name, "source": file.name, "mime_type": mime_type},
+                ),
             )
+        return documents
 
-        return docs
+    def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
+        text = extract_text_elements(
+            mime_type=document.mimetype,
+            data=document.content,
+            file_name=document.name,
+            extra_params=ExtraParams(openai_key=None),
+        )
+        return document.model_copy(update={"text": text})

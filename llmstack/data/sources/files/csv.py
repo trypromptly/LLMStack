@@ -5,7 +5,7 @@ from pydantic import Field
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
 from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.sources.base import BaseSource
+from llmstack.data.sources.base import BaseSource, SourceDataDocument
 
 logger = logging.getLogger(__name__)
 
@@ -26,20 +26,21 @@ class CSVFileSchema(BaseSource):
 
     def get_data_documents(self):
         mime_type, file_name, file_data = validate_parse_data_uri(self.file)
-        if mime_type != "text/csv":
-            raise ValueError(f"Invalid mime type: {mime_type}, expected: text/csv")
+        return [
+            SourceDataDocument(
+                name=file_name,
+                content=file_data,
+                mimetype=mime_type,
+                metadata={"file_name": file_name, "mime_type": mime_type, "source": file_name},
+            )
+        ]
 
-        data_uri = f"data:{mime_type};name={file_name};base64,{file_data}"
-
+    def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
+        if document.mimetype != "text/csv":
+            raise ValueError(f"Invalid mime type: {document.mimetype}, expected: text/csv")
+        data_uri = f"data:{document.mimetype};name={document.name};base64,{document.content}"
         result = Uri().process(
-            input=UriInput(
-                env=DataSourceEnvironmentSchema(),
-                uri=data_uri,
-            ),
+            input=UriInput(env=DataSourceEnvironmentSchema(), uri=data_uri),
             configuration=UriConfiguration(),
         )
-        result.documents[0].name = file_name
-        result.documents[0].metadata["file_name"] = file_name
-        result.documents[0].metadata["mime_type"] = mime_type
-
-        return result.documents
+        return document.model_copy(update={"text": result.documents[0].content_text})

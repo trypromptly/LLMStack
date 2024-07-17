@@ -3,9 +3,8 @@ from typing import Optional
 
 from pydantic import Field
 
-from llmstack.common.blocks.data import DataDocument
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
-from llmstack.data.sources.base import BaseSource
+from llmstack.data.sources.base import BaseSource, SourceDataDocument
 
 logger = logging.getLogger(__file__)
 
@@ -57,15 +56,16 @@ class URLSchema(BaseSource):
         urls = list(set(list(filter(lambda url: url != "", urls))))
         # Filter out sitemap.xml
         urls = list(filter(lambda url: not url.endswith(".xml"), urls))
-        docs = []
+        documents = []
         for url in urls:
-            url_text_data = get_url_data(url, connection=self.connection_id)
-            docs.append(
-                DataDocument(
+            documents.append(
+                SourceDataDocument(
                     name=url,
-                    content=url_text_data,
-                    content_text=url_text_data,
                     metadata={"source": url},
                 )
             )
-        return docs
+        return documents
+
+    def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
+        url_text_data = get_url_data(document.name, connection=self.connection_id)
+        return document.model_copy(update={"text": url_text_data, "content": url_text_data.encode()})

@@ -1,7 +1,6 @@
 import logging
 
-from llmstack.common.blocks.data import DataDocument
-from llmstack.data.sources.base import BaseSource
+from llmstack.data.sources.base import BaseSource, SourceDataDocument
 
 logger = logging.getLogger(__file__)
 
@@ -24,7 +23,11 @@ class TextSchema(BaseSource):
 
     def get_data_documents(self, **kwargs):
         return [
-            DataDocument(
-                name=self.name, content=self.content, content_text=self.content, metadata={"source": self.name}
+            SourceDataDocument(
+                name=self.name,
+                content=self.content.encode("utf-8"),
+                text=self.content,
+                mimetype="text/plain",
+                metadata={"source": self.name, "mime_type": "text/plain"},
             )
         ]

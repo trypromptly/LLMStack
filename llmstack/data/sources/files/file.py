@@ -5,7 +5,7 @@ from pydantic import Field
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
 from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.sources.base import BaseSource
+from llmstack.data.sources.base import BaseSource, SourceDataDocument
 
 logger = logging.getLogger(__name__)
 
@@ -42,16 +42,23 @@ class FileSchema(BaseSource):
 
     def get_data_documents(self):
         files = self.file.split("|")
-        docs = []
+        documents = []
         for file in files:
             mime_type, file_name, file_data = validate_parse_data_uri(file)
-            data_uri = f"data:{mime_type};name={file_name};base64,{file_data}"
-            result = Uri().process(
-                input=UriInput(env=DataSourceEnvironmentSchema(), uri=data_uri),
-                configuration=UriConfiguration(),
+            documents.append(
+                SourceDataDocument(
+                    name=file_name,
+                    content=file_data,
+                    mimetype=mime_type,
+                    metadata={"file_name": file_name, "mime_type": mime_type, "source": file_name},
+                )
             )
-            for doc in result.documents:
-                doc.name = file_name
-                doc.metadata = {**doc.metadata, "file_name": file_name, "mime_type": mime_type}
-                docs.append(doc)
-        return docs
+        return documents
+
+    def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
+        data_uri = f"data:{document.mimetype};name={document.name};base64,{document.content}"
+        result = Uri().process(
+            input=UriInput(env=DataSourceEnvironmentSchema(), uri=data_uri),
+            configuration=UriConfiguration(),
+        )
+        return document.model_copy(update={"text": result.documents[0].content_text})
