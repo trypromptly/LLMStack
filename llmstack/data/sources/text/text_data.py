@@ -1,14 +1,9 @@
+import base64
 import logging
-from typing import List
+import uuid
 
-from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.data.datasource_processor import (
-    WEAVIATE_SCHEMA,
-    DataSourceEntryItem,
-    DataSourceProcessor,
-    DataSourceSchema,
-)
+from llmstack.data.sources.base import BaseSource, SourceDataDocument
+from llmstack.data.sources.utils import create_source_document_asset
 
 logger = logging.getLogger(__file__)
 
@@ -17,66 +12,32 @@ Entry configuration schema for text data source type
 """
 
 
-class TextSchema(DataSourceSchema):
+class TextSchema(BaseSource):
     name: str = "Untitled"
     content: str = ""
 
-    @staticmethod
-    def get_content_key() -> str:
-        return "content"
-
-    @staticmethod
-    def get_weaviate_schema(class_name: str) -> dict:
-        return WEAVIATE_SCHEMA.safe_substitute(
-            class_name=class_name,
-            content_key=TextSchema.get_content_key(),
-        )
-
-
-class TextDataSource(DataSourceProcessor[TextSchema]):
-    @staticmethod
-    def name() -> str:
+    @classmethod
+    def slug(cls):
         return "text"
 
-    @staticmethod
-    def slug() -> str:
-        return "text"
-
-    @staticmethod
-    def description() -> str:
-        return "Text"
-
-    @staticmethod
-    def provider_slug() -> str:
+    @classmethod
+    def provider_slug(cls):
         return "promptly"
 
-    def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        entry = TextSchema(**data)
-        data_source_entry = DataSourceEntryItem(
-            name=entry.name,
-            data=data,
+    def get_data_documents(self, **kwargs):
+        id = str(uuid.uuid4())
+        data_uri = f"data:text/plain;name={self.name}.txt;base64,{base64.b64encode(self.content.encode('utf-8')).decode('utf-8')}"
+        file_objref = create_source_document_asset(
+            data_uri, datasource_uuid=kwargs.get("datasource_uuid", None), document_id=id
         )
-        return [data_source_entry]
 
-    def get_data_documents(
-        self,
-        data: DataSourceEntryItem,
-    ) -> DataSourceEntryItem:
-        entry = TextSchema(**data.data)
-
-        docs = [
-            Document(
-                page_content_key=self.get_content_key(),
-                page_content=t,
-                metadata={
-                    "source": entry.name,
-                },
-            )
-            for t in SpacyTextSplitter(
-                chunk_size=1500,
-            ).split_text(
-                entry.content,
+        return [
+            SourceDataDocument(
+                id_=id,
+                name=self.name,
+                content=file_objref,
+                text=self.content,
+                mimetype="text/plain",
+                metadata={"source": self.name, "mime_type": "text/plain"},
             )
         ]
-
-        return docs

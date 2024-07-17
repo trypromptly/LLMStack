@@ -1,23 +1,15 @@
 import base64
 import logging
 from io import BytesIO
-from typing import List, Optional
 
 from pydantic import Field
 from unstructured.documents.elements import PageBreak
 from unstructured.partition.pdf import partition_pdf
 
-from llmstack.base.models import Profile
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.datasource_processor import (
-    WEAVIATE_SCHEMA,
-    DataSourceEntryItem,
-    DataSourceProcessor,
-    DataSourceSchema,
-)
-from llmstack.data.models import DataSource
+from llmstack.data.sources.base import BaseSource
 
 DATA_URL_REGEX = r"data:application\/(\w+);name=(.*);base64,(.*)"
 
@@ -25,7 +17,7 @@ DATA_URL_REGEX = r"data:application\/(\w+);name=(.*);base64,(.*)"
 logger = logging.getLogger(__name__)
 
 
-class PdfSchema(DataSourceSchema):
+class PdfSchema(BaseSource):
     file: str = Field(
         description="File to be processed",
         json_schema_extra={
@@ -37,60 +29,21 @@ class PdfSchema(DataSourceSchema):
         },
     )
 
-    @staticmethod
-    def get_content_key() -> str:
-        return "content"
-
-    @staticmethod
-    def get_weaviate_schema(class_name: str) -> dict:
-        return WEAVIATE_SCHEMA.safe_substitute(
-            class_name=class_name,
-            content_key=PdfSchema.get_content_key(),
-        )
-
-
-class PDFDataSource(DataSourceProcessor[PdfSchema]):
-    def __init__(self, datasource: DataSource):
-        super().__init__(datasource)
-        profile = Profile.objects.get(user=self.datasource.owner)
-        self.openai_key = profile.get_vendor_key("openai_key")
-
-    @staticmethod
-    def name() -> str:
+    @classmethod
+    def slug(cls):
         return "pdf"
 
-    @staticmethod
-    def slug() -> str:
-        return "pdf"
-
-    @staticmethod
-    def description() -> str:
-        return "PDF file"
-
-    @staticmethod
-    def provider_slug() -> str:
+    @classmethod
+    def provider_slug(cls):
         return "promptly"
 
-    def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        entry = PdfSchema(**data)
-        mime_type, file_name, file_data = validate_parse_data_uri(entry.file)
+    def display_name(self):
+        mime_type, file_name, file_data = validate_parse_data_uri(self.file)
+        return file_name
 
-        data_source_entry = DataSourceEntryItem(
-            name=file_name,
-            data={
-                "mime_type": mime_type,
-                "file_name": file_name,
-                "file_data": file_data,
-            },
-        )
-
-        return [data_source_entry]
-
-    def get_data_documents(
-        self,
-        data: DataSourceEntryItem,
-    ) -> Optional[DataSourceEntryItem]:
-        decoded_data = base64.b64decode(data.data["file_data"])
+    def get_documents(self):
+        mime_type, file_name, file_data = validate_parse_data_uri(self.file)
+        decoded_data = base64.b64decode(file_data)
         data_fp = BytesIO(decoded_data)
         page_content = ""
         page_number = 0
@@ -106,9 +59,9 @@ class PDFDataSource(DataSourceProcessor[PdfSchema]):
                             page_content_key=self.get_content_key(),
                             page_content=text_chunk,
                             metadata={
-                                "source": f"file_{data.data['file_name']}_page_{page_number}",
+                                "source": f"file_{file_name}_page_{page_number}",
                                 "page_number": page_number,
-                                "file_name": data.data["file_name"],
+                                "file_name": file_name,
                             },
                         ),
                     )

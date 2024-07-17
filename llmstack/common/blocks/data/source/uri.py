@@ -99,13 +99,7 @@ class UriConfiguration(DataSourceConfigurationSchema):
     use_scrapy: bool = False
 
 
-class Uri(
-    ProcessorInterface[
-        UriInput,
-        DataSourceOutputSchema,
-        UriConfiguration,
-    ],
-):
+class Uri(ProcessorInterface[UriInput, DataSourceOutputSchema, UriConfiguration]):
     def _extract_text(
         self,
         data: bytes,
@@ -140,27 +134,12 @@ class Uri(
         else:
             raise Exception("Invalid mime type")
 
-    def process_data_url(
-        self,
-        input: UriInput,
-        configuration: UriConfiguration,
-    ) -> DataSourceOutputSchema:
-        mime_type, file_name, base64_encoded_data = validate_parse_data_uri(
-            input.uri,
-        )
+    def process_data_url(self, input: UriInput, configuration: UriConfiguration) -> DataSourceOutputSchema:
+        mime_type, file_name, base64_encoded_data = validate_parse_data_uri(input.uri)
         decoded_data = base64.b64decode(base64_encoded_data)
-        return self._extract_text(
-            decoded_data,
-            mime_type,
-            file_name,
-            configuration,
-        )
+        return self._extract_text(decoded_data, mime_type, file_name, configuration)
 
-    def process_http_url(
-        self,
-        input: UriInput,
-        configuration: UriConfiguration,
-    ) -> DataSourceOutputSchema:
+    def process_http_url(self, input: UriInput, configuration: UriConfiguration) -> DataSourceOutputSchema:
         data = None
         if is_youtube_video_url(input.uri):
             raise Exception("Youtube video URLs are not supported")
@@ -197,11 +176,7 @@ class Uri(
 
         return self._extract_text(data, mime_type, input.uri, configuration)
 
-    def process(
-        self,
-        input: UriInput,
-        configuration: UriConfiguration,
-    ) -> DataSourceOutputSchema:
+    def process(self, input: UriInput, configuration: UriConfiguration) -> DataSourceOutputSchema:
         if input.uri.startswith("data:"):
             return self.process_data_url(input, configuration)
         elif input.uri.startswith("http://") or input.uri.startswith("https://"):

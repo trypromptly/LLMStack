@@ -1,0 +1,7 @@
+name: Singlestore
+slug: singlestore
+description: Read data from Singlestore
+pipeline:
+  destination:
+    slug: singlestore
+    provider_slug: singlestore

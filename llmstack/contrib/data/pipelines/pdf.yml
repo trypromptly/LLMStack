@@ -1,0 +1,7 @@
+name: PDF
+slug: pdf
+description: Read data from a pdf
+pipeline:
+  source:
+    slug: pdf
+    provider_slug: promptly

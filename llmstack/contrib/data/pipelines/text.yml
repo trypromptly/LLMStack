@@ -1,0 +1,7 @@
+name: Text
+slug: text
+description: Read data from a text box
+pipeline:
+  source:
+    slug: text
+    provider_slug: promptly

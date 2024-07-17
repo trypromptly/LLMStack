@@ -43,3 +43,45 @@ def extract_documents(
             ).split_text(file_content)
         ]
     return docs
+
+
+def get_source_cls(slug, provider_slug):
+    from llmstack.data.sources.files.csv import CSVFileSchema
+    from llmstack.data.sources.files.file import FileSchema
+    from llmstack.data.sources.files.pdf import PdfSchema
+    from llmstack.data.sources.text.text_data import TextSchema
+    from llmstack.data.sources.website.url import URLSchema
+
+    for cls in [CSVFileSchema, FileSchema, PdfSchema, URLSchema, TextSchema]:
+        if cls.slug() == slug and cls.provider_slug() == provider_slug:
+            return cls
+
+    return None
+
+
+def create_source_document_asset(file, datasource_uuid, document_id):
+    from llmstack.data.models import DataSourceEntryFiles
+
+    if not file:
+        return None
+
+    file_obj = DataSourceEntryFiles.create_from_data_uri(
+        file, ref_id=document_id, metadata={"datasource_uuid": datasource_uuid}
+    )
+
+    return f"objref://datasource_entries/{file_obj.uuid}"
+
+
+def get_source_document_asset_by_objref(objref):
+    from llmstack.data.models import DataSourceEntryFiles
+
+    if not objref:
+        return None
+    asset = None
+    try:
+        category, uuid = objref.strip().split("//")[1].split("/")
+        asset = DataSourceEntryFiles.get_asset_data_uri(DataSourceEntryFiles.objects.get(uuid=uuid), include_name=True)
+    except Exception:
+        pass
+
+    return asset

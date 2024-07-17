@@ -1,115 +1,57 @@
 import logging
-from typing import List, Optional
+import uuid
 
 from pydantic import Field
 
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
 from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
-from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.common.utils.splitter import CSVTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.datasource_processor import (
-    WEAVIATE_SCHEMA,
-    DataSourceEntryItem,
-    DataSourceProcessor,
-    DataSourceSchema,
+from llmstack.data.sources.base import BaseSource, SourceDataDocument
+from llmstack.data.sources.utils import (
+    create_source_document_asset,
+    get_source_document_asset_by_objref,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class CSVFileSchema(DataSourceSchema):
+class CSVFileSchema(BaseSource):
     file: str = Field(
         description="File to be processed",
-        json_schema_extra={
-            "widget": "file",
-            "accept": {
-                "text/csv": [],
-            },
-            "maxSize": 20000000,
-        },
+        json_schema_extra={"widget": "file", "accept": {"text/csv": []}, "maxSize": 20000000},
     )
 
-    @staticmethod
-    def get_content_key() -> str:
-        return "content"
+    @classmethod
+    def slug(cls):
+        return "csv"
 
-    @staticmethod
-    def get_weaviate_schema(class_name: str) -> dict:
-        return WEAVIATE_SCHEMA.safe_substitute(
-            class_name=class_name,
-            content_key=CSVFileSchema.get_content_key(),
-        )
-
-
-class CSVFileDataSource(DataSourceProcessor[CSVFileSchema]):
-    @staticmethod
-    def name() -> str:
-        return "csv_file"
-
-    @staticmethod
-    def slug() -> str:
-        return "csv_file"
-
-    @staticmethod
-    def description() -> str:
-        return "CSV file"
-
-    @staticmethod
-    def provider_slug() -> str:
+    @classmethod
+    def provider_slug(cls):
         return "promptly"
 
-    def validate_and_process(self, data: dict) -> List[DataSourceEntryItem]:
-        entry = CSVFileSchema(**data)
-        mime_type, file_name, file_data = validate_parse_data_uri(entry.file)
-        if mime_type != "text/csv":
-            raise ValueError(
-                f"Invalid mime type: {mime_type}, expected: text/csv",
-            )
-
-        data_source_entry = DataSourceEntryItem(
-            name=file_name,
-            data={
-                "mime_type": mime_type,
-                "file_name": file_name,
-                "file_data": file_data,
-            },
+    def get_data_documents(self, **kwargs):
+        id = str(uuid.uuid4())
+        mime_type, file_name, file_data = validate_parse_data_uri(self.file)
+        file_objref = create_source_document_asset(
+            self.file, datasource_uuid=kwargs.get("datasource_uuid", None), document_id=id
         )
-
-        return [data_source_entry]
-
-    def get_data_documents(
-        self,
-        data: DataSourceEntryItem,
-    ) -> Optional[DataSourceEntryItem]:
-        data_uri = f"data:{data.data['mime_type']};name={data.data['file_name']};base64,{data.data['file_data']}"
-
-        result = Uri().process(
-            input=UriInput(
-                env=DataSourceEnvironmentSchema(
-                    openai_key=self.openai_key,
-                ),
-                uri=data_uri,
-            ),
-            configuration=UriConfiguration(),
-        )
-
-        file_text = ""
-        for doc in result.documents:
-            file_text += doc.content.decode() + "\n"
-
-        docs = [
-            Document(
-                page_content_key=self.get_content_key(),
-                page_content=t,
-                metadata={
-                    "source": data.data["file_name"],
-                },
+        return [
+            SourceDataDocument(
+                id_=id,
+                name=file_name,
+                content=file_objref,
+                mimetype=mime_type,
+                metadata={"file_name": file_name, "mime_type": mime_type, "source": file_name},
             )
-            for t in CSVTextSplitter(
-                chunk_size=2,
-                length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken,
-            ).split_text(file_text)
         ]
 
-        return docs
+    def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
+        if document.mimetype != "text/csv":
+            raise ValueError(f"Invalid mime type: {document.mimetype}, expected: text/csv")
+        data_uri = get_source_document_asset_by_objref(document.content)
+
+        result = Uri().process(
+            input=UriInput(env=DataSourceEnvironmentSchema(), uri=data_uri),
+            configuration=UriConfiguration(),
+        )
+        return document.model_copy(update={"text": result.documents[0].content_text})
