@@ -5,7 +5,7 @@ from pydantic import Field
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
 from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
 from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
+from llmstack.common.utils.splitter import SpacyTextSplitter
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.data.sources.base import BaseSource
 
@@ -25,7 +25,6 @@ class FileSchema(BaseSource):
                 "audio/mpeg": [],
                 "application/rtf": [],
                 "text/plain": [],
-                "text/csv": [],
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
                 "audio/mp3": [],
@@ -62,19 +61,10 @@ class FileSchema(BaseSource):
             for doc in result.documents:
                 file_text += doc.content.decode() + "\n"
 
-            if mime_type == "text/csv":
-                for document in [
-                    Document(page_content_key=self.get_content_key(), page_content=t, metadata={"source": file_name})
-                    for t in CSVTextSplitter(
-                        chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken
-                    ).split_text(file_text)
-                ]:
-                    docs.append(document)
-            else:
-                for document in [
-                    Document(page_content_key=self.get_content_key(), page_content=t, metadata={"source": file_name})
-                    for t in SpacyTextSplitter(chunk_size=1500).split_text(file_text)
-                ]:
-                    docs.append(document)
+            for document in [
+                Document(page_content_key=self.get_content_key(), page_content=t, metadata={"source": file_name})
+                for t in SpacyTextSplitter(chunk_size=1500).split_text(file_text)
+            ]:
+                docs.append(document)
 
         return docs
