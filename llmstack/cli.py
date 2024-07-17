@@ -1,27 +1,23 @@
 import argparse
 import os
 import platform
+import random
+import re
 import secrets
-import subprocess
+import signal
 import sys
-from collections import defaultdict
+import tempfile
+import time
+import webbrowser
 
-import docker
 import toml
-
-
-def run_django_command(command: list[str] = ["manage.py", "runserver"]):
-    """Run a Django command"""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "llmstack.server.settings")
-    from django.core.management import execute_from_command_line
-
-    execute_from_command_line(command)
+from python_on_whales import DockerClient
 
 
 def prepare_env():
     """
     Verifies that .llmstack dir exists in current directory or user's home dir.
-    If it doesn't exist, creates it and returns the .env.local file path.
+    If it doesn't exist, creates it and returns the file path.
     """
     if not os.path.exists(".llmstack") and not os.path.exists(
         os.path.join(os.path.expanduser("~"), ".llmstack"),
@@ -61,6 +57,7 @@ def prepare_env():
             config["llmstack"]["secret_key"] = secrets.token_urlsafe(32)
             config["llmstack"]["cipher_key_salt"] = secrets.token_urlsafe(32)
             config["llmstack"]["database_password"] = secrets.token_urlsafe(32)
+
             # Ask the user for admin username, email and password
             sys.stdout.write(
                 "It looks like you are running LLMStack for the first time. Please provide the following information:\n\n",
@@ -90,6 +87,16 @@ def prepare_env():
                 )
                 or ""
             )
+            keep_updated = (
+                input(
+                    "Would you like to receive updates about LLMStack? (Y/n) ",
+                )
+                or "Y"
+            )
+
+            if keep_updated.lower() != "n" and config["llmstack"]["admin_email"]:
+                # Add the user to the mailing list
+                pass
 
         with open(config_path, "w") as f:
             toml.dump(config, f)
@@ -117,264 +124,196 @@ def prepare_env():
     with open(config_path, "w") as f:
         toml.dump(config, f)
 
+    # Change permissions of config file
+    os.chmod(config_path, 0o600)
+
     return config_path
 
 
-def pull_redis_image():
-    """Pull Redis image"""
-    client = docker.from_env()
-    image_name = "redis"
-    image_tag = "latest"
+def stop(exit_code=0):
+    """Stop LLMStack server"""
+    print("Stopping LLMStack server...")
+    docker_client = DockerClient(
+        compose_project_name="llmstack",
+    )
+    docker_client.compose.down()
+    sys.exit(exit_code)
 
-    # Pull image if it is not locally available
-    if not any(f"{image_name}:{image_tag}" in image.tags for image in client.images.list()):
-        print(f"[Redis] Pulling {image_name}:{image_tag}")
 
-        layers_status = defaultdict(dict)
-        response = client.api.pull(
-            image_name,
-            tag=image_tag,
-            stream=True,
-            decode=True,
-        )
-        for line in response:
-            if "id" in line:
-                layer_id = line["id"]
-                # Update the status of this layer
-                layers_status[layer_id].update(line)
+def wait_for_server(llmstack_environment, timeout):
+    """Wait for server to be up and open browser"""
 
-                # Print the current status of all layers
-                for layer, status in layers_status.items():
-                    print(
-                        f"[Redis] Layer {layer}: {status.get('status', '')} {status.get('progress', '')}",
-                    )
-                print()  # Add a blank line for better readability
+    start_time = time.time()
+    while True:
+        try:
+            import requests
 
-            elif "status" in line and "id" not in line:
-                # Global status messages without a specific layer ID
-                print(line["status"])
-
-            elif "error" in line:
-                print(f"Error: {line['error']}")
+            resp = requests.get(
+                f'http://{llmstack_environment["LLMSTACK_HOST"]}:{llmstack_environment["LLMSTACK_PORT"]}',
+            )
+            if resp.status_code < 400:
                 break
+            print(
+                "Waiting for LLMStack server to be up...",
+            )
+            time.sleep(2 + (random.randint(0, 1000) / 1000))
+
+            # If we have waited for more than 3 minutes, exit
+            if time.time() - start_time > timeout:
+                raise Exception("Timeout")
+        except Exception:
+            print(
+                "Failed to connect to LLMStack server. Exiting...",
+            )
+            logs(follow=False)
+            stop(1)
+
+    webbrowser.open(f'http://{llmstack_environment["LLMSTACK_HOST"]}:{llmstack_environment["LLMSTACK_PORT"]}')
 
 
-def start_redis(environment):
-    """Start Redis container"""
-    print("[Redis] Starting Redis")
-    client = docker.from_env()
-    redis_container = None
-    image_name = environment.get("REDIS_IMAGE_NAME", "redis")
-    image_tag = environment.get("REDIS_IMAGE_TAG", "latest")
+def logs(follow=True, stream=True):
+    """Get logs for LLMStack server"""
+    docker_client = DockerClient(
+        compose_project_name="llmstack",
+    )
 
-    # Pull image if it is not locally available
-    if not any(f"{image_name}:{image_tag}" in image.tags for image in client.images.list()):
-        print(f"[Redis] Pulling {image_name}:{image_tag}")
+    if not docker_client.compose.ps():
+        print("LLMStack server is not running.")
+        sys.exit(0)
 
-        layers_status = defaultdict(dict)
-        response = client.api.pull(
-            image_name,
-            tag=image_tag,
-            stream=True,
-            decode=True,
-        )
-        for line in response:
-            if "id" in line:
-                layer_id = line["id"]
-                # Update the status of this layer
-                layers_status[layer_id].update(line)
+    logs = docker_client.compose.logs(follow=follow, stream=stream)
+    for _, line in logs:
+        print(line.decode("utf-8").strip())
 
-                # Print the current status of all layers
-                for layer, status in layers_status.items():
-                    print(
-                        f"[Redis] Layer {layer}: {status.get('status', '')} {status.get('progress', '')}",
-                    )
-                print()  # Add a blank line for better readability
 
-            elif "status" in line and "id" not in line:
-                # Global status messages without a specific layer ID
-                print(line["status"])
+def start(llmstack_environment):
+    # Create a temp file with this environment variables to be used by docker-compose
+    with tempfile.NamedTemporaryFile(mode="w") as f:
+        for key in llmstack_environment:
+            f.write(f"{key}={llmstack_environment[key]}\n")
+        f.flush()
 
-            elif "error" in line:
-                print(f"Error: {line['error']}")
-                break
-
-    try:
-        redis_container = client.containers.get("llmstack-redis")
-    except docker.errors.NotFound:
-        redis_container = client.containers.run(
-            f"{image_name}:{image_tag}",
-            name="llmstack-redis",
-            ports={
-                "6379/tcp": os.environ["REDIS_PORT"],
-            },
-            detach=True,
-            remove=True,
-            environment=environment,
+        # Start the containers
+        docker_client = DockerClient(
+            compose_files=[os.path.join(os.path.dirname(__file__), "../docker/docker-compose.yml")],
+            compose_env_file=f.name,
         )
 
-    # Start Redis container if not already running
-    print("[Redis] Started Redis")
-    if redis_container.status != "running":
-        redis_container.start()
+        # Start the containers
+        docker_logs = docker_client.compose.up(detach=True, stream_logs=True, pull="missing")
 
-    # Stream logs starting from the end to stdout
-    for line in redis_container.logs(stream=True, follow=True):
-        print(f'[Redis] {line.decode("utf-8").strip()}')
+        compose_output = []
+        last_output_len = 0
+        for _, line in docker_logs:
+            output = line.decode("utf-8").strip()
 
+            # If the output has a hash "26f9b446db9e Extracting  450.1MB/523.6M", replace in compose output
+            if len(output.split(" ")) > 1:
+                output_part = output.split(" ")[0]
+                if len(output_part) == 12 and re.fullmatch(r"[0-9a-f]+", output_part):
+                    for i, compose_output_part in enumerate(compose_output):
+                        if output_part in compose_output_part:
+                            compose_output.pop(i)
+                            compose_output.append(output)
 
-def stop_redis():
-    """Stop Redis container"""
-    print("\nStopping Redis\n")
-    client = docker.from_env()
-    redis_container = None
-    try:
-        redis_container = client.containers.get("llmstack-redis")
-    except docker.errors.NotFound:
-        pass
+            # If the output is not already in compose_output, add it
+            if output not in compose_output:
+                compose_output.append(output)
 
-    if redis_container:
-        redis_container.stop()
+            # Clear the previous output
+            for _ in range(last_output_len - 1):
+                print("\033[F\033[K", end="")
 
-    client.close()
+            print("\n".join(compose_output[-10:]), end="", flush=True)
+            last_output_len = len(compose_output[-10:])
 
 
 def main():
     """Main entry point for the application script"""
 
     def signal_handler(sig, frame):
-        if server_process.poll() is None:  # Check if the process is still running
-            server_process.terminate()
-            server_process.wait()
-
-        stop_redis()
-        if redis_thread.is_alive():
-            redis_thread.join()
-
-        sys.exit(0)
+        stop()
 
     # Get config file path
     env_path = prepare_env()
 
     # Setup CLI args
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--host", default=None)
-    parser.add_argument("--port", default=None)
-
-    subparsers = parser.add_subparsers(dest="command")
-    subparsers.add_parser("runserver")
-
-    # Django manage.py command setup
-    manage_py_command = subparsers.add_parser("manage.py")
-    manage_py_command.add_argument(
-        "manage_py_subcommand",
-        help="Type 'manage.py <subcommand>' for a specific subcommand.",
-        nargs=argparse.REMAINDER,
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument("--host", default=None, help="Host to bind to. Defaults to localhost.")
+    parent_parser.add_argument("--port", default=None, help="Port to bind to. Defaults to 3000.")
+    parent_parser.add_argument("--quiet", default=False, action="store_true", help="Suppress output.")
+    parent_parser.add_argument("--no-browser", default=False, action="store_true", help="Do not open browser.")
+    parent_parser.add_argument("--detach", default=False, action="store_true", help="Run in detached mode.")
+    parent_parser.add_argument("--timeout", default=180, help=argparse.SUPPRESS)
+    parent_parser.add_argument(
+        "--registry",
+        default="ghcr.io/trypromptly/",
+        help=argparse.SUPPRESS,
     )
+    parent_parser.add_argument("--tag", default="latest", help=argparse.SUPPRESS)
+
+    parser = argparse.ArgumentParser(
+        description="LLMStack: No-code platform to build AI agents", parents=[parent_parser]
+    )
+    subparsers = parser.add_subparsers(title="commands", help="Available commands", dest="command")
+
+    subparsers.add_parser("start", help="Start LLMStack server", parents=[parent_parser])
+    subparsers.add_parser("stop", help="Stop LLMStack server")
+    subparsers.add_parser("logs", help="Get logs for LLMStack server")
+
+    # Load CLI args
+    args = parser.parse_args()
 
     # Load environment variables from config under [llmstack] section
     llmstack_environment = {}
-    redis_environment = {}
     with open(env_path) as f:
         config = toml.load(f)
         for key in config["llmstack"]:
             os.environ[key.upper()] = str(config["llmstack"][key])
             llmstack_environment[key.upper()] = str(config["llmstack"][key])
 
-        redis_environment["REDIS_PORT"] = (
-            llmstack_environment["REDIS_PORT"] if "REDIS_PORT" in llmstack_environment else "50379"
-        )
+    if args.command == "stop":
+        stop()
+        return
 
-        os.environ["REDIS_PORT"] = redis_environment["REDIS_PORT"]
+    # Start the containers
+    if not args.command or args.command == "start":
+        if args.host is not None:
+            llmstack_environment["LLMSTACK_HOST"] = args.host
 
-    # Load CLI args
-    args = parser.parse_args()
-    if args.port is not None:
-        os.environ["LLMSTACK_PORT"] = args.port
-    if args.host is not None:
-        os.environ["HOST"] = args.host
+        if args.port is not None:
+            llmstack_environment["LLMSTACK_PORT"] = args.port
 
-    if args.command == "runserver":
-        print("Starting LLMStack")
-        run_server_command = [
-            "manage.py",
-            "runserver",
-            os.environ["LLMSTACK_PORT"],
-        ]
-        if "windows" in platform.platform().lower():
-            run_server_command.append("--noreload")
-        run_django_command(
-            run_server_command,
-        )
-        sys.exit(0)
+        protocol = "http"
 
-    if args.command == "manage.py":
-        run_django_command(sys.argv[1:])
-        sys.exit(0)
+        llmstack_environment[
+            "SITE_URL"
+        ] = f'{protocol}://{llmstack_environment["LLMSTACK_HOST"]}:{llmstack_environment["LLMSTACK_PORT"]}'
 
-    run_django_command(["manage.py", "migrate", "--noinput"])
-    run_django_command(
-        [
-            "manage.py",
-            "loaddata",
-            os.path.join(
-                os.path.dirname(__file__),
-                "fixtures/initial_data.json",
-            ),
-        ],
-    )
-    run_django_command(["manage.py", "createcachetable"])
-    run_django_command(["manage.py", "clearcache"])
+        # Set registry and tag
+        llmstack_environment["REGISTRY"] = args.registry
+        llmstack_environment["TAG"] = args.tag
 
-    # Install default playwright browsers
-    subprocess.run(["playwright", "install", "chromium"])
+        start(llmstack_environment)
 
-    # Pull redis before starting
-    pull_redis_image()
+        # Wait for server to be up and open browser
+        if not args.no_browser:
+            wait_for_server(llmstack_environment, args.timeout)
 
-    # Start llmstack-redis container in a separate thread
-    import threading
+        print(f"LLMStack server is running at {llmstack_environment['SITE_URL']}.")
 
-    redis_thread = threading.Thread(
-        target=start_redis,
-        args=([redis_environment]),
-    )
-    redis_thread.start()
+        # If running in detached mode, return
+        if args.detach:
+            print("Running in detached mode. Use `llmstack stop` to stop the server.")
+            return
 
-    # Run llmstack runserver in a separate process
-    server_process = subprocess.Popen(["llmstack", "runserver"])
-
-    # Run llmstack rqworker in a separate process
-    print("Starting LLMStack rqworker")
-    rqworker_process = subprocess.Popen(
-        ["llmstack", "manage.py", "rqworker", "default", "--verbosity=0", "--with-scheduler"],
-    )
-
-    # Wait for server to be up at LLMSTACK_PORT and open browser
-    import time
-    import webbrowser
-
-    while True:
-        try:
-            import requests
-
-            requests.get(
-                f'http://localhost:{os.environ["LLMSTACK_PORT"]}',
-            )
-            break
-        except Exception:
-            print(
-                "Waiting for LLMStack server to be up...",
-            )
-            time.sleep(1)
-
-    webbrowser.open(f'http://localhost:{os.environ["LLMSTACK_PORT"]}')
-
-    # Wait for signal to stop
-    import signal
+        print("Press Ctrl+C to stop the server.")
 
     # Register the signal handler for SIGINT
     signal.signal(signal.SIGINT, signal_handler)
+
+    if not args.quiet or args.command == "logs":
+        logs()
 
     # Block the main thread until a signal is received
     if "windows" in platform.platform().lower():
@@ -382,17 +321,8 @@ def main():
     else:
         signal.pause()
 
-    # Stop server process
-    server_process.terminate()
-    server_process.wait()
-
-    # Stop rqworker process
-    rqworker_process.terminate()
-    rqworker_process.wait()
-
-    # Stop redis container
-    stop_redis()
-    redis_thread.join()
+    # Stop the containers
+    stop()
 
 
 if __name__ == "__main__":

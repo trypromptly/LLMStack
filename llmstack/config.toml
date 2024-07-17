@@ -1,5 +1,6 @@
 [llmstack]
 llmstack_port=3000
+llmstack_host="localhost"
 redis_host="redis"
 
 # Platform default keys (optional)
