@@ -12,7 +12,7 @@ from rq.job import Job
 from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
 from llmstack.jobs.adhoc import AddDataSourceEntryJob, ExtractURLJob
 
-from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
+from .models import DataSource, DataSourceEntry, DataSourceType
 from .serializers import DataSourceEntrySerializer, DataSourceSerializer
 from .tasks import extract_urls_task
 
@@ -222,36 +222,36 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         source_data = request.data.get("entry_data", {})
         pipeline = datasource.create_data_pipeline()
-        result = pipeline.run(source_data_dict=source_data)
+        pipeline.run(source_data_dict=source_data)
 
-        entry_config = {
-            "input": {
-                "data": entry_data,
-                "name": result.get("name", "Entry"),
-                "size": result.get("dataprocessed_size", 0),
-            },
-            "document_ids": result.get("metadata", {}).get("destination", {}).get("document_ids", []),
-            "pipeline_data": result,
-        }
+        # entry_config = {
+        #     "input": {
+        #         "data": entry_data,
+        #         "name": result.get("name", "Entry"),
+        #         "size": result.get("dataprocessed_size", 0),
+        #     },
+        #     "document_ids": result.get("metadata", {}).get("destination", {}).get("document_ids", []),
+        #     "pipeline_data": result,
+        # }
 
-        if result.get("status_code", 200) != 200:
-            DataSourceEntry.objects.create(
-                name=result.get("name", "Entry"),
-                datasource=datasource,
-                status=DataSourceEntryStatus.FAILED,
-                config=entry_config,
-                size=0,
-            )
-            datasource.size += 0
-        else:
-            DataSourceEntry.objects.create(
-                name=result.get("name", "Entry"),
-                datasource=datasource,
-                status=DataSourceEntryStatus.READY,
-                config=entry_config,
-                size=result.get("dataprocessed_size", 0),
-            )
-            datasource.size += result.get("dataprocessed_size", 0)
+        # if result.get("status_code", 200) != 200:
+        #     DataSourceEntry.objects.create(
+        #         name=result.get("name", "Entry"),
+        #         datasource=datasource,
+        #         status=DataSourceEntryStatus.FAILED,
+        #         config=entry_config,
+        #         size=0,
+        #     )
+        #     datasource.size += 0
+        # else:
+        #     DataSourceEntry.objects.create(
+        #         name=result.get("name", "Entry"),
+        #         datasource=datasource,
+        #         status=DataSourceEntryStatus.READY,
+        #         config=entry_config,
+        #         size=result.get("dataprocessed_size", 0),
+        #     )
+        #     datasource.size += result.get("dataprocessed_size", 0)
 
         return DRFResponse({"status": "success"}, status=200)
 

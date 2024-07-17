@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -6,6 +6,7 @@ from llmstack.common.blocks.base.schema import (
     CustomGenerateJsonSchema,
     get_ui_schema_from_json_schema,
 )
+from llmstack.common.blocks.data import DataDocument
 
 
 class BaseSource(BaseModel):
@@ -27,6 +28,5 @@ class BaseSource(BaseModel):
     def get_ui_schema(cls):
         return get_ui_schema_from_json_schema(cls.get_schema())
 
-    def display_name(self):
-        if self.name:
-            return self.name
+    def get_data_documents(self) -> List[DataDocument]:
+        raise NotImplementedError

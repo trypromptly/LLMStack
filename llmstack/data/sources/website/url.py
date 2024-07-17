@@ -3,8 +3,7 @@ from typing import Optional
 
 from pydantic import Field
 
-from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.common.utils.splitter import SpacyTextSplitter
+from llmstack.common.blocks.data import DataDocument
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
 from llmstack.data.sources.base import BaseSource
 
@@ -23,14 +22,7 @@ def get_url_data(url: str, connection=None, **kwargs):
         url,
         extra_params=ExtraParams(openai_key=kwargs.get("openai_key"), connection=connection),
     )
-    docs = [
-        Document(page_content_key="page_content", page_content=t, metadata={"source": url})
-        for t in SpacyTextSplitter(
-            chunk_size=1500,
-            length_func=len,
-        ).split_text(text)
-    ]
-    return docs
+    return text
 
 
 class URLSchema(BaseSource):
@@ -67,6 +59,13 @@ class URLSchema(BaseSource):
         urls = list(filter(lambda url: not url.endswith(".xml"), urls))
         docs = []
         for url in urls:
-            for document in get_url_data(url, connection=self.connection_id, openai_key=self.openai_key):
-                docs.append(document)
+            url_text_data = get_url_data(url, connection=self.connection_id)
+            docs.append(
+                DataDocument(
+                    name=url,
+                    content=url_text_data,
+                    content_text=url_text_data,
+                    metadata={"source": url},
+                )
+            )
         return docs

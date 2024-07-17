@@ -1,11 +1,14 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 from llama_index.core.schema import TextNode
 from llama_index.core.vector_stores.types import VectorStoreQuery, VectorStoreQueryMode
 
+from llmstack.common.blocks.data import DataDocument
 from llmstack.common.blocks.data.store.vectorstore import Document
+from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.data.models import DataSource
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
 
@@ -28,42 +31,42 @@ class DataPipeline:
             self._transformation = self._transformation_cls(**self.datasource.transformation_data)
 
     def run(self, source_data_dict={}):
-        source = None
+        results = []
+        source: Optional[BaseSource] = None
 
         if self._source_cls:
             source = self._source_cls(**source_data_dict)
 
-        result = {
-            "name": source.name or source.display_name(),
-            "source_data": source.model_dump(),
-            "dataprocessed_size": 0,
-            "metadata": {},
-            "status_code": 200,
-            "detail": "Success",
-        }
+        if source:
+            documents: List[DataDocument] = source.get_data_documents()
+            for document in documents:
+                nodes = []
+                text_splits = []
+                process_result = {
+                    "name": document.name,
+                    "document_data": document.model_dump(),
+                    "dataprocessed_size": 0,
+                    "metadata": document.metadata,
+                    "source_data": source.model_dump(),
+                }
 
-        nodes = []
-        try:
-            if source:
-                # Get data from the source
-                documents = source.get_data_documents()
-                nodes = list(
-                    map(
-                        lambda document: TextNode(text=document.page_content, metadata={**document.metadata}),
-                        documents,
-                    )
-                )
-            if self._destination:
-                destination_client = self._destination.initialize_client()
-                # Ids of the documents added to the destination
-                document_ids = destination_client.add(nodes=nodes)
-                result["dataprocessed_size"] = 1536 * 4 * len(document_ids)
-                result["metadata"]["destination"] = {"document_ids": document_ids, "size": 1536 * 4 * len(document_ids)}
-        except Exception as e:
-            result["status_code"] = 500
-            result["detail"] = str(e)
+                if self.datasource.type_slug == "csv":
+                    text_splits = CSVTextSplitter(
+                        chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken
+                    ).split_text(document.content_text)
+                else:
+                    text_splits = SpacyTextSplitter(chunk_size=1500).split_text(document.content_text)
 
-        return result
+                nodes = list(map(lambda t: TextNode(text=t, metadata={**document.metadata}), text_splits))
+                if self._destination:
+                    destination_client = self._destination.initialize_client()
+                    document_ids = destination_client.add(nodes=nodes)
+                    process_result["dataprocessed_size"] = 1536 * 4 * len(document_ids)
+                    process_result["document_ids"] = document_ids
+
+                results.append(process_result)
+
+        return results
 
     def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
         content_key = self.datasource.destination_text_content_key

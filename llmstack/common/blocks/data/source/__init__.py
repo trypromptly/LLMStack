@@ -5,7 +5,7 @@ from llmstack.common.blocks.data import DataDocument
 
 
 class DataSourceEnvironmentSchema(BaseSchema):
-    openai_key: str
+    openai_key: Optional[str] = None
 
 
 class DataSourceInputSchema(BaseSchema):

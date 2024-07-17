@@ -6,8 +6,7 @@ import requests
 from django.test import RequestFactory
 from pydantic import Field
 
-from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.common.utils.splitter import SpacyTextSplitter
+from llmstack.common.blocks.data import DataDocument
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.data.sources.base import BaseSource
@@ -118,15 +117,13 @@ class GdriveFileSchema(BaseSource):
                     )
                 ],
             )
-
-            for document in [
-                Document(
-                    page_content_key=self.get_content_key(),
-                    page_content=t,
-                    metadata={"source": file.name},
+            docs.append(
+                DataDocument(
+                    name=file.name,
+                    content=file_text,
+                    content_text=file_text,
+                    metadata={"source": file.name, "mime_type": mime_type},
                 )
-                for t in SpacyTextSplitter(chunk_size=1500).split_text(file_text)
-            ]:
-                docs.append(document)
+            )
 
         return docs
