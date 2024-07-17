@@ -10,6 +10,7 @@ import tempfile
 import time
 import webbrowser
 
+import requests
 import toml
 from python_on_whales import DockerClient
 
@@ -94,9 +95,9 @@ def prepare_env():
                 or "Y"
             )
 
-            if keep_updated.lower() != "n" and config["llmstack"]["admin_email"]:
+            if keep_updated.lower() != "n":
                 # Add the user to the mailing list
-                pass
+                webbrowser.open("https://forms.gle/UKQ9rumczFDvwVmg7")
 
         with open(config_path, "w") as f:
             toml.dump(config, f)
@@ -146,32 +147,35 @@ def wait_for_server(llmstack_environment, timeout):
     start_time = time.time()
     while True:
         try:
-            import requests
-
+            print(
+                "\nWaiting for LLMStack server to be up...",
+                end="",
+            )
             resp = requests.get(
                 f'http://{llmstack_environment["LLMSTACK_HOST"]}:{llmstack_environment["LLMSTACK_PORT"]}',
             )
             if resp.status_code < 400:
                 break
-            print(
-                "Waiting for LLMStack server to be up...",
-            )
+
             time.sleep(2 + (random.randint(0, 1000) / 1000))
 
             # If we have waited for more than 3 minutes, exit
             if time.time() - start_time > timeout:
-                raise Exception("Timeout")
-        except Exception:
+                raise TimeoutError("Timeout waiting for LLMStack server to be up.")
+        except TimeoutError:
             print(
-                "Failed to connect to LLMStack server. Exiting...",
+                "\nFailed to connect to LLMStack server. Exiting...",
             )
-            logs(follow=False)
+            print_compose_logs(follow=False)
             stop(1)
+        except Exception:
+            time.sleep(2 + (random.randint(0, 1000) / 1000))
+            continue
 
     webbrowser.open(f'http://{llmstack_environment["LLMSTACK_HOST"]}:{llmstack_environment["LLMSTACK_PORT"]}')
 
 
-def logs(follow=True, stream=True):
+def print_compose_logs(follow=True, stream=True):
     """Get logs for LLMStack server"""
     docker_client = DockerClient(
         compose_project_name="llmstack",
@@ -283,6 +287,7 @@ def main():
 
         if args.port is not None:
             llmstack_environment["LLMSTACK_PORT"] = args.port
+            os.environ["LLMSTACK_PORT"] = args.port
 
         protocol = "http"
 
@@ -300,7 +305,7 @@ def main():
         if not args.no_browser:
             wait_for_server(llmstack_environment, args.timeout)
 
-        print(f"LLMStack server is running at {llmstack_environment['SITE_URL']}.")
+        print(f"\n\nLLMStack server is running at {llmstack_environment['SITE_URL']}.")
 
         # If running in detached mode, return
         if args.detach:
@@ -313,7 +318,7 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     if not args.quiet or args.command == "logs":
-        logs()
+        print_compose_logs()
 
     # Block the main thread until a signal is received
     if "windows" in platform.platform().lower():

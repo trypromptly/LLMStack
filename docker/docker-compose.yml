@@ -67,7 +67,7 @@ services:
   app:
     image: ${REGISTRY:-}llmstack-app:${TAG:-latest}
     ports:
-      - 3000:80
+      - ${LLMSTACK_PORT:-9000}:80
     depends_on:
       - api
   redis:
