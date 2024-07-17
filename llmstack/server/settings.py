@@ -16,12 +16,14 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
+LLMSTACK_PORT = os.getenv("LLMSTACK_PORT", 3000)
+LLMSTACK_HOST = os.getenv("LLMSTACK_HOST", "localhost")
+
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "127.0.0.1,localhost",
+    f"127.0.0.1,localhost,{LLMSTACK_HOST}",
 ).split(",")
 
-LLMSTACK_PORT = os.getenv("LLMSTACK_PORT", 3000)
 
 RUNNER_HOST = os.getenv("RUNNER_HOST")
 RUNNER_PORT = os.getenv("RUNNER_PORT")
@@ -30,7 +32,7 @@ PLAYWRIGHT_URL = f"ws://{RUNNER_HOST}:{RUNNER_PLAYWRIGHT_PORT}" if RUNNER_HOST a
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
     "CSRF_TRUSTED_ORIGINS",
-    f"http://127.0.0.1:{LLMSTACK_PORT},http://localhost:{LLMSTACK_PORT}",
+    f"http://{LLMSTACK_HOST}:{LLMSTACK_PORT}",
 ).split(",")
 
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
