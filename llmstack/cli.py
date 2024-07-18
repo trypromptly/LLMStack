@@ -199,7 +199,7 @@ def start(llmstack_environment):
 
         # Start the containers
         docker_client = DockerClient(
-            compose_files=[os.path.join(os.path.dirname(__file__), "../docker/docker-compose.yml")],
+            compose_files=[os.path.join(os.path.dirname(__file__), "docker-compose.yml")],
             compose_env_file=f.name,
         )
 
