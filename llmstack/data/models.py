@@ -252,7 +252,7 @@ class DataSource(models.Model):
         return {}
 
     def create_data_pipeline(self):
-        from llmstack.data.datasource_processor import DataPipeline
+        from llmstack.data.pipeline import DataPipeline
 
         return DataPipeline(self)
 
