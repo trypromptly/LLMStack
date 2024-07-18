@@ -29,7 +29,7 @@ const LoginPage = lazy(() => import("./pages/login"));
 const SignupPage = lazy(() => import("./pages/signup"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
 const HistoryPage = lazy(() => import("./pages/history"));
-const SettingPage = lazy(() => import("./pages/setting"));
+const SettingsPage = lazy(() => import("./pages/settings"));
 const OrganizationPage = lazy(() => import("./pages/organization"));
 const PublishedAppPage = lazy(() => import("./pages/PublishedApp"));
 const DatasourceRenderPage = lazy(() => import("./pages/DatasourceRender"));
@@ -538,7 +538,7 @@ let routes = [
     path: "/settings",
     element: (
       <App>
-        <SettingPage />
+        <SettingsPage />
       </App>
     ),
   },

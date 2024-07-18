@@ -383,7 +383,7 @@ const SettingPage = () => {
               </Button>
               <p>&nbsp;</p>
               <Typography variant="h6" className="section-header">
-                Model Providers
+                Providers
               </Typography>
               <ProviderConfigs
                 configs={profileData?.provider_configs || {}}
