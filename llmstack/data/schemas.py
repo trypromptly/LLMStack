@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -29,3 +29,7 @@ class DataDocument(BaseModel):
     content: Optional[str] = None
     mimetype: str = Field(default="text/plain", description="MIME type of the content.")
     metadata: Optional[dict] = None
+    extra_info: Optional[dict] = None
+    nodes: Optional[List[Any]] = None
+    embeddings: Optional[List[float]] = None
+    processing_errors: Optional[List[str]] = None

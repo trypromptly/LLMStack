@@ -222,34 +222,24 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             return DRFResponse({"errors": ["No entry_data provided"]}, status=400)
 
         pipeline = datasource.create_data_pipeline()
-        result = pipeline.add_data(source_data_dict=source_data)
+        documents = pipeline.add_data(source_data_dict=source_data)
 
-        for document_entry in result:
-            datasource_entry_name = document_entry.get("name", "Entry")
-            datasource_entry_size = (
-                document_entry.get("document_size", 0) if document_entry.get("status") == "success" else 0
+        for document in documents:
+            config_obj = document.model_dump(
+                include=["text", "content", "mimetype", "metadata", "extra_info", "processing_errors"]
             )
+            node_ids = list(map(lambda n: n.id_, document.nodes))
             DataSourceEntry.objects.create(
-                uuid=document_entry.get("id", uuid.uuid4()),
-                name=datasource_entry_name,
+                uuid=document.id_,
+                name=document.name,
                 datasource=datasource,
                 status=(
-                    DataSourceEntryStatus.READY
-                    if document_entry.get("status") == "success"
-                    else DataSourceEntryStatus.FAILED
+                    DataSourceEntryStatus.READY if not document.processing_errors else DataSourceEntryStatus.FAILED
                 ),
-                config={
-                    "input": {
-                        "data": source_data,
-                        "name": datasource_entry_name,
-                        "size": datasource_entry_size,
-                    },
-                    "document_ids": document_entry.get("document_ids", []),
-                    "document_data": document_entry.get("document_data", {}),
-                },
-                size=datasource_entry_size,
+                config={**config_obj, "nodes": node_ids},
+                size=len(node_ids) * 1536,
             )
-            datasource.size += datasource_entry_size
+            datasource.size += len(node_ids) * 1536
 
         datasource.save()
 

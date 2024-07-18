@@ -31,51 +31,32 @@ class DataPipeline:
             self._transformation = self._transformation_cls(**self.datasource.transformation_data)
 
     def add_data(self, source_data_dict={}):
-        results = []
         source: Optional[BaseSource] = None
+        documents: List[DataDocument] = []
 
         if self._source_cls:
             source = self._source_cls(**source_data_dict)
 
         if source:
-            documents: List[DataDocument] = source.get_data_documents(datasource_uuid=str(self.datasource.uuid))
+            documents = source.get_data_documents(datasource_uuid=str(self.datasource.uuid))
+            documents = list(map(lambda d: source.process_document(d), documents))
+
+        for document in documents:
+            if self.datasource.type_slug == "csv":
+                text_splits = CSVTextSplitter(
+                    chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken
+                ).split_text(document.text)
+            else:
+                text_splits = SpacyTextSplitter(chunk_size=1500).split_text(document.text)
+            document.nodes = list(map(lambda t: TextNode(text=t, metadata={**document.metadata}), text_splits))
+
+        if self._destination:
             for document in documents:
-                process_result = {
-                    "id": document.id_,
-                    "name": document.name,
-                    "size": len(document.content),
-                    "document_ids": [],
-                    "document_size": 0,
-                    "status": None,
-                    "details": "",
-                    "document_data": {},
-                }
-                try:
-                    processed_document = source.process_document(document)
-                    if self.datasource.type_slug == "csv":
-                        text_splits = CSVTextSplitter(
-                            chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken
-                        ).split_text(processed_document.text)
-                    else:
-                        text_splits = SpacyTextSplitter(chunk_size=1500).split_text(processed_document.text)
+                if document.nodes:
+                    destination_client = self._destination.initialize_client()
+                    destination_client.add(nodes=document.nodes)
 
-                    nodes = list(map(lambda t: TextNode(text=t, metadata={**document.metadata}), text_splits))
-                    if self._destination:
-                        destination_client = self._destination.initialize_client()
-                        document_ids = destination_client.add(nodes=nodes)
-                        process_result["document_size"] = 1536 * 4 * len(document_ids)
-                        process_result["document_ids"] = document_ids
-
-                    process_result["document_data"] = document.model_dump()
-                    process_result["status"] = "success"
-                except Exception as e:
-                    process_result["status"] = "failed"
-                    process_result["details"] = str(e)
-                    logger.error(f"Failed to process document {document.name}: {e}")
-
-                results.append(process_result)
-
-        return results
+        return documents
 
     def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
         content_key = self.datasource.destination_text_content_key
