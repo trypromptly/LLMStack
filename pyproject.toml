@@ -8,6 +8,7 @@ readme = "README.md"
 packages = [
     {include = "docker/docker-compose.yml"},
     {include = "llmstack/config.toml"},
+    {include = "llmstack/cli.py"},
 ]
 
 [tool.poetry.scripts]
