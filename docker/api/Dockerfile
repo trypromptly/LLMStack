@@ -82,6 +82,7 @@ RUN set -ex \
 COPY --from=builder /code/llmstack/client/build/index.html /code/llmstack/client/build/index.html
 COPY --from=builder /code/llmstack/client/build/static /code/llmstack/client/build/static
 COPY --from=builder /code/llmstack/contrib/apps /code/llmstack/contrib/apps
+COPY --from=builder /code/llmstack/contrib/data /code/llmstack/contrib/data
 COPY --from=builder /code/llmstack/static /code/llmstack/static
 COPY --from=builder /code/llmstack/apps /code/llmstack/apps
 COPY --from=builder /code/llmstack/assets /code/llmstack/assets
