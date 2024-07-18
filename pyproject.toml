@@ -6,41 +6,18 @@ authors = ["Ajay Chintala"]
 license = "ELv2"
 readme = "README.md"
 packages = [
-    {include = "docker/docker-compose.yml"},
     {include = "llmstack/config.toml"},
     {include = "llmstack/cli.py"},
+    {include = "llmstack/docker-compose.yml"},
 ]
 
 [tool.poetry.scripts]
 llmstack = "llmstack.cli:main"
-llmstack-runner = "llmstack.common.runner.server:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-playwright = "1.42.0"
-sqlalchemy = "^2.0.31"
-websockify = "^0.12.0"
-geoip2 = "^4.8.0"
-typing-extensions = {version = "^4.5.0" }
-twisted = "^24.3.0"
-uvloop = [
-  {version = "^0.17.0",  platform = "darwin" },
-  {version = "^0.17.0",  platform = "linux" }
-  ]
-websockets = "^12.0"
-beautifulsoup4 = {version = "^4.12.2" }
-google-auth = {version = "^2.22.0" }
 toml = {version ="^0.10.2"}
-
 junos-eznc = {version="^2.6.8", optional=true}
-chromadb = "^0.5.3"
-pydantic = "^2.7.4"
-daphne = "^4.1.2"
-pynacl = "^1.5.0"
-llama-index-vector-stores-weaviate = "^1.0.0"
-llama-index-core = "^0.10.51"
-spacy = "^3.7.5"
-striprtf = "^0.0.26"
 python-on-whales = "^0.71.0"
 
 [tool.poetry.extras]
@@ -79,6 +56,17 @@ openai = {version ="^1.13.3"}
 grpcio-health-checking = {version ="^1.53.0"}
 pyjwt = "^2.8.0"
 psycopg2-binary = "^2.9.9"
+geoip2 = "^4.8.0"
+typing-extensions = {version = "^4.5.0" }
+twisted = "^24.3.0"
+uvloop = [
+  {version = "^0.17.0",  platform = "darwin" },
+  {version = "^0.17.0",  platform = "linux" }
+  ]
+google-auth = {version = "^2.22.0" }
+pydantic = "^2.7.4"
+daphne = "^4.1.2"
+striprtf = "^0.0.26"
 
 
 [tool.poetry.group.processors]
@@ -112,6 +100,16 @@ pypdf = "^4.2.0"
 pikepdf = "^9.0.0"
 llama-index-readers-file = "0.1.30"
 llama-index-vector-stores-chroma = "^0.1.10"
+websockets = "^12.0"
+chromadb = "^0.5.3"
+pynacl = "^1.5.0"
+llama-index-vector-stores-weaviate = "^1.0.0"
+llama-index-core = "^0.10.51"
+beautifulsoup4 = {version = "^4.12.2" }
+playwright = "1.42.0"
+sqlalchemy = "^2.0.31"
+websockify = "^0.12.0"
+spacy = "^3.7.5"
 
 
 [tool.poetry-dynamic-versioning]
