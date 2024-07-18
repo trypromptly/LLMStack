@@ -254,7 +254,7 @@ def main():
         default="ghcr.io/trypromptly/",
         help=argparse.SUPPRESS,
     )
-    parent_parser.add_argument("--tag", default="latest", help=argparse.SUPPRESS)
+    parent_parser.add_argument("--tag", help=argparse.SUPPRESS)
 
     parser = argparse.ArgumentParser(
         description="LLMStack: No-code platform to build AI agents", parents=[parent_parser]
@@ -297,7 +297,9 @@ def main():
 
         # Set registry and tag
         llmstack_environment["REGISTRY"] = args.registry
-        llmstack_environment["TAG"] = args.tag
+
+        if args.tag:
+            llmstack_environment["TAG"] = args.tag
 
         start(llmstack_environment)
 
