@@ -584,6 +584,14 @@ APP_TEMPLATES_DIR = (
     else [os.path.join(BASE_DIR, "contrib", "apps", "templates")]
 )
 
+DATA_PIPELINES_DIR = (
+    os.getenv("DATA_PIPELINES_DIR").split(",")
+    if os.getenv("DATA_PIPELINES_DIR")
+    else [
+        os.path.join(BASE_DIR, "contrib", "data", "pipelines"),
+    ]
+)
+
 SOCIALACCOUNT_PROVIDERS = {
     "connection_google": {
         # For each OAuth based provider, either add a ``SocialApp``
