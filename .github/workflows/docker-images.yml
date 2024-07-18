@@ -114,7 +114,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             REGISTRY=${{ env.REGISTRY }}/${{ env.ORG }}/
-            TAG=main
+            TAG=latest
 
       - name: Sign the published LLMStack app Docker image
         if: ${{ github.event_name != 'pull_request' }}
