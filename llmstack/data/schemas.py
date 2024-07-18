@@ -1,6 +1,7 @@
+import uuid
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class BaseProcessorBlock(BaseModel):
@@ -19,3 +20,12 @@ class DataPipelineTemplate(BaseModel):
     name: str
     description: str
     pipeline: PipelineBlock
+
+
+class DataDocument(BaseModel):
+    id_: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique ID of the document.")
+    name: Optional[str] = None
+    text: Optional[str] = None
+    content: Optional[str] = None
+    mimetype: str = Field(default="text/plain", description="MIME type of the content.")
+    metadata: Optional[dict] = None

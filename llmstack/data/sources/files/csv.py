@@ -6,7 +6,8 @@ from pydantic import Field
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
 from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.sources.base import BaseSource, SourceDataDocument
+from llmstack.data.schemas import DataDocument
+from llmstack.data.sources.base import BaseSource
 from llmstack.data.sources.utils import (
     create_source_document_asset,
     get_source_document_asset_by_objref,
@@ -36,7 +37,7 @@ class CSVFileSchema(BaseSource):
             self.file, datasource_uuid=kwargs.get("datasource_uuid", None), document_id=id
         )
         return [
-            SourceDataDocument(
+            DataDocument(
                 id_=id,
                 name=file_name,
                 content=file_objref,
@@ -45,7 +46,7 @@ class CSVFileSchema(BaseSource):
             )
         ]
 
-    def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
+    def process_document(self, document: DataDocument) -> DataDocument:
         if document.mimetype != "text/csv":
             raise ValueError(f"Invalid mime type: {document.mimetype}, expected: text/csv")
         data_uri = get_source_document_asset_by_objref(document.content)

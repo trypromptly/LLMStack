@@ -4,7 +4,8 @@ from typing import Optional
 from pydantic import Field
 
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
-from llmstack.data.sources.base import BaseSource, SourceDataDocument
+from llmstack.data.schemas import DataDocument
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__file__)
 
@@ -58,9 +59,9 @@ class URLSchema(BaseSource):
         urls = list(filter(lambda url: not url.endswith(".xml"), urls))
         documents = []
         for url in urls:
-            documents.append(SourceDataDocument(name=url, content=url, metadata={"source": url}))
+            documents.append(DataDocument(name=url, content=url, metadata={"source": url}))
         return documents
 
-    def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
+    def process_document(self, document: DataDocument) -> DataDocument:
         url_text_data = get_url_data(document.content, connection=self.connection_id)
         return document.model_copy(update={"text": url_text_data, "content": url_text_data.encode()})

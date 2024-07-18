@@ -9,7 +9,8 @@ from pydantic import Field
 
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 from llmstack.connections.apis import ConnectionsViewSet
-from llmstack.data.sources.base import BaseSource, SourceDataDocument
+from llmstack.data.schemas import DataDocument
+from llmstack.data.sources.base import BaseSource
 from llmstack.data.sources.utils import create_source_document_asset
 
 logger = logging.getLogger(__name__)
@@ -114,7 +115,7 @@ class GdriveFileSchema(BaseSource):
             )
 
             documents.append(
-                SourceDataDocument(
+                DataDocument(
                     id_=id,
                     name=file.name,
                     content=file_objref,
@@ -124,7 +125,7 @@ class GdriveFileSchema(BaseSource):
             )
         return documents
 
-    def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
+    def process_document(self, document: DataDocument) -> DataDocument:
         text = extract_text_elements(
             mime_type=document.mimetype,
             data=document.content,

@@ -7,7 +7,8 @@ from llama_index.core.vector_stores.types import VectorStoreQuery, VectorStoreQu
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.data.models import DataSource
-from llmstack.data.sources.base import BaseSource, SourceDataDocument
+from llmstack.data.schemas import DataDocument
+from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class DataPipeline:
             source = self._source_cls(**source_data_dict)
 
         if source:
-            documents: List[SourceDataDocument] = source.get_data_documents(datasource_uuid=str(self.datasource.uuid))
+            documents: List[DataDocument] = source.get_data_documents(datasource_uuid=str(self.datasource.uuid))
             for document in documents:
                 process_result = {
                     "id": document.id_,
