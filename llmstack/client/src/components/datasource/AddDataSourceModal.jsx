@@ -75,10 +75,10 @@ export function AddDataSourceModal({
             ))}
           </ButtonGroup>
           <ThemedJsonForm
-            schema={dataSourceType?.input_schema || {}}
+            schema={dataSourceType?.source?.schema || {}}
             validator={validator}
             uiSchema={{
-              ...(dataSourceType?.input_ui_schema || {}),
+              ...(dataSourceType?.source?.ui_schema || {}),
               ...{
                 "ui:submitButtonOptions": {
                   norender: true,
