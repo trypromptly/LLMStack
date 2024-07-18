@@ -13,10 +13,9 @@ from llmstack.data.sources.base import BaseSource
 logger = logging.getLogger(__name__)
 
 
-class DataPipeline:
+class DataIngestionPipeline:
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
-        self.profile = datasource.profile
         self._source_cls = self.datasource.source_cls
         self._destination_cls = self.datasource.destination_cls
         self._transformation_cls = self.datasource.transformation_cls
@@ -58,6 +57,32 @@ class DataPipeline:
 
         return documents
 
+    def delete_entry(self, data: dict) -> None:
+        if self._destination:
+            destination_client = self._destination.initialize_client()
+            if "document_ids" in data and isinstance(data["document_ids"], list):
+                for document_id in data["document_ids"]:
+                    destination_client.delete(ref_doc_id=document_id)
+
+    def resync_entry(self, data: dict):
+        raise NotImplementedError
+
+    def delete_all_entries(self) -> None:
+        if self._destination:
+            destination_client = self._destination.initialize_client()
+            destination_client.delete_index()
+
+
+class DataQueryPipeline:
+    def __init__(self, datasource: DataSource):
+        self.datasource = datasource
+        self._destination_cls = self.datasource.destination_cls
+        self._destination = None
+        self._transformation = None
+
+        if self._destination_cls:
+            self._destination = self._destination_cls(**self.datasource.destination_data)
+
     def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
         content_key = self.datasource.destination_text_content_key
 
@@ -83,21 +108,6 @@ class DataPipeline:
                 )
             )
         return documents
-
-    def delete_entry(self, data: dict) -> None:
-        if self._destination:
-            destination_client = self._destination.initialize_client()
-            if "document_ids" in data and isinstance(data["document_ids"], list):
-                for document_id in data["document_ids"]:
-                    destination_client.delete(ref_doc_id=document_id)
-
-    def resync_entry(self, data: dict):
-        raise NotImplementedError
-
-    def delete_all_entries(self) -> None:
-        if self._destination:
-            destination_client = self._destination.initialize_client()
-            destination_client.delete_index()
 
     def get_entry_text(self, data: dict) -> str:
         documents = [TextNode(metadata={}, text="")]

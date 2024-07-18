@@ -251,10 +251,15 @@ class DataSource(models.Model):
     def transformation_data(self):
         return {}
 
-    def create_data_pipeline(self):
-        from llmstack.data.pipeline import DataPipeline
+    def create_data_ingestion_pipeline(self):
+        from llmstack.data.pipeline import DataIngestionPipeline
 
-        return DataPipeline(self)
+        return DataIngestionPipeline(self)
+
+    def create_data_query_pipeline(self):
+        from llmstack.data.pipeline import DataQueryPipeline
+
+        return DataQueryPipeline(self)
 
 
 class DataSourceEntry(models.Model):

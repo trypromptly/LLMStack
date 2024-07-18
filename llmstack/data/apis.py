@@ -131,7 +131,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
             return DRFResponse(status=404)
 
         try:
-            pipeline = datasource_entry_object.datasource.create_data_pipeline()
+            pipeline = datasource_entry_object.datasource.create_data_ingestion_pipeline()
             pipeline.delete_entry(data=datasource_entry_object.config)
         except Exception as e:
             logger.error(f"Error pipeline data for entry {datasource_entry_object.config}: {e}")
@@ -147,7 +147,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         if not datasource_entry_object.user_can_read(request.user):
             return DRFResponse(status=404)
 
-        pipeline = datasource_entry_object.datasource.create_data_pipeline()
+        pipeline = datasource_entry_object.datasource.create_data_query_pipeline()
         metadata, content = pipeline.get_entry_text(datasource_entry_object.config)
         return DRFResponse({"content": content, "metadata": metadata})
 
@@ -202,7 +202,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             DataSourceEntryViewSet().delete(request=request, uid=str(entry.uuid))
 
         try:
-            pipeline = datasource.create_data_pipeline()
+            pipeline = datasource.create_data_ingestion_pipeline()
             pipeline.delete_all_entries()
         except Exception as e:
             logger.error(f"Error deleting all entries for datasource {datasource.uuid}: {e}")
@@ -221,7 +221,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         if not source_data:
             return DRFResponse({"errors": ["No entry_data provided"]}, status=400)
 
-        pipeline = datasource.create_data_pipeline()
+        pipeline = datasource.create_data_ingestion_pipeline()
         documents = pipeline.add_data(source_data_dict=source_data)
 
         for document in documents:
