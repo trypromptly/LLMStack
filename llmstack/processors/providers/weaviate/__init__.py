@@ -62,3 +62,7 @@ class WeaviateProviderConfig(ProviderConfig):
         description="Additional headers for the Weaviate instance",
         default=[],
     )
+
+    @property
+    def additional_headers_dict(self):
+        return {header.key: header.value for header in self.additional_headers}
