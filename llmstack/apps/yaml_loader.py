@@ -60,20 +60,25 @@ def get_input_model_from_fields(
             field["widget"] = "file"
             field["format"] = "data-url"
             field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
+            field["type"] = "string"
         elif field_type == "text":
             field["widget"] = "textarea"
         elif field_type == "richtext":
             field["widget"] = "richtext"
         elif field_type == "datasource":
             field["widget"] = "datasource"
+            field["type"] = "string"
             if "default" not in field:
                 field["default"] = []
         elif field_type == "connection":
             field["widget"] = "connection"
+            field["type"] = "string"
         elif field_type == "color":
             field["widget"] = "color"
+            field["type"] = "string"
         elif field_type == "voice":
             field["widget"] = "voice"
+            field["type"] = "string"
             if "stream" not in field:
                 field["format"] = "data-url"
                 field["pattern"] = "data:(.*);name=(.*);base64,(.*)"
