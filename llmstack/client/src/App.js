@@ -90,30 +90,19 @@ export default function App({ children }) {
     return () => window.removeEventListener("resize", handleResize);
   }, [setIsMobile]);
 
-  if (process.env.REACT_APP_ENABLE_APP_STORE === "true") {
-    allMenuItems = [
-      {
-        key: "2",
-        label: "Home",
-        link: "/",
-      },
-      {
-        key: "4",
-        label: "Apps",
-        link: "/apps",
-      },
-      ...menuItems,
-    ];
-  } else {
-    allMenuItems = [
-      {
-        key: "4",
-        label: "Apps",
-        link: "/",
-      },
-      ...menuItems,
-    ];
-  }
+  allMenuItems = [
+    {
+      key: "2",
+      label: "Home",
+      link: "/",
+    },
+    {
+      key: "4",
+      label: "Apps",
+      link: "/apps",
+    },
+    ...menuItems,
+  ];
 
   if (profileFlags.IS_ORGANIZATION_OWNER) {
     allMenuItems.push({
@@ -167,14 +156,19 @@ export default function App({ children }) {
           </Grid>
         </Suspense>
       </Stack>
-      {!isMobile && process.env.REACT_APP_ENABLE_APP_STORE && (
-        <div
-          dangerouslySetInnerHTML={{
-            __html:
-              '<promptly-app-embed published-app-id="f4d7cb50-1805-4add-80c5-e30334bce53c" width="100px" chat-bubble="true"></promptly-app-embed>',
-          }}
-        ></div>
-      )}
+      {!isMobile &&
+        process.env.REACT_APP_ENABLE_APP_STORE &&
+        location.pathname !== "/" &&
+        location.pathname !== "/playground" &&
+        !location.pathname.startsWith("/u/") &&
+        !location.pathname.startsWith("/a/") && (
+          <div
+            dangerouslySetInnerHTML={{
+              __html:
+                '<promptly-app-embed published-app-id="f4d7cb50-1805-4add-80c5-e30334bce53c" width="100px" chat-bubble="true"></promptly-app-embed>',
+            }}
+          ></div>
+        )}
     </div>
   );
 }

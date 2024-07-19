@@ -296,6 +296,24 @@ const defaultTheme = createTheme({
 
 let routes = [
   {
+    path: "/",
+    element: (
+      <App>
+        <HomePage />
+      </App>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/a/:appSlug",
+    element: (
+      <App>
+        <HomePage />
+      </App>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
     path: "/playground",
     element: (
       <App>
@@ -576,40 +594,6 @@ let routes = [
     element: <SessionExpiredPage />,
   },
 ];
-
-// Add store app paths
-if (process.env.REACT_APP_ENABLE_APP_STORE === "true") {
-  routes.push(
-    {
-      path: "/",
-      element: (
-        <App>
-          <HomePage />
-        </App>
-      ),
-      errorElement: <ErrorPage />,
-    },
-    {
-      path: "/a/:appSlug",
-      element: (
-        <App>
-          <HomePage />
-        </App>
-      ),
-      errorElement: <ErrorPage />,
-    },
-  );
-} else {
-  routes.push({
-    path: "/",
-    element: (
-      <App>
-        <AppStudioPage />
-      </App>
-    ),
-    errorElement: <ErrorPage />,
-  });
-}
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
