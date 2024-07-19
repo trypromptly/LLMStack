@@ -15,7 +15,7 @@ packages = [
 llmstack = "llmstack.cli:main"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.8,<4"
 toml = {version ="^0.10.2"}
 junos-eznc = {version="^2.6.8", optional=true}
 python-on-whales = "^0.71.0"
