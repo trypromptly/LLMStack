@@ -66,6 +66,7 @@ class Completions(OpenAICompletions):
                 "gpt-4-vision-preview",
                 "gpt-4",
                 "gpt-4o",
+                "gpt-4o-mini",
                 "gpt-4-0314",
                 "gpt-4-0613",
                 "gpt-4-32k",

@@ -26,6 +26,7 @@ class Model(str, Enum):
     GPT_3_5_TURBO = "gpt-3.5-turbo"
     GPT_4 = "gpt-4"
     GPT_4_O = "gpt-4o"
+    GPT_4_O_MINI = "gpt-4o-mini"
     GPT_4_TURBO_PREVIEW = "gpt-4-turbo-preview"
     GEMINI_PRO = "gemini-pro"
     CLAUDE_2_1 = "claude-2.1"
@@ -66,6 +67,7 @@ class OpenAIModel(str, Enum):
     GPT_4 = "gpt-4"
     GPT_4_TURBO_PREVIEW = "gpt-4-turbo-preview"
     GPT_4_O = "gpt-4o"
+    GPT_4_O_MINI = "gpt-4o-mini"
 
     def __str__(self):
         return self.value
@@ -76,7 +78,7 @@ class OpenAIModel(str, Enum):
 
 class OpenAIModelConfig(BaseModel):
     provider: Literal["openai"] = "openai"
-    model: OpenAIModel = Field(default=OpenAIModel.GPT_3_5_TURBO, description="The model for the LLM")
+    model: OpenAIModel = Field(default=OpenAIModel.GPT_4_O_MINI, description="The model for the LLM")
 
 
 class GoogleModel(str, Enum):

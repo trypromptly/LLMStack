@@ -292,6 +292,7 @@ class OpenAIChatCompletionsAPIProcessorOutput(OpenAIAPIProcessorOutput):
 class ChatCompletionsModel(str, Enum):
     GPT_4 = "gpt-4"
     GPT_4_O = "gpt-4o"
+    GPT_4_O_MINI = "gpt-4o-mini"
     GPT_4_32K = "gpt-4-32k"
     GPT_4_TURBO = "gpt-4-turbo"
     GPT_3_5 = "gpt-3.5-turbo"
@@ -307,7 +308,7 @@ class OpenAIChatCompletionsAPIProcessorConfiguration(
     OpenAIAPIProcessorConfiguration,
 ):
     model: ChatCompletionsModel = Field(
-        default=ChatCompletionsModel.GPT_3_5,
+        default=ChatCompletionsModel.GPT_4_O_MINI,
         description="ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.",
     )
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(

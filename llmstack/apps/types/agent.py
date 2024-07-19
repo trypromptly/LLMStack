@@ -15,6 +15,7 @@ class AgentModel(str, Enum):
     GPT_4_LATEST = "gpt-4-turbo-latest"
     GPT_4_1106_PREVIEW = "gpt-4-1106-preview"
     GPT_4_O = "gpt-4o"
+    GPT_4_O_MINI = "gpt-4o-mini"
 
     def __str__(self):
         return self.value
@@ -23,7 +24,7 @@ class AgentModel(str, Enum):
 class AgentConfigSchema(BaseSchema):
     model: AgentModel = Field(
         title="Model",
-        default=AgentModel.GPT_3_5_LATEST,
+        default=AgentModel.GPT_4_O_MINI,
         description="The model to use for the agent.",
     )
     user_message: Optional[str] = Field(

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 class TextChatCompletionsModel(str, Enum):
     GPT_4 = "gpt-4"
     GPT_4_O = "gpt-4o"
+    GPT_4_O_MINI = "gpt-4o-mini"
     GPT_4_LATEST = "gpt-4-turbo-latest"
     GPT_3_5 = "gpt-3.5-turbo"
     GPT_3_5_LATEST = "gpt-3.5-turbo-latest"
@@ -35,7 +36,7 @@ class TextChatCompletionsModel(str, Enum):
 
 class TextChatConfiguration(ApiProcessorSchema):
     model: TextChatCompletionsModel = Field(
-        default=TextChatCompletionsModel.GPT_3_5,
+        default=TextChatCompletionsModel.GPT_4_O_MINI,
         description="ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.",
         json_schema_extra={"widget": "customselect"},
     )
@@ -87,11 +88,6 @@ Keep the answers terse.""",
         title="Use Azure if available",
         default=True,
         description="Use Azure if available. Will fallback to OpenAI when unchecked",
-    )
-    use_localai_if_available: bool = Field(
-        title="Use LocalAI if available",
-        default=False,
-        description="Use LocalAI if available. Will fallback to OpenAI or Azure OpenAI when unchecked",
     )
     chat_history_in_doc_search: int = Field(
         title="Chat history in doc search",
@@ -289,7 +285,19 @@ Citations:
         elif model == "gpt-4-turbo-latest":
             model = "gpt-4-0125-preview"
 
+        # Check if azure is available
+        provider_config = None
         if self._config.use_azure_if_available:
+            try:
+                provider_config = self.get_provider_config(
+                    provider_slug="azure",
+                    processor_slug="*",
+                    model_slug=model,
+                )
+            except Exception:
+                pass
+
+        if self._config.use_azure_if_available and provider_config:
             if model == "gpt-3.5-turbo":
                 model = "gpt-35-turbo"
             elif model == "gpt-3.5-turbo-16k":
@@ -297,11 +305,6 @@ Citations:
             elif model == "gpt-3.5-turbo-latest":
                 model = "gpt-35-turbo-1106"
 
-            provider_config = self.get_provider_config(
-                provider_slug="azure",
-                processor_slug="*",
-                model_slug=model,
-            )
             openai_client = AzureOpenAI(
                 api_key=provider_config.api_key,
                 api_version=provider_config.api_version,

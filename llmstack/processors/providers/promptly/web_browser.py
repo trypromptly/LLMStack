@@ -76,6 +76,7 @@ class Model(str, Enum):
     GPT_3_5_16K = "gpt-3.5-turbo-16k"
     GPT_4 = "gpt-4"
     GPT_4_O = "gpt-4o"
+    GPT_4_O_MINI = "gpt-4o-mini"
     GPT_4_32K = "gpt-4-32k"
     GPT_4_LATEST = "gpt-4-turbo-latest"
     GPT_4_V_LATEST = "gpt-4-vision-latest"

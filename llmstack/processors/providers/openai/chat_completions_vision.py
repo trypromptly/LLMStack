@@ -33,6 +33,7 @@ class ChatCompletionsVisionModel(str, Enum):
     GPT_4_TURBO_240409 = "gpt-4-turbo-2024-04-09"
     GPT_4_1106_VISION_PREVIEW = "gpt-4-1106-vision-preview"
     GPT_4_O = "gpt-4o"
+    GPT_4_O_MINI = "gpt-4o-mini"
 
     def __str__(self):
         return self.value

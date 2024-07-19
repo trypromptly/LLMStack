@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 class ChatCompletionsModel(str, Enum):
     GPT_4 = "gpt-4"
     GPT_4_O = "gpt-4o"
+    GPT_4_O_MINI = "gpt-4o-mini"
     GPT_4_32K = "gpt-4-32k"
     GPT_4_TURBO = "gpt-4-turbo"
     GPT_3_5 = "gpt-3.5-turbo"
@@ -128,7 +129,7 @@ class ChatCompletionsConfiguration(
     ApiProcessorSchema,
 ):
     model: str = Field(
-        default=ChatCompletionsModel.GPT_3_5,
+        default=ChatCompletionsModel.GPT_4_O_MINI,
         description="ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-4` are supported.",
         json_schema_extra={
             "advanced_parameter": False,
