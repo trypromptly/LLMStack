@@ -3,7 +3,11 @@ from typing import Optional
 from pydantic import Field, PrivateAttr
 
 from llmstack.data.destinations.base import BaseDestination
-from llmstack.processors.providers.weaviate import APIKey, WeaviateProviderConfig
+from llmstack.processors.providers.weaviate import (
+    APIKey,
+    WeaviateLocalInstance,
+    WeaviateProviderConfig,
+)
 
 
 class Weaviate(BaseDestination):
@@ -23,7 +27,7 @@ class Weaviate(BaseDestination):
 
     def initialize_client(self, *args, **kwargs):
         import weaviate
-        from weaviate.connect.helpers import connect_to_custom
+        from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
 
         datasource = kwargs.get("datasource")
         self._deployment_config = datasource.profile.get_provider_config(
@@ -33,13 +37,21 @@ class Weaviate(BaseDestination):
         if isinstance(self._deployment_config.auth, APIKey):
             auth = weaviate.auth.AuthApiKey(api_key=self._deployment_config.auth.api_key)
 
-        self._client = connect_to_custom(
-            http_host=self._deployment_config.http_host,
-            http_port=self._deployment_config.http_port,
-            http_secure=self._deployment_config.http_secure,
-            grpc_host=self._deployment_config.grpc_host,
-            grpc_port=self._deployment_config.grpc_port,
-            grpc_secure=self._deployment_config.grpc_secure,
-            headers=self._deployment_config.additional_headers_dict,
-            auth_credentials=auth,
+        self._client = (
+            connect_to_custom(
+                http_host=self._deployment_config.instance.http_host,
+                http_port=self._deployment_config.instance.http_port,
+                http_secure=self._deployment_config.instance.http_secure,
+                grpc_host=self._deployment_config.instance.grpc_host,
+                grpc_port=self._deployment_config.instance.grpc_port,
+                grpc_secure=self._deployment_config.instance.grpc_secure,
+                headers=self._deployment_config.additional_headers_dict,
+                auth_credentials=auth,
+            )
+            if isinstance(self._deployment_config.instance, WeaviateLocalInstance)
+            else connect_to_wcs(
+                cluster_url=self._deployment_config.instance.cluster_url,
+                auth_credentials=auth,
+                headers=self._deployment_config.additional_headers_dict,
+            )
         )

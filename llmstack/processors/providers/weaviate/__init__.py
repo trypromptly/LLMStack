@@ -44,7 +44,7 @@ class Header(BaseModel):
 AuthType = Annotated[Union[APIKey, BasicAuthentication], Field(title="Authentication Type")]
 
 
-class WeaviateProviderConfig(ProviderConfig):
+class WeaviateLocalInstance(BaseModel):
     url: Optional[str] = Field(title="Weaviate URL", description="URL of the Weaviate instance", default="")
     http_host: Optional[str] = Field(title="HTTP Host", description="HTTP Host of the Weaviate instance", default="")
     http_port: Optional[int] = Field(title="HTTP Port", description="HTTP Port of the Weaviate instance", default=0)
@@ -55,6 +55,17 @@ class WeaviateProviderConfig(ProviderConfig):
     grpc_port: Optional[int] = Field(title="GRPC Port", description="GRPC Port of the Weaviate instance", default=0)
     grpc_secure: Optional[bool] = Field(
         title="GRPC Secure", description="GRPC Secure of the Weaviate instance", default=False
+    )
+
+
+class WeaviateCloudInstance(BaseModel):
+    cluster_url: Optional[str] = Field(title="Cluster URL", description="URL of the Weaviate cluster", default="")
+
+
+class WeaviateProviderConfig(ProviderConfig):
+    instance: Union[WeaviateLocalInstance, WeaviateCloudInstance] = Field(
+        title="Weaviate Instance Configuration",
+        description="Weaviate instance configuration",
     )
     auth: Optional[AuthType] = Field(title="Authentication", description="Authentication for the Weaviate instance")
     additional_headers: Optional[List[Header]] = Field(
