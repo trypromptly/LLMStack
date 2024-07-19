@@ -35,6 +35,7 @@ export function AddDataSourceModal({
     datasource?.type ? datasource.type : dataSourceTypes?.[0],
   );
   const [formData, setFormData] = useState({});
+  const [destinationFormData, setDestinationFormData] = useState({});
   const reloadDataSourceEntries = useReloadDataSourceEntries();
 
   return (
@@ -93,6 +94,27 @@ export function AddDataSourceModal({
             }}
             disableAdvanced={true}
           />
+          {datasource === null && dataSourceType?.destination && (
+            <ThemedJsonForm
+              schema={dataSourceType?.destination?.schema || {}}
+              validator={validator}
+              uiSchema={{
+                ...(dataSourceType?.destination?.ui_schema || {}),
+                ...{
+                  "ui:submitButtonOptions": {
+                    norender: true,
+                  },
+                  "ui:DescriptionFieldTemplate": () => null,
+                  "ui:TitleFieldTemplate": () => null,
+                },
+              }}
+              formData={destinationFormData}
+              onChange={({ data }) => {
+                setDestinationFormData(data);
+              }}
+              disableAdvanced={true}
+            />
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>

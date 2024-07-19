@@ -42,21 +42,36 @@ def load_sources():
     return sources
 
 
+def load_destinations():
+    from llmstack.data.destinations.stores.singlestore import SingleStore
+    from llmstack.data.destinations.vector_stores.weaviate import Weaviate
+
+    destinations = {}
+
+    for cls in [SingleStore, Weaviate]:
+        if not destinations.get(cls.provider_slug()):
+            destinations[cls.provider_slug()] = {}
+        destinations[cls.provider_slug()][cls.slug()] = {
+            "slug": cls.slug(),
+            "provider_slug": cls.provider_slug(),
+            "schema": cls.get_schema(),
+            "ui_schema": cls.get_ui_schema(),
+        }
+    return destinations
+
+
 class DataSourceTypeViewSet(viewsets.ViewSet):
     def list(self, request):
         processors = []
 
         sources = load_sources()
+        destinations = load_destinations()
         pipeline_templates = get_data_pipelines_from_contrib()
 
         for pipeline_template in pipeline_templates:
             source = pipeline_template.pipeline.source
-            if source:
-                source_schema = sources.get(source.provider_slug, {}).get(source.slug, {}).get("schema", {})
-                source_ui_schema = sources.get(source.provider_slug, {}).get(source.slug, {}).get("ui_schema", {})
-            else:
-                source_schema = {}
-                source_ui_schema = {}
+            destination = pipeline_template.pipeline.destination
+
             is_external_datasource = (
                 pipeline_template.pipeline.source is None
                 and pipeline_template.pipeline.transformations is None
@@ -67,13 +82,13 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                     "slug": pipeline_template.slug,
                     "name": pipeline_template.name,
                     "description": pipeline_template.description,
-                    "input_schema": source_schema,
-                    "input_ui_schema": source_ui_schema,
                     "sync_config": None,
                     "is_external_datasource": is_external_datasource,
                     "source": sources.get(source.provider_slug, {}).get(source.slug, {}) if source else {},
+                    "destination": (
+                        destinations.get(destination.provider_slug, {}).get(destination.slug, {}) if destination else {}
+                    ),
                     "transformation": [],
-                    "destination": {},
                 }
             )
 
@@ -88,14 +103,6 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                 break
 
         return DRFResponse(response) if response else DRFResponse(status=404)
-
-
-def load_transformations():
-    return {}
-
-
-def load_destinations():
-    return {}
 
 
 class DataSourceEntryViewSet(viewsets.ModelViewSet):
