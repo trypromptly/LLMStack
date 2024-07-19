@@ -622,6 +622,19 @@ class AbstractProfile(models.Model):
             "google_custom_search_cx": self.get_vendor_key("google_custom_search_cx"),
         }
 
+    def get_provider_config(
+        self, model_slug: str = "*", deployment_key: str = "*", provider_slug=None, processor_slug=None
+    ):
+        from llmstack.common.utils.provider_config import get_matched_provider_config
+
+        return get_matched_provider_config(
+            provider_configs=self.get_vendor_env().get("provider_configs", {}),
+            provider_slug=provider_slug,
+            processor_slug=processor_slug,
+            model_slug=model_slug,
+            deployment_key=deployment_key,
+        )
+
     def is_basic_subscriber(self):
         return False
 
