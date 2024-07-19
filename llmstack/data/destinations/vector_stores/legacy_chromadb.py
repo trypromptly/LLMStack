@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal, Optional
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
-from llmstack.data.destinations.vector_stores.base import VectorStoreConfiguration
+from llmstack.data.destinations.base import BaseDestination
 
 
 class PromptlyChromaVectorStore(ChromaVectorStore):
@@ -20,7 +20,7 @@ class PromptlyChromaVectorStore(ChromaVectorStore):
         self._collection._client.delete_collection(self.collection_name)
 
 
-class PromptlyLegacyChromaDBVectorStoreConfiguration(VectorStoreConfiguration):
+class PromptlyLegacyChromaDBVectorStoreConfiguration(BaseDestination):
     type: Literal["promptly_legacy_chromadb"] = "promptly_legacy_chromadb"
     path: str
     index_name: str
