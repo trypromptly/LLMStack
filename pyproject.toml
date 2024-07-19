@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llmstack"
-version = "0.1.7"
+version = "0.1.8"
 description = "Low-code platform to build generative AI apps, chatbots and agents with your data"
 authors = ["Ajay Chintala"]
 license = "ELv2"
