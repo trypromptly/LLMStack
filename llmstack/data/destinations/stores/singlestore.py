@@ -10,7 +10,7 @@ from llmstack.processors.providers.singlestore import SinglestoreProviderConfig
 
 class SingleStore(BaseDestination):
     database: str = Field(description="Database name")
-    deployment_name: Optional[str] = Field(description="Deployment name", default="default")
+    deployment_name: Optional[str] = Field(description="Deployment name", default="*")
 
     _deployment_config: Optional[SinglestoreProviderConfig] = PrivateAttr()
 
