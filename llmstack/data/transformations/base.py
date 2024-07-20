@@ -1,9 +1,17 @@
-from pydantic import BaseModel
+from typing import Annotated, Union
+
+from pydantic import BaseModel, Field
 
 from llmstack.common.blocks.base.schema import (
     CustomGenerateJsonSchema,
     get_ui_schema_from_json_schema,
 )
+from llmstack.data.transformations.splitters.csv import CSVTextSplitter
+from llmstack.data.transformations.splitters.llamindex import LlamIndexSentenceSplitter
+
+TransformationComponent = Annotated[
+    Union[CSVTextSplitter, LlamIndexSentenceSplitter], Field(title="Transformation Component")
+]
 
 
 class BaseTransformation(BaseModel):

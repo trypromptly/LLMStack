@@ -73,6 +73,11 @@ class WeaviateProviderConfig(ProviderConfig):
         description="Additional headers for the Weaviate instance",
         default=[],
     )
+    module_config: Optional[str] = Field(
+        title="Module Configuration JSON",
+        description="Module configuration for the Weaviate instance",
+        default="",
+    )
 
     @property
     def additional_headers_dict(self):
