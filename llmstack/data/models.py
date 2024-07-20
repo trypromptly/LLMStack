@@ -133,7 +133,11 @@ class DataSource(models.Model):
         from llmstack.data.yaml_loader import get_data_pipeline_template_by_slug
 
         pipeline_template = get_data_pipeline_template_by_slug(self.type_slug)
-        return get_source_cls(pipeline_template.pipeline.source.slug, pipeline_template.pipeline.source.provider_slug)
+        return (
+            get_source_cls(pipeline_template.pipeline.source.slug, pipeline_template.pipeline.source.provider_slug)
+            if pipeline_template.pipeline.source
+            else None
+        )
 
     @property
     def destination_schema(self):
@@ -148,8 +152,12 @@ class DataSource(models.Model):
         from llmstack.data.yaml_loader import get_data_pipeline_template_by_slug
 
         pipeline_template = get_data_pipeline_template_by_slug(self.type_slug)
-        return get_destination_cls(
-            pipeline_template.pipeline.source.slug, pipeline_template.pipeline.source.provider_slug
+        return (
+            get_destination_cls(
+                pipeline_template.pipeline.destination.slug, pipeline_template.pipeline.destination.provider_slug
+            )
+            if pipeline_template.pipeline.destination
+            else None
         )
 
     @property
