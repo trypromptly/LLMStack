@@ -1,13 +1,10 @@
 def get_destination_cls(slug, provider_slug):
-    from llmstack.data.destinations.vector_stores.legacy_chromadb import (
-        PromptlyLegacyChromaDBVectorStoreConfiguration,
-    )
-    from llmstack.data.destinations.vector_stores.legacy_weaviate import (
-        PromptlyLegacyWeaviateVectorStoreConfiguration,
-    )
+    from llmstack.data.destinations.vector_stores.chromadb import ChromaDB
+    from llmstack.data.destinations.vector_stores.pinecone import Pinecone
+    from llmstack.data.destinations.vector_stores.qadrant import Qdrant
+    from llmstack.data.destinations.vector_stores.weaviate import Weaviate
 
-    for cls in [PromptlyLegacyWeaviateVectorStoreConfiguration, PromptlyLegacyChromaDBVectorStoreConfiguration]:
+    for cls in [ChromaDB, Pinecone, Qdrant, Weaviate]:
         if cls.slug() == slug and cls.provider_slug() == provider_slug:
             return cls
-
     return None
