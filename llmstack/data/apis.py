@@ -86,9 +86,10 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                     "is_external_datasource": is_external_datasource,
                     "source": sources.get(source.provider_slug, {}).get(source.slug, {}) if source else {},
                     "destination": (
-                        destinations.get(destination.provider_slug, {}).get(destination.slug, {}) if destination else {}
+                        destinations.get(destination.provider_slug, {}).get(destination.slug, {})
+                        if destination and not destination.is_hidden
+                        else {}
                     ),
-                    "transformation": [],
                 }
             )
 
@@ -154,6 +155,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         if not datasource_entry_object.user_can_read(request.user):
             return DRFResponse(status=404)
 
+        logger.info(f"Getting text content for entry {uid}")
         pipeline = datasource_entry_object.datasource.create_data_query_pipeline()
         metadata, content = pipeline.get_entry_text(datasource_entry_object.config)
         return DRFResponse({"content": content, "metadata": metadata})
