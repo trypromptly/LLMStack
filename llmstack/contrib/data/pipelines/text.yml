@@ -8,4 +8,4 @@ pipeline:
   destination:
     slug: weaviate_vector_store
     provider_slug: weaviate
-    is_configurable: false
+    is_hidden: true
