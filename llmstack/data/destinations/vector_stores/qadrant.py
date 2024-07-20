@@ -7,7 +7,7 @@ from llmstack.data.destinations.base import BaseDestination
 from llmstack.processors.providers.qdrant import QdrantProviderConfig
 
 
-class Qadrant(BaseDestination):
+class Qdrant(BaseDestination):
     index_name: str = Field(description="Index/Collection name", default="text")
     text_key: Optional[str] = Field(description="Text key", default="text")
     deployment_name: Optional[str] = Field(description="Deployment name", default="default")
