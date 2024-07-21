@@ -57,17 +57,18 @@ class DataIngestionPipeline:
         return documents
 
     def delete_entry(self, data: dict) -> None:
+        node_ids = data.get("document_ids", [])
+        if not node_ids:
+            node_ids = data.get("nodes", [])
         if self._destination:
-            if "document_ids" in data and isinstance(data["document_ids"], list):
-                for document_id in data["document_ids"]:
-                    self._destination.delete(ref_doc_id=document_id)
+            self._destination.delete(node_ids=node_ids)
 
     def resync_entry(self, data: dict):
         raise NotImplementedError
 
     def delete_all_entries(self) -> None:
         if self._destination:
-            self._destination.delete_index()
+            self._destination.delete_collection()
 
 
 class DataQueryPipeline:

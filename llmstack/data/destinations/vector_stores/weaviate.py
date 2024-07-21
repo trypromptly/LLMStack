@@ -2,7 +2,7 @@ import json
 import logging
 import uuid
 from string import Template
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import weaviate
 from llama_index.core.schema import BaseNode, TextNode
@@ -114,27 +114,25 @@ def to_node(entry: Dict, text_key: str = "Text") -> TextNode:
 class WeaviateVectorStore:
     def __init__(
         self,
-        weaviate_client: Optional[Any] = None,
+        weaviate_client: Optional[weaviate.WeaviateClient] = None,
         index_name: Optional[str] = None,
         text_key: str = "content",
         auth_config: Optional[Any] = None,
     ) -> None:
         """Initialize params."""
         index_name = index_name or f"Datasource_{uuid.uuid4().hex}"
-        if not index_name[0].isupper():
-            raise ValueError("Index name must start with a capital letter, e.g. 'LlamaIndex'")
-
         self._index_name = index_name
         self._text_key = text_key
         self._auth_config = auth_config
-        self._client = cast(weaviate.WeaviateClient, weaviate_client)
+        self._weaviate_client = weaviate_client
+        self._client = weaviate_client.collections.get(self._index_name)
 
     @classmethod
     def class_name(cls) -> str:
         return "WeaviateVectorStore"
 
     @property
-    def client(self) -> weaviate.WeaviateClient:
+    def client(self) -> weaviate.collections.Collection:
         """Get client."""
         return self._client
 
@@ -142,13 +140,9 @@ class WeaviateVectorStore:
         self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None
     ) -> List[BaseNode]:
         result = []
-        logger.info(f"Fetching nodes from Weaviate with ids: {node_ids}")
         for node_id in node_ids:
             try:
-                schema_client = self.client.collections.get(self._index_name)
-                logger.info(f"Fetching node with id: {schema_client.query.fetch_objects()}")
-                object_data = schema_client.query.fetch_object_by_id(uuid=node_id)
-
+                object_data = self.client.query.fetch_object_by_id(uuid=node_id)
                 if object_data:
                     result.append(
                         TextNode(
@@ -169,9 +163,8 @@ class WeaviateVectorStore:
 
         """
         ids = [r.node_id for r in nodes]
-        schema_client = self.client.collections.get(self._index_name)
 
-        with schema_client.batch.dynamic() as batch:
+        with self.client.batch.dynamic() as batch:
             for node in nodes:
                 content_key = self._text_key
                 content = node.text
@@ -187,11 +180,11 @@ class WeaviateVectorStore:
                     batch.add_object(properties=properties, uuid=id)
         return ids
 
-    def delete(self, ref_doc_id: str, **delete_kwargs: Any) -> None:
-        self._client.data_object.delete(ref_doc_id, self._index_name)
+    def delete(self, ref_doc_id: str) -> None:
+        self.client.data.delete_by_id(uuid=ref_doc_id)
 
     def delete_index(self) -> None:
-        self._client.schema.delete_class(self._index_name)
+        self._weaviate_client.collections.delete(self._index_name)
 
     def query(self, query: VectorStoreQuery, **kwargs: Any) -> VectorStoreQueryResult:
         nodes = []
@@ -346,8 +339,21 @@ class Weaviate(BaseDestination):
             auth_config=self._deployment_config.auth,
         )
 
-    def get_nodes(self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None):
-        return self._client.get_nodes(node_ids=node_ids, filters=filters)
-
     def add(self, document: DataDocument) -> DataDocument:
         return self._client.add(document.nodes)
+
+    def delete(self, node_ids: List[str] = []) -> DataDocument:
+        for node_id in node_ids:
+            self._client.delete(node_id)
+
+    def search(self, query: str, **kwargs):
+        raise NotImplementedError
+
+    def create_collection(self):
+        pass
+
+    def delete_collection(self):
+        return self._client.delete_index()
+
+    def get_nodes(self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None):
+        return self._client.get_nodes(node_ids=node_ids, filters=filters)
