@@ -60,8 +60,11 @@ class DataIngestionPipeline:
         node_ids = data.get("document_ids", [])
         if not node_ids:
             node_ids = data.get("nodes", [])
+
+        data_document = DataDocument()
+        data_document.nodes = list(map(lambda x: TextNode(id_=x), node_ids))
         if self._destination:
-            self._destination.delete(node_ids=node_ids)
+            self._destination.delete(document=data_document)
 
     def resync_entry(self, data: dict):
         raise NotImplementedError

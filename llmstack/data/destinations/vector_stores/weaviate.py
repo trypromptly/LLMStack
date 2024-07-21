@@ -342,9 +342,9 @@ class Weaviate(BaseDestination):
     def add(self, document: DataDocument) -> DataDocument:
         return self._client.add(document.nodes)
 
-    def delete(self, node_ids: List[str] = []) -> DataDocument:
-        for node_id in node_ids:
-            self._client.delete(node_id)
+    def delete(self, document: DataDocument) -> DataDocument:
+        for node in document.nodes:
+            self._client.delete(node.node_id)
 
     def search(self, query: str, **kwargs):
         raise NotImplementedError
