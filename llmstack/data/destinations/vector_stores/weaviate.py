@@ -1,12 +1,12 @@
 import json
+import logging
 import uuid
 from string import Template
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import weaviate
 from llama_index.core.schema import BaseNode, TextNode
 from llama_index.core.vector_stores.types import (
-    BasePydanticVectorStore,
     MetadataFilters,
     VectorStoreQuery,
     VectorStoreQueryMode,
@@ -25,6 +25,7 @@ from llmstack.processors.providers.weaviate import (
     WeaviateProviderConfig,
 )
 
+logger = logging.getLogger(__name__)
 WEAVIATE_SCHEMA = Template(
     """
 {
@@ -109,50 +110,32 @@ def to_node(entry: Dict, text_key: str = "Text") -> TextNode:
     return node
 
 
-class WeaviateVectorStore(BasePydanticVectorStore):
-    stores_text: bool = True
-
-    _client = PrivateAttr()
-    _index_name = PrivateAttr()
-    _text_key = PrivateAttr()
-    _schema = PrivateAttr()
-
+class WeaviateVectorStore:
     def __init__(
         self,
         weaviate_client: Optional[Any] = None,
-        index_name: str = "Text",
+        index_name: Optional[str] = None,
         text_key: str = "content",
         auth_config: Optional[Any] = None,
-        client_kwargs: Optional[Dict[str, Any]] = None,
-        url: Optional[str] = None,
-        schema: Optional[dict] = None,
-        **kwargs: Any,
     ) -> None:
         """Initialize params."""
-        self._client = weaviate_client
-
-        self._schema = schema
-
+        index_name = index_name or f"Datasource_{uuid.uuid4().hex}"
         if not index_name[0].isupper():
-            raise ValueError("Index name must start with a capital letter, e.g. 'Text'")
+            raise ValueError("Index name must start with a capital letter, e.g. 'LlamaIndex'")
 
+        self._index_name = index_name
         self._text_key = text_key
-        super().__init__(
-            url=url,
-            index_name=index_name,
-            text_key=text_key,
-            auth_config=auth_config.__dict__ if auth_config else {},
-            client_kwargs=client_kwargs or {},
-        )
-
-    @property
-    def client(self) -> Any:
-        """Get client."""
-        return self._client
+        self._auth_config = auth_config
+        self._client = cast(weaviate.WeaviateClient, weaviate_client)
 
     @classmethod
     def class_name(cls) -> str:
         return "WeaviateVectorStore"
+
+    @property
+    def client(self) -> weaviate.WeaviateClient:
+        """Get client."""
+        return self._client
 
     def get_nodes(
         self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None
@@ -160,7 +143,13 @@ class WeaviateVectorStore(BasePydanticVectorStore):
         result = []
         for node_id in node_ids:
             try:
-                object_data = self.client.data_object.get_by_id(node_id, class_name=self._index_name)
+                schema_client = self.client.collections.get(self._index_name)
+                logger.info(f"Fetching schema_client with id: {schema_client}")
+                logger.info(f"Fetching object_data with id: {node_id}")
+                logger.info(f"Objects: {schema_client.query.fetch_objects()}")
+                object_data = schema_client.query.fetch_object_by_id(uuid=node_id)
+                logger.info(f"Fetching object_data with id: {object_data}")
+
                 if object_data:
                     result.append(
                         TextNode(
@@ -251,7 +240,7 @@ class WeaviateVectorStore(BasePydanticVectorStore):
 
 class Weaviate(BaseDestination):
     index_name: str = Field(description="Index/Collection name", default="text")
-    text_key: str = Field(description="Text key", default="text")
+    text_key: str = Field(description="Text key", default="Text")
     deployment_name: Optional[str] = Field(description="Deployment name", default="*")
     schema: Optional[str] = Field(description="Schema", default="")
 
@@ -270,23 +259,31 @@ class Weaviate(BaseDestination):
         import weaviate
         from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
 
+        datasource = kwargs.get("datasource")
+
         schema = self.schema or WEAVIATE_SCHEMA.safe_substitute(class_name=self.index_name, content_key=self.text_key)
         self._schema_dict = json.loads(schema)
 
-        datasource = kwargs.get("datasource")
-        self._deployment_config = datasource.profile.get_provider_config(
-            deployment_key=self.deployment_name, provider_slug=self.provider_slug()
-        )
+        try:
+            self._deployment_config = datasource.profile.get_provider_config(
+                deployment_key=self.deployment_name, provider_slug=self.provider_slug()
+            )
+        except Exception:
+            # TODO: Reove this after migration of vector store settings is done to provider config
+
+            auth = None
+            if datasource.profile.weaviate_api_key:
+                auth = APIKey(api_key=datasource.profile.weaviate_api_key)
+
+            self._deployment_config = WeaviateProviderConfig(
+                provider_slug="weaviate",
+                instance=WeaviateLocalInstance(url=datasource.profile.weaviate_url),
+                auth=auth,
+                additional_headers=[],
+                module_config=json.dumps(datasource.profile.weaviate_text2vec_config),
+            )
 
         additional_headers = self._deployment_config.additional_headers_dict or {}
-
-        if datasource.profile.vectostore_embedding_endpoint == "openai":
-            openai_provider_config = datasource.profile.get_provider_config(provider_slug="openai")
-            additional_headers["X-OpenAI-Api-Key"] = openai_provider_config.api_key
-
-        else:
-            azure_provider_config = datasource.profile.get_provider_config(provider_slug="azure")
-            additional_headers["X-Azure-Api-Key"] = azure_provider_config.api_key
 
         if self._deployment_config and self._deployment_config.module_config:
             self._schema_dict["classes"][0]["moduleConfig"] = json.loads(self._deployment_config.module_config)
@@ -295,29 +292,52 @@ class Weaviate(BaseDestination):
         if isinstance(self._deployment_config.auth, APIKey):
             auth = weaviate.auth.AuthApiKey(api_key=self._deployment_config.auth.api_key)
 
-        weaviate_client = (
-            connect_to_custom(
-                http_host=self._deployment_config.instance.http_host,
-                http_port=self._deployment_config.instance.http_port,
-                http_secure=self._deployment_config.instance.http_secure,
-                grpc_host=self._deployment_config.instance.grpc_host,
-                grpc_port=self._deployment_config.instance.grpc_port,
-                grpc_secure=self._deployment_config.instance.grpc_secure,
-                headers=self._deployment_config.additional_headers_dict,
-                auth_credentials=auth,
-            )
-            if isinstance(self._deployment_config.instance, WeaviateLocalInstance)
-            else connect_to_wcs(
+        weaviate_client = None
+
+        if isinstance(self._deployment_config.instance, WeaviateLocalInstance):
+            if (
+                self._deployment_config.instance.http_host
+                and self._deployment_config.instance.http_port
+                and self._deployment_config.instance.grpc_host
+                and self._deployment_config.instance.grpc_port
+            ):
+                weaviate_client = connect_to_custom(
+                    http_host=self._deployment_config.instance.http_host,
+                    http_port=self._deployment_config.instance.http_port,
+                    http_secure=self._deployment_config.instance.http_secure,
+                    grpc_host=self._deployment_config.instance.grpc_host,
+                    grpc_port=self._deployment_config.instance.grpc_port,
+                    grpc_secure=self._deployment_config.instance.grpc_secure,
+                    headers=additional_headers,
+                    auth_credentials=auth,
+                )
+            elif self._deployment_config.instance.url:
+                protocol, url = self._deployment_config.instance.url.split("://")
+                host, port = url.split(":")
+                logger.info(f"Connecting to Weaviate instance at {self._deployment_config.instance.url}")
+                weaviate_client = weaviate.WeaviateClient(
+                    connection_params=weaviate.connect.base.ConnectionParams(
+                        http=weaviate.connect.base.ProtocolParams(host=host, port=port, secure=protocol == "https"),
+                        grpc=weaviate.connect.base.ProtocolParams(host=host, port=50051, secure=protocol == "https"),
+                    ),
+                    auth_client_secret=auth,
+                    additional_headers=additional_headers,
+                )
+        else:
+            weaviate_client = connect_to_wcs(
                 cluster_url=self._deployment_config.instance.cluster_url,
                 auth_credentials=auth,
-                headers=self._deployment_config.additional_headers_dict,
+                headers=additional_headers,
             )
-        )
+
+        weaviate_client.connect()
 
         self._client = WeaviateVectorStore(
             weaviate_client=weaviate_client,
             index_name=self.index_name,
             text_key=self.text_key,
             auth_config=self._deployment_config.auth,
-            schema=self._schema_dict,
         )
+
+    def get_nodes(self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None):
+        return self._client.get_nodes(node_ids=node_ids, filters=filters)

@@ -80,6 +80,9 @@ class DataQueryPipeline:
         self._destination = None
         self._transformation = None
 
+        logger.info(f"DataIngestionPipeline: {self._destination_cls}")
+        logger.info(f"DataIngestionPipeline: {self.datasource.destination_data}")
+
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.destination_data)
 
@@ -113,9 +116,9 @@ class DataQueryPipeline:
         documents = [TextNode(metadata={}, text="")]
 
         if self._destination:
-            destination_client = self._destination.initialize_client()
+            self._destination.initialize_client(datasource=self.datasource)
             if "document_ids" in data and isinstance(data["document_ids"], list):
-                result = destination_client.get_nodes(data["document_ids"][:20])
+                result = self._destination.get_nodes(data["document_ids"][:20])
                 if result:
                     documents = result
         return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))

@@ -177,10 +177,13 @@ class DataSource(models.Model):
     def destination_data(self):
         from llmstack.data.destinations.vector_stores.weaviate import Weaviate
 
-        data = {}
         if self.config.get("destination_data"):
             data = self.config.get("destination_data")
-        elif self.config.get("destination_data") is None and isinstance(self.destination_cls, Weaviate):
+        elif (
+            not self.config.get("destination_data")
+            and self.destination_cls.slug() == Weaviate.slug()
+            and self.destination_cls.provider_slug() == Weaviate.provider_slug()
+        ):
             # Default destination data for platform vector store
             data = {
                 "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),

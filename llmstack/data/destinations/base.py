@@ -40,3 +40,6 @@ class BaseDestination(BaseModel):
 
     def delete_collection(self):
         pass
+
+    def get_nodes(self, **kwargs):
+        pass
