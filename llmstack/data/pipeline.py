@@ -25,6 +25,7 @@ class DataIngestionPipeline:
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.destination_data)
+            self._destination.initialize_client(datasource=self.datasource)
 
         if self._transformation_cls:
             self._transformation = self._transformation_cls(**self.datasource.transformation_data)
@@ -51,26 +52,22 @@ class DataIngestionPipeline:
 
         if self._destination:
             for document in documents:
-                if document.nodes:
-                    destination_client = self._destination.initialize_client()
-                    destination_client.add(nodes=document.nodes)
+                self._destination.add(document=document)
 
         return documents
 
     def delete_entry(self, data: dict) -> None:
         if self._destination:
-            destination_client = self._destination.initialize_client()
             if "document_ids" in data and isinstance(data["document_ids"], list):
                 for document_id in data["document_ids"]:
-                    destination_client.delete(ref_doc_id=document_id)
+                    self._destination.delete(ref_doc_id=document_id)
 
     def resync_entry(self, data: dict):
         raise NotImplementedError
 
     def delete_all_entries(self) -> None:
         if self._destination:
-            destination_client = self._destination.initialize_client()
-            destination_client.delete_index()
+            self._destination.delete_index()
 
 
 class DataQueryPipeline:
@@ -79,9 +76,6 @@ class DataQueryPipeline:
         self._destination_cls = self.datasource.destination_cls
         self._destination = None
         self._transformation = None
-
-        logger.info(f"DataIngestionPipeline: {self._destination_cls}")
-        logger.info(f"DataIngestionPipeline: {self.datasource.destination_data}")
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.destination_data)
@@ -114,11 +108,14 @@ class DataQueryPipeline:
 
     def get_entry_text(self, data: dict) -> str:
         documents = [TextNode(metadata={}, text="")]
+        node_ids = data.get("document_ids", [])
+        if not node_ids:
+            node_ids = data.get("nodes", [])
 
         if self._destination:
             self._destination.initialize_client(datasource=self.datasource)
-            if "document_ids" in data and isinstance(data["document_ids"], list):
-                result = self._destination.get_nodes(data["document_ids"][:20])
+            if node_ids:
+                result = self._destination.get_nodes(node_ids[:20])
                 if result:
                     documents = result
         return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))

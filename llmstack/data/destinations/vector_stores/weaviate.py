@@ -19,6 +19,7 @@ from llama_index.core.vector_stores.utils import (
 from pydantic import Field, PrivateAttr
 
 from llmstack.data.destinations.base import BaseDestination
+from llmstack.data.schemas import DataDocument
 from llmstack.processors.providers.weaviate import (
     APIKey,
     WeaviateLocalInstance,
@@ -141,28 +142,26 @@ class WeaviateVectorStore:
         self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None
     ) -> List[BaseNode]:
         result = []
+        logger.info(f"Fetching nodes from Weaviate with ids: {node_ids}")
         for node_id in node_ids:
             try:
                 schema_client = self.client.collections.get(self._index_name)
-                logger.info(f"Fetching schema_client with id: {schema_client}")
-                logger.info(f"Fetching object_data with id: {node_id}")
-                logger.info(f"Objects: {schema_client.query.fetch_objects()}")
+                logger.info(f"Fetching node with id: {schema_client.query.fetch_objects()}")
                 object_data = schema_client.query.fetch_object_by_id(uuid=node_id)
-                logger.info(f"Fetching object_data with id: {object_data}")
 
                 if object_data:
                     result.append(
                         TextNode(
                             id_=node_id,
-                            text=object_data["properties"].get(self._text_key, ""),
-                            metadata={k: v for k, v in object_data["properties"].items() if k != self._text_key},
+                            text=object_data.properties.get(self._text_key, ""),
+                            metadata={k: v for k, v in object_data.properties.items() if k != self._text_key},
                         )
                     )
             except weaviate.exceptions.UnexpectedStatusCodeException:
                 pass
         return result
 
-    def add(self, nodes: List[BaseNode], **add_kwargs: Any) -> List[str]:
+    def add(self, nodes: List[BaseNode]) -> List[str]:
         """Add nodes to index.
 
         Args:
@@ -170,7 +169,9 @@ class WeaviateVectorStore:
 
         """
         ids = [r.node_id for r in nodes]
-        with self.client.batch as batch:
+        schema_client = self.client.collections.get(self._index_name)
+
+        with schema_client.batch.dynamic() as batch:
             for node in nodes:
                 content_key = self._text_key
                 content = node.text
@@ -181,9 +182,9 @@ class WeaviateVectorStore:
                     properties[metadata_key] = metadata[metadata_key]
                 if node.embedding:
                     # Vectors we provided with the document use them
-                    batch.add_data_object(properties, self._index_name, id, vector=node.embedding)
+                    batch.add_object(properties=properties, uuid=id, vector=node.embedding)
                 else:
-                    batch.add_data_object(properties, self._index_name, id)
+                    batch.add_object(properties=properties, uuid=id)
         return ids
 
     def delete(self, ref_doc_id: str, **delete_kwargs: Any) -> None:
@@ -284,6 +285,12 @@ class Weaviate(BaseDestination):
             )
 
         additional_headers = self._deployment_config.additional_headers_dict or {}
+        if datasource.profile.vectostore_embedding_endpoint == "azure_openai":
+            azure_deployment_config = datasource.profile.get_provider_config(provider_slug="azure")
+            additional_headers["X-Azure-Api-Key"] = azure_deployment_config.api_key
+        else:
+            openai_deployment_config = datasource.profile.get_provider_config(provider_slug="openai")
+            additional_headers["X-Openai-Api-Key"] = openai_deployment_config.api_key
 
         if self._deployment_config and self._deployment_config.module_config:
             self._schema_dict["classes"][0]["moduleConfig"] = json.loads(self._deployment_config.module_config)
@@ -341,3 +348,6 @@ class Weaviate(BaseDestination):
 
     def get_nodes(self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None):
         return self._client.get_nodes(node_ids=node_ids, filters=filters)
+
+    def add(self, document: DataDocument) -> DataDocument:
+        return self._client.add(document.nodes)
