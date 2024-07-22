@@ -400,82 +400,86 @@ export default function Sidebar({ menuItems }) {
               />
             </ListItemButton>
           </ListItem>
-          {isLoggedIn && <Divider sx={{ margin: "5px 0" }} />}
-          {isLoggedIn && (
-            <ListItem key={"profile-icon"} disablePadding>
-              <ListItemButton
-                sx={{
-                  minHeight: 48,
-                  justifyContent: open ? "initial" : "center",
-                  px: 2.5,
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-
-                  if (isLoggedIn && profile?.username) {
-                    navigate(`/u/${profile?.username}`);
-                  }
-                }}
-              >
-                <ListItemIcon
-                  sx={(theme) => ({
-                    minWidth: 0,
-                    mr: open ? 3 : "auto",
-                    justifyContent: "center",
-                    color: "#666",
-                  })}
-                >
-                  {" "}
-                  {profile && profile.avatar ? (
-                    <Avatar
-                      alt={profile.name}
-                      src={profile.avatar}
-                      sx={{
-                        width: 26,
-                        height: 26,
-                        cursor: "pointer",
-                        border: "1px solid #728bd0",
-                        margin: "0 auto",
-                      }}
-                    />
-                  ) : (
-                    <Avatar
-                      sx={{
-                        width: 26,
-                        height: 26,
-                        fontSize: "0.8rem",
-                        cursor: "pointer",
-                        border: "1px solid #728bd0",
-                        margin: "0 auto",
-                      }}
-                    >{`${
-                      profile?.name
-                        ?.split(" ")
-                        .map((x) => x[0])
-                        .join("") || "P"
-                    }`}</Avatar>
-                  )}
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    profile && profile.name && profile.name.length > 0
-                      ? profile.name
-                      : "Human"
-                  }
+          {isLoggedIn &&
+            process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT && (
+              <Divider sx={{ margin: "5px 0" }} />
+            )}
+          {isLoggedIn &&
+            process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT && (
+              <ListItem key={"profile-icon"} disablePadding>
+                <ListItemButton
                   sx={{
-                    opacity: open ? 1 : 0,
-                    display: open ? "block" : "none",
-                    margin: 0,
-                    maxWidth: "72px",
-                    "& .MuiTypography-root": {
-                      fontSize: "clamp(9px, 2vw, 16px)",
-                      whiteSpace: "normal",
-                    },
+                    minHeight: 48,
+                    justifyContent: open ? "initial" : "center",
+                    px: 2.5,
                   }}
-                />
-              </ListItemButton>
-            </ListItem>
-          )}
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    if (isLoggedIn && profile?.username) {
+                      navigate(`/u/${profile?.username}`);
+                    }
+                  }}
+                >
+                  <ListItemIcon
+                    sx={(theme) => ({
+                      minWidth: 0,
+                      mr: open ? 3 : "auto",
+                      justifyContent: "center",
+                      color: "#666",
+                    })}
+                  >
+                    {" "}
+                    {profile && profile.avatar ? (
+                      <Avatar
+                        alt={profile.name}
+                        src={profile.avatar}
+                        sx={{
+                          width: 26,
+                          height: 26,
+                          cursor: "pointer",
+                          border: "1px solid #728bd0",
+                          margin: "0 auto",
+                        }}
+                      />
+                    ) : (
+                      <Avatar
+                        sx={{
+                          width: 26,
+                          height: 26,
+                          fontSize: "0.8rem",
+                          cursor: "pointer",
+                          border: "1px solid #728bd0",
+                          margin: "0 auto",
+                        }}
+                      >{`${
+                        profile?.name
+                          ?.split(" ")
+                          .map((x) => x[0])
+                          .join("") || "P"
+                      }`}</Avatar>
+                    )}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      profile && profile.name && profile.name.length > 0
+                        ? profile.name
+                        : "Human"
+                    }
+                    sx={{
+                      opacity: open ? 1 : 0,
+                      display: open ? "block" : "none",
+                      margin: 0,
+                      maxWidth: "72px",
+                      "& .MuiTypography-root": {
+                        fontSize: "clamp(9px, 2vw, 16px)",
+                        whiteSpace: "normal",
+                      },
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )}
         </List>
       </Drawer>
       <LoginDialog

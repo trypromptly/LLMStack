@@ -113,7 +113,7 @@ const TokenField = ({ token }) => {
   return (
     <Box sx={{ padding: "15px 0" }}>
       <TextField
-        label="Promptly Token"
+        label={`${process.env.REACT_APP_SITE_NAME || "LLMStack"} Token`}
         value={token}
         fullWidth
         variant="outlined"
@@ -302,85 +302,89 @@ const SettingPage = () => {
                 Settings
               </Typography>
               <TokenField token={formData.token} />
-              <Paper sx={{ width: "100%" }}>
-                <Stack gap={2} padding={1} spacing={2}>
-                  <ThemedJsonForm
-                    schema={settingsSchema}
-                    uiSchema={settingsUiSchema}
-                    formData={formData}
-                    validator={validator}
-                    disableAdvanced={true}
-                    onChange={(e) => {
-                      const newFormData = { ...formData, ...e.formData };
-                      setUpdateKeys(
-                        new Set(
-                          Object.keys(newFormData).filter((key) => {
-                            return e.formData[key] !== formData[key];
-                          }),
-                        ),
-                      );
-                      setFormData(newFormData);
-                    }}
-                    formRef={formRef}
-                    customValidate={settingsValidate}
-                  />
-                  <Divider />
-                  <Box sx={{ my: 2 }}>
-                    <InputLabel>Custom Logo</InputLabel>
-                    {formData.logo && (
-                      <img
-                        src={formData.logo}
-                        alt="Logo"
-                        style={{ height: 50, margin: 10, display: "block" }}
+              {process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT && (
+                <>
+                  <Paper sx={{ width: "100%" }}>
+                    <Stack gap={2} padding={1} spacing={2}>
+                      <ThemedJsonForm
+                        schema={settingsSchema}
+                        uiSchema={settingsUiSchema}
+                        formData={formData}
+                        validator={validator}
+                        disableAdvanced={true}
+                        onChange={(e) => {
+                          const newFormData = { ...formData, ...e.formData };
+                          setUpdateKeys(
+                            new Set(
+                              Object.keys(newFormData).filter((key) => {
+                                return e.formData[key] !== formData[key];
+                              }),
+                            ),
+                          );
+                          setFormData(newFormData);
+                        }}
+                        formRef={formRef}
+                        customValidate={settingsValidate}
                       />
-                    )}
-                    <Tooltip
-                      title={
-                        !profileFlags.CAN_UPLOAD_APP_LOGO
-                          ? "You need to be a Pro subscriber to upload a custom logo"
-                          : ""
-                      }
-                    >
-                      <Button
-                        component="label"
-                        variant="outlined"
-                        startIcon={<FileUpload />}
-                        disabled={!profileFlags.CAN_UPLOAD_APP_LOGO}
-                      >
-                        Upload
-                        <VisuallyHiddenInput
-                          type="file"
-                          accept="image/*"
-                          disabled={!profileFlags.CAN_UPLOAD_APP_LOGO}
-                          onChange={(e) => {
-                            const files = e.target.files;
-                            if (files && files.length > 0) {
-                              const reader = new FileReader();
-                              reader.readAsDataURL(files[0]);
-                              reader.onload = (e) => {
-                                setFormData({
-                                  ...formData,
-                                  logo: e.target?.result,
-                                });
-                                setUpdateKeys(updateKeys.add("logo"));
-                              };
-                            }
-                          }}
-                        />
-                      </Button>
-                    </Tooltip>
-                  </Box>
-                </Stack>
-              </Paper>
-              <Button
-                variant="contained"
-                sx={{ alignSelf: "end", width: "fit-content" }}
-                onClick={() => {
-                  handleUpdate(updateKeys);
-                }}
-              >
-                Update
-              </Button>
+                      <Divider />
+                      <Box sx={{ my: 2 }}>
+                        <InputLabel>Custom Logo</InputLabel>
+                        {formData.logo && (
+                          <img
+                            src={formData.logo}
+                            alt="Logo"
+                            style={{ height: 50, margin: 10, display: "block" }}
+                          />
+                        )}
+                        <Tooltip
+                          title={
+                            !profileFlags.CAN_UPLOAD_APP_LOGO
+                              ? "You need to be a Pro subscriber to upload a custom logo"
+                              : ""
+                          }
+                        >
+                          <Button
+                            component="label"
+                            variant="outlined"
+                            startIcon={<FileUpload />}
+                            disabled={!profileFlags.CAN_UPLOAD_APP_LOGO}
+                          >
+                            Upload
+                            <VisuallyHiddenInput
+                              type="file"
+                              accept="image/*"
+                              disabled={!profileFlags.CAN_UPLOAD_APP_LOGO}
+                              onChange={(e) => {
+                                const files = e.target.files;
+                                if (files && files.length > 0) {
+                                  const reader = new FileReader();
+                                  reader.readAsDataURL(files[0]);
+                                  reader.onload = (e) => {
+                                    setFormData({
+                                      ...formData,
+                                      logo: e.target?.result,
+                                    });
+                                    setUpdateKeys(updateKeys.add("logo"));
+                                  };
+                                }
+                              }}
+                            />
+                          </Button>
+                        </Tooltip>
+                      </Box>
+                    </Stack>
+                  </Paper>
+                  <Button
+                    variant="contained"
+                    sx={{ alignSelf: "end", width: "fit-content" }}
+                    onClick={() => {
+                      handleUpdate(updateKeys);
+                    }}
+                  >
+                    Update
+                  </Button>
+                </>
+              )}
               <p>&nbsp;</p>
               <Typography variant="h6" className="section-header">
                 Providers
