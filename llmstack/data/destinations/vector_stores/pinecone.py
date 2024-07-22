@@ -14,6 +14,14 @@ class Pinecone(BaseDestination):
 
     _deployment_config: Optional[PineconeProviderConfig] = PrivateAttr()
 
+    @classmethod
+    def slug(cls):
+        return "pinecone_vector_store"
+
+    @classmethod
+    def provider_slug(cls):
+        return "pinecone"
+
     def initialize_client(self, *args, **kwargs):
         from llama_index.vector_stores.pinecone import PineconeVectorStore
 

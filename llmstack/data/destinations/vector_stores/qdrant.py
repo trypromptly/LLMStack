@@ -14,6 +14,15 @@ class Qdrant(BaseDestination):
 
     _deployment_config: Optional[QdrantProviderConfig] = PrivateAttr()
 
+    classmethod
+
+    def slug(cls):
+        return "qdrant_vector_store"
+
+    @classmethod
+    def provider_slug(cls):
+        return "qdrant"
+
     def initialize_client(self, *args, **kwargs):
         import qdrant_client
 
@@ -29,7 +38,4 @@ class Qdrant(BaseDestination):
             api_key=self._deployment_config.api_key.api_key,
         )
 
-        self._client = QdrantVectorStore(
-            collection_name=self.index_name,
-            client=client,
-        )
+        self._client = QdrantVectorStore(collection_name=self.index_name, client=client)

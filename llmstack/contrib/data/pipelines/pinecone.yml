@@ -1,0 +1,7 @@
+name: Pinecone
+slug: pinecone
+description: Read data from Pinecone
+pipeline:
+  destination:
+    slug: pinecone_vector_store
+    provider_slug: pinecone
