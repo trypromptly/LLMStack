@@ -40,6 +40,7 @@ export default function StoreApp({ appSlug }) {
           categories={storeApp.categories}
           appTypeSlug={storeApp?.data?.type_slug || "agent"}
           appStoreUuid={storeApp.uuid}
+          shareHeader={!process.env.REACT_APP_ENABLE_APP_SHARE}
         />
       </Grid>
       <Grid
