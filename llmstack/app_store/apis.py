@@ -311,7 +311,10 @@ class AppStoreSpecialCategoryAppsViewSet(viewsets.ModelViewSet):
     def recommended_apps(self, request, slug):
         app = AppStoreApp.objects.filter(slug=slug).first()
         if not app:
-            return DRFResponse(status=404)
+            """
+            Return new apps if app not found
+            """
+            return self.new_apps(request)
 
         total = AppStoreApp.objects.count()
         apps = AppStoreApp.objects.filter(~Q(slug=slug))
