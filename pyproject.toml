@@ -68,6 +68,8 @@ pydantic = "^2.7.4"
 daphne = "^4.1.2"
 striprtf = "^0.0.26"
 
+[tool.poetry.group.faiss.dependencies]
+faiss-cpu = "^1.8.0"
 
 [tool.poetry.group.processors]
 
@@ -77,7 +79,7 @@ unstructured = {version = "0.12.6", python=">=3.10,<3.12"}
 google-generativeai = {version ="^0.3.1"}
 scrapy-playwright = {version ="^0.0.33"}
 pillow-heif = {version ="^0.15.0"}
-opencv-python = {version ="^4.9.0.80"}
+opencv-python-headless = {version ="^4.10.0.84"}
 unstructured-inference = {version ="^0.7.23"}
 unstructured-pytesseract = {version ="^0.3.12"}
 python-docx = {version ="^1.1.0"}
