@@ -18,5 +18,9 @@ urlpatterns = [
         "api/store/categories/new/apps",
         apis.AppStoreSpecialCategoryAppsViewSet.as_view({"get": "new_apps"}),
     ),
+    path(
+        "api/store/categories/my-apps/apps",
+        apis.AppStoreSpecialCategoryAppsViewSet.as_view({"get": "my_apps"}),
+    ),
     path("api/store/categories/<str:slug>/apps", apis.AppStoreCategoryAppsViewSet.as_view({"get": "list"})),
 ]

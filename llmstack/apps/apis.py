@@ -901,7 +901,7 @@ class AppViewSet(viewsets.ViewSet):
             else App(
                 name=app_store_app_data.get("name", ""),
                 store_uuid=app_store_uuid,
-                uuid=app_store_uuid,
+                uuid=uid if uid else app_store_uuid,
                 owner=request.user,
                 type=AppType(slug=app_store_app_data.get("type_slug", "agent")),
                 is_published=True,

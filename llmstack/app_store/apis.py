@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 import requests
 from asgiref.sync import sync_to_async
@@ -12,6 +13,8 @@ from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
 
 from llmstack.apps.apis import AppViewSet
+from llmstack.apps.models import App
+from llmstack.apps.serializers import AppAsStoreAppSerializer
 from llmstack.common.utils.utils import generate_checksum, vectorize_text
 
 from .models import AppStoreApp, AppStoreAppAssets, filter_queryset_by_query
@@ -35,8 +38,25 @@ def download_file(url):
 
 
 @sync_to_async
-def _fetch_app(store_app_slug):
-    return AppStoreApp.objects.filter(slug=store_app_slug).first()
+def _fetch_app(store_app_slug, user):
+    """
+    Fetches app and returns app_uuid, store_app_uuid and app_data
+    """
+    try:
+        uuid.UUID(store_app_slug)
+        app = App.objects.filter(
+            uuid=store_app_slug,
+        ).first()
+        if app and user == app.owner or user.email in app.read_accessible_by:
+            return str(app.uuid), None, None
+    except ValueError:
+        store_app = AppStoreApp.objects.filter(slug=store_app_slug).first()
+        if store_app:
+            return None, str(store_app.uuid), store_app.app_data
+    except Exception as e:
+        logger.error(f"Error fetching app with slug {store_app_slug}: {e}")
+
+    return None, None, None
 
 
 class AppStoreAppViewSet(viewsets.ModelViewSet):
@@ -163,10 +183,18 @@ class AppStoreAppViewSet(viewsets.ModelViewSet):
 
     def get(self, request, slug):
         try:
-            store_app = AppStoreApp.objects.filter(slug=slug).first()
-            if store_app:
-                serializer = self.get_serializer(store_app)
+            """
+            If this is a valid uuid, return the app with that uuid
+            """
+            uuid.UUID(slug)
+            instance = App.objects.filter(
+                uuid=slug,
+            ).first()
+            if instance and request.user == instance.owner or request.user.email in instance.read_accessible_by:
+                serializer = AppAsStoreAppSerializer(instance)
                 return DRFResponse(serializer.data)
+
+            return DRFResponse(status=404)
         except ValueError:
             pass
 
@@ -178,19 +206,19 @@ class AppStoreAppViewSet(viewsets.ModelViewSet):
         return DRFResponse(serializer.data)
 
     async def run_app_internal_async(self, slug, session_id, request_uuid, request):
-        store_app = await _fetch_app(slug)
+        app_uuid, store_app_uuid, app_data = await _fetch_app(slug, request.user)
 
-        if not store_app:
+        if not app_uuid and not store_app_uuid:
             return DRFResponse(status=404)
 
         return await database_sync_to_async(AppViewSet().run_app_internal)(
-            uid=None,
+            uid=app_uuid,
             session_id=session_id,
             request_uuid=request_uuid,
             request=request,
-            preview=False,
-            app_store_uuid=str(store_app.uuid),
-            app_store_app_data=store_app.app_data,
+            preview=True,
+            app_store_uuid=store_app_uuid,
+            app_store_app_data=app_data,
         )
 
 
@@ -308,4 +336,17 @@ class AppStoreSpecialCategoryAppsViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
+        return DRFResponse(serializer.data)
+
+    @method_decorator(cache_page(60 * 60 * 0.5))
+    def my_apps(self, request):
+        queryset = App.objects.filter(
+            Q(owner=request.user) | Q(read_accessible_by__contains=[request.user.email])
+        ).order_by("-last_updated_at")
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = AppAsStoreAppSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = AppAsStoreAppSerializer(queryset, many=True)
         return DRFResponse(serializer.data)

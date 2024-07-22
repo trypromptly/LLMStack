@@ -1,3 +1,5 @@
+from functools import cache
+
 from rest_framework import serializers
 
 from llmstack.apps.app_types import AppTypeFactory
@@ -413,4 +415,96 @@ class TestCaseSerializer(serializers.ModelSerializer):
             "testset_uuid",
             "created_at",
             "last_updated_at",
+        ]
+
+
+class AppAsStoreAppSerializer(DynamicFieldsModelSerializer):
+    """
+    Takes an App object and serializes it as an app store entry.
+    """
+
+    version = serializers.SerializerMethodField()
+    slug = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
+    categories = serializers.SerializerMethodField()
+    data = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    icon = serializers.SerializerMethodField()
+    icon128 = serializers.SerializerMethodField()
+    icon512 = serializers.SerializerMethodField()
+
+    @cache
+    def get_data(self, obj):
+        include_processors = self.context.get("include_processors", False)
+        include_config = self.context.get("include_config", False)
+        app_data_obj = (
+            AppData.objects.filter(
+                app_uuid=obj.uuid,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        app_data = app_data_obj.data if app_data_obj else None
+        if app_data:
+            app_data["version"] = str(app_data_obj.version)
+
+        if app_data and not include_processors:
+            app_data.pop("processors", None)
+
+        if app_data and not include_config:
+            app_data.pop("config", None)
+
+        return app_data
+
+    def get_username(self, obj):
+        return obj.owner.username or obj.owner.email
+
+    def get_slug(self, obj):
+        return str(obj.uuid)
+
+    def get_categories(self, obj):
+        return []
+
+    def get_icon(self, obj):
+        app_data = self.get_data(obj)
+
+        if app_data and "icon" in app_data:
+            return app_data["icon"]
+        elif app_data and "config" in app_data and "assistant_image" in app_data["config"]:
+            asset_data = AssetViewSet().get_asset_data(
+                objref=app_data["config"]["assistant_image"],
+                request_user=self._request_user,
+            )
+            if asset_data and "url" in asset_data:
+                return asset_data["url"]
+
+        return None
+
+    def get_icon128(self, obj):
+        return self.get_icon(obj)
+
+    def get_icon512(self, obj):
+        return self.get_icon(obj)
+
+    def get_version(self, obj):
+        return self.get_data(obj).get("version", "")
+
+    def get_description(self, obj):
+        return self.get_data(obj).get("description", "")
+
+    class Meta:
+        model = App
+        fields = [
+            "uuid",
+            "username",
+            "version",
+            "name",
+            "slug",
+            "description",
+            "categories",
+            "data",
+            "created_at",
+            "icon",
+            "icon128",
+            "icon512",
         ]
