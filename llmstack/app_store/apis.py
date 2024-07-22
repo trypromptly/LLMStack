@@ -163,7 +163,7 @@ class AppStoreAppViewSet(viewsets.ModelViewSet):
 
     def get(self, request, slug):
         try:
-            store_app = AppStoreApp.objects.filter(uuid=slug).first()
+            store_app = AppStoreApp.objects.filter(slug=slug).first()
             if store_app:
                 serializer = self.get_serializer(store_app)
                 return DRFResponse(serializer.data)
