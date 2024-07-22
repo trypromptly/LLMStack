@@ -10,6 +10,7 @@ ADD poetry.lock /poetry.lock
 
 # Install dependencies
 RUN poetry config virtualenvs.create false
+RUN poetry install --no-root --no-dev --no-interaction --only faiss
 RUN poetry install --no-root --no-dev --no-interaction --no-ansi
 RUN poetry install --only server --no-root --no-dev --no-interaction --no-ansi
 
@@ -85,6 +86,7 @@ COPY --from=builder /code/llmstack/contrib/apps /code/llmstack/contrib/apps
 COPY --from=builder /code/llmstack/contrib/data /code/llmstack/contrib/data
 COPY --from=builder /code/llmstack/static /code/llmstack/static
 COPY --from=builder /code/llmstack/apps /code/llmstack/apps
+COPY --from=builder /code/llmstack/app_store /code/llmstack/app_store
 COPY --from=builder /code/llmstack/assets /code/llmstack/assets
 COPY --from=builder /code/llmstack/base /code/llmstack/base
 COPY --from=builder /code/llmstack/common /code/llmstack/common

@@ -508,3 +508,10 @@ def get_tool_json_schema_from_input_fields(name="", input_fields=[]):
             tool_schema["properties"][key]["items"] = value["items"]
 
     return tool_schema
+
+
+def vectorize_text(text):
+    from chromadb.utils import embedding_functions
+
+    vectors = embedding_functions.DefaultEmbeddingFunction()([text])
+    return vectors[0]

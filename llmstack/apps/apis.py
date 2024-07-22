@@ -893,8 +893,20 @@ class AppViewSet(viewsets.ViewSet):
         preview=False,
         version=None,
         app_store_uuid=None,
+        app_store_app_data=None,
     ):
-        app = get_object_or_404(App, uuid=uuid.UUID(uid))
+        app = (
+            get_object_or_404(App, uuid=uuid.UUID(uid))
+            if not app_store_app_data
+            else App(
+                name=app_store_app_data.get("name", ""),
+                store_uuid=app_store_uuid,
+                uuid=app_store_uuid,
+                owner=request.user,
+                type=AppType(slug=app_store_app_data.get("type_slug", "agent")),
+                is_published=True,
+            )
+        )
         app_owner = get_object_or_404(Profile, user=app.owner)
         stream = request.data.get("stream", False)
         request_ip = request.headers.get(
@@ -927,18 +939,26 @@ class AppViewSet(viewsets.ViewSet):
             )
 
         app_data_obj = (
-            AppData.objects.filter(
-                app_uuid=app.uuid,
-                is_draft=preview,
+            (
+                AppData.objects.filter(
+                    app_uuid=app.uuid,
+                    is_draft=preview,
+                )
+                .order_by("-created_at")
+                .first()
+                if version is None
+                else AppData.objects.filter(
+                    app_uuid=app.uuid,
+                    version=version,
+                    is_draft=False,
+                ).first()
             )
-            .order_by("-created_at")
-            .first()
-            if version is None
-            else AppData.objects.filter(
+            if not app_store_app_data
+            else AppData(
                 app_uuid=app.uuid,
-                version=version,
+                data=app_store_app_data,
                 is_draft=False,
-            ).first()
+            )
         )
 
         # If we are running a published app, use the published app data

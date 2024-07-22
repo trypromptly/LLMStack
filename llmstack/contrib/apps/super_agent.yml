@@ -1,0 +1,205 @@
+name: Super Agent
+slug: super-agent
+version: "0.0.1"
+icon: super_agent_icon.png
+description: >-
+  Super Agent is the ultimate agent app tailored for the modern user. With features like Image Generations, Web Search, and Code Generator, this app provides a range of capabilities to assist you in various tasks seamlessly. Just input your requests and let Super Agent handle the rest effortlessly. Whether it's generating images, searching the web, or helping you with coding, this app has you covered.
+
+  - **Image Generations:** Create stunning images from prompts
+
+  - **Web Search:** Instantly find answers on the web
+
+  - **Web Browser:** Perform actions on specific URLs with ease
+
+  - **Story Narration:** Generate stories and get the agent to narrate them for you
+categories:
+  - productivity
+  - utilities
+config:
+  model: gpt-4o-mini
+  system_message: >-
+    You are PromptlyGPT, a helpful assistant from Promptly. You help users
+    perform their tasks using available a combination of available tools. You
+    have access to the following tools:
+
+
+    ## Image generator (_inputs1)
+
+    - Generates images from a given prompt. Make the prompt as detailed as
+    possible clearly describing individual elements and their characteristics
+    needed in the image.
+
+
+    ## Web search (_inputs2)
+
+    - Searches the web for URLs containing realtime information. Only use web
+    search when you cannot answer from your knowledge. Once the URLs are
+    available, visit these URLs with static web browser to pull more
+    information.
+
+
+    ## Static web browser (_inputs3)
+
+    - Access a URL to retrieve information from a web page. Following are the
+    only valid instruction types for browser input: Click, Type, Wait, Goto,
+    Copy, Terminate, Enter, Scrollx, Scrolly
+
+
+    ## Image Reader (_inputs4)
+
+    - Takes an image and an optional instruction message for features to
+    describe from the contents of the image.
+
+    - This cannot generate images. 
+
+    - Only use this when the user has provided an image file.
+
+    - For image inputs, use message object with type as "image_url" to pass the
+    contents in "image_url" field. 
+
+    - For example, { messages: [ {"type": "text", "text": " Describe this
+    image"}, { "type": "image_url", "image_url": "objref://...." } ] }.
+    "image_url" must only contain url and nothing else.
+
+
+    Prefer to visit URLs  to gather more information where appropriate. If you
+    need more information to perform the task, ask the user follow up questions
+    and proceed to perform the task. 
+
+
+    When you encounter objref:// urls, use <pa-asset></pa-asset> tag to render
+    it. For example, <pa-asset  url="objref://example" type="image"></pa-asset>
+    for an image url of type objref.
+
+
+    Now let's think step by step -
+  max_steps: 10
+  split_tasks: true
+  input_template: <p class="editor-paragraph"><br></p>
+  welcome_message: ""
+  window_color: "#477195"
+  suggested_messages:
+    - input:
+        task:
+          text: Suggest fun activities for a family visiting us for holidays
+      label: "**Suggest fun activities**<br/>for a family visiting us for holidays"
+    - input:
+        task:
+          text: >-
+            Please provide me with a code snippet to implement a sticky header
+            on a website
+      label: "**Show me code snippet**<br/>of website's sticky header"
+    - input:
+        task:
+          text: Give me an itinerary for a trip to two to Bahamas for a week.
+      label: "**Plan a trip**<br/>for two to Bahamas for a week"
+  chat_history_limit: 20
+  temperature: 0.7
+  layout: >-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "5px
+    0", "height": "100%"}'>
+        <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
+          <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
+            <pa-chat-output></pa-chat-output>
+          </pa-grid>
+          <pa-grid item="true" xs="12" sx='{"alignSelf": "flex-end", "flex": "0 !important", "width": "100%", "padding": "0 !important"}'>
+            <pa-input-form clearonsubmit="true"></pa-input-form>
+          </pa-grid>
+        </pa-grid>
+    </pa-layout>
+  seed: 1233
+  user_message: "{{task}}"
+  renderer_type: Chat
+type_slug: agent
+processors:
+  - id: _inputs1
+    name: Image Generations
+    input:
+      prompt: ""
+    config:
+      "n": 1
+      size: 1024x1024
+      model: dall-e-3
+      quality: standard
+      response_format: url
+    description: Generates images from a given prompt
+    provider_slug: openai
+    processor_slug: image_generations
+    output_template:
+      markdown: "![Image]({{data[0]}}) "
+  - id: _inputs2
+    name: Web Search
+    input:
+      query: ""
+    config:
+      k: 5
+      search_engine: Google
+    description: Search the web for answers
+    provider_slug: promptly
+    processor_slug: web_search
+    output_template:
+      markdown: |-
+        {% for result in results %}
+        {{result.text}}
+        {{result.source}}
+
+        {% endfor %}
+  - id: _inputs3
+    name: Static Web Browser
+    input:
+      url: ""
+      instructions: []
+    config:
+      timeout: 10
+      stream_video: true
+      connection_id: null
+    description: >-
+      Visit a URL and perform actions. Copy, Wait, Goto, Enter, Scollx, Scrolly
+      and Click are the valid instruction types
+    provider_slug: promptly
+    processor_slug: static_web_browser
+    output_template:
+      markdown: >
+
+        <promptly-web-browser-embed
+        wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
+
+
+        {{text}}
+  - id: _inputs4
+    name: Image Reader
+    input:
+      messages: []
+      system_message: ""
+    config:
+      "n": 1
+      stop: null
+      model: gpt-4-vision-preview
+      top_p: 1
+      stream: false
+      logit_bias: {}
+      max_tokens: 1024
+      temperature: 0.7
+      function_call: null
+      retain_history: false
+      presence_penalty: 0
+      frequency_penalty: 0
+      auto_prune_chat_history: false
+    description: >-
+      Takes an image and an optional instruction message to describe what is
+      there in the image
+    provider_slug: openai
+    processor_slug: chatgpt_vision
+    output_template:
+      markdown: "{{result}}"
+input_fields:
+  - name: task
+    type: multi
+    title: Task
+    required: true
+    allowFiles: true
+    description: What do you want the agent to perform?
+    filesAccept: image/*
+    placeholder: Type in your message
+output_template:
+  markdown: "{{agent.content}}"

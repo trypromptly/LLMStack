@@ -191,7 +191,11 @@ export default function Search({ appSlug }) {
   const location = useLocation();
   const isMobile = useRecoilValue(isMobileState);
   const [categoryFilter, setCategoryFilter] = useState(
-    appSlug && location.pathname !== "/" ? "recommended" : "featured",
+    appSlug && location.pathname !== "/"
+      ? "recommended"
+      : process.env.REACT_APP_ENBLE_SUBSCRIPTION_MANAGEMENT
+        ? "featured"
+        : "recommended",
   );
   const [queryTerm, setQueryTerm] = useState(
     appSlug

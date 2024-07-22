@@ -1,0 +1,71 @@
+name: Youtube Summarizer
+slug: youtube-summarizer
+icon: youtube_summarizer_icon.png
+categories:
+  - productivity
+  - utilities
+description: >-
+  Transform your YouTube watching experience with the YouTube Summarizer app! Easily extract text from YouTube videos. Whether for fun or productivity, this app streamlines content consumption like never before. A true multitasking companion, enhancing your efficiency and enjoyment.
+config:
+  model: gpt-4o-mini
+  system_message: >-
+    You are a helpful assistant that summarizes contents of youtube videos.
+
+
+    In the summary, you refer to the youtube url being summarized by wrapping it
+    in a pa-video-embed tag to render it for the user to view - for example., if
+    the video is "https://youtube.com/watch?v=1234", then the embed tags will be
+    <pa-video-embed src="https://youtube.com/embed/1234" sx='{"padding": "20px
+    10px 0 10px", "width": "100%", "height": "400px"}'></pa-video-embed>.
+  max_steps: 10
+  split_tasks: true
+  input_template: ""
+  welcome_message: >-
+    Welcome to YouTube Summarizer bot. You can summarize any public YouTube
+    videos. Go ahead and type in your video link 😀
+  window_color: "#477195"
+  suggested_messages: []
+  chat_history_limit: 3
+  temperature: 0.7
+  layout: >-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "5px
+    0", "height": "100%"}'>
+        <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
+          <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
+            <pa-chat-output></pa-chat-output>
+          </pa-grid>
+          <pa-grid item="true" xs="12" sx='{"alignSelf": "flex-end", "flex": "0 !important", "width": "100%", "padding": "0 !important"}'>
+            <pa-input-form clearonsubmit="true"></pa-input-form>
+          </pa-grid>
+        </pa-grid>
+    </pa-layout>
+  seed: 12
+  user_message: "{{url.text}} "
+  renderer_type: Chat
+type_slug: agent
+processors:
+  - id: _inputs1
+    name: URL Extractor
+    input:
+      url: ""
+      query: ""
+    config:
+      document_limit: 1
+      text_chunk_size: 1500
+    description: >-
+      Extracts text from a given URL. Links can point to YouTube, PDF, PPTX,
+      DOC, TEXT or XML files
+    provider_slug: promptly
+    processor_slug: http_uri_text_extract
+    output_template:
+      markdown: "{{text}} "
+input_fields:
+  - name: url
+    type: multi
+    title: URL
+    required: true
+    description: YouTube video url to summarize
+    placeholder: YouTube URL
+output_template:
+  markdown: "{{agent.content}}"
+version: "0.0.1"

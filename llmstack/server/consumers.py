@@ -397,3 +397,15 @@ class PlaygroundConsumer(AppConsumer):
             request=request,
             preview=self.preview,
         )
+
+
+class AppStoreAppConsumer(AppConsumer):
+    async def _run_app(self, request_uuid, request, **kwargs):
+        from llmstack.app_store.apis import AppStoreAppViewSet
+
+        return await AppStoreAppViewSet().run_app_internal_async(
+            slug=self.app_id,
+            session_id=self._session_id,
+            request_uuid=request_uuid,
+            request=request,
+        )

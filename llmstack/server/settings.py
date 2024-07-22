@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "llmstack.processors.apps.ProcessorsConfig",
     "llmstack.data.apps.DatasourcesConfig",
     "llmstack.apps.apps.AppsConfig",
+    "llmstack.app_store.apps.AppStoreConfig",
     "llmstack.base.apps.BaseConfig",
     "llmstack.connections.apps.ConnectionsConfig",
     "llmstack.jobs.apps.JobsConfig",
@@ -575,7 +576,6 @@ DATASOURCE_PROCESSOR_EXCLUDE_LIST = sum(
     [],
 )
 
-
 APP_TEMPLATES_DIR = (
     os.getenv("APP_TEMPATES_DIR").split(",")
     if os.getenv(
@@ -589,6 +589,14 @@ DATA_PIPELINES_DIR = (
     if os.getenv("DATA_PIPELINES_DIR")
     else [
         os.path.join(BASE_DIR, "contrib", "data", "pipelines"),
+    ]
+)
+
+STORE_APPS_DIR = (
+    os.getenv("STORE_APPS_DIR").split(",")
+    if os.getenv("STORE_APPS_DIR")
+    else [
+        os.path.join(BASE_DIR, "contrib", "apps"),
     ]
 )
 
