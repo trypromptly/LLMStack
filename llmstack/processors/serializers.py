@@ -1,4 +1,5 @@
 import json
+from functools import cache
 
 from rest_framework import serializers
 
@@ -174,32 +175,35 @@ class HistorySerializer(serializers.ModelSerializer):
 
         return representation
 
+    @cache
     def get_app_detail(self, obj):
         from llmstack.apps.models import App
 
-        name = ""
-        path = ""
-        if obj.app_store_uuid:
+        def get_app_store_app(uuid):
             try:
                 from promptly_app_store.models import AppStoreApp
             except ImportError:
                 from llmstack.app_store.models import AppStoreApp
+            return AppStoreApp.objects.filter(uuid=uuid).first()
 
-            app = AppStoreApp.objects.filter(uuid=obj.app_store_uuid).first()
+        if obj.app_store_uuid:
+            app = get_app_store_app(obj.app_store_uuid)
             if not app:
                 return {"name": "Deleted App", "path": "/"}
-            name = app.name
-            path = f"/a/{app.slug}"
-        elif obj.app_uuid:
+            return {"name": app.name, "path": f"/a/{app.slug}"}
+
+        if obj.app_uuid:
             app = App.objects.filter(uuid=obj.app_uuid).first()
-            if not app:
-                return {"name": "Deleted App", "path": "/"}
-            name = app.name
-            path = f"/apps/{obj.app_uuid}"
-        else:
-            name = "Playground"
-            path = "/playground"
-        return {"name": name, "path": path}
+            if app:
+                return {"name": app.name, "path": f"/apps/{obj.app_uuid}"}
+            if obj.request_body:
+                try:
+                    body = json.loads(json.dumps(obj.request_body))
+                    if "config" in body:
+                        return {"name": "Playground", "path": "/playground"}
+                except Exception:
+                    pass
+        return {"name": "Deleted App", "path": "/"}
 
     class Meta:
         model = RunEntry
