@@ -48,7 +48,7 @@ FROM python:3.11-slim
 
 ARG APP_USER=appuser
 RUN groupadd -r ${APP_USER} && useradd --no-log-init -r -g ${APP_USER} ${APP_USER} \
-  && mkdir -p /home/${APP_USER} \
+  && mkdir -p /home/${APP_USER}/data \
   && mkdir -p /home/${APP_USER}/.cache/chroma \
   && chown -R ${APP_USER}:${APP_USER} /home/${APP_USER} \
   && chown -R ${APP_USER}:${APP_USER} /home/${APP_USER}/.cache/chroma

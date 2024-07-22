@@ -7,6 +7,8 @@ services:
       - postgres:postgres
     expose:
       - 9000
+    volumes:
+      - userdata:/home/appuser/data
     environment:
       LLMSTACK_PORT: ${LLMSTACK_PORT:-9000}
       LLMSTACK_HOST: ${LLMSTACK_HOST:-localhost}
@@ -102,3 +104,4 @@ volumes:
   redisdata:
   postgresdata:
   weaviatedata:
+  userdata:

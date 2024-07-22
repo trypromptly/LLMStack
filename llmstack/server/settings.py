@@ -199,6 +199,22 @@ GENERATEDFILES_URL = os.getenv(
     "GENERATEDFILES_URL",
     "/generatedfiles/",
 )
+ASSETS_ROOT = os.getenv(
+    "ASSETS_ROOT",
+    "/home/appuser/data/assets",
+)
+ASSETS_URL = os.getenv(
+    "ASSETS_URL",
+    "/assets/",
+)
+PUBLIC_ASSETS_ROOT = os.getenv(
+    "PUBLIC_ASSETS_ROOT",
+    "/home/appuser/data/public_assets",
+)
+PUBLIC_ASSETS_URL = os.getenv(
+    "PUBLIC_ASSETS_URL",
+    "/public_assets/",
+)
 
 STORAGES = {
     "default": {
@@ -216,9 +232,17 @@ STORAGES = {
     },
     "assets": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": ASSETS_ROOT,
+            "base_url": ASSETS_URL,
+        },
     },
     "public_assets": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": PUBLIC_ASSETS_ROOT,
+            "base_url": PUBLIC_ASSETS_URL,
+        },
     },
 }
 

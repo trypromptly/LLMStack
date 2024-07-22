@@ -20,6 +20,15 @@ if settings.GENERATEDFILES_ROOT and settings.GENERATEDFILES_URL:
         document_root=settings.GENERATEDFILES_ROOT,
     )
 
+if settings.ASSETS_ROOT and settings.ASSETS_URL:
+    urlpatterns += static(settings.ASSETS_URL, document_root=settings.ASSETS_ROOT)
+
+if settings.PUBLIC_ASSETS_ROOT and settings.PUBLIC_ASSETS_URL:
+    urlpatterns += static(
+        settings.PUBLIC_ASSETS_URL,
+        document_root=settings.PUBLIC_ASSETS_ROOT,
+    )
+
 if settings.ADMIN_ENABLED:
     urlpatterns += [path("admin/", admin.site.urls)]
 
