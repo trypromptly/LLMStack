@@ -27,6 +27,9 @@ class AppStoreAppAssets(Assets):
         blank=True,
     )
 
+    def __str__(self) -> str:
+        return self.file.name + " - " + str(self.ref_id)
+
     @property
     def category(self):
         return "appstore"
