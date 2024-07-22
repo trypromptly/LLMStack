@@ -19,6 +19,10 @@ apiserver() {
     if [ "x$DJANGO_MANAGEPY_CLEARCACHE" != 'xoff' ]; then
         python manage.py clearcache
     fi
+
+    if [ "x$DJANGO_MANAGEPY_LOADSTOREAPPS" = 'xon' ]; then
+        python manage.py loadstoreapps
+    fi
     
     if [ "x$AUTORELOAD" = 'xFalse' ] && [ "x$SINGLE_THREAD" = 'xTrue' ]; then
         python manage.py runserver --nothreading --noreload 0.0.0.0:9000

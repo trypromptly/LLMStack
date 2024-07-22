@@ -301,6 +301,9 @@ def main():
         if args.tag:
             llmstack_environment["TAG"] = args.tag
 
+        # Load default store apps
+        llmstack_environment["DJANGO_MANAGEPY_LOADSTOREAPPS"] = "on"
+
         start(llmstack_environment)
 
         # Wait for server to be up and open browser
