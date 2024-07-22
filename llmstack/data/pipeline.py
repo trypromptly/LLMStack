@@ -2,7 +2,6 @@ import logging
 from typing import List, Optional
 
 from llama_index.core.schema import TextNode
-from llama_index.core.vector_stores.types import VectorStoreQuery, VectorStoreQueryMode
 
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
@@ -83,6 +82,7 @@ class DataQueryPipeline:
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.destination_data)
+            self._destination.initialize_client(datasource=self.datasource)
 
     def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
         content_key = self.datasource.destination_text_content_key
@@ -93,15 +93,7 @@ class DataQueryPipeline:
         documents = []
 
         if self._destination:
-            destination_client = self._destination.initialize_client()
-
-            vector_store_query = VectorStoreQuery(
-                query_str=query,
-                mode=VectorStoreQueryMode.HYBRID if use_hybrid_search else VectorStoreQueryMode.DEFAULT,
-                alpha=kwargs.get("alpha", 0.75),
-                hybrid_top_k=kwargs.get("limit", 2),
-            )
-            query_result = destination_client.query(query=vector_store_query)
+            query_result = self._destination.search(query=query, use_hybrid_search=use_hybrid_search, **kwargs)
             documents = list(
                 map(
                     lambda x: Document(page_content_key=content_key, page_content=x.text, metadata=x.metadata),

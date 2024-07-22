@@ -5,6 +5,7 @@ from string import Template
 from typing import Any, Dict, List, Optional
 
 import weaviate
+import weaviate.classes as wvc
 from llama_index.core.schema import TextNode
 from llama_index.core.vector_stores.types import (
     MetadataFilters,
@@ -90,24 +91,29 @@ WEAVIATE_SCHEMA = Template(
 
 def to_node(entry: Dict, text_key: str = "Text") -> TextNode:
     """Convert to Node."""
-    text = entry.pop(text_key, "")
+    text = entry.get("properties", {}).get(text_key, "")
+    source = entry.get("properties", {}).get("source", None)
 
     try:
         node = metadata_dict_to_node(entry["metadata"])
         node.text = text
         node.embedding = None
+
     except Exception:
+        logger.error("Error in converting to node")
         metadata, node_info, relationships = legacy_metadata_dict_to_node(entry)
+        source = entry.get("properties", {}).get("source", None)
 
         node = TextNode(
             text=text,
-            id_=entry.get("_additional", {}).get("id", str(uuid.uuid4())),
-            metadata=metadata,
+            id_=str(entry["uuid"]),
+            metadata={"source": source},
             start_char_idx=node_info.get("start", None),
             end_char_idx=node_info.get("end", None),
             relationships=relationships,
             embedding=None,
         )
+    node.metadata["source"] = source
     return node
 
 
@@ -191,41 +197,36 @@ class WeaviateVectorStore:
 
         if query.mode == VectorStoreQueryMode.HYBRID:
             try:
-                query_obj = self._client.query.get(self._index_name, [self._text_key, "source"])
-                query_response = (
-                    query_obj.with_hybrid(query=query.query_str, alpha=query.alpha)
-                    .with_limit(query.hybrid_top_k)
-                    .with_additional(["id", "score"])
-                    .do()
+                query_response = self.client.query.hybrid(
+                    query=query.query_str,
+                    alpha=query.alpha,
+                    query_properties=[self._text_key],
+                    return_metadata=None,
                 )
             except Exception as e:
                 raise e
 
         else:
-            nearText = {"concepts": [query.query_str]}
-            if kwargs.get("search_distance"):
-                nearText["certainty"] = kwargs.get("search_distance")
             try:
-                query_obj = self.client.query.get(self._index_name, [self._text_key, "source"])
-                query_response = (
-                    query_obj.with_near_text(nearText)
-                    .with_limit(query.similarity_top_k if query.similarity_top_k is not None else 10)
-                    .with_additional(["id", "certainty", "distance"])
-                    .do()
+                query_response = self.client.query.near_text(
+                    query=query.query_str,
+                    certainty=kwargs.get("search_distance", None),
+                    limit=query.similarity_top_k if query.similarity_top_k is not None else 10,
+                    return_metadata=wvc.query.MetadataQuery(certainty=True, distance=True),
                 )
             except Exception as e:
                 raise e
-        if (
-            "data" not in query_response
-            or "Get" not in query_response["data"]
-            or self._index_name not in query_response["data"]["Get"]
-        ):
+
+        if not query_response or not query_response.objects:
             raise Exception("Error in fetching data from document store")
-        if query_response["data"]["Get"][self._index_name]:
-            for res in query_response["data"]["Get"][self._index_name]:
-                res["metadata"] = dict({"source": res["source"]})
-                nodes.append(to_node(res, text_key=self._text_key))
-                node_ids.append(nodes[-1].node_id)
+
+        for entry in query_response.objects:
+            node = to_node(entry.__dict__, text_key=self._text_key)
+            nodes.append(node)
+            node_ids.append(nodes[-1].node_id)
+
+        logger.info(f"Nodes: {nodes}")
+        logger.info(f"Node IDs: {node_ids}")
 
         return VectorStoreQueryResult(nodes=nodes, ids=node_ids, similarities=similarities)
 
@@ -345,7 +346,21 @@ class Weaviate(BaseDestination):
             self._client.delete(node.node_id)
 
     def search(self, query: str, **kwargs):
-        raise NotImplementedError
+        from llama_index.core.vector_stores.types import (
+            VectorStoreQuery,
+            VectorStoreQueryMode,
+        )
+
+        vector_store_query = VectorStoreQuery(
+            query_str=query,
+            mode=(
+                VectorStoreQueryMode.HYBRID if kwargs.get("use_hybrid_search", False) else VectorStoreQueryMode.DEFAULT
+            ),
+            alpha=kwargs.get("alpha", 0.75),
+            hybrid_top_k=kwargs.get("limit", 2),
+        )
+
+        return self._client.query(query=vector_store_query)
 
     def create_collection(self):
         pass
