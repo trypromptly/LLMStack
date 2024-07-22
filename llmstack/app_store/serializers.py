@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-from llmstack.apps.models import App
-
 from .models import AppStoreApp
 
 
@@ -28,11 +26,6 @@ class AppStoreAppSerializer(serializers.ModelSerializer):
     icon = serializers.SerializerMethodField()
     icon128 = serializers.SerializerMethodField()
     icon512 = serializers.SerializerMethodField()
-
-    class AppSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = App
-            fields = ["config", "input_schema", "input_ui_schema", "output_template"]
 
     def get_data(self, obj):
         app_data = obj.app_data
