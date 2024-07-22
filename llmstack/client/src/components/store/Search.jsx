@@ -292,18 +292,24 @@ export default function Search({ appSlug }) {
               padding: "4px, 8px, 4px, 8px",
               m: 1,
               backgroundColor: isSameCategory(categoryFilter, category.slug)
-                ? "corral.main"
+                ? process.env.REACT_APP_ENBLE_SUBSCRIPTION_MANAGEMENT
+                  ? "corral.main"
+                  : "blue.main"
                 : "#FBFBFB",
               boxShadow: "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
               border: "1px solid",
               borderColor: isSameCategory(categoryFilter, category.slug)
-                ? "corral.main"
+                ? process.env.REACT_APP_ENBLE_SUBSCRIPTION_MANAGEMENT
+                  ? "corral.main"
+                  : "blue.main"
                 : "gray.main",
               "& :hover": {
                 borderRadius: 2,
                 padding: "2px 8px",
                 backgroundColor: isSameCategory(categoryFilter, category.slug)
-                  ? "corral.main"
+                  ? process.env.REACT_APP_ENBLE_SUBSCRIPTION_MANAGEMENT
+                    ? "corral.main"
+                    : "blue.main"
                   : "inherit",
               },
             }}

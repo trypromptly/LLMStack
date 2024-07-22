@@ -93,6 +93,12 @@ const defaultTheme = createTheme({
       dark: "#EE625A",
       contrastText: "#FFFFFF",
     },
+    blue: {
+      main: "#1e88e5",
+      light: "#1e88e5",
+      dark: "#1e88e5",
+      contrastText: "#fff",
+    },
     gray: {
       main: "#E8EBEE",
     },
