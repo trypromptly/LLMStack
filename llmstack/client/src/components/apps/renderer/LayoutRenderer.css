@@ -60,7 +60,7 @@
 
 .layout-chat-container {
   display: flex;
-  overflow: scroll;
+  overflow: auto;
   flex-direction: column;
   position: relative;
   width: 100%;
