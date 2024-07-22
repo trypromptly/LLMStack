@@ -37,6 +37,8 @@ services:
       - .env.dev
     depends_on:
       - api
+    volumes:
+      - userdata:/usr/share/nginx/html/media
   redis:
     image: redis:latest
     ports:

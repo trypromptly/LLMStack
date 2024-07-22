@@ -205,7 +205,7 @@ ASSETS_ROOT = os.getenv(
 )
 ASSETS_URL = os.getenv(
     "ASSETS_URL",
-    "/assets/",
+    "/media/assets/",
 )
 PUBLIC_ASSETS_ROOT = os.getenv(
     "PUBLIC_ASSETS_ROOT",
@@ -213,7 +213,7 @@ PUBLIC_ASSETS_ROOT = os.getenv(
 )
 PUBLIC_ASSETS_URL = os.getenv(
     "PUBLIC_ASSETS_URL",
-    "/public_assets/",
+    "/media/public_assets/",
 )
 
 STORAGES = {

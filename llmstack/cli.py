@@ -97,7 +97,11 @@ def prepare_env():
 
             if keep_updated.lower() != "n":
                 # Add the user to the mailing list
-                webbrowser.open("https://forms.gle/UKQ9rumczFDvwVmg7")
+                try:
+                    webbrowser.open("https://forms.gle/UKQ9rumczFDvwVmg7")
+                except Exception:
+                    print("Failed to open browser. Please open the browser and navigate to the URL below.")
+                    print("https://forms.gle/UKQ9rumczFDvwVmg7")
 
         with open(config_path, "w") as f:
             toml.dump(config, f)
@@ -172,7 +176,13 @@ def wait_for_server(llmstack_environment, timeout):
             time.sleep(2 + (random.randint(0, 1000) / 1000))
             continue
 
-    webbrowser.open(f'http://{llmstack_environment["LLMSTACK_HOST"]}:{llmstack_environment["LLMSTACK_PORT"]}')
+    try:
+        webbrowser.open(f'http://{llmstack_environment["LLMSTACK_HOST"]}:{llmstack_environment["LLMSTACK_PORT"]}')
+    except Exception:
+        print("\nFailed to open browser. Please open the browser and navigate to the URL below.")
+        print(
+            f"LLMStack server is running at http://{llmstack_environment['LLMSTACK_HOST']}:{llmstack_environment['LLMSTACK_PORT']}"
+        )
 
 
 def print_compose_logs(follow=True, stream=True):
@@ -302,7 +312,7 @@ def main():
             llmstack_environment["TAG"] = args.tag
 
         # Load default store apps
-        llmstack_environment["DJANGO_MANAGEPY_LOADSTOREAPPS"] = "on"
+        os.environ["DJANGO_MANAGEPY_LOADSTOREAPPS"] = "on"
 
         start(llmstack_environment)
 

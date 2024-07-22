@@ -10,6 +10,7 @@ services:
     volumes:
       - userdata:/home/appuser/data
     environment:
+      DJANGO_MANAGEPY_LOADSTOREAPPS: ${DJANGO_MANAGEPY_LOADSTOREAPPS:-off}
       LLMSTACK_PORT: ${LLMSTACK_PORT:-9000}
       LLMSTACK_HOST: ${LLMSTACK_HOST:-localhost}
       REDIS_HOST: ${REDIS_HOST:-redis}
@@ -72,6 +73,8 @@ services:
       - ${LLMSTACK_PORT:-9000}:80
     depends_on:
       - api
+    volumes:
+      - userdata:/usr/share/nginx/html/media
   redis:
     image: redis:latest
     command: redis-server
