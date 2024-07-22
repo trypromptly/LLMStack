@@ -40,6 +40,18 @@ class AppStoreAppSerializer(serializers.ModelSerializer):
             if app_data["icon"]:
                 app_data["icon"] = obj.icon256_url if obj.icon256 else obj.icon_url
 
+            processors = [
+                {
+                    "id": processor.get("id", ""),
+                    "name": processor.get("name", ""),
+                    "output_template": processor.get("output_template", ""),
+                    "provider_slug": processor.get("provider_slug", ""),
+                    "processor_slug": processor.get("processor_slug", ""),
+                }
+                for processor in app_data.pop("processors", [])
+            ]
+            app_data["processors"] = processors
+
             return app_data
 
         return None
