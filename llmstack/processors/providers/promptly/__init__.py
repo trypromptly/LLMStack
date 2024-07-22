@@ -56,38 +56,57 @@ class PromptlyProviderConfig(ProviderConfig):
 
 
 def get_llm_client_from_provider_config(provider, model_slug, get_provider_config_fn):
-    google_provider_config = get_provider_config_fn(
-        provider_slug="google",
-        model_slug=model_slug,
-    )
+    try:
+        google_provider_config = get_provider_config_fn(
+            provider_slug="google",
+            model_slug=model_slug,
+        )
+    except Exception:
+        google_provider_config = None
 
-    openai_provider_config = get_provider_config_fn(
-        provider_slug="openai",
-        model_slug=model_slug,
-    )
+    try:
+        openai_provider_config = get_provider_config_fn(
+            provider_slug="openai",
+            model_slug=model_slug,
+        )
+    except Exception:
+        openai_provider_config = None
 
-    stability_provider_config = get_provider_config_fn(
-        provider_slug="stabilityai",
-        model_slug=model_slug,
-    )
+    try:
+        stability_provider_config = get_provider_config_fn(
+            provider_slug="stabilityai",
+            model_slug=model_slug,
+        )
+    except Exception:
+        stability_provider_config = None
 
-    anthropic_provider_config = get_provider_config_fn(
-        provider_slug="anthropic",
-        model_slug=model_slug,
-    )
+    try:
+        anthropic_provider_config = get_provider_config_fn(
+            provider_slug="anthropic",
+            model_slug=model_slug,
+        )
+    except Exception:
+        anthropic_provider_config = None
 
-    cohere_provider_config = get_provider_config_fn(
-        provider_slug="cohere",
-        model_slug=model_slug,
-    )
+    try:
+        cohere_provider_config = get_provider_config_fn(
+            provider_slug="cohere",
+            model_slug=model_slug,
+        )
+    except Exception:
+        cohere_provider_config = None
 
-    google_api_key, token_type = get_google_credentials_from_json_key(google_provider_config.service_account_json_key)
+    google_api_key, token_type = (
+        get_google_credentials_from_json_key(google_provider_config.service_account_json_key)
+        if google_provider_config
+        else (None, None)
+    )
 
     return LLM(
         provider=provider,
-        openai_api_key=openai_provider_config.api_key,
-        stabilityai_api_key=stability_provider_config.api_key,
-        google_api_key=google_api_key,
-        anthropic_api_key=anthropic_provider_config.api_key,
-        cohere_api_key=cohere_provider_config.api_key,
+        openai_api_key=openai_provider_config.api_key if openai_provider_config else "",
+        stabilityai_api_key=stability_provider_config.api_key if stability_provider_config else "",
+        google_api_key=google_api_key if google_api_key else "",
+        anthropic_api_key=anthropic_provider_config.api_key if anthropic_provider_config else "",
+        cohere_api_key=cohere_provider_config.api_key if cohere_provider_config else "",
     )
