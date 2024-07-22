@@ -235,7 +235,7 @@ class Weaviate(BaseDestination):
     index_name: str = Field(description="Index/Collection name", default="text")
     text_key: str = Field(description="Text key", default="Text")
     deployment_name: Optional[str] = Field(description="Deployment name", default="*")
-    schema: Optional[str] = Field(description="Schema", default="")
+    weaviate_schema: Optional[str] = Field(description="Schema", default="")
 
     _deployment_config: Optional[WeaviateProviderConfig] = PrivateAttr()
     _schema_dict = PrivateAttr()
@@ -254,7 +254,9 @@ class Weaviate(BaseDestination):
 
         datasource = kwargs.get("datasource")
 
-        schema = self.schema or WEAVIATE_SCHEMA.safe_substitute(class_name=self.index_name, content_key=self.text_key)
+        schema = self.weaviate_schema or WEAVIATE_SCHEMA.safe_substitute(
+            class_name=self.index_name, content_key=self.text_key
+        )
         self._schema_dict = json.loads(schema)
 
         try:
