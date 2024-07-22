@@ -5,7 +5,7 @@ from string import Template
 from typing import Any, Dict, List, Optional
 
 import weaviate
-from llama_index.core.schema import BaseNode, TextNode
+from llama_index.core.schema import TextNode
 from llama_index.core.vector_stores.types import (
     MetadataFilters,
     VectorStoreQuery,
@@ -136,9 +136,7 @@ class WeaviateVectorStore:
         """Get client."""
         return self._client
 
-    def get_nodes(
-        self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None
-    ) -> List[BaseNode]:
+    def get_nodes(self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None):
         result = []
         for node_id in node_ids:
             try:
@@ -155,7 +153,7 @@ class WeaviateVectorStore:
                 pass
         return result
 
-    def add(self, nodes: List[BaseNode]) -> List[str]:
+    def add(self, nodes) -> List[str]:
         """Add nodes to index.
 
         Args:
