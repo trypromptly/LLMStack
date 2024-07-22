@@ -1,7 +1,6 @@
 import json
 import logging
 import uuid
-from string import Template
 from typing import Any, Dict, List, Optional
 
 import weaviate
@@ -28,65 +27,6 @@ from llmstack.processors.providers.weaviate import (
 )
 
 logger = logging.getLogger(__name__)
-WEAVIATE_SCHEMA = Template(
-    """
-{
-    "classes": [
-        {
-            "class": "$class_name",
-            "description": "Text data source",
-            "vectorizer": "text2vec-openai",
-            "moduleConfig": {
-                "text2vec-openai": {
-                    "model": "ada",
-                    "type": "text"
-                }
-            },
-            "vectorIndexConfig": {
-                "pq": {
-                    "enabled": true
-                }
-            },
-            "replicationConfig": {
-                "factor": 1
-            },
-            "shardingConfig": {
-                "desiredCount": 1
-            },
-            "properties": [
-                {
-                    "name": "$content_key",
-                    "dataType": [
-                        "text"
-                    ],
-                    "description": "Text",
-                    "moduleConfig": {
-                        "text2vec-openai": {
-                            "skip": false,
-                            "vectorizePropertyName": false
-                        }
-                    }
-                },
-                {
-                    "name": "source",
-                    "dataType": [
-                        "string"
-                    ],
-                    "description": "Document source"
-                },
-                {
-                    "name": "metadata",
-                    "dataType": [
-                        "string[]"
-                    ],
-                    "description": "Document metadata"
-                }
-            ]
-        }
-    ]
-}
-""",
-)
 
 
 def to_node(entry: Dict, text_key: str = "Text") -> TextNode:
@@ -100,7 +40,6 @@ def to_node(entry: Dict, text_key: str = "Text") -> TextNode:
         node.embedding = None
 
     except Exception:
-        logger.error("Error in converting to node")
         metadata, node_info, relationships = legacy_metadata_dict_to_node(entry)
         source = entry.get("properties", {}).get("source", None)
 
@@ -131,7 +70,6 @@ class WeaviateVectorStore:
         self._text_key = text_key
         self._auth_config = auth_config
         self._weaviate_client = weaviate_client
-        self._client = weaviate_client.collections.get(self._index_name)
 
     @classmethod
     def class_name(cls) -> str:
@@ -140,6 +78,7 @@ class WeaviateVectorStore:
     @property
     def client(self) -> weaviate.collections.Collection:
         """Get client."""
+        self._client = self._weaviate_client.collections.get(self._index_name)
         return self._client
 
     def get_nodes(self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None):
@@ -189,6 +128,39 @@ class WeaviateVectorStore:
 
     def delete_index(self) -> None:
         self._weaviate_client.collections.delete(self._index_name)
+
+    def create_index(self, schema: Optional[dict]) -> None:
+        from weaviate.classes.config import Configure, DataType, Property
+
+        if not self._weaviate_client.collections.exists(self._index_name):
+            properties = []
+            vectorizer_config = None
+            if schema:
+                if "properties" in schema:
+                    for prop in schema["properties"]:
+                        data_type = DataType.TEXT
+                        if prop["dataType"][0] == "string[]":
+                            data_type = DataType.TEXT_ARRAY
+                        properties.append(
+                            Property(
+                                name=prop["name"],
+                                data_type=data_type,
+                                description=prop["description"],
+                                vectorize_property_name=False,
+                            )
+                        )
+
+                if "vectorizer" in schema:
+                    if schema["vectorizer"] == "text2vec-openai":
+                        module_config = schema["moduleConfig"]["text2vec-openai"]
+                        module_config.pop("type", None)
+                        vectorizer_config = Configure.Vectorizer.text2vec_openai(**module_config)
+
+            return self._weaviate_client.collections.create(
+                name=self._index_name,
+                vectorizer_config=vectorizer_config,
+                properties=properties,
+            )
 
     def query(self, query: VectorStoreQuery, **kwargs: Any) -> VectorStoreQueryResult:
         nodes = []
@@ -250,11 +222,27 @@ class Weaviate(BaseDestination):
         from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
 
         datasource = kwargs.get("datasource")
+        DEFAULT_SCHEMA = {
+            "class": self.index_name,
+            "description": "Text data source",
+            "vectorizer": "text2vec-openai",
+            "moduleConfig": {"text2vec-openai": {"model": "ada", "type": "text"}},
+            "properties": [
+                {
+                    "name": self.text_key,
+                    "dataType": ["text"],
+                    "description": "Text",
+                    "moduleConfig": {"text2vec-openai": {"skip": False, "vectorizePropertyName": False}},
+                },
+                {"name": "source", "dataType": ["text"], "description": "Document source"},
+                {"name": "metadata", "dataType": ["string[]"], "description": "Document metadata"},
+            ],
+        }
 
-        schema = self.weaviate_schema or WEAVIATE_SCHEMA.safe_substitute(
-            class_name=self.index_name, content_key=self.text_key
-        )
-        self._schema_dict = json.loads(schema)
+        try:
+            self._schema_dict = json.loads(self.weaviate_schema) if self.weaviate_schema else DEFAULT_SCHEMA
+        except Exception:
+            pass
 
         try:
             self._deployment_config = datasource.profile.get_provider_config(
@@ -272,7 +260,7 @@ class Weaviate(BaseDestination):
                 instance=WeaviateLocalInstance(url=datasource.profile.weaviate_url),
                 auth=auth,
                 additional_headers=[],
-                module_config=json.dumps(datasource.profile.weaviate_text2vec_config),
+                module_config=json.dumps({"text2vec-openai": datasource.profile.weaviate_text2vec_config}),
             )
 
         additional_headers = self._deployment_config.additional_headers_dict or {}
@@ -284,7 +272,7 @@ class Weaviate(BaseDestination):
             additional_headers["X-Openai-Api-Key"] = openai_deployment_config.api_key
 
         if self._deployment_config and self._deployment_config.module_config:
-            self._schema_dict["classes"][0]["moduleConfig"] = json.loads(self._deployment_config.module_config)
+            self._schema_dict["moduleConfig"] = json.loads(self._deployment_config.module_config)
 
         auth = None
         if isinstance(self._deployment_config.auth, APIKey):
@@ -312,7 +300,6 @@ class Weaviate(BaseDestination):
             elif self._deployment_config.instance.url:
                 protocol, url = self._deployment_config.instance.url.split("://")
                 host, port = url.split(":")
-                logger.info(f"Connecting to Weaviate instance at {self._deployment_config.instance.url}")
                 weaviate_client = weaviate.WeaviateClient(
                     connection_params=weaviate.connect.base.ConnectionParams(
                         http=weaviate.connect.base.ProtocolParams(host=host, port=port, secure=protocol == "https"),
@@ -336,6 +323,9 @@ class Weaviate(BaseDestination):
             text_key=self.text_key,
             auth_config=self._deployment_config.auth,
         )
+
+        # Create collection if it doesn't exist
+        self.create_collection()
 
     def add(self, document: DataDocument) -> DataDocument:
         return self._client.add(document.nodes)
@@ -362,7 +352,7 @@ class Weaviate(BaseDestination):
         return self._client.query(query=vector_store_query)
 
     def create_collection(self):
-        pass
+        return self._client.create_index(schema=self._schema_dict)
 
     def delete_collection(self):
         return self._client.delete_index()
