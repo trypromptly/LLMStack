@@ -179,20 +179,23 @@ class HistorySerializer(serializers.ModelSerializer):
 
         name = ""
         path = ""
-        if obj.app_uuid:
-            app = App.objects.filter(uuid=obj.app_uuid).first()
-            if not app:
-                return {"name": "Deleted App", "path": "/"}
-            name = app.name
-            path = f"/apps/{obj.app_uuid}"
-        elif obj.app_store_uuid:
-            from promptly_app_store.models import AppStoreApp
+        if obj.app_store_uuid:
+            try:
+                from promptly_app_store.models import AppStoreApp
+            except ImportError:
+                from llmstack.app_store.models import AppStoreApp
 
             app = AppStoreApp.objects.filter(uuid=obj.app_store_uuid).first()
             if not app:
                 return {"name": "Deleted App", "path": "/"}
             name = app.name
             path = f"/a/{app.slug}"
+        elif obj.app_uuid:
+            app = App.objects.filter(uuid=obj.app_uuid).first()
+            if not app:
+                return {"name": "Deleted App", "path": "/"}
+            name = app.name
+            path = f"/apps/{obj.app_uuid}"
         else:
             name = "Playground"
             path = "/playground"
