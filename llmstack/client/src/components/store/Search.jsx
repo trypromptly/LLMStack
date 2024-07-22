@@ -18,6 +18,13 @@ import {
   storeCategoriesListState,
   fetchAppsFromStore,
 } from "../../data/atoms";
+import promptlyIcon from "../../assets/promptly-icon.png";
+import llmstackIcon from "../../assets/llmstack-icon.png";
+
+let defaultIcon = llmstackIcon;
+if (process.env.REACT_APP_SITE_NAME === "Promptly") {
+  defaultIcon = promptlyIcon;
+}
 
 const AppEntry = forwardRef(({ app }, ref) => (
   <a href={`/a/${app.slug}`} style={{ textDecoration: "none" }}>
@@ -55,7 +62,7 @@ const AppEntry = forwardRef(({ app }, ref) => (
         }}
       >
         <img
-          src={app.icon128}
+          src={app.icon || defaultIcon}
           alt={app.name}
           style={{
             width: "50px",

@@ -18,6 +18,13 @@ import { useRecoilValue } from "recoil";
 import { storeCategoriesListState, isMobileState } from "../../data/atoms";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import ShareModal from "./ShareModal";
+import promptlyIcon from "../../assets/promptly-icon.png";
+import llmstackIcon from "../../assets/llmstack-icon.png";
+
+let defaultIcon = llmstackIcon;
+if (process.env.REACT_APP_SITE_NAME === "Promptly") {
+  defaultIcon = promptlyIcon;
+}
 
 const AppIcon = styled("img")({
   width: 80,
@@ -94,7 +101,7 @@ function StoreAppHeader({
               alignItems: "center",
             }}
           >
-            <AppIconSmall src={icon} alt={name} />
+            <AppIconSmall src={icon || defaultIcon} alt={name} />
             <Box sx={{ alignSelf: "center", width: "100%" }}>
               <Box
                 sx={{ width: "100%", display: "flex", alignItems: "center" }}
@@ -150,7 +157,7 @@ function StoreAppHeader({
               alignItems: "center",
             }}
           >
-            <AppIcon src={icon} alt={name} />
+            <AppIcon src={icon || defaultIcon} alt={name} />
             <Box sx={{ width: "100%" }}>
               <Box
                 sx={{ width: "100%", display: "flex", alignItems: "center" }}
@@ -232,22 +239,24 @@ function StoreAppHeader({
           </Box>
         )}
       </Box>
-      <Box
-        sx={{
-          textAlign: "left",
-          lineHeight: "1.6",
-          color: "#183a58",
-          "& p": {
-            mt: 0,
-            ml: 0,
-            marginBlockEnd: 0,
-          },
-        }}
-      >
-        <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <LayoutRenderer>{description}</LayoutRenderer>
-        </Collapse>
-      </Box>
+      {description && (
+        <Box
+          sx={{
+            textAlign: "left",
+            lineHeight: "1.6",
+            color: "#183a58",
+            "& p": {
+              mt: 0,
+              ml: 0,
+              marginBlockEnd: 0,
+            },
+          }}
+        >
+          <Collapse in={expanded} timeout="auto" unmountOnExit>
+            <LayoutRenderer>{description}</LayoutRenderer>
+          </Collapse>
+        </Box>
+      )}
     </Card>
   );
 }
