@@ -1,0 +1,236 @@
+name: File Summarizer
+slug: file-summarizer
+description: Summarize the content of a file using chain of density method
+icon: file_summarizer_icon.png
+categories:
+  - utilities
+  - productivity
+config:
+  layout: |-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "10px auto"}'>
+      <pa-paper style="padding: 10px;">
+        <pa-grid container="true" spacing="2" style="width: 100%">
+          <pa-grid item="true" xs="12">
+            <pa-input-form workflow="true"></pa-input-form>
+          </pa-grid>
+          <pa-grid item="true" xs="12">
+            <br/>
+          </pa-grid>
+          <pa-grid item="true" xs="12">
+            <pa-workflow-output showHeader="true"></pa-workflow-output>
+          </pa-grid>
+        </pa-grid>
+      </pa-paper>
+    </pa-layout>
+  allowed_sites: []
+  input_template: ""
+type_slug: web
+processors:
+  - id: data_uri_text_extract1
+    name: File Extractor
+    input:
+      file: ""
+      query: ""
+      file_data: "{{_inputs0.file}}"
+    config:
+      document_limit: 1
+      text_chunk_size: 1500
+    description: Extract text from file represened as data uri
+    input_fields: []
+    provider_slug: promptly
+    processor_slug: data_uri_text_extract
+    output_template:
+      markdown: "{{text}}"
+  - id: llm2
+    name: Chat Completions
+    input:
+      input_message: |-
+        {{_inputs0.content_category}} 
+        ---
+
+        {{data_uri_text_extract1.text}}
+    config:
+      seed: null
+      objref: false
+      max_tokens: 2888
+      max_history: 5
+      temperature: 0
+      retain_history: false
+      system_message: >
+        As an expert copy-writer, you will write concise, entity-dense summaries
+        of the user provided {{_inputs0.content_category}}. The summary should
+        be under {{_inputs0.max_words}} words and contain 2-3 informative
+        Descriptive Entities from the {{_inputs0.content_category}}.
+
+
+        A Descriptive Entity is:
+
+        - Relevant: to the main content.
+
+        - Specific: descriptive yet concise (5 words or fewer).
+
+        - Faithful: present in the {{_inputs0.content_category}}
+
+        - Anywhere: located anywhere in the {{_inputs0.content_category}}.
+
+
+        # Your Summarization Process
+
+        - Read through the {{_inputs0.content_category}} and the all the below
+        sections to get an understanding of the task.
+
+        - Pick 2-3 informative Descriptive Entities from the
+        {{_inputs0.content_category}} (";" delimited, do not add spaces).
+
+        - In your output JSON list of dictionaries, write an initial summary of
+        max {{_inputs0.max_words}} words containing the Entities.
+
+        - You now have `[{"missing_entities": "...", "denser_summary": "..."}]`
+
+
+        Then, repeat the below 2 steps 3 times:
+
+        - Step 1. In a new dict in the same list, identify 2-3 new informative
+        Descriptive Entities from the {{_inputs0.content_category}} which are
+        missing from the previously generated summary.
+
+
+        - Step 2. Write a new, denser summary of identical length which covers
+        every Entity and detail from the previous summary plus the new Missing
+        Entities.
+
+
+        A Missing Entity is:
+
+        - An informative Descriptive Entity from the
+        {{_inputs0.content_category}} as defined above.
+
+        - Novel: not in the previous summary.
+
+
+        # Guidelines
+
+        - The first summary should be long (max {{_inputs0.max_words}} words)
+        yet highly non-specific, containing little information beyond the
+        Entities marked as missing. Use overly verbose language and fillers
+        (e.g., "this {{_inputs0.content_category}} discusses") to reach
+        ~{{_inputs0.max_words}} words.
+
+
+        - Make every word count: re-write the previous summary to improve flow
+        and make space for additional entities.
+
+        - Make space with fusion, compression, and removal of uninformative
+        phrases like "the {{_inputs0.content_category}} discusses".
+
+        - The summaries should become highly dense and concise yet
+        self-contained, e.g., easily understood without the
+        {{_inputs0.content_category}}.
+
+        - Missing entities can appear anywhere in the new summary.
+
+        - Never drop entities from the previous summary. If space cannot be
+        made, add fewer new entities.
+
+        - You're finished when your JSON list has 4 dictionaries of increasing
+        density.
+
+
+        # IMPORTANT
+
+        - Remember, to keep each summary to max {{_inputs0.max_words}} words.
+
+        - Never remove Entities or details. Only add more from the
+        {{_inputs0.content_category}}.
+
+        - Do not discuss the {{_inputs0.content_category}} itself, focus on the
+        content: informative Descriptive Entities, and details.
+
+        - Remember, if you're overusing filler phrases in later summaries, or
+        discussing the {{_inputs0.content_category}} itself, not its contents,
+        choose more informative Descriptive Entities and include more details
+        from the {{_inputs0.content_category}}.
+
+
+        - Answer with a minified JSON list of dictionaries with keys
+        "missing_entities" and "denser_summary".
+
+        ![Source]
+        (https://smith.langchain.com/hub/iamrobotbear/chain-of-density-prompt) 
+
+        ## Example output
+
+
+        [{"missing_entities": "ent1;ent2", "denser_summary": "<vague initial
+        summary with entities 'ent1','ent2'>"}, {"missing_entities": "ent3",
+        "denser_summary": "denser summary with 'ent1','ent2','ent3'"}, ...]
+      provider_config:
+        model: gpt-4o-mini
+        provider: openai
+    description: LLM Chat completions processor
+    input_fields: []
+    provider_slug: promptly
+    processor_slug: llm
+    output_template:
+      markdown: "{{text}}"
+  - id: llm3
+    name: Chat Completions
+    input:
+      input_message: "{{llm2.text}}"
+    config:
+      seed: null
+      objref: false
+      max_tokens: 2859
+      max_history: 5
+      temperature: 0
+      retain_history: false
+      system_message: >-
+        As an expert copy-writer, you will write concise,  summaries of the user
+        provided {{_inputs0.content_category}}. You are provided a json list of
+        entity dense summaries along with a description entity and missing
+        entities. 
+
+        A Descriptive Entity is:
+
+        - Relevant: to the main content.
+
+        - Specific: descriptive yet concise (5 words or fewer).
+
+        - Faithful: present in the {{_inputs0.content_category}}
+
+        - Anywhere: located anywhere in the {{_inputs0.content_category}}.
+
+
+        The last entry in the list will have to most concise and information
+        rich summary. Use that to output a final summary. Only provide the final
+        summary of {{_inputs0.max_words}} words
+      provider_config:
+        model: gpt-4o
+        provider: openai
+    description: LLM Chat completions processor
+    input_fields: []
+    provider_slug: promptly
+    processor_slug: llm
+    output_template:
+      markdown: "{{text}}"
+input_fields:
+  - name: file
+    type: file
+    title: File
+    required: true
+    description: Provide the file to summarize
+  - name: content_category
+    type: string
+    title: content_category
+    default: Article
+    required: true
+    description: Content Category
+  - name: max_words
+    type: string
+    title: max_words
+    default: "200"
+    required: true
+    description: Max words
+output_template:
+  markdown: " {{llm3.text}}"
+version: "0.0.1"

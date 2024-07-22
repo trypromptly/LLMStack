@@ -1,0 +1,138 @@
+name: Story Narrator
+slug: story-narrator
+description: >-
+  Enhance your bedtime routine with engaging stories beautifully narrated by the **Story Narrator** web app. Simply provide a theme, and watch as the app crafts captivating short stories for you to enjoy. Immerse yourself in the tale as the app narrates it in a soothing voice. As an added bonus, the app will even create an enchanting illustration to complement the story.
+
+  Get ready for a delightful bedtime experience filled with imagination and creativity.
+version: "0.0.1"
+icon: story_narrator_icon.png
+categories:
+  - entertainment
+  - utilities
+config:
+  layout: |-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "10px auto"}'>
+      <pa-paper style="padding: 10px;">
+        <pa-grid container="true" spacing="2" style="width: 100%">
+          <pa-grid item="true" xs="12">
+            <pa-input-form workflow="true"></pa-input-form>
+          </pa-grid>
+          <pa-grid item="true" xs="12">
+            <br/>
+          </pa-grid>
+          <pa-grid item="true" xs="12">
+            <pa-workflow-output></pa-workflow-output>
+          </pa-grid>
+        </pa-grid>
+      </pa-paper>
+    </pa-layout>
+  allowed_sites: []
+  input_template: ""
+type_slug: web
+processors:
+  - id: llm1
+    name: Chat Completions
+    input:
+      input_message: "{{_inputs0.theme}}"
+    config:
+      seed: null
+      objref: true
+      max_tokens: 473
+      max_history: 5
+      temperature: 0.7
+      retain_history: false
+      system_message: >-
+        Generate a short 150 word story based on the user provided theme. Keep
+        the story kid friendly and avoid using complex words.
+      provider_config:
+        model: gpt-4o-mini
+        provider: openai
+    description: LLM Chat completions processor
+    provider_slug: promptly
+    processor_slug: llm
+    output_template:
+      markdown: "{{text}}"
+  - id: text_to_speech2
+    name: Text to Speech
+    input:
+      input_text: "{{llm1.objref}} "
+    config:
+      model_id: eleven_multilingual_v2
+      voice_id: Vuo6zmtjWmlDbzqgIDos
+      voice_settings:
+        stability: 0.75
+        similarity_boost: 0.75
+      optimize_streaming_latency: 1
+    description: Transforms text into speech in a given voice
+    provider_slug: elevenlabs
+    processor_slug: text_to_speech
+    output_template:
+      markdown: <pa-asset url="{{audio_content}}" controls type="audio/mpeg"></pa-media>
+  - id: llm3
+    name: Chat Completions
+    input:
+      input_message: >-
+        You are a LLM prompt generator. Generated prompt will be used by stable
+        diffusion model to generate images. Generate a 50 word prompt for an
+        illustration of the following story.:
+
+
+        {{_inputs0.theme}}
+
+
+        ----
+
+
+        Make sure the generated image from prompt captures the main elements of
+        the story
+    config:
+      seed: null
+      objref: false
+      max_tokens: 100
+      max_history: 5
+      temperature: 0.7
+      retain_history: false
+      system_message: You are a helpful assistant that generates image prompts
+      provider_config:
+        model: gpt-4o-mini
+        provider: openai
+    description: LLM Chat completions processor
+    provider_slug: promptly
+    processor_slug: llm
+    output_template:
+      markdown: "{{text}}"
+  - id: image_generator
+    name: Image Generator
+    input:
+      input_message: "{{llm3.text}}"
+    config:
+      seed: null
+      width: 1024
+      height: 1024
+      aspect_ratio: "1:1"
+      provider_config:
+        model: dall-e-3
+        provider: openai
+    description: Image Generator processor for all providers
+    provider_slug: promptly
+    processor_slug: image_generator
+    output_template:
+      markdown: <pa-asset url="{{output_str}}" type="image/png"></pa-asset>
+input_fields:
+  - name: theme
+    type: string
+    title: Theme
+    required: true
+    description: Please provide a theme for the story
+output_template:
+  markdown: >
+
+    <pa-asset url="{{text_to_speech2.audio_content}}"
+    type="audio/mpeg"></pa-asset>
+
+    <br/>
+
+    <pa-asset url="{{image_generator.output_str}}" type="image/png"></pa-asset>
+
+
+    <pa-asset url="{{llm1.objref}}" type="text/markdown"></pa-asset>

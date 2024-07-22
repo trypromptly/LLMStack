@@ -1,0 +1,113 @@
+name: Marketing Content Generator
+slug: marketing-content-generator
+description: >-
+  "Marketing Content Generator" is your go-to web app for creating compelling marketing content quickly and efficiently. With the power of OpenAI's advanced text generation capabilities from the latest GPT-4 model, this app can help you effortlessly generate engaging messages for your campaigns. Say goodbye to writer's block and let this app supercharge your content creation process!
+icon: marketing_content_generator_icon.png
+categories:
+  - utilities
+  - productivity
+config: {}
+type_slug: web
+processors:
+  - id: _inputs1
+    name: ChatGPT
+    input:
+      messages:
+        - name: ""
+          role: user
+          content: >-
+            Create a {{_inputs0.format}}  for {{_inputs0.product_name}} . The
+            content will be posted on {{_inputs0.platform}} . Consider the
+            following characteristics when generating the content:
+
+            1. Tone of the content should be {{_inputs0.tone}}
+
+            2. messaging {{_inputs0.messaging}}
+
+            3. Messaging is the 4. Limit the content generated to a maximum of
+            400 words
+          function_call:
+            name: ""
+            arguments: ""
+      chat_history: []
+      system_message: >-
+        You are an AI language model, and your task is to to act as a Marketing
+        Content Generator. Your task is to create engaging marketing content.
+        Please generate the content ensuring that it contributes to a
+        comprehensive marketing strategy.
+    config:
+      "n": 1
+      stop: null
+      model: gpt-4o
+      top_p: 1
+      stream: true
+      logit_bias: {}
+      max_tokens: 2459
+      temperature: 0.7
+      function_call: null
+      retain_history: false
+      presence_penalty: 0
+      frequency_penalty: 0
+      auto_prune_chat_history: false
+    description: >-
+      Takes a series of messages as input, and return a model-generated message
+      as output
+    provider_slug: openai
+    processor_slug: chatgpt
+    output_template: {}
+input_fields:
+  - name: format
+    type: select
+    title: Format
+    options:
+      - label: Blog Post
+        value: Blog Post
+      - label: LinkedIn Post
+        value: LinkedIn Post
+      - label: Instagram Post
+        value: Instagram Post
+      - label: Landing Page
+        value: Landing Page
+      - label: Facebook Post
+        value: Facebook Post
+      - label: Video Script
+        value: Video Script
+      - label: Product Description
+        value: Product Description
+      - label: Press Release
+        value: Press Release
+      - label: Newsletter
+        value: Newsletter
+      - label: Case Study
+        value: Case Study
+    description: Specify the marketing content format
+  - name: messaging
+    type: text
+    title: Messaging
+    description: >-
+      The key messages or value proposition that the content conveys to the
+      audience, such as highlighting the benefits of a product or service or
+      addressing a pain point etc.,
+  - name: product_name
+    type: string
+    title: Product Name
+    description: Name of the product you want to generate content for
+  - name: tone
+    type: select
+    title: Tone
+    options:
+      - label: Formal
+        value: Formal
+      - label: Casual
+        value: Casual
+      - label: Professional
+        value: Professional
+      - label: Humorous
+        value: Humorous
+      - label: Informative
+        value: Informative
+    description: Set the tone for the content
+output_template:
+  markdown: |
+    {{_inputs1.choices[0].content}}
+version: "0.0.1"

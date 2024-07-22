@@ -1,0 +1,96 @@
+name: Structured Data Extractor
+slug: structured-data-extractor
+description: Extract structured data from given file. You can specify the output format and features to include in the output data.
+icon: structured_data_extractor_icon.png
+categories:
+  - utilities
+  - productivity
+config:
+  layout: |-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "10px auto"}'>
+      <pa-paper style="padding: 10px;">
+        <pa-grid container="true" spacing="2" style="width: 100%">
+          <pa-grid item="true" xs="12">
+            <pa-input-form workflow="true"></pa-input-form>
+          </pa-grid>
+          <pa-grid item="true" xs="12">
+            <br/>
+          </pa-grid>
+          <pa-grid item="true" xs="12">
+            <pa-workflow-output showHeader="true"></pa-workflow-output>
+          </pa-grid>
+        </pa-grid>
+      </pa-paper>
+    </pa-layout>
+  allowed_sites: []
+  input_template: ""
+type_slug: web
+processors:
+  - id: data_uri_text_extract1
+    name: File Extractor
+    input:
+      file: ""
+      query: ""
+      file_data: "{{_inputs0.file}}"
+    config:
+      document_limit: 1
+      text_chunk_size: 1500
+    description: Extract text from file represened as data uri
+    input_fields: []
+    provider_slug: promptly
+    processor_slug: data_uri_text_extract
+    output_template:
+      markdown: "{{text}}"
+  - id: llm2
+    name: Chat Completions
+    input:
+      input_message: |
+        Extract structured data from 
+        --
+        {{data_uri_text_extract1.text}}
+        --
+
+        The output should be in {{_inputs0.format}} format.
+        Make sure to include the following features in the output
+        {{_inputs0.feature}}
+    config:
+      seed: null
+      objref: false
+      max_tokens: 1893
+      max_history: 5
+      temperature: 0
+      retain_history: false
+      system_message: Assistant that helps extract structured data from unstructured data
+      provider_config:
+        model: gpt-4o-mini
+        provider: openai
+    description: LLM Chat completions processor
+    input_fields: []
+    provider_slug: promptly
+    processor_slug: llm
+    output_template:
+      markdown: "{{text}}"
+input_fields:
+  - name: file
+    type: file
+    title: File
+    required: true
+    description: File
+  - name: format
+    type: select
+    title: Format
+    options:
+      - label: json
+        value: json
+      - label: xml
+        value: xml
+    required: true
+    description: format
+  - name: feature
+    type: string
+    title: Feature
+    required: true
+    description: Features to include in output data
+output_template:
+  markdown: "{{llm2.text}} "
+version: "0.0.1"
