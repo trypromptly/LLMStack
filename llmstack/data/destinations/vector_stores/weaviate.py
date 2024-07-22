@@ -225,9 +225,6 @@ class WeaviateVectorStore:
             nodes.append(node)
             node_ids.append(nodes[-1].node_id)
 
-        logger.info(f"Nodes: {nodes}")
-        logger.info(f"Node IDs: {node_ids}")
-
         return VectorStoreQueryResult(nodes=nodes, ids=node_ids, similarities=similarities)
 
 
