@@ -15,7 +15,7 @@ class APIKey(BaseModel):
 
 
 class PineconeProviderConfig(ProviderConfig):
-    api_key: Optional[APIKey] = Field(
+    auth: Optional[APIKey] = Field(
         title="API Key",
         description="API Key for the Weaviate instance",
         default=None,

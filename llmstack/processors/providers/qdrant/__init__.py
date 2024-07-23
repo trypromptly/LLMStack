@@ -35,7 +35,7 @@ class QdrantProviderConfig(ProviderConfig):
         description="GRPC Port for the Qdrant instance",
         default=None,
     )
-    api_key: Optional[APIKey] = Field(
+    auth: Optional[APIKey] = Field(
         title="API Key",
         description="API Key for the Weaviate instance",
         default=None,
