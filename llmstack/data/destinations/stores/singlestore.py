@@ -1,15 +1,21 @@
 import json
+import logging
 from typing import Optional
 
+from llama_index.core.schema import TextNode
+from llama_index.core.vector_stores.types import VectorStoreQueryResult
 from pydantic import Field, PrivateAttr
 
 from llmstack.common.utils.prequests import post
 from llmstack.data.destinations.base import BaseDestination
 from llmstack.processors.providers.singlestore import SinglestoreProviderConfig
 
+logger = logging.getLogger(__name__)
+
 
 class SingleStore(BaseDestination):
     database: str = Field(description="Database name")
+    table: str = Field(description="Table name")
     deployment_name: Optional[str] = Field(description="Deployment name", default="*")
 
     _deployment_config: Optional[SinglestoreProviderConfig] = PrivateAttr()
@@ -38,43 +44,24 @@ class SingleStore(BaseDestination):
             "database": self.database,
             "program_name": "promptly_datasource",
         }
+
         response = post(
             url,
             headers=headers,
             data=json.dumps(data),
-            auth=(
-                self._deployment_config.username,
-                self._deployment_config.password,
-            ),
+            auth=(self._deployment_config.username, self._deployment_config.password),
         )
+
         response.raise_for_status()
         csv_result = ""
         if "results" in response.json():
             if len(response.json()["results"]) > 0 and "rows" in response.json()["results"][0]:
                 rows = response.json()["results"][0]["rows"]
                 if len(rows) > 0:
-                    csv_result += (
-                        ",".join(
-                            list(
-                                map(
-                                    lambda entry: str(entry),
-                                    rows[0].keys(),
-                                ),
-                            ),
-                        )
-                        + "\n"
-                    )
+                    csv_result += ",".join(list(map(lambda entry: str(entry), rows[0].keys()))) + "\n"
                     for row in rows:
-                        csv_result += (
-                            ",".join(
-                                list(
-                                    map(
-                                        lambda entry: str(entry),
-                                        row.values(),
-                                    ),
-                                ),
-                            )
-                            + "\n"
-                        )
+                        csv_result += ",".join(list(map(lambda entry: str(entry), row.values()))) + "\n"
 
-        return [csv_result]
+        return VectorStoreQueryResult(
+            nodes=[TextNode(text=csv_result, metadata={"query": query, "source": self.database})]
+        )
