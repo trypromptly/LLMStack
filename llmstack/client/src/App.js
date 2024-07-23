@@ -8,7 +8,11 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import BannerMessages from "./components/BannerMessages";
 import NavBar from "./components/navbar";
 import Sidebar from "./components/sidebar";
-import { isMobileState, profileFlagsSelector } from "./data/atoms";
+import {
+  isMobileState,
+  profileFlagsSelector,
+  isLoggedInState,
+} from "./data/atoms";
 
 const menuItems = [
   {
@@ -40,6 +44,7 @@ const menuItems = [
 
 export default function App({ children }) {
   const location = useLocation();
+  const isLoggedIn = useRecoilValue(isLoggedInState);
   const [_, setCookie] = useCookies(["irclickid"]); // eslint-disable-line
 
   let allMenuItems = menuItems;
@@ -118,6 +123,15 @@ export default function App({ children }) {
       label: "Docs",
       link: "https://docs.trypromptly.com",
     });
+  }
+
+  if (
+    !process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT &&
+    !location.pathname.startsWith("/app/") &&
+    !isLoggedIn
+  ) {
+    // Redirect to login page if user is not logged in
+    window.location.href = "/login";
   }
 
   return (
