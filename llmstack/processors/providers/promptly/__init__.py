@@ -46,12 +46,24 @@ class GoogleSearchEngineConfig(BaseModel):
 SearchEngineConfig = Union[GoogleSearchEngineConfig]
 
 
+class DataDestinationProviderSlug(str, Enum):
+    WEAVIATE = "weaviate"
+
+    def __str__(self) -> str:
+        return self.value
+
+
 class PromptlyProviderConfig(ProviderConfig):
     provider_slug: str = "promptly"
     search_engine: Optional[SearchEngineConfig] = Field(
         title="Search Engine",
         description="Search Engine Configuration",
         default=None,
+    )
+    data_destination_provider: Optional[DataDestinationProviderSlug] = Field(
+        title="Default Data Destination",
+        description="Default Data Destination",
+        default=DataDestinationProviderSlug.WEAVIATE,
     )
 
 
