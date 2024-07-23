@@ -10,12 +10,11 @@ from llmstack.processors.providers.qdrant import QdrantProviderConfig
 class Qdrant(BaseDestination):
     index_name: str = Field(description="Index/Collection name", default="text")
     text_key: Optional[str] = Field(description="Text key", default="text")
-    deployment_name: Optional[str] = Field(description="Deployment name", default="default")
+    deployment_name: Optional[str] = Field(description="Deployment name", default="*")
 
     _deployment_config: Optional[QdrantProviderConfig] = PrivateAttr()
 
-    classmethod
-
+    @classmethod
     def slug(cls):
         return "qdrant_vector_store"
 
@@ -35,7 +34,24 @@ class Qdrant(BaseDestination):
             url=self._deployment_config.url,
             port=self._deployment_config.port,
             grpc_port=self._deployment_config.grpc_port,
-            api_key=self._deployment_config.api_key.api_key,
+            api_key=self._deployment_config.auth.api_key,
         )
 
-        self._client = QdrantVectorStore(collection_name=self.index_name, client=client)
+        self._client = QdrantVectorStore(collection_name=self.index_name, client=client, enable_hybrid=True)
+
+    def search(self, query: str, **kwargs):
+        from llama_index.core.vector_stores.types import (
+            VectorStoreQuery,
+            VectorStoreQueryMode,
+        )
+
+        vector_store_query = VectorStoreQuery(
+            query_str=query,
+            mode=(
+                VectorStoreQueryMode.HYBRID if kwargs.get("use_hybrid_search", False) else VectorStoreQueryMode.DEFAULT
+            ),
+            alpha=kwargs.get("alpha", 0.75),
+            hybrid_top_k=kwargs.get("limit", 2),
+        )
+
+        return self._client.query(query=vector_store_query)

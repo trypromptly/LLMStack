@@ -1,7 +1,0 @@
-name: Qdrant
-slug: qdrant
-description: Read data from Qdrant
-pipeline:
-  destination:
-    slug: qdrant_vector_store
-    provider_slug: qdrant
