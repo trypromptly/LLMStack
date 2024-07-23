@@ -153,8 +153,18 @@ export default function DropzoneFileWidget(props) {
 
   return (
     <div className="container">
-      <label style={{ display: "flex" }}>{props.label}</label>
-      <p></p>
+      <label
+        style={{
+          display: "flex",
+          padding: "8px 0 4px 0",
+          fontSize: "1rem",
+          fontFamily: "Lato, sans-serif",
+          fontWeight: 550,
+          color: "#00000099",
+        }}
+      >
+        {props.label}
+      </label>
       <div {...getRootProps({ style })}>
         <input {...getInputProps()} multiple={false} />
         <p>
