@@ -675,5 +675,3 @@ except Exception:
 CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES = os.getenv(
     "CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES", "llmstack.connections.handlers.web_login"
 ).split(",")
-
-DEFAULT_PIPELINE_DESTINATION_PROVIDER = os.getenv("DEFAULT_PIPELINE_DESTINATION_PROVIDER", "weaviate")
