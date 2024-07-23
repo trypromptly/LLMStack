@@ -44,11 +44,13 @@ def load_sources():
 
 def load_destinations():
     from llmstack.data.destinations.stores.singlestore import SingleStore
+    from llmstack.data.destinations.vector_stores.pinecone import Pinecone
+    from llmstack.data.destinations.vector_stores.qdrant import Qdrant
     from llmstack.data.destinations.vector_stores.weaviate import Weaviate
 
     destinations = {}
 
-    for cls in [SingleStore, Weaviate]:
+    for cls in [SingleStore, Weaviate, Pinecone, Qdrant]:
         if not destinations.get(cls.provider_slug()):
             destinations[cls.provider_slug()] = {}
         destinations[cls.provider_slug()][cls.slug()] = {
