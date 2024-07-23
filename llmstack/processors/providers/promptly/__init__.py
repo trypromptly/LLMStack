@@ -46,6 +46,29 @@ class GoogleSearchEngineConfig(BaseModel):
 SearchEngineConfig = Union[GoogleSearchEngineConfig]
 
 
+class OpenAIEmbeddingsGeneratorConfig(BaseModel):
+    type: Literal["openai"] = "openai"
+    model: str = Field(
+        title="OpenAI Model",
+        description="The OpenAI model to use for generating embeddings",
+        default="text-embedding-ada-002",
+        json_schema_extra={"advanced_parameter": False},
+    )
+
+
+class AzureOpenAIEmbeddingsGeneratorConfig(BaseModel):
+    type: Literal["azure_openai"] = "azure_openai"
+    model: str = Field(
+        title="Azure OpenAI Model",
+        description="The Azure OpenAI model to use for generating embeddings",
+        default="text-embedding-ada-002",
+        json_schema_extra={"advanced_parameter": False},
+    )
+
+
+EmbeddingsGeneratorConfig = Union[OpenAIEmbeddingsGeneratorConfig, AzureOpenAIEmbeddingsGeneratorConfig]
+
+
 class DataDestinationProviderSlug(str, Enum):
     WEAVIATE = "weaviate"
 
@@ -58,6 +81,11 @@ class PromptlyProviderConfig(ProviderConfig):
     search_engine: Optional[SearchEngineConfig] = Field(
         title="Search Engine",
         description="Search Engine Configuration",
+        default=None,
+    )
+    embeddings_generator: Optional[EmbeddingsGeneratorConfig] = Field(
+        title="Embeddings Generator",
+        description="Embeddings Generator Configuration",
         default=None,
     )
     data_destination_provider: Optional[DataDestinationProviderSlug] = Field(
