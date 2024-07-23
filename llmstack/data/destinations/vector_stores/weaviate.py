@@ -22,6 +22,7 @@ from llmstack.data.destinations.base import BaseDestination
 from llmstack.data.schemas import DataDocument
 from llmstack.processors.providers.weaviate import (
     APIKey,
+    EmbeddingsProvider,
     WeaviateLocalInstance,
     WeaviateProviderConfig,
 )
@@ -222,6 +223,10 @@ class Weaviate(BaseDestination):
         from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
 
         datasource = kwargs.get("datasource")
+        self._deployment_config = datasource.profile.get_provider_config(
+            deployment_key=self.deployment_name, provider_slug=self.provider_slug()
+        )
+
         DEFAULT_SCHEMA = {
             "class": self.index_name,
             "description": "Text data source",
@@ -243,21 +248,16 @@ class Weaviate(BaseDestination):
             self._schema_dict = json.loads(self.weaviate_schema) if self.weaviate_schema else DEFAULT_SCHEMA
         except Exception:
             pass
-
-        self._deployment_config = datasource.profile.get_provider_config(
-            deployment_key=self.deployment_name, provider_slug=self.provider_slug()
-        )
-
-        additional_headers = self._deployment_config.additional_headers_dict or {}
-        if datasource.profile.vectostore_embedding_endpoint == "azure_openai":
-            azure_deployment_config = datasource.profile.get_provider_config(provider_slug="azure")
-            additional_headers["X-Azure-Api-Key"] = azure_deployment_config.api_key
-        else:
-            openai_deployment_config = datasource.profile.get_provider_config(provider_slug="openai")
-            additional_headers["X-Openai-Api-Key"] = openai_deployment_config.api_key
-
         if self._deployment_config and self._deployment_config.module_config:
             self._schema_dict["moduleConfig"] = json.loads(self._deployment_config.module_config)
+
+        additional_headers = self._deployment_config.additional_headers_dict or {}
+        if self._deployment_config.embeddings_provider == EmbeddingsProvider.AZURE_OPENAI:
+            azure_deployment_config = datasource.profile.get_provider_config(provider_slug="azure")
+            additional_headers["X-Azure-Api-Key"] = azure_deployment_config.api_key
+        elif self._deployment_config.embeddings_provider == EmbeddingsProvider.OPENAI:
+            openai_deployment_config = datasource.profile.get_provider_config(provider_slug="openai")
+            additional_headers["X-Openai-Api-Key"] = openai_deployment_config.api_key
 
         auth = None
         if isinstance(self._deployment_config.auth, APIKey):

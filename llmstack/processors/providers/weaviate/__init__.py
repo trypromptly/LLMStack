@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Annotated, List, Optional, Union
 
 from pydantic import BaseModel, Field
@@ -58,6 +59,14 @@ class WeaviateLocalInstance(BaseModel):
     )
 
 
+class EmbeddingsProvider(str, Enum):
+    OPENAI = "openai"
+    AZURE_OPENAI = "azure_openai"
+
+    def __str__(self):
+        return str(self.value)
+
+
 class WeaviateCloudInstance(BaseModel):
     cluster_url: Optional[str] = Field(title="Cluster URL", description="URL of the Weaviate cluster", default="")
 
@@ -72,6 +81,11 @@ class WeaviateProviderConfig(ProviderConfig):
         title="Additional Headers",
         description="Additional headers for the Weaviate instance",
         default=[],
+    )
+    embeddings_provider: Optional[EmbeddingsProvider] = Field(
+        title="Embeddings Provider",
+        description="Embeddings provider for the Weaviate instance",
+        default=None,
     )
     module_config: Optional[str] = Field(
         title="Module Configuration JSON",
