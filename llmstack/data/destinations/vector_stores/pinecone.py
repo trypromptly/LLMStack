@@ -9,7 +9,6 @@ from llmstack.processors.providers.pinecone import PineconeProviderConfig
 class Pinecone(BaseDestination):
     index_name: str = Field(description="Index/Collection name", default="text")
     text_key: str = Field(description="Text key", default="text")
-    namespace: Optional[str] = Field(description="Namespace", default=None)
     deployment_name: Optional[str] = Field(description="Deployment name", default="*")
 
     _deployment_config: Optional[PineconeProviderConfig] = PrivateAttr()
@@ -38,7 +37,6 @@ class Pinecone(BaseDestination):
             pinecone_index=pinecone_index,
             api_key=self._deployment_config.auth.api_key,
             index_name=self.index_name,
-            namespace=self.namespace,
             text_key=self.text_key,
         )
 
