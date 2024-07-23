@@ -18,7 +18,14 @@ logger = logging.getLogger(__name__)
 class MessagesModel(str, Enum):
     LLAMA_3_8B = "llama-3-8b"
     LLAMA_3_8B_INSTRUCT = "llama-3-8b-instruct"
-    LLAMA_3_70B = "llama-3-70b"
+    LLAMA_3_70B = "llama-3.1-70b"
+    LLAMA_3_70B_INSTRUCT = "llama-3.1-70b-instruct"
+    LLAMA_3_1_8B = "llama-3.1-8b"
+    LLAMA_3_1_8B_INSTRUCT = "llama-3.1-8b-instruct"
+    LLAMA_3_1_70B = "llama-3.1-70b"
+    LLAMA_3_1_70B_INSTRUCT = "llama-3.1-70b-instruct"
+    LLAMA_3_1_405B = "llama-3.1-405b"
+    LLAMA_3_1_405B_INSTRUCT = "llama-3.1-405b-instruct"
 
     def __str__(self):
         return self.value
