@@ -244,24 +244,9 @@ class Weaviate(BaseDestination):
         except Exception:
             pass
 
-        try:
-            self._deployment_config = datasource.profile.get_provider_config(
-                deployment_key=self.deployment_name, provider_slug=self.provider_slug()
-            )
-        except Exception:
-            # TODO: Reove this after migration of vector store settings is done to provider config
-
-            auth = None
-            if datasource.profile.weaviate_api_key:
-                auth = APIKey(api_key=datasource.profile.weaviate_api_key)
-
-            self._deployment_config = WeaviateProviderConfig(
-                provider_slug="weaviate",
-                instance=WeaviateLocalInstance(url=datasource.profile.weaviate_url),
-                auth=auth,
-                additional_headers=[],
-                module_config=json.dumps({"text2vec-openai": datasource.profile.weaviate_text2vec_config}),
-            )
+        self._deployment_config = datasource.profile.get_provider_config(
+            deployment_key=self.deployment_name, provider_slug=self.provider_slug()
+        )
 
         additional_headers = self._deployment_config.additional_headers_dict or {}
         if datasource.profile.vectostore_embedding_endpoint == "azure_openai":

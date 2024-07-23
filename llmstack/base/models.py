@@ -18,6 +18,10 @@ from rest_framework.authtoken.models import Token
 from llmstack.common.utils.provider_config import validate_provider_configs
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
+from llmstack.processors.providers.weaviate import (
+    WeaviateLocalInstance,
+    WeaviateProviderConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +109,25 @@ def get_vendor_env_platform_defaults():
                 deployment_config=v,
                 provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
             ).model_dump()
+
+    if settings.WEAVIATE_URL:
+        from llmstack.processors.providers.weaviate import APIKey
+
+        auth = None
+        if settings.WEAVIATE_API_KEY:
+            auth = APIKey(api_key=settings.WEAVIATE_API_KEY)
+
+        provider_configs["weaviate/*/*/*"] = WeaviateProviderConfig(
+            provider_slug="weaviate",
+            instance=WeaviateLocalInstance(url=settings.WEAVIATE_URL),
+            auth=auth,
+            additional_headers=[],
+            module_config=(
+                json.dumps({"text2vec-openai": settings.WEAVIATE_TEXT2VEC_MODULE_CONFIG})
+                if settings.WEAVIATE_TEXT2VEC_MODULE_CONFIG
+                else None
+            ),
+        ).model_dump()
 
     return {
         "azure_openai_api_key": settings.DEFAULT_AZURE_OPENAI_API_KEY,
