@@ -109,8 +109,8 @@ export function AddDataSourceModal({
                 },
               }}
               formData={destinationFormData}
-              onChange={({ data }) => {
-                setDestinationFormData(data);
+              onChange={({ formData }) => {
+                setDestinationFormData(formData);
               }}
               disableAdvanced={true}
             />
@@ -159,6 +159,7 @@ export function AddDataSourceModal({
                   type: dataSourceType.id,
                   type_slug: dataSourceType.slug,
                   config: dataSourceType.is_external_datasource ? formData : {},
+                  destination_data: destinationFormData,
                 })
                 .then((response) => {
                   // External data sources do not support adding entries
