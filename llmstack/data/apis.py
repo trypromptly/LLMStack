@@ -72,11 +72,7 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
             source = pipeline_template.pipeline.source
             destination = pipeline_template.pipeline.destination
 
-            is_external_datasource = (
-                pipeline_template.pipeline.source is None
-                and pipeline_template.pipeline.transformations is None
-                and pipeline_template.pipeline.destination
-            )
+            is_external_datasource = not pipeline_template.pipeline.source
             processors.append(
                 {
                     "slug": pipeline_template.slug,
