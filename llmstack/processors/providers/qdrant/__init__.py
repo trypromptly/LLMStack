@@ -8,7 +8,7 @@ from llmstack.processors.providers.config import ProviderConfig
 class APIKey(BaseModel):
     api_key: str = Field(
         title="API Key",
-        description="API Key for the Weaviate instance",
+        description="API Key for the Qdrant instance",
         default="",
         json_schema_extra={"widget": "password"},
     )
@@ -36,7 +36,7 @@ class QdrantProviderConfig(ProviderConfig):
         default=None,
     )
     auth: Optional[APIKey] = Field(
-        title="API Key",
-        description="API Key for the Weaviate instance",
+        title="Auth",
+        description="Auth for the Qdrant instance",
         default=None,
     )
