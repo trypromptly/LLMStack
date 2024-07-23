@@ -5,7 +5,3 @@ pipeline:
   source:
     slug: file
     provider_slug: promptly
-  destination:
-    slug: weaviate_vector_store
-    provider_slug: weaviate
-    is_hidden: true
