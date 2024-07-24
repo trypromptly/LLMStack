@@ -24,7 +24,7 @@ class BaseProcessorBlock(BaseModel):
     def get_default_data(self, **kwargs):
         return {}
 
-    def default_dict(self, **kwargs):
+    def default_dict(self):
         return {
             "slug": self.slug,
             "provider_slug": self.provider_slug,
@@ -64,9 +64,22 @@ class PipelineTransformation(BaseProcessorBlock):
         return {**self.processor_cls.get_default_data(), **self.data}
 
 
+class PipelineEmbedding(BaseProcessorBlock):
+    def __init__(self, **data):
+        from llmstack.data.transformations.utils import get_transformer_cls
+
+        super().__init__(**data)
+
+        self._processor_cls = get_transformer_cls(slug=self.slug, provider_slug=self.provider_slug)
+
+    def get_default_data(self, **kwargs):
+        return {}
+
+
 class PipelineBlock(BaseModel):
     source: Optional[PipelineSource] = None
     transformations: Optional[List[PipelineTransformation]] = []
+    embedding: Optional[PipelineEmbedding] = None
     destination: Optional[PipelineDestination] = None
 
 
@@ -75,18 +88,6 @@ class DataPipelineTemplate(BaseModel):
     name: str
     description: str
     pipeline: PipelineBlock
-
-    def default_dict(self, **kwargs):
-        return {
-            "slug": self.slug,
-            "name": self.name,
-            "description": self.description,
-            "pipeline": {
-                "source": self.pipeline.source.default_dict(**kwargs) if self.pipeline.source else None,
-                "transformations": [t.default_dict(**kwargs) for t in self.pipeline.transformations],
-                "destination": self.pipeline.destination.default_dict(**kwargs) if self.pipeline.destination else None,
-            },
-        }
 
     @property
     def source_cls(self):
