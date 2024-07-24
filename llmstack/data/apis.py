@@ -38,6 +38,7 @@ def load_sources():
             "provider_slug": cls.provider_slug(),
             "schema": cls.get_schema(),
             "ui_schema": cls.get_ui_schema(),
+            "data": {},
         }
     return sources
 
@@ -58,19 +59,18 @@ def load_destinations():
             "provider_slug": cls.provider_slug(),
             "schema": cls.get_schema(),
             "ui_schema": cls.get_ui_schema(),
+            "data": {},
         }
     return destinations
 
 
 def load_transformations():
     from llmstack.data.transformations.splitters.llamindex.splitters import (
-        CodeSplitter,
-        SemanticSplitterNodeParser,
         SentenceSplitter,
     )
 
     transformations = {}
-    for cls in [CodeSplitter, SemanticSplitterNodeParser, SentenceSplitter]:
+    for cls in [SentenceSplitter]:
         if not transformations.get(cls.provider_slug()):
             transformations[cls.provider_slug()] = {}
         transformations[cls.provider_slug()][cls.slug()] = {
@@ -78,6 +78,7 @@ def load_transformations():
             "provider_slug": cls.provider_slug(),
             "schema": cls.get_schema(),
             "ui_schema": cls.get_ui_schema(),
+            "data": cls.get_default_data(),
         }
     return transformations
 
@@ -94,7 +95,6 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
         for pipeline_template in pipeline_templates:
             source = pipeline_template.pipeline.source
             destination = pipeline_template.pipeline.destination
-            transformation = pipeline_template.pipeline.transformations
 
             is_external_datasource = not pipeline_template.pipeline.source
             processors.append(
@@ -109,7 +109,10 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                         destinations.get(destination.provider_slug, {}).get(destination.slug, {}) if destination else {}
                     ),
                     "transformations": list(
-                        map(lambda t: transformations.get(t.provider_slug, {}).get(t.slug, {}), transformation)
+                        map(
+                            lambda t: transformations.get(t.provider_slug, {}).get(t.slug, {}),
+                            pipeline_template.pipeline.transformations or [],
+                        )
                     ),
                 }
             )
@@ -216,8 +219,9 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource = DataSource(name=request.data["name"], owner=owner, type=datasource_type)
         datasource_config = datasource.config or {}
         datasource_config["type_slug"] = request.data["type_slug"]
+        datasource_config["type_data"] = DataSourceTypeViewSet().get(request, request.data["type_slug"]).data
         datasource_config["destination_data"] = request.data.get("destination_data", {})
-        datasource_config["transformation_data"] = request.data.get("transformation_data", {})
+        datasource_config["transformations_data"] = request.data.get("transformations_data", [])
         datasource.config = datasource_config
         datasource.save()
         return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
