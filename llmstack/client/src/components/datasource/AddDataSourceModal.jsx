@@ -76,7 +76,11 @@ export function AddDataSourceModal({
                 }
                 onClick={(e) => {
                   setDataSourceType(dst);
-                  setTransformationsData(dst.transformations?.map(() => ({})));
+                  setTransformationsData(
+                    dst.transformations?.map(
+                      (transformation) => transformation.data || {},
+                    ) || [],
+                  );
                 }}
               >
                 {dst.name}
@@ -213,6 +217,7 @@ export function AddDataSourceModal({
                   type_slug: dataSourceType.slug,
                   config: dataSourceType.is_external_datasource ? formData : {},
                   destination_data: destinationFormData,
+                  transformations_data: transformationsData,
                 })
                 .then((response) => {
                   // External data sources do not support adding entries
