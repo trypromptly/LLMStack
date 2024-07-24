@@ -12,7 +12,7 @@ def get_embedding(client, text, engine, **kwargs):
 
 
 class EmbeddingsGenerator(BaseEmbedding, LlamaIndexTransformers):
-    embedding_provider_slug: str = "openai"
+    embedding_provider_slug: Optional[str] = None
     embedding_model_name: str = "ada"
     additional_kwargs: Optional[Dict[str, Any]] = None
 

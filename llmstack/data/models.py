@@ -201,6 +201,10 @@ class DataSource(models.Model):
         )
 
     @property
+    def pipeline(self):
+        return self.config.get("pipeline", {}) or self.config.get("pipeline_legacy", {})
+
+    @property
     def transformations_data(self):
         transformations_data = self.config.get("pipeline_data", {}).get("transformations", [])
         return transformations_data
