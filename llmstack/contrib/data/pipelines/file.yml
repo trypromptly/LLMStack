@@ -8,8 +8,9 @@ pipeline:
   transformations:
     - slug: sentence-splitter
       provider_slug: promptly
-    - slug: embeddings-generator
-      provider_slug: promptly
+  embedding:
+    slug: embeddings-generator
+    provider_slug: promptly
   destination:
     slug: vector-store
     provider_slug: weaviate
