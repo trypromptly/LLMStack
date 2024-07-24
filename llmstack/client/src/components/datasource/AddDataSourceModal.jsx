@@ -77,7 +77,7 @@ export function AddDataSourceModal({
                 onClick={(e) => {
                   setDataSourceType(dst);
                   setTransformationsData(
-                    dst.transformations?.map(
+                    dst?.pipeline?.transformations?.map(
                       (transformation) => transformation.data || {},
                     ) || [],
                   );
