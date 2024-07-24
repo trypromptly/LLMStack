@@ -2,233 +2,1063 @@
 
 from django.db import migrations
 
-SOURCE_DATA = {
+PIPELINE_DATA = {
     "pdf": {
         "slug": "pdf",
-        "provider_slug": "promptly",
-        "schema": {
-            "properties": {
-                "file": {
-                    "accepts": {"application/pdf": []},
-                    "description": "File to be processed",
-                    "maxSize": 20000000,
-                    "title": "File",
-                    "type": "string",
-                    "widget": "file",
-                }
+        "name": "PDF",
+        "description": "Read data from a pdf",
+        "pipeline": {
+            "source": {
+                "slug": "pdf",
+                "provider_slug": "promptly",
+                "schema": {
+                    "properties": {
+                        "file": {
+                            "accepts": {"application/pdf": []},
+                            "description": "File to be processed",
+                            "maxSize": 20000000,
+                            "title": "File",
+                            "type": "string",
+                            "widget": "file",
+                        }
+                    },
+                    "required": ["file"],
+                    "title": "PdfSchema",
+                    "type": "object",
+                },
+                "ui_schema": {
+                    "file": {
+                        "ui:label": "File",
+                        "ui:description": "File to be processed",
+                        "ui:widget": "file",
+                        "ui:advanced": True,
+                    }
+                },
+                "data": {},
             },
-            "required": ["file"],
-            "title": "PdfSchema",
-            "type": "object",
+            "transformations": [
+                {
+                    "slug": "sentence-splitter",
+                    "provider_slug": "promptly",
+                    "schema": {
+                        "title": "SentenceSplitter",
+                        "description": "Parse text with a preference for complete sentences.\n\nIn general, this class tries to keep sentences and paragraphs together. Therefore\ncompared to the original TokenTextSplitter, there are less likely to be\nhanging sentences or parts of sentences at the end of the node chunk.",
+                        "type": "object",
+                        "properties": {
+                            "include_metadata": {
+                                "title": "Include Metadata",
+                                "description": "Whether or not to consider metadata when splitting.",
+                                "default": True,
+                                "type": "boolean",
+                            },
+                            "include_prev_next_rel": {
+                                "title": "Include Prev Next Rel",
+                                "description": "Include prev/next node relationships.",
+                                "default": True,
+                                "type": "boolean",
+                            },
+                            "chunk_size": {
+                                "title": "Chunk Size",
+                                "description": "The token chunk size for each chunk.",
+                                "default": 1024,
+                                "exclusiveMinimum": 0,
+                                "type": "integer",
+                            },
+                            "chunk_overlap": {
+                                "title": "Chunk Overlap",
+                                "description": "The token overlap of each chunk when splitting.",
+                                "default": 200,
+                                "gte": 0,
+                                "type": "integer",
+                            },
+                            "separator": {
+                                "title": "Separator",
+                                "description": "Default separator for splitting into words",
+                                "default": " ",
+                                "type": "string",
+                            },
+                            "paragraph_separator": {
+                                "title": "Paragraph Separator",
+                                "description": "Separator between paragraphs.",
+                                "default": "\n\n\n",
+                                "type": "string",
+                            },
+                            "secondary_chunking_regex": {
+                                "title": "Secondary Chunking Regex",
+                                "description": "Backup regex for splitting into sentences.",
+                                "default": "[^,.;。？！]+[,.;。？！]?",
+                                "type": "string",
+                            },
+                        },
+                    },
+                    "ui_schema": {
+                        "include_metadata": {
+                            "ui:label": "Include Metadata",
+                            "ui:description": "Whether or not to consider metadata when splitting.",
+                            "ui:widget": "checkbox",
+                            "ui:advanced": True,
+                        },
+                        "include_prev_next_rel": {
+                            "ui:label": "Include Prev Next Rel",
+                            "ui:description": "Include prev/next node relationships.",
+                            "ui:widget": "checkbox",
+                            "ui:advanced": True,
+                        },
+                        "chunk_size": {
+                            "ui:label": "Chunk Size",
+                            "ui:description": "The token chunk size for each chunk.",
+                            "ui:widget": "updown",
+                            "ui:advanced": True,
+                        },
+                        "chunk_overlap": {
+                            "ui:label": "Chunk Overlap",
+                            "ui:description": "The token overlap of each chunk when splitting.",
+                            "ui:widget": "updown",
+                            "ui:advanced": True,
+                        },
+                        "separator": {
+                            "ui:label": "Separator",
+                            "ui:description": "Default separator for splitting into words",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "paragraph_separator": {
+                            "ui:label": "Paragraph Separator",
+                            "ui:description": "Separator between paragraphs.",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "secondary_chunking_regex": {
+                            "ui:label": "Secondary Chunking Regex",
+                            "ui:description": "Backup regex for splitting into sentences.",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                    },
+                    "data": {
+                        "include_metadata": True,
+                        "include_prev_next_rel": True,
+                        "chunk_size": 1024,
+                        "chunk_overlap": 200,
+                        "separator": " ",
+                        "paragraph_separator": "\n\n\n",
+                        "secondary_chunking_regex": "[^,.;。？！]+[,.;。？！]?",
+                    },
+                },
+                {
+                    "slug": "embeddings-generator",
+                    "provider_slug": "promptly",
+                    "schema": {
+                        "title": "EmbeddingsGenerator",
+                        "description": "Base class for embeddings.",
+                        "type": "object",
+                        "properties": {
+                            "embedding_provider_slug": {"title": "Embedding Provider Slug", "type": "string"},
+                            "embedding_model_name": {
+                                "title": "Embedding Model Name",
+                                "default": "ada",
+                                "type": "string",
+                            },
+                            "additional_kwargs": {"title": "Additional Kwargs", "type": "object"},
+                        },
+                    },
+                    "ui_schema": {
+                        "embedding_provider_slug": {
+                            "ui:label": "Embedding Provider Slug",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "embedding_model_name": {
+                            "ui:label": "Embedding Model Name",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "additional_kwargs": {"ui:label": "Additional Kwargs", "ui:advanced": True},
+                    },
+                    "data": {
+                        "model_name": "unknown",
+                        "embed_batch_size": 10,
+                        "num_workers": None,
+                        "embedding_provider_slug": None,
+                        "embedding_model_name": "ada",
+                        "additional_kwargs": None,
+                    },
+                },
+            ],
+            "destination": {
+                "slug": "vector-store",
+                "provider_slug": "weaviate",
+                "schema": {
+                    "properties": {
+                        "index_name": {
+                            "default": None,
+                            "description": "Index/Collection name",
+                            "title": "Index Name",
+                            "type": "string",
+                        },
+                        "text_key": {
+                            "default": "content",
+                            "description": "Text key",
+                            "title": "Text Key",
+                            "type": "string",
+                        },
+                        "deployment_name": {
+                            "default": "*",
+                            "description": "Deployment name",
+                            "title": "Deployment Name",
+                            "type": "string",
+                        },
+                        "weaviate_schema": {
+                            "default": "",
+                            "description": "Schema",
+                            "title": "Weaviate Schema",
+                            "type": "string",
+                        },
+                    },
+                    "title": "Weaviate",
+                    "type": "object",
+                },
+                "ui_schema": {
+                    "index_name": {
+                        "ui:label": "Index Name",
+                        "ui:description": "Index/Collection name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "text_key": {
+                        "ui:label": "Text Key",
+                        "ui:description": "Text key",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "deployment_name": {
+                        "ui:label": "Deployment Name",
+                        "ui:description": "Deployment name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "weaviate_schema": {
+                        "ui:label": "Weaviate Schema",
+                        "ui:description": "Schema",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                },
+                "data": {},
+            },
         },
-        "ui_schema": {
-            "file": {
-                "ui:label": "File",
-                "ui:description": "File to be processed",
-                "ui:widget": "file",
-                "ui:advanced": True,
-            }
-        },
-        "data": {},
+        "sync_config": None,
+        "is_external_datasource": False,
     },
     "text": {
         "slug": "text",
-        "provider_slug": "promptly",
-        "schema": {
-            "properties": {
-                "name": {"default": "Untitled", "title": "Name", "type": "string"},
-                "content": {"default": "", "title": "Content", "type": "string"},
+        "name": "Text",
+        "description": "Read data from a text box",
+        "pipeline": {
+            "source": {
+                "slug": "text",
+                "provider_slug": "promptly",
+                "schema": {
+                    "properties": {
+                        "name": {"default": "Untitled", "title": "Name", "type": "string"},
+                        "content": {"default": "", "title": "Content", "type": "string"},
+                    },
+                    "title": "TextSchema",
+                    "type": "object",
+                },
+                "ui_schema": {
+                    "name": {"ui:label": "Name", "ui:widget": "text", "ui:advanced": True},
+                    "content": {"ui:label": "Content", "ui:widget": "text", "ui:advanced": True},
+                },
+                "data": {},
             },
-            "title": "TextSchema",
-            "type": "object",
+            "transformations": [
+                {
+                    "slug": "sentence-splitter",
+                    "provider_slug": "promptly",
+                    "schema": {
+                        "title": "SentenceSplitter",
+                        "description": "Parse text with a preference for complete sentences.\n\nIn general, this class tries to keep sentences and paragraphs together. Therefore\ncompared to the original TokenTextSplitter, there are less likely to be\nhanging sentences or parts of sentences at the end of the node chunk.",
+                        "type": "object",
+                        "properties": {
+                            "include_metadata": {
+                                "title": "Include Metadata",
+                                "description": "Whether or not to consider metadata when splitting.",
+                                "default": True,
+                                "type": "boolean",
+                            },
+                            "include_prev_next_rel": {
+                                "title": "Include Prev Next Rel",
+                                "description": "Include prev/next node relationships.",
+                                "default": True,
+                                "type": "boolean",
+                            },
+                            "chunk_size": {
+                                "title": "Chunk Size",
+                                "description": "The token chunk size for each chunk.",
+                                "default": 1024,
+                                "exclusiveMinimum": 0,
+                                "type": "integer",
+                            },
+                            "chunk_overlap": {
+                                "title": "Chunk Overlap",
+                                "description": "The token overlap of each chunk when splitting.",
+                                "default": 200,
+                                "gte": 0,
+                                "type": "integer",
+                            },
+                            "separator": {
+                                "title": "Separator",
+                                "description": "Default separator for splitting into words",
+                                "default": " ",
+                                "type": "string",
+                            },
+                            "paragraph_separator": {
+                                "title": "Paragraph Separator",
+                                "description": "Separator between paragraphs.",
+                                "default": "\n\n\n",
+                                "type": "string",
+                            },
+                            "secondary_chunking_regex": {
+                                "title": "Secondary Chunking Regex",
+                                "description": "Backup regex for splitting into sentences.",
+                                "default": "[^,.;。？！]+[,.;。？！]?",
+                                "type": "string",
+                            },
+                        },
+                    },
+                    "ui_schema": {
+                        "include_metadata": {
+                            "ui:label": "Include Metadata",
+                            "ui:description": "Whether or not to consider metadata when splitting.",
+                            "ui:widget": "checkbox",
+                            "ui:advanced": True,
+                        },
+                        "include_prev_next_rel": {
+                            "ui:label": "Include Prev Next Rel",
+                            "ui:description": "Include prev/next node relationships.",
+                            "ui:widget": "checkbox",
+                            "ui:advanced": True,
+                        },
+                        "chunk_size": {
+                            "ui:label": "Chunk Size",
+                            "ui:description": "The token chunk size for each chunk.",
+                            "ui:widget": "updown",
+                            "ui:advanced": True,
+                        },
+                        "chunk_overlap": {
+                            "ui:label": "Chunk Overlap",
+                            "ui:description": "The token overlap of each chunk when splitting.",
+                            "ui:widget": "updown",
+                            "ui:advanced": True,
+                        },
+                        "separator": {
+                            "ui:label": "Separator",
+                            "ui:description": "Default separator for splitting into words",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "paragraph_separator": {
+                            "ui:label": "Paragraph Separator",
+                            "ui:description": "Separator between paragraphs.",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "secondary_chunking_regex": {
+                            "ui:label": "Secondary Chunking Regex",
+                            "ui:description": "Backup regex for splitting into sentences.",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                    },
+                    "data": {
+                        "include_metadata": True,
+                        "include_prev_next_rel": True,
+                        "chunk_size": 1024,
+                        "chunk_overlap": 200,
+                        "separator": " ",
+                        "paragraph_separator": "\n\n\n",
+                        "secondary_chunking_regex": "[^,.;。？！]+[,.;。？！]?",
+                    },
+                },
+                {
+                    "slug": "embeddings-generator",
+                    "provider_slug": "promptly",
+                    "schema": {
+                        "title": "EmbeddingsGenerator",
+                        "description": "Base class for embeddings.",
+                        "type": "object",
+                        "properties": {
+                            "embedding_provider_slug": {"title": "Embedding Provider Slug", "type": "string"},
+                            "embedding_model_name": {
+                                "title": "Embedding Model Name",
+                                "default": "ada",
+                                "type": "string",
+                            },
+                            "additional_kwargs": {"title": "Additional Kwargs", "type": "object"},
+                        },
+                    },
+                    "ui_schema": {
+                        "embedding_provider_slug": {
+                            "ui:label": "Embedding Provider Slug",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "embedding_model_name": {
+                            "ui:label": "Embedding Model Name",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "additional_kwargs": {"ui:label": "Additional Kwargs", "ui:advanced": True},
+                    },
+                    "data": {
+                        "model_name": "unknown",
+                        "embed_batch_size": 10,
+                        "num_workers": None,
+                        "embedding_provider_slug": None,
+                        "embedding_model_name": "ada",
+                        "additional_kwargs": None,
+                    },
+                },
+            ],
+            "destination": {
+                "slug": "vector-store",
+                "provider_slug": "weaviate",
+                "schema": {
+                    "properties": {
+                        "index_name": {
+                            "default": None,
+                            "description": "Index/Collection name",
+                            "title": "Index Name",
+                            "type": "string",
+                        },
+                        "text_key": {
+                            "default": "content",
+                            "description": "Text key",
+                            "title": "Text Key",
+                            "type": "string",
+                        },
+                        "deployment_name": {
+                            "default": "*",
+                            "description": "Deployment name",
+                            "title": "Deployment Name",
+                            "type": "string",
+                        },
+                        "weaviate_schema": {
+                            "default": "",
+                            "description": "Schema",
+                            "title": "Weaviate Schema",
+                            "type": "string",
+                        },
+                    },
+                    "title": "Weaviate",
+                    "type": "object",
+                },
+                "ui_schema": {
+                    "index_name": {
+                        "ui:label": "Index Name",
+                        "ui:description": "Index/Collection name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "text_key": {
+                        "ui:label": "Text Key",
+                        "ui:description": "Text key",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "deployment_name": {
+                        "ui:label": "Deployment Name",
+                        "ui:description": "Deployment name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "weaviate_schema": {
+                        "ui:label": "Weaviate Schema",
+                        "ui:description": "Schema",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                },
+                "data": {},
+            },
         },
-        "ui_schema": {
-            "name": {"ui:label": "Name", "ui:widget": "text", "ui:advanced": True},
-            "content": {"ui:label": "Content", "ui:widget": "text", "ui:advanced": True},
-        },
-        "data": {},
+        "sync_config": None,
+        "is_external_datasource": False,
     },
     "url": {
         "slug": "url",
-        "provider_slug": "promptly",
-        "schema": {
-            "properties": {
-                "urls": {
-                    "description": "URLs to scrape, List of URL can be comma or newline separated. If site.xml is present, it will be used to scrape the site.",
-                    "maxLength": 1600,
-                    "title": "Urls",
-                    "type": "string",
-                    "widget": "webpageurls",
+        "name": "URL",
+        "description": "Read data from a website URL",
+        "pipeline": {
+            "source": {
+                "slug": "url",
+                "provider_slug": "promptly",
+                "schema": {
+                    "properties": {
+                        "urls": {
+                            "description": "URLs to scrape, List of URL can be comma or newline separated. If site.xml is present, it will be used to scrape the site.",
+                            "maxLength": 1600,
+                            "title": "Urls",
+                            "type": "string",
+                            "widget": "webpageurls",
+                        },
+                        "connection_id": {
+                            "default": None,
+                            "description": "Select connection if parsing loggedin page",
+                            "title": "Connection Id",
+                            "type": "string",
+                            "widget": "connection",
+                        },
+                    },
+                    "required": ["urls"],
+                    "title": "URLSchema",
+                    "type": "object",
                 },
-                "connection_id": {
-                    "default": None,
-                    "description": "Select connection if parsing loggedin page",
-                    "title": "Connection Id",
-                    "type": "string",
-                    "widget": "connection",
+                "ui_schema": {
+                    "urls": {
+                        "ui:label": "Urls",
+                        "ui:description": "URLs to scrape, List of URL can be comma or newline separated. If site.xml is present, it will be used to scrape the site.",
+                        "ui:widget": "webpageurls",
+                        "ui:advanced": True,
+                    },
+                    "connection_id": {
+                        "ui:label": "Connection Id",
+                        "ui:description": "Select connection if parsing loggedin page",
+                        "ui:widget": "connection",
+                        "ui:advanced": True,
+                    },
                 },
+                "data": {},
             },
-            "required": ["urls"],
-            "title": "URLSchema",
-            "type": "object",
+            "transformations": [
+                {
+                    "slug": "sentence-splitter",
+                    "provider_slug": "promptly",
+                    "schema": {
+                        "title": "SentenceSplitter",
+                        "description": "Parse text with a preference for complete sentences.\n\nIn general, this class tries to keep sentences and paragraphs together. Therefore\ncompared to the original TokenTextSplitter, there are less likely to be\nhanging sentences or parts of sentences at the end of the node chunk.",
+                        "type": "object",
+                        "properties": {
+                            "include_metadata": {
+                                "title": "Include Metadata",
+                                "description": "Whether or not to consider metadata when splitting.",
+                                "default": True,
+                                "type": "boolean",
+                            },
+                            "include_prev_next_rel": {
+                                "title": "Include Prev Next Rel",
+                                "description": "Include prev/next node relationships.",
+                                "default": True,
+                                "type": "boolean",
+                            },
+                            "chunk_size": {
+                                "title": "Chunk Size",
+                                "description": "The token chunk size for each chunk.",
+                                "default": 1024,
+                                "exclusiveMinimum": 0,
+                                "type": "integer",
+                            },
+                            "chunk_overlap": {
+                                "title": "Chunk Overlap",
+                                "description": "The token overlap of each chunk when splitting.",
+                                "default": 200,
+                                "gte": 0,
+                                "type": "integer",
+                            },
+                            "separator": {
+                                "title": "Separator",
+                                "description": "Default separator for splitting into words",
+                                "default": " ",
+                                "type": "string",
+                            },
+                            "paragraph_separator": {
+                                "title": "Paragraph Separator",
+                                "description": "Separator between paragraphs.",
+                                "default": "\n\n\n",
+                                "type": "string",
+                            },
+                            "secondary_chunking_regex": {
+                                "title": "Secondary Chunking Regex",
+                                "description": "Backup regex for splitting into sentences.",
+                                "default": "[^,.;。？！]+[,.;。？！]?",
+                                "type": "string",
+                            },
+                        },
+                    },
+                    "ui_schema": {
+                        "include_metadata": {
+                            "ui:label": "Include Metadata",
+                            "ui:description": "Whether or not to consider metadata when splitting.",
+                            "ui:widget": "checkbox",
+                            "ui:advanced": True,
+                        },
+                        "include_prev_next_rel": {
+                            "ui:label": "Include Prev Next Rel",
+                            "ui:description": "Include prev/next node relationships.",
+                            "ui:widget": "checkbox",
+                            "ui:advanced": True,
+                        },
+                        "chunk_size": {
+                            "ui:label": "Chunk Size",
+                            "ui:description": "The token chunk size for each chunk.",
+                            "ui:widget": "updown",
+                            "ui:advanced": True,
+                        },
+                        "chunk_overlap": {
+                            "ui:label": "Chunk Overlap",
+                            "ui:description": "The token overlap of each chunk when splitting.",
+                            "ui:widget": "updown",
+                            "ui:advanced": True,
+                        },
+                        "separator": {
+                            "ui:label": "Separator",
+                            "ui:description": "Default separator for splitting into words",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "paragraph_separator": {
+                            "ui:label": "Paragraph Separator",
+                            "ui:description": "Separator between paragraphs.",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "secondary_chunking_regex": {
+                            "ui:label": "Secondary Chunking Regex",
+                            "ui:description": "Backup regex for splitting into sentences.",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                    },
+                    "data": {
+                        "include_metadata": True,
+                        "include_prev_next_rel": True,
+                        "chunk_size": 1024,
+                        "chunk_overlap": 200,
+                        "separator": " ",
+                        "paragraph_separator": "\n\n\n",
+                        "secondary_chunking_regex": "[^,.;。？！]+[,.;。？！]?",
+                    },
+                },
+                {
+                    "slug": "embeddings-generator",
+                    "provider_slug": "promptly",
+                    "schema": {
+                        "title": "EmbeddingsGenerator",
+                        "description": "Base class for embeddings.",
+                        "type": "object",
+                        "properties": {
+                            "embedding_provider_slug": {"title": "Embedding Provider Slug", "type": "string"},
+                            "embedding_model_name": {
+                                "title": "Embedding Model Name",
+                                "default": "ada",
+                                "type": "string",
+                            },
+                            "additional_kwargs": {"title": "Additional Kwargs", "type": "object"},
+                        },
+                    },
+                    "ui_schema": {
+                        "embedding_provider_slug": {
+                            "ui:label": "Embedding Provider Slug",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "embedding_model_name": {
+                            "ui:label": "Embedding Model Name",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "additional_kwargs": {"ui:label": "Additional Kwargs", "ui:advanced": True},
+                    },
+                    "data": {
+                        "model_name": "unknown",
+                        "embed_batch_size": 10,
+                        "num_workers": None,
+                        "embedding_provider_slug": None,
+                        "embedding_model_name": "ada",
+                        "additional_kwargs": None,
+                    },
+                },
+            ],
+            "destination": {
+                "slug": "vector-store",
+                "provider_slug": "weaviate",
+                "schema": {
+                    "properties": {
+                        "index_name": {
+                            "default": None,
+                            "description": "Index/Collection name",
+                            "title": "Index Name",
+                            "type": "string",
+                        },
+                        "text_key": {
+                            "default": "content",
+                            "description": "Text key",
+                            "title": "Text Key",
+                            "type": "string",
+                        },
+                        "deployment_name": {
+                            "default": "*",
+                            "description": "Deployment name",
+                            "title": "Deployment Name",
+                            "type": "string",
+                        },
+                        "weaviate_schema": {
+                            "default": "",
+                            "description": "Schema",
+                            "title": "Weaviate Schema",
+                            "type": "string",
+                        },
+                    },
+                    "title": "Weaviate",
+                    "type": "object",
+                },
+                "ui_schema": {
+                    "index_name": {
+                        "ui:label": "Index Name",
+                        "ui:description": "Index/Collection name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "text_key": {
+                        "ui:label": "Text Key",
+                        "ui:description": "Text key",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "deployment_name": {
+                        "ui:label": "Deployment Name",
+                        "ui:description": "Deployment name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "weaviate_schema": {
+                        "ui:label": "Weaviate Schema",
+                        "ui:description": "Schema",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                },
+                "data": {},
+            },
         },
-        "ui_schema": {
-            "urls": {
-                "ui:label": "Urls",
-                "ui:description": "URLs to scrape, List of URL can be comma or newline separated. If site.xml is present, it will be used to scrape the site.",
-                "ui:widget": "webpageurls",
-                "ui:advanced": True,
-            },
-            "connection_id": {
-                "ui:label": "Connection Id",
-                "ui:description": "Select connection if parsing loggedin page",
-                "ui:widget": "connection",
-                "ui:advanced": True,
-            },
-        },
-        "data": {},
+        "sync_config": None,
+        "is_external_datasource": False,
     },
     "file": {
         "slug": "file",
-        "provider_slug": "promptly",
-        "schema": {
-            "properties": {
-                "file": {
-                    "accepts": {
-                        "application/json": [],
-                        "application/pdf": [],
-                        "application/rtf": [],
-                        "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
-                        "audio/mp3": [],
-                        "audio/mpeg": [],
-                        "text/plain": [],
-                        "video/mp4": [],
-                        "video/webm": [],
+        "name": "File",
+        "description": "Read data from a file",
+        "pipeline": {
+            "source": {
+                "slug": "file",
+                "provider_slug": "promptly",
+                "schema": {
+                    "properties": {
+                        "file": {
+                            "accepts": {
+                                "application/json": [],
+                                "application/pdf": [],
+                                "application/rtf": [],
+                                "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
+                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
+                                "audio/mp3": [],
+                                "audio/mpeg": [],
+                                "text/plain": [],
+                                "video/mp4": [],
+                                "video/webm": [],
+                            },
+                            "description": "File to be processed",
+                            "maxFiles": 4,
+                            "maxSize": 25000000,
+                            "title": "File",
+                            "type": "string",
+                            "widget": "file",
+                        }
                     },
-                    "description": "File to be processed",
-                    "maxFiles": 4,
-                    "maxSize": 25000000,
-                    "title": "File",
-                    "type": "string",
-                    "widget": "file",
-                }
+                    "required": ["file"],
+                    "title": "FileSchema",
+                    "type": "object",
+                },
+                "ui_schema": {
+                    "file": {
+                        "ui:label": "File",
+                        "ui:description": "File to be processed",
+                        "ui:widget": "file",
+                        "ui:advanced": True,
+                    }
+                },
+                "data": {},
             },
-            "required": ["file"],
-            "title": "FileSchema",
-            "type": "object",
+            "transformations": [
+                {
+                    "slug": "sentence-splitter",
+                    "provider_slug": "promptly",
+                    "schema": {
+                        "title": "SentenceSplitter",
+                        "description": "Parse text with a preference for complete sentences.\n\nIn general, this class tries to keep sentences and paragraphs together. Therefore\ncompared to the original TokenTextSplitter, there are less likely to be\nhanging sentences or parts of sentences at the end of the node chunk.",
+                        "type": "object",
+                        "properties": {
+                            "include_metadata": {
+                                "title": "Include Metadata",
+                                "description": "Whether or not to consider metadata when splitting.",
+                                "default": True,
+                                "type": "boolean",
+                            },
+                            "include_prev_next_rel": {
+                                "title": "Include Prev Next Rel",
+                                "description": "Include prev/next node relationships.",
+                                "default": True,
+                                "type": "boolean",
+                            },
+                            "chunk_size": {
+                                "title": "Chunk Size",
+                                "description": "The token chunk size for each chunk.",
+                                "default": 1024,
+                                "exclusiveMinimum": 0,
+                                "type": "integer",
+                            },
+                            "chunk_overlap": {
+                                "title": "Chunk Overlap",
+                                "description": "The token overlap of each chunk when splitting.",
+                                "default": 200,
+                                "gte": 0,
+                                "type": "integer",
+                            },
+                            "separator": {
+                                "title": "Separator",
+                                "description": "Default separator for splitting into words",
+                                "default": " ",
+                                "type": "string",
+                            },
+                            "paragraph_separator": {
+                                "title": "Paragraph Separator",
+                                "description": "Separator between paragraphs.",
+                                "default": "\n\n\n",
+                                "type": "string",
+                            },
+                            "secondary_chunking_regex": {
+                                "title": "Secondary Chunking Regex",
+                                "description": "Backup regex for splitting into sentences.",
+                                "default": "[^,.;。？！]+[,.;。？！]?",
+                                "type": "string",
+                            },
+                        },
+                    },
+                    "ui_schema": {
+                        "include_metadata": {
+                            "ui:label": "Include Metadata",
+                            "ui:description": "Whether or not to consider metadata when splitting.",
+                            "ui:widget": "checkbox",
+                            "ui:advanced": True,
+                        },
+                        "include_prev_next_rel": {
+                            "ui:label": "Include Prev Next Rel",
+                            "ui:description": "Include prev/next node relationships.",
+                            "ui:widget": "checkbox",
+                            "ui:advanced": True,
+                        },
+                        "chunk_size": {
+                            "ui:label": "Chunk Size",
+                            "ui:description": "The token chunk size for each chunk.",
+                            "ui:widget": "updown",
+                            "ui:advanced": True,
+                        },
+                        "chunk_overlap": {
+                            "ui:label": "Chunk Overlap",
+                            "ui:description": "The token overlap of each chunk when splitting.",
+                            "ui:widget": "updown",
+                            "ui:advanced": True,
+                        },
+                        "separator": {
+                            "ui:label": "Separator",
+                            "ui:description": "Default separator for splitting into words",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "paragraph_separator": {
+                            "ui:label": "Paragraph Separator",
+                            "ui:description": "Separator between paragraphs.",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "secondary_chunking_regex": {
+                            "ui:label": "Secondary Chunking Regex",
+                            "ui:description": "Backup regex for splitting into sentences.",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                    },
+                    "data": {
+                        "include_metadata": True,
+                        "include_prev_next_rel": True,
+                        "chunk_size": 1024,
+                        "chunk_overlap": 200,
+                        "separator": " ",
+                        "paragraph_separator": "\n\n\n",
+                        "secondary_chunking_regex": "[^,.;。？！]+[,.;。？！]?",
+                    },
+                },
+                {
+                    "slug": "embeddings-generator",
+                    "provider_slug": "promptly",
+                    "schema": {
+                        "title": "EmbeddingsGenerator",
+                        "description": "Base class for embeddings.",
+                        "type": "object",
+                        "properties": {
+                            "embedding_provider_slug": {"title": "Embedding Provider Slug", "type": "string"},
+                            "embedding_model_name": {
+                                "title": "Embedding Model Name",
+                                "default": "ada",
+                                "type": "string",
+                            },
+                            "additional_kwargs": {"title": "Additional Kwargs", "type": "object"},
+                        },
+                    },
+                    "ui_schema": {
+                        "embedding_provider_slug": {
+                            "ui:label": "Embedding Provider Slug",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "embedding_model_name": {
+                            "ui:label": "Embedding Model Name",
+                            "ui:widget": "text",
+                            "ui:advanced": True,
+                        },
+                        "additional_kwargs": {"ui:label": "Additional Kwargs", "ui:advanced": True},
+                    },
+                    "data": {
+                        "model_name": "unknown",
+                        "embed_batch_size": 10,
+                        "num_workers": None,
+                        "embedding_provider_slug": None,
+                        "embedding_model_name": "ada",
+                        "additional_kwargs": None,
+                    },
+                },
+            ],
+            "destination": {
+                "slug": "vector-store",
+                "provider_slug": "weaviate",
+                "schema": {
+                    "properties": {
+                        "index_name": {
+                            "default": None,
+                            "description": "Index/Collection name",
+                            "title": "Index Name",
+                            "type": "string",
+                        },
+                        "text_key": {
+                            "default": "content",
+                            "description": "Text key",
+                            "title": "Text Key",
+                            "type": "string",
+                        },
+                        "deployment_name": {
+                            "default": "*",
+                            "description": "Deployment name",
+                            "title": "Deployment Name",
+                            "type": "string",
+                        },
+                        "weaviate_schema": {
+                            "default": "",
+                            "description": "Schema",
+                            "title": "Weaviate Schema",
+                            "type": "string",
+                        },
+                    },
+                    "title": "Weaviate",
+                    "type": "object",
+                },
+                "ui_schema": {
+                    "index_name": {
+                        "ui:label": "Index Name",
+                        "ui:description": "Index/Collection name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "text_key": {
+                        "ui:label": "Text Key",
+                        "ui:description": "Text key",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "deployment_name": {
+                        "ui:label": "Deployment Name",
+                        "ui:description": "Deployment name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "weaviate_schema": {
+                        "ui:label": "Weaviate Schema",
+                        "ui:description": "Schema",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                },
+                "data": {},
+            },
         },
-        "ui_schema": {
-            "file": {
-                "ui:label": "File",
-                "ui:description": "File to be processed",
-                "ui:widget": "file",
-                "ui:advanced": True,
-            }
+        "sync_config": None,
+        "is_external_datasource": False,
+    },
+    "singlestore": {
+        "slug": "singlestore",
+        "name": "Singlestore",
+        "description": "Read data from Singlestore",
+        "pipeline": {
+            "source": None,
+            "transformations": [],
+            "destination": {
+                "slug": "singlestore",
+                "provider_slug": "singlestore",
+                "schema": {
+                    "properties": {
+                        "database": {"description": "Database name", "title": "Database", "type": "string"},
+                        "table": {"description": "Table name", "title": "Table", "type": "string"},
+                        "deployment_name": {
+                            "default": "*",
+                            "description": "Deployment name",
+                            "title": "Deployment Name",
+                            "type": "string",
+                        },
+                    },
+                    "required": ["database", "table"],
+                    "title": "SingleStore",
+                    "type": "object",
+                },
+                "ui_schema": {
+                    "database": {
+                        "ui:label": "Database",
+                        "ui:description": "Database name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "table": {
+                        "ui:label": "Table",
+                        "ui:description": "Table name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                    "deployment_name": {
+                        "ui:label": "Deployment Name",
+                        "ui:description": "Deployment name",
+                        "ui:widget": "text",
+                        "ui:advanced": True,
+                    },
+                },
+                "data": {},
+            },
         },
-        "data": {},
+        "sync_config": None,
+        "is_external_datasource": True,
     },
 }
 
-SENTENCE_SPLITTER_DATA = {
-    "slug": "sentence-splitter",
-    "provider_slug": "promptly",
-    "schema": {
-        "title": "SentenceSplitter",
-        "description": "Parse text with a preference for complete sentences.\n\nIn general, this class tries to keep sentences and paragraphs together. Therefore\ncompared to the original TokenTextSplitter, there are less likely to be\nhanging sentences or parts of sentences at the end of the node chunk.",
-        "type": "object",
-        "properties": {
-            "include_metadata": {
-                "title": "Include Metadata",
-                "description": "Whether or not to consider metadata when splitting.",
-                "default": True,
-                "type": "boolean",
-            },
-            "include_prev_next_rel": {
-                "title": "Include Prev Next Rel",
-                "description": "Include prev/next node relationships.",
-                "default": True,
-                "type": "boolean",
-            },
-            "chunk_size": {
-                "title": "Chunk Size",
-                "description": "The token chunk size for each chunk.",
-                "default": 1024,
-                "exclusiveMinimum": 0,
-                "type": "integer",
-            },
-            "chunk_overlap": {
-                "title": "Chunk Overlap",
-                "description": "The token overlap of each chunk when splitting.",
-                "default": 200,
-                "gte": 0,
-                "type": "integer",
-            },
-            "separator": {
-                "title": "Separator",
-                "description": "Default separator for splitting into words",
-                "default": " ",
-                "type": "string",
-            },
-            "paragraph_separator": {
-                "title": "Paragraph Separator",
-                "description": "Separator between paragraphs.",
-                "default": "\n\n\n",
-                "type": "string",
-            },
-            "secondary_chunking_regex": {
-                "title": "Secondary Chunking Regex",
-                "description": "Backup regex for splitting into sentences.",
-                "default": "[^,.;。？！]+[,.;。？！]?",
-                "type": "string",
-            },
-        },
-    },
-    "ui_schema": {
-        "include_metadata": {
-            "ui:label": "Include Metadata",
-            "ui:description": "Whether or not to consider metadata when splitting.",
-            "ui:widget": "checkbox",
-            "ui:advanced": True,
-        },
-        "include_prev_next_rel": {
-            "ui:label": "Include Prev Next Rel",
-            "ui:description": "Include prev/next node relationships.",
-            "ui:widget": "checkbox",
-            "ui:advanced": True,
-        },
-        "chunk_size": {
-            "ui:label": "Chunk Size",
-            "ui:description": "The token chunk size for each chunk.",
-            "ui:widget": "updown",
-            "ui:advanced": True,
-        },
-        "chunk_overlap": {
-            "ui:label": "Chunk Overlap",
-            "ui:description": "The token overlap of each chunk when splitting.",
-            "ui:widget": "updown",
-            "ui:advanced": True,
-        },
-        "separator": {
-            "ui:label": "Separator",
-            "ui:description": "Default separator for splitting into words",
-            "ui:widget": "text",
-            "ui:advanced": True,
-        },
-        "paragraph_separator": {
-            "ui:label": "Paragraph Separator",
-            "ui:description": "Separator between paragraphs.",
-            "ui:widget": "text",
-            "ui:advanced": True,
-        },
-        "secondary_chunking_regex": {
-            "ui:label": "Secondary Chunking Regex",
-            "ui:description": "Backup regex for splitting into sentences.",
-            "ui:widget": "text",
-            "ui:advanced": True,
-        },
-    },
-    "data": {
+TRANSFORMATIONS_DATA = [
+    {
         "include_metadata": True,
         "include_prev_next_rel": True,
         "chunk_size": 1024,
@@ -237,27 +1067,7 @@ SENTENCE_SPLITTER_DATA = {
         "paragraph_separator": "\n\n\n",
         "secondary_chunking_regex": "[^,.;。？！]+[,.;。？！]?",
     },
-}
-
-EMBEDDINGS_DATA = {
-    "slug": "embeddings-generator",
-    "provider_slug": "promptly",
-    "schema": {
-        "title": "EmbeddingsGenerator",
-        "description": "Base class for embeddings.",
-        "type": "object",
-        "properties": {
-            "embedding_provider_slug": {"title": "Embedding Provider Slug", "default": None, "type": "string"},
-            "embedding_model_name": {"title": "Embedding Model Name", "default": "ada", "type": "string"},
-            "additional_kwargs": {"title": "Additional Kwargs", "type": "object"},
-        },
-    },
-    "ui_schema": {
-        "embedding_provider_slug": {"ui:label": "Embedding Provider Slug", "ui:widget": "text", "ui:advanced": True},
-        "embedding_model_name": {"ui:label": "Embedding Model Name", "ui:widget": "text", "ui:advanced": True},
-        "additional_kwargs": {"ui:label": "Additional Kwargs", "ui:advanced": True},
-    },
-    "data": {
+    {
         "model_name": "unknown",
         "embed_batch_size": 10,
         "num_workers": None,
@@ -265,106 +1075,7 @@ EMBEDDINGS_DATA = {
         "embedding_model_name": "ada",
         "additional_kwargs": None,
     },
-}
-
-DESTINATION_DATA = {
-    "weaviate-vector-store": {
-        "slug": "vector-store",
-        "provider_slug": "weaviate",
-        "schema": {
-            "properties": {
-                "index_name": {
-                    "default": "text",
-                    "description": "Index/Collection name",
-                    "title": "Index Name",
-                    "type": "string",
-                },
-                "text_key": {"default": "Text", "description": "Text key", "title": "Text Key", "type": "string"},
-                "deployment_name": {
-                    "default": "*",
-                    "description": "Deployment name",
-                    "title": "Deployment Name",
-                    "type": "string",
-                },
-                "weaviate_schema": {
-                    "default": "",
-                    "description": "Schema",
-                    "title": "Weaviate Schema",
-                    "type": "string",
-                },
-            },
-            "title": "Weaviate",
-            "type": "object",
-        },
-        "ui_schema": {
-            "index_name": {
-                "ui:label": "Index Name",
-                "ui:description": "Index/Collection name",
-                "ui:widget": "text",
-                "ui:advanced": True,
-            },
-            "text_key": {
-                "ui:label": "Text Key",
-                "ui:description": "Text key",
-                "ui:widget": "text",
-                "ui:advanced": True,
-            },
-            "deployment_name": {
-                "ui:label": "Deployment Name",
-                "ui:description": "Deployment name",
-                "ui:widget": "text",
-                "ui:advanced": True,
-            },
-            "weaviate_schema": {
-                "ui:label": "Weaviate Schema",
-                "ui:description": "Schema",
-                "ui:widget": "text",
-                "ui:advanced": True,
-            },
-        },
-        "data": {},
-    },
-    "singlestore": {
-        "slug": "singlestore",
-        "provider_slug": "singlestore",
-        "schema": {
-            "properties": {
-                "database": {"description": "Database name", "title": "Database", "type": "string"},
-                "table": {"description": "Table name", "title": "Table", "type": "string"},
-                "deployment_name": {
-                    "default": "*",
-                    "description": "Deployment name",
-                    "title": "Deployment Name",
-                    "type": "string",
-                },
-            },
-            "required": ["database", "table"],
-            "title": "SingleStore",
-            "type": "object",
-        },
-        "ui_schema": {
-            "database": {
-                "ui:label": "Database",
-                "ui:description": "Database name",
-                "ui:widget": "text",
-                "ui:advanced": True,
-            },
-            "table": {
-                "ui:label": "Table",
-                "ui:description": "Table name",
-                "ui:widget": "text",
-                "ui:advanced": True,
-            },
-            "deployment_name": {
-                "ui:label": "Deployment Name",
-                "ui:description": "Deployment name",
-                "ui:widget": "text",
-                "ui:advanced": True,
-            },
-        },
-        "data": {},
-    },
-}
+]
 
 
 def delete_legacy_pipeline_from_datasource_config(apps, schema_editor):
@@ -386,64 +1097,23 @@ def add_legacy_pipeline_to_datasource_config(apps, schema_editor):
     for datasource in datasources:
 
         type_slug = datasource.config.get("type_slug")
-        if type_slug and "pipeline" not in datasource.config:
-            pipeline_config = {}
+        if type_slug and type_slug in PIPELINE_DATA:
+            pipeline = PIPELINE_DATA[type_slug]
+            pipeline_data = {
+                "source": {},
+                "destination": {},
+                "transformations": TRANSFORMATIONS_DATA,
+            }
+
             datasource_config = {**datasource.config} or {}
-            transformations_data = [SENTENCE_SPLITTER_DATA, EMBEDDINGS_DATA]
+            datasource_config["pipeline_legacy"] = pipeline
+            datasource_config["pipeline_legacy_data"] = pipeline_data
 
             owner_profile = Profile.objects.get(user=datasource.owner)
             if owner_profile.vectostore_embedding_endpoint == "azure_openai":
-                transformations_data[1]["data"]["embedding_provider_slug"] = "azure-openai"
+                pipeline_data["transformations"][1]["embedding_provider_slug"] = "azure-openai"
             else:
-                transformations_data[1]["data"]["embedding_provider_slug"] = "openai"
-
-            if type_slug == "text":
-                pipeline_config["name"] = "Text"
-                pipeline_config["slug"] = "text"
-                pipeline_config["description"] = ""
-                pipeline_config["is_external_datasource"] = False
-                pipeline_config["source"] = SOURCE_DATA["text"]
-                pipeline_config["transformations"] = transformations_data
-                pipeline_config["destination"] = DESTINATION_DATA["weaviate-vector-store"]
-            elif type_slug == "url":
-                pipeline_config["name"] = "URL"
-                pipeline_config["slug"] = "url"
-                pipeline_config["description"] = ""
-                pipeline_config["is_external_datasource"] = False
-                pipeline_config["source"] = SOURCE_DATA["url"]
-                pipeline_config["transformations"] = transformations_data
-                pipeline_config["destination"] = DESTINATION_DATA["weaviate-vector-store"]
-            elif type_slug == "pdf":
-                pipeline_config["name"] = "PDF"
-                pipeline_config["slug"] = "pdf"
-                pipeline_config["description"] = ""
-                pipeline_config["is_external_datasource"] = False
-                pipeline_config["source"] = SOURCE_DATA["pdf"]
-                pipeline_config["transformations"] = transformations_data
-                pipeline_config["destination"] = DESTINATION_DATA["weaviate-vector-store"]
-            elif type_slug == "file":
-                pipeline_config["name"] = "File"
-                pipeline_config["slug"] = "file"
-                pipeline_config["description"] = ""
-                pipeline_config["is_external_datasource"] = False
-                pipeline_config["source"] = SOURCE_DATA["file"]
-                pipeline_config["transformations"] = transformations_data
-                pipeline_config["destination"] = DESTINATION_DATA["weaviate-vector-store"]
-            elif type_slug == "singlestore":
-                pipeline_config["name"] = "SingleStore"
-                pipeline_config["slug"] = "singlestore"
-                pipeline_config["description"] = ""
-                pipeline_config["is_external_datasource"] = False
-                pipeline_config["source"] = None
-                pipeline_config["transformations"] = []
-                pipeline_config["destination"] = DESTINATION_DATA["singlestore"]
-
-            datasource_config["pipeline_legacy"] = pipeline_config
-            datasource_config["pipeline_legacy_data"] = {
-                "source": pipeline_config["source"]["data"],
-                "destination": pipeline_config["destination"]["data"],
-                "transformations": [t["data"] for t in pipeline_config["transformations"]],
-            }
+                pipeline_data["transformations"][1]["embedding_provider_slug"] = "openai"
 
             datasource.config = {**datasource_config}
             datasource.save()

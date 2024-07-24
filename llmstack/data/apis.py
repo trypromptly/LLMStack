@@ -139,6 +139,13 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource_type = get_object_or_404(DataSourceType, slug=request.data["type_slug"])
         datasource = DataSource(name=request.data["name"], owner=owner, type=datasource_type)
 
+        transformations_data = request.data.get("transformations_data", [])
+
+        # Add depending on platform defaults
+        transformations_data[-1]["embedding_provider_slug"] = "openai"
+        if datasource.profile.vectostore_embedding_endpoint == "azure_openai":
+            transformations_data[-1]["embedding_provider_slug"] = "azure-openai"
+
         config = {
             "type_slug": request.data["type_slug"],
             "pipeline": DataSourceTypeViewSet().get(request, request.data["type_slug"]).data,
