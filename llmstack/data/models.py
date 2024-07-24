@@ -192,16 +192,18 @@ class DataSource(models.Model):
         return data
 
     @property
-    def transformation_schema(self):
-        return {}
+    def transformations_cls(self):
+        from llmstack.data.transformations.utils import get_transformer_cls
+
+        transformations = self.config.get("pipeline", {}).get("transformations", [])
+        return list(
+            map(lambda t: get_transformer_cls(slug=t["slug"], provider_slug=t["provider_slug"]), transformations)
+        )
 
     @property
-    def transformation_cls(self):
-        return None
-
-    @property
-    def transformation_data(self):
-        return {}
+    def transformations_data(self):
+        transformations_data = self.config.get("pipeline_data", {}).get("transformations", [])
+        return transformations_data
 
     def create_data_ingestion_pipeline(self):
         from llmstack.data.pipeline import DataIngestionPipeline

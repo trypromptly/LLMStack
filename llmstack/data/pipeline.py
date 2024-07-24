@@ -17,17 +17,19 @@ class DataIngestionPipeline:
         self.datasource = datasource
         self._source_cls = self.datasource.source_cls
         self._destination_cls = self.datasource.destination_cls
-        self._transformation_cls = self.datasource.transformation_cls
+        self._transformations_cls = self.datasource.transformations_cls
 
         self._destination = None
-        self._transformation = None
+        self._transformations = []
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.destination_data)
             self._destination.initialize_client(datasource=self.datasource)
 
-        if self._transformation_cls:
-            self._transformation = self._transformation_cls(**self.datasource.transformation_data)
+        if self._transformations_cls:
+            transformations_data = self.datasource.transformations_data
+            for transformation_cls in self._transformations_cls:
+                self._transformations.append(transformation_cls(**transformations_data))
 
     def add_data(self, source_data_dict={}):
         source: Optional[BaseSource] = None
@@ -78,7 +80,6 @@ class DataQueryPipeline:
         self.datasource = datasource
         self._destination_cls = self.datasource.destination_cls
         self._destination = None
-        self._transformation = None
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.destination_data)
