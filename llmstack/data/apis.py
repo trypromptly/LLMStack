@@ -30,10 +30,9 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
         pipeline_templates = get_data_pipelines_from_contrib()
 
         for pipeline_template in pipeline_templates:
-            pipeline_dict = pipeline_template.to_dict()
             processors.append(
                 {
-                    **pipeline_dict,
+                    **pipeline_template.default_dict(request=request),
                     "sync_config": None,
                     "is_external_datasource": not pipeline_template.pipeline.source,
                 }
@@ -139,21 +138,17 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         # Validation for slug
         datasource_type = get_object_or_404(DataSourceType, slug=request.data["type_slug"])
         datasource = DataSource(name=request.data["name"], owner=owner, type=datasource_type)
-        datasource_config = datasource.config or {}
-        datasource_config["type_slug"] = request.data["type_slug"]
 
-        datasource_config["pipeline"] = DataSourceTypeViewSet().get(request, request.data["type_slug"]).data
-
-        pipeline_data = {}
-        if datasource_config["pipeline"].get("source"):
-            pipeline_data["source"] = request.data.get("source_data", {})
-        if datasource_config["pipeline"].get("destination"):
-            pipeline_data["destination"] = request.data.get("destination_data", {})
-        if datasource_config["pipeline"].get("transformations"):
-            pipeline_data["transformations"] = request.data.get("transformations_data", [])
-
-        datasource_config["pipeline_data"] = pipeline_data
-        datasource.config = datasource_config
+        config = {
+            "type_slug": request.data["type_slug"],
+            "pipeline": DataSourceTypeViewSet().get(request, request.data["type_slug"]).data,
+            "pipeline_data": {
+                "source": request.data.get("source_data", {}),
+                "destination": request.data.get("destination_data", {}),
+                "transformations": request.data.get("transformations_data", []),
+            },
+        }
+        datasource.config = config
         datasource.save()
         return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
 

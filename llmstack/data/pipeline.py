@@ -15,21 +15,14 @@ logger = logging.getLogger(__name__)
 class DataIngestionPipeline:
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
-        self._source_cls = self.datasource.source_cls
-        self._destination_cls = self.datasource.destination_cls
-        self._transformations_cls = self.datasource.transformations_cls
+        self._source_cls = self.datasource.pipeline_obj.source_cls
+        self._destination_cls = self.datasource.pipeline_obj.destination_cls
 
         self._destination = None
-        self._transformations = []
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.destination_data)
             self._destination.initialize_client(datasource=self.datasource)
-
-        if self._transformations_cls:
-            transformations_data = self.datasource.transformations_data
-            for transformation_cls in self._transformations_cls:
-                self._transformations.append(transformation_cls(**transformations_data))
 
     def add_data(self, source_data_dict={}):
         source: Optional[BaseSource] = None

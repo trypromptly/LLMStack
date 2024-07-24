@@ -24,7 +24,7 @@ class BaseProcessorBlock(BaseModel):
     def get_default_data(self, **kwargs):
         return {}
 
-    def to_dict(self):
+    def default_dict(self, **kwargs):
         return {
             "slug": self.slug,
             "provider_slug": self.provider_slug,
@@ -76,17 +76,29 @@ class DataPipelineTemplate(BaseModel):
     description: str
     pipeline: PipelineBlock
 
-    def to_dict(self):
+    def default_dict(self, **kwargs):
         return {
             "slug": self.slug,
             "name": self.name,
             "description": self.description,
             "pipeline": {
-                "source": self.pipeline.source.to_dict() if self.pipeline.source else None,
-                "transformations": [t.to_dict() for t in self.pipeline.transformations],
-                "destination": self.pipeline.destination.to_dict() if self.pipeline.destination else None,
+                "source": self.pipeline.source.default_dict(**kwargs) if self.pipeline.source else None,
+                "transformations": [t.default_dict(**kwargs) for t in self.pipeline.transformations],
+                "destination": self.pipeline.destination.default_dict(**kwargs) if self.pipeline.destination else None,
             },
         }
+
+    @property
+    def source_cls(self):
+        return self.pipeline.source.processor_cls if self.pipeline.source else None
+
+    @property
+    def destination_cls(self):
+        return self.pipeline.destination.processor_cls if self.pipeline.destination else None
+
+    @property
+    def transformation_cls(self):
+        return [t.processor_cls for t in self.pipeline.transformations]
 
 
 class DataDocument(BaseModel):

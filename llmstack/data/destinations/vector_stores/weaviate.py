@@ -202,8 +202,8 @@ class WeaviateVectorStore:
 
 
 class Weaviate(BaseDestination):
-    index_name: str = Field(description="Index/Collection name", default="text")
-    text_key: str = Field(description="Text key", default="Text")
+    index_name: Optional[str] = Field(description="Index/Collection name", default=None)
+    text_key: str = Field(description="Text key", default="content")
     deployment_name: Optional[str] = Field(description="Deployment name", default="*")
     weaviate_schema: Optional[str] = Field(description="Schema", default="")
 
@@ -223,12 +223,14 @@ class Weaviate(BaseDestination):
         from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
 
         datasource = kwargs.get("datasource")
+
+        index_name = self.index_name or f"Datasource_{datasource.uuid}"
         self._deployment_config = datasource.profile.get_provider_config(
             deployment_key=self.deployment_name, provider_slug=self.provider_slug()
         )
 
         DEFAULT_SCHEMA = {
-            "class": self.index_name,
+            "class": index_name,
             "description": "Text data source",
             "vectorizer": "text2vec-openai",
             "moduleConfig": {"text2vec-openai": {"model": "ada", "type": "text"}},
@@ -304,7 +306,7 @@ class Weaviate(BaseDestination):
 
         self._client = WeaviateVectorStore(
             weaviate_client=weaviate_client,
-            index_name=self.index_name,
+            index_name=index_name,
             text_key=self.text_key,
             auth_config=self._deployment_config.auth,
         )
