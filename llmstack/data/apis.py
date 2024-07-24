@@ -62,17 +62,39 @@ def load_destinations():
     return destinations
 
 
+def load_transformations():
+    from llmstack.data.transformations.splitters.llamindex.splitters import (
+        CodeSplitter,
+        SemanticSplitterNodeParser,
+        SentenceSplitter,
+    )
+
+    transformations = {}
+    for cls in [CodeSplitter, SemanticSplitterNodeParser, SentenceSplitter]:
+        if not transformations.get(cls.provider_slug()):
+            transformations[cls.provider_slug()] = {}
+        transformations[cls.provider_slug()][cls.slug()] = {
+            "slug": cls.slug(),
+            "provider_slug": cls.provider_slug(),
+            "schema": cls.get_schema(),
+            "ui_schema": cls.get_ui_schema(),
+        }
+    return transformations
+
+
 class DataSourceTypeViewSet(viewsets.ViewSet):
     def list(self, request):
         processors = []
 
         sources = load_sources()
         destinations = load_destinations()
+        transformations = load_transformations()
         pipeline_templates = get_data_pipelines_from_contrib()
 
         for pipeline_template in pipeline_templates:
             source = pipeline_template.pipeline.source
             destination = pipeline_template.pipeline.destination
+            transformation = pipeline_template.pipeline.transformations
 
             is_external_datasource = not pipeline_template.pipeline.source
             processors.append(
@@ -85,6 +107,9 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                     "source": sources.get(source.provider_slug, {}).get(source.slug, {}) if source else {},
                     "destination": (
                         destinations.get(destination.provider_slug, {}).get(destination.slug, {}) if destination else {}
+                    ),
+                    "transformations": list(
+                        map(lambda t: transformations.get(t.provider_slug, {}).get(t.slug, {}), transformation)
                     ),
                 }
             )
