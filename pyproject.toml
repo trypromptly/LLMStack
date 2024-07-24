@@ -112,8 +112,8 @@ playwright = "1.42.0"
 sqlalchemy = "^2.0.31"
 websockify = "^0.12.0"
 spacy = "^3.7.5"
-llama-index-vector-stores-pinecone = "^0.1.8"
-llama-index-vector-stores-qdrant = "^0.2.13"
+llama-index-vector-stores-pinecone = {version="^0.1.8", python=">=3.10,<3.13"}
+llama-index-vector-stores-qdrant = {version="^0.2.13", python=">=3.10,<3.13"}
 
 
 [tool.poetry-dynamic-versioning]
