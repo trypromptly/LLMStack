@@ -94,7 +94,8 @@ const SessionRenderer = ({
     if (storeApp) {
       setAppRunData({
         messages,
-        assistantImage: storeApp.data?.config?.assistant_image || "",
+        assistantImage:
+          storeApp.data?.icon || storeApp.data?.config?.assistant_image || "",
         inputFields: storeApp.data?.input_fields || [],
         processors: storeApp.data?.processors || [],
       });

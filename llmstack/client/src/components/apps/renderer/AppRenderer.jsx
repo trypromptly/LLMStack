@@ -495,7 +495,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
       ),
       messages: messagesRef.current.get(),
       processors: app?.data?.processors || [],
-      assistantImage: app?.data?.config?.assistant_image || logo,
+      assistantImage: app?.icon || app?.data?.config?.assistant_image || logo,
       suggestedMessages: app?.data?.config?.suggested_messages || [],
     }));
 

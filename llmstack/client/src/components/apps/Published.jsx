@@ -264,9 +264,9 @@ export const PublishedAppChatEmbed = ({
               borderRadius: "8px 8px 0px 0px",
             }}
           >
-            {app?.data?.config?.assistant_image && (
+            {(app.icon || app?.data?.config?.assistant_image) && (
               <Avatar
-                src={app.data?.config?.assistant_image}
+                src={app.icon || app.data?.config?.assistant_image}
                 alt="Bot"
                 style={{ margin: "10px 8px", border: "solid 1px #ccc" }}
               />
@@ -277,9 +277,10 @@ export const PublishedAppChatEmbed = ({
                 fontWeight: 600,
                 fontSize: "18px",
                 color: "white",
-                padding: app?.data?.config?.assistant_image
-                  ? "inherit"
-                  : "16px",
+                padding:
+                  app.icon || app?.data?.config?.assistant_image
+                    ? "inherit"
+                    : "16px",
               }}
             >
               {app?.name}

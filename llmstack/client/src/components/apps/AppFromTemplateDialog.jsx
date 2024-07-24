@@ -14,12 +14,21 @@ import { useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { appTemplateState } from "../../data/atoms";
 import { axios } from "../../data/axios";
+import DropzoneFileWidget from "../form/DropzoneFileWidget";
 
-export function AppFromTemplateDialog({ open, setOpen, appTemplateSlug }) {
-  const [appName, setAppName] = useState("Untitled");
+export function AppFromTemplateDialog({
+  open,
+  setOpen,
+  appTemplateSlug,
+  app,
+  setApp,
+}) {
+  const [appName, setAppName] = useState(app?.name || "Untitled");
+  const [appDescription, setAppDescription] = useState(app?.description || "");
+  const [appIcon, setAppIcon] = useState(app?.icon || "");
   const appTemplate = useRecoilValue(
     appTemplateState(
-      appTemplateSlug.startsWith("_blank_") ? "_blank_" : appTemplateSlug,
+      appTemplateSlug?.startsWith("_blank_") ? "_blank_" : appTemplateSlug,
     ),
   );
   const navigate = useNavigate();
@@ -28,14 +37,31 @@ export function AppFromTemplateDialog({ open, setOpen, appTemplateSlug }) {
     setOpen(false);
   };
 
+  const saveApp = () => {
+    const payload = {
+      ...(app || {}),
+      name: appName,
+      description: appDescription,
+      icon: appIcon,
+    };
+    axios()
+      .patch(`/api/apps/${app.uuid}`, payload)
+      .then(() => {
+        setApp(payload);
+        setOpen(false);
+      });
+  };
+
   const createApp = () => {
     const payload = {
       ...(appTemplate.app || {}),
       name: appName || appTemplate?.name || "Untitled",
+      description: appDescription || appTemplate?.description || "",
+      icon: appIcon,
       app_type: appTemplate?.app?.type,
       type_slug:
         appTemplate?.app?.type_slug ||
-        appTemplateSlug.replaceAll("_blank_", ""),
+        appTemplateSlug?.replaceAll("_blank_", ""),
       template_slug: appTemplate?.slug,
     };
     axios()
@@ -48,7 +74,9 @@ export function AppFromTemplateDialog({ open, setOpen, appTemplateSlug }) {
 
   return (
     <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>{appTemplate?.name || "Create a new App"}</DialogTitle>
+      <DialogTitle>
+        {appTemplate?.name || (app ? "Edit App" : "Create a new App")}
+      </DialogTitle>
       <DialogContent>
         <Typography style={{ fontSize: "14px", color: "#555" }}>
           {appTemplate?.description}
@@ -74,27 +102,52 @@ export function AppFromTemplateDialog({ open, setOpen, appTemplateSlug }) {
             />
           ))}
         </Stack>
-        <Typography
-          variant="body1"
-          style={{
-            paddingTop: 10,
-            paddingBottom: 5,
-            fontSize: "16px",
-          }}
-        >
-          To begin creating your application, please provide a name.
-        </Typography>
+        {!app && (
+          <Typography
+            variant="body1"
+            style={{
+              paddingTop: 10,
+              paddingBottom: 5,
+              fontSize: "16px",
+            }}
+          >
+            To begin creating your application, please provide the following
+            information.
+          </Typography>
+        )}
         <TextField
           autoFocus
           margin="dense"
           id="name"
-          label="App name"
+          label="Name"
           type="text"
           fullWidth
-          variant="standard"
           value={appName}
           required={true}
           onChange={(e) => setAppName(e.target.value)}
+        />
+        <TextField
+          margin="dense"
+          id="description"
+          label="Description"
+          type="text"
+          fullWidth
+          multiline
+          minRows={3}
+          placeholder="Describe your app. Markdown supported."
+          value={appDescription}
+          onChange={(e) => setAppDescription(e.target.value)}
+        />
+        <DropzoneFileWidget
+          label="App Icon"
+          onChange={setAppIcon}
+          value={appIcon}
+          multiple={false}
+          schema={{
+            type: "string",
+            format: "data-url",
+            accepts: { "image/*": [] },
+          }}
         />
       </DialogContent>
       <DialogActions>
@@ -102,11 +155,11 @@ export function AppFromTemplateDialog({ open, setOpen, appTemplateSlug }) {
           Cancel
         </Button>
         <Button
-          onClick={createApp}
+          onClick={app ? saveApp : createApp}
           variant="contained"
           sx={{ textTransform: "none" }}
         >
-          Create App
+          {app ? "Save" : "Create App"}
         </Button>
       </DialogActions>
     </Dialog>

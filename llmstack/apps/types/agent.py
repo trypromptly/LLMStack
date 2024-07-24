@@ -69,7 +69,7 @@ class AgentConfigSchema(BaseSchema):
         title="Assistant Image",
         default="",
         description="Icon to show for the messages from assistant",
-        json_schema_extra={"widget": "image_generator", "advanced_parameter": True},
+        json_schema_extra={"widget": "hidden", "advanced_parameter": True, "hidden": True},
     )
     window_color: str = Field(
         title="Primary Color of Chat Window",

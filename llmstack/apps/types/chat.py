@@ -21,7 +21,7 @@ class ChatAppConfigSchema(BaseSchema):
         title="Assistant Image",
         default="",
         description="Icon to show for the messages from assistant",
-        json_schema_extra={"widget": "image_generator", "accepts": {"image/*": []}},
+        json_schema_extra={"widget": "hidden", "accepts": {"image/*": []}},
     )
     window_color: str = Field(
         title="Primary Color of Chat Window",

@@ -497,10 +497,18 @@ class AppViewSet(viewsets.ViewSet):
         draft = request.data["draft"] if "draft" in request.data else True
         comment = request.data["comment"] if "comment" in request.data else ""
 
-        versioned_app_data = AppData.objects.filter(
-            app_uuid=app.uuid,
-            is_draft=True,
-        ).first()
+        versioned_app_data = (
+            AppData.objects.filter(
+                app_uuid=app.uuid,
+                is_draft=True,
+            ).first()
+            or AppData.objects.filter(
+                app_uuid=app.uuid,
+                is_draft=False,
+            )
+            .order_by("-created_at")
+            .first()
+        )
 
         processors_data = request.data["processors"] if "processors" in request.data else []
         processed_processors_data = (
@@ -542,11 +550,20 @@ class AppViewSet(viewsets.ViewSet):
         # Find the versioned app data and update it
         app_data = {
             "name": request.data["name"] if "name" in request.data else versioned_app_data.data["name"],
-            "type_slug": (
-                request.data["type_slug"] if "type_slug" in request.data else versioned_app_data.data["type_slug"]
-            ),
             "description": (
                 request.data["description"] if "description" in request.data else versioned_app_data.data["description"]
+            ),
+            "icon": (
+                request.data["icon"]
+                if "icon" in request.data
+                else (
+                    versioned_app_data.data.get("icon", None)
+                    if versioned_app_data and versioned_app_data.data
+                    else None
+                )
+            ),
+            "type_slug": (
+                request.data["type_slug"] if "type_slug" in request.data else versioned_app_data.data["type_slug"]
             ),
             "config": request.data["config"] if "config" in request.data else versioned_app_data.data["config"],
             "input_fields": (
@@ -609,6 +626,7 @@ class AppViewSet(viewsets.ViewSet):
         )
         app_name = request.data["name"]
         app_description = request.data["description"] if "description" in request.data else ""
+        app_icon = request.data["icon"] if "icon" in request.data else None
         app_config = request.data["config"] if "config" in request.data else {}
         app_input_fields = request.data["input_fields"] if "input_fields" in request.data else []
         app_output_template = request.data["output_template"] if "output_template" in request.data else {}
@@ -676,6 +694,7 @@ class AppViewSet(viewsets.ViewSet):
         )
         app_data = {
             "name": app_name,
+            "description": app_description,
             "type_slug": app_type.slug,
             "description": app_description,
             "config": app_config,
@@ -683,6 +702,11 @@ class AppViewSet(viewsets.ViewSet):
             "output_template": app_output_template,
             "processors": app_processors,
         }
+
+        # Add app icon to app data if it exists
+        if app_icon:
+            app_data["icon"] = app_icon
+
         AppData.objects.create(
             app_uuid=app.uuid,
             data=app_data,

@@ -34,19 +34,14 @@ import { AppApiExamples } from "../components/apps/AppApiExamples";
 import { AppDiscordConfigEditor } from "../components/apps/AppDiscordConfigEditor";
 import { AppEditor } from "../components/apps/AppEditor";
 import AppEditorMenu from "../components/apps/AppEditorMenu";
-import { AppNameEditor } from "../components/apps/AppNameEditor";
 import { AppPreview } from "../components/apps/AppPreview";
-import {
-  EditSharingModal,
-  PublishModal,
-  UnpublishModal,
-} from "../components/apps/AppPublisher";
+import { PublishModal, UnpublishModal } from "../components/apps/AppPublisher";
 import { AppRunHistory } from "../components/apps/AppRunHistory";
 import { AppSlackConfigEditor } from "../components/apps/AppSlackConfigEditor";
 import { AppTemplate } from "../components/apps/AppTemplate";
 import { AppTwilioConfigEditor } from "../components/apps/AppTwilioConfigEditor";
 import { AppVersions } from "../components/apps/AppVersions";
-import AppVisibilityIcon from "../components/apps/AppVisibilityIcon";
+import { AppDetailsEditor } from "../components/apps/AppDetailsEditor";
 import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
 import { useValidationErrorsForAppConsole } from "../data/appValidation";
 import {
@@ -193,7 +188,6 @@ export default function AppConsolePage(props) {
   const [app, setApp] = useState(null);
   const [isPublished, setIsPublished] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
-  const [showSharingModal, setShowSharingModal] = useState(false);
   const [showUnpublishModal, setShowUnpublishModal] = useState(false);
   const [showStoreListingModal, setShowStoreListingModal] = useState(false);
   const [processors, setProcessors] = useState([]);
@@ -202,7 +196,6 @@ export default function AppConsolePage(props) {
   const [appTemplate, setAppTemplate] = useState(null);
   const [appOutputTemplate, setAppOutputTemplate] = useState({});
   const [missingKeys, setMissingKeys] = useState([]);
-  const [appVisibility, setAppVisibility] = useState(3);
   const [selectedMenuItem, setSelectedMenuItem] = useState(page || "editor");
   const profile = useRecoilValue(profileSelector);
   const profileFlags = useRecoilValue(profileFlagsSelector);
@@ -233,7 +226,6 @@ export default function AppConsolePage(props) {
           setAppOutputTemplate(
             app?.data?.output_template || app?.output_template,
           );
-          setAppVisibility(app.visibility);
 
           if (app?.template) {
             setSelectedMenuItem(page || "template");
@@ -410,64 +402,13 @@ export default function AppConsolePage(props) {
           <Paper
             elevation={1}
             sx={{
-              padding: "10px 15px",
+              padding: "8px 12px",
               boxShadow: "none",
               backgroundColor: "#edeff755",
             }}
           >
             <Stack direction="row" spacing={1}>
-              <Stack direction="column">
-                <Stack direction="row" spacing={1.2}>
-                  <AppNameEditor
-                    appName={app.name}
-                    setAppName={(newAppName) =>
-                      setApp((app) => ({
-                        ...app,
-                        name: newAppName,
-                      }))
-                    }
-                  />
-                  {app.owner_email !== profile.user_email && (
-                    <span style={{ color: "gray", lineHeight: "40px" }}>
-                      shared by <b>{app.owner_email}</b>
-                    </span>
-                  )}
-                  {app.owner_email === profile.user_email &&
-                    app.visibility === 0 &&
-                    app.last_modified_by_email && (
-                      <span style={{ color: "gray", lineHeight: "40px" }}>
-                        Last modified by{" "}
-                        <b>
-                          {app.last_modified_by_email === profile.user_email
-                            ? "You"
-                            : app.last_modified_by_email}
-                        </b>
-                      </span>
-                    )}
-                </Stack>
-                {isPublished && (
-                  <Stack
-                    direction="row"
-                    spacing={0.2}
-                    sx={{ justifyContent: "left" }}
-                  >
-                    <Link
-                      href={`${window.location.origin}/app/${app.published_uuid}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      variant="body2"
-                    >
-                      {`${window.location.origin}/app/${app.published_uuid}`}
-                    </Link>
-                    <AppVisibilityIcon
-                      visibility={appVisibility}
-                      published={isPublished}
-                      setShowSharingModal={setShowSharingModal}
-                      disabled={app.owner_email !== profile.user_email}
-                    />
-                  </Stack>
-                )}
-              </Stack>
+              <AppDetailsEditor app={app} setApp={setApp} saveApp={saveApp} />
               <Stack
                 direction="row"
                 spacing={1}
@@ -478,19 +419,14 @@ export default function AppConsolePage(props) {
                   alignItems: "center",
                 }}
               >
-                <EditSharingModal
-                  show={showSharingModal}
-                  setShow={setShowSharingModal}
-                  app={app}
-                  setIsPublished={setIsPublished}
-                  setAppVisibility={setAppVisibility}
-                />
                 <PublishModal
                   show={showPublishModal}
                   setShow={setShowPublishModal}
                   app={app}
                   setIsPublished={setIsPublished}
-                  setAppVisibility={setAppVisibility}
+                  setAppVisibility={(visibility) =>
+                    setApp({ ...app, visibility })
+                  }
                   setReadAccessibleBy={(readAccessibleBy) =>
                     setApp((app) => ({
                       ...app,

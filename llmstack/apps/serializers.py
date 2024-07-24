@@ -96,6 +96,8 @@ class AppSerializer(DynamicFieldsModelSerializer):
     processors = serializers.SerializerMethodField()
     unique_processors = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
+    icon = serializers.SerializerMethodField()
     is_shareable = serializers.SerializerMethodField()
     has_footer = serializers.SerializerMethodField()
     last_modified_by_email = serializers.SerializerMethodField()
@@ -296,6 +298,25 @@ class AppSerializer(DynamicFieldsModelSerializer):
             else None
         )
 
+    def get_icon(self, obj):
+        app_data = self.get_data(obj)
+
+        if app_data and "icon" in app_data:
+            return app_data["icon"]
+        elif app_data and "config" in app_data and "assistant_image" in app_data["config"]:
+            asset_data = AssetViewSet().get_asset_data(
+                objref=app_data["config"]["assistant_image"],
+                request_user=self._request_user,
+            )
+            if asset_data and "url" in asset_data:
+                return asset_data["url"]
+
+        return None
+
+    def get_description(self, obj):
+        app_data = self.get_data(obj)
+        return app_data.get("description", obj.description)
+
     class Meta:
         model = App
         fields = [
@@ -315,6 +336,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
             "created_at",
             "last_updated_at",
             "logo",
+            "icon",
             "is_shareable",
             "has_footer",
             "domain",

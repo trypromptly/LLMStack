@@ -531,6 +531,14 @@ class AppData(models.Model):
                     result = public_file_storage.save(stored_file_name, thumbnail_content_file)
                     url = public_file_storage.url(result)
                     self.data["config"]["assistant_image"] = url
+
+            if "icon" in self.data and self.data["icon"] and self.data["icon"].startswith("data:image"):
+                thumbnail_content_file = create_image_asset_thumbnail_file(self.data["icon"], (300, 300), "PNG")
+                stored_file_name = f"{thumbnail_content_file.name}_{str(uuid.uuid4())[:4]}_resized.png"
+                result = public_file_storage.save(stored_file_name, thumbnail_content_file)
+                url = public_file_storage.url(result)
+                self.data["icon"] = url
+
         return super().save(*args, **kwargs)
 
 
