@@ -93,8 +93,38 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
         pipeline_templates = get_data_pipelines_from_contrib()
 
         for pipeline_template in pipeline_templates:
-            source = pipeline_template.pipeline.source
-            destination = pipeline_template.pipeline.destination
+            source = (
+                sources.get(pipeline_template.pipeline.source.provider_slug, {}).get(
+                    pipeline_template.pipeline.source.slug, {}
+                )
+                if pipeline_template.pipeline.source
+                else {}
+            )
+            if source:
+                source["data"] = {**source["data"], **pipeline_template.pipeline.source.data}
+
+            destination = (
+                destinations.get(pipeline_template.pipeline.destination.provider_slug, {}).get(
+                    pipeline_template.pipeline.destination.slug, {}
+                )
+                if pipeline_template.pipeline.destination
+                else {}
+            )
+            if destination:
+                destination["data"] = {**destination["data"], **pipeline_template.pipeline.destination.data}
+
+            transformation_list = list(
+                map(
+                    lambda t: transformations.get(t.provider_slug, {}).get(t.slug, {}),
+                    pipeline_template.pipeline.transformations or [],
+                )
+            )
+            transformation_list = []
+            for entry in pipeline_template.pipeline.transformations or []:
+                transformation = transformations.get(entry.provider_slug, {}).get(entry.slug, {})
+                if transformation:
+                    transformation["data"] = {**transformation["data"], **entry.data}
+                transformation_list.append(transformation)
 
             is_external_datasource = not pipeline_template.pipeline.source
             processors.append(
@@ -104,16 +134,9 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                     "description": pipeline_template.description,
                     "sync_config": None,
                     "is_external_datasource": is_external_datasource,
-                    "source": sources.get(source.provider_slug, {}).get(source.slug, {}) if source else {},
-                    "destination": (
-                        destinations.get(destination.provider_slug, {}).get(destination.slug, {}) if destination else {}
-                    ),
-                    "transformations": list(
-                        map(
-                            lambda t: transformations.get(t.provider_slug, {}).get(t.slug, {}),
-                            pipeline_template.pipeline.transformations or [],
-                        )
-                    ),
+                    "source": source,
+                    "destination": destination,
+                    "transformations": transformation_list,
                 }
             )
 

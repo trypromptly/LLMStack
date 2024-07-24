@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class BaseProcessorBlock(BaseModel):
     slug: str
     provider_slug: str
+    data: Optional[dict] = {}
 
 
 class PipelineBlock(BaseModel):
