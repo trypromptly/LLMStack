@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel
 
@@ -10,8 +10,6 @@ from llmstack.data.schemas import DataDocument
 
 
 class BaseSource(BaseModel):
-    name: Optional[str] = None
-
     @classmethod
     def slug(cls):
         raise NotImplementedError

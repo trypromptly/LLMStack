@@ -94,27 +94,29 @@ export function AddDataSourceModal({
             }}
             disableAdvanced={true}
           />
-          {datasource === null && dataSourceType?.destination && (
-            <ThemedJsonForm
-              schema={dataSourceType?.destination?.schema || {}}
-              validator={validator}
-              uiSchema={{
-                ...(dataSourceType?.destination?.ui_schema || {}),
-                ...{
-                  "ui:submitButtonOptions": {
-                    norender: true,
+          {datasource === null &&
+            dataSourceType?.destination &&
+            dataSourceType?.destination?.provider_slug !== "weaviate" && (
+              <ThemedJsonForm
+                schema={dataSourceType?.destination?.schema || {}}
+                validator={validator}
+                uiSchema={{
+                  ...(dataSourceType?.destination?.ui_schema || {}),
+                  ...{
+                    "ui:submitButtonOptions": {
+                      norender: true,
+                    },
+                    "ui:DescriptionFieldTemplate": () => null,
+                    "ui:TitleFieldTemplate": () => null,
                   },
-                  "ui:DescriptionFieldTemplate": () => null,
-                  "ui:TitleFieldTemplate": () => null,
-                },
-              }}
-              formData={destinationFormData}
-              onChange={({ formData }) => {
-                setDestinationFormData(formData);
-              }}
-              disableAdvanced={true}
-            />
-          )}
+                }}
+                formData={destinationFormData}
+                onChange={({ formData }) => {
+                  setDestinationFormData(formData);
+                }}
+                disableAdvanced={true}
+              />
+            )}
         </Stack>
       </DialogContent>
       <DialogActions>
