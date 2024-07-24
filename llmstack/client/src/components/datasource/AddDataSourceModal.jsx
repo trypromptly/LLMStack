@@ -88,10 +88,10 @@ export function AddDataSourceModal({
             ))}
           </ButtonGroup>
           <ThemedJsonForm
-            schema={dataSourceType?.source?.schema || {}}
+            schema={dataSourceType?.pipeline?.source?.schema || {}}
             validator={validator}
             uiSchema={{
-              ...(dataSourceType?.source?.ui_schema || {}),
+              ...(dataSourceType?.pipeline?.source?.ui_schema || {}),
               ...{
                 "ui:submitButtonOptions": {
                   norender: true,
@@ -106,7 +106,7 @@ export function AddDataSourceModal({
             }}
             disableAdvanced={true}
           />
-          {datasource === null && dataSourceType?.transformations && (
+          {datasource === null && dataSourceType?.pipeline?.transformations && (
             <Accordion defaultExpanded={false}>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
@@ -116,7 +116,7 @@ export function AddDataSourceModal({
                 <Typography>Transformations (Advanced)</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                {dataSourceType?.transformations?.map(
+                {dataSourceType?.pipeline?.transformations?.map(
                   (transformation, index) => {
                     return (
                       <ThemedJsonForm
@@ -150,13 +150,14 @@ export function AddDataSourceModal({
             </Accordion>
           )}
           {datasource === null &&
-            dataSourceType?.destination &&
-            dataSourceType?.destination?.provider_slug !== "weaviate" && (
+            dataSourceType?.pipeline?.destination &&
+            dataSourceType?.pipeline?.destination?.provider_slug !==
+              "weaviate" && (
               <ThemedJsonForm
-                schema={dataSourceType?.destination?.schema || {}}
+                schema={dataSourceType?.pipeline?.destination?.schema || {}}
                 validator={validator}
                 uiSchema={{
-                  ...(dataSourceType?.destination?.ui_schema || {}),
+                  ...(dataSourceType?.pipeline?.destination?.ui_schema || {}),
                   ...{
                     "ui:submitButtonOptions": {
                       norender: true,

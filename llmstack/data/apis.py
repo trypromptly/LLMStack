@@ -25,69 +25,17 @@ def get_data_source_type(slug):
 
 class DataSourceTypeViewSet(viewsets.ViewSet):
     def list(self, request):
-        from llmstack.data.destinations.utils import get_destination_cls
-        from llmstack.data.sources.utils import get_source_cls
-        from llmstack.data.transformations.utils import get_transformer_cls
-
         processors = []
 
         pipeline_templates = get_data_pipelines_from_contrib()
 
         for pipeline_template in pipeline_templates:
-            source = None
-            transformations = []
-            destination = None
-
-            if pipeline_template.pipeline.source:
-                source_cls = get_source_cls(
-                    pipeline_template.pipeline.source.slug, pipeline_template.pipeline.source.provider_slug
-                )
-                source = {
-                    "slug": pipeline_template.pipeline.source.slug,
-                    "provider_slug": pipeline_template.pipeline.source.provider_slug,
-                    "schema": source_cls.get_schema(),
-                    "ui_schema": source_cls.get_ui_schema(),
-                    "data": {**pipeline_template.pipeline.source.data},
-                }
-
-            if pipeline_template.pipeline.destination:
-                destination_cls = get_destination_cls(
-                    slug=pipeline_template.pipeline.destination.slug,
-                    provider_slug=pipeline_template.pipeline.destination.provider_slug,
-                )
-                destination = {
-                    "slug": pipeline_template.pipeline.destination.slug,
-                    "provider_slug": pipeline_template.pipeline.destination.provider_slug,
-                    "schema": destination_cls.get_schema(),
-                    "ui_schema": destination_cls.get_ui_schema(),
-                    "data": {**pipeline_template.pipeline.destination.data},
-                }
-
-            if pipeline_template.pipeline.transformations:
-                for entry in pipeline_template.pipeline.transformations:
-                    entry_cls = get_transformer_cls(slug=entry.slug, provider_slug=entry.provider_slug)
-                    transformations.append(
-                        {
-                            "slug": entry.slug,
-                            "provider_slug": entry.provider_slug,
-                            "schema": entry_cls.get_schema(),
-                            "ui_schema": entry_cls.get_ui_schema(),
-                            "data": {**entry_cls.get_default_data(), **entry.data},
-                        }
-                    )
-
-            is_external_datasource = not pipeline_template.pipeline.source
-
+            pipeline_dict = pipeline_template.to_dict()
             processors.append(
                 {
-                    "slug": pipeline_template.slug,
-                    "name": pipeline_template.name,
-                    "description": pipeline_template.description,
+                    **pipeline_dict,
                     "sync_config": None,
-                    "is_external_datasource": is_external_datasource,
-                    "source": source,
-                    "destination": destination,
-                    "transformations": transformations,
+                    "is_external_datasource": not pipeline_template.pipeline.source,
                 }
             )
 
