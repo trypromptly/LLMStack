@@ -34,13 +34,20 @@ def get_vendor_env_platform_defaults():
     from llmstack.processors.providers.mistral import MistralProviderConfig
     from llmstack.processors.providers.openai import OpenAIProviderConfig
     from llmstack.processors.providers.promptly import (
+        DataDestinationConfig,
+        EmbeddingsGeneratorConfig,
         GoogleSearchEngineConfig,
         PromptlyProviderConfig,
     )
     from llmstack.processors.providers.stabilityai import StabilityAIProviderConfig
+    from llmstack.processors.providers.weaviate import (  # Populate the default provider configs
+        EmbeddingsProvider,
+        WeaviateLocalInstance,
+        WeaviateProviderConfig,
+    )
 
-    # Populate the default provider configs
     provider_configs = {}
+    promptly_provider_config = PromptlyProviderConfig()
     if settings.DEFAULT_AZURE_OPENAI_API_KEY:
         provider_configs["azure/*/*/*"] = AzureProviderConfig(
             api_key=settings.DEFAULT_AZURE_OPENAI_API_KEY,
@@ -82,13 +89,18 @@ def get_vendor_env_platform_defaults():
             provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
         ).model_dump()
     if settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY:
-        provider_configs["promptly/*/*/*"] = PromptlyProviderConfig(
-            search_engine=GoogleSearchEngineConfig(
-                api_key=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY,
-                cx=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_CX,
-            ),
-            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
-        ).model_dump()
+        promptly_provider_config.search_engine = GoogleSearchEngineConfig(
+            api_key=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY,
+            cx=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_CX,
+        )
+    if settings.DEFAULT_DATA_DESTINATION_CONFIG:
+        promptly_provider_config.data_destination_configuration = DataDestinationConfig(
+            **settings.DEFAULT_DATA_DESTINATION_CONFIG
+        )
+    if settings.DEFAULT_EMBEDDINGS_GENERATOR_CONFIG:
+        promptly_provider_config.embeddings_generator = EmbeddingsGeneratorConfig(
+            **settings.DEFAULT_EMBEDDINGS_GENERATOR_CONFIG
+        )
     if settings.DEFAULT_META_PROVIDER_CONFIG:
         meta_provider_configs = {}
         try:
@@ -105,6 +117,28 @@ def get_vendor_env_platform_defaults():
                 deployment_config=v,
                 provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
             ).model_dump()
+
+    if settings.WEAVIATE_URL:
+        from llmstack.processors.providers.weaviate import APIKey
+
+        auth = None
+        if settings.WEAVIATE_API_KEY:
+            auth = APIKey(api_key=settings.WEAVIATE_API_KEY)
+
+        provider_configs["weaviate/*/*/*"] = WeaviateProviderConfig(
+            provider_slug="weaviate",
+            instance=WeaviateLocalInstance(url=settings.WEAVIATE_URL),
+            auth=auth,
+            additional_headers=[],
+            embeddings_provider=EmbeddingsProvider.OPENAI,
+            module_config=(
+                json.dumps({"text2vec-openai": settings.WEAVIATE_TEXT2VEC_MODULE_CONFIG})
+                if settings.WEAVIATE_TEXT2VEC_MODULE_CONFIG
+                else None
+            ),
+        ).model_dump()
+
+    provider_configs["promptly/*/*/*"] = promptly_provider_config.model_dump()
 
     return {
         "azure_openai_api_key": settings.DEFAULT_AZURE_OPENAI_API_KEY,
@@ -621,6 +655,19 @@ class AbstractProfile(models.Model):
             "google_custom_search_api_key": self.get_vendor_key("google_custom_search_api_key"),
             "google_custom_search_cx": self.get_vendor_key("google_custom_search_cx"),
         }
+
+    def get_provider_config(
+        self, model_slug: str = "*", deployment_key: str = "*", provider_slug=None, processor_slug=None
+    ):
+        from llmstack.common.utils.provider_config import get_matched_provider_config
+
+        return get_matched_provider_config(
+            provider_configs=self.get_vendor_env().get("provider_configs", {}),
+            provider_slug=provider_slug,
+            processor_slug=processor_slug,
+            model_slug=model_slug,
+            deployment_key=deployment_key,
+        )
 
     def is_basic_subscriber(self):
         return False

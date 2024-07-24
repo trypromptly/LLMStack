@@ -50,7 +50,7 @@ class ProviderConfig(BaseSchema):
     )
 
     def __str__(self) -> str:
-        return f"{self.provider_slug}/{self.processor_slug}/{self.model_key}/{self.deployment_key}"
+        return f"{self.provider_slug}/{self.processor_slug}/{self.model_slug}/{self.deployment_key}"
 
     @classmethod
     def get_config_schema(cls):

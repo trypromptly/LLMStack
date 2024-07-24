@@ -8,8 +8,7 @@ from django.dispatch import receiver
 from django.utils.timezone import now
 
 from llmstack.assets.models import Assets
-from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
-from llmstack.common.utils.provider_config import get_matched_provider_config
+from llmstack.base.models import Profile
 from llmstack.events.apis import EventsViewSet
 
 logger = logging.getLogger(__name__)
@@ -134,7 +133,11 @@ class DataSource(models.Model):
         from llmstack.data.yaml_loader import get_data_pipeline_template_by_slug
 
         pipeline_template = get_data_pipeline_template_by_slug(self.type_slug)
-        return get_source_cls(pipeline_template.pipeline.source.slug, pipeline_template.pipeline.source.provider_slug)
+        return (
+            get_source_cls(pipeline_template.pipeline.source.slug, pipeline_template.pipeline.source.provider_slug)
+            if pipeline_template.pipeline.source
+            else None
+        )
 
     @property
     def destination_schema(self):
@@ -145,35 +148,16 @@ class DataSource(models.Model):
 
     @property
     def destination_cls(self):
-        from django.conf import settings
-
         from llmstack.data.destinations.utils import get_destination_cls
-        from llmstack.data.destinations.vector_stores.legacy_chromadb import (
-            PromptlyLegacyChromaDBVectorStoreConfiguration,
-        )
-        from llmstack.data.destinations.vector_stores.legacy_weaviate import (
-            PromptlyLegacyWeaviateVectorStoreConfiguration,
-        )
         from llmstack.data.yaml_loader import get_data_pipeline_template_by_slug
 
         pipeline_template = get_data_pipeline_template_by_slug(self.type_slug)
-
-        # For Legacy Data Sources
-        if pipeline_template.pipeline.destination is None and self.type_slug in [
-            "csv_file",
-            "file",
-            "pdf",
-            "gdrive_file",
-            "text",
-            "url",
-        ]:
-            if settings.VECTOR_DATABASES.get("default")["ENGINE"] == "weaviate":
-                return PromptlyLegacyWeaviateVectorStoreConfiguration
-            elif settings.VECTOR_DATABASES.get("default")["ENGINE"] == "chroma":
-                return PromptlyLegacyChromaDBVectorStoreConfiguration
-
-        return get_destination_cls(
-            pipeline_template.pipeline.source.slug, pipeline_template.pipeline.source.provider_slug
+        return (
+            get_destination_cls(
+                pipeline_template.pipeline.destination.slug, pipeline_template.pipeline.destination.provider_slug
+            )
+            if pipeline_template.pipeline.destination
+            else None
         )
 
     @property
@@ -191,52 +175,20 @@ class DataSource(models.Model):
 
     @property
     def destination_data(self):
-        from django.conf import settings
+        from llmstack.data.destinations.vector_stores.weaviate import Weaviate
 
-        data = {}
         if self.config.get("destination_data"):
             data = self.config.get("destination_data")
-        elif self.type_slug in ["csv_file", "file", "pdf", "gdrive_file", "text", "url"]:
-            # For Legacy Data Sources
-            content_key = self.destination_text_content_key
-            if settings.VECTOR_DATABASES.get("default")["ENGINE"] == "weaviate":
-                data = {
-                    "type": "promptly_legacy_weaviate",
-                    "url": self.profile.weaviate_url,
-                    "host": None,
-                    "http_port": None,
-                    "grpc_port": None,
-                    "embeddings_rate_limit": None,
-                    "embeddings_batch_size": None,
-                    "additional_headers": None,
-                    "api_key": self.profile.weaviate_api_key,
-                    "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
-                    "text_key": content_key,
-                    "text2vec_openai_config": self.profile.weaviate_text2vec_config,
-                }
-                if self.profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.OPEN_AI:
-                    openai_provider_config = get_matched_provider_config(
-                        provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
-                        provider_slug="openai",
-                    )
-                    data["additional_headers"] = {"X-OpenAI-Api-Key": openai_provider_config.api_key}
-                else:
-                    azure_provider_config = get_matched_provider_config(
-                        provider_configs=self.profile.get_vendor_env().get("provider_configs", {}),
-                        provider_slug="azure",
-                    )
-
-                    data["additional_headers"] = {"X-Azure-Api-Key": azure_provider_config.api_key}
-
-            elif settings.VECTOR_DATABASES.get("default")["ENGINE"] == "chroma":
-                data = {
-                    "type": "promptly_legacy_chromadb",
-                    "path": settings.VECTOR_DATABASES.get("default", {}).get("NAME", "chromadb"),
-                    "settings": {"anonymized_telemetry": False, "is_persistent": True},
-                    "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
-                    "text_key": content_key,
-                }
-
+        elif (
+            not self.config.get("destination_data")
+            and self.destination_cls.slug() == Weaviate.slug()
+            and self.destination_cls.provider_slug() == Weaviate.provider_slug()
+        ):
+            # Default destination data for platform vector store
+            data = {
+                "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
+                "text_key": self.destination_text_content_key,
+            }
         return data
 
     @property
@@ -251,10 +203,15 @@ class DataSource(models.Model):
     def transformation_data(self):
         return {}
 
-    def create_data_pipeline(self):
-        from llmstack.data.datasource_processor import DataPipeline
+    def create_data_ingestion_pipeline(self):
+        from llmstack.data.pipeline import DataIngestionPipeline
 
-        return DataPipeline(self)
+        return DataIngestionPipeline(self)
+
+    def create_data_query_pipeline(self):
+        from llmstack.data.pipeline import DataQueryPipeline
+
+        return DataQueryPipeline(self)
 
 
 class DataSourceEntry(models.Model):

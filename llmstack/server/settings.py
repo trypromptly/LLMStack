@@ -379,6 +379,8 @@ WEAVIATE_REPLICATION_FACTOR = int(
 )
 WEAVIATE_SHARD_COUNT = int(os.getenv("WEAVIATE_SHARD_COUNT", "1"))
 
+WEAVIATE_API_KEY = os.getenv("WEAVIATE_API_KEY", os.getenv("VECTOR_DATABASE_API_KEY", None))
+
 PLAYWRIGHT_URL = os.getenv("PLAYWRIGHT_URL", "ws://playwright:30000/ws")
 
 RQ_QUEUES = {
@@ -673,3 +675,7 @@ except Exception:
 CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES = os.getenv(
     "CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES", "llmstack.connections.handlers.web_login"
 ).split(",")
+
+DEFAULT_DATA_DESTINATION_CONFIG = {"provider_slug": "weaviate", "processor_slug": "vector-store"}
+
+DEFAULT_EMBEDDINGS_GENERATOR_CONFIG = {"provider_slug": "openai", "embedding_model_slug": "text-embedding-ada-002"}

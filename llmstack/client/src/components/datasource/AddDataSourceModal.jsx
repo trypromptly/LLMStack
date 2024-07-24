@@ -35,6 +35,7 @@ export function AddDataSourceModal({
     datasource?.type ? datasource.type : dataSourceTypes?.[0],
   );
   const [formData, setFormData] = useState({});
+  const [destinationFormData, setDestinationFormData] = useState({});
   const reloadDataSourceEntries = useReloadDataSourceEntries();
 
   return (
@@ -75,10 +76,10 @@ export function AddDataSourceModal({
             ))}
           </ButtonGroup>
           <ThemedJsonForm
-            schema={dataSourceType?.input_schema || {}}
+            schema={dataSourceType?.source?.schema || {}}
             validator={validator}
             uiSchema={{
-              ...(dataSourceType?.input_ui_schema || {}),
+              ...(dataSourceType?.source?.ui_schema || {}),
               ...{
                 "ui:submitButtonOptions": {
                   norender: true,
@@ -93,6 +94,29 @@ export function AddDataSourceModal({
             }}
             disableAdvanced={true}
           />
+          {datasource === null &&
+            dataSourceType?.destination &&
+            dataSourceType?.destination?.provider_slug !== "weaviate" && (
+              <ThemedJsonForm
+                schema={dataSourceType?.destination?.schema || {}}
+                validator={validator}
+                uiSchema={{
+                  ...(dataSourceType?.destination?.ui_schema || {}),
+                  ...{
+                    "ui:submitButtonOptions": {
+                      norender: true,
+                    },
+                    "ui:DescriptionFieldTemplate": () => null,
+                    "ui:TitleFieldTemplate": () => null,
+                  },
+                }}
+                formData={destinationFormData}
+                onChange={({ formData }) => {
+                  setDestinationFormData(formData);
+                }}
+                disableAdvanced={true}
+              />
+            )}
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -137,6 +161,7 @@ export function AddDataSourceModal({
                   type: dataSourceType.id,
                   type_slug: dataSourceType.slug,
                   config: dataSourceType.is_external_datasource ? formData : {},
+                  destination_data: destinationFormData,
                 })
                 .then((response) => {
                   // External data sources do not support adding entries

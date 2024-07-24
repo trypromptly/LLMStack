@@ -46,11 +46,47 @@ class GoogleSearchEngineConfig(BaseModel):
 SearchEngineConfig = Union[GoogleSearchEngineConfig]
 
 
+class EmbeddingsGeneratorConfig(BaseModel):
+    provider_slug: Optional[str] = Field(
+        title="Embeddings Provider slug",
+        description="Embeddings Provider slug",
+        default="openai",
+    )
+    embedding_model_slug: Optional[str] = Field(
+        title="Embeddings Provider Model",
+        description="Embeddings Provider Model",
+        default="text-embedding-ada-002",
+    )
+
+
+class DataDestinationConfig(BaseModel):
+    provider_slug: Optional[str] = Field(
+        title="Data Destination Provider slug",
+        description="Data Destination Provider slug",
+        default="weaviate",
+    )
+    processor_slug: Optional[str] = Field(
+        title="Data Destination Processor slug",
+        description="Data Destination Processor slug",
+        default="vector-store",
+    )
+
+
 class PromptlyProviderConfig(ProviderConfig):
     provider_slug: str = "promptly"
     search_engine: Optional[SearchEngineConfig] = Field(
         title="Search Engine",
         description="Search Engine Configuration",
+        default=None,
+    )
+    embeddings_generator: Optional[EmbeddingsGeneratorConfig] = Field(
+        title="Embeddings Generator",
+        description="Embeddings Generator Configuration",
+        default=None,
+    )
+    data_destination_configuration: Optional[DataDestinationConfig] = Field(
+        title="Default Data Destination Configuration",
+        description="Default Data Destination Configuration",
         default=None,
     )
 

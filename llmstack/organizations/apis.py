@@ -429,7 +429,7 @@ class OrganizationDataSourceEntryViewSet(viewsets.ModelViewSet):
     def text_content(self, request, uid):
         datasource_entry_object = self._get_datasource_entry_object_or_404(request, uid)
 
-        pipeline = datasource_entry_object.datasource.create_data_pipeline()
+        pipeline = datasource_entry_object.datasource.create_data_query_pipeline()
         metadata, content = pipeline.get_entry_text(datasource_entry_object.config)
 
         return DRFResponse({"content": content, "metadata": metadata})

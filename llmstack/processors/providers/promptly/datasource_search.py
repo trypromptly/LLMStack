@@ -97,7 +97,7 @@ class DataSourceSearchProcessor(
         documents = []
         for datasource_uuid in self._config.datasources:
             datasource = get_object_or_404(DataSource, uuid=uuid.UUID(datasource_uuid))
-            pipeline = datasource.create_data_pipeline()
+            pipeline = datasource.create_data_query_pipeline()
             try:
                 result = pipeline.search(
                     query=input_data.query,

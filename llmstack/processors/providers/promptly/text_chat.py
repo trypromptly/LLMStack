@@ -185,7 +185,7 @@ Citations:
                 datasource = DataSource.objects.get(
                     uuid=uuid.UUID(datasource_uuid),
                 )
-                pipeline = datasource.create_data_pipeline()
+                pipeline = datasource.create_data_query_pipeline()
                 search_query = input["question"]
                 search_filters = input["search_filters"]
                 if (

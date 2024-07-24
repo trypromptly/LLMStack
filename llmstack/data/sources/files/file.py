@@ -7,7 +7,8 @@ from pydantic import Field
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
 from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.sources.base import BaseSource, SourceDataDocument
+from llmstack.data.schemas import DataDocument
+from llmstack.data.sources.base import BaseSource
 from llmstack.data.sources.utils import (
     create_source_document_asset,
     get_source_document_asset_by_objref,
@@ -46,7 +47,7 @@ class FileSchema(BaseSource):
     def provider_slug(cls):
         return "promptly"
 
-    def get_data_documents(self, **kwargs) -> List[SourceDataDocument]:
+    def get_data_documents(self, **kwargs) -> List[DataDocument]:
         files = self.file.split("|")
         documents = []
         for file in files:
@@ -56,7 +57,7 @@ class FileSchema(BaseSource):
                 file, datasource_uuid=kwargs.get("datasource_uuid", None), document_id=file_id
             )
             documents.append(
-                SourceDataDocument(
+                DataDocument(
                     id_=file_id,
                     name=file_name,
                     content=file_objref,
@@ -66,7 +67,7 @@ class FileSchema(BaseSource):
             )
         return documents
 
-    def process_document(self, document: SourceDataDocument) -> SourceDataDocument:
+    def process_document(self, document: DataDocument) -> DataDocument:
         data_uri = get_source_document_asset_by_objref(document.content)
         result = Uri().process(
             input=UriInput(env=DataSourceEnvironmentSchema(), uri=data_uri),

@@ -42,38 +42,50 @@ def load_sources():
     return sources
 
 
+def load_destinations():
+    from llmstack.data.destinations.stores.singlestore import SingleStore
+    from llmstack.data.destinations.vector_stores.pinecone import Pinecone
+    from llmstack.data.destinations.vector_stores.qdrant import Qdrant
+    from llmstack.data.destinations.vector_stores.weaviate import Weaviate
+
+    destinations = {}
+
+    for cls in [SingleStore, Weaviate, Pinecone, Qdrant]:
+        if not destinations.get(cls.provider_slug()):
+            destinations[cls.provider_slug()] = {}
+        destinations[cls.provider_slug()][cls.slug()] = {
+            "slug": cls.slug(),
+            "provider_slug": cls.provider_slug(),
+            "schema": cls.get_schema(),
+            "ui_schema": cls.get_ui_schema(),
+        }
+    return destinations
+
+
 class DataSourceTypeViewSet(viewsets.ViewSet):
     def list(self, request):
         processors = []
 
         sources = load_sources()
+        destinations = load_destinations()
         pipeline_templates = get_data_pipelines_from_contrib()
 
         for pipeline_template in pipeline_templates:
             source = pipeline_template.pipeline.source
-            if source:
-                source_schema = sources.get(source.provider_slug, {}).get(source.slug, {}).get("schema", {})
-                source_ui_schema = sources.get(source.provider_slug, {}).get(source.slug, {}).get("ui_schema", {})
-            else:
-                source_schema = {}
-                source_ui_schema = {}
-            is_external_datasource = (
-                pipeline_template.pipeline.source is None
-                and pipeline_template.pipeline.transformations is None
-                and pipeline_template.pipeline.destination
-            )
+            destination = pipeline_template.pipeline.destination
+
+            is_external_datasource = not pipeline_template.pipeline.source
             processors.append(
                 {
                     "slug": pipeline_template.slug,
                     "name": pipeline_template.name,
                     "description": pipeline_template.description,
-                    "input_schema": source_schema,
-                    "input_ui_schema": source_ui_schema,
                     "sync_config": None,
                     "is_external_datasource": is_external_datasource,
                     "source": sources.get(source.provider_slug, {}).get(source.slug, {}) if source else {},
-                    "transformation": [],
-                    "destination": {},
+                    "destination": (
+                        destinations.get(destination.provider_slug, {}).get(destination.slug, {}) if destination else {}
+                    ),
                 }
             )
 
@@ -88,14 +100,6 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                 break
 
         return DRFResponse(response) if response else DRFResponse(status=404)
-
-
-def load_transformations():
-    return {}
-
-
-def load_destinations():
-    return {}
 
 
 class DataSourceEntryViewSet(viewsets.ModelViewSet):
@@ -131,7 +135,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
             return DRFResponse(status=404)
 
         try:
-            pipeline = datasource_entry_object.datasource.create_data_pipeline()
+            pipeline = datasource_entry_object.datasource.create_data_ingestion_pipeline()
             pipeline.delete_entry(data=datasource_entry_object.config)
         except Exception as e:
             logger.error(f"Error pipeline data for entry {datasource_entry_object.config}: {e}")
@@ -147,7 +151,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         if not datasource_entry_object.user_can_read(request.user):
             return DRFResponse(status=404)
 
-        pipeline = datasource_entry_object.datasource.create_data_pipeline()
+        pipeline = datasource_entry_object.datasource.create_data_query_pipeline()
         metadata, content = pipeline.get_entry_text(datasource_entry_object.config)
         return DRFResponse({"content": content, "metadata": metadata})
 
@@ -202,7 +206,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             DataSourceEntryViewSet().delete(request=request, uid=str(entry.uuid))
 
         try:
-            pipeline = datasource.create_data_pipeline()
+            pipeline = datasource.create_data_ingestion_pipeline()
             pipeline.delete_all_entries()
         except Exception as e:
             logger.error(f"Error deleting all entries for datasource {datasource.uuid}: {e}")
@@ -221,35 +225,25 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         if not source_data:
             return DRFResponse({"errors": ["No entry_data provided"]}, status=400)
 
-        pipeline = datasource.create_data_pipeline()
-        result = pipeline.add_data(source_data_dict=source_data)
+        pipeline = datasource.create_data_ingestion_pipeline()
+        documents = pipeline.add_data(source_data_dict=source_data)
 
-        for document_entry in result:
-            datasource_entry_name = document_entry.get("name", "Entry")
-            datasource_entry_size = (
-                document_entry.get("document_size", 0) if document_entry.get("status") == "success" else 0
+        for document in documents:
+            config_obj = document.model_dump(
+                include=["text", "content", "mimetype", "metadata", "extra_info", "processing_errors"]
             )
+            node_ids = list(map(lambda n: n.id_, document.nodes))
             DataSourceEntry.objects.create(
-                uuid=document_entry.get("id", uuid.uuid4()),
-                name=datasource_entry_name,
+                uuid=document.id_,
+                name=document.name,
                 datasource=datasource,
                 status=(
-                    DataSourceEntryStatus.READY
-                    if document_entry.get("status") == "success"
-                    else DataSourceEntryStatus.FAILED
+                    DataSourceEntryStatus.READY if not document.processing_errors else DataSourceEntryStatus.FAILED
                 ),
-                config={
-                    "input": {
-                        "data": source_data,
-                        "name": datasource_entry_name,
-                        "size": datasource_entry_size,
-                    },
-                    "document_ids": document_entry.get("document_ids", []),
-                    "document_data": document_entry.get("document_data", {}),
-                },
-                size=datasource_entry_size,
+                config={**config_obj, "nodes": node_ids},
+                size=len(node_ids) * 1536,
             )
-            datasource.size += datasource_entry_size
+            datasource.size += len(node_ids) * 1536
 
         datasource.save()
 

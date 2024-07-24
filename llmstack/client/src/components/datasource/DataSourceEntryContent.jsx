@@ -17,7 +17,10 @@ function DataSourceEntryContent({ onCancel, dataSourceEntry, open }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (dataSourceEntry?.config?.document_ids) {
+    if (
+      dataSourceEntry?.config?.document_ids ||
+      dataSourceEntry?.config?.nodes
+    ) {
       axios()
         .get(`/api/datasource_entries/${dataSourceEntry.uuid}/text_content`)
         .then((response) => {
