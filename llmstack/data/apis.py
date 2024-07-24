@@ -242,9 +242,18 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource = DataSource(name=request.data["name"], owner=owner, type=datasource_type)
         datasource_config = datasource.config or {}
         datasource_config["type_slug"] = request.data["type_slug"]
-        datasource_config["type_data"] = DataSourceTypeViewSet().get(request, request.data["type_slug"]).data
-        datasource_config["destination_data"] = request.data.get("destination_data", {})
-        datasource_config["transformations_data"] = request.data.get("transformations_data", [])
+
+        datasource_config["pipeline"] = DataSourceTypeViewSet().get(request, request.data["type_slug"]).data
+
+        pipeline_data = {}
+        if datasource_config["pipeline"].get("source"):
+            pipeline_data["source"] = request.data.get("source_data", {})
+        if datasource_config["pipeline"].get("destination"):
+            pipeline_data["destination"] = request.data.get("destination_data", {})
+        if datasource_config["pipeline"].get("transformations"):
+            pipeline_data["transformations"] = request.data.get("transformations_data", [])
+
+        datasource_config["pipeline_data"] = pipeline_data
         datasource.config = datasource_config
         datasource.save()
         return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
