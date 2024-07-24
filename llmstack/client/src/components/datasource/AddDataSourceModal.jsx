@@ -7,7 +7,13 @@ import {
   DialogTitle,
   Stack,
   TextField,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Typography,
 } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+
 import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
 import { useState } from "react";
@@ -36,6 +42,7 @@ export function AddDataSourceModal({
   );
   const [formData, setFormData] = useState({});
   const [destinationFormData, setDestinationFormData] = useState({});
+  const [transformationsData, setTransformationsData] = useState([]);
   const reloadDataSourceEntries = useReloadDataSourceEntries();
 
   return (
@@ -69,6 +76,7 @@ export function AddDataSourceModal({
                 }
                 onClick={(e) => {
                   setDataSourceType(dst);
+                  setTransformationsData(dst.transformations?.map(() => ({})));
                 }}
               >
                 {dst.name}
@@ -94,6 +102,49 @@ export function AddDataSourceModal({
             }}
             disableAdvanced={true}
           />
+          {datasource === null && dataSourceType?.transformations && (
+            <Accordion defaultExpanded={false}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="transformations-content"
+                id="transformations-header"
+              >
+                <Typography>Transformations</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {dataSourceType?.transformations?.map(
+                  (transformation, index) => {
+                    return (
+                      <ThemedJsonForm
+                        key={index}
+                        schema={transformation.schema}
+                        validator={validator}
+                        uiSchema={{
+                          ...(transformation.ui_schema || {}),
+                          ...{
+                            "ui:submitButtonOptions": {
+                              norender: true,
+                            },
+                            "ui:DescriptionFieldTemplate": () => null,
+                            "ui:TitleFieldTemplate": () => null,
+                          },
+                        }}
+                        formData={transformationsData[index] || {}}
+                        onChange={({ formData }) => {
+                          setTransformationsData((prev) => {
+                            const newTransformationsData = [...prev];
+                            newTransformationsData[index] = formData;
+                            return newTransformationsData;
+                          });
+                        }}
+                        disableAdvanced={true}
+                      />
+                    );
+                  },
+                )}
+              </AccordionDetails>
+            </Accordion>
+          )}
           {datasource === null &&
             dataSourceType?.destination &&
             dataSourceType?.destination?.provider_slug !== "weaviate" && (
