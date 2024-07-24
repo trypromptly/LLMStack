@@ -113,7 +113,7 @@ export function AddDataSourceModal({
                 aria-controls="transformations-content"
                 id="transformations-header"
               >
-                <Typography>Transformations</Typography>
+                <Typography>Transformations (Advanced)</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 {dataSourceType?.transformations?.map(
