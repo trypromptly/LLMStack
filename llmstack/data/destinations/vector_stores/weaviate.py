@@ -212,7 +212,7 @@ class Weaviate(BaseDestination):
 
     @classmethod
     def slug(cls):
-        return "weaviate_vector_store"
+        return "vector-store"
 
     @classmethod
     def provider_slug(cls):

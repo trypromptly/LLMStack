@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 class BaseProcessorBlock(BaseModel):
     slug: str
     provider_slug: str
-    is_hidden: Optional[bool] = None
 
 
 class PipelineBlock(BaseModel):

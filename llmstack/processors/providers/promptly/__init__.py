@@ -46,34 +46,30 @@ class GoogleSearchEngineConfig(BaseModel):
 SearchEngineConfig = Union[GoogleSearchEngineConfig]
 
 
-class OpenAIEmbeddingsGeneratorConfig(BaseModel):
-    type: Literal["openai"] = "openai"
-    model: str = Field(
-        title="OpenAI Model",
-        description="The OpenAI model to use for generating embeddings",
+class EmbeddingsGeneratorConfig(BaseModel):
+    provider_slug: Optional[str] = Field(
+        title="Embeddings Provider slug",
+        description="Embeddings Provider slug",
+        default="openai",
+    )
+    embedding_model_slug: Optional[str] = Field(
+        title="Embeddings Provider Model",
+        description="Embeddings Provider Model",
         default="text-embedding-ada-002",
-        json_schema_extra={"advanced_parameter": False},
     )
 
 
-class AzureOpenAIEmbeddingsGeneratorConfig(BaseModel):
-    type: Literal["azure_openai"] = "azure_openai"
-    model: str = Field(
-        title="Azure OpenAI Model",
-        description="The Azure OpenAI model to use for generating embeddings",
-        default="text-embedding-ada-002",
-        json_schema_extra={"advanced_parameter": False},
+class DataDestinationConfig(BaseModel):
+    provider_slug: Optional[str] = Field(
+        title="Data Destination Provider slug",
+        description="Data Destination Provider slug",
+        default="weaviate",
     )
-
-
-EmbeddingsGeneratorConfig = Union[OpenAIEmbeddingsGeneratorConfig, AzureOpenAIEmbeddingsGeneratorConfig]
-
-
-class DataDestinationProviderSlug(str, Enum):
-    WEAVIATE = "weaviate"
-
-    def __str__(self) -> str:
-        return self.value
+    processor_slug: Optional[str] = Field(
+        title="Data Destination Processor slug",
+        description="Data Destination Processor slug",
+        default="vector-store",
+    )
 
 
 class PromptlyProviderConfig(ProviderConfig):
@@ -88,10 +84,10 @@ class PromptlyProviderConfig(ProviderConfig):
         description="Embeddings Generator Configuration",
         default=None,
     )
-    data_destination_provider: Optional[DataDestinationProviderSlug] = Field(
-        title="Default Data Destination",
-        description="Default Data Destination",
-        default=DataDestinationProviderSlug.WEAVIATE,
+    data_destination_configuration: Optional[DataDestinationConfig] = Field(
+        title="Default Data Destination Configuration",
+        description="Default Data Destination Configuration",
+        default=None,
     )
 
 

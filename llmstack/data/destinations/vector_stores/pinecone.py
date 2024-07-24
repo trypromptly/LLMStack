@@ -15,7 +15,7 @@ class Pinecone(BaseDestination):
 
     @classmethod
     def slug(cls):
-        return "pinecone_vector_store"
+        return "vector-store"
 
     @classmethod
     def provider_slug(cls):

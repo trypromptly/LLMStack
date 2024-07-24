@@ -34,7 +34,7 @@ class ChromaDB(BaseDestination):
 
     @classmethod
     def slug(cls):
-        return "chroma_vector_store"
+        return "vector-store"
 
     @classmethod
     def provider_slug(cls):

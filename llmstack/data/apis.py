@@ -84,9 +84,7 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                     "is_external_datasource": is_external_datasource,
                     "source": sources.get(source.provider_slug, {}).get(source.slug, {}) if source else {},
                     "destination": (
-                        destinations.get(destination.provider_slug, {}).get(destination.slug, {})
-                        if destination and not destination.is_hidden
-                        else {}
+                        destinations.get(destination.provider_slug, {}).get(destination.slug, {}) if destination else {}
                     ),
                 }
             )

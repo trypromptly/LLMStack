@@ -5,3 +5,6 @@ pipeline:
   source:
     slug: file
     provider_slug: promptly
+  destination:
+    slug: vector-store
+    provider_slug: weaviate

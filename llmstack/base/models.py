@@ -34,6 +34,8 @@ def get_vendor_env_platform_defaults():
     from llmstack.processors.providers.mistral import MistralProviderConfig
     from llmstack.processors.providers.openai import OpenAIProviderConfig
     from llmstack.processors.providers.promptly import (
+        DataDestinationConfig,
+        EmbeddingsGeneratorConfig,
         GoogleSearchEngineConfig,
         PromptlyProviderConfig,
     )
@@ -45,6 +47,7 @@ def get_vendor_env_platform_defaults():
     )
 
     provider_configs = {}
+    promptly_provider_config = PromptlyProviderConfig()
     if settings.DEFAULT_AZURE_OPENAI_API_KEY:
         provider_configs["azure/*/*/*"] = AzureProviderConfig(
             api_key=settings.DEFAULT_AZURE_OPENAI_API_KEY,
@@ -86,13 +89,18 @@ def get_vendor_env_platform_defaults():
             provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
         ).model_dump()
     if settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY:
-        provider_configs["promptly/*/*/*"] = PromptlyProviderConfig(
-            search_engine=GoogleSearchEngineConfig(
-                api_key=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY,
-                cx=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_CX,
-            ),
-            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
-        ).model_dump()
+        promptly_provider_config.search_engine = GoogleSearchEngineConfig(
+            api_key=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY,
+            cx=settings.DEFAULT_GOOGLE_CUSTOM_SEARCH_CX,
+        )
+    if settings.DEFAULT_DATA_DESTINATION_CONFIG:
+        promptly_provider_config.data_destination_configuration = DataDestinationConfig(
+            **settings.DEFAULT_DATA_DESTINATION_CONFIG
+        )
+    if settings.DEFAULT_EMBEDDINGS_GENERATOR_CONFIG:
+        promptly_provider_config.embeddings_generator = EmbeddingsGeneratorConfig(
+            **settings.DEFAULT_EMBEDDINGS_GENERATOR_CONFIG
+        )
     if settings.DEFAULT_META_PROVIDER_CONFIG:
         meta_provider_configs = {}
         try:
@@ -129,6 +137,8 @@ def get_vendor_env_platform_defaults():
                 else None
             ),
         ).model_dump()
+
+    provider_configs["promptly/*/*/*"] = promptly_provider_config.model_dump()
 
     return {
         "azure_openai_api_key": settings.DEFAULT_AZURE_OPENAI_API_KEY,
