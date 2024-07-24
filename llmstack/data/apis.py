@@ -65,12 +65,13 @@ def load_destinations():
 
 
 def load_transformations():
-    from llmstack.data.transformations.splitters.llamindex.splitters import (
-        SentenceSplitter,
+    from llmstack.data.transformations.llamindex.embeddings_generator import (
+        EmbeddingsGenerator,
     )
+    from llmstack.data.transformations.llamindex.splitters import SentenceSplitter
 
     transformations = {}
-    for cls in [SentenceSplitter]:
+    for cls in [SentenceSplitter, EmbeddingsGenerator]:
         if not transformations.get(cls.provider_slug()):
             transformations[cls.provider_slug()] = {}
         transformations[cls.provider_slug()][cls.slug()] = {
