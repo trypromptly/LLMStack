@@ -145,6 +145,8 @@
   }
 
   // Register the custom element
-  customElements.define("promptly-app-embed", PromptlyAppEmbed);
-  customElements.define("promptly-datasource-embed", PromptlyDatasourceEmbed);
+  customElements.get("promptly-app-embed") ||
+    customElements.define("promptly-app-embed", PromptlyAppEmbed);
+  customElements.get("promptly-datasource-embed") ||
+    customElements.define("promptly-datasource-embed", PromptlyDatasourceEmbed);
 })();
