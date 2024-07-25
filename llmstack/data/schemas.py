@@ -99,8 +99,11 @@ class PipelineBlock(BaseModel):
         return self.destination.data if self.destination else {}
 
     @property
-    def transformation_cls(self):
-        return [t.processor_cls for t in self.transformations]
+    def transformation_objs(self):
+        transformations = []
+        for t in self.transformations or []:
+            transformations.append(t.processor_cls(**t.data))
+        return transformations
 
 
 class DataPipelineTemplate(BaseModel):
@@ -130,7 +133,7 @@ class DataDocument(BaseModel):
     content: Optional[str] = None
     mimetype: str = Field(default="text/plain", description="MIME type of the content.")
     metadata: Optional[dict] = None
-    extra_info: Optional[dict] = None
+    extra_info: Optional[dict] = {}
     nodes: Optional[List[Any]] = None
     embeddings: Optional[List[float]] = None
     processing_errors: Optional[List[str]] = None
