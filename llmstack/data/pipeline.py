@@ -1,10 +1,11 @@
 import logging
 from typing import List, Optional
 
+from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.schema import Document as LlamaDocument
 from llama_index.core.schema import TextNode
 
 from llmstack.common.blocks.data.store.vectorstore import Document
-from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.data.models import DataSource
 from llmstack.data.schemas import DataDocument
 from llmstack.data.sources.base import BaseSource
@@ -19,6 +20,7 @@ class DataIngestionPipeline:
         self._destination_cls = self.datasource.pipeline_obj.destination_cls
 
         self._destination = None
+        self._transformations = self.datasource.pipeline_obj.transformation_objs
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
@@ -36,13 +38,20 @@ class DataIngestionPipeline:
             documents = list(map(lambda d: source.process_document(d), documents))
 
         for document in documents:
-            if self.datasource.type_slug == "csv":
-                text_splits = CSVTextSplitter(
-                    chunk_size=2, length_function=CSVTextSplitter.num_tokens_from_string_using_tiktoken
-                ).split_text(document.text)
-            else:
-                text_splits = SpacyTextSplitter(chunk_size=1500).split_text(document.text)
-            document.nodes = list(map(lambda t: TextNode(text=t, metadata={**document.metadata}), text_splits))
+            if self.datasource.pipeline_obj.embedding:
+                embedding_data = self.datasource.pipeline_obj.embedding.data
+                embedding_data["additional_kwargs"] = {
+                    **embedding_data.get("additional_kwargs", {}),
+                    **{"datasource": self.datasource},
+                }
+                embedding_transformer = self.datasource.pipeline_obj.embedding_cls(**embedding_data)
+                self._transformations.append(embedding_transformer)
+
+            ingestion_pipeline = IngestionPipeline(transformations=self._transformations)
+
+            ldoc = LlamaDocument(**document.model_dump())
+            ldoc.metadata = {**ldoc.metadata, **document.metadata}
+            document.nodes = ingestion_pipeline.run(documents=[ldoc])
 
         if self._destination:
             for document in documents:
