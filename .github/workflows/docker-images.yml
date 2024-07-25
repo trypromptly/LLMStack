@@ -71,7 +71,7 @@ jobs:
         run: |
           cd llmstack/client
           npm install
-          npm run build
+          REACT_APP_GA_MEASUREMENT_IDS=G-XZ40100Y5C npm run build
           rm -rf node_modules
           cd ../../
 
