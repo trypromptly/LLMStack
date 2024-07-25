@@ -82,6 +82,26 @@ class PipelineBlock(BaseModel):
     embedding: Optional[PipelineEmbedding] = None
     destination: Optional[PipelineDestination] = None
 
+    @property
+    def source_cls(self):
+        return self.source.processor_cls if self.source else None
+
+    @property
+    def source_data(self):
+        return self.source.data if self.source else {}
+
+    @property
+    def destination_cls(self):
+        return self.destination.processor_cls if self.destination else None
+
+    @property
+    def destination_data(self):
+        return self.destination.data if self.destination else {}
+
+    @property
+    def transformation_cls(self):
+        return [t.processor_cls for t in self.transformations]
+
 
 class DataPipelineTemplate(BaseModel):
     slug: str
@@ -89,17 +109,18 @@ class DataPipelineTemplate(BaseModel):
     description: str
     pipeline: PipelineBlock
 
-    @property
-    def source_cls(self):
-        return self.pipeline.source.processor_cls if self.pipeline.source else None
-
-    @property
-    def destination_cls(self):
-        return self.pipeline.destination.processor_cls if self.pipeline.destination else None
-
-    @property
-    def transformation_cls(self):
-        return [t.processor_cls for t in self.pipeline.transformations]
+    def default_dict(self):
+        return {
+            "slug": self.slug,
+            "name": self.name,
+            "description": self.description,
+            "pipeline": {
+                "source": self.pipeline.source.default_dict() if self.pipeline.source else None,
+                "transformations": [t.default_dict() for t in self.pipeline.transformations],
+                "embedding": self.pipeline.embedding.default_dict() if self.pipeline.embedding else None,
+                "destination": self.pipeline.destination.default_dict() if self.pipeline.destination else None,
+            },
+        }
 
 
 class DataDocument(BaseModel):

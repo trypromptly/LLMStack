@@ -9,7 +9,10 @@ from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 from rq.job import Job
 
-from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
+from llmstack.data.yaml_loader import (
+    get_data_pipeline_template_by_slug,
+    get_data_pipelines_from_contrib,
+)
 from llmstack.jobs.adhoc import AddDataSourceEntryJob, ExtractURLJob
 
 from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
@@ -32,7 +35,7 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
         for pipeline_template in pipeline_templates:
             processors.append(
                 {
-                    **pipeline_template.default_dict(request=request),
+                    **pipeline_template.default_dict(),
                     "sync_config": None,
                     "is_external_datasource": not pipeline_template.pipeline.source,
                 }
@@ -138,24 +141,27 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         # Validation for slug
         datasource_type = get_object_or_404(DataSourceType, slug=request.data["type_slug"])
         datasource = DataSource(name=request.data["name"], owner=owner, type=datasource_type)
+        pipeline_template = get_data_pipeline_template_by_slug(request.data["type_slug"])
 
-        transformations_data = request.data.get("transformations_data", [])
+        if not pipeline_template:
+            raise ValueError(f"Pipeline template not found for slug {request.data['type_slug']}")
 
-        # Add depending on platform defaults
-        transformations_data[-1]["embedding_provider_slug"] = "openai"
+        embedding_data = {"embedding_provider_slug": "openai"}
         if datasource.profile.vectostore_embedding_endpoint == "azure_openai":
-            transformations_data[-1]["embedding_provider_slug"] = "azure-openai"
+            embedding_data["embedding_provider_slug"] = "azure-openai"
+
+        pipeline_template.pipeline.embedding.data = embedding_data
+        for i in range(len(pipeline_template.pipeline.transformations)):
+            pipeline_template.pipeline.transformations[i].data = request.data["transformations_data"][i]
+
+        pipeline_template.pipeline.embedding.data = embedding_data
 
         config = {
             "type_slug": request.data["type_slug"],
-            "pipeline": DataSourceTypeViewSet().get(request, request.data["type_slug"]).data,
-            "pipeline_data": {
-                "source": request.data.get("source_data", {}),
-                "destination": request.data.get("destination_data", {}),
-                "transformations": request.data.get("transformations_data", []),
-            },
+            "pipeline": pipeline_template.pipeline.model_dump(),
         }
         datasource.config = config
+
         datasource.save()
         return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
 

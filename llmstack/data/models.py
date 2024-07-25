@@ -122,28 +122,12 @@ class DataSource(models.Model):
 
     @property
     def pipeline_obj(self):
-        from llmstack.data.schemas import DataPipelineTemplate
+        from llmstack.data.schemas import PipelineBlock
 
         if self.config.get("pipeline"):
-            return DataPipelineTemplate(**self.config.get("pipeline"))
+            return PipelineBlock(**self.config.get("pipeline"))
 
         return None
-
-    @property
-    def pipeline_data(self):
-        return self.config.get("pipeline_data", {})
-
-    @property
-    def source_data(self):
-        return self.pipeline_data.get("source", {})
-
-    @property
-    def destination_data(self):
-        return self.pipeline_data.get("destination", {})
-
-    @property
-    def transformations_data(self):
-        return self.pipeline_data.get("transformations", [])
 
     @property
     def destination_text_content_key(self):
@@ -160,7 +144,7 @@ class DataSource(models.Model):
 
     @property
     def pipeline(self):
-        return self.config.get("pipeline", {}) or self.config.get("pipeline_legacy", {})
+        return self.config.get("pipeline", {})
 
     def create_data_ingestion_pipeline(self):
         from llmstack.data.pipeline import DataIngestionPipeline

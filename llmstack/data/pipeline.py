@@ -21,7 +21,7 @@ class DataIngestionPipeline:
         self._destination = None
 
         if self._destination_cls:
-            self._destination = self._destination_cls(**self.datasource.destination_data)
+            self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
             self._destination.initialize_client(datasource=self.datasource)
 
     def add_data(self, source_data_dict={}):
@@ -71,11 +71,11 @@ class DataIngestionPipeline:
 class DataQueryPipeline:
     def __init__(self, datasource: DataSource):
         self.datasource = datasource
-        self._destination_cls = self.datasource.destination_cls
+        self._destination_cls = self.datasource.pipeline_obj.destination_cls
         self._destination = None
 
         if self._destination_cls:
-            self._destination = self._destination_cls(**self.datasource.destination_data)
+            self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
             self._destination.initialize_client(datasource=self.datasource)
 
     def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:

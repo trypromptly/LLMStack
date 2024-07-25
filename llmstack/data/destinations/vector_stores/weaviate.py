@@ -224,7 +224,8 @@ class Weaviate(BaseDestination):
 
         datasource = kwargs.get("datasource")
 
-        index_name = self.index_name or f"Datasource_{datasource.uuid}"
+        index_name = self.index_name or f"Datasource_{datasource.uuid}".replace("-", "_")
+
         self._deployment_config = datasource.profile.get_provider_config(
             deployment_key=self.deployment_name, provider_slug=self.provider_slug()
         )
