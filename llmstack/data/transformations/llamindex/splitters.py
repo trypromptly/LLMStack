@@ -1,3 +1,6 @@
+from typing import Any, List, Optional
+
+from llama_index.core.bridge.pydantic import BaseModel, Field
 from llama_index.core.node_parser import CodeSplitter as _CodeSplitter
 from llama_index.core.node_parser import (
     SemanticDoubleMergingSplitterNodeParser as _SemanticDoubleMergingSplitterNodeParser,
@@ -44,7 +47,30 @@ class SemanticSplitterNodeParser(_SemanticSplitterNodeParser, LlamaIndexTransfor
         return "promptly"
 
 
+class LanguageConfig(BaseModel):
+    language: Optional[str] = Field(default="english")
+    spacy_model: Optional[str] = Field(default="en_core_web_sm")
+    model_validation: Optional[bool] = Field(default=True)
+    nlp: Optional[Any] = Field(default=None)
+    stopwords: List[str] = Field(default=[])
+
+    def load_model(self) -> None:
+        try:
+            import spacy
+            from nltk.corpus import stopwords
+        except ImportError:
+            raise ImportError("Spacy is not installed, please install it with `pip install spacy`.")
+        self.nlp = spacy.load(self.spacy_model)
+        self.stopwords = set(stopwords.words(self.language))
+
+
 class SemanticDoubleMergingSplitterNodeParser(_SemanticDoubleMergingSplitterNodeParser, LlamaIndexTransformers):
+    language_config: LanguageConfig = LanguageConfig()
+    max_chunk_size: int = Field(
+        default=1500,
+        description="Maximum length of chunk that can be subjected to verification (number of characters)",
+    )
+
     @classmethod
     def slug(cls):
         return "semantic-double-merging-splitter-node-parser"

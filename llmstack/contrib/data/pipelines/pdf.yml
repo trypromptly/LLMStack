@@ -6,7 +6,7 @@ pipeline:
     slug: pdf
     provider_slug: promptly
   transformations:
-    - slug: sentence-splitter
+    - slug: semantic-double-merging-splitter-node-parser
       provider_slug: promptly
   embedding:
     slug: embeddings-generator
