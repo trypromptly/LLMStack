@@ -77,12 +77,16 @@ function DatasourceRenderPage({ headless = false }) {
 
   useEffect(() => {
     ReactGA.initialize(
-      process.env.REACT_APP_GA_MEASUREMENT_ID || "G-WV60HC9CHD",
-      {
-        gaOptions: {
-          cookieFlags: "SameSite=None;Secure",
-        },
-      },
+      (process.env.REACT_APP_GA_MEASUREMENT_IDS || "G-WV60HC9CHD")
+        .split(",")
+        .map((measurementId) => {
+          return {
+            trackingId: measurementId,
+            gaOptions: {
+              cookieFlags: "SameSite=None;Secure",
+            },
+          };
+        }),
     );
     ReactGA.send({
       hitType: "pageview",
