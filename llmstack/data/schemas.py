@@ -99,6 +99,10 @@ class PipelineBlock(BaseModel):
         return self.destination.data if self.destination else {}
 
     @property
+    def embedding_cls(self):
+        return self.embedding.processor_cls if self.embedding else None
+
+    @property
     def transformation_objs(self):
         transformations = []
         for t in self.transformations or []:
