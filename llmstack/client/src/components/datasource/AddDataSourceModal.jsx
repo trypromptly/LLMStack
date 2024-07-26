@@ -23,6 +23,27 @@ import { axios } from "../../data/axios";
 import { useReloadDataSourceEntries } from "../../data/init";
 import ThemedJsonForm from "../ThemedJsonForm";
 
+const SOURCE_REFRESH_SCHEMA = {
+  type: "object",
+  properties: {
+    refresh_interval: {
+      type: "string",
+      title: "Refresh Interval",
+      description: "The interval at which the data source should be refreshed.",
+      default: "Weekly",
+      enum: ["Daily", "Weekly", "Monthly"],
+    },
+  },
+};
+const SOURCE_REFRESH_UI_SCHEMA = {
+  refresh_interval: {
+    "ui:widget": "radio",
+    "ui:options": {
+      inline: true,
+    },
+  },
+};
+
 export function AddDataSourceModal({
   open,
   handleCancelCb,
@@ -43,6 +64,7 @@ export function AddDataSourceModal({
   const [formData, setFormData] = useState({});
   const [destinationFormData, setDestinationFormData] = useState({});
   const [transformationsData, setTransformationsData] = useState([]);
+  const [refreshData, setRefreshData] = useState({});
   const reloadDataSourceEntries = useReloadDataSourceEntries();
 
   return (
@@ -173,6 +195,40 @@ export function AddDataSourceModal({
                 disableAdvanced={true}
               />
             )}
+          {datasource === null && dataSourceType?.pipeline?.source && (
+            <Accordion defaultExpanded={false}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="refresh-content"
+                id="refresh-header"
+              >
+                <Typography>Refresh Configuration</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {
+                  <ThemedJsonForm
+                    schema={SOURCE_REFRESH_SCHEMA}
+                    validator={validator}
+                    uiSchema={{
+                      ...(SOURCE_REFRESH_UI_SCHEMA || {}),
+                      ...{
+                        "ui:submitButtonOptions": {
+                          norender: true,
+                        },
+                        "ui:DescriptionFieldTemplate": () => null,
+                        "ui:TitleFieldTemplate": () => null,
+                      },
+                    }}
+                    formData={refreshData || {}}
+                    onChange={({ formData }) => {
+                      setRefreshData(formData);
+                    }}
+                    disableAdvanced={true}
+                  />
+                }
+              </AccordionDetails>
+            </Accordion>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -219,6 +275,7 @@ export function AddDataSourceModal({
                   config: dataSourceType.is_external_datasource ? formData : {},
                   destination_data: destinationFormData,
                   transformations_data: transformationsData,
+                  refresh_config: refreshData,
                 })
                 .then((response) => {
                   // External data sources do not support adding entries
