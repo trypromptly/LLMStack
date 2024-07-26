@@ -16,6 +16,7 @@ from django.utils.module_loading import import_string
 from rest_framework.authtoken.models import Token
 
 from llmstack.common.utils.provider_config import validate_provider_configs
+from llmstack.connections.models import Connection
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
 
@@ -432,7 +433,7 @@ class AbstractProfile(models.Model):
             existing_connection["description"] = connection["description"]
             connection = existing_connection
 
-        connection_json = json.dumps(connection)
+        connection_json = Connection(**connection).model_dump_json()
         if not self._connections:
             self._connections = {}
         self._connections[connection_id] = self.encrypt_value(

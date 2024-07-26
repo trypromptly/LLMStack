@@ -3,7 +3,7 @@ import uuid
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 """
 We use pydantic models to represent the connection information and save it in the database as encrypted json.
@@ -40,15 +40,11 @@ class Connection(BaseModel):
     base_connection_type: ConnectionType = ConnectionType.BROWSER_LOGIN
     connection_type_slug: str
     provider_slug: str
-    status: ConnectionStatus = "Created"
+    status: ConnectionStatus = ConnectionStatus.CREATED
     configuration: dict = {}
-    created_at: datetime.datetime = None
-    updated_at: datetime.datetime = None
-    last_checked_at: datetime.datetime = None
-
-    @field_validator("created_at", "updated_at", "last_checked_at")
-    def datetime_to_string(cls, value):
-        return value.isoformat() if value else None
+    created_at: Optional[datetime.datetime] = None
+    updated_at: Optional[datetime.datetime] = None
+    last_checked_at: Optional[datetime.datetime] = None
 
     class Config:
         from_attributes = True
