@@ -54,6 +54,104 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
         return DRFResponse(response) if response else DRFResponse(status=404)
 
 
+class PipelineViewSet(viewsets.ViewSet):
+    def sources(self, request):
+        from llmstack.data.sources import FileSchema, TextSchema, URLSchema
+
+        return DRFResponse(
+            [
+                {
+                    "slug": FileSchema.slug(),
+                    "provider_slug": FileSchema.provider_slug(),
+                    "schema": FileSchema.get_schema(),
+                    "ui_schema": FileSchema.get_ui_schema(),
+                },
+                {
+                    "slug": TextSchema.slug(),
+                    "provider_slug": TextSchema.provider_slug(),
+                    "schema": TextSchema.get_schema(),
+                    "ui_schema": TextSchema.get_ui_schema(),
+                },
+                {
+                    "slug": URLSchema.slug(),
+                    "provider_slug": URLSchema.provider_slug(),
+                    "schema": URLSchema.get_schema(),
+                    "ui_schema": URLSchema.get_ui_schema(),
+                },
+            ]
+        )
+
+    def destinations(self, request):
+        from llmstack.data.destinations import Pinecone, SingleStore, Weaviate
+
+        return DRFResponse(
+            [
+                {
+                    "slug": Weaviate.slug(),
+                    "provider_slug": Weaviate.provider_slug(),
+                    "schema": Weaviate.get_schema(),
+                    "ui_schema": Weaviate.get_ui_schema(),
+                },
+                {
+                    "slug": SingleStore.slug(),
+                    "provider_slug": SingleStore.provider_slug(),
+                    "schema": SingleStore.get_schema(),
+                    "ui_schema": SingleStore.get_ui_schema(),
+                },
+                {
+                    "slug": Pinecone.slug(),
+                    "provider_slug": Pinecone.provider_slug(),
+                    "schema": Pinecone.get_schema(),
+                    "ui_schema": Pinecone.get_ui_schema(),
+                },
+            ]
+        )
+
+    def transformations(self, request):
+        from llmstack.data.transformations import (
+            CodeSplitter,
+            SemanticDoubleMergingSplitterNodeParser,
+            SentenceSplitter,
+        )
+
+        return DRFResponse(
+            [
+                {
+                    "slug": CodeSplitter.slug(),
+                    "provider_slug": CodeSplitter.provider_slug(),
+                    "schema": CodeSplitter.get_schema(),
+                    "ui_schema": CodeSplitter.get_ui_schema(),
+                },
+                {
+                    "slug": SemanticDoubleMergingSplitterNodeParser.slug(),
+                    "provider_slug": SemanticDoubleMergingSplitterNodeParser.provider_slug(),
+                    "schema": SemanticDoubleMergingSplitterNodeParser.get_schema(),
+                    "ui_schema": SemanticDoubleMergingSplitterNodeParser.get_ui_schema(),
+                },
+                {
+                    "slug": SentenceSplitter.slug(),
+                    "provider_slug": SentenceSplitter.provider_slug(),
+                    "schema": SentenceSplitter.get_schema(),
+                    "ui_schema": SentenceSplitter.get_ui_schema(),
+                },
+            ]
+        )
+
+    def embeddings(self, request):
+        from llmstack.data.transformations import EmbeddingsGenerator
+
+        return DRFResponse(
+            [
+                {
+                    "slug": EmbeddingsGenerator.slug(),
+                    "provider_slug": EmbeddingsGenerator.provider_slug(),
+                    "schema": EmbeddingsGenerator.get_schema(),
+                    "ui_schema": EmbeddingsGenerator.get_ui_schema(),
+                }
+            ]
+        )
+
+
 class DataSourceEntryViewSet(viewsets.ModelViewSet):
     queryset = DataSourceEntry.objects.all()
     serializer_class = DataSourceEntrySerializer
