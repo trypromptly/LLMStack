@@ -172,6 +172,7 @@ class WeaviateVectorStore:
             try:
                 query_response = self.client.query.hybrid(
                     query=query.query_str,
+                    vector=query.query_embedding,
                     alpha=query.alpha,
                     query_properties=[self._text_key],
                     return_metadata=None,
@@ -183,6 +184,7 @@ class WeaviateVectorStore:
             try:
                 query_response = self.client.query.near_text(
                     query=query.query_str,
+                    vector=query.query_embedding,
                     certainty=kwargs.get("search_distance", None),
                     limit=query.similarity_top_k if query.similarity_top_k is not None else 10,
                     return_metadata=wvc.query.MetadataQuery(certainty=True, distance=True),
@@ -335,6 +337,7 @@ class Weaviate(BaseDestination):
             ),
             alpha=kwargs.get("alpha", 0.75),
             hybrid_top_k=kwargs.get("limit", 2),
+            query_embedding=kwargs.get("query_embedding", None),
         )
 
         return self._client.query(query=vector_store_query)

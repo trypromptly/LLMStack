@@ -81,3 +81,6 @@ class EmbeddingsGenerator(BaseEmbedding, LlamaIndexTransformers):
         )
 
         return client._get_text_embedding(text)
+
+    def get_embedding(self, query: str) -> List[float]:
+        return self._get_query_embedding(query)

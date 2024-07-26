@@ -82,21 +82,36 @@ class DataQueryPipeline:
         self.datasource = datasource
         self._destination_cls = self.datasource.pipeline_obj.destination_cls
         self._destination = None
+        self._embedding_generator = None
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
             self._destination.initialize_client(datasource=self.datasource)
 
+        if self.datasource.pipeline_obj.embedding:
+            embedding_data = self.datasource.pipeline_obj.embedding.data
+            embedding_data["additional_kwargs"] = {
+                **embedding_data.get("additional_kwargs", {}),
+                **{"datasource": self.datasource},
+            }
+            self._embedding_generator = self.datasource.pipeline_obj.embedding_cls(**embedding_data)
+
     def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
         content_key = self.datasource.destination_text_content_key
+        query_embedding = None
 
         if kwargs.get("search_filters", None):
             raise NotImplementedError("Search filters are not supported for this data source.")
 
         documents = []
 
+        if self._embedding_generator:
+            query_embedding = self._embedding_generator.get_embedding(query)
+
         if self._destination:
-            query_result = self._destination.search(query=query, use_hybrid_search=use_hybrid_search, **kwargs)
+            query_result = self._destination.search(
+                query=query, use_hybrid_search=use_hybrid_search, query_embedding=query_embedding, **kwargs
+            )
             documents = list(
                 map(
                     lambda x: Document(page_content_key=content_key, page_content=x.text, metadata=x.metadata),
