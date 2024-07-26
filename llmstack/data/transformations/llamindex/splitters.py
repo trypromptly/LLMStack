@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Dict, List, Optional
 
 from llama_index.core.bridge.pydantic import BaseModel, Field
 from llama_index.core.node_parser import CodeSplitter as _CodeSplitter
@@ -51,7 +51,7 @@ class LanguageConfig(BaseModel):
     language: Optional[str] = Field(default="english")
     spacy_model: Optional[str] = Field(default="en_core_web_sm")
     model_validation: Optional[bool] = Field(default=True)
-    nlp: Optional[Any] = Field(default=None)
+    nlp: Optional[Dict] = Field(default=None)
     stopwords: List[str] = Field(default=[])
 
     def load_model(self) -> None:
