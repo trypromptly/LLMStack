@@ -14,15 +14,22 @@ import {
   Box,
   Tab,
 } from "@mui/material";
+
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { dataSourcesState, pipelineTemplatesState } from "../../data/atoms";
+import {
+  dataSourcesState,
+  pipelineTemplatesState,
+  sourceTypesState,
+  transformationTypesState,
+  destinationTypesState,
+} from "../../data/atoms";
 import { axios } from "../../data/axios";
 import { useReloadDataSourceEntries } from "../../data/init";
 import ThemedJsonForm from "../ThemedJsonForm";
@@ -34,8 +41,8 @@ const SOURCE_REFRESH_SCHEMA = {
       type: "string",
       title: "Refresh Interval",
       description: "The interval at which the data source should be refreshed.",
-      default: "Weekly",
-      enum: ["Daily", "Weekly", "Monthly"],
+      default: "None",
+      enum: ["None", "Daily", "Weekly", "Monthly"],
     },
   },
 };
@@ -48,6 +55,159 @@ const SOURCE_REFRESH_UI_SCHEMA = {
   },
 };
 
+function AdvancedForm({
+  datasource,
+  source,
+  setSource,
+  sourceData,
+  setSourceData,
+  transformations,
+  setTransformations,
+  transformationsData,
+  setTransformationsData,
+  destination,
+  setDestination,
+  destinationFormData,
+  setDestinationData,
+}) {
+  const sourceTypes = useRecoilValue(sourceTypesState);
+  const transformationTypes = useRecoilValue(transformationTypesState);
+  const destinationTypes = useRecoilValue(destinationTypesState);
+
+  return (
+    <Stack>
+      <ButtonGroup
+        variant="outlined"
+        size="small"
+        style={{ display: "inline-block" }}
+      >
+        {sourceTypes.map((sourceType) => (
+          <Button
+            key={sourceType.slug}
+            variant={
+              source?.slug === sourceType.slug &&
+              source?.provider_slug === sourceType.provider_slug
+                ? "contained"
+                : "outlined"
+            }
+            onClick={(e) => {
+              setSource(sourceType);
+            }}
+          >
+            {sourceType.slug}
+          </Button>
+        ))}
+      </ButtonGroup>
+      <ThemedJsonForm
+        schema={source?.schema || {}}
+        validator={validator}
+        uiSchema={{
+          ...(source?.ui_schema || {}),
+          ...{
+            "ui:submitButtonOptions": {
+              norender: true,
+            },
+            "ui:DescriptionFieldTemplate": () => null,
+            "ui:TitleFieldTemplate": () => null,
+          },
+        }}
+        formData={sourceData}
+        onChange={({ formData }) => {
+          setSourceData(formData);
+        }}
+        disableAdvanced={true}
+      />
+      <ButtonGroup
+        variant="outlined"
+        size="small"
+        style={{ display: "inline-block" }}
+      >
+        {transformationTypes.map((transformationType) => (
+          <Button
+            key={transformationType.slug}
+            variant={
+              transformationType.slug === transformations[0]?.slug &&
+              transformationType.provider_slug ===
+                transformations[0]?.provider_slug
+                ? "contained"
+                : "outlined"
+            }
+            onClick={(e) => {
+              setTransformations([transformationType]);
+            }}
+          >
+            {transformationType.slug}
+          </Button>
+        ))}
+      </ButtonGroup>
+      {datasource === null && (
+        <ThemedJsonForm
+          schema={transformations[0]?.schema || {}}
+          validator={validator}
+          uiSchema={{
+            ...(transformations[0]?.ui_schema || {}),
+            ...{
+              "ui:submitButtonOptions": {
+                norender: true,
+              },
+              "ui:DescriptionFieldTemplate": () => null,
+              "ui:TitleFieldTemplate": () => null,
+            },
+          }}
+          formData={transformationsData[0]}
+          onChange={({ formData }) => {
+            setTransformationsData([formData]);
+          }}
+          disableAdvanced={true}
+        />
+      )}
+      <ButtonGroup
+        variant="outlined"
+        size="small"
+        style={{ display: "inline-block" }}
+      >
+        {destinationTypes.map((destinationType) => (
+          <Button
+            key={destinationType.slug}
+            variant={
+              destination?.slug === destinationType.slug &&
+              destination.provider_slug === destinationType.provider_slug
+                ? "contained"
+                : "outlined"
+            }
+            onClick={(e) => {
+              setDestination(destinationType);
+            }}
+          >
+            {destinationType.slug}
+          </Button>
+        ))}
+      </ButtonGroup>
+      {datasource === null && (
+        <ThemedJsonForm
+          schema={destination?.schema || {}}
+          validator={validator}
+          uiSchema={{
+            ...(destination?.ui_schema || {}),
+            ...{
+              "ui:submitButtonOptions": {
+                norender: true,
+              },
+              "ui:DescriptionFieldTemplate": () => null,
+              "ui:TitleFieldTemplate": () => null,
+            },
+          }}
+          formData={destinationFormData}
+          onChange={({ formData }) => {
+            setDestinationData(formData);
+          }}
+          disableAdvanced={true}
+        />
+      )}
+    </Stack>
+  );
+}
+
 function TemplateForm({
   datasource,
   sourceData,
@@ -55,9 +215,7 @@ function TemplateForm({
   transformationsData,
   setTransformationsData,
   destinationFormData,
-  setDestinationFormData,
-  refreshData,
-  setRefreshData,
+  setDestinationData,
   setPipelineSlug,
   setPipeline,
 }) {
@@ -187,45 +345,11 @@ function TemplateForm({
             }}
             formData={destinationFormData}
             onChange={({ formData }) => {
-              setDestinationFormData(formData);
+              setDestinationData(formData);
             }}
             disableAdvanced={true}
           />
         )}
-      {datasource === null && selectedTemplate?.pipeline?.source && (
-        <Accordion defaultExpanded={false}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="refresh-content"
-            id="refresh-header"
-          >
-            <Typography>Refresh Configuration</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            {
-              <ThemedJsonForm
-                schema={SOURCE_REFRESH_SCHEMA}
-                validator={validator}
-                uiSchema={{
-                  ...(SOURCE_REFRESH_UI_SCHEMA || {}),
-                  ...{
-                    "ui:submitButtonOptions": {
-                      norender: true,
-                    },
-                    "ui:DescriptionFieldTemplate": () => null,
-                    "ui:TitleFieldTemplate": () => null,
-                  },
-                }}
-                formData={refreshData || {}}
-                onChange={({ formData }) => {
-                  setRefreshData(formData);
-                }}
-                disableAdvanced={true}
-              />
-            }
-          </AccordionDetails>
-        </Accordion>
-      )}
     </Stack>
   );
 }
@@ -251,9 +375,9 @@ export function AddDataSourceModal({
   const [transformations, setTransformations] = useState([]);
   const [transformationsData, setTransformationsData] = useState([]);
   const [destination, setDestination] = useState({});
-  const [destinationFormData, setDestinationFormData] = useState({});
+  const [destinationFormData, setDestinationData] = useState({});
   const [formTab, setFormTab] = useState("template");
-
+  const [refreshData, setRefreshData] = useState({});
   const [pipelineSlug, setPipelineSlug] = useState("");
 
   return (
@@ -287,13 +411,10 @@ export function AddDataSourceModal({
                 datasource={datasource}
                 sourceData={sourceData}
                 setSourceData={setSourceData}
-                setSource={setSource}
                 transformationsData={transformationsData}
                 setTransformationsData={setTransformationsData}
-                setTransformations={setTransformations}
                 destinationFormData={destinationFormData}
-                setDestinationFormData={setDestinationFormData}
-                setDestination={setDestination}
+                setDestinationData={setDestinationData}
                 refreshData={{}}
                 setRefreshData={() => {}}
                 setPipelineSlug={setPipelineSlug}
@@ -304,7 +425,58 @@ export function AddDataSourceModal({
                 }}
               />
             </TabPanel>
+            <TabPanel value="advanced">
+              <AdvancedForm
+                datasource={datasource}
+                source={source}
+                setSource={setSource}
+                sourceData={sourceData}
+                setSourceData={setSourceData}
+                transformations={transformations}
+                setTransformations={setTransformations}
+                transformationsData={transformationsData}
+                setTransformationsData={setTransformationsData}
+                destination={destination}
+                setDestination={setDestination}
+                destinationFormData={destinationFormData}
+                setDestinationData={setDestinationData}
+              />
+            </TabPanel>
           </TabContext>
+          {datasource === null && source && (
+            <Accordion defaultExpanded={false}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="refresh-content"
+                id="refresh-header"
+              >
+                <Typography>Refresh Configuration</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {
+                  <ThemedJsonForm
+                    schema={SOURCE_REFRESH_SCHEMA}
+                    validator={validator}
+                    uiSchema={{
+                      ...(SOURCE_REFRESH_UI_SCHEMA || {}),
+                      ...{
+                        "ui:submitButtonOptions": {
+                          norender: true,
+                        },
+                        "ui:DescriptionFieldTemplate": () => null,
+                        "ui:TitleFieldTemplate": () => null,
+                      },
+                    }}
+                    formData={refreshData || {}}
+                    onChange={({ formData }) => {
+                      setRefreshData(formData);
+                    }}
+                    disableAdvanced={true}
+                  />
+                }
+              </AccordionDetails>
+            </Accordion>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
