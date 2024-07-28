@@ -55,6 +55,18 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
 
 
 class PipelineViewSet(viewsets.ViewSet):
+    def templates(self, request):
+        templates_data = []
+        pipeline_templates = get_data_pipelines_from_contrib()
+        for pipeline_template in pipeline_templates:
+            templates_data.append(
+                {
+                    **pipeline_template.default_dict(),
+                    "is_external_datasource": not pipeline_template.pipeline.source,
+                }
+            )
+        return DRFResponse(templates_data)
+
     def sources(self, request):
         from llmstack.data.sources import FileSchema, TextSchema, URLSchema
 
@@ -236,27 +248,32 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
     def post(self, request):
         owner = request.user
+        pipeline_data = request.data.get("pipeline", None)
+        name = request.data.get("name", None)
+        type_slug = request.data.get("type_slug", None)
         # Validation for slug
-        datasource_type = get_object_or_404(DataSourceType, slug=request.data["type_slug"])
-        datasource = DataSource(name=request.data["name"], owner=owner, type=datasource_type)
-        pipeline_template = get_data_pipeline_template_by_slug(request.data["type_slug"])
+        datasource_type = get_object_or_404(DataSourceType, slug="text")
 
-        if not pipeline_template:
+        datasource = DataSource(name=name, owner=owner, type=datasource_type)
+
+        pipeline_template = get_data_pipeline_template_by_slug(type_slug)
+
+        if type_slug and not pipeline_template:
             raise ValueError(f"Pipeline template not found for slug {request.data['type_slug']}")
 
-        embedding_data = {"embedding_provider_slug": "openai"}
-        if datasource.profile.vectostore_embedding_endpoint == "azure_openai":
-            embedding_data["embedding_provider_slug"] = "azure-openai"
-
-        pipeline_template.pipeline.embedding.data = embedding_data
-        for i in range(len(pipeline_template.pipeline.transformations)):
-            pipeline_template.pipeline.transformations[i].data = request.data["transformations_data"][i]
-
-        pipeline_template.pipeline.embedding.data = embedding_data
+        if pipeline_template:
+            # If the request is from a pipeline template, use the pipeline template's embedding coffiguration
+            if pipeline_template.pipeline.embedding:
+                embedding_data = {"embedding_provider_slug": "openai"}
+                if datasource.profile.vectostore_embedding_endpoint == "azure_openai":
+                    embedding_data["embedding_provider_slug"] = "azure-openai"
+                embedding_transformation = pipeline_template.pipeline.embedding.model_dump()
+                embedding_transformation["data"] = embedding_data
+                pipeline_data["transformations"].append(embedding_transformation)
 
         config = {
             "type_slug": request.data["type_slug"],
-            "pipeline": pipeline_template.pipeline.model_dump(),
+            "pipeline": pipeline_data,
         }
         datasource.config = config
 

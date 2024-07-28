@@ -28,6 +28,10 @@ urlpatterns = [
         "api/pipeline/embeddings",
         apis.PipelineViewSet.as_view({"get": "embeddings"}),
     ),
+    path(
+        "api/pipeline/templates",
+        apis.PipelineViewSet.as_view({"get": "templates"}),
+    ),
     # Data sources
     path(
         "api/datasources",
