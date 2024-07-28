@@ -432,7 +432,11 @@ export function AddDataSourceModal({
   const [destinationFormData, setDestinationData] = useState({});
 
   const [formTab, setFormTab] = useState(
-    datasource && datasource.type.slug !== "custom" ? "template" : "advanced",
+    datasource
+      ? datasource.type.slug !== "custom"
+        ? "template"
+        : "advanced"
+      : "template",
   );
   const [refreshData, setRefreshData] = useState({});
   const [pipelineSlug, setPipelineSlug] = useState("");
