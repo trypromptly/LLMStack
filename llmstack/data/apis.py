@@ -265,7 +265,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                     embedding_data["embedding_provider_slug"] = "azure-openai"
                 embedding_transformation = pipeline_template.pipeline.embedding.model_dump()
                 embedding_transformation["data"] = embedding_data
-                pipeline_data["transformations"].append(embedding_transformation)
+                pipeline_data["embedding"] = embedding_transformation
 
         config = {
             "type_slug": request.data["type_slug"],

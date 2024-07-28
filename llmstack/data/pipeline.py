@@ -21,6 +21,20 @@ class DataIngestionPipeline:
 
         self._destination = None
         self._transformations = self.datasource.pipeline_obj.transformation_objs
+        embedding_cls = self.datasource.pipeline_obj.embedding_cls
+        if embedding_cls:
+            embedding_additional_kwargs = {
+                **self.datasource.pipeline_obj.embedding.data.get("additional_kwargs", {}),
+                **{"datasource": datasource},
+            }
+            self._transformations.append(
+                embedding_cls(
+                    **{
+                        **self.datasource.pipeline_obj.embedding.data,
+                        **{"additional_kwargs": embedding_additional_kwargs},
+                    }
+                )
+            )
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
