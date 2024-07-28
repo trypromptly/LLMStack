@@ -274,7 +274,8 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource.config = config
 
         datasource.save()
-        return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
+        json_data = DataSourceSerializer(instance=datasource).data
+        return DRFResponse(json_data, status=201)
 
     def delete(self, request, uid):
         datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
@@ -299,10 +300,10 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         if datasource and datasource.type.is_external_datasource:
             return DRFResponse({"errors": ["Cannot add entry to external data source"]}, status=400)
 
-        source_data = request.data.get("entry_data", {})
+        source_data = request.data.get("source_data", {})
 
         if not source_data:
-            return DRFResponse({"errors": ["No entry_data provided"]}, status=400)
+            return DRFResponse({"errors": ["No source_data provided"]}, status=400)
 
         pipeline = datasource.create_data_ingestion_pipeline()
         documents = pipeline.add_data(source_data_dict=source_data)

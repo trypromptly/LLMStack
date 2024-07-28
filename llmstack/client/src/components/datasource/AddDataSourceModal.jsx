@@ -271,9 +271,9 @@ function TemplateForm({
   const templates = useRecoilValue(pipelineTemplatesState);
   const [selectedTemplate, setSelectedTemplate] = useState(
     useMemo(() => {
-      return datasource?.type_slug &&
-        templates.find((t) => t.slug === datasource.type_slug)
-        ? templates.find((t) => t.slug === datasource.type_slug)
+      return datasource?.type?.slug &&
+        templates.find((t) => t.slug === datasource.type?.slug)
+        ? templates.find((t) => t.slug === datasource.type?.slug)
         : templates[0];
     }, [datasource, templates]),
   );
@@ -431,7 +431,9 @@ export function AddDataSourceModal({
   const [destination, setDestination] = useState({});
   const [destinationFormData, setDestinationData] = useState({});
 
-  const [formTab, setFormTab] = useState("template");
+  const [formTab, setFormTab] = useState(
+    datasource && datasource.type.slug !== "custom" ? "template" : "advanced",
+  );
   const [refreshData, setRefreshData] = useState({});
   const [pipelineSlug, setPipelineSlug] = useState("");
 
@@ -457,8 +459,16 @@ export function AddDataSourceModal({
                 onChange={(event, newValue) => setFormTab(newValue)}
                 aria-label="simple tabs example"
               >
-                <Tab label="Templates" value="template" />
-                <Tab label="Advanced" value="advanced" />
+                <Tab
+                  label="Templates"
+                  value="template"
+                  disabled={datasource && formTab !== "template"}
+                />
+                <Tab
+                  label="Advanced"
+                  value="advanced"
+                  disabled={datasource && formTab !== "advanced"}
+                />
               </TabList>
             </Box>
             <TabPanel value="template">
@@ -545,8 +555,8 @@ export function AddDataSourceModal({
           onClick={() => {
             if (datasource) {
               axios()
-                .post(`/api/datasources/${datasource.uuid}/add_entry_async`, {
-                  entry_data: sourceData.data,
+                .post(`/api/datasources/${datasource.uuid}/add_entry`, {
+                  source_data: sourceData,
                 })
                 .then(() => {
                   reloadDataSourceEntries();
@@ -615,12 +625,9 @@ export function AddDataSourceModal({
                     const dataSource = response.data;
                     setDataSources([...dataSources, dataSource]);
                     axios()
-                      .post(
-                        `/api/datasources/${dataSource.uuid}/add_entry_async`,
-                        {
-                          source_data: sourceData,
-                        },
-                      )
+                      .post(`/api/datasources/${dataSource.uuid}/add_entry`, {
+                        source_data: sourceData,
+                      })
                       .then((response) => {
                         dataSourceAddedCb(dataSource);
                       });
