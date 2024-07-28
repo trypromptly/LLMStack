@@ -22,10 +22,6 @@ from .tasks import extract_urls_task
 logger = logging.getLogger(__name__)
 
 
-def get_data_source_type(slug):
-    return DataSourceTypeViewSet().get(None, slug).data
-
-
 class DataSourceTypeViewSet(viewsets.ViewSet):
     def list(self, request):
         processors = []

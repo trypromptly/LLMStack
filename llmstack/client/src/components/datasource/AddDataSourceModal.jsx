@@ -43,7 +43,7 @@ const SOURCE_REFRESH_SCHEMA = {
       title: "Refresh Interval",
       description: "The interval at which the data source should be refreshed.",
       default: "None",
-      enum: ["None", "Daily", "Weekly", "Monthly"],
+      enum: ["None"],
     },
   },
 };
