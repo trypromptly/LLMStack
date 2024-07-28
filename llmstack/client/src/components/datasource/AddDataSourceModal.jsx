@@ -29,6 +29,7 @@ import {
   sourceTypesState,
   transformationTypesState,
   destinationTypesState,
+  embeddingTypesState,
 } from "../../data/atoms";
 import { axios } from "../../data/axios";
 import { useReloadDataSourceEntries } from "../../data/init";
@@ -65,6 +66,10 @@ function AdvancedForm({
   setTransformations,
   transformationsData,
   setTransformationsData,
+  embedding,
+  setEmbedding,
+  embeddingData,
+  setEmbeddingData,
   destination,
   setDestination,
   destinationFormData,
@@ -73,6 +78,7 @@ function AdvancedForm({
   const sourceTypes = useRecoilValue(sourceTypesState);
   const transformationTypes = useRecoilValue(transformationTypesState);
   const destinationTypes = useRecoilValue(destinationTypesState);
+  const embeddingTypes = useRecoilValue(embeddingTypesState);
 
   return (
     <Stack>
@@ -157,6 +163,49 @@ function AdvancedForm({
           formData={transformationsData[0]}
           onChange={({ formData }) => {
             setTransformationsData([formData]);
+          }}
+          disableAdvanced={true}
+        />
+      )}
+      <ButtonGroup
+        variant="outlined"
+        size="small"
+        style={{ display: "inline-block" }}
+      >
+        {embeddingTypes.map((embeddingType) => (
+          <Button
+            key={embeddingType.slug}
+            variant={
+              embedding?.slug === embeddingType.slug &&
+              embedding.provider_slug === embeddingType.provider_slug
+                ? "contained"
+                : "outlined"
+            }
+            onClick={(e) => {
+              setEmbedding(embeddingType);
+            }}
+          >
+            {embeddingType.slug}
+          </Button>
+        ))}
+      </ButtonGroup>
+      {datasource === null && (
+        <ThemedJsonForm
+          schema={embedding?.schema || {}}
+          validator={validator}
+          uiSchema={{
+            ...(embedding?.ui_schema || {}),
+            ...{
+              "ui:submitButtonOptions": {
+                norender: true,
+              },
+              "ui:DescriptionFieldTemplate": () => null,
+              "ui:TitleFieldTemplate": () => null,
+            },
+          }}
+          formData={embeddingData}
+          onChange={({ formData }) => {
+            setEmbeddingData(formData);
           }}
           disableAdvanced={true}
         />
@@ -372,10 +421,16 @@ export function AddDataSourceModal({
 
   const [source, setSource] = useState({});
   const [sourceData, setSourceData] = useState({});
+
   const [transformations, setTransformations] = useState([]);
   const [transformationsData, setTransformationsData] = useState([]);
+
+  const [embedding, setEmbedding] = useState({});
+  const [embeddingData, setEmbeddingData] = useState({});
+
   const [destination, setDestination] = useState({});
   const [destinationFormData, setDestinationData] = useState({});
+
   const [formTab, setFormTab] = useState("template");
   const [refreshData, setRefreshData] = useState({});
   const [pipelineSlug, setPipelineSlug] = useState("");
@@ -436,6 +491,10 @@ export function AddDataSourceModal({
                 setTransformations={setTransformations}
                 transformationsData={transformationsData}
                 setTransformationsData={setTransformationsData}
+                embedding={embedding}
+                setEmbedding={setEmbedding}
+                embeddingData={embeddingData}
+                setEmbeddingData={setEmbeddingData}
                 destination={destination}
                 setDestination={setDestination}
                 destinationFormData={destinationFormData}
@@ -534,6 +593,13 @@ export function AddDataSourceModal({
                         data: transformationsData[index],
                       }),
                     ),
+                    embedding: embedding
+                      ? {
+                          slug: embedding.slug,
+                          provider_slug: embedding.provider_slug,
+                          data: embeddingData,
+                        }
+                      : {},
                     destination: destination
                       ? {
                           slug: destination.slug,
