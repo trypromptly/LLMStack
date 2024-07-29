@@ -7,7 +7,6 @@ from typing import Dict, List, Optional
 import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from langrocks.common.models import runner_pb2, runner_pb2_grpc
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
@@ -81,6 +80,8 @@ class CodeInterpreterProcessor(
         )
 
     def convert_stdout_to_content(self, stdout) -> List[Content]:
+        from langrocks.common.models import runner_pb2
+
         content = []
         for entry in stdout:
             if not entry.mime_type or entry.mime_type == runner_pb2.ContentMimeType.TEXT:
@@ -115,6 +116,8 @@ class CodeInterpreterProcessor(
         }
 
     def process(self) -> dict:
+        from langrocks.common.models import runner_pb2, runner_pb2_grpc
+
         kernel_session_id = self._kernel_session_id if self._kernel_session_id else str(uuid.uuid4())
 
         channel = grpc.insecure_channel(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}")

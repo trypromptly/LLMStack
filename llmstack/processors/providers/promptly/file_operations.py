@@ -13,7 +13,6 @@ from typing import Optional
 import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from langrocks.common.models import runner_pb2, runner_pb2_grpc
 from pydantic import Field, model_validator
 
 from llmstack.apps.schemas import OutputTemplate
@@ -69,6 +68,8 @@ class FileMimeType(str, Enum):
         return self.value
 
     def grpc_mime_type(self):
+        from langrocks.common.models import runner_pb2
+
         if self == FileMimeType.TEXT:
             return runner_pb2.ContentMimeType.TEXT
         elif self == FileMimeType.HTML:
@@ -225,6 +226,8 @@ class FileOperationsProcessor(
         )
 
     def process(self) -> dict:
+        from langrocks.common.models import runner_pb2, runner_pb2_grpc
+
         input_content_bytes = None
         input_content_mime_type = None
         data_uri = None
