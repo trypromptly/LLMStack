@@ -366,7 +366,8 @@ class ConnectionConsumer(AsyncWebsocketConsumer):
                 self.connection_activation_actor.input(
                     ConnectionActivationInput(data=input),
                 )
-            except Exception:
+            except Exception as e:
+                logger.exception(e)
                 pass
             finally:
                 self.disconnect(1000)
