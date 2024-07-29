@@ -532,6 +532,30 @@ PROVIDERS = [
         "slug": "meta",
         "config_schema": "llmstack.processors.providers.meta.MetaProviderConfig",
     },
+    {
+        "name": "Pinecone",
+        "processor_packages": ["llmstack.processors.providers.pinecone"],
+        "slug": "pinecone",
+        "config_schema": "llmstack.processors.providers.pinecone.PineconeProviderConfig",
+    },
+    {
+        "name": "Qdrant",
+        "processor_packages": ["llmstack.processors.providers.qdrant"],
+        "slug": "qdrant",
+        "config_schema": "llmstack.processors.providers.qdrant.QdrantProviderConfig",
+    },
+    {
+        "name": "Singlestore",
+        "processor_packages": ["llmstack.processors.providers.singlestore"],
+        "slug": "singlestore",
+        "config_schema": "llmstack.processors.providers.singlestore.SinglestoreProviderConfig",
+    },
+    {
+        "name": "Weaviate",
+        "processor_packages": ["llmstack.processors.providers.weaviate"],
+        "slug": "weaviate",
+        "config_schema": "llmstack.processors.providers.weaviate.WeaviateProviderConfig",
+    },
 ]
 
 # Include networking providers if they are enabled
