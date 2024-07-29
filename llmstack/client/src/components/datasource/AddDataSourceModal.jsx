@@ -630,7 +630,7 @@ export function AddDataSourceModal({
                       ? {
                           slug: source.slug,
                           provider_slug: source.provider_slug,
-                          data: sourceData,
+                          data: {},
                         }
                       : {},
                     transformations: transformations.map(
