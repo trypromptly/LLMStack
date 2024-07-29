@@ -320,7 +320,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         for document in documents:
             config_obj = document.model_dump(
-                include=["text", "content", "mimetype", "metadata", "extra_info", "processing_errors"]
+                include=["content", "mimetype", "metadata", "extra_info", "processing_errors", "text_objref"]
             )
             node_ids = list(map(lambda n: n.id_, document.nodes))
             DataSourceEntry.objects.create(
