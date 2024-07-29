@@ -78,20 +78,11 @@ def run_sitemap_spider_in_process(sitemap_url):
 
 class PromptlyScrapyPlaywrightDownloadHandler(ScrapyPlaywrightDownloadHandler):
     def __init__(self, settings):
+        from django.conf import settings as django_settings
+
         super().__init__(settings)
-        PLAYWRIGHT_URL = (
-            f'ws://{os.getenv("RUNNER_HOST")}:{os.getenv("RUNNER_PLAYWRIGHT_PORT")}'
-            if os.getenv(
-                "RUNNER_HOST",
-                None,
-            )
-            and os.getenv(
-                "RUNNER_PLAYWRIGHT_PORT",
-                None,
-            )
-            else None
-        )
-        self.browser_cdp_url = PLAYWRIGHT_URL
+
+        self.browser_cdp_url = f"ws://{django_settings.RUNNER_HOST}:{django_settings.RUNNER_PLAYWRIGHT_PORT}"
         logging.getLogger("scrapy-playwright").setLevel(logging.ERROR)
 
     async def _maybe_connect(self) -> None:
