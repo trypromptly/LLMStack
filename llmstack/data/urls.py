@@ -13,23 +13,23 @@ urlpatterns = [
         apis.DataSourceTypeViewSet.as_view({"get": "get"}),
     ),
     path(
-        "api/pipeline/sources",
+        "api/data/pipeline/sources",
         apis.PipelineViewSet.as_view({"get": "sources"}),
     ),
     path(
-        "api/pipeline/destinations",
+        "api/data/pipeline/destinations",
         apis.PipelineViewSet.as_view({"get": "destinations"}),
     ),
     path(
-        "api/pipeline/transformations",
+        "api/data/pipeline/transformations",
         apis.PipelineViewSet.as_view({"get": "transformations"}),
     ),
     path(
-        "api/pipeline/embeddings",
+        "api/data/pipeline/embeddings",
         apis.PipelineViewSet.as_view({"get": "embeddings"}),
     ),
     path(
-        "api/pipeline/templates",
+        "api/data/pipeline/templates",
         apis.PipelineViewSet.as_view({"get": "templates"}),
     ),
     # Data sources

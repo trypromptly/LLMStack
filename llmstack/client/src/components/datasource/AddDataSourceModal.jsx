@@ -21,7 +21,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
   dataSourcesState,
@@ -311,6 +311,21 @@ function TemplateForm({
     }, [datasource, templates]),
   );
 
+  useEffect(() => {
+    if (selectedTemplate) {
+      setPipelineSlug(selectedTemplate.slug);
+      setPipeline({
+        source: selectedTemplate?.pipeline?.source || {},
+        transformations: selectedTemplate?.pipeline?.transformations || [],
+        destination: selectedTemplate?.pipeline?.destination || {},
+      });
+      setTransformationsData(
+        selectedTemplate?.pipeline?.transformations?.map(
+          (transformation) => transformation.data || {},
+        ) || [],
+      );
+    }
+  }, [selectedTemplate]);
   return (
     <Stack>
       <ButtonGroup
@@ -329,17 +344,6 @@ function TemplateForm({
             }
             onClick={(e) => {
               setSelectedTemplate(template);
-              setPipelineSlug(template.slug);
-              setPipeline({
-                source: template?.pipeline?.source || {},
-                transformations: template?.pipeline?.transformations || [],
-                destination: template?.pipeline?.destination || {},
-              });
-              setTransformationsData(
-                template?.pipeline?.transformations?.map(
-                  (transformation) => transformation.data || {},
-                ) || [],
-              );
             }}
           >
             {template.name}
@@ -411,7 +415,7 @@ function TemplateForm({
       {datasource === null &&
         selectedTemplate?.pipeline?.destination &&
         selectedTemplate?.pipeline?.destination?.provider_slug !==
-          "weaviate" && (
+          "promptly" && (
           <ThemedJsonForm
             schema={selectedTemplate?.pipeline?.destination?.schema || {}}
             validator={validator}
@@ -630,7 +634,7 @@ export function AddDataSourceModal({
                       ? {
                           slug: source.slug,
                           provider_slug: source.provider_slug,
-                          data: sourceData,
+                          data: {},
                         }
                       : {},
                     transformations: transformations.map(

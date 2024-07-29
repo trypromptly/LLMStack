@@ -267,6 +267,16 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                 embedding_transformation["data"] = embedding_data
                 pipeline_data["embedding"] = embedding_transformation
 
+            if pipeline_template.pipeline.destination:
+                if (
+                    pipeline_template.pipeline.destination.provider_slug == "promptly"
+                    and pipeline_template.pipeline.destination.slug == "vector-store"
+                ):
+                    store_provider_slug = datasource.profile.get_provider_config(
+                        provider_slug="promptly"
+                    ).data_destination_configuration.provider_slug
+                    pipeline_data["destination"]["data"]["store_provider_slug"] = store_provider_slug
+
         config = {
             "type_slug": request.data["type_slug"],
             "pipeline": pipeline_data,
@@ -310,7 +320,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         for document in documents:
             config_obj = document.model_dump(
-                include=["text", "content", "mimetype", "metadata", "extra_info", "processing_errors"]
+                include=["content", "mimetype", "metadata", "extra_info", "processing_errors", "text_objref"]
             )
             node_ids = list(map(lambda n: n.id_, document.nodes))
             DataSourceEntry.objects.create(
