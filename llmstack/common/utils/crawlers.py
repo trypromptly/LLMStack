@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 import multiprocessing as mp
-import os
 from urllib.parse import urlparse
 
 from scrapy import Selector, Spider
@@ -219,6 +218,8 @@ class URLSpider(CrawlSpider):
 
     @classmethod
     def update_settings(cls, settings) -> None:
+        from django.conf import settings as django_settings
+
         super().update_settings(settings)
         settings.set("LOG_LEVEL", "ERROR", priority="spider")
         extensions = settings.getdict("EXTENSIONS")
@@ -245,15 +246,9 @@ class URLSpider(CrawlSpider):
             "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
             priority="spider",
         )
-        if os.getenv(
-            "RUNNER_HOST",
-            None,
-        ) and os.getenv(
-            "RUNNER_PLAYWRIGHT_PORT",
-            None,
-        ):
-            PLAYWRIGHT_URL = f'ws://{os.getenv("RUNNER_HOST", None)}:{os.getenv("RUNNER_PLAYWRIGHT_PORT", None)}'
-            settings.set("PLAYWRIGHT_CDP_URL", PLAYWRIGHT_URL)
+        settings.set(
+            "PLAYWRIGHT_CDP_URL", f"ws://{django_settings.RUNNER_HOST}:{django_settings.RUNNER_PLAYWRIGHT_PORT}"
+        )
 
     def _get_cookies(self, url):
         cookies = []
