@@ -25,9 +25,9 @@ ALLOWED_HOSTS = os.getenv(
 ).split(",")
 
 
-RUNNER_HOST = os.getenv("RUNNER_HOST")
-RUNNER_PORT = os.getenv("RUNNER_PORT")
-RUNNER_PLAYWRIGHT_PORT = os.getenv("RUNNER_PLAYWRIGHT_PORT")
+RUNNER_HOST = os.getenv("RUNNER_HOST", "runner")
+RUNNER_PORT = os.getenv("RUNNER_PORT", 50051)
+RUNNER_PLAYWRIGHT_PORT = os.getenv("RUNNER_PLAYWRIGHT_PORT", 50053)
 PLAYWRIGHT_URL = f"ws://{RUNNER_HOST}:{RUNNER_PLAYWRIGHT_PORT}" if RUNNER_HOST and RUNNER_PLAYWRIGHT_PORT else ""
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
@@ -492,8 +492,6 @@ PROVIDERS = [
         ],
         "processor_exclude": [
             "llmstack.processors.providers.promptly.code_interpreter.CodeInterpreterProcessor",
-            "llmstack.processors.providers.promptly.static_web_browser.StaticWebBrowser",
-            "llmstack.processors.providers.promptly.web_browser.WebBrowser",
         ],
         "datasource_processors_exclude": [],
         "slug": "promptly",
@@ -672,9 +670,7 @@ try:
 except Exception:
     print("Error parsing CUSTOM_MODELS_DEPLOYMENT_CONFIG")
 
-CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES = os.getenv(
-    "CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES", "llmstack.connections.handlers.web_login"
-).split(",")
+CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES = os.getenv("CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES", "").split(",")
 
 DEFAULT_DATA_DESTINATION_CONFIG = {"provider_slug": "weaviate", "processor_slug": "vector-store"}
 

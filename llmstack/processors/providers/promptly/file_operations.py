@@ -13,10 +13,10 @@ from typing import Optional
 import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
+from langrocks.common.models import runner_pb2, runner_pb2_grpc
 from pydantic import Field, model_validator
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.common.utils.utils import create_data_uri, validate_parse_data_uri
 from llmstack.play.actor import BookKeepingData
 from llmstack.processors.providers.api_processor_interface import (

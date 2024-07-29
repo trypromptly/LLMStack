@@ -42,13 +42,21 @@ services:
   redis:
     image: redis:latest
     ports:
-      - "26379:6379"
+      - 26379:6379
     command: redis-server
     restart: unless-stopped
     volumes:
       - redisdata:/data
     env_file:
       - .env.dev
+  runner:
+    image: langrocks-web-browser:latest
+    env_file:
+      - .env.dev
+    ports:
+      - 50051:50051
+      - 50052:50052
+      - 50053:50053
   postgres:
     image: postgres:16-alpine
     ports:

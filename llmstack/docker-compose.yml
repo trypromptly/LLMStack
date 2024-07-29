@@ -32,6 +32,9 @@ services:
       SECRET_KEY: ${SECRET_KEY:-}
       SITE_URL: ${SITE_URL:-http://localhost:3000}
       SITE_NAME: ${SITE_NAME:-LLMStack}
+      RUNNER_HOST: ${RUNNER_HOST:-runner}
+      RUNNER_PORT: ${RUNNER_PORT:-50051}
+      RUNNER_PLAYWRIGHT_PORT: ${RUNNER_PLAYWRIGHT_PORT:-50053}
       DEBUG: ${DEBUG:-True}
     cap_add:
       - SYS_PTRACE
@@ -75,6 +78,14 @@ services:
       - api
     volumes:
       - userdata:/usr/share/nginx/html/media
+  runner:
+    image: ghcr.io/langrocks/langrocks-web-browser:main
+    environment:
+      RUNNER_WSS_HOSTNAME: ${RUNNER_WSS_HOSTNAME:-${LLMSTACK_HOST}:${LLMSTACK_PORT}/runner}
+    ports:
+      - 50051:50051
+      - 50052:50052
+      - 50053:50053
   redis:
     image: redis:latest
     command: redis-server

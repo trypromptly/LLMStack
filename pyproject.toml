@@ -67,6 +67,7 @@ google-auth = {version = "^2.22.0" }
 pydantic = "^2.7.4"
 daphne = "^4.1.2"
 striprtf = "^0.0.26"
+langrocks = "^0.1.0"
 
 [tool.poetry.group.faiss.dependencies]
 faiss-cpu = "^1.8.0"

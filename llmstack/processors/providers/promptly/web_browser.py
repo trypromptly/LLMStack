@@ -9,10 +9,10 @@ import openai
 import orjson as json
 from asgiref.sync import async_to_sync
 from django.conf import settings
+from langrocks.common.models import tools_pb2, tools_pb2_grpc
 from pydantic import BaseModel, Field, field_validator
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -258,100 +258,100 @@ class WebBrowser(
     def _request_iterator(
         self,
         start_url,
-    ) -> Optional[runner_pb2.PlaywrightBrowserRequest]:
+    ) -> Optional[tools_pb2.WebBrowserRequest]:
         # Our first instruction is always to goto the start_url
-        playwright_start_request = runner_pb2.PlaywrightBrowserRequest()
-        playwright_start_request.url = start_url
-        playwright_start_request.timeout = (
+        web_browser_start_request = tools_pb2.WebBrowserRequest()
+        web_browser_start_request.url = start_url
+        web_browser_start_request.timeout = (
             self._config.timeout
             if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100
             else 100
         )
-        playwright_start_request.session_data = (
+        web_browser_start_request.session_data = (
             self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
             if self._config.connection_id
             else ""
         )
-        playwright_start_request.stream_video = self._config.stream_video
+        web_browser_start_request.stream_video = self._config.stream_video
 
-        yield playwright_start_request
+        yield web_browser_start_request
 
         while not self._terminated:
             if self._instructions_processed_index >= len(self._instructions):
                 sleep(0.1)
                 continue
 
-            playwright_request = runner_pb2.PlaywrightBrowserRequest()
+            web_browser_request = tools_pb2.WebBrowserRequest()
             instructions = self._instructions[self._instructions_processed_index]
             for step in instructions["steps"]:
                 if step.type == BrowserInstructionType.GOTO:
-                    input = runner_pb2.BrowserInput(
-                        type=runner_pb2.GOTO,
+                    input = tools_pb2.BrowserInput(
+                        type=tools_pb2.GOTO,
                         data=step.data,
                     )
                 if step.type == BrowserInstructionType.CLICK:
-                    input = runner_pb2.BrowserInput(
-                        type=runner_pb2.CLICK,
+                    input = tools_pb2.BrowserInput(
+                        type=tools_pb2.CLICK,
                         selector=step.selector,
                     )
                 elif step.type == BrowserInstructionType.WAIT:
-                    input = runner_pb2.BrowserInput(
-                        type=runner_pb2.WAIT,
+                    input = tools_pb2.BrowserInput(
+                        type=tools_pb2.WAIT,
                         selector=step.selector,
                     )
                 elif step.type == BrowserInstructionType.COPY:
-                    input = runner_pb2.BrowserInput(
-                        type=runner_pb2.COPY,
+                    input = tools_pb2.BrowserInput(
+                        type=tools_pb2.COPY,
                         selector=step.selector,
                     )
                 elif step.type == BrowserInstructionType.TYPE:
-                    input = runner_pb2.BrowserInput(
-                        type=runner_pb2.TYPE,
+                    input = tools_pb2.BrowserInput(
+                        type=tools_pb2.TYPE,
                         selector=step.selector,
                         data=step.data,
                     )
                 elif step.type == BrowserInstructionType.SCROLLX:
-                    input = runner_pb2.BrowserInput(
-                        type=runner_pb2.SCROLL_X,
+                    input = tools_pb2.BrowserInput(
+                        type=tools_pb2.SCROLL_X,
                         selector=step.selector,
                         data=step.data,
                     )
                 elif step.type == BrowserInstructionType.SCROLLY:
-                    input = runner_pb2.BrowserInput(
-                        type=runner_pb2.SCROLL_Y,
+                    input = tools_pb2.BrowserInput(
+                        type=tools_pb2.SCROLL_Y,
                         selector=step.selector,
                         data=step.data,
                     )
                 elif step.type == BrowserInstructionType.TERMINATE:
-                    input = runner_pb2.BrowserInput(
-                        type=runner_pb2.TERMINATE,
+                    input = tools_pb2.BrowserInput(
+                        type=tools_pb2.TERMINATE,
                     )
                 elif step.type == BrowserInstructionType.ENTER:
-                    input = runner_pb2.BrowserInput(
-                        type=runner_pb2.ENTER,
+                    input = tools_pb2.BrowserInput(
+                        type=tools_pb2.ENTER,
                     )
-                playwright_request.steps.append(input)
-            playwright_request.url = start_url
-            playwright_request.timeout = (
+                web_browser_request.steps.append(input)
+            web_browser_request.url = start_url
+            web_browser_request.timeout = (
                 self._config.timeout
                 if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100
                 else 100
             )
-            playwright_request.session_data = (
+            web_browser_request.session_data = (
                 self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
                 if self._config.connection_id
                 else ""
             )
-            playwright_request.stream_video = self._config.stream_video
+            web_browser_request.stream_video = self._config.stream_video
 
             self._instructions_processed_index += 1
 
-            yield playwright_request
+            yield web_browser_request
 
-        terminate_request = runner_pb2.PlaywrightBrowserRequest()
-        terminate_request.steps.append(
-            runner_pb2.BrowserInput(
-                type=runner_pb2.TERMINATE,
+        terminate_request = tools_pb2.WebBrowserRequest()
+        terminate_request.inputs.append(
+            tools_pb2.WebBrowserInput(
+                type=tools_pb2.TERMINATE,
             ),
         )
         yield terminate_request
@@ -386,14 +386,14 @@ class WebBrowser(
         channel = grpc.insecure_channel(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
         )
-        stub = runner_pb2_grpc.RunnerStub(channel)
+        stub = tools_pb2_grpc.RunnerStub(channel)
 
-        playwright_response_iter = stub.GetPlaywrightBrowser(
+        web_browser_response_iter = stub.GetWebBrowser(
             self._request_iterator(self._input.start_url),
         )
 
-        # Wait till we get the first playwright non video response
-        for response in playwright_response_iter:
+        # Wait till we get the first Web non video response
+        for response in web_browser_response_iter:
             if response.content.text or response.content.screenshot:
                 browser_text_response = self._process_browser_content(response)
                 browser_response = browser_text_response
@@ -436,8 +436,8 @@ class WebBrowser(
                     ),
                 )
 
-        if response.state == runner_pb2.TERMINATED:
-            output_text = "".join([x.text for x in response.outputs])
+        if response.state == tools_pb2.TERMINATED:
+            output_text = "".join([x.text for x in response.output.outputs])
             if not output_text:
                 output_text = response.content.text
             self._terminated = True
@@ -569,7 +569,7 @@ class WebBrowser(
             try:
                 # Get the next response from the browser and generate the next
                 # set of instructions
-                for response in playwright_response_iter:
+                for response in web_browser_response_iter:
                     if response.content.text or response.content.screenshot:
                         browser_text_response = self._process_browser_content(
                             response,

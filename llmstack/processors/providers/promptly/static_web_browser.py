@@ -6,10 +6,10 @@ import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from google.protobuf.json_format import MessageToDict
+from langrocks.common.models import tools_pb2, tools_pb2_grpc
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -91,63 +91,68 @@ class StaticWebBrowser(
 
     def _request_iterator(
         self,
-    ) -> Optional[runner_pb2.PlaywrightBrowserRequest]:
-        playwright_request = runner_pb2.PlaywrightBrowserRequest()
+    ) -> Optional[tools_pb2.WebBrowserRequest]:
+        playwright_request = tools_pb2.WebBrowserRequest()
         for instruction in self._input.instructions:
             if instruction.type == BrowserInstructionType.GOTO:
-                input = runner_pb2.BrowserInput(
-                    type=runner_pb2.GOTO,
+                input = tools_pb2.WebBrowserInput(
+                    type=tools_pb2.GOTO,
                     data=instruction.data,
                 )
             if instruction.type == BrowserInstructionType.CLICK:
-                input = runner_pb2.BrowserInput(
-                    type=runner_pb2.CLICK,
+                input = tools_pb2.WebBrowserInput(
+                    type=tools_pb2.CLICK,
                     selector=instruction.selector,
                 )
             elif instruction.type == BrowserInstructionType.WAIT:
-                input = runner_pb2.BrowserInput(
-                    type=runner_pb2.WAIT,
+                input = tools_pb2.WebBrowserInput(
+                    type=tools_pb2.WAIT,
                     selector=instruction.selector,
                 )
             elif instruction.type == BrowserInstructionType.COPY:
-                input = runner_pb2.BrowserInput(
-                    type=runner_pb2.COPY,
+                input = tools_pb2.WebBrowserInput(
+                    type=tools_pb2.COPY,
                     selector=instruction.selector,
                 )
             elif instruction.type == BrowserInstructionType.SCROLLX:
-                input = runner_pb2.BrowserInput(
-                    type=runner_pb2.SCROLL_X,
+                input = tools_pb2.WebBrowserInput(
+                    type=tools_pb2.SCROLL_X,
                     selector=instruction.selector,
                     data=instruction.data,
                 )
             elif instruction.type == BrowserInstructionType.SCROLLY:
-                input = runner_pb2.BrowserInput(
-                    type=runner_pb2.SCROLL_Y,
+                input = tools_pb2.WebBrowserInput(
+                    type=tools_pb2.SCROLL_Y,
                     selector=instruction.selector,
                     data=instruction.data,
                 )
             elif instruction.type == BrowserInstructionType.TERMINATE:
-                input = runner_pb2.BrowserInput(
-                    type=runner_pb2.TERMINATE,
+                input = tools_pb2.WebBrowserInput(
+                    type=tools_pb2.TERMINATE,
                 )
             elif instruction.type == BrowserInstructionType.ENTER:
-                input = runner_pb2.BrowserInput(
-                    type=runner_pb2.ENTER,
+                input = tools_pb2.WebBrowserInput(
+                    type=tools_pb2.ENTER,
                 )
-            playwright_request.steps.append(input)
-        playwright_request.url = self._input.url
-        playwright_request.skip_tags = self._config.skip_tags
-        playwright_request.timeout = (
-            self._config.timeout
-            if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100
-            else 100
+            playwright_request.inputs.append(input)
+
+        playwright_request.session_config.CopyFrom(
+            tools_pb2.WebBrowserSessionConfig(
+                init_url=self._input.url,
+                skip_tags=self._config.skip_tags,
+                timeout=(
+                    self._config.timeout
+                    if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100
+                    else 100
+                ),
+                session_data=(
+                    self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
+                    if self._config.connection_id
+                    else ""
+                ),
+                interactive=self._config.stream_video,
+            )
         )
-        playwright_request.session_data = (
-            self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
-            if self._config.connection_id
-            else ""
-        )
-        playwright_request.stream_video = self._config.stream_video
 
         yield playwright_request
 
@@ -159,13 +164,13 @@ class StaticWebBrowser(
         channel = grpc.insecure_channel(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
         )
-        stub = runner_pb2_grpc.RunnerStub(channel)
+        stub = tools_pb2_grpc.ToolsStub(channel)
 
         try:
-            playwright_response_iter = stub.GetPlaywrightBrowser(
+            web_browser_response_iter = stub.GetWebBrowser(
                 self._request_iterator(),
             )
-            for response in playwright_response_iter:
+            for response in web_browser_response_iter:
                 if response.session and response.session.ws_url:
                     # Send session info to the client
                     async_to_sync(
@@ -177,13 +182,13 @@ class StaticWebBrowser(
                             ),
                         ),
                     )
-                if response.content:
-                    response_content = MessageToDict(response.content)
+                if response.output:
+                    response_content = MessageToDict(response.output)
                     if response_content:
                         browser_response = response_content
 
-                if response.state == runner_pb2.TERMINATED or response.content.text:
-                    output_text = "".join([x.text for x in response.outputs])
+                if response.state == tools_pb2.TERMINATED or response.output.text:
+                    output_text = "".join([x.output for x in response.output.outputs])
                     if not output_text:
                         output_text = response.content.text
                     break

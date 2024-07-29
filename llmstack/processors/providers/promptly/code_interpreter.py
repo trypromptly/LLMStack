@@ -7,10 +7,10 @@ from typing import Dict, List, Optional
 import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
+from langrocks.common.models import runner_pb2, runner_pb2_grpc
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,

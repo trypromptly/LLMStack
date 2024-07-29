@@ -4,9 +4,9 @@ from typing import Iterator, Union
 
 import grpc
 from django.conf import settings
+from langrocks.common.models import tools_pb2, tools_pb2_grpc
 from pydantic import Field
 
-from llmstack.common.acars.proto import runner_pb2, runner_pb2_grpc
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.connections.models import (
     Connection,
@@ -62,13 +62,14 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
             if "_storage_state" in connection.configuration and connection.configuration["_storage_state"]
             else ""
         )
-        yield runner_pb2.RemoteBrowserRequest(
-            init_data=runner_pb2.BrowserInitData(
-                url=connection.configuration["start_url"],
+        yield tools_pb2.WebBrowserRequest(
+            session_config=tools_pb2.WebBrowserSessionConfig(
+                init_url=connection.configuration["start_url"],
                 terminate_url_pattern="",
                 session_data=session_data,
                 timeout=timeout,
                 persist_session=True,
+                interactive=True,
             ),
         )
 
@@ -78,14 +79,18 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
             await asyncio.sleep(0.1)
             time_elapsed += 0.1
 
-        yield runner_pb2.RemoteBrowserRequest(input=runner_pb2.BrowserInput(type=runner_pb2.TERMINATE))
+        yield tools_pb2.WebBrowserRequest(inputs=[tools_pb2.WebBrowserInput(type=tools_pb2.TERMINATE)])
 
     async def _read_browser_output(self, connection, remote_browser_stream):
-        while not self._is_terminated:
+        while not self._is_terminated and not self._is_remote_browser_terminated:
             try:
                 # Read the next message from the stream
                 output = await remote_browser_stream.read()
-                if output.state is not runner_pb2.RemoteBrowserState.RUNNING:
+                if not output:
+                    self._is_remote_browser_terminated = True
+                    break
+
+                if output.state is not tools_pb2.WebBrowserState.RUNNING:
                     self._is_terminated = True
                     if output.session.session_data:
                         connection.configuration["_storage_state"] = output.session.session_data
@@ -122,13 +127,14 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
         self.channel = grpc.aio.insecure_channel(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
         )
-        stub = runner_pb2_grpc.RunnerStub(self.channel)
+        stub = tools_pb2_grpc.ToolsStub(self.channel)
         self._input_index = 0
         self._input_instructions = []
         self._is_terminated = False
+        self._is_remote_browser_terminated = False
         timeout = 120
 
-        self.remote_browser_stream = stub.GetRemoteBrowser(
+        self.remote_browser_stream = stub.GetWebBrowser(
             self._request_iterator(connection, timeout),
         )
 
