@@ -21,7 +21,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import validator from "@rjsf/validator-ajv8";
 import { enqueueSnackbar } from "notistack";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
   dataSourcesState,
