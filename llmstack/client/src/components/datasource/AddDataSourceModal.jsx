@@ -82,177 +82,210 @@ function AdvancedForm({
 
   return (
     <Stack>
-      <ButtonGroup
-        variant="outlined"
-        size="small"
-        style={{ display: "inline-block" }}
-      >
-        {sourceTypes.map((sourceType) => (
-          <Button
-            key={sourceType.slug}
-            variant={
-              source?.slug === sourceType.slug &&
-              source?.provider_slug === sourceType.provider_slug
-                ? "contained"
-                : "outlined"
-            }
-            onClick={(e) => {
-              setSource(sourceType);
-            }}
+      <Accordion defaultExpanded={true}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="source-content"
+          id="source-header"
+        >
+          <Typography>Source</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <ButtonGroup
+            variant="outlined"
+            size="small"
+            style={{ display: "inline-block" }}
           >
-            {sourceType.slug}
-          </Button>
-        ))}
-      </ButtonGroup>
-      <ThemedJsonForm
-        schema={source?.schema || {}}
-        validator={validator}
-        uiSchema={{
-          ...(source?.ui_schema || {}),
-          ...{
-            "ui:submitButtonOptions": {
-              norender: true,
-            },
-            "ui:DescriptionFieldTemplate": () => null,
-            "ui:TitleFieldTemplate": () => null,
-          },
-        }}
-        formData={sourceData}
-        onChange={({ formData }) => {
-          setSourceData(formData);
-        }}
-        disableAdvanced={true}
-      />
-      <ButtonGroup
-        variant="outlined"
-        size="small"
-        style={{ display: "inline-block" }}
-      >
-        {transformationTypes.map((transformationType) => (
-          <Button
-            key={transformationType.slug}
-            variant={
-              transformationType.slug === transformations[0]?.slug &&
-              transformationType.provider_slug ===
-                transformations[0]?.provider_slug
-                ? "contained"
-                : "outlined"
-            }
-            onClick={(e) => {
-              setTransformations([transformationType]);
-            }}
-          >
-            {transformationType.slug}
-          </Button>
-        ))}
-      </ButtonGroup>
-      {datasource === null && (
-        <ThemedJsonForm
-          schema={transformations[0]?.schema || {}}
-          validator={validator}
-          uiSchema={{
-            ...(transformations[0]?.ui_schema || {}),
-            ...{
-              "ui:submitButtonOptions": {
-                norender: true,
+            {sourceTypes.map((sourceType) => (
+              <Button
+                key={sourceType.slug}
+                variant={
+                  source?.slug === sourceType.slug &&
+                  source?.provider_slug === sourceType.provider_slug
+                    ? "contained"
+                    : "outlined"
+                }
+                onClick={(e) => {
+                  setSource(sourceType);
+                }}
+              >
+                {sourceType.slug}
+              </Button>
+            ))}
+          </ButtonGroup>
+          <ThemedJsonForm
+            schema={source?.schema || {}}
+            validator={validator}
+            uiSchema={{
+              ...(source?.ui_schema || {}),
+              ...{
+                "ui:submitButtonOptions": {
+                  norender: true,
+                },
+                "ui:DescriptionFieldTemplate": () => null,
+                "ui:TitleFieldTemplate": () => null,
               },
-              "ui:DescriptionFieldTemplate": () => null,
-              "ui:TitleFieldTemplate": () => null,
-            },
-          }}
-          formData={transformationsData[0]}
-          onChange={({ formData }) => {
-            setTransformationsData([formData]);
-          }}
-          disableAdvanced={true}
-        />
-      )}
-      <ButtonGroup
-        variant="outlined"
-        size="small"
-        style={{ display: "inline-block" }}
-      >
-        {embeddingTypes.map((embeddingType) => (
-          <Button
-            key={embeddingType.slug}
-            variant={
-              embedding?.slug === embeddingType.slug &&
-              embedding.provider_slug === embeddingType.provider_slug
-                ? "contained"
-                : "outlined"
-            }
-            onClick={(e) => {
-              setEmbedding(embeddingType);
             }}
-          >
-            {embeddingType.slug}
-          </Button>
-        ))}
-      </ButtonGroup>
-      {datasource === null && (
-        <ThemedJsonForm
-          schema={embedding?.schema || {}}
-          validator={validator}
-          uiSchema={{
-            ...(embedding?.ui_schema || {}),
-            ...{
-              "ui:submitButtonOptions": {
-                norender: true,
-              },
-              "ui:DescriptionFieldTemplate": () => null,
-              "ui:TitleFieldTemplate": () => null,
-            },
-          }}
-          formData={embeddingData}
-          onChange={({ formData }) => {
-            setEmbeddingData(formData);
-          }}
-          disableAdvanced={true}
-        />
-      )}
-      <ButtonGroup
-        variant="outlined"
-        size="small"
-        style={{ display: "inline-block" }}
-      >
-        {destinationTypes.map((destinationType) => (
-          <Button
-            key={destinationType.slug}
-            variant={
-              destination?.slug === destinationType.slug &&
-              destination.provider_slug === destinationType.provider_slug
-                ? "contained"
-                : "outlined"
-            }
-            onClick={(e) => {
-              setDestination(destinationType);
+            formData={sourceData}
+            onChange={({ formData }) => {
+              setSourceData(formData);
             }}
+            disableAdvanced={true}
+          />
+        </AccordionDetails>
+      </Accordion>
+      <Accordion defaultExpanded={false}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="transformations-content"
+          id="transformations-header"
+        >
+          <Typography>Transformations</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <ButtonGroup
+            variant="outlined"
+            size="small"
+            style={{ display: "inline-block" }}
           >
-            {destinationType.slug}
-          </Button>
-        ))}
-      </ButtonGroup>
-      {datasource === null && (
-        <ThemedJsonForm
-          schema={destination?.schema || {}}
-          validator={validator}
-          uiSchema={{
-            ...(destination?.ui_schema || {}),
-            ...{
-              "ui:submitButtonOptions": {
-                norender: true,
-              },
-              "ui:DescriptionFieldTemplate": () => null,
-              "ui:TitleFieldTemplate": () => null,
-            },
-          }}
-          formData={destinationFormData}
-          onChange={({ formData }) => {
-            setDestinationData(formData);
-          }}
-          disableAdvanced={true}
-        />
-      )}
+            {transformationTypes.map((transformationType) => (
+              <Button
+                key={transformationType.slug}
+                variant={
+                  transformationType.slug === transformations[0]?.slug &&
+                  transformationType.provider_slug ===
+                    transformations[0]?.provider_slug
+                    ? "contained"
+                    : "outlined"
+                }
+                onClick={(e) => {
+                  setTransformations([transformationType]);
+                }}
+              >
+                {transformationType.slug}
+              </Button>
+            ))}
+            {datasource === null && (
+              <ThemedJsonForm
+                schema={transformations[0]?.schema || {}}
+                validator={validator}
+                uiSchema={{
+                  ...(transformations[0]?.ui_schema || {}),
+                  ...{
+                    "ui:submitButtonOptions": {
+                      norender: true,
+                    },
+                    "ui:DescriptionFieldTemplate": () => null,
+                    "ui:TitleFieldTemplate": () => null,
+                  },
+                }}
+                formData={transformationsData[0]}
+                onChange={({ formData }) => {
+                  setTransformationsData([formData]);
+                }}
+                disableAdvanced={true}
+              />
+            )}
+          </ButtonGroup>
+          <ButtonGroup
+            variant="outlined"
+            size="small"
+            style={{ display: "inline-block" }}
+          >
+            {embeddingTypes.map((embeddingType) => (
+              <Button
+                key={embeddingType.slug}
+                variant={
+                  embedding?.slug === embeddingType.slug &&
+                  embedding.provider_slug === embeddingType.provider_slug
+                    ? "contained"
+                    : "outlined"
+                }
+                onClick={(e) => {
+                  setEmbedding(embeddingType);
+                }}
+              >
+                {embeddingType.slug}
+              </Button>
+            ))}
+          </ButtonGroup>
+          {datasource === null && (
+            <ThemedJsonForm
+              schema={embedding?.schema || {}}
+              validator={validator}
+              uiSchema={{
+                ...(embedding?.ui_schema || {}),
+                ...{
+                  "ui:submitButtonOptions": {
+                    norender: true,
+                  },
+                  "ui:DescriptionFieldTemplate": () => null,
+                  "ui:TitleFieldTemplate": () => null,
+                },
+              }}
+              formData={embeddingData}
+              onChange={({ formData }) => {
+                setEmbeddingData(formData);
+              }}
+              disableAdvanced={true}
+            />
+          )}
+        </AccordionDetails>
+      </Accordion>
+      <Accordion defaultExpanded={false}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="destination-content"
+          id="destination-header"
+        >
+          <Typography>Destination</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <ButtonGroup
+            variant="outlined"
+            size="small"
+            style={{ display: "inline-block" }}
+          >
+            {destinationTypes.map((destinationType) => (
+              <Button
+                key={destinationType.slug}
+                variant={
+                  destination?.slug === destinationType.slug &&
+                  destination.provider_slug === destinationType.provider_slug
+                    ? "contained"
+                    : "outlined"
+                }
+                onClick={(e) => {
+                  setDestination(destinationType);
+                }}
+              >
+                {destinationType.slug}
+              </Button>
+            ))}
+          </ButtonGroup>
+          {datasource === null && (
+            <ThemedJsonForm
+              schema={destination?.schema || {}}
+              validator={validator}
+              uiSchema={{
+                ...(destination?.ui_schema || {}),
+                ...{
+                  "ui:submitButtonOptions": {
+                    norender: true,
+                  },
+                  "ui:DescriptionFieldTemplate": () => null,
+                  "ui:TitleFieldTemplate": () => null,
+                },
+              }}
+              formData={destinationFormData}
+              onChange={({ formData }) => {
+                setDestinationData(formData);
+              }}
+              disableAdvanced={true}
+            />
+          )}
+        </AccordionDetails>
+      </Accordion>
     </Stack>
   );
 }
