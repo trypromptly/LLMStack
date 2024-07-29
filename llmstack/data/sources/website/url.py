@@ -1,4 +1,6 @@
+import base64
 import logging
+import uuid
 from typing import Optional
 
 from pydantic import Field
@@ -6,6 +8,7 @@ from pydantic import Field
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
 from llmstack.data.schemas import DataDocument
 from llmstack.data.sources.base import BaseSource
+from llmstack.data.sources.utils import create_source_document_asset
 
 logger = logging.getLogger(__file__)
 
@@ -22,7 +25,7 @@ def get_url_data(url: str, connection=None, **kwargs):
         url,
         extra_params=ExtraParams(openai_key=kwargs.get("openai_key"), connection=connection),
     )
-    return text
+    return text or "Could not extract text from URL"
 
 
 class URLSchema(BaseSource):
@@ -59,9 +62,32 @@ class URLSchema(BaseSource):
         urls = list(filter(lambda url: not url.endswith(".xml"), urls))
         documents = []
         for url in urls:
-            documents.append(DataDocument(name=url, content=url, metadata={"source": url}))
+            documents.append(
+                DataDocument(
+                    name=url,
+                    content=url,
+                    metadata={
+                        "source": url,
+                        "datasource_uuid": kwargs["datasource_uuid"],
+                    },
+                )
+            )
         return documents
 
     def process_document(self, document: DataDocument) -> DataDocument:
         url_text_data = get_url_data(document.content, connection=self.connection_id)
-        return document.model_copy(update={"text": url_text_data, "content": url_text_data.encode()})
+        logger.info(f"Extracted text from {url_text_data}")
+        text_data_uri = (
+            f"data:text/plain;name={document.id_}_text.txt;base64,{base64.b64encode(url_text_data.encode()).decode()}"
+        )
+        text_file_objref = create_source_document_asset(
+            text_data_uri,
+            datasource_uuid=document.metadata["datasource_uuid"],
+            document_id=str(uuid.uuid4()),
+        )
+        return document.model_copy(
+            update={
+                "text": url_text_data,
+                "text_objref": text_file_objref,
+            }
+        )
