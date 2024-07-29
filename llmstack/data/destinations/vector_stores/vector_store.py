@@ -38,7 +38,7 @@ class PromptlyVectorStore(BaseDestination):
         return self._store.delete(document)
 
     def search(self, query: str, **kwargs):
-        self._store.search(query, **kwargs)
+        return self._store.search(query, **kwargs)
 
     def create_collection(self):
         return self._store.create_collection()
