@@ -65,7 +65,7 @@ const sourceTypesFetchSelector = selector({
   key: "sourceTypesFetchSelector",
   get: async () => {
     try {
-      const sources = await axios().get("/api/pipeline/sources");
+      const sources = await axios().get("/api/data/pipeline/sources");
       return sources.data;
     } catch (error) {
       return [];
@@ -78,7 +78,7 @@ const transformationTypesFetchSelector = selector({
   get: async () => {
     try {
       const transformations = await axios().get(
-        "/api/pipeline/transformations",
+        "/api/data/pipeline/transformations",
       );
       return transformations.data;
     } catch (error) {
@@ -91,7 +91,7 @@ const embeddingTypesFetchSelector = selector({
   key: "embeddingTypesFetchSelector",
   get: async () => {
     try {
-      const embeddings = await axios().get("/api/pipeline/embeddings");
+      const embeddings = await axios().get("/api/data/pipeline/embeddings");
       return embeddings.data;
     } catch (error) {
       return [];
@@ -102,7 +102,7 @@ const destinationTypesFetchSelector = selector({
   key: "destinationTypesFetchSelector",
   get: async () => {
     try {
-      const destinations = await axios().get("/api/pipeline/destinations");
+      const destinations = await axios().get("/api/data/pipeline/destinations");
       return destinations.data;
     } catch (error) {
       return {};
@@ -114,7 +114,9 @@ const pipelineTemplatesFetchSelector = selector({
   key: "pipelineTemplatesFetchSelector",
   get: async () => {
     try {
-      const pipelineTemplates = await axios().get("/api/pipeline/templates");
+      const pipelineTemplates = await axios().get(
+        "/api/data/pipeline/templates",
+      );
       return pipelineTemplates.data;
     } catch (error) {
       return [];
