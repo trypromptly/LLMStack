@@ -411,7 +411,7 @@ function TemplateForm({
       {datasource === null &&
         selectedTemplate?.pipeline?.destination &&
         selectedTemplate?.pipeline?.destination?.provider_slug !==
-          "weaviate" && (
+          "promptly" && (
           <ThemedJsonForm
             schema={selectedTemplate?.pipeline?.destination?.schema || {}}
             validator={validator}
