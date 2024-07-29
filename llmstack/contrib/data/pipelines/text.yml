@@ -5,6 +5,12 @@ pipeline:
   source:
     slug: text
     provider_slug: promptly
+  transformations:
+    - slug: semantic-double-merging-splitter-node-parser
+      provider_slug: promptly
+  embedding:
+    slug: embeddings-generator
+    provider_slug: promptly
   destination:
     slug: vector-store
     provider_slug: weaviate

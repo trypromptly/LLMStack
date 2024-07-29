@@ -9,7 +9,10 @@ from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 from rq.job import Job
 
-from llmstack.data.yaml_loader import get_data_pipelines_from_contrib
+from llmstack.data.yaml_loader import (
+    get_data_pipeline_template_by_slug,
+    get_data_pipelines_from_contrib,
+)
 from llmstack.jobs.adhoc import AddDataSourceEntryJob, ExtractURLJob
 
 from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
@@ -19,73 +22,18 @@ from .tasks import extract_urls_task
 logger = logging.getLogger(__name__)
 
 
-def get_data_source_type(slug):
-    return DataSourceTypeViewSet().get(None, slug).data
-
-
-def load_sources():
-    from llmstack.data.sources.files.file import FileSchema
-    from llmstack.data.sources.files.pdf import PdfSchema
-    from llmstack.data.sources.text.text_data import TextSchema
-    from llmstack.data.sources.website.url import URLSchema
-
-    sources = {}
-    for cls in [FileSchema, PdfSchema, TextSchema, URLSchema]:
-        if not sources.get(cls.provider_slug()):
-            sources[cls.provider_slug()] = {}
-        sources[cls.provider_slug()][cls.slug()] = {
-            "slug": cls.slug(),
-            "provider_slug": cls.provider_slug(),
-            "schema": cls.get_schema(),
-            "ui_schema": cls.get_ui_schema(),
-        }
-    return sources
-
-
-def load_destinations():
-    from llmstack.data.destinations.stores.singlestore import SingleStore
-    from llmstack.data.destinations.vector_stores.pinecone import Pinecone
-    from llmstack.data.destinations.vector_stores.qdrant import Qdrant
-    from llmstack.data.destinations.vector_stores.weaviate import Weaviate
-
-    destinations = {}
-
-    for cls in [SingleStore, Weaviate, Pinecone, Qdrant]:
-        if not destinations.get(cls.provider_slug()):
-            destinations[cls.provider_slug()] = {}
-        destinations[cls.provider_slug()][cls.slug()] = {
-            "slug": cls.slug(),
-            "provider_slug": cls.provider_slug(),
-            "schema": cls.get_schema(),
-            "ui_schema": cls.get_ui_schema(),
-        }
-    return destinations
-
-
 class DataSourceTypeViewSet(viewsets.ViewSet):
     def list(self, request):
         processors = []
 
-        sources = load_sources()
-        destinations = load_destinations()
         pipeline_templates = get_data_pipelines_from_contrib()
 
         for pipeline_template in pipeline_templates:
-            source = pipeline_template.pipeline.source
-            destination = pipeline_template.pipeline.destination
-
-            is_external_datasource = not pipeline_template.pipeline.source
             processors.append(
                 {
-                    "slug": pipeline_template.slug,
-                    "name": pipeline_template.name,
-                    "description": pipeline_template.description,
+                    **pipeline_template.default_dict(),
                     "sync_config": None,
-                    "is_external_datasource": is_external_datasource,
-                    "source": sources.get(source.provider_slug, {}).get(source.slug, {}) if source else {},
-                    "destination": (
-                        destinations.get(destination.provider_slug, {}).get(destination.slug, {}) if destination else {}
-                    ),
+                    "is_external_datasource": not pipeline_template.pipeline.source,
                 }
             )
 
@@ -100,6 +48,116 @@ class DataSourceTypeViewSet(viewsets.ViewSet):
                 break
 
         return DRFResponse(response) if response else DRFResponse(status=404)
+
+
+class PipelineViewSet(viewsets.ViewSet):
+    def templates(self, request):
+        templates_data = []
+        pipeline_templates = get_data_pipelines_from_contrib()
+        for pipeline_template in pipeline_templates:
+            templates_data.append(
+                {
+                    **pipeline_template.default_dict(),
+                    "is_external_datasource": not pipeline_template.pipeline.source,
+                }
+            )
+        return DRFResponse(templates_data)
+
+    def sources(self, request):
+        from llmstack.data.sources import FileSchema, TextSchema, URLSchema
+
+        return DRFResponse(
+            [
+                {
+                    "slug": FileSchema.slug(),
+                    "provider_slug": FileSchema.provider_slug(),
+                    "schema": FileSchema.get_schema(),
+                    "ui_schema": FileSchema.get_ui_schema(),
+                },
+                {
+                    "slug": TextSchema.slug(),
+                    "provider_slug": TextSchema.provider_slug(),
+                    "schema": TextSchema.get_schema(),
+                    "ui_schema": TextSchema.get_ui_schema(),
+                },
+                {
+                    "slug": URLSchema.slug(),
+                    "provider_slug": URLSchema.provider_slug(),
+                    "schema": URLSchema.get_schema(),
+                    "ui_schema": URLSchema.get_ui_schema(),
+                },
+            ]
+        )
+
+    def destinations(self, request):
+        from llmstack.data.destinations import Pinecone, SingleStore, Weaviate
+
+        return DRFResponse(
+            [
+                {
+                    "slug": Weaviate.slug(),
+                    "provider_slug": Weaviate.provider_slug(),
+                    "schema": Weaviate.get_schema(),
+                    "ui_schema": Weaviate.get_ui_schema(),
+                },
+                {
+                    "slug": SingleStore.slug(),
+                    "provider_slug": SingleStore.provider_slug(),
+                    "schema": SingleStore.get_schema(),
+                    "ui_schema": SingleStore.get_ui_schema(),
+                },
+                {
+                    "slug": Pinecone.slug(),
+                    "provider_slug": Pinecone.provider_slug(),
+                    "schema": Pinecone.get_schema(),
+                    "ui_schema": Pinecone.get_ui_schema(),
+                },
+            ]
+        )
+
+    def transformations(self, request):
+        from llmstack.data.transformations import (
+            CodeSplitter,
+            SemanticDoubleMergingSplitterNodeParser,
+            SentenceSplitter,
+        )
+
+        return DRFResponse(
+            [
+                {
+                    "slug": CodeSplitter.slug(),
+                    "provider_slug": CodeSplitter.provider_slug(),
+                    "schema": CodeSplitter.get_schema(),
+                    "ui_schema": CodeSplitter.get_ui_schema(),
+                },
+                {
+                    "slug": SemanticDoubleMergingSplitterNodeParser.slug(),
+                    "provider_slug": SemanticDoubleMergingSplitterNodeParser.provider_slug(),
+                    "schema": SemanticDoubleMergingSplitterNodeParser.get_schema(),
+                    "ui_schema": SemanticDoubleMergingSplitterNodeParser.get_ui_schema(),
+                },
+                {
+                    "slug": SentenceSplitter.slug(),
+                    "provider_slug": SentenceSplitter.provider_slug(),
+                    "schema": SentenceSplitter.get_schema(),
+                    "ui_schema": SentenceSplitter.get_ui_schema(),
+                },
+            ]
+        )
+
+    def embeddings(self, request):
+        from llmstack.data.transformations import EmbeddingsGenerator
+
+        return DRFResponse(
+            [
+                {
+                    "slug": EmbeddingsGenerator.slug(),
+                    "provider_slug": EmbeddingsGenerator.provider_slug(),
+                    "schema": EmbeddingsGenerator.get_schema(),
+                    "ui_schema": EmbeddingsGenerator.get_ui_schema(),
+                }
+            ]
+        )
 
 
 class DataSourceEntryViewSet(viewsets.ModelViewSet):
@@ -186,16 +244,38 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
     def post(self, request):
         owner = request.user
+        pipeline_data = request.data.get("pipeline", None)
+        name = request.data.get("name", None)
+        type_slug = request.data.get("type_slug", None)
         # Validation for slug
-        datasource_type = get_object_or_404(DataSourceType, slug=request.data["type_slug"])
-        datasource = DataSource(name=request.data["name"], owner=owner, type=datasource_type)
-        datasource_config = datasource.config or {}
-        datasource_config["type_slug"] = request.data["type_slug"]
-        datasource_config["destination_data"] = request.data.get("destination_data", {})
-        datasource_config["transformation_data"] = request.data.get("transformation_data", {})
-        datasource.config = datasource_config
+        datasource_type = get_object_or_404(DataSourceType, slug="text")
+
+        datasource = DataSource(name=name, owner=owner, type=datasource_type)
+
+        pipeline_template = get_data_pipeline_template_by_slug(type_slug)
+
+        if type_slug and not pipeline_template:
+            raise ValueError(f"Pipeline template not found for slug {request.data['type_slug']}")
+
+        if pipeline_template:
+            # If the request is from a pipeline template, use the pipeline template's embedding coffiguration
+            if pipeline_template.pipeline.embedding:
+                embedding_data = {"embedding_provider_slug": "openai"}
+                if datasource.profile.vectostore_embedding_endpoint == "azure_openai":
+                    embedding_data["embedding_provider_slug"] = "azure-openai"
+                embedding_transformation = pipeline_template.pipeline.embedding.model_dump()
+                embedding_transformation["data"] = embedding_data
+                pipeline_data["embedding"] = embedding_transformation
+
+        config = {
+            "type_slug": request.data["type_slug"],
+            "pipeline": pipeline_data,
+        }
+        datasource.config = config
+
         datasource.save()
-        return DRFResponse(DataSourceSerializer(instance=datasource).data, status=201)
+        json_data = DataSourceSerializer(instance=datasource).data
+        return DRFResponse(json_data, status=201)
 
     def delete(self, request, uid):
         datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
@@ -220,10 +300,10 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         if datasource and datasource.type.is_external_datasource:
             return DRFResponse({"errors": ["Cannot add entry to external data source"]}, status=400)
 
-        source_data = request.data.get("entry_data", {})
+        source_data = request.data.get("source_data", {})
 
         if not source_data:
-            return DRFResponse({"errors": ["No entry_data provided"]}, status=400)
+            return DRFResponse({"errors": ["No source_data provided"]}, status=400)
 
         pipeline = datasource.create_data_ingestion_pipeline()
         documents = pipeline.add_data(source_data_dict=source_data)

@@ -121,44 +121,13 @@ class DataSource(models.Model):
         return self.config.get("type_slug", "")
 
     @property
-    def source_schema(self):
-        source_cls = self.source_cls
-        if source_cls:
-            return source_cls.get_schema()
-        return {}
+    def pipeline_obj(self):
+        from llmstack.data.schemas import PipelineBlock
 
-    @property
-    def source_cls(self):
-        from llmstack.data.sources.utils import get_source_cls
-        from llmstack.data.yaml_loader import get_data_pipeline_template_by_slug
+        if self.config.get("pipeline"):
+            return PipelineBlock(**self.config.get("pipeline"))
 
-        pipeline_template = get_data_pipeline_template_by_slug(self.type_slug)
-        return (
-            get_source_cls(pipeline_template.pipeline.source.slug, pipeline_template.pipeline.source.provider_slug)
-            if pipeline_template.pipeline.source
-            else None
-        )
-
-    @property
-    def destination_schema(self):
-        destination_cls = self.destination_cls
-        if destination_cls:
-            return destination_cls.get_schema()
-        return {}
-
-    @property
-    def destination_cls(self):
-        from llmstack.data.destinations.utils import get_destination_cls
-        from llmstack.data.yaml_loader import get_data_pipeline_template_by_slug
-
-        pipeline_template = get_data_pipeline_template_by_slug(self.type_slug)
-        return (
-            get_destination_cls(
-                pipeline_template.pipeline.destination.slug, pipeline_template.pipeline.destination.provider_slug
-            )
-            if pipeline_template.pipeline.destination
-            else None
-        )
+        return None
 
     @property
     def destination_text_content_key(self):
@@ -174,34 +143,8 @@ class DataSource(models.Model):
         return None
 
     @property
-    def destination_data(self):
-        from llmstack.data.destinations.vector_stores.weaviate import Weaviate
-
-        if self.config.get("destination_data"):
-            data = self.config.get("destination_data")
-        elif (
-            not self.config.get("destination_data")
-            and self.destination_cls.slug() == Weaviate.slug()
-            and self.destination_cls.provider_slug() == Weaviate.provider_slug()
-        ):
-            # Default destination data for platform vector store
-            data = {
-                "index_name": "Datasource_" + str(self.uuid).replace("-", "_"),
-                "text_key": self.destination_text_content_key,
-            }
-        return data
-
-    @property
-    def transformation_schema(self):
-        return {}
-
-    @property
-    def transformation_cls(self):
-        return None
-
-    @property
-    def transformation_data(self):
-        return {}
+    def pipeline(self):
+        return self.config.get("pipeline", {})
 
     def create_data_ingestion_pipeline(self):
         from llmstack.data.pipeline import DataIngestionPipeline

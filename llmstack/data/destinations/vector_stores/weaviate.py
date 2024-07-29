@@ -172,6 +172,7 @@ class WeaviateVectorStore:
             try:
                 query_response = self.client.query.hybrid(
                     query=query.query_str,
+                    vector=query.query_embedding,
                     alpha=query.alpha,
                     query_properties=[self._text_key],
                     return_metadata=None,
@@ -183,6 +184,7 @@ class WeaviateVectorStore:
             try:
                 query_response = self.client.query.near_text(
                     query=query.query_str,
+                    vector=query.query_embedding,
                     certainty=kwargs.get("search_distance", None),
                     limit=query.similarity_top_k if query.similarity_top_k is not None else 10,
                     return_metadata=wvc.query.MetadataQuery(certainty=True, distance=True),
@@ -202,8 +204,8 @@ class WeaviateVectorStore:
 
 
 class Weaviate(BaseDestination):
-    index_name: str = Field(description="Index/Collection name", default="text")
-    text_key: str = Field(description="Text key", default="Text")
+    index_name: Optional[str] = Field(description="Index/Collection name", default=None)
+    text_key: str = Field(description="Text key", default="content")
     deployment_name: Optional[str] = Field(description="Deployment name", default="*")
     weaviate_schema: Optional[str] = Field(description="Schema", default="")
 
@@ -223,12 +225,15 @@ class Weaviate(BaseDestination):
         from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
 
         datasource = kwargs.get("datasource")
+
+        index_name = self.index_name or f"Datasource_{datasource.uuid}".replace("-", "_")
+
         self._deployment_config = datasource.profile.get_provider_config(
             deployment_key=self.deployment_name, provider_slug=self.provider_slug()
         )
 
         DEFAULT_SCHEMA = {
-            "class": self.index_name,
+            "class": index_name,
             "description": "Text data source",
             "vectorizer": "text2vec-openai",
             "moduleConfig": {"text2vec-openai": {"model": "ada", "type": "text"}},
@@ -304,7 +309,7 @@ class Weaviate(BaseDestination):
 
         self._client = WeaviateVectorStore(
             weaviate_client=weaviate_client,
-            index_name=self.index_name,
+            index_name=index_name,
             text_key=self.text_key,
             auth_config=self._deployment_config.auth,
         )
@@ -332,6 +337,7 @@ class Weaviate(BaseDestination):
             ),
             alpha=kwargs.get("alpha", 0.75),
             hybrid_top_k=kwargs.get("limit", 2),
+            query_embedding=kwargs.get("query_embedding", None),
         )
 
         return self._client.query(query=vector_store_query)

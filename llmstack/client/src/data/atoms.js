@@ -61,6 +61,67 @@ const dataSourceTypesFetchSelector = selector({
   },
 });
 
+const sourceTypesFetchSelector = selector({
+  key: "sourceTypesFetchSelector",
+  get: async () => {
+    try {
+      const sources = await axios().get("/api/pipeline/sources");
+      return sources.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
+const transformationTypesFetchSelector = selector({
+  key: "transformationTypesFetchSelector",
+  get: async () => {
+    try {
+      const transformations = await axios().get(
+        "/api/pipeline/transformations",
+      );
+      return transformations.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
+const embeddingTypesFetchSelector = selector({
+  key: "embeddingTypesFetchSelector",
+  get: async () => {
+    try {
+      const embeddings = await axios().get("/api/pipeline/embeddings");
+      return embeddings.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+const destinationTypesFetchSelector = selector({
+  key: "destinationTypesFetchSelector",
+  get: async () => {
+    try {
+      const destinations = await axios().get("/api/pipeline/destinations");
+      return destinations.data;
+    } catch (error) {
+      return {};
+    }
+  },
+});
+
+const pipelineTemplatesFetchSelector = selector({
+  key: "pipelineTemplatesFetchSelector",
+  get: async () => {
+    try {
+      const pipelineTemplates = await axios().get("/api/pipeline/templates");
+      return pipelineTemplates.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
 export const apiProvidersState = atom({
   key: "apiProviders",
   default: apiProvidersFetchSelector,
@@ -297,6 +358,31 @@ export const orgDataSourcesState = selector({
 export const dataSourceTypesState = atom({
   key: "dataSourceTypesState",
   default: dataSourceTypesFetchSelector,
+});
+
+export const sourceTypesState = atom({
+  key: "sourceTypesState",
+  default: sourceTypesFetchSelector,
+});
+
+export const transformationTypesState = atom({
+  key: "transformationTypesState",
+  default: transformationTypesFetchSelector,
+});
+
+export const pipelineTemplatesState = atom({
+  key: "pipelineTemplatesState",
+  default: pipelineTemplatesFetchSelector,
+});
+
+export const destinationTypesState = atom({
+  key: "destinationTypesState",
+  default: destinationTypesFetchSelector,
+});
+
+export const embeddingTypesState = atom({
+  key: "embeddingTypesState",
+  default: embeddingTypesFetchSelector,
 });
 
 export const dataSourceEntriesState = atom({

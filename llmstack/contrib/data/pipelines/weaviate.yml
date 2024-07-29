@@ -1,0 +1,7 @@
+name: Weaviate
+slug: weaviate
+description: Read data from Weaviate
+pipeline:
+  destination:
+    slug: vector-store
+    provider_slug: weaviate

@@ -11,9 +11,16 @@ class DataSourceSerializer(serializers.ModelSerializer):
         return obj.owner.email
 
     def get_type(self, obj):
-        from llmstack.data.apis import get_data_source_type
-
-        return get_data_source_type(obj.type_slug)
+        if obj.type_slug:
+            return {
+                "slug": obj.type_slug,
+                "name": obj.type_slug,
+            }
+        else:
+            return {
+                "slug": "custom",
+                "name": "Custom",
+            }
 
     class Meta:
         model = DataSource
