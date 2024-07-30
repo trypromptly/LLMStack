@@ -48,7 +48,7 @@ def extract_text_with_runner(url: str, cdp_url=None, **kwargs):
         page.goto(url, timeout=kwargs.get("timeout", 30000))
         page_html = page.content()
         text = partition_html(text=page_html)
-        return "\n".join(list(map(lambda x: str(x), text)))
+        return "\n".join(list(map(lambda x: str(x), text))) or "Could not extract text from URL"
 
 
 def get_url_data(url: str, connection=None, **kwargs):
