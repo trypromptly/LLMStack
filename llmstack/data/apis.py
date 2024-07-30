@@ -17,7 +17,7 @@ from llmstack.jobs.adhoc import AddDataSourceEntryJob, ExtractURLJob
 
 from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
 from .serializers import DataSourceEntrySerializer, DataSourceSerializer
-from .tasks import extract_urls_task
+from .tasks import extract_page_hrefs_task
 
 logger = logging.getLogger(__name__)
 
@@ -362,7 +362,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         if not url.startswith("https://") and not url.startswith("http://"):
             url = f"https://{url}"
 
-        job = ExtractURLJob.create(func=extract_urls_task, args=[url]).add_to_queue()
+        job = ExtractURLJob.create(func=extract_page_hrefs_task, args=[url]).add_to_queue()
 
         # Wait for job to finish and return the result
         elapsed_time = 0
