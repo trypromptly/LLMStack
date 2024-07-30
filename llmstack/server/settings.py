@@ -381,8 +381,6 @@ WEAVIATE_SHARD_COUNT = int(os.getenv("WEAVIATE_SHARD_COUNT", "1"))
 
 WEAVIATE_API_KEY = os.getenv("WEAVIATE_API_KEY", os.getenv("VECTOR_DATABASE_API_KEY", None))
 
-PLAYWRIGHT_URL = os.getenv("PLAYWRIGHT_URL", "ws://playwright:30000/ws")
-
 RQ_QUEUES = {
     "default": {
         "HOST": os.getenv(
