@@ -124,7 +124,11 @@ class DataQueryPipeline:
 
         if self._destination:
             query_result = self._destination.search(
-                query=query, use_hybrid_search=use_hybrid_search, query_embedding=query_embedding, **kwargs
+                query=query,
+                use_hybrid_search=use_hybrid_search,
+                query_embedding=query_embedding,
+                datasource_uuid=str(self.datasource.uuid),
+                **kwargs
             )
             documents = list(
                 map(
