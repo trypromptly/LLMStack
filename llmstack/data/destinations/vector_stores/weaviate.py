@@ -101,7 +101,7 @@ class WeaviateVectorStore:
                 pass
         return result
 
-    def add(self, nodes) -> List[str]:
+    def add(self, nodes, datasource_uuid, source) -> List[str]:
         """Add nodes to index.
 
         Args:
@@ -119,6 +119,11 @@ class WeaviateVectorStore:
                 properties = {content_key: content}
                 for metadata_key in metadata.keys():
                     properties[metadata_key] = metadata[metadata_key]
+
+                # Add source and datasource_uuid
+                properties["source"] = source
+                properties["datasource_uuid"] = datasource_uuid
+
                 if node.embedding:
                     # Vectors we provided with the document use them
                     batch.add_object(properties=properties, uuid=id, vector=node.embedding)
@@ -327,7 +332,7 @@ class Weaviate(BaseDestination):
         self.create_collection()
 
     def add(self, document: DataDocument) -> DataDocument:
-        return self._client.add(document.nodes)
+        return self._client.add(document.nodes, datasource_uuid=document.datasource_uuid, source=document.name)
 
     def delete(self, document: DataDocument) -> DataDocument:
         for node in document.nodes:
