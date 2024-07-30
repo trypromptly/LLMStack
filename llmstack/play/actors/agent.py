@@ -9,6 +9,7 @@ from openai import OpenAI
 from pydantic import BaseModel
 
 from llmstack.apps.app_session_utils import save_agent_app_session_data
+from llmstack.apps.types.agent import AgentModel
 from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import Actor, BookKeepingData
@@ -90,6 +91,11 @@ class AgentActor(Actor):
         )
         self._openai_client = OpenAI(
             api_key=openai_provider_config.api_key,
+            base_url=openai_provider_config.base_url,
+        )
+        self._stream = self._config.get(
+            "stream",
+            self._config.get("model", "gpt-3.5-turbo") in list(map(lambda x: str(x.value), AgentModel)),
         )
 
         self._agent_messages = []
@@ -229,7 +235,7 @@ class AgentActor(Actor):
             result = self._openai_client.chat.completions.create(
                 model=model,
                 messages=self._system_message + self._agent_messages,
-                stream=True,
+                stream=self._stream,
                 tools=[{"type": "function", "function": x} for x in self._functions],
                 seed=self._config.get("seed", None),
                 temperature=self._config.get("temperature", 0.7),
@@ -237,7 +243,7 @@ class AgentActor(Actor):
             agent_message_id = str(uuid.uuid4())
             agent_function_call_id = None
 
-            for data in result:
+            for data in result if self._stream else [result]:
                 if (
                     data.object == "chat.completion.chunk"
                     and len(
@@ -245,9 +251,15 @@ class AgentActor(Actor):
                     )
                     > 0
                     and data.choices[0].delta
+                ) or (
+                    data.object == "chat.completion"
+                    and len(
+                        data.choices,
+                    )
+                    > 0
                 ):
                     finish_reason = data.choices[0].finish_reason
-                    delta = data.choices[0].delta
+                    delta = data.choices[0].delta if data.object == "chat.completion.chunk" else data.choices[0].message
                     function_call = delta.function_call
                     tool_calls_chunk = delta.tool_calls
                     content = delta.content
@@ -279,10 +291,11 @@ class AgentActor(Actor):
                         )
                     elif tool_calls_chunk and len(tool_calls_chunk) > 0:
                         for tool_call in tool_calls_chunk:
-                            if len(self._tool_calls) < tool_call.index + 1:
+                            tool_call_index = tool_call.index if hasattr(tool_call, "index") else 0
+                            if len(self._tool_calls) < tool_call_index + 1:
                                 # Insert at the index
                                 self._tool_calls.insert(
-                                    tool_call.index,
+                                    tool_call_index,
                                     {
                                         "id": tool_call.id,
                                         "name": tool_call.function.name,
@@ -293,6 +306,7 @@ class AgentActor(Actor):
                                     AgentOutput(
                                         content=FunctionCall(
                                             name=tool_call.function.name,
+                                            arguments=tool_call.function.arguments or "",
                                         ),
                                         id=tool_call.id,
                                         from_id=tool_call.function.name,
@@ -301,14 +315,14 @@ class AgentActor(Actor):
                                 )
                             else:
                                 # Update at the index
-                                self._tool_calls[tool_call.index]["arguments"] += tool_call.function.arguments
+                                self._tool_calls[tool_call_index]["arguments"] += tool_call.function.arguments
                                 async_to_sync(self._output_stream.write)(
                                     AgentOutput(
                                         content=FunctionCall(
                                             arguments=tool_call.function.arguments,
                                         ),
-                                        id=self._tool_calls[tool_call.index]["id"],
-                                        from_id=self._tool_calls[tool_call.index]["name"],
+                                        id=self._tool_calls[tool_call_index]["id"],
+                                        from_id=self._tool_calls[tool_call_index]["name"],
                                         type="step",
                                     ),
                                 )
@@ -362,7 +376,7 @@ class AgentActor(Actor):
                             message=f"Error invoking tool {function_name}: {e}",
                         ),
                     )
-            elif len(self._tool_calls) > 0 and finish_reason == "tool_calls":
+            elif len(self._tool_calls) > 0 and (finish_reason == "tool_calls" or finish_reason == "stop"):
                 logger.info(f"Agent tool calls: {self._tool_calls}")
 
                 self._agent_messages.append(

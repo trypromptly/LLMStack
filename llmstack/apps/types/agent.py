@@ -26,6 +26,13 @@ class AgentConfigSchema(BaseSchema):
         title="Model",
         default=AgentModel.GPT_4_O_MINI,
         description="The model to use for the agent.",
+        json_schema_extra={"widget": "customselect"},
+    )
+    stream: Optional[bool] = Field(
+        default=None,
+        title="Stream",
+        description="Stream the output from the agent",
+        json_schema_extra={"advanced_parameter": True},
     )
     user_message: Optional[str] = Field(
         default=None,
