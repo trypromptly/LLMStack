@@ -254,6 +254,7 @@ class Weaviate(BaseDestination):
                 },
                 {"name": "source", "dataType": ["text"], "description": "Document source"},
                 {"name": "metadata", "dataType": ["string[]"], "description": "Document metadata"},
+                {"name": "datasource_uuid", "dataType": ["text"], "description": "Datasource UUID"},
             ],
         }
 
