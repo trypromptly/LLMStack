@@ -109,6 +109,7 @@ class URLSchema(BaseSource):
                         "source": url,
                         "datasource_uuid": kwargs["datasource_uuid"],
                     },
+                    datasource_uuid=kwargs["datasource_uuid"],
                 )
             )
         return documents

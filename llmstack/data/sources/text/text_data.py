@@ -40,5 +40,6 @@ class TextSchema(BaseSource):
                 text=self.content,
                 mimetype="text/plain",
                 metadata={"source": self.name, "mime_type": "text/plain"},
+                datasource_uuid=kwargs["datasource_uuid"],
             )
         ]

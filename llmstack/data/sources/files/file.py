@@ -69,6 +69,7 @@ class FileSchema(BaseSource):
                         "source": file_name,
                         "datasource_uuid": kwargs["datasource_uuid"],
                     },
+                    datasource_uuid=kwargs["datasource_uuid"],
                 )
             )
         return documents
