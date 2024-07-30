@@ -190,7 +190,7 @@ class StaticWebBrowser(
                 if response.state == tools_pb2.TERMINATED or response.output.text:
                     output_text = "".join([x.output for x in response.output.outputs])
                     if not output_text:
-                        output_text = response.content.text
+                        output_text = response.output.text
                     break
 
         except Exception as e:
