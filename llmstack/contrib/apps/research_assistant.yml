@@ -1,0 +1,120 @@
+name: Research Assistant
+slug: research-assistant
+description: >-
+  This assistant helps you find answers to your questions by searching the web
+  and providing citations for the sources used in the response.
+version: "0.0.1"
+icon: research_assistant_icon.png
+categories:
+  - utilities
+  - research
+config:
+  model: gpt-4o
+  layout: >-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "0",
+    "height": "100%"}'>
+        <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
+          <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
+            <pa-chat-output></pa-chat-output>
+          </pa-grid>
+          <pa-grid item="true" xs="12" sx='{"alignSelf": "flex-end", "flex": "0 !important", "width": "100%", "padding": "0 !important"}'>
+            <pa-input-form clearonsubmit="true"></pa-input-form>
+          </pa-grid>
+        </pa-grid>
+    </pa-layout>
+  max_steps: 17
+  split_tasks: true
+  temperature: 0.7
+  user_message: >-
+    Cite all the sources used in the response as a separate paragraph. Answer
+    the following by visiting at least 3 sources: "{{question.text}}"
+  window_color: "#477195"
+  input_template: <p class="editor-paragraph"><br></p>
+  system_message: >-
+    You are a helpful research assistant that answers user's question and
+    provide citations. You will open any URLs using open_url function before
+    responding to the user.
+
+
+    ## You will break down the user's question into multiple sub tasks, perform
+    each of them before responding. For example, if someone asks what is the
+    current price of nvda stock, you will break it down into two tasks: 1) find
+    sources for nvda stock price 2) Pick three relevant URLs from the search
+    results 3) Visit url1 using open_url and get the data 4) Visit url2 using
+    open_url and get the data 4) Visit url3 using open_url to get the data 5)
+    Create an answer from the data extracted from urls and finally 6) Include
+    sources as citations as the last paragraph
+
+    ## If the user's question is not part of your existing knowledge, you MUST
+    create a search query string and search the internet for results
+
+    ## Format the answer into multiple paragraphs with each paragraph no longer
+    than 100 words
+
+    ## First paragraph should be a brief introduction about the entity being
+    discussed
+
+    ## You MUST use at least three different sources before responding to the
+    user
+
+
+    Current date is {{ "now" | date: "%Y-%m-%d %H:%M" }}. Now let's think step
+    by step -
+  assistant_image: ""
+  welcome_message: ""
+  chat_history_limit: 30
+  suggested_messages: []
+type_slug: agent
+processors:
+  - id: web_search
+    name: Web Search
+    input:
+      query: ""
+    config:
+      k: 10
+      search_engine: Google
+      advanced_params: ""
+    description: Search the web for answers
+    input_fields: []
+    provider_slug: promptly
+    processor_slug: web_search
+    output_template:
+      markdown: |-
+        {% for result in results %}
+        {{result.text}}
+        {{result.source}}
+
+        {% endfor %}
+  - id: open_url
+    name: Static Web Browser
+    input:
+      url: ""
+      instructions: []
+    config:
+      timeout: 10
+      skip_tags: true
+      stream_video: true
+      connection_id: null
+    description: >-
+      Visit a URL and perform actions. Copy, Wait, Goto and Click are the valid
+      instruction types
+    input_fields: []
+    provider_slug: promptly
+    processor_slug: static_web_browser
+    output_template:
+      markdown: >
+
+        <promptly-web-browser-embed
+        wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
+
+        <pa-asset url="{{content.screenshot}}" type="image/png"></pa-asset>
+
+        {{text | truncate: 5000}}
+input_fields:
+  - name: question
+    type: multi
+    title: Question
+    required: true
+    description: What do you want to know about?
+output_template:
+  markdown: "{{agent.content}}"
