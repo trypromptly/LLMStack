@@ -316,24 +316,33 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             return DRFResponse({"errors": ["No source_data provided"]}, status=400)
 
         pipeline = datasource.create_data_ingestion_pipeline()
-        documents = pipeline.add_data(source_data_dict=source_data)
 
+        documents = pipeline.pre_process_source(source_data_dict=source_data)
         for document in documents:
-            config_obj = document.model_dump(
-                include=["content", "mimetype", "metadata", "extra_info", "processing_errors", "text_objref"]
-            )
-            node_ids = list(map(lambda n: n.id_, document.nodes))
             DataSourceEntry.objects.create(
                 uuid=document.id_,
                 name=document.name,
                 datasource=datasource,
-                status=(
-                    DataSourceEntryStatus.READY if not document.processing_errors else DataSourceEntryStatus.FAILED
-                ),
-                config={**config_obj, "nodes": node_ids},
-                size=len(node_ids) * 1536,
+                status=(DataSourceEntryStatus.PROCESSING),
+                config={},
+                size=0,
             )
+        documents = pipeline.process_documents(source_data_dict=source_data)
+
+        for document in documents:
+            datasource_entry_obj = DataSourceEntry.objects.get(uuid=document.id_)
+            config_obj = document.model_dump(
+                include=["content", "mimetype", "metadata", "extra_info", "processing_errors", "text_objref"]
+            )
+            node_ids = list(map(lambda n: n.id_, document.nodes))
+
+            datasource_entry_obj.config = {**config_obj, "nodes": node_ids}
+            datasource_entry_obj.size = len(node_ids) * 1536
             datasource.size += len(node_ids) * 1536
+            datasource_entry_obj.status = (
+                DataSourceEntryStatus.READY if not document.processing_errors else DataSourceEntryStatus.FAILED
+            )
+            datasource_entry_obj.save(update_fields=["config", "size", "status"])
 
         datasource.save()
 

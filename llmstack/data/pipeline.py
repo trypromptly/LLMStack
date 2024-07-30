@@ -40,18 +40,24 @@ class DataIngestionPipeline:
             self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
             self._destination.initialize_client(datasource=self.datasource)
 
-    def add_data(self, source_data_dict={}):
-        source: Optional[BaseSource] = None
-        documents: List[DataDocument] = []
+        self.documents = []
 
+    def pre_process_source(self, source_data_dict={}):
+        source: Optional[BaseSource] = None
         if self._source_cls:
             source = self._source_cls(**source_data_dict)
 
         if source:
-            documents = source.get_data_documents(datasource_uuid=str(self.datasource.uuid))
-            documents = list(map(lambda d: source.process_document(d), documents))
+            self.documents = source.get_data_documents(datasource_uuid=str(self.datasource.uuid))
 
-        for document in documents:
+        return self.documents
+
+    def process_documents(self, source_data_dict={}):
+        if self.documents:
+            source = self._source_cls(**source_data_dict)
+            self.documents = list(map(lambda d: source.process_document(d), self.documents))
+
+        for document in self.documents:
             if self.datasource.pipeline_obj.embedding:
                 embedding_data = self.datasource.pipeline_obj.embedding.data
                 embedding_data["additional_kwargs"] = {
@@ -68,10 +74,10 @@ class DataIngestionPipeline:
             document.nodes = ingestion_pipeline.run(documents=[ldoc])
 
         if self._destination:
-            for document in documents:
+            for document in self.documents:
                 self._destination.add(document=document)
 
-        return documents
+        return self.documents
 
     def delete_entry(self, data: dict) -> None:
         node_ids = data.get("document_ids", [])

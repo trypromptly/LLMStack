@@ -82,7 +82,7 @@ class URLSchema(BaseSource):
         description="Select connection if parsing loggedin page",
         json_schema_extra={"widget": "connection"},
     )
-    extractor_method: Optional[URLScraper] = Field(default=URLScraper.LOCAL)
+    extractor_method: Optional[URLScraper] = Field(default=URLScraper.LOCAL, json_schema_extra={"widget": "hidden"})
 
     @classmethod
     def slug(cls):
