@@ -1,6 +1,8 @@
 import base64
+import json
 import logging
 import uuid
+from enum import Enum
 from typing import Optional
 
 from pydantic import Field
@@ -12,9 +14,41 @@ from llmstack.data.sources.utils import create_source_document_asset
 
 logger = logging.getLogger(__file__)
 
-"""
-Entry configuration schema for url data source type
-"""
+
+def get_connection_context(connection_id: str, datasource_uuid: str):
+    from llmstack.data.models import DataSource
+
+    datasource = DataSource.objects.filter(uuid=datasource_uuid).first()
+    if datasource:
+        connection = datasource.profile.get_connection(connection_id)
+        if connection and connection.get("connection_type_slug") == "web_login":
+            return json.loads(connection.get("configuration", {}).get("_storage_state", "{}"))
+    return {}
+
+
+def extract_text_with_runner(url: str, cdp_url=None, **kwargs):
+    from playwright.sync_api import sync_playwright
+    from unstructured.partition.auto import partition_html
+
+    if not url.startswith("https://") and not url.startswith("http://"):
+        url = f"https://{url}"
+
+    with sync_playwright() as p:
+        if not cdp_url:
+            from django.conf import settings
+
+            cdp_url = settings.PLAYWRIGHT_URL
+
+        browser = p.chromium.connect(ws_endpoint=cdp_url)
+        if kwargs.get("storage_state"):
+            context = browser.new_context(storage_state=kwargs.get("storage_state"))
+        else:
+            context = browser.new_context()
+        page = context.new_page()
+        page.goto(url, timeout=kwargs.get("timeout", 30000))
+        page_html = page.content()
+        text = partition_html(text=page_html)
+        return "\n".join(list(map(lambda x: str(x), text)))
 
 
 def get_url_data(url: str, connection=None, **kwargs):
@@ -26,6 +60,13 @@ def get_url_data(url: str, connection=None, **kwargs):
         extra_params=ExtraParams(openai_key=kwargs.get("openai_key"), connection=connection),
     )
     return text or "Could not extract text from URL"
+
+
+class URLScraper(str, Enum):
+    LOCAL = "local"
+
+    def __str__(self):
+        return str(self.value)
 
 
 class URLSchema(BaseSource):
@@ -41,6 +82,7 @@ class URLSchema(BaseSource):
         description="Select connection if parsing loggedin page",
         json_schema_extra={"widget": "connection"},
     )
+    extractor_method: Optional[URLScraper] = Field(default=URLScraper.LOCAL)
 
     @classmethod
     def slug(cls):
@@ -49,9 +91,6 @@ class URLSchema(BaseSource):
     @classmethod
     def provider_slug(cls):
         return "promptly"
-
-    def display_name(self):
-        return f"{self.urls[0]} and {len(self.urls) - 1} more"
 
     def get_data_documents(self, **kwargs):
         urls = self.urls.split("\n")
@@ -75,8 +114,13 @@ class URLSchema(BaseSource):
         return documents
 
     def process_document(self, document: DataDocument) -> DataDocument:
-        url_text_data = get_url_data(document.content, connection=self.connection_id)
-        logger.info(f"Extracted text from {url_text_data}")
+        connection_context = get_connection_context(self.connection_id, document.metadata["datasource_uuid"])
+        url_text_data = extract_text_with_runner(
+            document.content,
+            connection=self.connection_id,
+            storage_state=connection_context if connection_context else {},
+        )
+
         text_data_uri = (
             f"data:text/plain;name={document.id_}_text.txt;base64,{base64.b64encode(url_text_data.encode()).decode()}"
         )

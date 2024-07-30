@@ -109,7 +109,6 @@ pynacl = "^1.5.0"
 llama-index-vector-stores-weaviate = "^1.0.0"
 llama-index-core = "^0.10.51"
 beautifulsoup4 = {version = "^4.12.2" }
-playwright = "1.42.0"
 sqlalchemy = "^2.0.31"
 websockify = "^0.12.0"
 spacy = "^3.7.5"
@@ -117,6 +116,7 @@ llama-index-vector-stores-pinecone = {version="^0.1.8", python=">=3.10,<3.13"}
 llama-index-vector-stores-qdrant = {version="^0.2.13", python=">=3.10,<3.13"}
 llama-index-embeddings-azure-openai = "^0.1.11"
 llama-index-embeddings-openai = "^0.1.11"
+playwright = "1.45.0"
 
 
 [tool.poetry-dynamic-versioning]
