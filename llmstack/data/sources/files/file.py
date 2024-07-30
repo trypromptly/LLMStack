@@ -74,7 +74,8 @@ class FileSchema(BaseSource):
             )
         return documents
 
-    def process_document(self, document: DataDocument) -> DataDocument:
+    @classmethod
+    def process_document(cls, document: DataDocument) -> DataDocument:
         data_uri = get_source_document_asset_by_objref(document.content)
         result = Uri().process(
             input=UriInput(env=DataSourceEnvironmentSchema(), uri=data_uri),

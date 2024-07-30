@@ -110,15 +110,18 @@ class URLSchema(BaseSource):
                         "datasource_uuid": kwargs["datasource_uuid"],
                     },
                     datasource_uuid=kwargs["datasource_uuid"],
+                    request_data=dict(connection_id=self.connection_id),
                 )
             )
         return documents
 
-    def process_document(self, document: DataDocument) -> DataDocument:
-        connection_context = get_connection_context(self.connection_id, document.metadata["datasource_uuid"])
+    @classmethod
+    def process_document(cls, document: DataDocument) -> DataDocument:
+        connection_id = document.request_data.get("connection_id")
+        connection_context = get_connection_context(connection_id, document.metadata["datasource_uuid"])
         url_text_data = extract_text_with_runner(
             document.content,
-            connection=self.connection_id,
+            connection=connection_id,
             storage_state=connection_context if connection_context else {},
         )
 

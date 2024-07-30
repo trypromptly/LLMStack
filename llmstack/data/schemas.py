@@ -143,3 +143,4 @@ class DataDocument(BaseModel):
     embeddings: Optional[List[float]] = None
     processing_errors: Optional[List[str]] = None
     datasource_uuid: Optional[str] = None
+    request_data: Optional[dict] = {}

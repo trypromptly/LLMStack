@@ -126,7 +126,8 @@ class GdriveFileSchema(BaseSource):
             )
         return documents
 
-    def process_document(self, document: DataDocument) -> DataDocument:
+    @classmethod
+    def process_document(cls, document: DataDocument) -> DataDocument:
         text = extract_text_elements(
             mime_type=document.mimetype,
             data=document.content,
