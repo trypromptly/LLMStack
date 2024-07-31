@@ -291,7 +291,9 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         old_size = datasource_entry_object.size
 
         nodes = datasource_entry_object.config.get("nodes", [])
-        document = DataDocument(**datasource_entry_object.config, nodes=list(map(lambda x: TextNode(id_=x), nodes)))
+        entry_config = {**datasource_entry_object.config}
+        entry_config.pop("nodes", None)
+        document = DataDocument(**entry_config, nodes=list(map(lambda x: TextNode(id_=x), nodes)))
 
         pipeline = datasource_entry_object.datasource.create_data_ingestion_pipeline()
 
@@ -303,6 +305,14 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         datasource_entry_object.datasource.save()
 
         return self.process_entry(request, uid)
+
+    def resync_async(self, request, uid):
+        job = AddDataSourceEntryJob.create(
+            func="llmstack.data.tasks.process_datasource_entry_resync_request",
+            args=[request.user.email, uid],
+        ).add_to_queue()
+
+        return DRFResponse({"job_id": job.id}, status=202)
 
 
 class DataSourceViewSet(viewsets.ModelViewSet):
