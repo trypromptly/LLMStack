@@ -80,4 +80,8 @@ urlpatterns = [
         "api/datasource_entries/<str:uid>/resync",
         apis.DataSourceEntryViewSet.as_view({"post": "resync"}),
     ),
+    path(
+        "api/datasource_entries/<str:uid>/resync_async",
+        apis.DataSourceEntryViewSet.as_view({"post": "resync_async"}),
+    ),
 ]
