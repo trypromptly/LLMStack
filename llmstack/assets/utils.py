@@ -8,6 +8,7 @@ def get_asset_by_objref(objref, request_user, request_session):
     Get asset by objref if one exists and is accessible by the user.
     """
     from llmstack.apps.models import AppDataAssets, AppSessionFiles
+    from llmstack.data.models import DataSourceEntryFiles
 
     if not objref:
         return None
@@ -22,6 +23,8 @@ def get_asset_by_objref(objref, request_user, request_session):
             model_cls = AppSessionFiles
         elif category == "appdata":
             model_cls = AppDataAssets
+        elif category == "datasource_entries":
+            model_cls = DataSourceEntryFiles
         else:
             return None
 

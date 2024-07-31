@@ -281,3 +281,7 @@ class DataSourceEntryFiles(Assets):
     @property
     def category(self):
         return "datasource_entries"
+
+    @classmethod
+    def is_accessible(asset, request_user, request_session):
+        return True

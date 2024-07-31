@@ -53,5 +53,6 @@ class PdfSchema(FileSchema):
                     "source": file_name,
                     "datasource_uuid": kwargs["datasource_uuid"],
                 },
+                datasource_uuid=kwargs["datasource_uuid"],
             )
         ]

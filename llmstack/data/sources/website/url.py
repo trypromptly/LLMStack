@@ -5,7 +5,9 @@ import uuid
 from enum import Enum
 from typing import Optional
 
+from playwright.sync_api import sync_playwright
 from pydantic import Field
+from unstructured.partition.auto import partition_html
 
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
 from llmstack.data.schemas import DataDocument
@@ -18,18 +20,18 @@ logger = logging.getLogger(__file__)
 def get_connection_context(connection_id: str, datasource_uuid: str):
     from llmstack.data.models import DataSource
 
+    if not connection_id:
+        return None
+
     datasource = DataSource.objects.filter(uuid=datasource_uuid).first()
     if datasource:
         connection = datasource.profile.get_connection(connection_id)
         if connection and connection.get("connection_type_slug") == "web_login":
             return json.loads(connection.get("configuration", {}).get("_storage_state", "{}"))
-    return {}
+    return None
 
 
 def extract_text_with_runner(url: str, cdp_url=None, **kwargs):
-    from playwright.sync_api import sync_playwright
-    from unstructured.partition.auto import partition_html
-
     if not url.startswith("https://") and not url.startswith("http://"):
         url = f"https://{url}"
 
@@ -38,7 +40,6 @@ def extract_text_with_runner(url: str, cdp_url=None, **kwargs):
             from django.conf import settings
 
             cdp_url = settings.PLAYWRIGHT_URL
-
         browser = p.chromium.connect(ws_endpoint=cdp_url)
         if kwargs.get("storage_state"):
             context = browser.new_context(storage_state=kwargs.get("storage_state"))
@@ -82,7 +83,7 @@ class URLSchema(BaseSource):
         description="Select connection if parsing loggedin page",
         json_schema_extra={"widget": "connection"},
     )
-    extractor_method: Optional[URLScraper] = Field(default=URLScraper.LOCAL)
+    extractor_method: Optional[URLScraper] = Field(default=URLScraper.LOCAL, json_schema_extra={"widget": "hidden"})
 
     @classmethod
     def slug(cls):
@@ -109,16 +110,21 @@ class URLSchema(BaseSource):
                         "source": url,
                         "datasource_uuid": kwargs["datasource_uuid"],
                     },
+                    datasource_uuid=kwargs["datasource_uuid"],
+                    request_data=dict(connection_id=self.connection_id),
                 )
             )
         return documents
 
-    def process_document(self, document: DataDocument) -> DataDocument:
-        connection_context = get_connection_context(self.connection_id, document.metadata["datasource_uuid"])
+    @classmethod
+    def process_document(cls, document: DataDocument) -> DataDocument:
+        connection_id = document.request_data.get("connection_id")
+
+        connection_context = (
+            get_connection_context(connection_id, document.metadata["datasource_uuid"]) if connection_id else None
+        )
         url_text_data = extract_text_with_runner(
-            document.content,
-            connection=self.connection_id,
-            storage_state=connection_context if connection_context else {},
+            document.content, connection=connection_id, storage_state=connection_context
         )
 
         text_data_uri = (

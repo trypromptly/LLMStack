@@ -7,6 +7,7 @@ import weaviate
 import weaviate.classes as wvc
 from llama_index.core.schema import TextNode
 from llama_index.core.vector_stores.types import (
+    MetadataFilter,
     MetadataFilters,
     VectorStoreQuery,
     VectorStoreQueryMode,
@@ -16,6 +17,7 @@ from llama_index.core.vector_stores.utils import (
     legacy_metadata_dict_to_node,
     metadata_dict_to_node,
 )
+from llama_index.vector_stores.weaviate.base import _to_weaviate_filter
 from pydantic import Field, PrivateAttr
 
 from llmstack.data.destinations.base import BaseDestination
@@ -99,7 +101,7 @@ class WeaviateVectorStore:
                 pass
         return result
 
-    def add(self, nodes) -> List[str]:
+    def add(self, nodes, datasource_uuid, source) -> List[str]:
         """Add nodes to index.
 
         Args:
@@ -117,6 +119,11 @@ class WeaviateVectorStore:
                 properties = {content_key: content}
                 for metadata_key in metadata.keys():
                     properties[metadata_key] = metadata[metadata_key]
+
+                # Add source and datasource_uuid
+                properties["source"] = source
+                properties["datasource_uuid"] = datasource_uuid
+
                 if node.embedding:
                     # Vectors we provided with the document use them
                     batch.add_object(properties=properties, uuid=id, vector=node.embedding)
@@ -167,6 +174,10 @@ class WeaviateVectorStore:
         nodes = []
         node_ids = []
         similarities = []
+        filters = None
+
+        if query.filters:
+            filters = _to_weaviate_filter(query.filters)
 
         if query.mode == VectorStoreQueryMode.HYBRID:
             try:
@@ -176,6 +187,7 @@ class WeaviateVectorStore:
                     alpha=query.alpha,
                     query_properties=[self._text_key],
                     return_metadata=None,
+                    filters=filters,
                 )
             except Exception as e:
                 raise e
@@ -188,6 +200,7 @@ class WeaviateVectorStore:
                     certainty=kwargs.get("search_distance", None),
                     limit=query.similarity_top_k if query.similarity_top_k is not None else 10,
                     return_metadata=wvc.query.MetadataQuery(certainty=True, distance=True),
+                    filters=filters,
                 )
             except Exception as e:
                 raise e
@@ -246,6 +259,7 @@ class Weaviate(BaseDestination):
                 },
                 {"name": "source", "dataType": ["text"], "description": "Document source"},
                 {"name": "metadata", "dataType": ["string[]"], "description": "Document metadata"},
+                {"name": "datasource_uuid", "dataType": ["text"], "description": "Datasource UUID"},
             ],
         }
 
@@ -318,17 +332,20 @@ class Weaviate(BaseDestination):
         self.create_collection()
 
     def add(self, document: DataDocument) -> DataDocument:
-        return self._client.add(document.nodes)
+        return self._client.add(document.nodes, datasource_uuid=document.datasource_uuid, source=document.name)
 
     def delete(self, document: DataDocument) -> DataDocument:
-        for node in document.nodes:
-            self._client.delete(node.node_id)
+        for node_id in document.node_ids:
+            self._client.delete(node_id)
 
     def search(self, query: str, **kwargs):
         from llama_index.core.vector_stores.types import (
             VectorStoreQuery,
             VectorStoreQueryMode,
         )
+
+        datasource_uuid = kwargs["datasource_uuid"]
+        filters = MetadataFilters(filters=[MetadataFilter(key="datasource_uuid", value=datasource_uuid)])
 
         vector_store_query = VectorStoreQuery(
             query_str=query,
@@ -338,6 +355,7 @@ class Weaviate(BaseDestination):
             alpha=kwargs.get("alpha", 0.75),
             hybrid_top_k=kwargs.get("limit", 2),
             query_embedding=kwargs.get("query_embedding", None),
+            filters=filters,
         )
 
         return self._client.query(query=vector_store_query)

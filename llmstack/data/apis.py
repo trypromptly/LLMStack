@@ -2,6 +2,7 @@ import logging
 import time
 import uuid
 from concurrent.futures import Future
+from typing import List
 
 from django.shortcuts import get_object_or_404
 from flags.state import flag_enabled
@@ -9,6 +10,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 from rq.job import Job
 
+from llmstack.data.schemas import DataDocument
 from llmstack.data.yaml_loader import (
     get_data_pipeline_template_by_slug,
     get_data_pipelines_from_contrib,
@@ -192,11 +194,14 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         if datasource_entry_object.datasource.owner != request.user:
             return DRFResponse(status=404)
 
-        try:
-            pipeline = datasource_entry_object.datasource.create_data_ingestion_pipeline()
-            pipeline.delete_entry(data=datasource_entry_object.config)
-        except Exception as e:
-            logger.error(f"Error pipeline data for entry {datasource_entry_object.config}: {e}")
+        node_ids = datasource_entry_object.config.get(
+            "document_ids",
+            datasource_entry_object.config.get("nodes", datasource_entry_object.config.get("node_ids", [])),
+        )
+        document = DataDocument(node_ids=node_ids)
+
+        pipeline = datasource_entry_object.datasource.create_data_ingestion_pipeline()
+        pipeline.delete_entry(document)
 
         datasource.size = max(datasource.size - datasource_entry_object.size, 0)
         datasource_entry_object.delete()
@@ -213,8 +218,97 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         metadata, content = pipeline.get_entry_text(datasource_entry_object.config)
         return DRFResponse({"content": content, "metadata": metadata})
 
+    def create_entry(self, document: DataDocument):
+        datasource = get_object_or_404(DataSource, uuid=document.datasource_uuid)
+
+        entry = DataSourceEntry.objects.create(
+            uuid=document.id_,
+            name=document.name,
+            datasource=datasource,
+            status=DataSourceEntryStatus.PROCESSING,
+            config={
+                **document.model_dump(
+                    include=[
+                        "name",
+                        "text_objref",
+                        "content",
+                        "mimetype",
+                        "metadata",
+                        "extra_info",
+                        "processing_errors",
+                        "request_data",
+                        "datasource_uuid",
+                        "node_ids",
+                    ]
+                ),
+            },
+            size=0,
+        )
+        return DRFResponse(DataSourceEntrySerializer(instance=entry).data)
+
+    def process_entry(self, request, uid):
+        entry = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
+        if request and request.user != entry.datasource.owner:
+            return DRFResponse(status=404)
+
+        document = DataDocument(**entry.config)
+        pipeline_obj = entry.datasource.create_data_ingestion_pipeline()
+        try:
+            document = pipeline_obj.process(document)
+            entry.config = {
+                **document.model_dump(
+                    include=[
+                        "name",
+                        "text_objref",
+                        "content",
+                        "mimetype",
+                        "metadata",
+                        "extra_info",
+                        "processing_errors",
+                        "request_data",
+                        "datasource_uuid",
+                        "node_ids",
+                    ]
+                ),
+            }
+            entry.size = len(document.node_ids) * 1536
+        except Exception as e:
+            document.processing_errors = [str(e)]
+
+        entry.status = DataSourceEntryStatus.READY if not document.processing_errors else DataSourceEntryStatus.FAILED
+        entry.save(update_fields=["config", "size", "status", "updated_at"])
+
+        return DRFResponse(DataSourceEntrySerializer(instance=entry).data)
+
     def resync(self, request, uid):
-        raise NotImplementedError
+        datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
+
+        if datasource_entry_object.datasource.owner != request.user:
+            return DRFResponse(status=404)
+
+        old_size = datasource_entry_object.size
+
+        entry_config = {**datasource_entry_object.config}
+        document = DataDocument(**entry_config)
+
+        pipeline = datasource_entry_object.datasource.create_data_ingestion_pipeline()
+
+        pipeline.delete_entry(document=document)
+        result = self.process_entry(request, uid)
+
+        new_size = result.data["size"]
+        datasource_entry_object.datasource.size = max(datasource_entry_object.datasource.size - old_size + new_size, 0)
+        datasource_entry_object.datasource.save()
+
+        return self.process_entry(request, uid)
+
+    def resync_async(self, request, uid):
+        job = AddDataSourceEntryJob.create(
+            func="llmstack.data.tasks.process_datasource_entry_resync_request",
+            args=[request.user.email, uid],
+        ).add_to_queue()
+
+        return DRFResponse({"job_id": job.id}, status=202)
 
 
 class DataSourceViewSet(viewsets.ModelViewSet):
@@ -304,6 +398,13 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource.delete()
         return DRFResponse(status=204)
 
+    def process_add_entry_request(self, datasource: DataSource, source_data) -> List[DataDocument]:
+        source_cls = datasource.pipeline_obj.source_cls
+        if not source_cls:
+            raise Exception("No source class found for data source")
+        source = source_cls(**source_data)
+        return source.get_data_documents(datasource_uuid=str(datasource.uuid))
+
     def add_entry(self, request, uid):
         datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
 
@@ -315,29 +416,15 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         if not source_data:
             return DRFResponse({"errors": ["No source_data provided"]}, status=400)
 
-        pipeline = datasource.create_data_ingestion_pipeline()
-        documents = pipeline.add_data(source_data_dict=source_data)
-
+        documents = self.process_add_entry_request(datasource, source_data)
         for document in documents:
-            config_obj = document.model_dump(
-                include=["content", "mimetype", "metadata", "extra_info", "processing_errors", "text_objref"]
-            )
-            node_ids = list(map(lambda n: n.id_, document.nodes))
-            DataSourceEntry.objects.create(
-                uuid=document.id_,
-                name=document.name,
-                datasource=datasource,
-                status=(
-                    DataSourceEntryStatus.READY if not document.processing_errors else DataSourceEntryStatus.FAILED
-                ),
-                config={**config_obj, "nodes": node_ids},
-                size=len(node_ids) * 1536,
-            )
-            datasource.size += len(node_ids) * 1536
+            create_result = DataSourceEntryViewSet().create_entry(document=document)
+            process_result = DataSourceEntryViewSet().process_entry(request=None, uid=str(create_result.data["uuid"]))
+            datasource.size += process_result.data["size"]
 
         datasource.save()
 
-        return DRFResponse({"status": "success"}, status=200)
+        return DRFResponse(DataSourceSerializer(instance=datasource).data, status=200)
 
     def add_entry_async(self, request, uid):
         # Check if flag_enabled("has_exceeded_storage_quota") is True and deny the request
@@ -347,6 +434,23 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         job = AddDataSourceEntryJob.create(
             func="llmstack.data.tasks.process_datasource_add_entry_request",
             args=[request.user.email, request.data, uid],
+        ).add_to_queue()
+
+        return DRFResponse({"job_id": job.id}, status=202)
+
+    def resync(self, request, uid):
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
+
+        entries = DataSourceEntry.objects.filter(datasource=datasource)
+        for entry in entries:
+            DataSourceEntryViewSet().resync(request, str(entry.uuid))
+
+        return DRFResponse(DataSourceSerializer(instance=datasource).data, status=200)
+
+    def resync_async(self, request, uid):
+        job = AddDataSourceEntryJob.create(
+            func="llmstack.data.tasks.process_datasource_resync_request",
+            args=[request.user.email, uid],
         ).add_to_queue()
 
         return DRFResponse({"job_id": job.id}, status=202)

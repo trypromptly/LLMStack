@@ -29,5 +29,6 @@ class BaseSource(BaseModel):
     def get_data_documents(self, **kwargs) -> List[DataDocument]:
         raise NotImplementedError
 
-    def process_document(self, document: DataDocument) -> DataDocument:
+    @classmethod
+    def process_document(cls, document: DataDocument) -> DataDocument:
         return document
