@@ -19,12 +19,11 @@ function DataSourceEntryContent({ onCancel, dataSourceEntry, open }) {
   useEffect(() => {
     if (
       dataSourceEntry?.config?.document_ids ||
-      dataSourceEntry?.config?.nodes
+      dataSourceEntry?.config?.node_ids
     ) {
       axios()
         .get(`/api/datasource_entries/${dataSourceEntry.uuid}/text_content`)
         .then((response) => {
-          console.log(response);
           setData(
             <TextareaAutosize
               value={response.data?.content}
