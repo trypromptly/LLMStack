@@ -38,8 +38,19 @@ class TextSchema(BaseSource):
                 name=self.name,
                 content=file_objref,
                 text=self.content,
+                text_objref=file_objref,
                 mimetype="text/plain",
                 metadata={"source": self.name, "mime_type": "text/plain"},
                 datasource_uuid=kwargs["datasource_uuid"],
             )
         ]
+
+    @classmethod
+    def process_document(cls, document: DataDocument) -> DataDocument:
+        from llmstack.assets.utils import get_asset_by_objref
+
+        datasource_uuid = document.datasource_uuid
+        file_asset = get_asset_by_objref(document.content, None, datasource_uuid)
+        text = file_asset.file.read().decode("utf-8")
+
+        return document.model_copy(update={"text": text})
