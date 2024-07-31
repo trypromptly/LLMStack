@@ -276,7 +276,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
             document.processing_errors = [str(e)]
 
         entry.status = DataSourceEntryStatus.READY if not document.processing_errors else DataSourceEntryStatus.FAILED
-        entry.save(update_fields=["config", "size", "status"])
+        entry.save(update_fields=["config", "size", "status", "updated_at"])
 
         return DRFResponse(DataSourceEntrySerializer(instance=entry).data)
 
