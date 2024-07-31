@@ -438,6 +438,23 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         return DRFResponse({"job_id": job.id}, status=202)
 
+    def resync(self, request, uid):
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
+
+        entries = DataSourceEntry.objects.filter(datasource=datasource)
+        for entry in entries:
+            DataSourceEntryViewSet().resync(request, str(entry.uuid))
+
+        return DRFResponse(DataSourceSerializer(instance=datasource).data, status=200)
+
+    def resync_async(self, request, uid):
+        job = AddDataSourceEntryJob.create(
+            func="llmstack.data.tasks.process_datasource_resync_request",
+            args=[request.user.email, uid],
+        ).add_to_queue()
+
+        return DRFResponse({"job_id": job.id}, status=202)
+
     def extract_urls(self, request):
         if not request.user.is_authenticated or request.method != "POST":
             return DRFResponse(status=403)

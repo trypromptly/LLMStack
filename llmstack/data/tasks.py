@@ -51,6 +51,27 @@ def process_datasource_entry_resync_request(user_email, entry_uuid):
     }
 
 
+def process_datasource_resync_request(user_email, datasource_uuid):
+    from django.contrib.auth.models import User
+    from django.test import RequestFactory
+
+    from llmstack.data.apis import DataSourceViewSet
+
+    user = User.objects.get(email=user_email)
+
+    request = RequestFactory().post(
+        f"/api/datasources/{datasource_uuid}/resync",
+        format="json",
+    )
+    request.user = user
+    response = DataSourceViewSet().resync(request, datasource_uuid)
+
+    return {
+        "status_code": response.status_code,
+        "data": response.data,
+    }
+
+
 def extract_page_hrefs_task(page_url, cdp_url=None):
     from playwright.sync_api import sync_playwright
 
