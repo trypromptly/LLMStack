@@ -143,7 +143,7 @@ export function DataSourceEntries({
                       return new Set([...oldResyncEntries, row.uuid]);
                     });
                     axios()
-                      .post(`/api/datasource_entries/${row.uuid}/resync`)
+                      .post(`/api/datasource_entries/${row.uuid}/resync_async`)
                       .then((res) => {
                         reloadDataSourceEntries();
                       })
