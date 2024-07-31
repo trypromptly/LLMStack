@@ -221,8 +221,14 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         if not datasource_entry_object.user_can_read(request.user):
             return DRFResponse(status=404)
 
+        node_ids = datasource_entry_object.config.get(
+            "document_ids",
+            datasource_entry_object.config.get("node_ids", []),
+        )
+        document = DataDocument(node_ids=node_ids)
+
         pipeline = datasource_entry_object.datasource.create_data_query_pipeline()
-        metadata, content = pipeline.get_entry_text(datasource_entry_object.config)
+        metadata, content = pipeline.get_entry_text(document=document)
         return DRFResponse({"content": content, "metadata": metadata})
 
     def create_entry(self, document: DataDocument):

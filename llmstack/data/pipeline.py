@@ -3,7 +3,6 @@ from typing import List, Optional
 
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.schema import Document as LlamaDocument
-from llama_index.core.schema import TextNode
 
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.data.models import DataSource
@@ -115,7 +114,7 @@ class DataQueryPipeline:
                 use_hybrid_search=use_hybrid_search,
                 query_embedding=query_embedding,
                 datasource_uuid=str(self.datasource.uuid),
-                **kwargs
+                **kwargs,
             )
             documents = list(
                 map(
@@ -125,16 +124,11 @@ class DataQueryPipeline:
             )
         return documents
 
-    def get_entry_text(self, data: dict) -> str:
-        documents = [TextNode(metadata={}, text="")]
-        node_ids = data.get("document_ids", [])
-        if not node_ids:
-            node_ids = data.get("nodes", [])
-
+    def get_entry_text(self, document: DataDocument) -> str:
         if self._destination:
             self._destination.initialize_client(datasource=self.datasource)
-            if node_ids:
-                result = self._destination.get_nodes(node_ids[:20])
+            if document.node_ids:
+                result = self._destination.get_nodes(document.node_ids[:20])
                 if result:
                     documents = result
         return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))
