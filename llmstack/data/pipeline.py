@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List
 
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.schema import Document as LlamaDocument
@@ -8,7 +8,6 @@ from llama_index.core.schema import TextNode
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.data.models import DataSource
 from llmstack.data.schemas import DataDocument
-from llmstack.data.sources.base import BaseSource
 
 logger = logging.getLogger(__name__)
 
@@ -40,54 +39,29 @@ class DataIngestionPipeline:
             self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
             self._destination.initialize_client(datasource=self.datasource)
 
-        self.documents = []
+    def process(self, document: DataDocument) -> DataDocument:
+        document = self._source_cls.process_document(document)
+        if self.datasource.pipeline_obj.embedding:
+            embedding_data = self.datasource.pipeline_obj.embedding.data
+            embedding_data["additional_kwargs"] = {
+                **embedding_data.get("additional_kwargs", {}),
+                **{"datasource": self.datasource},
+            }
+            embedding_transformer = self.datasource.pipeline_obj.embedding_cls(**embedding_data)
+            self._transformations.append(embedding_transformer)
 
-    def pre_process_source(self, source_data_dict={}):
-        source: Optional[BaseSource] = None
-        if self._source_cls:
-            source = self._source_cls(**source_data_dict)
-
-        if source:
-            self.documents = source.get_data_documents(datasource_uuid=str(self.datasource.uuid))
-
-        return self.documents
-
-    def process_documents(self, source_data_dict={}):
-        if self.documents:
-            source = self._source_cls(**source_data_dict)
-            self.documents = list(map(lambda d: source.process_document(d), self.documents))
-
-        for document in self.documents:
-            if self.datasource.pipeline_obj.embedding:
-                embedding_data = self.datasource.pipeline_obj.embedding.data
-                embedding_data["additional_kwargs"] = {
-                    **embedding_data.get("additional_kwargs", {}),
-                    **{"datasource": self.datasource},
-                }
-                embedding_transformer = self.datasource.pipeline_obj.embedding_cls(**embedding_data)
-                self._transformations.append(embedding_transformer)
-
-            ingestion_pipeline = IngestionPipeline(transformations=self._transformations)
-
-            ldoc = LlamaDocument(**document.model_dump())
-            ldoc.metadata = {**ldoc.metadata, **document.metadata}
-            document.nodes = ingestion_pipeline.run(documents=[ldoc])
-
+        ingestion_pipeline = IngestionPipeline(transformations=self._transformations)
+        ldoc = LlamaDocument(**document.model_dump())
+        ldoc.metadata = {**ldoc.metadata, **document.metadata}
+        document.nodes = ingestion_pipeline.run(documents=[ldoc])
         if self._destination:
-            for document in self.documents:
-                self._destination.add(document=document)
+            self._destination.add(document=document)
 
-        return self.documents
+        return document
 
-    def delete_entry(self, data: dict) -> None:
-        node_ids = data.get("document_ids", [])
-        if not node_ids:
-            node_ids = data.get("nodes", [])
-
-        data_document = DataDocument()
-        data_document.nodes = list(map(lambda x: TextNode(id_=x), node_ids))
+    def delete_entry(self, document: DataDocument) -> None:
         if self._destination:
-            self._destination.delete(document=data_document)
+            self._destination.delete(document=document)
 
     def resync_entry(self, data: dict):
         raise NotImplementedError
