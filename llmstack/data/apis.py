@@ -122,6 +122,7 @@ class PipelineViewSet(viewsets.ViewSet):
             CodeSplitter,
             SemanticDoubleMergingSplitterNodeParser,
             SentenceSplitter,
+            UnstructuredIOSplitter,
         )
 
         return DRFResponse(
@@ -143,6 +144,12 @@ class PipelineViewSet(viewsets.ViewSet):
                     "provider_slug": SentenceSplitter.provider_slug(),
                     "schema": SentenceSplitter.get_schema(),
                     "ui_schema": SentenceSplitter.get_ui_schema(),
+                },
+                {
+                    "slug": UnstructuredIOSplitter.slug(),
+                    "provider_slug": UnstructuredIOSplitter.provider_slug(),
+                    "schema": UnstructuredIOSplitter.get_schema(),
+                    "ui_schema": UnstructuredIOSplitter.get_ui_schema(),
                 },
             ]
         )
