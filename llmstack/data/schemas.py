@@ -144,3 +144,4 @@ class DataDocument(BaseModel):
     processing_errors: Optional[List[str]] = None
     datasource_uuid: Optional[str] = None
     request_data: Optional[dict] = {}
+    node_ids: Optional[List[str]] = []

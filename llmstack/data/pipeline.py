@@ -54,6 +54,7 @@ class DataIngestionPipeline:
         ldoc = LlamaDocument(**document.model_dump())
         ldoc.metadata = {**ldoc.metadata, **document.metadata}
         document.nodes = ingestion_pipeline.run(documents=[ldoc])
+        document.node_ids = list(map(lambda x: x.id_, document.nodes))
         if self._destination:
             self._destination.add(document=document)
 

@@ -335,8 +335,8 @@ class Weaviate(BaseDestination):
         return self._client.add(document.nodes, datasource_uuid=document.datasource_uuid, source=document.name)
 
     def delete(self, document: DataDocument) -> DataDocument:
-        for node in document.nodes:
-            self._client.delete(node.node_id)
+        for node_id in document.node_ids:
+            self._client.delete(node_id)
 
     def search(self, query: str, **kwargs):
         from llama_index.core.vector_stores.types import (

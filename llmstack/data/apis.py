@@ -188,16 +188,17 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         )
 
     def delete(self, request, uid):
-        from llama_index.core.schema import TextNode
-
         datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
         datasource = datasource_entry_object.datasource
 
         if datasource_entry_object.datasource.owner != request.user:
             return DRFResponse(status=404)
 
-        node_ids = datasource_entry_object.config.get("document_ids", datasource_entry_object.config.get("nodes", []))
-        document = DataDocument(nodes=list(map(lambda x: TextNode(id_=x), node_ids)))
+        node_ids = datasource_entry_object.config.get(
+            "document_ids",
+            datasource_entry_object.config.get("nodes", datasource_entry_object.config.get("node_ids", [])),
+        )
+        document = DataDocument(node_ids=node_ids)
 
         pipeline = datasource_entry_object.datasource.create_data_ingestion_pipeline()
         pipeline.delete_entry(document)
@@ -237,9 +238,9 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
                         "processing_errors",
                         "request_data",
                         "datasource_uuid",
+                        "node_ids",
                     ]
                 ),
-                "nodes": [],
             },
             size=0,
         )
@@ -254,7 +255,6 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         pipeline_obj = entry.datasource.create_data_ingestion_pipeline()
         try:
             document = pipeline_obj.process(document)
-            node_ids = list(map(lambda n: n.id_, document.nodes))
             entry.config = {
                 **document.model_dump(
                     include=[
@@ -267,11 +267,11 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
                         "processing_errors",
                         "request_data",
                         "datasource_uuid",
+                        "node_ids",
                     ]
                 ),
-                "nodes": node_ids,
             }
-            entry.size = len(node_ids) * 1536
+            entry.size = len(document.node_ids) * 1536
         except Exception as e:
             document.processing_errors = [str(e)]
 
@@ -281,8 +281,6 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         return DRFResponse(DataSourceEntrySerializer(instance=entry).data)
 
     def resync(self, request, uid):
-        from llama_index.core.schema import TextNode
-
         datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
 
         if datasource_entry_object.datasource.owner != request.user:
@@ -290,10 +288,8 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
 
         old_size = datasource_entry_object.size
 
-        nodes = datasource_entry_object.config.get("nodes", [])
         entry_config = {**datasource_entry_object.config}
-        entry_config.pop("nodes", None)
-        document = DataDocument(**entry_config, nodes=list(map(lambda x: TextNode(id_=x), nodes)))
+        document = DataDocument(**entry_config)
 
         pipeline = datasource_entry_object.datasource.create_data_ingestion_pipeline()
 
