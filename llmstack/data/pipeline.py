@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.schema import Document as LlamaDocument
@@ -10,6 +10,12 @@ from llmstack.data.models import DataSource
 from llmstack.data.schemas import DataDocument
 
 logger = logging.getLogger(__name__)
+
+
+class LlamaDocumentShim(LlamaDocument):
+    text_objref: Optional[str] = None
+    content: Optional[str] = None
+    mimetype: str = "text/plain"
 
 
 class DataIngestionPipeline:
@@ -51,7 +57,7 @@ class DataIngestionPipeline:
             self._transformations.append(embedding_transformer)
 
         ingestion_pipeline = IngestionPipeline(transformations=self._transformations)
-        ldoc = LlamaDocument(**document.model_dump())
+        ldoc = LlamaDocumentShim(**document.model_dump())
         ldoc.metadata = {**ldoc.metadata, **document.metadata}
         document.nodes = ingestion_pipeline.run(documents=[ldoc])
         document.node_ids = list(map(lambda x: x.id_, document.nodes))
