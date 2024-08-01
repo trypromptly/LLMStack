@@ -6,8 +6,8 @@ pipeline:
     slug: file
     provider_slug: promptly
   transformations:
-    - slug: semantic-double-merging-splitter-node-parser
-      provider_slug: promptly
+    - slug: splitter
+      provider_slug: unstructured
   embedding:
     slug: embeddings-generator
     provider_slug: promptly

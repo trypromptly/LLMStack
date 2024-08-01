@@ -2,137 +2,43 @@
 
 from django.db import migrations
 
-PIPELINE_DATA = {
-    "pdf": {
-        "source": {"slug": "pdf", "provider_slug": "promptly", "data": {}},
-        "transformations": [
-            {
-                "slug": "semantic-double-merging-splitter-node-parser",
-                "provider_slug": "promptly",
-                "data": {
-                    "merging_range": 1,
-                    "max_chunk_size": 1500,
-                    "language_config": {
-                        "nlp": None,
-                        "language": "english",
-                        "stopwords": [],
-                        "spacy_model": "en_core_web_sm",
-                        "model_validation": True,
-                    },
-                    "include_metadata": True,
-                    "initial_threshold": 0.6,
-                    "merging_threshold": 0.8,
-                    "appending_threshold": 0.8,
-                    "include_prev_next_rel": True,
-                },
-            }
-        ],
-        "embedding": {"slug": "embeddings-generator", "provider_slug": "promptly", "data": {}},
-        "destination": {"slug": "vector-store", "provider_slug": "weaviate", "data": {}},
+PIPELINE_DATA_WITHOUT_SRC = {
+    "transformations": [
+        {
+            "data": {
+                "strategy": {
+                    "overlap": None,
+                    "overlap_all": None,
+                    "max_characters": None,
+                    "new_after_n_chars": None,
+                }
+            },
+            "slug": "splitter",
+            "provider_slug": "unstructured",
+        }
+    ],
+    "embedding": {
+        "data": {"embedding_provider_slug": "openai"},
+        "slug": "embeddings-generator",
+        "provider_slug": "promptly",
     },
-    "text": {
-        "source": {"slug": "text", "provider_slug": "promptly", "data": {}},
-        "transformations": [
-            {
-                "slug": "semantic-double-merging-splitter-node-parser",
-                "provider_slug": "promptly",
-                "data": {
-                    "merging_range": 1,
-                    "max_chunk_size": 1500,
-                    "language_config": {
-                        "nlp": None,
-                        "language": "english",
-                        "stopwords": [],
-                        "spacy_model": "en_core_web_sm",
-                        "model_validation": True,
-                    },
-                    "include_metadata": True,
-                    "initial_threshold": 0.6,
-                    "merging_threshold": 0.8,
-                    "appending_threshold": 0.8,
-                    "include_prev_next_rel": True,
-                },
-            }
-        ],
-        "embedding": {"slug": "embeddings-generator", "provider_slug": "promptly", "data": {}},
-        "destination": {"slug": "vector-store", "provider_slug": "weaviate", "data": {}},
-    },
-    "url": {
-        "source": {"slug": "url", "provider_slug": "promptly", "data": {}},
-        "transformations": [
-            {
-                "slug": "semantic-double-merging-splitter-node-parser",
-                "provider_slug": "promptly",
-                "data": {
-                    "merging_range": 1,
-                    "max_chunk_size": 1500,
-                    "language_config": {
-                        "nlp": None,
-                        "language": "english",
-                        "stopwords": [],
-                        "spacy_model": "en_core_web_sm",
-                        "model_validation": True,
-                    },
-                    "include_metadata": True,
-                    "initial_threshold": 0.6,
-                    "merging_threshold": 0.8,
-                    "appending_threshold": 0.8,
-                    "include_prev_next_rel": True,
-                },
-            }
-        ],
-        "embedding": {"slug": "embeddings-generator", "provider_slug": "promptly", "data": {}},
-        "destination": {"slug": "vector-store", "provider_slug": "weaviate", "data": {}},
-    },
-    "file": {
-        "source": {"slug": "file", "provider_slug": "promptly", "data": {}},
-        "transformations": [
-            {
-                "slug": "semantic-double-merging-splitter-node-parser",
-                "provider_slug": "promptly",
-                "data": {
-                    "merging_range": 1,
-                    "max_chunk_size": 1500,
-                    "language_config": {
-                        "nlp": None,
-                        "language": "english",
-                        "stopwords": [],
-                        "spacy_model": "en_core_web_sm",
-                        "model_validation": True,
-                    },
-                    "include_metadata": True,
-                    "initial_threshold": 0.6,
-                    "merging_threshold": 0.8,
-                    "appending_threshold": 0.8,
-                    "include_prev_next_rel": True,
-                },
-            }
-        ],
-        "embedding": {"slug": "embeddings-generator", "provider_slug": "promptly", "data": {}},
-        "destination": {"slug": "vector-store", "provider_slug": "weaviate", "data": {}},
-    },
-    "singlestore": {
-        "source": None,
-        "transformations": [],
-        "embedding": None,
-        "destination": {"slug": "singlestore", "provider_slug": "singlestore", "data": {}},
+    "destination": {
+        "data": {
+            "additional_kwargs": {},
+            "store_provider_slug": "weaviate",
+            "store_processor_slug": "vector-store",
+        },
+        "slug": "vector-store",
+        "provider_slug": "promptly",
     },
 }
 
-
-def delete_legacy_pipeline_from_datasource_config(apps, schema_editor):
-    DataSource = apps.get_model("datasources", "DataSource")
-    datasources = DataSource.objects.all()
-    for datasource in datasources:
-        datasource_config = {**datasource.config} or {}
-        if "pipeline_legacy" in datasource_config:
-            del datasource_config["pipeline_legacy"]
-            datasource.config = {**datasource_config}
-            datasource.save()
-        if "pipeline_legacy_data" in datasource_config:
-            del datasource_config["pipeline_legacy_data"]
-            datasource.config = {**datasource_config}
-            datasource.save()
+SINGLESTORE_PIPELINE_DATA = {
+    "source": None,
+    "transformations": [],
+    "embedding": None,
+    "destination": {"slug": "singlestore", "provider_slug": "singlestore", "data": {}},
+}
 
 
 def add_legacy_pipeline_to_datasource_config(apps, schema_editor):
@@ -141,21 +47,29 @@ def add_legacy_pipeline_to_datasource_config(apps, schema_editor):
 
     datasources = DataSource.objects.all()
     for datasource in datasources:
-
+        pipeline_data = {**PIPELINE_DATA_WITHOUT_SRC}
         type_slug = datasource.config.get("type_slug")
-        if type_slug and type_slug in PIPELINE_DATA:
-            pipeline = PIPELINE_DATA[type_slug]
-            owner_profile = Profile.objects.get(user=datasource.owner)
-            if owner_profile.vectostore_embedding_endpoint == "azure_openai":
-                pipeline["embedding"]["data"]["embedding_provider_slug"] = "azure-openai"
-            else:
-                pipeline["embedding"]["data"]["embedding_provider_slug"] = "openai"
+        owner_profile = Profile.objects.get(user=datasource.owner)
 
-            datasource_config = {**datasource.config} or {}
-            datasource_config["pipeline"] = pipeline
+        if owner_profile.vectostore_embedding_endpoint == "azure_openai":
+            pipeline_data["embedding"]["data"]["embedding_provider_slug"] = "azure-openai"
 
-            datasource.config = {**datasource_config}
-            datasource.save()
+        if type_slug and type_slug in ["pdf", "text", "url", "file"]:
+            # Add src config
+            pipeline_data["source"] = {"slug": type_slug, "provider_slug": "promptly", "data": {}}
+            # Add index name as Datasource_<uuid> to match legacy schema
+            index_name = f"Datasource_{datasource.uuid}".replace("-", "_")
+            pipeline_data["destination"]["data"]["additional_kwargs"] = {"index_name": index_name}
+
+        elif type_slug and type_slug == "singlestore":
+            pipeline_data = {**SINGLESTORE_PIPELINE_DATA}
+        else:
+            continue
+
+        datasource_config = {**datasource.config} or {}
+        datasource_config["pipeline"] = pipeline_data
+        datasource.config = {**datasource_config}
+        datasource.save()
 
 
 class Migration(migrations.Migration):
@@ -165,7 +79,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(
-            add_legacy_pipeline_to_datasource_config, reverse_code=delete_legacy_pipeline_from_datasource_config
-        ),
+        migrations.RunPython(add_legacy_pipeline_to_datasource_config, reverse_code=migrations.RunPython.noop),
     ]
