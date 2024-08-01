@@ -325,7 +325,7 @@ function TemplateForm({
         ) || [],
       );
     }
-  }, [selectedTemplate]);
+  }, [selectedTemplate, setPipeline, setPipelineSlug, setTransformationsData]);
   return (
     <Stack>
       <ButtonGroup
