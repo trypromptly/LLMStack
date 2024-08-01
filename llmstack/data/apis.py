@@ -415,7 +415,18 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         try:
             pipeline = datasource.create_data_ingestion_pipeline()
-            pipeline.delete_all_entries()
+            if (
+                datasource.config.get("pipeline", {})
+                .get("destination", {})
+                .get("data", {})
+                .get("additional_kwargs", {})
+                .get("index_name", None)
+                != "text"
+            ):
+                pipeline.delete_all_entries()
+            else:
+                logger.info(f"Skipping deletion of all entries for datasource {datasource.uuid}")
+
         except Exception as e:
             logger.error(f"Error deleting all entries for datasource {datasource.uuid}: {e}")
 
