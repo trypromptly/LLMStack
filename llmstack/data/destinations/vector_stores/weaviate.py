@@ -300,6 +300,7 @@ class Weaviate(BaseDestination):
                     grpc_secure=self._deployment_config.instance.grpc_secure,
                     headers=additional_headers,
                     auth_credentials=auth,
+                    skip_init_checks=True,
                 )
             elif self._deployment_config.instance.url:
                 protocol, url = self._deployment_config.instance.url.split("://")
@@ -311,6 +312,7 @@ class Weaviate(BaseDestination):
                     ),
                     auth_client_secret=auth,
                     additional_headers=additional_headers,
+                    skip_init_checks=True,
                 )
         else:
             weaviate_client = connect_to_wcs(
