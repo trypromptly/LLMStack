@@ -3,7 +3,6 @@ from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
-from django.conf import settings
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
@@ -161,28 +160,9 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
     def process(self) -> MessagesOutput:
         from llmstack.common.utils.sslr import LLM
 
-        deployment_configs = settings.CUSTOM_MODELS_DEPLOYMENT_CONFIG.get(
-            f"{self.provider_slug()}/{self._config.model.model_name()}"
-        )
-        if not deployment_configs:
-            raise Exception(
-                f"Model deployment config not found for {self.provider_slug()}/{self._config.model.model_name()}"
-            )
-
-        model_deployment_configs = []
-
-        if not self._config.deployment_names:
-            if deployment_configs.get("default"):
-                model_deployment_configs = [deployment_configs["default"]]
-        else:
-            for entry in self._config.deployment_names:
-                if deployment_configs.get(entry):
-                    model_deployment_configs.append(deployment_configs.get(entry))
-
-        if not model_deployment_configs:
-            raise Exception(
-                f"Model deployment config not found for {self.provider_slug()}/{self._config.model.model_name()}"
-            )
+        deployment_config = self.get_provider_config(model_slug=self._config.model)
+        if not deployment_config:
+            raise Exception(f"Model deployment config not found for {self.provider_slug()}/{self._config.model}")
 
         messages = []
 
@@ -196,7 +176,7 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         for message in self._input.messages:
             messages.append({"role": str(message.role), "content": str(message.message)})
 
-        client = LLM(provider="custom", deployment_config=model_deployment_configs[0])
+        client = LLM(provider="custom", deployment_config=deployment_config.model_dump().get("deployment_config"))
 
         result = client.chat.completions.create(
             messages=messages,

@@ -365,7 +365,15 @@ DEFAULT_GOOGLE_CUSTOM_SEARCH_CX = os.getenv(
     "DEFAULT_GOOGLE_CUSTOM_SEARCH_CX",
     "",
 )
-DEFAULT_META_PROVIDER_CONFIG = os.getenv("DEFAULT_META_PROVIDER_CONFIG", "{}")
+DEFAULT_META_PROVIDER_CONFIG = {}
+try:
+    DEFAULT_META_PROVIDER_CONFIG = (
+        json.loads(base64.b64decode(os.getenv("DEFAULT_META_PROVIDER_CONFIG")))
+        if os.getenv("DEFAULT_META_PROVIDER_CONFIG")
+        else {}
+    )
+except Exception:
+    print("Error parsing DEFAULT_META_PROVIDER_CONFIG")
 
 WEAVIATE_URL = os.getenv("WEAVIATE_URL", "http://weaviate:8080")
 WEAVIATE_TEXT2VEC_MODULE_CONFIG = {
@@ -681,16 +689,6 @@ ANONYMOUS_USER_RATELIMIT = os.getenv("ANONYMOUS_USER_RATELIMIT", None)
 LIMITER_MODULE = "llmstack.server.limiter"
 
 ENABLE_JOBS = os.getenv("ENABLE_JOBS", "True") == "True"
-
-CUSTOM_MODELS_DEPLOYMENT_CONFIG = {}
-try:
-    CUSTOM_MODELS_DEPLOYMENT_CONFIG = (
-        json.loads(base64.b64decode(os.getenv("CUSTOM_MODELS_DEPLOYMENT_CONFIG")))
-        if os.getenv("CUSTOM_MODELS_DEPLOYMENT_CONFIG")
-        else {}
-    )
-except Exception:
-    print("Error parsing CUSTOM_MODELS_DEPLOYMENT_CONFIG")
 
 CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES = os.getenv("CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES", "").split(",")
 

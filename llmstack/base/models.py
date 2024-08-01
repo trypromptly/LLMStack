@@ -102,18 +102,9 @@ def get_vendor_env_platform_defaults():
         promptly_provider_config.embeddings_generator = EmbeddingsGeneratorConfig(
             **settings.DEFAULT_EMBEDDINGS_GENERATOR_CONFIG
         )
-    if settings.DEFAULT_META_PROVIDER_CONFIG:
-        meta_provider_configs = {}
-        try:
-            meta_provider_configs = json.loads(settings.DEFAULT_META_PROVIDER_CONFIG)
-        except json.JSONDecodeError as e:
-            logger.error(
-                f"Error parsing DEFAULT_META_PROVIDER_CONFIG: {settings.DEFAULT_META_PROVIDER_CONFIG}",
-            )
-            logger.error(e)
-
+    if settings.DEFAULT_META_PROVIDER_CONFIG and isinstance(settings.DEFAULT_META_PROVIDER_CONFIG, dict):
         # Iterate over the meta provider config and add the provider configs
-        for k, v in meta_provider_configs.items():
+        for k, v in settings.DEFAULT_META_PROVIDER_CONFIG.items():
             provider_configs[k] = MetaProviderConfig(
                 deployment_config=v,
                 provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
