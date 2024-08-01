@@ -379,10 +379,21 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                     pipeline_template.pipeline.destination.provider_slug == "promptly"
                     and pipeline_template.pipeline.destination.slug == "vector-store"
                 ):
-                    store_provider_slug = datasource.profile.get_provider_config(
+                    data_destination_configuration = datasource.profile.get_provider_config(
                         provider_slug="promptly"
-                    ).data_destination_configuration.provider_slug
-                    pipeline_data["destination"]["data"]["store_provider_slug"] = store_provider_slug
+                    ).data_destination_configuration
+
+                    pipeline_data["destination"]["data"][
+                        "store_provider_slug"
+                    ] = data_destination_configuration.provider_slug
+
+                    pipeline_data["destination"]["data"][
+                        "store_processor_slug"
+                    ] = data_destination_configuration.processor_slug
+
+                    pipeline_data["destination"]["data"][
+                        "additional_kwargs"
+                    ] = data_destination_configuration.additional_kwargs
 
         config = {
             "type_slug": request.data["type_slug"],
