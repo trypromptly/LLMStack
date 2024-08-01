@@ -44,6 +44,11 @@ class StaticWebBrowserConfiguration(ApiProcessorSchema):
         ge=1,
         le=100,
     )
+    tags_to_extract: List[str] = Field(
+        description="Tags to extract",
+        default=[],
+        json_schema_extra={"advanced_parameter": True, "widget": "hidden"},
+    )
 
 
 class StaticWebBrowserInput(ApiProcessorSchema):
@@ -127,6 +132,7 @@ class StaticWebBrowser(
                     timeout=self._config.timeout,
                     interactive=self._config.stream_video,
                     capture_screenshot=True,
+                    tags_to_extract=self._config.tags_to_extract,
                 ),
             )
 
