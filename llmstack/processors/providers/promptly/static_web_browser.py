@@ -112,9 +112,7 @@ class StaticWebBrowser(
                 instruction_type = WebBrowserCommandType.ENTER
 
             yield WebBrowserCommand(
-                command_type=instruction_type,
-                data=instruction.data,
-                selector=instruction.selector,
+                command_type=instruction_type, data=(instruction.data or ""), selector=(instruction.selector or "")
             )
 
     def process(self) -> dict:
@@ -159,7 +157,10 @@ class StaticWebBrowser(
 
         async_to_sync(output_stream.write)(
             WebBrowserOutput(
-                text=browser_response.get("text", "".join(browser_response.get("command_outputs", []))),
+                text=browser_response.get(
+                    "text",
+                    "".join(list(map(lambda x: x.get("output", ""), browser_response.get("command_outputs", [])))),
+                ),
                 content=browser_response,
             ),
         )
