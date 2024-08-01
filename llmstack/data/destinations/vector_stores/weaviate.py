@@ -303,7 +303,7 @@ class Weaviate(BaseDestination):
                 )
             elif self._deployment_config.instance.url:
                 protocol, url = self._deployment_config.instance.url.split("://")
-                host, port = url.split(":")
+                host, port = url.split(":") if len(url.split(":")) == 2 else (url, 8080)
                 weaviate_client = weaviate.WeaviateClient(
                     connection_params=weaviate.connect.base.ConnectionParams(
                         http=weaviate.connect.base.ProtocolParams(host=host, port=port, secure=protocol == "https"),
