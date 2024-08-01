@@ -10,6 +10,7 @@ from llmstack.data.transformations.llamindex.splitters import (
     TokenTextSplitter,
 )
 from llmstack.data.transformations.splitters import CSVTextSplitter
+from llmstack.data.transformations.unstructured.splitters import UnstructuredIOSplitter
 
 __all__ = [
     "CodeSplitter",
@@ -19,5 +20,6 @@ __all__ = [
     "SentenceWindowNodeParser",
     "TokenTextSplitter",
     "CSVTextSplitter",
+    "UnstructuredIOSplitter",
     "EmbeddingsGenerator",
 ]

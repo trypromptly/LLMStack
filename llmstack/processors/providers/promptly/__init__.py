@@ -70,6 +70,11 @@ class DataDestinationConfig(BaseModel):
         description="Data Destination Processor slug",
         default="vector-store",
     )
+    additional_kwargs: Optional[dict] = Field(
+        title="Additional Keyword Arguments",
+        description="Additional Keyword Arguments",
+        default={},
+    )
 
 
 class PromptlyProviderConfig(ProviderConfig):

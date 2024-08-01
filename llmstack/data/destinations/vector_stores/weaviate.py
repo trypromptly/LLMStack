@@ -364,7 +364,8 @@ class Weaviate(BaseDestination):
         return self._client.create_index(schema=self._schema_dict)
 
     def delete_collection(self):
-        return self._client.delete_index()
+        if self.index_name != "text":
+            self._client.delete_index()
 
     def get_nodes(self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None):
         return self._client.get_nodes(node_ids=node_ids, filters=filters)

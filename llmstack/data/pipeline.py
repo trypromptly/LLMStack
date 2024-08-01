@@ -1,15 +1,20 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.schema import Document as LlamaDocument
-from llama_index.core.schema import TextNode
 
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.data.models import DataSource
 from llmstack.data.schemas import DataDocument
 
 logger = logging.getLogger(__name__)
+
+
+class LlamaDocumentShim(LlamaDocument):
+    text_objref: Optional[str] = None
+    content: Optional[str] = None
+    mimetype: str = "text/plain"
 
 
 class DataIngestionPipeline:
@@ -51,7 +56,7 @@ class DataIngestionPipeline:
             self._transformations.append(embedding_transformer)
 
         ingestion_pipeline = IngestionPipeline(transformations=self._transformations)
-        ldoc = LlamaDocument(**document.model_dump())
+        ldoc = LlamaDocumentShim(**document.model_dump())
         ldoc.metadata = {**ldoc.metadata, **document.metadata}
         document.nodes = ingestion_pipeline.run(documents=[ldoc])
         document.node_ids = list(map(lambda x: x.id_, document.nodes))
@@ -109,7 +114,7 @@ class DataQueryPipeline:
                 use_hybrid_search=use_hybrid_search,
                 query_embedding=query_embedding,
                 datasource_uuid=str(self.datasource.uuid),
-                **kwargs
+                **kwargs,
             )
             documents = list(
                 map(
@@ -119,16 +124,11 @@ class DataQueryPipeline:
             )
         return documents
 
-    def get_entry_text(self, data: dict) -> str:
-        documents = [TextNode(metadata={}, text="")]
-        node_ids = data.get("document_ids", [])
-        if not node_ids:
-            node_ids = data.get("nodes", [])
-
+    def get_entry_text(self, document: DataDocument) -> str:
         if self._destination:
             self._destination.initialize_client(datasource=self.datasource)
-            if node_ids:
-                result = self._destination.get_nodes(node_ids[:20])
+            if document.node_ids:
+                result = self._destination.get_nodes(document.node_ids[:20])
                 if result:
                     documents = result
         return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))

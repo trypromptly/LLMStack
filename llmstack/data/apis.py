@@ -122,6 +122,7 @@ class PipelineViewSet(viewsets.ViewSet):
             CodeSplitter,
             SemanticDoubleMergingSplitterNodeParser,
             SentenceSplitter,
+            UnstructuredIOSplitter,
         )
 
         return DRFResponse(
@@ -143,6 +144,12 @@ class PipelineViewSet(viewsets.ViewSet):
                     "provider_slug": SentenceSplitter.provider_slug(),
                     "schema": SentenceSplitter.get_schema(),
                     "ui_schema": SentenceSplitter.get_ui_schema(),
+                },
+                {
+                    "slug": UnstructuredIOSplitter.slug(),
+                    "provider_slug": UnstructuredIOSplitter.provider_slug(),
+                    "schema": UnstructuredIOSplitter.get_schema(),
+                    "ui_schema": UnstructuredIOSplitter.get_ui_schema(),
                 },
             ]
         )
@@ -214,8 +221,14 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         if not datasource_entry_object.user_can_read(request.user):
             return DRFResponse(status=404)
 
+        node_ids = datasource_entry_object.config.get(
+            "document_ids",
+            datasource_entry_object.config.get("node_ids", []),
+        )
+        document = DataDocument(node_ids=node_ids)
+
         pipeline = datasource_entry_object.datasource.create_data_query_pipeline()
-        metadata, content = pipeline.get_entry_text(datasource_entry_object.config)
+        metadata, content = pipeline.get_entry_text(document=document)
         return DRFResponse({"content": content, "metadata": metadata})
 
     def create_entry(self, document: DataDocument):
@@ -366,10 +379,21 @@ class DataSourceViewSet(viewsets.ModelViewSet):
                     pipeline_template.pipeline.destination.provider_slug == "promptly"
                     and pipeline_template.pipeline.destination.slug == "vector-store"
                 ):
-                    store_provider_slug = datasource.profile.get_provider_config(
+                    data_destination_configuration = datasource.profile.get_provider_config(
                         provider_slug="promptly"
-                    ).data_destination_configuration.provider_slug
-                    pipeline_data["destination"]["data"]["store_provider_slug"] = store_provider_slug
+                    ).data_destination_configuration
+
+                    pipeline_data["destination"]["data"][
+                        "store_provider_slug"
+                    ] = data_destination_configuration.provider_slug
+
+                    pipeline_data["destination"]["data"][
+                        "store_processor_slug"
+                    ] = data_destination_configuration.processor_slug
+
+                    pipeline_data["destination"]["data"][
+                        "additional_kwargs"
+                    ] = data_destination_configuration.additional_kwargs
 
         config = {
             "type_slug": request.data["type_slug"],
@@ -391,7 +415,18 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         try:
             pipeline = datasource.create_data_ingestion_pipeline()
-            pipeline.delete_all_entries()
+            if (
+                datasource.config.get("pipeline", {})
+                .get("destination", {})
+                .get("data", {})
+                .get("additional_kwargs", {})
+                .get("index_name", None)
+                != "text"
+            ):
+                pipeline.delete_all_entries()
+            else:
+                logger.info(f"Skipping deletion of all entries for datasource {datasource.uuid}")
+
         except Exception as e:
             logger.error(f"Error deleting all entries for datasource {datasource.uuid}: {e}")
 

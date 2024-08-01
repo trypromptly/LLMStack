@@ -7,6 +7,7 @@ from llmstack.data.destinations.base import BaseDestination
 
 class PromptlyVectorStore(BaseDestination):
     store_provider_slug: Optional[str] = None
+    store_processor_slug: Optional[str] = None
     additional_kwargs: Optional[Dict[str, Any]] = {}
 
     _store: Optional[BaseDestination] = PrivateAttr(default=None)
