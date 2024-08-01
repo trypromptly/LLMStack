@@ -79,7 +79,10 @@ class WebLogin(ConnectionTypeInterface[WebLoginConfiguration]):
             await asyncio.sleep(0.1)
             time_elapsed += 0.1
 
-        yield tools_pb2.WebBrowserRequest(inputs=[tools_pb2.WebBrowserInput(type=tools_pb2.TERMINATE)])
+        yield tools_pb2.WebBrowserRequest(commands=[tools_pb2.WebBrowserCommand(type=tools_pb2.TERMINATE)])
+
+        # Sleep till the browser is terminated
+        await asyncio.sleep(1)
 
     async def _read_browser_output(self, connection, remote_browser_stream):
         while not self._is_terminated and not self._is_remote_browser_terminated:

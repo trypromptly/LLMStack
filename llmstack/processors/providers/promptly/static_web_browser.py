@@ -1,12 +1,16 @@
+import base64
 import logging
 import uuid
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
-import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from google.protobuf.json_format import MessageToDict
-from langrocks.common.models import tools_pb2, tools_pb2_grpc
+from langrocks.client.web_browser import WebBrowserContextManager
+from langrocks.common.models.web_browser import (
+    WebBrowserCommand,
+    WebBrowserCommandType,
+    WebBrowserSessionConfig,
+)
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
@@ -39,10 +43,6 @@ class StaticWebBrowserConfiguration(ApiProcessorSchema):
         default=10,
         ge=1,
         le=100,
-    )
-    skip_tags: bool = Field(
-        description="Skip extracting tags. This will skip processing HTML tags and only return text content to speed up processing",
-        default=True,
     )
 
 
@@ -91,127 +91,80 @@ class StaticWebBrowser(
 
     def _request_iterator(
         self,
-    ) -> Optional[tools_pb2.WebBrowserRequest]:
-        playwright_request = tools_pb2.WebBrowserRequest()
+    ) -> Iterator[WebBrowserCommand]:
         for instruction in self._input.instructions:
-            if instruction.type == BrowserInstructionType.GOTO:
-                input = tools_pb2.WebBrowserInput(
-                    type=tools_pb2.GOTO,
-                    data=instruction.data,
-                )
-            if instruction.type == BrowserInstructionType.CLICK:
-                input = tools_pb2.WebBrowserInput(
-                    type=tools_pb2.CLICK,
-                    selector=instruction.selector,
-                )
-            elif instruction.type == BrowserInstructionType.WAIT:
-                input = tools_pb2.WebBrowserInput(
-                    type=tools_pb2.WAIT,
-                    selector=instruction.selector,
-                )
-            elif instruction.type == BrowserInstructionType.COPY:
-                input = tools_pb2.WebBrowserInput(
-                    type=tools_pb2.COPY,
-                    selector=instruction.selector,
-                )
-            elif instruction.type == BrowserInstructionType.SCROLLX:
-                input = tools_pb2.WebBrowserInput(
-                    type=tools_pb2.SCROLL_X,
-                    selector=instruction.selector,
-                    data=instruction.data,
-                )
-            elif instruction.type == BrowserInstructionType.SCROLLY:
-                input = tools_pb2.WebBrowserInput(
-                    type=tools_pb2.SCROLL_Y,
-                    selector=instruction.selector,
-                    data=instruction.data,
-                )
-            elif instruction.type == BrowserInstructionType.TERMINATE:
-                input = tools_pb2.WebBrowserInput(
-                    type=tools_pb2.TERMINATE,
-                )
-            elif instruction.type == BrowserInstructionType.ENTER:
-                input = tools_pb2.WebBrowserInput(
-                    type=tools_pb2.ENTER,
-                )
-            playwright_request.inputs.append(input)
+            instruction_type = instruction.type
+            if instruction.type == BrowserInstructionType.GOTO.value:
+                instruction_type = WebBrowserCommandType.GOTO
+            elif instruction.type == BrowserInstructionType.CLICK.value:
+                instruction_type = WebBrowserCommandType.CLICK
+            elif instruction.type == BrowserInstructionType.WAIT.value:
+                instruction_type = WebBrowserCommandType.WAIT
+            elif instruction.type == BrowserInstructionType.COPY.value:
+                instruction_type = WebBrowserCommandType.COPY
+            elif instruction.type == BrowserInstructionType.SCROLLX.value:
+                instruction_type = WebBrowserCommandType.SCROLL_X
+            elif instruction.type == BrowserInstructionType.SCROLLY.value:
+                instruction_type = WebBrowserCommandType.SCROLL_Y
+            elif instruction.type == BrowserInstructionType.TERMINATE.value:
+                instruction_type = WebBrowserCommandType.TERMINATE
+            elif instruction.type == BrowserInstructionType.ENTER.value:
+                instruction_type = WebBrowserCommandType.ENTER
 
-        playwright_request.session_config.CopyFrom(
-            tools_pb2.WebBrowserSessionConfig(
-                init_url=self._input.url,
-                skip_tags=self._config.skip_tags,
-                timeout=(
-                    self._config.timeout
-                    if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100
-                    else 100
-                ),
-                session_data=(
-                    self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
-                    if self._config.connection_id
-                    else ""
-                ),
-                interactive=self._config.stream_video,
+            yield WebBrowserCommand(
+                command_type=instruction_type,
+                data=instruction.data,
+                selector=instruction.selector,
             )
-        )
-
-        yield playwright_request
 
     def process(self) -> dict:
         output_stream = self._output_stream
-        output_text = ""
         browser_response = None
 
-        channel = grpc.insecure_channel(
-            f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
-        )
-        stub = tools_pb2_grpc.ToolsStub(channel)
-
-        try:
-            web_browser_response_iter = stub.GetWebBrowser(
-                self._request_iterator(),
+        with WebBrowserContextManager(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}") as web_browser:
+            session, content_iter = web_browser.run_commands_interactive(
+                commands_iterator=self._request_iterator(),
+                config=WebBrowserSessionConfig(
+                    init_url=self._input.url,
+                    timeout=self._config.timeout,
+                    interactive=self._config.stream_video,
+                    capture_screenshot=True,
+                ),
             )
-            for response in web_browser_response_iter:
-                if response.session and response.session.ws_url:
-                    # Send session info to the client
-                    async_to_sync(
-                        output_stream.write,
-                    )(
-                        WebBrowserOutput(
-                            session=BrowserRemoteSessionData(
-                                ws_url=response.session.ws_url,
-                            ),
+
+            if session and session.ws_url:
+                # Send session info to the client
+                async_to_sync(
+                    output_stream.write,
+                )(
+                    WebBrowserOutput(
+                        session=BrowserRemoteSessionData(
+                            ws_url=session.ws_url,
                         ),
-                    )
-                if response.output:
-                    response_content = MessageToDict(response.output)
-                    if response_content:
-                        browser_response = response_content
+                    ),
+                )
 
-                if response.state == tools_pb2.TERMINATED or response.output.text:
-                    output_text = "".join([x.output for x in response.output.outputs])
-                    if not output_text:
-                        output_text = response.output.text
-                    break
-
-        except Exception as e:
-            logger.exception(e)
-
+            for content in content_iter:
+                browser_response = content
         # If browser_response contains screenshot, convert it to objref
-        if browser_response and "screenshot" in browser_response:
+        screenshot_asset = None
+        if browser_response and browser_response.screenshot:
             screenshot_asset = self._upload_asset_from_url(
-                f"data:image/png;name={str(uuid.uuid4())};base64,{browser_response['screenshot']}",
+                f"data:image/png;name={str(uuid.uuid4())};base64,{base64.b64encode(browser_response.screenshot).decode('utf-8')}",
                 mime_type="image/png",
             )
-            browser_response["screenshot"] = screenshot_asset.objref
+
+        browser_response = browser_response.model_dump()
+        browser_response["screenshot"] = screenshot_asset.objref if screenshot_asset else None
 
         async_to_sync(output_stream.write)(
             WebBrowserOutput(
-                text=output_text,
+                text=browser_response.get("text", "".join(browser_response.get("command_outputs", []))),
                 content=browser_response,
             ),
         )
         output = output_stream.finalize()
 
-        channel.close()
+        # channel.close()
 
         return output
