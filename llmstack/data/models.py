@@ -247,6 +247,18 @@ def register_data_change(sender, instance: DataSourceEntry, **kwargs):
 
 @receiver(post_delete, sender=DataSourceEntry)
 def register_data_delete(sender, instance: DataSourceEntry, **kwargs):
+    if instance.config:
+        from llmstack.assets.utils import get_asset_by_objref
+
+        if instance.config.get("content"):
+            asset = get_asset_by_objref(instance.config.get("content"), None, None)
+            if asset:
+                asset.delete()
+        if instance.config.get("text_objref"):
+            asset = get_asset_by_objref(instance.config.get("text_objref"), None, None)
+            if asset:
+                asset.delete()
+
     if instance.old_size != 0:
         # The datasource entry size has changed
         EventsViewSet().create(
