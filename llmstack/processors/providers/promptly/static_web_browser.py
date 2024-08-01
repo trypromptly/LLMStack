@@ -165,6 +165,4 @@ class StaticWebBrowser(
         )
         output = output_stream.finalize()
 
-        # channel.close()
-
         return output
