@@ -194,7 +194,7 @@ class Completions(OpenAICompletions):
         if self._client._llm_router_provider == PROVIDER_ANTHROPIC:
             path = "/messages"
             stream_cls = LLMAnthropicStream[_chat.ChatCompletionChunk]
-            user_messages = list(filter(lambda message: message["role"] == "user", messages_openai_format))
+            user_messages = list(filter(lambda message: message["role"] != "system", messages_openai_format))
             system_messages = list(filter(lambda message: message["role"] == "system", messages_openai_format))
             if system_messages and "content" in system_messages[0] and isinstance(system_messages[0]["content"], str):
                 system = system_messages[0]["content"]
@@ -207,7 +207,7 @@ class Completions(OpenAICompletions):
         elif self._client._llm_router_provider == PROVIDER_COHERE:
             path = "/chat"
             stream_cls = LLMCohereStream[_chat.ChatCompletionChunk]
-            user_messages = list(filter(lambda message: message["role"] == "user", messages_openai_format))
+            user_messages = list(filter(lambda message: message["role"] != "system", messages_openai_format))
             system_messages = list(filter(lambda message: message["role"] == "system", messages_openai_format))
             if system_messages and "content" in system_messages[0] and isinstance(system_messages[0]["content"], str):
                 system = system_messages[0]["content"]
