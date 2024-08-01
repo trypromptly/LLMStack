@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class ByTitle(BaseModel):
     multipage_sections: Optional[bool] = None
-    max_characters: Optional[int] = None
+    max_characters: Optional[int] = 1000
     combine_text_under_n_chars: Optional[int] = None
     new_after_n_chars: Optional[int] = None
     overlap: Optional[int] = None
@@ -24,7 +24,7 @@ class ByTitle(BaseModel):
 
 
 class Basic(BaseModel):
-    max_characters: Optional[int] = None
+    max_characters: Optional[int] = 1000
     new_after_n_chars: Optional[int] = None
     overlap: Optional[int] = None
     overlap_all: Optional[bool] = None
