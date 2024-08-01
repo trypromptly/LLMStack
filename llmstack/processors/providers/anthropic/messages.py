@@ -130,6 +130,8 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         if self._config.retain_history:
             return {"chat_history": self._chat_history}
 
+        return {}
+
     def process(self) -> MessagesOutput:
         client = get_llm_client_from_provider_config(
             "anthropic", self._config.model.model_name(), self.get_provider_config
