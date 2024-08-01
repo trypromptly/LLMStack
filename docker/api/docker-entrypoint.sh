@@ -16,6 +16,10 @@ apiserver() {
         python manage.py createcachetable
     fi
 
+    if [ "x$DJANGO_MANAGEPY_ADDMISSINGAPPTYPES" = 'xon' ]; then
+        python manage.py addmissingapptypes
+    fi
+    
     if [ "x$DJANGO_MANAGEPY_LOADSTOREAPPS" = 'xon' ]; then
         python manage.py loadstoreapps
     fi
