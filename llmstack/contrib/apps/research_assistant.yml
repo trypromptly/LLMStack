@@ -9,7 +9,7 @@ categories:
   - utilities
   - research
 config:
-  model: gpt-4o
+  model: gpt-3.5-turbo
   layout: >-
     <pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "0",
     "height": "100%"}'>
@@ -27,7 +27,8 @@ config:
   temperature: 0.7
   user_message: >-
     Cite all the sources used in the response as a separate paragraph. Answer
-    the following by visiting at least 3 sources: "{{question.text}}"
+    the following by visiting multiple sources as needed to generate a high
+    quality response: "{{question.text}}"
   window_color: "#477195"
   input_template: <p class="editor-paragraph"><br></p>
   system_message: >-
@@ -38,24 +39,31 @@ config:
 
     ## You will break down the user's question into multiple sub tasks, perform
     each of them before responding. For example, if someone asks what is the
-    current price of nvda stock, you will break it down into two tasks: 1) find
-    sources for nvda stock price 2) Pick three relevant URLs from the search
-    results 3) Visit url1 using open_url and get the data 4) Visit url2 using
-    open_url and get the data 4) Visit url3 using open_url to get the data 5)
-    Create an answer from the data extracted from urls and finally 6) Include
-    sources as citations as the last paragraph
+    current price of nvda stock, you will break it down into following tasks:
+
+    1) Find sources for nvda stock price using web_search
+
+    2) Pick some relevant URLs from the search results, visit each one of them
+    to get data with open_url individually
+
+    3) Create an answer from the data extracted from urls and finally
+
+    4) Include sources as citations as the last paragraph
+
+    ## web_search and open_url can only process one request at a time. So make
+    sure to not generate multiple requests in the same invocation
 
     ## If the user's question is not part of your existing knowledge, you MUST
     create a search query string and search the internet for results
+
+    ## If the answer is readily available from web search, you may skip opening
+    the urls with open_url
 
     ## Format the answer into multiple paragraphs with each paragraph no longer
     than 100 words
 
     ## First paragraph should be a brief introduction about the entity being
     discussed
-
-    ## You MUST use at least three different sources before responding to the
-    user
 
 
     Current date is {{ "now" | date: "%Y-%m-%d %H:%M" }}. Now let's think step
@@ -69,20 +77,43 @@ processors:
   - id: web_search
     name: Web Search
     input:
-      query: ""
+      url: "www.google.com/search?q={{query}}"
+      instructions: [{ "type": "Wait", "selector": "body", "data": "" }]
     config:
-      k: 10
-      search_engine: Google
-      advanced_params: ""
+      timeout: 10
+      stream_video: true
+      connection_id: null
+      tags_to_extract:
+        - a
     description: Search the web for answers
-    input_fields: []
+    input_fields:
+      - name: query
+        type: string
+        title: Search Query
+        required: true
+        description: Search query to be used
     provider_slug: promptly
-    processor_slug: web_search
+    processor_slug: static_web_browser
     output_template:
-      markdown: |-
-        {% for result in results %}
-        {{result.text}}
-        {{result.source}}
+      markdown: >-
+        {% if content.screenshot %}<pa-asset url="{{content.screenshot}}"
+        type="image/png"></pa-asset>%}{% else %}<promptly-web-browser-embed
+        wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>{% endif %}
+
+
+
+        ## Text from the search results page
+
+
+        {{text}}
+
+
+        ## Links from the search results page
+
+
+        {% for link in content.links %}
+
+        {{ link.url }} - {{ link.text }}
 
         {% endfor %}
   - id: open_url
@@ -96,7 +127,7 @@ processors:
       stream_video: true
       connection_id: null
     description: >-
-      Visit a URL and perform actions. Copy, Wait, Goto and Click are the valid
+      Visit a URL and perform actions. "Copy", "Wait", "Goto" and "Click" are the only valid
       instruction types
     input_fields: []
     provider_slug: promptly
