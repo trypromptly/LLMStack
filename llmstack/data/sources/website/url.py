@@ -31,7 +31,12 @@ def get_connection_context(connection_id: str, datasource_uuid: str):
     return None
 
 
-def extract_text_with_runner(url: str, cdp_url=None, **kwargs):
+def extract_text(html_page):
+    elements = partition_html(text=html_page)
+    return "\n".join(list(map(lambda x: str(x), elements))) or "Could not extract text from URL"
+
+
+def get_page_html(url: str, cdp_url=None, **kwargs):
     if not url.startswith("https://") and not url.startswith("http://"):
         url = f"https://{url}"
 
@@ -105,13 +110,12 @@ class URLSchema(BaseSource):
             documents.append(
                 DataDocument(
                     name=url,
-                    content=url,
                     metadata={
                         "source": url,
                         "datasource_uuid": kwargs["datasource_uuid"],
                     },
                     datasource_uuid=kwargs["datasource_uuid"],
-                    request_data=dict(connection_id=self.connection_id),
+                    request_data=dict(connection_id=self.connection_id, url=url),
                 )
             )
         return documents
@@ -123,12 +127,21 @@ class URLSchema(BaseSource):
         connection_context = (
             get_connection_context(connection_id, document.metadata["datasource_uuid"]) if connection_id else None
         )
-        url_text_data = extract_text_with_runner(
-            document.content, connection=connection_id, storage_state=connection_context
+        html_page = get_page_html(
+            document.request_data.get("url"), connection=connection_id, storage_state=connection_context
         )
+        page_text = extract_text(html_page)
 
         text_data_uri = (
-            f"data:text/plain;name={document.id_}_text.txt;base64,{base64.b64encode(url_text_data.encode()).decode()}"
+            f"data:text/plain;name={document.id_}_text.txt;base64,{base64.b64encode(page_text.encode()).decode()}"
+        )
+        html_data_uri = (
+            f"data:text/html;name={document.id_}.html;base64,{base64.b64encode(html_page.encode()).decode()}"
+        )
+        content_file_objref = create_source_document_asset(
+            html_data_uri,
+            datasource_uuid=document.metadata["datasource_uuid"],
+            document_id=str(uuid.uuid4()),
         )
         text_file_objref = create_source_document_asset(
             text_data_uri,
@@ -137,7 +150,8 @@ class URLSchema(BaseSource):
         )
         return document.model_copy(
             update={
-                "text": url_text_data,
+                "content": content_file_objref,
+                "text": page_text,
                 "text_objref": text_file_objref,
             }
         )
