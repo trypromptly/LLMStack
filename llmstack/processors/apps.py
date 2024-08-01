@@ -26,7 +26,8 @@ class ProcessorsConfig(AppConfig):
         from sys import argv
 
         # If this is collecstatic command, do not load the processor subclasses
-        if "collectstatic" in argv:
+        if "collectstatic" in argv or "createcachetable" in argv or "clearcache" in argv:
             return
+
         logger.info("Initializing Processor subclasses")
         load_processor_subclasses()
