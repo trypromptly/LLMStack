@@ -67,7 +67,7 @@ google-auth = {version = "^2.22.0" }
 pydantic = "^2.7.4"
 daphne = "^4.1.2"
 striprtf = "^0.0.26"
-langrocks = "^0.1.0"
+langrocks = "0.1.1"
 
 [tool.poetry.group.faiss.dependencies]
 faiss-cpu = "^1.8.0"
@@ -76,7 +76,7 @@ faiss-cpu = "^1.8.0"
 
 [tool.poetry.group.processors.dependencies]
 scrapy = "^2.11.2"
-unstructured = {version = "0.12.6", python=">=3.10,<3.12"}
+unstructured = {version = "0.15.0", python=">=3.10,<3.13"}
 google-generativeai = {version ="^0.3.1"}
 scrapy-playwright = {version ="^0.0.33"}
 pillow-heif = {version ="^0.15.0"}
