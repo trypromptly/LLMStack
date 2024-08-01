@@ -9,7 +9,7 @@ PIPELINE_DATA_WITHOUT_SRC = {
                 "strategy": {
                     "overlap": None,
                     "overlap_all": None,
-                    "max_characters": None,
+                    "max_characters": 1000,
                     "new_after_n_chars": None,
                 }
             },
