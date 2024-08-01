@@ -118,6 +118,11 @@
   margin: 8px;
 }
 
+.layout-chat_message_type_step a {
+  word-break: break-all;
+  word-wrap: break-word;
+}
+
 .layout-workflow_message_type_step {
   display: inline-block;
   width: 100%;
@@ -125,6 +130,11 @@
   color: #999;
   font-size: 12px;
   margin: 8px;
+}
+
+.layout-workflow_message_type_step a {
+  word-break: break-all;
+  word-wrap: break-word;
 }
 
 .layout-chat_message_type_step_header {
