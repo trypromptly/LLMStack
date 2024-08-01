@@ -47,16 +47,18 @@ class UnstructuredIOSplitter(TextSplitter, UnstructuredIOTransformers):
         node_elements = []
         chunks = []
 
-        if hasattr(node, "content"):
-            asset = get_asset_by_objref(node.content, None, None)
-            with asset.file.open(mode="rb") as f:
-                asset_file_bytes = f.read()
-                node_elements = partition(
-                    file=io.BytesIO(asset_file_bytes),
-                    file_name=asset.metadata.get("file_name", ""),
-                    content_type=node.mimetype,
-                )
-                f.close()
+        try:
+            if hasattr(node, "content"):
+                asset = get_asset_by_objref(node.content, None, None)
+                with asset.file.open(mode="rb") as f:
+                    asset_file_bytes = f.read()
+                    node_elements = partition(
+                        file=io.BytesIO(asset_file_bytes),
+                        file_name=asset.metadata.get("file_name", ""),
+                        content_type=node.mimetype,
+                    )
+        except Exception:
+            pass
         if not node_elements:
             node_elements = partition_text(text=node.get_content() or "")
 
