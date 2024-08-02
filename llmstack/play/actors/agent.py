@@ -93,10 +93,13 @@ class AgentActor(Actor):
             api_key=openai_provider_config.api_key,
             base_url=openai_provider_config.base_url,
         )
-        self._stream = self._config.get(
-            "stream",
-            self._config.get("model", "gpt-3.5-turbo") in list(map(lambda x: str(x.value), AgentModel)),
-        )
+        self._stream = self._config.get("stream")
+        if self._stream is None:
+            self._stream = (
+                True
+                if self._config.get("model", "gpt-3.5-turbo") in list(map(lambda x: str(x.value), AgentModel))
+                else False
+            )
 
         self._agent_messages = []
         self._tool_calls = []
@@ -290,8 +293,11 @@ class AgentActor(Actor):
                             ),
                         )
                     elif tool_calls_chunk and len(tool_calls_chunk) > 0:
+                        tool_call_index = 0
                         for tool_call in tool_calls_chunk:
-                            tool_call_index = tool_call.index if hasattr(tool_call, "index") else 0
+                            if hasattr(tool_call, "index"):
+                                tool_call_index = tool_call.index
+
                             if len(self._tool_calls) < tool_call_index + 1:
                                 # Insert at the index
                                 self._tool_calls.insert(
@@ -313,6 +319,9 @@ class AgentActor(Actor):
                                         type="step",
                                     ),
                                 )
+
+                                if not hasattr(tool_call, "index"):
+                                    tool_call_index += 1
                             else:
                                 # Update at the index
                                 self._tool_calls[tool_call_index]["arguments"] += tool_call.function.arguments
