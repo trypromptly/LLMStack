@@ -1,0 +1,222 @@
+name: News Article Generator
+slug: news-article-generator
+description: Generate a news article on a given topic
+version: "0.0.1"
+icon: news_article_generator_icon.png
+categories:
+  - utilities
+  - research
+  - writing
+config:
+  seed: 2
+  model: gpt-4o-mini
+  layout: >-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "0",
+    "height": "100%"}'>
+        <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
+          <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
+            <pa-chat-output></pa-chat-output>
+          </pa-grid>
+          <pa-grid item="true" xs="12" sx='{"alignSelf": "flex-end", "flex": "0 !important", "width": "100%", "padding": "0 !important"}'>
+            <pa-input-form clearonsubmit="true"></pa-input-form>
+          </pa-grid>
+        </pa-grid>
+    </pa-layout>
+  stream: null
+  max_steps: 10
+  split_tasks: true
+  temperature: 0.7
+  init_on_load: null
+  user_message: "{{topic.text}}"
+  window_color: "#477195"
+  input_template: ""
+  system_message: >-
+    You are a helpful assistant writing informational articles on a given topic.
+    You will follow the below guidelines when generating an article.
+
+
+    1. Article should have a clear, captive and non sensational title followed
+    by a cover image related to the article
+
+    2. You will search the internet and read urls related to the topic before
+    writing the article
+
+    3. You must visit a minimum of 2 urls using the static web browser before
+    generating the article
+
+    4. Include hyperlinks in the content where relevant
+
+    5. You will search internet for relevant images for the content and include
+    them in the article along with captions and attribution
+
+    6. Images should be contextual and reflect the content around the image
+
+    7. Article should contain at least 3000 words
+
+    8. Generated final article should be ready to publish
+
+    9. Do not include any information about how the article is generated
+
+    10. Emulate writing style of publications like BBC and NYT
+
+
+    You have access to the following tools:
+
+    1. web_browser: used to open a web page and get the contents of the page
+
+    2. web_search: searches the internet based on a given query and returns the
+    list of urls
+
+    3. image_search: searches images for images matching given query and returns
+    the urls
+
+
+    Current date is {{ "now" | date: "%Y-%m-%d %H:%M" }}. Now let's think step
+    by step:
+  assistant_image: ""
+  welcome_message: ""
+  chat_bubble_text: null
+  chat_bubble_style: null
+  chat_history_limit: 10
+  suggested_messages: []
+type_slug: agent
+processors:
+  - id: web_browser
+    name: Static Web Browser
+    input:
+      url: "{{url}}"
+      instructions:
+        - data: ""
+          type: Wait
+          selector: body
+    config:
+      timeout: 10
+      stream_video: true
+      connection_id: null
+      tags_to_extract:
+        - img
+    description: Visit a webpage from a URL and get the text from that page
+    input_fields:
+      - name: url
+        type: string
+        title: URL of the page
+        description: URL of the page to open
+    provider_slug: promptly
+    processor_slug: static_web_browser
+    output_template:
+      markdown: >
+        {% if content.screenshot %}
+
+        <pa-asset url="{{content.screenshot}}" type="image/png"></pa-asset>%}
+
+        {% else %}
+
+        <promptly-web-browser-embed
+        wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
+
+        {% endif %}
+
+
+        ## Text from the page
+
+
+        {{text | truncate: 4000}}
+  - id: web_search
+    name: Web Search
+    input:
+      url: www.google.com/search?q={{query}}
+      instructions:
+        - data: ""
+          type: Wait
+          selector: body
+    config:
+      timeout: 10
+      stream_video: true
+      connection_id: null
+      tags_to_extract:
+        - a
+    description: Search the web for answers
+    input_fields:
+      - name: query
+        type: string
+        title: Search Query
+        required: true
+        description: Search query to be used
+    provider_slug: promptly
+    processor_slug: static_web_browser
+    output_template:
+      markdown: >-
+        {% if content.screenshot %}<pa-asset url="{{content.screenshot}}"
+        type="image/png"></pa-asset>%}{% else %}<promptly-web-browser-embed
+        wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>{% endif %}
+
+
+
+        ## Text from the search results page
+
+
+        {{text}}
+
+
+        ## Links from the search results page
+
+
+        {% for link in content.links %}
+
+        {{ link.url }} - {{ link.text }}
+
+        {% endfor %}
+  - id: image_search
+    name: Image Search
+    input:
+      url: >-
+        https://duckduckgo.com/?t=h_&q={{query}}&iax=images&ia=images&iaf=size%3ALarge
+      instructions:
+        - data: "2000"
+          type: Wait
+          selector: dummy
+    config:
+      timeout: 10
+      stream_video: true
+      connection_id: null
+      tags_to_extract:
+        - img
+    description: Search the internet for images
+    input_fields:
+      - name: query
+        type: string
+        title: Search Query
+        required: true
+        description: Search query to be used for finding images
+    provider_slug: promptly
+    processor_slug: static_web_browser
+    output_template:
+      markdown: >-
+        {% if content.screenshot %}<pa-asset url="{{content.screenshot}}"
+        type="image/png"></pa-asset>%}{% else %}<promptly-web-browser-embed
+        wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>{% endif %}
+
+
+
+        ## Text from the search results page
+
+
+        {{text}}
+
+
+        ## Images from the search results page
+
+
+        {% for img in content.images %}
+
+        {{ img.src }} - {{ img.text }}
+
+        {% endfor %}
+input_fields:
+  - name: topic
+    type: multi
+    title: Topic
+    required: true
+    description: Provide a topic for the article
+output_template:
+  markdown: "{{agent.content}}"
