@@ -21,7 +21,6 @@ def get_data_pipelines_from_contrib() -> List[DataPipelineTemplate]:
     """
     Loads app templates from yaml files in settings.APP_TEMPLATES_DIR and caches them in memory.
     """
-    cache.delete("data_pipelines")
     data_pipelines = cache.get("data_pipelines")
     if data_pipelines:
         return data_pipelines

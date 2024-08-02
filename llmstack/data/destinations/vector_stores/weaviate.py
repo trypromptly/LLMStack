@@ -20,6 +20,8 @@ from llama_index.core.vector_stores.utils import (
 )
 from llama_index.vector_stores.weaviate.base import _to_weaviate_filter
 from pydantic import Field, PrivateAttr
+from weaviate.classes.config import Configure, DataType, Property
+from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
 
 from llmstack.data.destinations.base import BaseDestination
 from llmstack.data.schemas import DataDocument
@@ -141,8 +143,6 @@ class WeaviateVectorStore:
         self._weaviate_client.collections.delete(self._index_name)
 
     def create_index(self, schema: Optional[dict]) -> None:
-        from weaviate.classes.config import Configure, DataType, Property
-
         if not self._weaviate_client.collections.exists(self._index_name):
             properties = []
             vectorizer_config = None
@@ -238,9 +238,6 @@ class Weaviate(BaseDestination):
         return "weaviate"
 
     def initialize_client(self, *args, **kwargs):
-        import weaviate
-        from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
-
         datasource = kwargs.get("datasource")
 
         index_name = self.index_name or f"Datasource_{datasource.uuid}".replace("-", "_")

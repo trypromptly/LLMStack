@@ -89,7 +89,7 @@ def extract_page_hrefs_task(page_url, cdp_url=None):
             browser = p.chromium.connect(ws_endpoint=cdp_url)
             context = browser.new_context()
             page = context.new_page()
-            page.goto(page_url, timeout=2000)
+            page.goto(page_url)
             # Extract all URLs from the page
             anchors = page.query_selector_all("a")
             for anchor in anchors:
