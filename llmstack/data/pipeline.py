@@ -131,4 +131,6 @@ class DataQueryPipeline:
                 result = self._destination.get_nodes(document.node_ids[:20])
                 if result:
                     documents = result
-        return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))
+                    return documents[0].extra_info, "\n".join(list(map(lambda x: x.text, documents)))
+
+        return {}, ""
