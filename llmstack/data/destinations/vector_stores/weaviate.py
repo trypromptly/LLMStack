@@ -16,6 +16,7 @@ from llama_index.core.vector_stores.types import (
 from llama_index.core.vector_stores.utils import (
     legacy_metadata_dict_to_node,
     metadata_dict_to_node,
+    node_to_metadata_dict,
 )
 from llama_index.vector_stores.weaviate.base import _to_weaviate_filter
 from pydantic import Field, PrivateAttr
@@ -32,7 +33,7 @@ from llmstack.processors.providers.weaviate import (
 logger = logging.getLogger(__name__)
 
 
-def to_node(entry: Dict, text_key: str = "Text") -> TextNode:
+def to_node(entry: Dict, text_key: str = "content") -> TextNode:
     """Convert to Node."""
     text = entry.get("properties", {}).get(text_key, "")
     source = entry.get("properties", {}).get("source", None)
@@ -94,7 +95,7 @@ class WeaviateVectorStore:
                         TextNode(
                             id_=node_id,
                             text=object_data.properties.get(self._text_key, ""),
-                            metadata={k: v for k, v in object_data.properties.items() if k != self._text_key},
+                            metadata={k: v for k, v in object_data.properties.items() if k in ["source"]},
                         )
                     )
             except weaviate.exceptions.UnexpectedStatusCodeException:
@@ -114,15 +115,17 @@ class WeaviateVectorStore:
             for node in nodes:
                 content_key = self._text_key
                 content = node.text
-                metadata = node.metadata
                 id = node.node_id
                 properties = {content_key: content}
-                for metadata_key in metadata.keys():
-                    properties[metadata_key] = metadata[metadata_key]
+                metadata_dict = node_to_metadata_dict(
+                    node, remove_text=True, flat_metadata=False, text_field=self._text_key
+                )
+                node_info = metadata_dict.get("_node_content", {})
 
                 # Add source and datasource_uuid
                 properties["source"] = source
                 properties["datasource_uuid"] = datasource_uuid
+                properties["node_info"] = node_info
 
                 if node.embedding:
                     # Vectors we provided with the document use them
@@ -188,6 +191,7 @@ class WeaviateVectorStore:
                     query_properties=[self._text_key],
                     return_metadata=None,
                     filters=filters,
+                    limit=query.hybrid_top_k,
                 )
             except Exception as e:
                 raise e
@@ -210,6 +214,183 @@ class WeaviateVectorStore:
 
         for entry in query_response.objects:
             node = to_node(entry.__dict__, text_key=self._text_key)
+            nodes.append(node)
+            node_ids.append(nodes[-1].node_id)
+
+        return VectorStoreQueryResult(nodes=nodes, ids=node_ids, similarities=similarities)
+
+
+class WeaviateVectorStoreLegacy:
+    def __init__(
+        self,
+        weaviate_client: Optional[weaviate.WeaviateClient] = None,
+        index_name: Optional[str] = None,
+        text_key: str = "content",
+        auth_config: Optional[Any] = None,
+    ) -> None:
+        """Initialize params."""
+        index_name = index_name or f"Datasource_{uuid.uuid4().hex}"
+        self._index_name = index_name
+        self._text_key = text_key
+        self._auth_config = auth_config
+        self._weaviate_client = weaviate_client
+
+        self._weaviate_client.batch.configure(
+            batch_size=100,
+            dynamic=False,
+            timeout_retries=3,
+        )
+
+    @classmethod
+    def class_name(cls) -> str:
+        return "WeaviateVectorStore"
+
+    @property
+    def client(self) -> weaviate.Client:
+        """Get client."""
+        return self._weaviate_client
+
+    def get_nodes(self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None):
+        result = []
+        for node_id in node_ids:
+            try:
+                object_data = self.client.data_object.get_by_id(uuid=node_id, class_name=self._index_name)
+                if object_data:
+                    result.append(
+                        TextNode(
+                            id_=node_id,
+                            text=object_data.get("properties", {}).get(self._text_key, ""),
+                            metadata={k: v for k, v in object_data.get("properties", {}).items() if k in ["source"]},
+                        )
+                    )
+            except weaviate.exceptions.UnexpectedStatusCodeException:
+                pass
+        return result
+
+    def add(self, nodes, datasource_uuid, source) -> List[str]:
+        """Add nodes to index.
+
+        Args:
+            nodes: List[BaseNode]: list of nodes with embeddings
+
+        """
+        ids = [r.node_id for r in nodes]
+        with self.client.batch as batch:
+            for node in nodes:
+                content_key = self._text_key
+                content = node.text
+                id = node.node_id
+                properties = {content_key: content}
+                metadata_dict = node_to_metadata_dict(
+                    node, remove_text=True, flat_metadata=False, text_field=self._text_key
+                )
+                node_info = metadata_dict.get("_node_content", {})
+                # Add source and datasource_uuid
+                properties["source"] = source
+                properties["datasource_uuid"] = datasource_uuid
+                properties["node_info"] = node_info
+
+                if node.embedding:
+                    batch.add_data_object(
+                        data_object=properties,
+                        class_name=self._index_name,
+                        uuid=id,
+                        vector=node.embedding,
+                    )
+                else:
+                    batch.add_data_object(data_object=properties, class_name=self._index_name, uuid=id)
+        return ids
+
+    def delete(self, ref_doc_id: str) -> None:
+        self.client.data_object.delete(ref_doc_id, class_name=self._index_name)
+
+    def delete_index(self) -> None:
+        self.client.schema.delete_class(self._index_name)
+
+    def create_index(self, schema: Optional[dict]) -> None:
+        try:
+            return self.client.schema.get(self._index_name)
+        except weaviate.exceptions.UnexpectedStatusCodeException as e:
+            if e.status_code == 404:
+                return self.client.schema.create(schema)
+
+    def query(self, query: VectorStoreQuery, **kwargs: Any) -> VectorStoreQueryResult:
+        nodes = []
+        node_ids = []
+        similarities = []
+
+        if query.mode == VectorStoreQueryMode.HYBRID:
+            try:
+                query_response = (
+                    self.client.query.get(self._index_name, [self._text_key, "source"])
+                    .with_hybrid(
+                        query=query.query_str,
+                        vector=query.query_embedding,
+                        alpha=query.alpha,
+                        properties=[self._text_key],
+                    )
+                    .with_limit(limit=query.hybrid_top_k)
+                    .with_additional(
+                        ["id", "score"],
+                    )
+                    .with_where(
+                        {
+                            "path": [query.filters.filters[0].key],
+                            "operator": "Equal",
+                            "valueString": query.filters.filters[0].value,
+                        }
+                    )
+                    .do()
+                )
+            except Exception as e:
+                raise e
+
+        else:
+            try:
+                if query.query_embedding:
+                    # TODO add filter
+                    query_response = (
+                        self.client.query.get(self._index_name, [self._text_key, "source"])
+                        .with_near_vector(
+                            {"vector": query.query_embedding, "certainty": kwargs.get("search_distance", None)}
+                        )
+                        .with_limit(query.similarity_top_k if query.similarity_top_k is not None else 10)
+                        .with_additional(["id", "certainty", "distance"])
+                        .do()
+                    )
+
+                else:
+                    # TODO add filter
+                    query_response = (
+                        self.client.query.get(self._index_name, [self._text_key])
+                        .with_near_text(
+                            {"concepts": [query.query_str], "certainty": kwargs.get("search_distance", None)}
+                        )
+                        .with_limit(query.similarity_top_k if query.similarity_top_k is not None else 10)
+                        .with_additional(["id", "certainty", "distance"])
+                        .with_where(
+                            {
+                                "path": [query.filters.filters[0].key],
+                                "operator": "Equal",
+                                "valueString": query.filters.filters[0].value,
+                            }
+                        )
+                        .do()
+                    )
+            except Exception as e:
+                raise e
+
+        if not query_response or not query_response.get("data", {}).get("Get", {}).get("Text", []):
+            raise Exception("Error in fetching data from document store")
+
+        for entry in query_response.get("data", {}).get("Get", {}).get("Text", []):
+            entry_dict = {
+                "uuid": entry["_additional"]["id"],
+                "properties": {
+                    **entry,
+                },
+            }
+            node = to_node(entry_dict, text_key=self._text_key)
             nodes.append(node)
             node_ids.append(nodes[-1].node_id)
 
@@ -260,6 +441,7 @@ class Weaviate(BaseDestination):
                 {"name": "source", "dataType": ["text"], "description": "Document source"},
                 {"name": "metadata", "dataType": ["string[]"], "description": "Document metadata"},
                 {"name": "datasource_uuid", "dataType": ["text"], "description": "Datasource UUID"},
+                {"dataType": ["object"], "description": "node_info (in JSON)", "name": "node_info"},
             ],
         }
 
@@ -303,16 +485,10 @@ class Weaviate(BaseDestination):
                     skip_init_checks=True,
                 )
             elif self._deployment_config.instance.url:
-                protocol, url = self._deployment_config.instance.url.split("://")
-                host, port = url.split(":") if len(url.split(":")) == 2 else (url, 80)
-                weaviate_client = weaviate.WeaviateClient(
-                    connection_params=weaviate.connect.base.ConnectionParams(
-                        http=weaviate.connect.base.ProtocolParams(host=host, port=port, secure=protocol == "https"),
-                        grpc=weaviate.connect.base.ProtocolParams(host=host, port=50051, secure=protocol == "https"),
-                    ),
+                weaviate_client = weaviate.Client(
+                    url=self._deployment_config.instance.url,
                     auth_client_secret=auth,
                     additional_headers=additional_headers,
-                    skip_init_checks=True,
                 )
         else:
             weaviate_client = connect_to_wcs(
@@ -321,14 +497,22 @@ class Weaviate(BaseDestination):
                 headers=additional_headers,
             )
 
-        weaviate_client.connect()
+        if isinstance(weaviate_client, weaviate.WeaviateClient):
+            weaviate_client.connect()
+            self._client = WeaviateVectorStore(
+                weaviate_client=weaviate_client,
+                index_name=index_name,
+                text_key=self.text_key,
+                auth_config=self._deployment_config.auth,
+            )
 
-        self._client = WeaviateVectorStore(
-            weaviate_client=weaviate_client,
-            index_name=index_name,
-            text_key=self.text_key,
-            auth_config=self._deployment_config.auth,
-        )
+        elif isinstance(weaviate_client, weaviate.Client):
+            self._client = WeaviateVectorStoreLegacy(
+                weaviate_client=weaviate_client,
+                index_name=index_name,
+                text_key=self.text_key,
+                auth_config=self._deployment_config.auth,
+            )
 
         # Create collection if it doesn't exist
         self.create_collection()
