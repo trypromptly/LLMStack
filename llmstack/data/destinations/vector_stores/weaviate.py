@@ -16,6 +16,7 @@ from llama_index.core.vector_stores.types import (
 from llama_index.core.vector_stores.utils import (
     legacy_metadata_dict_to_node,
     metadata_dict_to_node,
+    node_to_metadata_dict,
 )
 from llama_index.vector_stores.weaviate.base import _to_weaviate_filter
 from pydantic import Field, PrivateAttr
@@ -32,7 +33,7 @@ from llmstack.processors.providers.weaviate import (
 logger = logging.getLogger(__name__)
 
 
-def to_node(entry: Dict, text_key: str = "Text") -> TextNode:
+def to_node(entry: Dict, text_key: str = "content") -> TextNode:
     """Convert to Node."""
     text = entry.get("properties", {}).get(text_key, "")
     source = entry.get("properties", {}).get("source", None)
@@ -94,7 +95,7 @@ class WeaviateVectorStore:
                         TextNode(
                             id_=node_id,
                             text=object_data.properties.get(self._text_key, ""),
-                            metadata={k: v for k, v in object_data.properties.items() if k != self._text_key},
+                            metadata={k: v for k, v in object_data.properties.items() if k in ["source"]},
                         )
                     )
             except weaviate.exceptions.UnexpectedStatusCodeException:
@@ -114,15 +115,17 @@ class WeaviateVectorStore:
             for node in nodes:
                 content_key = self._text_key
                 content = node.text
-                metadata = node.metadata
                 id = node.node_id
                 properties = {content_key: content}
-                for metadata_key in metadata.keys():
-                    properties[metadata_key] = metadata[metadata_key]
+                metadata_dict = node_to_metadata_dict(
+                    node, remove_text=True, flat_metadata=False, text_field=self._text_key
+                )
+                node_info = metadata_dict.get("_node_content", {})
 
                 # Add source and datasource_uuid
                 properties["source"] = source
                 properties["datasource_uuid"] = datasource_uuid
+                properties["node_info"] = node_info
 
                 if node.embedding:
                     # Vectors we provided with the document use them
@@ -188,6 +191,7 @@ class WeaviateVectorStore:
                     query_properties=[self._text_key],
                     return_metadata=None,
                     filters=filters,
+                    limit=query.hybrid_top_k,
                 )
             except Exception as e:
                 raise e
@@ -260,6 +264,7 @@ class Weaviate(BaseDestination):
                 {"name": "source", "dataType": ["text"], "description": "Document source"},
                 {"name": "metadata", "dataType": ["string[]"], "description": "Document metadata"},
                 {"name": "datasource_uuid", "dataType": ["text"], "description": "Datasource UUID"},
+                {"name": "node_info", "dataType": ["object"], "description": "node_info (in JSON)"},
             ],
         }
 
@@ -300,19 +305,6 @@ class Weaviate(BaseDestination):
                     grpc_secure=self._deployment_config.instance.grpc_secure,
                     headers=additional_headers,
                     auth_credentials=auth,
-                    skip_init_checks=True,
-                )
-            elif self._deployment_config.instance.url:
-                protocol, url = self._deployment_config.instance.url.split("://")
-                host, port = url.split(":") if len(url.split(":")) == 2 else (url, 80)
-                weaviate_client = weaviate.WeaviateClient(
-                    connection_params=weaviate.connect.base.ConnectionParams(
-                        http=weaviate.connect.base.ProtocolParams(host=host, port=port, secure=protocol == "https"),
-                        grpc=weaviate.connect.base.ProtocolParams(host=host, port=50051, secure=protocol == "https"),
-                    ),
-                    auth_client_secret=auth,
-                    additional_headers=additional_headers,
-                    skip_init_checks=True,
                 )
         else:
             weaviate_client = connect_to_wcs(

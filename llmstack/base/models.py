@@ -110,7 +110,7 @@ def get_vendor_env_platform_defaults():
                 provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
             ).model_dump()
 
-    if settings.WEAVIATE_URL:
+    if settings.WEAVIATE_PROVIDER_CONFIG:
         from llmstack.processors.providers.weaviate import APIKey
 
         auth = None
@@ -119,7 +119,7 @@ def get_vendor_env_platform_defaults():
 
         provider_configs["weaviate/*/*/*"] = WeaviateProviderConfig(
             provider_slug="weaviate",
-            instance=WeaviateLocalInstance(url=settings.WEAVIATE_URL),
+            instance=WeaviateLocalInstance(**settings.WEAVIATE_PROVIDER_CONFIG),
             auth=auth,
             additional_headers=[],
             embeddings_provider=EmbeddingsProvider.OPENAI,
