@@ -1,3 +1,5 @@
+from functools import cache
+
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.text_extract import extract_text_elements
@@ -45,6 +47,7 @@ def extract_documents(
     return docs
 
 
+@cache
 def get_source_cls(slug, provider_slug):
     from llmstack.data.sources.files.csv import CSVFileSchema
     from llmstack.data.sources.files.file import FileSchema

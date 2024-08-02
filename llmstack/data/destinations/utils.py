@@ -1,3 +1,7 @@
+from functools import cache
+
+
+@cache
 def get_destination_cls(slug, provider_slug):
     from llmstack.data.destinations.stores.singlestore import SingleStore
     from llmstack.data.destinations.vector_stores.chromadb import ChromaDB
