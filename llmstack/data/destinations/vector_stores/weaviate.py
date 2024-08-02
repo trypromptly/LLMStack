@@ -482,7 +482,6 @@ class Weaviate(BaseDestination):
                     grpc_secure=self._deployment_config.instance.grpc_secure,
                     headers=additional_headers,
                     auth_credentials=auth,
-                    skip_init_checks=True,
                 )
             elif self._deployment_config.instance.url:
                 weaviate_client = weaviate.Client(

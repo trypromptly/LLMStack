@@ -564,6 +564,16 @@ PROVIDERS = [
     },
 ]
 
+WEAVIATE_PROVIDER_CONFIG = {
+    "url": os.getenv("WEAVIATE_URL", "http://weaviate:8080"),
+    "http_host": os.getenv("WEAVIATE_HTTP_HOST", "weaviate"),
+    "http_port": os.getenv("WEAVIATE_HTTP_PORT", 8080),
+    "http_secure": os.getenv("WEAVIATE_HTTP_SECURE", False),
+    "grpc_host": os.getenv("WEAVIATE_GRPC_HOST", "weaviate"),
+    "grpc_port": os.getenv("WEAVIATE_GRPC_PORT", 50051),
+    "grpc_secure": os.getenv("WEAVIATE_GRPC_SECURE", False),
+}
+
 # Include networking providers if they are enabled
 try:
     import jnpr.junos  # noqa: F401

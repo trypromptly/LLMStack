@@ -119,7 +119,7 @@ def get_vendor_env_platform_defaults():
 
         provider_configs["weaviate/*/*/*"] = WeaviateProviderConfig(
             provider_slug="weaviate",
-            instance=WeaviateLocalInstance(url=settings.WEAVIATE_URL),
+            instance=WeaviateLocalInstance(**settings.WEAVIATE_PROVIDER_CONFIG),
             auth=auth,
             additional_headers=[],
             embeddings_provider=EmbeddingsProvider.OPENAI,
