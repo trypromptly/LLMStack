@@ -3042,13 +3042,13 @@ six = "*"
 
 [[package]]
 name = "langrocks"
-version = "0.1.1"
+version = "0.1.2"
 description = "Tools like web browser and code interpreters for LLMs"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "langrocks-0.1.1-py3-none-any.whl", hash = "sha256:175afe92c025f933e9597f1ebf83fa4c6ecb0bf61c67f4b9241b3afd3301488b"},
-    {file = "langrocks-0.1.1.tar.gz", hash = "sha256:91ed8ebd4ad6d663c16875522ef3078a9f5d877f78b5b6d5f5e48f9091df2958"},
+    {file = "langrocks-0.1.2-py3-none-any.whl", hash = "sha256:7133083fa0b50307fb5266c82cf7e8cc84a0d513266b1845f60a9fcffd68a86e"},
+    {file = "langrocks-0.1.2.tar.gz", hash = "sha256:d05c7464be624e3122ffd35bb6b5db1ff0b034efd2d6eb252e68a67d36ab2476"},
 ]
 
 [package.dependencies]
@@ -7906,17 +7906,6 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.9.0"
-description = "Backported and Experimental Type Hints for Python 3.8+"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "typing_extensions-4.9.0-py3-none-any.whl", hash = "sha256:af72aea155e91adfc61c3ae9e0e342dbc0cba726d6cba4b6c72c1f34e47291cd"},
-    {file = "typing_extensions-4.9.0.tar.gz", hash = "sha256:23478f88c37f27d76ac8aee6c905017a143b0b1b886c3c9f66bc2fd94f9f5783"},
-]
-
-[[package]]
-name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
@@ -8949,4 +8938,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "1b3c5c50cb0415f91398bd3007f0a9fcd24f91b6f56f86f1b4fca0c0fce42144"
+content-hash = "9cfb568fcaa70ef068b5baf018ef47869efc97a31e40ab0aad7c7c8718da91af"

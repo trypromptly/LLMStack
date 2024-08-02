@@ -1,16 +1,12 @@
 import base64
 import logging
 import uuid
-from typing import Iterator, List, Optional
+from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from langrocks.client.web_browser import WebBrowserContextManager
-from langrocks.common.models.web_browser import (
-    WebBrowserCommand,
-    WebBrowserCommandType,
-    WebBrowserSessionConfig,
-)
+from langrocks.client import WebBrowser
+from langrocks.common.models.web_browser import WebBrowserCommand, WebBrowserCommandType
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
@@ -94,63 +90,60 @@ class StaticWebBrowser(
 """,
         )
 
-    def _request_iterator(
-        self,
-    ) -> Iterator[WebBrowserCommand]:
-        for instruction in self._input.instructions:
-            instruction_type = instruction.type
-            if instruction.type == BrowserInstructionType.GOTO.value:
-                instruction_type = WebBrowserCommandType.GOTO
-            elif instruction.type == BrowserInstructionType.CLICK.value:
-                instruction_type = WebBrowserCommandType.CLICK
-            elif instruction.type == BrowserInstructionType.WAIT.value:
-                instruction_type = WebBrowserCommandType.WAIT
-            elif instruction.type == BrowserInstructionType.COPY.value:
-                instruction_type = WebBrowserCommandType.COPY
-            elif instruction.type == BrowserInstructionType.SCROLLX.value:
-                instruction_type = WebBrowserCommandType.SCROLL_X
-            elif instruction.type == BrowserInstructionType.SCROLLY.value:
-                instruction_type = WebBrowserCommandType.SCROLL_Y
-            elif instruction.type == BrowserInstructionType.TERMINATE.value:
-                instruction_type = WebBrowserCommandType.TERMINATE
-            elif instruction.type == BrowserInstructionType.ENTER.value:
-                instruction_type = WebBrowserCommandType.ENTER
+    def _web_browser_instruction_to_command(self, instruction: BrowserInstruction) -> WebBrowserCommand:
+        instruction_type = instruction.type
+        if instruction.type == BrowserInstructionType.GOTO.value:
+            instruction_type = WebBrowserCommandType.GOTO
+        elif instruction.type == BrowserInstructionType.CLICK.value:
+            instruction_type = WebBrowserCommandType.CLICK
+        elif instruction.type == BrowserInstructionType.WAIT.value:
+            instruction_type = WebBrowserCommandType.WAIT
+        elif instruction.type == BrowserInstructionType.COPY.value:
+            instruction_type = WebBrowserCommandType.COPY
+        elif instruction.type == BrowserInstructionType.SCROLLX.value:
+            instruction_type = WebBrowserCommandType.SCROLL_X
+        elif instruction.type == BrowserInstructionType.SCROLLY.value:
+            instruction_type = WebBrowserCommandType.SCROLL_Y
+        elif instruction.type == BrowserInstructionType.TERMINATE.value:
+            instruction_type = WebBrowserCommandType.TERMINATE
+        elif instruction.type == BrowserInstructionType.ENTER.value:
+            instruction_type = WebBrowserCommandType.ENTER
 
-            yield WebBrowserCommand(
-                command_type=instruction_type, data=(instruction.data or ""), selector=(instruction.selector or "")
-            )
+        return WebBrowserCommand(
+            command_type=instruction_type, data=(instruction.data or ""), selector=(instruction.selector or "")
+        )
 
     def process(self) -> dict:
         output_stream = self._output_stream
         browser_response = None
 
-        with WebBrowserContextManager(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}") as web_browser:
-            session, content_iter = web_browser.run_commands_interactive(
-                commands_iterator=self._request_iterator(),
-                config=WebBrowserSessionConfig(
-                    init_url=self._input.url,
-                    timeout=self._config.timeout,
-                    interactive=self._config.stream_video,
-                    capture_screenshot=True,
-                    tags_to_extract=self._config.tags_to_extract,
-                ),
-            )
-
-            if session and session.ws_url:
-                # Send session info to the client
+        with WebBrowser(
+            f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
+            interactive=self._config.stream_video,
+            capture_screenshot=True,
+            tags_to_extract=self._config.tags_to_extract,
+        ) as web_browser:
+            if self._config.stream_video and web_browser.get_wss_url():
                 async_to_sync(
                     output_stream.write,
                 )(
                     WebBrowserOutput(
                         session=BrowserRemoteSessionData(
-                            ws_url=session.ws_url,
+                            ws_url=web_browser.get_wss_url(),
                         ),
                     ),
                 )
 
-            for content in content_iter:
-                browser_response = content
-        # If browser_response contains screenshot, convert it to objref
+            browser_response = web_browser.run_commands(
+                [
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.GOTO,
+                        data=self._input.url,
+                    )
+                ]
+                + list(map(self._web_browser_instruction_to_command, self._input.instructions))
+            )
+
         screenshot_asset = None
         if browser_response and browser_response.screenshot:
             screenshot_asset = self._upload_asset_from_url(
