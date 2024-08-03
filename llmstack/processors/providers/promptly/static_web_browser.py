@@ -41,9 +41,9 @@ class StaticWebBrowserConfiguration(ApiProcessorSchema):
         le=100,
     )
     tags_to_extract: List[str] = Field(
-        description="Tags to extract",
+        description="Tags to extract. e.g. ['a', 'img']",
         default=[],
-        json_schema_extra={"advanced_parameter": True, "widget": "hidden"},
+        json_schema_extra={"advanced_parameter": True},
     )
 
 
