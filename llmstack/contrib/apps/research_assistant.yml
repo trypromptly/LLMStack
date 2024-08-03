@@ -3,7 +3,7 @@ slug: research-assistant
 description: >-
   This assistant helps you find answers to your questions by searching the web
   and providing citations for the sources used in the response.
-version: "0.0.1"
+version: "0.0.2"
 icon: research_assistant_icon.png
 categories:
   - utilities
@@ -77,7 +77,7 @@ processors:
   - id: web_search
     name: Web Search
     input:
-      url: "www.google.com/search?q={{query}}"
+      url: "https://www.google.com/search?q={{query | url_encode}}"
       instructions: [{ "type": "Wait", "selector": "body", "data": "" }]
     config:
       timeout: 10
@@ -105,16 +105,16 @@ processors:
         ## Text from the search results page
 
 
-        {{text}}
+        {{text | truncate: 5000}}
 
 
         ## Links from the search results page
 
 
         {% for link in content.links %}
-
+        {% unless link.url contains "google.com" %}
         {{ link.url }} - {{ link.text }}
-
+        {% endunless %}
         {% endfor %}
   - id: open_url
     name: Static Web Browser

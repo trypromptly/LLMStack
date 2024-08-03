@@ -1,7 +1,7 @@
 name: News Article Generator
 slug: news-article-generator
 description: Generate a news article on a given topic
-version: "0.0.1"
+version: "0.0.2"
 icon: news_article_generator_icon.png
 categories:
   - utilities
@@ -120,11 +120,11 @@ processors:
         ## Text from the page
 
 
-        {{text | truncate: 4000}}
+        {{text | truncate: 5000}}
   - id: web_search
     name: Web Search
     input:
-      url: www.google.com/search?q={{query}}
+      url: https://www.google.com/search?q={{query | url_encode}}
       instructions:
         - data: ""
           type: Wait
@@ -150,27 +150,25 @@ processors:
         type="image/png"></pa-asset>%}{% else %}<promptly-web-browser-embed
         wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>{% endif %}
 
-
-
         ## Text from the search results page
 
-
-        {{text}}
+        {{text | truncate: 5000}}
 
 
         ## Links from the search results page
 
-
         {% for link in content.links %}
 
+        {% unless link.url contains "google.com" %}
         {{ link.url }} - {{ link.text }}
+        {% endunless %}
 
         {% endfor %}
   - id: image_search
     name: Image Search
     input:
       url: >-
-        https://duckduckgo.com/?t=h_&q={{query}}&iax=images&ia=images&iaf=size%3ALarge
+        https://duckduckgo.com/?t=h_&q={{query | url_encode}}&iax=images&ia=images&iaf=size%3ALarge
       instructions:
         - data: "2000"
           type: Wait
@@ -197,17 +195,16 @@ processors:
         wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>{% endif %}
 
 
-
         ## Text from the search results page
 
-
-        {{text}}
+        {{text | truncate: 2000}}
 
 
         ## Images from the search results page
 
+        {% assign images = content.images | slice: 0, 15 %}
 
-        {% for img in content.images %}
+        {% for img in images %}
 
         {{ img.src }} - {{ img.text }}
 
