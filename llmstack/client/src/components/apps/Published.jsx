@@ -128,7 +128,11 @@ export const PublishedAppFooter = () => {
 
 export const PublishedApp = ({ ws, app, error, isLoggedIn, isMobile }) => {
   return (
-    <Stack container spacing={2} height={"100vh"}>
+    <Stack
+      container
+      spacing={2}
+      height={isMobile ? "calc(100vh - 50px)" : "100vh"}
+    >
       <PublishedAppHeader
         appName={app.name}
         appLogo={app.logo}
