@@ -1,7 +1,7 @@
 name: News Article Generator
 slug: news-article-generator
 description: Generate a news article on a given topic
-version: "0.0.2"
+version: "0.0.3"
 icon: news_article_generator_icon.png
 categories:
   - utilities
@@ -168,18 +168,18 @@ processors:
     name: Image Search
     input:
       url: >-
-        https://duckduckgo.com/?t=h_&q={{query | url_encode}}&iax=images&ia=images&iaf=size%3ALarge
+        https://commons.wikimedia.org/w/index.php?search={{query | url_encode}}&title=Special:MediaSearch&go=Go&type=image
       instructions:
-        - data: "2000"
+        - data: "1000"
           type: Wait
-          selector: dummy
+          selector: body
     config:
       timeout: 10
       stream_video: true
       connection_id: null
       tags_to_extract:
         - img
-    description: Search the internet for images
+    description: Search the wikipedia for relevant images
     input_fields:
       - name: query
         type: string
@@ -206,7 +206,13 @@ processors:
 
         {% for img in images %}
 
-        {{ img.src }} - {{ img.text }}
+        {% assign url = img.src %}
+        {% assign parts = url | split: "/" %}
+        {% assign filename = parts | last %}
+        {% assign newfilename = "/" | append: filename %}
+        {% assign base_url = url | remove: "/thumb" | replace: newfilename, "" %}
+
+        {{ base_url }} - {{ img.text }}
 
         {% endfor %}
 input_fields:
