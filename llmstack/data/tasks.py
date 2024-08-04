@@ -70,34 +70,3 @@ def process_datasource_resync_request(user_email, datasource_uuid):
         "status_code": response.status_code,
         "data": response.data,
     }
-
-
-def extract_page_hrefs_task(page_url, cdp_url=None):
-    from playwright.sync_api import sync_playwright
-
-    if not page_url.startswith("https://") and not page_url.startswith("http://"):
-        page_url = f"https://{page_url}"
-
-    urls = [page_url]
-    try:
-        with sync_playwright() as p:
-            if not cdp_url:
-                from django.conf import settings
-
-                cdp_url = settings.PLAYWRIGHT_URL
-
-            browser = p.chromium.connect(ws_endpoint=cdp_url)
-            context = browser.new_context()
-            page = context.new_page()
-            page.goto(page_url)
-            # Extract all URLs from the page
-            anchors = page.query_selector_all("a")
-            for anchor in anchors:
-                href = anchor.get_attribute("href")
-                if href and href.startswith("http"):
-                    urls.append(href)
-
-            browser.close()
-    except Exception:
-        logger.exception("Error while extracting page hrefs")
-    return list(set(urls))

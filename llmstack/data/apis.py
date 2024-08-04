@@ -1,25 +1,23 @@
 import logging
-import time
 import uuid
-from concurrent.futures import Future
 from typing import List
 
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from flags.state import flag_enabled
+from langrocks.client import WebBrowser
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
-from rq.job import Job
 
 from llmstack.data.schemas import DataDocument
 from llmstack.data.yaml_loader import (
     get_data_pipeline_template_by_slug,
     get_data_pipelines_from_contrib,
 )
-from llmstack.jobs.adhoc import AddDataSourceEntryJob, ExtractURLJob
+from llmstack.jobs.adhoc import AddDataSourceEntryJob
 
 from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
 from .serializers import DataSourceEntrySerializer, DataSourceSerializer
-from .tasks import extract_page_hrefs_task
 
 logger = logging.getLogger(__name__)
 
@@ -501,25 +499,10 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         if not url.startswith("https://") and not url.startswith("http://"):
             url = f"https://{url}"
 
-        job = ExtractURLJob.create(func=extract_page_hrefs_task, args=[url]).add_to_queue()
+        runner_url = f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}"
+        urls = [url]
 
-        # Wait for job to finish and return the result
-        elapsed_time = 0
-        while True and elapsed_time < 30:
-            time.sleep(1)
-
-            if isinstance(job, Future) and job.done():
-                break
-            elif isinstance(job, Job) and (job.is_failed or job.is_finished or job.is_stopped or job.is_canceled):
-                break
-
-            elapsed_time += 1
-
-        if isinstance(job, Future):
-            urls = job.result()
-        elif job.is_failed or job.is_stopped or job.is_canceled:
-            urls = [url]
-        else:
-            urls = job.result
+        with WebBrowser(runner_url, html=True, interactive=False) as browser:
+            urls.extend(browser.get_links(url=url))
 
         return DRFResponse({"urls": urls})
