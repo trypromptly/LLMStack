@@ -18,7 +18,6 @@ from llama_index.core.vector_stores.utils import (
     metadata_dict_to_node,
     node_to_metadata_dict,
 )
-from llama_index.vector_stores.weaviate.base import _to_weaviate_filter
 from pydantic import Field, PrivateAttr
 from weaviate.classes.config import Configure, DataType, Property
 from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
@@ -34,6 +33,66 @@ from llmstack.processors.providers.weaviate import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _transform_weaviate_filter_operator(operator: str) -> str:
+    """Translate standard metadata filter operator to Chroma specific spec."""
+    if operator == "!=":
+        return "NotEqual"
+    elif operator == "==":
+        return "Equal"
+    elif operator == ">":
+        return "GreaterThan"
+    elif operator == "<":
+        return "LessThan"
+    elif operator == ">=":
+        return "GreaterThanEqual"
+    elif operator == "<=":
+        return "LessThanEqual"
+    else:
+        raise ValueError(f"Filter operator {operator} not supported")
+
+
+def _transform_weaviate_filter_condition(condition: str) -> str:
+    """Translate standard metadata filter op to Chroma specific spec."""
+    if condition == "and":
+        return "And"
+    elif condition == "or":
+        return "Or"
+    else:
+        raise ValueError(f"Filter condition {condition} not supported")
+
+
+def _to_weaviate_filter(standard_filters: MetadataFilters) -> Dict[str, Any]:
+    filters_list = []
+    condition = standard_filters.condition or "and"
+    condition = _transform_weaviate_filter_condition(condition)
+
+    if standard_filters.filters:
+        for filter in standard_filters.filters:
+            value_type = "valueText"
+            if isinstance(filter.value, float):
+                value_type = "valueNumber"
+            elif isinstance(filter.value, int):
+                value_type = "valueNumber"
+            elif isinstance(filter.value, str) and filter.value.isnumeric():
+                filter.value = float(filter.value)
+                value_type = "valueNumber"
+            filters_list.append(
+                {
+                    "path": filter.key,
+                    "operator": _transform_weaviate_filter_operator(filter.operator),
+                    value_type: filter.value,
+                }
+            )
+    else:
+        return {}
+
+    if len(filters_list) == 1:
+        # If there is only one filter, return it directly
+        return filters_list[0]
+
+    return {"operands": filters_list, "operator": condition}
 
 
 def to_node(entry: Dict, text_key: str = "content") -> TextNode:
