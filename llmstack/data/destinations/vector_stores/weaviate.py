@@ -136,12 +136,14 @@ def _create_weaviate_client(
             grpc_secure=weaviate_config.grpc_secure,
             headers=additional_headers,
             auth_credentials=auth,
+            skip_init_checks=True,
         )
     else:
         weaviate_client = connect_to_wcs(
             cluster_url=weaviate_config.cluster_url,
             auth_credentials=auth,
             headers=additional_headers,
+            skip_init_checks=True,
         )
     weaviate_client.connect()
     return weaviate_client
