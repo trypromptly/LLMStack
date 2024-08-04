@@ -42,7 +42,7 @@ class DataIngestionPipeline:
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
-            self._destination.initialize_client(datasource=self.datasource)
+            self._destination.initialize_client(datasource=self.datasource, create_collection=True)
 
     def process(self, document: DataDocument) -> DataDocument:
         document = self._source_cls.process_document(document)
@@ -86,7 +86,7 @@ class DataQueryPipeline:
 
         if self._destination_cls:
             self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
-            self._destination.initialize_client(datasource=self.datasource)
+            self._destination.initialize_client(datasource=self.datasource, create_collection=False)
 
         if self.datasource.pipeline_obj.embedding:
             embedding_data = self.datasource.pipeline_obj.embedding.data
@@ -126,7 +126,6 @@ class DataQueryPipeline:
 
     def get_entry_text(self, document: DataDocument) -> str:
         if self._destination:
-            self._destination.initialize_client(datasource=self.datasource)
             if document.node_ids:
                 result = self._destination.get_nodes(document.node_ids[:20])
                 if result:

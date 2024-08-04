@@ -379,7 +379,8 @@ class Weaviate(BaseDestination):
         )
 
         # Create collection if it doesn't exist
-        self.create_collection()
+        if kwargs.get("create_collection", True):
+            self.create_collection()
 
     def add(self, document: DataDocument) -> DataDocument:
         return self._client.add(document.nodes, datasource_uuid=document.datasource_uuid, source=document.name)
