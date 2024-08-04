@@ -5,11 +5,10 @@ import uuid
 from enum import Enum
 from typing import Optional
 
-from playwright.sync_api import sync_playwright
+from langrocks.client import WebBrowser
 from pydantic import Field
 from unstructured.partition.auto import partition_html
 
-from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_url
 from llmstack.data.schemas import DataDocument
 from llmstack.data.sources.base import BaseSource
 from llmstack.data.sources.utils import create_source_document_asset
@@ -33,43 +32,28 @@ def get_connection_context(connection_id: str, datasource_uuid: str):
 
 def extract_text(html_page):
     elements = partition_html(text=html_page)
-    return "\n".join(list(map(lambda x: str(x), elements))) or "Could not extract text from URL"
+    return "\n".join(list(map(lambda x: x.text, elements))) or "Could not extract text from URL"
 
 
-def get_page_html(url: str, cdp_url=None, **kwargs):
+def get_page_html(url: str, **kwargs):
+    page_html = "<html></html>"
+    from django.conf import settings
+
     if not url.startswith("https://") and not url.startswith("http://"):
         url = f"https://{url}"
 
-    with sync_playwright() as p:
-        if not cdp_url:
-            from django.conf import settings
+    try:
+        with WebBrowser(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}", html=True, interactive=False) as browser:
+            page_html = browser.get_html(url=url)
+    except Exception as e:
+        logger.exception(f"Error while extracting page html: {e}")
 
-            cdp_url = settings.PLAYWRIGHT_URL
-        browser = p.chromium.connect(ws_endpoint=cdp_url)
-        if kwargs.get("storage_state"):
-            context = browser.new_context(storage_state=kwargs.get("storage_state"))
-        else:
-            context = browser.new_context()
-        page = context.new_page()
-        page.goto(url, timeout=kwargs.get("timeout", 30000))
-        page_html = page.content()
-        text = partition_html(text=page_html)
-        return "\n".join(list(map(lambda x: str(x), text))) or "Could not extract text from URL"
-
-
-def get_url_data(url: str, connection=None, **kwargs):
-    if not url.startswith("https://") and not url.startswith("http://"):
-        url = f"https://{url}"
-
-    text = extract_text_from_url(
-        url,
-        extra_params=ExtraParams(openai_key=kwargs.get("openai_key"), connection=connection),
-    )
-    return text or "Could not extract text from URL"
+    return page_html
 
 
 class URLScraper(str, Enum):
     LOCAL = "local"
+    LANGROCKS = "langrocks"
 
     def __str__(self):
         return str(self.value)

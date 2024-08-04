@@ -46,17 +46,18 @@ class UnstructuredIOSplitter(TextSplitter, UnstructuredIOTransformers):
     def split_text(self, node) -> List[str]:
         node_elements = []
         chunks = []
-
         try:
             if hasattr(node, "content"):
                 asset = get_asset_by_objref(node.content, None, None)
-                with asset.file.open(mode="rb") as f:
-                    asset_file_bytes = f.read()
-                    node_elements = partition(
-                        file=io.BytesIO(asset_file_bytes),
-                        file_name=asset.metadata.get("file_name", ""),
-                        content_type=node.mimetype,
-                    )
+                if asset:
+                    mime_type = asset.metadata.get("mime_type", "text/plain")
+                    with asset.file.open(mode="rb") as f:
+                        asset_file_bytes = f.read()
+                        node_elements = partition(
+                            file=io.BytesIO(asset_file_bytes),
+                            file_name=asset.metadata.get("file_name", ""),
+                            content_type=mime_type,
+                        )
         except Exception:
             pass
         if not node_elements:
@@ -67,7 +68,7 @@ class UnstructuredIOSplitter(TextSplitter, UnstructuredIOTransformers):
         else:
             chunks = chunk_elements(node_elements, **self.strategy.dict())
 
-        return [str(chunk) for chunk in chunks]
+        return [chunk.text for chunk in chunks]
 
     def split_texts(self, texts: List[str]) -> List[str]:
         raise NotImplementedError

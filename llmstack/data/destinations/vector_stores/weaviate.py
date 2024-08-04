@@ -1,7 +1,7 @@
 import json
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import weaviate
 import weaviate.classes as wvc
@@ -28,6 +28,7 @@ from llmstack.data.schemas import DataDocument
 from llmstack.processors.providers.weaviate import (
     APIKey,
     EmbeddingsProvider,
+    WeaviateCloudInstance,
     WeaviateLocalInstance,
     WeaviateProviderConfig,
 )
@@ -60,6 +61,31 @@ def to_node(entry: Dict, text_key: str = "content") -> TextNode:
         )
     node.metadata["source"] = source
     return node
+
+
+def _create_weaviate_client(
+    weaviate_config: Union[WeaviateLocalInstance, WeaviateCloudInstance], auth=None, additional_headers=None
+):
+    weaviate_client = None
+    if isinstance(weaviate_config, WeaviateLocalInstance):
+        weaviate_client = connect_to_custom(
+            http_host=weaviate_config.http_host,
+            http_port=weaviate_config.http_port,
+            http_secure=weaviate_config.http_secure,
+            grpc_host=weaviate_config.grpc_host,
+            grpc_port=weaviate_config.grpc_port,
+            grpc_secure=weaviate_config.grpc_secure,
+            headers=additional_headers,
+            auth_credentials=auth,
+        )
+    else:
+        weaviate_client = connect_to_wcs(
+            cluster_url=weaviate_config.cluster_url,
+            auth_credentials=auth,
+            headers=additional_headers,
+        )
+    weaviate_client.connect()
+    return weaviate_client
 
 
 class WeaviateVectorStore:
@@ -284,33 +310,7 @@ class Weaviate(BaseDestination):
         if isinstance(self._deployment_config.auth, APIKey):
             auth = weaviate.auth.AuthApiKey(api_key=self._deployment_config.auth.api_key)
 
-        weaviate_client = None
-
-        if isinstance(self._deployment_config.instance, WeaviateLocalInstance):
-            if (
-                self._deployment_config.instance.http_host
-                and self._deployment_config.instance.http_port
-                and self._deployment_config.instance.grpc_host
-                and self._deployment_config.instance.grpc_port
-            ):
-                weaviate_client = connect_to_custom(
-                    http_host=self._deployment_config.instance.http_host,
-                    http_port=self._deployment_config.instance.http_port,
-                    http_secure=self._deployment_config.instance.http_secure,
-                    grpc_host=self._deployment_config.instance.grpc_host,
-                    grpc_port=self._deployment_config.instance.grpc_port,
-                    grpc_secure=self._deployment_config.instance.grpc_secure,
-                    headers=additional_headers,
-                    auth_credentials=auth,
-                )
-        else:
-            weaviate_client = connect_to_wcs(
-                cluster_url=self._deployment_config.instance.cluster_url,
-                auth_credentials=auth,
-                headers=additional_headers,
-            )
-
-        weaviate_client.connect()
+        weaviate_client = _create_weaviate_client(self._deployment_config.instance, auth, additional_headers)
 
         self._client = WeaviateVectorStore(
             weaviate_client=weaviate_client,
