@@ -1,5 +1,4 @@
 import base64
-import json
 import logging
 import os
 import shutil
@@ -7,12 +6,12 @@ import tempfile
 import time
 import uuid
 from enum import Enum
-from io import BytesIO
 from typing import Optional
 
-import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
+from langrocks.client.files import FileOperations
+from langrocks.common.models.files import FileMimeType
 from pydantic import Field, model_validator
 
 from llmstack.apps.schemas import OutputTemplate
@@ -51,41 +50,11 @@ def _file_extension_from_mime_type(mime_type):
         return "bin"
 
 
-class FileMimeType(str, Enum):
-    TEXT = "text/plain"
-    HTML = "text/html"
-    CSS = "text/css"
-    JAVASCRIPT = "application/javascript"
-    JSON = "application/json"
-    XML = "application/xml"
-    CSV = "text/csv"
-    TSV = "text/tab-separated-values"
-    MARKDOWN = "text/markdown"
-    PDF = "application/pdf"
-    OCTET_STREAM = "application/octet-stream"
-
-    def __str__(self):
-        return self.value
-
-    def grpc_mime_type(self):
-        from langrocks.common.models import runner_pb2
-
-        if self == FileMimeType.TEXT:
-            return runner_pb2.ContentMimeType.TEXT
-        elif self == FileMimeType.HTML:
-            return runner_pb2.ContentMimeType.HTML
-        elif self == FileMimeType.JSON:
-            return runner_pb2.ContentMimeType.JSON
-        elif self == FileMimeType.PDF:
-            return runner_pb2.ContentMimeType.PDF
-        else:
-            return runner_pb2.ContentMimeType.TEXT
-
-
 class FileOperationsInput(ApiProcessorSchema):
     content: Optional[str] = Field(
         default="",
         description="The contents of the file. Skip this field if you want to create an archive of the directory",
+        json_schema_extra={"widget": "textarea"},
     )
     content_mime_type: Optional[FileMimeType] = Field(
         default=FileMimeType.TEXT,
@@ -105,7 +74,7 @@ class FileOperationsInput(ApiProcessorSchema):
     )
     output_mime_type: FileMimeType = Field(
         default=FileMimeType.TEXT,
-        description="The mimetype of the file. If not provided, it will be inferred from the filename",
+        description="The mimetype of the output file. If not provided, it will be inferred from the filename",
     )
 
     @model_validator(mode="before")
@@ -226,8 +195,6 @@ class FileOperationsProcessor(
         )
 
     def process(self) -> dict:
-        from langrocks.common.models import runner_pb2, runner_pb2_grpc
-
         input_content_bytes = None
         input_content_mime_type = None
         data_uri = None
@@ -256,26 +223,19 @@ class FileOperationsProcessor(
         if operation == FileOperationOperation.CONVERT:
             if input_content_bytes is None or input_content_mime_type is None:
                 raise ValueError("Content is missing or invalid")
-            with grpc.insecure_channel(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}") as channel:
-                stub = runner_pb2_grpc.RunnerStub(channel)
-                request = runner_pb2.FileConverterRequest(
-                    file=runner_pb2.Content(
-                        data=input_content_bytes,
-                        mime_type=input_content_mime_type.grpc_mime_type(),
-                    ),
-                    target_mime_type=self._input.output_mime_type.grpc_mime_type(),
-                    options=json.loads(self._config.operation_config),
+
+            with FileOperations(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}") as fops:
+                response = fops.convert_file(
+                    data=input_content_bytes,
+                    filename=filename,
+                    input_mime_type=input_content_mime_type,
+                    output_mime_type=self._input.output_mime_type,
                 )
-                response_iter = stub.GetFileConverter(iter([request]))
-                response_buffer = BytesIO()
-                for response in response_iter:
-                    response_buffer.write(response.file.data)
-                response_buffer.seek(0)
                 data_uri = create_data_uri(
-                    response_buffer.read(),
+                    response.data,
                     str(self._input.output_mime_type),
                     base64_encode=True,
-                    filename=full_file_path,
+                    filename=response.name,
                 )
 
         elif operation == FileOperationOperation.CREATE:
