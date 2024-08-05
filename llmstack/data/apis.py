@@ -502,7 +502,8 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         runner_url = f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}"
         urls = [url]
 
-        with WebBrowser(runner_url, html=True, interactive=False) as browser:
-            urls.extend(browser.get_links(url=url))
+        with WebBrowser(runner_url, html=True, interactive=False, tags_to_extract=["a"]) as browser:
+            urls.extend([entry.url for entry in browser.get_links(url=url)])
 
+        urls = list(set(filter(lambda x: x.startswith("http"), urls)))
         return DRFResponse({"urls": urls})
