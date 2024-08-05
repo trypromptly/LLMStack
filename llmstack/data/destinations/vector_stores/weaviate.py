@@ -7,7 +7,6 @@ import weaviate
 import weaviate.classes as wvc
 from llama_index.core.schema import TextNode
 from llama_index.core.vector_stores.types import (
-    MetadataFilter,
     MetadataFilters,
     VectorStoreQuery,
     VectorStoreQueryMode,
@@ -19,14 +18,13 @@ from llama_index.core.vector_stores.utils import (
     node_to_metadata_dict,
 )
 from pydantic import Field, PrivateAttr
-from weaviate.classes.config import Configure, DataType, Property
+from weaviate.classes.config import DataType, Property
 from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
 
 from llmstack.data.destinations.base import BaseDestination
 from llmstack.data.schemas import DataDocument
 from llmstack.processors.providers.weaviate import (
     APIKey,
-    EmbeddingsProvider,
     WeaviateCloudInstance,
     WeaviateLocalInstance,
     WeaviateProviderConfig,
@@ -232,39 +230,23 @@ class WeaviateVectorStore:
     def create_index(self, schema: Optional[dict]) -> None:
         if not self._weaviate_client.collections.exists(self._index_name):
             properties = []
-            vectorizer_config = None
             if schema:
-                if "properties" in schema:
-                    for prop in schema["properties"]:
-                        data_type = DataType.TEXT
-                        if prop["dataType"][0] == "string[]":
-                            data_type = DataType.TEXT_ARRAY
-                        properties.append(
-                            Property(
-                                name=prop["name"],
-                                data_type=data_type,
-                                description=prop["description"],
-                                vectorize_property_name=False,
-                            )
-                        )
+                for prop in schema.get("properties", []):
+                    data_type = DataType.TEXT
+                    if prop["dataType"][0] == "string[]":
+                        data_type = DataType.TEXT_ARRAY
+                    properties.append(Property(name=prop["name"], data_type=data_type, description=prop["description"]))
 
-                if "vectorizer" in schema:
-                    if schema["vectorizer"] == "text2vec-openai":
-                        module_config = schema["moduleConfig"]["text2vec-openai"]
-                        module_config.pop("type", None)
-                        vectorizer_config = Configure.Vectorizer.text2vec_openai(**module_config)
-
-            return self._weaviate_client.collections.create(
-                name=self._index_name,
-                vectorizer_config=vectorizer_config,
-                properties=properties,
-            )
+            return self._weaviate_client.collections.create(name=self._index_name, properties=properties)
 
     def query(self, query: VectorStoreQuery, **kwargs: Any) -> VectorStoreQueryResult:
         nodes = []
         node_ids = []
         similarities = []
         filters = None
+
+        if query.doc_ids:
+            filters = wvc.query.Filter.by_property("datasource_uuid").contains_any(query.doc_ids)
 
         if query.filters:
             filters = _to_weaviate_filter(query.filters)
@@ -336,15 +318,8 @@ class Weaviate(BaseDestination):
         DEFAULT_SCHEMA = {
             "class": index_name,
             "description": "Text data source",
-            "vectorizer": "text2vec-openai",
-            "moduleConfig": {"text2vec-openai": {"model": "ada", "type": "text"}},
             "properties": [
-                {
-                    "name": self.text_key,
-                    "dataType": ["text"],
-                    "description": "Text",
-                    "moduleConfig": {"text2vec-openai": {"skip": False, "vectorizePropertyName": False}},
-                },
+                {"name": self.text_key, "dataType": ["text"], "description": "Text"},
                 {"name": "source", "dataType": ["text"], "description": "Document source"},
                 {"name": "metadata", "dataType": ["string[]"], "description": "Document metadata"},
                 {"name": "datasource_uuid", "dataType": ["text"], "description": "Datasource UUID"},
@@ -356,16 +331,8 @@ class Weaviate(BaseDestination):
             self._schema_dict = json.loads(self.weaviate_schema) if self.weaviate_schema else DEFAULT_SCHEMA
         except Exception:
             pass
-        if self._deployment_config and self._deployment_config.module_config:
-            self._schema_dict["moduleConfig"] = json.loads(self._deployment_config.module_config)
 
         additional_headers = self._deployment_config.additional_headers_dict or {}
-        if self._deployment_config.embeddings_provider == EmbeddingsProvider.AZURE_OPENAI:
-            azure_deployment_config = datasource.profile.get_provider_config(provider_slug="azure")
-            additional_headers["X-Azure-Api-Key"] = azure_deployment_config.api_key
-        elif self._deployment_config.embeddings_provider == EmbeddingsProvider.OPENAI:
-            openai_deployment_config = datasource.profile.get_provider_config(provider_slug="openai")
-            additional_headers["X-Openai-Api-Key"] = openai_deployment_config.api_key
 
         auth = None
         if isinstance(self._deployment_config.auth, APIKey):
@@ -398,9 +365,9 @@ class Weaviate(BaseDestination):
         )
 
         datasource_uuid = kwargs["datasource_uuid"]
-        filters = MetadataFilters(filters=[MetadataFilter(key="datasource_uuid", value=datasource_uuid)])
 
         vector_store_query = VectorStoreQuery(
+            doc_ids=[datasource_uuid],
             query_str=query,
             mode=(
                 VectorStoreQueryMode.HYBRID if kwargs.get("use_hybrid_search", False) else VectorStoreQueryMode.DEFAULT
@@ -408,7 +375,7 @@ class Weaviate(BaseDestination):
             alpha=kwargs.get("alpha", 0.75),
             hybrid_top_k=kwargs.get("limit", 2),
             query_embedding=kwargs.get("query_embedding", None),
-            filters=filters,
+            filters=None,
         )
 
         return self._client.query(query=vector_store_query)
