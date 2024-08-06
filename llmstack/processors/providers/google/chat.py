@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class GeminiModel(str, Enum):
-    GEMINI_PRO = "gemini-pro"
     GEMINI_1_5_PRO = "gemini-1.5-pro"
     GEMINI_1_5_FLASH = "gemini-1.5-flash"
     GEMINI_1_0_PRO = "gemini-1.0-pro"
@@ -119,8 +118,9 @@ class GenerationConfig(BaseModel):
 
 class ChatConfiguration(ApiProcessorSchema):
     model: GeminiModel = Field(
-        json_schema_extra={"advanced_parameter": False},
-        default=GeminiModel.GEMINI_PRO,
+        description="The model to use for the chat.",
+        json_schema_extra={"advanced_parameter": False, "widget": "customselect"},
+        default=GeminiModel.GEMINI_1_5_PRO,
     )
     safety_settings: List[SafetySetting]
     generation_config: GenerationConfig = Field(
@@ -203,7 +203,7 @@ class ChatProcessor(
 ):
     @staticmethod
     def name() -> str:
-        return "Gemini"
+        return "Chat Completions"
 
     @staticmethod
     def slug() -> str:
@@ -211,7 +211,7 @@ class ChatProcessor(
 
     @staticmethod
     def description() -> str:
-        return "Google generative model"
+        return "Google's Chat Completions with Gemini and Gemma."
 
     @staticmethod
     def provider_slug() -> str:
@@ -268,7 +268,7 @@ class ChatProcessor(
             else []
         )
 
-        if self._config.model.value == GeminiModel.GEMINI_PRO or self._config.model.value == GeminiModel.GEMINI_1_0_PRO:
+        if self._config.model.value == GeminiModel.GEMINI_1_0_PRO:
             for message in self._input.messages:
                 if message.type == "image_url":
                     raise ValueError(
