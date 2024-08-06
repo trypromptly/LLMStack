@@ -242,9 +242,16 @@ class ChatProcessor(
         history = self._chat_history if self._config.retain_history else []
 
         google_provider_config = self.get_provider_config(model_slug=self._config.model.value)
-        token, token_type = get_google_credentials_from_json_key(google_provider_config.service_account_json_key)
-        if token_type != API_KEY:
-            raise ValueError("Invalid token type. Gemini needs an API key.")
+        if google_provider_config is None:
+            raise ValueError(f"Model deployment config not found for {self.provider_slug()}/{self._config.model}")
+
+        if google_provider_config.api_key:
+            token = google_provider_config.api_key
+            token_type = API_KEY
+        else:
+            token, token_type = get_google_credentials_from_json_key(google_provider_config.service_account_json_key)
+            if token_type != API_KEY:
+                raise ValueError("Invalid token type. Gemini needs an API key.")
 
         genai.configure(api_key=token)
 

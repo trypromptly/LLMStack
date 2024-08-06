@@ -48,9 +48,15 @@ def get_project_id_from_env(env: str) -> str:
 
 class GoogleProviderConfig(ProviderConfig):
     provider_slug: str = "google"
-    service_account_json_key: str = Field(
-        title="Service Account JSON Key",
-        description="Google Service Account JSON Key",
+    api_key: str = Field(
+        title="API Key",
+        description="Google Gemini API Key",
         default="",
         json_schema_extra={"widget": "password", "advanced_parameter": False},
+    )
+    service_account_json_key: str = Field(
+        title="Service Account JSON",
+        description="Google Service Account JSON",
+        default="",
+        json_schema_extra={"widget": "textarea", "advanced_parameter": True},
     )
