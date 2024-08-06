@@ -10,7 +10,7 @@ def get_provider_config_classes_cached():
     processor_providers = list(
         filter(
             lambda provider: provider.get(
-                "processor_packages",
+                "config_schema",
             ),
             settings.PROVIDERS,
         ),
