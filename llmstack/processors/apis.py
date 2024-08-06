@@ -1,7 +1,5 @@
-import importlib
 import json
 import logging
-import sys
 from collections import namedtuple
 
 from django.conf import settings
@@ -16,6 +14,9 @@ from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
 
 from llmstack.apps.models import App
+from llmstack.common.utils.provider_config import (
+    get_provider_config_class_by_slug_cached,
+)
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 
 from .models import RunEntry
@@ -34,14 +35,7 @@ class ApiProviderViewSet(viewsets.ViewSet):
     def list(self, request):
         data = []
         for provider in settings.PROVIDERS:
-            provider_config_cls = None
-            if provider.get("config_schema"):
-                importlib.import_module(".".join(provider.get("config_schema").rsplit(".", 1)[:-1]))
-                provider_config_cls = getattr(
-                    sys.modules[".".join(provider.get("config_schema").rsplit(".", 1)[:-1])],
-                    provider.get("config_schema").split(".")[-1],
-                )
-
+            provider_config_cls = get_provider_config_class_by_slug_cached(provider.get("name"))
             data.append(
                 {
                     "name": provider.get("name"),

@@ -1,5 +1,6 @@
 import sys
 from functools import cache
+from importlib import import_module
 
 from django.conf import settings
 
@@ -23,6 +24,8 @@ def get_provider_config_classes_cached():
         ),
         processor_providers,
     ):
+        import_module(".".join(provider.get("config_schema").rsplit(".", 1)[:-1]))
+
         provider_classes.append(
             (
                 provider.get("slug"),
