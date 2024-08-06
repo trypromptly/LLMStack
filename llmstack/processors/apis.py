@@ -1,3 +1,4 @@
+import importlib
 import json
 import logging
 import sys
@@ -31,9 +32,18 @@ class ApiProviderViewSet(viewsets.ViewSet):
 
     @cache_page(60 * 60 * 12)
     def list(self, request):
-        data = list(
-            map(
-                lambda provider: {
+        data = []
+        for provider in settings.PROVIDERS:
+            provider_config_cls = None
+            if provider.get("config_schema"):
+                importlib.import_module(".".join(provider.get("config_schema").rsplit(".", 1)[:-1]))
+                provider_config_cls = getattr(
+                    sys.modules[".".join(provider.get("config_schema").rsplit(".", 1)[:-1])],
+                    provider.get("config_schema").split(".")[-1],
+                )
+
+            data.append(
+                {
                     "name": provider.get("name"),
                     "slug": provider.get("slug"),
                     "has_processors": bool(
@@ -41,26 +51,10 @@ class ApiProviderViewSet(viewsets.ViewSet):
                             "processor_packages",
                         ),
                     ),
-                    "config_schema": (
-                        getattr(
-                            sys.modules[".".join(provider.get("config_schema").rsplit(".", 1)[:-1])],
-                            provider.get("config_schema").split(".")[-1],
-                        ).get_config_schema()
-                        if provider.get("config_schema")
-                        else None
-                    ),
-                    "config_ui_schema": (
-                        getattr(
-                            sys.modules[".".join(provider.get("config_schema").rsplit(".", 1)[:-1])],
-                            provider.get("config_schema").split(".")[-1],
-                        ).get_config_ui_schema()
-                        if provider.get("config_schema")
-                        else None
-                    ),
+                    "config_schema": provider_config_cls.get_config_schema() if provider_config_cls else None,
+                    "config_ui_schema": provider_config_cls.get_config_ui_schema() if provider_config_cls else None,
                 },
-                settings.PROVIDERS,
-            ),
-        )
+            )
 
         return DRFResponse(data)
 
