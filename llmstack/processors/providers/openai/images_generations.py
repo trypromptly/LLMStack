@@ -127,6 +127,12 @@ class ImagesGenerations(
 {% endfor %}""",
         )
 
+    def usage_data(self) -> dict:
+        if self._config.model == ImageModel.DALL_E_2:
+            return {"credits": 5000}
+        elif self._config.model == ImageModel.DALL_E_3:
+            return {"credits": 20000}
+
     def process(self) -> dict:
         prompt = self._input.prompt
 

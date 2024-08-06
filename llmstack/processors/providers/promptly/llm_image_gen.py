@@ -139,6 +139,14 @@ class LLMImageGeneratorProcessor(
             markdown="""<pa-asset url="{{output_str}}" type="image/png"></pa-asset>""",
         )
 
+    def usage_data(self) -> dict:
+        if self._config.provider_config.model == OpenAIModel.DALLE_2:
+            return {"credits": 5000}
+        elif self._config.provider_config.model == OpenAIModel.DALLE_3:
+            return {"credits": 20000}
+
+        return {"credits": 2000}
+
     def process(self) -> dict:
         output_stream = self._output_stream
 

@@ -137,6 +137,22 @@ class AgentActor(Actor):
             },
         )
 
+        self._base_price_per_message = 100
+        if self._config.model == "gpt-4o-mini":
+            self._base_price_per_message = 20
+        elif self._config.model == "gpt-4o":
+            self._base_price_per_message = 100
+        elif self._config.model == "gpt-4-32k":
+            self._base_price_per_message = 500
+        elif self._config.model == "gpt-4":
+            self._base_price_per_message = 300
+        elif self._config.model == "gpt-4-turbo-latest":
+            self._base_price_per_message = 200
+        elif self._config.model == "gpt-4-turbo":
+            self._base_price_per_message = 200
+        else:
+            self._base_price_per_message = 150
+
     def run(self) -> None:
         # This will send a message to itself to start the loop
         self.actor_ref.tell(
