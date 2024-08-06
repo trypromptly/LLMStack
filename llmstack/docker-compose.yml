@@ -1,7 +1,7 @@
 name: llmstack
 services:
   api:
-    image: ${REGISTRY:-}llmstack-api:${TAG:-v0.2.1}
+    image: ${REGISTRY:-}llmstack-api:${TAG:-v0.2.2}
     command: apiserver
     links:
       - postgres:postgres

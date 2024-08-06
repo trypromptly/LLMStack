@@ -1,6 +1,6 @@
 {
   "name": "llmstack",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "proxy": "http://localhost:9000",
   "homepage": "https://llmstack.trypromptly.com",
