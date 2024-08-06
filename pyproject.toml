@@ -52,7 +52,7 @@ sendgrid = {version = "^6.10.0" }
 python-liquid = {version ="^1.12.1"}
 orjson = {version = "^3.8.14" }
 ujson = {version = "^5.7.0" }
-openai = {version ="^1.13.3"}
+openai = {version ="^1.40.0"}
 grpcio-health-checking = {version ="^1.53.0"}
 pyjwt = "^2.8.0"
 psycopg2-binary = "^2.9.9"
