@@ -230,6 +230,7 @@ class FileOperationsProcessor(
                     filename=filename,
                     input_mime_type=input_content_mime_type,
                     output_mime_type=self._input.output_mime_type,
+                    options=self._config.operation_config.split(" "),
                 )
                 data_uri = create_data_uri(
                     response.data,
