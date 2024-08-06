@@ -42,7 +42,7 @@ SINGLESTORE_PIPELINE_DATA = {
 
 
 def add_legacy_pipeline_to_datasource_config(apps, schema_editor):
-    from llmstack.base.models import Profile
+    from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
     from llmstack.data.models import DataSource
 
     datasources = DataSource.objects.all()
@@ -51,7 +51,7 @@ def add_legacy_pipeline_to_datasource_config(apps, schema_editor):
         type_slug = datasource.config.get("type_slug")
         owner_profile = Profile.objects.get(user=datasource.owner)
 
-        if owner_profile.vectostore_embedding_endpoint == "azure_openai":
+        if owner_profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.AZURE_OPEN_AI:
             pipeline_data["embedding"]["data"]["embedding_provider_slug"] = "azure-openai"
 
         if type_slug and type_slug in ["pdf", "text", "url", "file"]:

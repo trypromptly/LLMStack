@@ -27,8 +27,9 @@ def get_embedding_client(datasource, embedding_provider_slug, embedding_model_na
         return AzureOpenAIEmbedding(
             model=embedding_model,
             api_key=provider_config.api_key,
-            deployment_name=provider_config.azure_deployment,
-            api_version=provider_config.api_version,
+            azure_endpoint=provider_config.azure_endpoint if provider_config.azure_endpoint else None,
+            deployment_name=provider_config.azure_deployment if provider_config.azure_deployment else None,
+            api_version=provider_config.api_version if provider_config.api_version else "2024-02-01",
         )
 
 

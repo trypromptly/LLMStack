@@ -9,6 +9,7 @@ from langrocks.client import WebBrowser
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 
+from llmstack.base.models import VectorstoreEmbeddingEndpoint
 from llmstack.data.schemas import DataDocument
 from llmstack.data.yaml_loader import (
     get_data_pipeline_template_by_slug,
@@ -366,7 +367,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             # If the request is from a pipeline template, use the pipeline template's embedding coffiguration
             if pipeline_template.pipeline.embedding:
                 embedding_data = {"embedding_provider_slug": "openai"}
-                if datasource.profile.vectostore_embedding_endpoint == "azure_openai":
+                if datasource.profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.AZURE_OPEN_AI:
                     embedding_data["embedding_provider_slug"] = "azure-openai"
                 embedding_transformation = pipeline_template.pipeline.embedding.model_dump()
                 embedding_transformation["data"] = embedding_data
