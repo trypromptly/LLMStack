@@ -1,0 +1,164 @@
+name: Resume Generator
+slug: resume-generator
+description: Generate a custom resume based on user's background and job description
+version: 0.0.1
+icon: resume_generator_icon.png
+categories:
+  - utilities
+  - writing
+config:
+  seed: null
+  model: gpt-4o
+  layout: >-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "0",
+    "height": "100%"}'>
+        <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
+          <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
+            <pa-chat-output></pa-chat-output>
+          </pa-grid>
+          <pa-grid item="true" xs="12" sx='{"alignSelf": "flex-end", "flex": "0 !important", "width": "100%", "padding": "0 !important"}'>
+            <pa-input-form clearonsubmit="true"></pa-input-form>
+          </pa-grid>
+        </pa-grid>
+    </pa-layout>
+  stream: null
+  max_steps: 10
+  split_tasks: true
+  temperature: 0.7
+  init_on_load: null
+  user_message: "{{information}}"
+  window_color: "#477195"
+  input_template: ""
+  system_message: >-
+    You are a professional resume writer. You will consider the user's profile,
+    company information and the job description they are applying to and
+    generate a customized resume that maximizes the user's chances of getting an
+    interview call. If an existing resume is provided, you are free to rewrite
+    to better fit the job description, including skipping some of the existing
+    content.
+
+
+    You have access to the following tools:
+
+
+    - web_browser: Visit a URL and get text from the page
+
+    - text_extractor_from_file: Extracts text from a given file
+
+    - latex_to_pdf_converter: Generates a PDF file from a given latex document
+
+
+    - When providing the final pdf to the user, render it as <pa-asset
+    url="objref://...." type="application/pdf"></pa-asset>
+
+    - Make sure the resume is visually pleasing by using multiple colors, fonts
+    and font weights
+
+
+    Let's think step by step:
+  assistant_image: ""
+  welcome_message: >-
+    Welcome to resume helper 🤖.  Please provide details about your background
+    and the job you are applying to so I can generate a custom resume for you.
+    Feel free to attach your existing resume using the attachment icon and type
+    in job description or the job board posting url to get started ✨
+  chat_bubble_text: null
+  chat_bubble_style: null
+  chat_history_limit: 20
+  suggested_messages: []
+type_slug: agent
+processors:
+  - id: web_browser
+    name: Static Web Browser
+    input:
+      url: "{{url}}"
+      instructions:
+        - data: ""
+          type: Wait
+          selector: body
+    config:
+      timeout: 10
+      stream_video: true
+      connection_id: null
+      tags_to_extract:
+        - img
+    description: Visit a webpage from a URL and get the text from that page
+    input_fields:
+      - name: url
+        type: string
+        title: URL of the page
+        description: URL of the page to open
+    provider_slug: promptly
+    processor_slug: static_web_browser
+    output_template:
+      markdown: >
+        {% if content.screenshot %}
+
+        <pa-asset url="{{content.screenshot}}" type="image/png"></pa-asset>%}
+
+        {% else %}
+
+        <promptly-web-browser-embed
+        wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
+
+        {% endif %}
+
+
+        ## Text from the page
+
+
+        {{text | truncate: 4000}}
+  - id: latex_to_pdf_convertor
+    name: File Operations
+    input:
+      content: "{{latex}}"
+      content_objref: ""
+      output_filename: resume.pdf
+      output_directory: ""
+      output_mime_type: application/pdf
+      content_mime_type: application/x-latex
+    config:
+      operation: convert
+      operation_config: "-V geometry:margin=0.75in -V pagestyle=empty"
+    description: Creates PDF resumes from Latex content
+    input_fields:
+      - name: latex
+        type: string
+        title: Latex for the resume PDF
+        required: true
+        description: Latex for the resume PDF
+    provider_slug: promptly
+    processor_slug: file_operations
+    output_template:
+      markdown: "{{objref}}"
+  - id: text_extractor_from_file
+    name: File Extractor
+    input:
+      file: "{{file}}"
+      query: ""
+      file_data: ""
+    config:
+      document_limit: 1
+      text_chunk_size: 1500
+    description: Extract text from a given file
+    input_fields:
+      - name: file
+        type: string
+        title: File
+        description: File to extract data from
+    provider_slug: promptly
+    processor_slug: data_uri_text_extract
+    output_template:
+      markdown: "{{text}}"
+input_fields:
+  - name: information
+    type: multi
+    title: Information
+    required: true
+    allowFiles: true
+    description: >-
+      Please provide information about the job you are applying to along with
+      your background information
+    placeholder: Job description or job posting url
+output_template:
+  markdown: "{{agent.content}}"
