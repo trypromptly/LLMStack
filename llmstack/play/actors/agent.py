@@ -138,17 +138,18 @@ class AgentActor(Actor):
         )
 
         self._base_price_per_message = 100
-        if self._config.model == "gpt-4o-mini":
+        configured_model = self._config.get("model")
+        if configured_model == "gpt-4o-mini":
             self._base_price_per_message = 20
-        elif self._config.model == "gpt-4o":
+        elif configured_model == "gpt-4o":
             self._base_price_per_message = 100
-        elif self._config.model == "gpt-4-32k":
+        elif configured_model == "gpt-4-32k":
             self._base_price_per_message = 500
-        elif self._config.model == "gpt-4":
+        elif configured_model == "gpt-4":
             self._base_price_per_message = 300
-        elif self._config.model == "gpt-4-turbo-latest":
+        elif configured_model == "gpt-4-turbo-latest":
             self._base_price_per_message = 200
-        elif self._config.model == "gpt-4-turbo":
+        elif configured_model == "gpt-4-turbo":
             self._base_price_per_message = 200
         else:
             self._base_price_per_message = 150
@@ -189,7 +190,7 @@ class AgentActor(Actor):
             },
             timestamp=time.time(),
             usage_data={
-                "credits": 100 * len(self._agent_messages),
+                "credits": self._base_price_per_message * len(self._agent_messages),
             },
         )
         self._output_stream.bookkeep(bookkeeping_data)
@@ -221,7 +222,7 @@ class AgentActor(Actor):
                 },
                 timestamp=time.time(),
                 usage_data={
-                    "credits": 100 * len(self._agent_messages),
+                    "credits": self._base_price_per_message * len(self._agent_messages),
                 },
             )
             self._output_stream.bookkeep(bookkeeping_data)
@@ -464,7 +465,7 @@ class AgentActor(Actor):
                     },
                     timestamp=time.time(),
                     usage_data={
-                        "credits": 100 * len(self._agent_messages),
+                        "credits": self._base_price_per_message * len(self._agent_messages),
                     },
                 )
                 # Persist session data
