@@ -211,7 +211,7 @@ class ChatProcessor(
 
     @staticmethod
     def description() -> str:
-        return "Google's Chat Completions with Gemini and Gemma."
+        return "Google's Chat Completions with Gemini."
 
     @staticmethod
     def provider_slug() -> str:
