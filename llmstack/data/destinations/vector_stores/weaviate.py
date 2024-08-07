@@ -246,7 +246,9 @@ class WeaviateVectorStore:
         filters = None
 
         if query.doc_ids:
-            filters = wvc.query.Filter.by_property("datasource_uuid").contains_any(query.doc_ids)
+            # Legacy datasource don't have datasource_uuid property
+            if not self._index_name.startswith("Datasource_"):
+                filters = wvc.query.Filter.by_property("datasource_uuid").contains_any(query.doc_ids)
 
         if query.filters:
             filters = _to_weaviate_filter(query.filters)
