@@ -311,7 +311,8 @@ export default function AppConsolePage(props) {
     return new Promise((resolve, reject) => {
       const updatedApp = {
         name: app?.name,
-        description: "",
+        description: app?.description || "",
+        icon: app?.icon || "",
         draft: draft,
         comment: comment,
         config: app?.data?.config,

@@ -534,7 +534,7 @@ class AppViewSet(viewsets.ViewSet):
 
         app_data_config = (
             request.data["config"]
-            if "config" in request.data
+            if "config" in request.data and request.data["config"]
             else (versioned_app_data.data["config"] if versioned_app_data else None)
         )
         if app_data_config:
@@ -565,7 +565,11 @@ class AppViewSet(viewsets.ViewSet):
             "type_slug": (
                 request.data["type_slug"] if "type_slug" in request.data else versioned_app_data.data["type_slug"]
             ),
-            "config": request.data["config"] if "config" in request.data else versioned_app_data.data["config"],
+            "config": (
+                request.data["config"]
+                if "config" in request.data and request.data["config"]
+                else versioned_app_data.data["config"]
+            ),
             "input_fields": (
                 request.data["input_fields"]
                 if "input_fields" in request.data
