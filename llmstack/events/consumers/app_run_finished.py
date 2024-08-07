@@ -217,7 +217,6 @@ def persist_app_run_history(event_data: AppRunFinishedEventData):
         response_content_type=event_data.response_content_type,
         response_headers=event_data.response_headers,
         response_time=event_data.response_time,
-        processor_runs=event_data.processor_runs,
         platform_data=event_data.platform_data,
     )
-    run_entry.save()
+    run_entry.save(processor_runs=event_data.processor_runs)
