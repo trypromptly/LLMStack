@@ -111,9 +111,11 @@ class URLSchema(BaseSource):
         connection_context = (
             get_connection_context(connection_id, document.metadata["datasource_uuid"]) if connection_id else None
         )
-        html_page = get_page_html(
-            document.request_data.get("url"), connection=connection_id, storage_state=connection_context
-        )
+        url = document.name
+        if document.request_data.get("url"):
+            url = document.request_data.get("url")
+
+        html_page = get_page_html(url, connection=connection_id, storage_state=connection_context)
         page_text = extract_text(html_page)
 
         text_data_uri = (

@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 
@@ -7,6 +8,7 @@ from django.db import connection, models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
+from llmstack.assets.utils import get_asset_by_objref_internal
 from llmstack.common.utils.db_models import ArrayField
 
 logger = logging.getLogger(__name__)
@@ -416,6 +418,12 @@ class RunEntry(models.Model):
             help_text="Array of processor data for each endpoint including input and output data",
         )
     )
+    processor_runs_objref = models.CharField(
+        default=None,
+        blank=True,
+        null=True,
+        help_text="Processor runs objref",
+    )
     platform_data = models.JSONField(
         default=dict,
         blank=True,
@@ -442,66 +450,45 @@ class RunEntry(models.Model):
             return data.replace("\u0000", "")
         return data
 
-    def clean_processor_runs(self):
-        if self.processor_runs:
-            self.processor_runs = [self.clean_dict(item) for item in self.processor_runs]
+    def clean_processor_runs(self, processor_runs=[]):
+        return [self.clean_dict(item) for item in processor_runs]
 
     def save(self, *args, **kwargs):
         # Clean the processor_runs field
-        self.clean_processor_runs()
+        processor_runs = kwargs.pop("processor_runs", [])
+        processor_runs_objref = self.create_processor_runs_objref(processor_runs)
+        self.processor_runs = []
+        self.processor_runs_objref = processor_runs_objref
         super(RunEntry, self).save(*args, **kwargs)
 
     @property
     def is_store_request(self):
         return self.app_store_uuid is not None
 
-    @staticmethod
-    def from_pinot_dict(row):
-        owner = User.objects.get(id=row["owner_id"])
+    def create_processor_runs_objref(self, processor_runs=[]):
+        import base64
+        import json
 
-        return RunEntry(
-            request_uuid=row["request_uuid"],
-            app_uuid=row["app_uuid"],
-            endpoint_uuid=row["endpoint_uuid"],
-            owner=owner,
-            session_key=row["session_key"],
-            request_user_email=row["request_user_email"],
-            request_ip=row["request_ip"],
-            request_location=row["request_location"],
-            request_user_agent=row["request_user_agent"],
-            request_content_type=row["request_content_type"],
-            request_body=row["request_body"],
-            response_status=row["response_status"],
-            response_body=row["response_body"],
-            response_content_type=row["response_content_type"],
-            response_headers=row["response_headers"],
-            response_time=row["response_time"],
-            processor_runs=row["processor_runs"],
+        from llmstack.apps.models import AppSessionFiles
+
+        processor_runs = self.clean_processor_runs(processor_runs)
+        processor_runs = {"processor_runs": processor_runs}
+
+        request_uuid = str(self.request_uuid)
+        processor_runs_datauri = f"data:application/json;name={request_uuid}_processor_runs.json;base64,{base64.b64encode(json.dumps(processor_runs).encode()).decode()}"
+
+        session_id = self.session_key
+        processor_runs_objrefs = AppSessionFiles.create_from_data_uri(
+            data_uri=processor_runs_datauri,
+            ref_id=session_id,
+            metadata={"session_id": session_id, "request_uuid": request_uuid},
         )
+        return processor_runs_objrefs.objref
 
-
-class EndpointInvocationCount(models.Model):
-    """
-    Model to track the usage of endpoints by users
-    """
-
-    user = models.ForeignKey(
-        User,
-        on_delete=models.DO_NOTHING,
-        help_text="User this count is for",
-    )
-    month = models.CharField(
-        max_length=5,
-        help_text="Month for the count as MM-YY",
-        default="",
-    )
-    count = models.IntegerField(
-        help_text="Count for the month",
-        default=0,
-    )
-
-    def __str__(self):
-        return self.user.__str__() + ":" + self.month
+    def get_processor_runs_from_objref(self):
+        file_asset = get_asset_by_objref_internal(self.processor_runs_objref)
+        content = file_asset.file.read().decode("utf-8")
+        return json.loads(content).get("processor_runs", [])
 
 
 class Feedback(models.Model):
