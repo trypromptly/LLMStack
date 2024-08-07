@@ -35,7 +35,7 @@ class ApiProviderViewSet(viewsets.ViewSet):
     def list(self, request):
         data = []
         for provider in settings.PROVIDERS:
-            provider_config_cls = get_provider_config_class_by_slug_cached(provider.get("name"))
+            provider_config_cls = get_provider_config_class_by_slug_cached(provider.get("slug"))
             data.append(
                 {
                     "name": provider.get("name"),
