@@ -1,17 +1,13 @@
 import { Button, Paper, Stack, Typography } from "@mui/material";
-import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import {
   organizationState,
   profileSelector,
   profileFlagsSelector,
 } from "../data/atoms";
-import SubscriptionUpdateModal from "./SubscriptionUpdateModal";
 import { formatStorage } from "../data/utils";
 
 function Subscription(props) {
-  const [subscriptionUpdateModalOpen, setSubscriptionUpdateModalOpen] =
-    useState(false);
   const profileFlags = useRecoilValue(profileFlagsSelector);
   const profile = useRecoilValue(profileSelector);
   const organization = useRecoilValue(organizationState);
@@ -90,14 +86,6 @@ function Subscription(props) {
             </Stack>
           </Paper>
         </Stack>
-        {subscriptionUpdateModalOpen && (
-          <SubscriptionUpdateModal
-            open={subscriptionUpdateModalOpen}
-            handleCloseCb={() => {
-              setSubscriptionUpdateModalOpen(false);
-            }}
-          />
-        )}
       </Stack>
       {!profileFlags.IS_ORGANIZATION_MEMBER && (
         <Button
@@ -107,10 +95,12 @@ function Subscription(props) {
             display: profileFlags.IS_ORGANIZATION_MEMBER ? "none" : "inherit",
             alignSelf: "end",
           }}
-          onClick={() => {
-            setSubscriptionUpdateModalOpen(true);
-          }}
-          disabled={profileFlags.IS_PRO_SUBSCRIBER}
+          component="a"
+          href={`${
+            process.env.REACT_APP_SUBSCRIPTION_MANAGEMENT_URL
+          }?prefilled_email=${encodeURIComponent(props.user_email)}`}
+          target="_blank"
+          rel="noreferrer"
         >
           Manage Subscription
         </Button>
