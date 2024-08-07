@@ -112,16 +112,14 @@ class AgentActor(Actor):
             self._chat_history_limit = 0
 
         # Get and hydrate user_message_template with self._input
-        user_message_template = self._config.get(
-            "user_message",
-            "{{task}}",
-        )
-
-        if user_message_template == "":
-            user_message_template = "{{task}}"
+        user_message_template = self._config.get("user_message")
 
         try:
-            user_message = render_template(user_message_template, self._input)
+            user_message = (
+                render_template(user_message_template, self._input)
+                if user_message_template
+                else json.dumps(self._input).decode("utf-8")
+            )
 
             # Hydrate system_message_template with self._input
             if self._system_message and len(self._system_message) > 0 and "content" in self._system_message[0]:
