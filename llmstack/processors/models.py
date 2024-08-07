@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 
@@ -7,6 +8,7 @@ from django.db import connection, models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
+from llmstack.assets.utils import get_asset_by_objref_internal
 from llmstack.common.utils.db_models import ArrayField
 
 logger = logging.getLogger(__name__)
@@ -482,6 +484,11 @@ class RunEntry(models.Model):
             metadata={"session_id": session_id, "request_uuid": request_uuid},
         )
         return processor_runs_objrefs.objref
+
+    def get_processor_runs_from_objref(self):
+        file_asset = get_asset_by_objref_internal(self.processor_runs_objref)
+        content = file_asset.file.read().decode("utf-8")
+        return json.loads(content).get("processor_runs", [])
 
 
 class Feedback(models.Model):
