@@ -207,18 +207,14 @@ class HistorySerializer(serializers.ModelSerializer):
         return {"name": "Deleted App", "path": "/"}
 
     def get_processor_runs(self, obj):
-        import logging
-
-        logging.info(f"Getting processor runs for {obj.processor_runs}")
-        logging.info(f"Getting processor runs for {obj.processor_runs_objref}")
-        if obj.processor_runs:
-            return obj.processor_runs
-
         if obj.processor_runs_objref:
             try:
                 return obj.get_processor_runs_from_objref()
             except Exception:
                 pass
+
+        if obj.processor_runs:
+            return obj.processor_runs
 
         return []
 
