@@ -213,9 +213,6 @@ class HistorySerializer(serializers.ModelSerializer):
             except Exception:
                 pass
 
-        if obj.processor_runs:
-            return obj.processor_runs
-
         return []
 
     class Meta:
