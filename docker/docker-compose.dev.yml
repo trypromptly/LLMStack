@@ -21,6 +21,7 @@ services:
     command: rqworker
     volumes:
       - ../llmstack/:/code/llmstack
+      - userdata:/home/appuser/data
     depends_on:
       - redis
       - postgres

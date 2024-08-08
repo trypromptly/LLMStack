@@ -47,6 +47,8 @@ services:
     links:
       - redis:redis
       - postgres:postgres
+    volumes:
+      - userdata:/home/appuser/data
     environment:
       LLMSTACK_PORT: ${LLMSTACK_PORT:-9000}
       LLMSTACK_HOST: ${LLMSTACK_HOST:-localhost}
