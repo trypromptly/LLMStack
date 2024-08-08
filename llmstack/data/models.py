@@ -9,6 +9,8 @@ from django.utils.timezone import now
 
 from llmstack.assets.models import Assets
 from llmstack.base.models import Profile
+from llmstack.data.pipeline import DataIngestionPipeline, DataQueryPipeline
+from llmstack.data.schemas import PipelineBlock
 from llmstack.events.apis import EventsViewSet
 
 logger = logging.getLogger(__name__)
@@ -122,8 +124,6 @@ class DataSource(models.Model):
 
     @property
     def pipeline_obj(self):
-        from llmstack.data.schemas import PipelineBlock
-
         if self.config.get("pipeline"):
             return PipelineBlock(**self.config.get("pipeline"))
 
@@ -147,13 +147,9 @@ class DataSource(models.Model):
         return self.config.get("pipeline", {})
 
     def create_data_ingestion_pipeline(self):
-        from llmstack.data.pipeline import DataIngestionPipeline
-
         return DataIngestionPipeline(self)
 
     def create_data_query_pipeline(self):
-        from llmstack.data.pipeline import DataQueryPipeline
-
         return DataQueryPipeline(self)
 
 

@@ -9,8 +9,7 @@ from pydantic import Field
 
 from llmstack.common.utils.text_extract import ExtraParams, extract_text_elements
 from llmstack.connections.apis import ConnectionsViewSet
-from llmstack.data.schemas import DataDocument
-from llmstack.data.sources.base import BaseSource
+from llmstack.data.sources.base import BaseSource, DataDocument
 from llmstack.data.sources.utils import create_source_document_asset
 
 logger = logging.getLogger(__name__)

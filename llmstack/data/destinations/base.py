@@ -4,7 +4,7 @@ from llmstack.common.blocks.base.schema import (
     CustomGenerateJsonSchema,
     get_ui_schema_from_json_schema,
 )
-from llmstack.data.schemas import DataDocument
+from llmstack.data.sources.base import DataDocument
 
 
 class BaseDestination(BaseModel):

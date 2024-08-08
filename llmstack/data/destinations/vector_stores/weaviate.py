@@ -22,7 +22,7 @@ from weaviate.classes.config import DataType, Property
 from weaviate.connect.helpers import connect_to_custom, connect_to_wcs
 
 from llmstack.data.destinations.base import BaseDestination
-from llmstack.data.schemas import DataDocument
+from llmstack.data.sources.base import DataDocument
 from llmstack.processors.providers.weaviate import (
     APIKey,
     WeaviateCloudInstance,

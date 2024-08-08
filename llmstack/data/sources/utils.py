@@ -1,5 +1,3 @@
-from functools import cache
-
 from llmstack.common.blocks.data.store.vectorstore import Document
 from llmstack.common.utils.splitter import CSVTextSplitter, SpacyTextSplitter
 from llmstack.common.utils.text_extract import extract_text_elements
@@ -45,21 +43,6 @@ def extract_documents(
             ).split_text(file_content)
         ]
     return docs
-
-
-@cache
-def get_source_cls(slug, provider_slug):
-    from llmstack.data.sources.files.csv import CSVFileSchema
-    from llmstack.data.sources.files.file import FileSchema
-    from llmstack.data.sources.files.pdf import PdfSchema
-    from llmstack.data.sources.text.text_data import TextSchema
-    from llmstack.data.sources.website.url import URLSchema
-
-    for cls in [CSVFileSchema, FileSchema, PdfSchema, URLSchema, TextSchema]:
-        if cls.slug() == slug and cls.provider_slug() == provider_slug:
-            return cls
-
-    return None
 
 
 def create_source_document_asset(file, datasource_uuid, document_id):

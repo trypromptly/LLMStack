@@ -8,8 +8,7 @@ from pydantic import Field
 from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
 from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.schemas import DataDocument
-from llmstack.data.sources.base import BaseSource
+from llmstack.data.sources.base import BaseSource, DataDocument
 from llmstack.data.sources.utils import (
     create_source_document_asset,
     get_source_document_asset_by_objref,

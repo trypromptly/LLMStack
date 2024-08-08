@@ -5,7 +5,7 @@ from typing import List
 from pydantic import Field
 
 from llmstack.common.utils.utils import validate_parse_data_uri
-from llmstack.data.schemas import DataDocument
+from llmstack.data.sources.base import DataDocument
 from llmstack.data.sources.files.file import FileSchema
 from llmstack.data.sources.utils import create_source_document_asset
 

@@ -10,7 +10,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 
 from llmstack.base.models import VectorstoreEmbeddingEndpoint
-from llmstack.data.schemas import DataDocument
+from llmstack.data.sources.base import DataDocument
 from llmstack.data.yaml_loader import (
     get_data_pipeline_template_by_slug,
     get_data_pipelines_from_contrib,
