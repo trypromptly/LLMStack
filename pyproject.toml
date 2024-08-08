@@ -76,7 +76,6 @@ faiss-cpu = "^1.8.0"
 
 [tool.poetry.group.processors.dependencies]
 google-generativeai = "0.7.2"
-pillow-heif = {version ="^0.15.0"}
 cohere = {version ="5.5.4"}
 google-cloud-speech = {version ="^2.26.0"}
 mysqlclient = {version ="^2.2.4"}
@@ -111,6 +110,7 @@ llama-index-embeddings-openai = "^0.1.11"
 opencv-python-headless = {version ="^4.10.0.84"}
 pdf2image = {version = "^1.16.3" }
 pdfminer-six = {version = "^20221105" }
+pillow-heif = {version ="^0.15.0"}
 python-docx = {version ="^1.1.0"}
 python-magic = {version = "^0.4.27" }
 python-pptx = {version = "^0.6.21" }

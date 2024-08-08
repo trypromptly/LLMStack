@@ -8988,4 +8988,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "a5b5b6b480d82068c541f72e9732032cef603652b107d9a0bea9947084b5e09a"
+content-hash = "c9f0e0ca4fe5bcf18fdd09bc604bb09ffb1dc826198a066d7702816f452dcfca"
