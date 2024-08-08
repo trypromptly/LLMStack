@@ -23,6 +23,7 @@ ARG UNIQUE_IDENTIFIER=promptly
 
 # Install processors
 RUN poetry install --no-root --only processors
+RUN poetry install --no-root --only data
 
 RUN python -m nltk.downloader -d /usr/local/share/nltk_data 'punkt'
 RUN python -m nltk.downloader -d /usr/local/share/nltk_data 'averaged_perceptron_tagger'

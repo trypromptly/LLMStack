@@ -75,15 +75,8 @@ faiss-cpu = "^1.8.0"
 [tool.poetry.group.processors]
 
 [tool.poetry.group.processors.dependencies]
-scrapy = "^2.11.2"
-unstructured = {version = "0.15.0", python=">=3.10,<3.13"}
 google-generativeai = "0.7.2"
-scrapy-playwright = {version ="^0.0.33"}
 pillow-heif = {version ="^0.15.0"}
-opencv-python-headless = {version ="^4.10.0.84"}
-unstructured-inference = {version ="^0.7.23"}
-unstructured-pytesseract = {version ="^0.3.12"}
-python-docx = {version ="^1.1.0"}
 cohere = {version ="5.5.4"}
 google-cloud-speech = {version ="^2.26.0"}
 mysqlclient = {version ="^2.2.4"}
@@ -93,29 +86,40 @@ pydub = {version = "^0.25.1" }
 boto3 = {version = "^1.26.122" }
 botocore = {version = "^1.29.122" }
 yt-dlp = "^2024.5.27"
-pdf2image = {version = "^1.16.3" }
-pdfminer-six = {version = "^20221105" }
 markdown = {version = "^3.4.4" }
-python-pptx = {version = "^0.6.21" }
-python-magic = {version = "^0.4.27" }
 anthropic = "^0.30.0"
 pypdf = "^4.2.0"
 pikepdf = "^9.0.0"
-llama-index-readers-file = "0.1.30"
-llama-index-vector-stores-chroma = "^0.1.10"
 websockets = "^12.0"
-chromadb = "^0.5.3"
 pynacl = "^1.5.0"
-llama-index-core = "^0.10.51"
 beautifulsoup4 = {version = "^4.12.2" }
 sqlalchemy = "^2.0.31"
 websockify = "^0.12.0"
-spacy = "^3.7.5"
+playwright = "1.45.0"
+
+[tool.poetry.group.data]
+
+[tool.poetry.group.data.dependencies]
+chromadb = "^0.5.3"
+llama-index-readers-file = "0.1.30"
+llama-index-vector-stores-chroma = "^0.1.10"
+llama-index-core = "^0.10.51"
 llama-index-vector-stores-pinecone = {version="^0.1.8", python=">=3.10,<3.13"}
 llama-index-vector-stores-qdrant = {version="^0.2.13", python=">=3.10,<3.13"}
 llama-index-embeddings-azure-openai = "^0.1.11"
 llama-index-embeddings-openai = "^0.1.11"
-playwright = "1.45.0"
+opencv-python-headless = {version ="^4.10.0.84"}
+pdf2image = {version = "^1.16.3" }
+pdfminer-six = {version = "^20221105" }
+python-docx = {version ="^1.1.0"}
+python-magic = {version = "^0.4.27" }
+python-pptx = {version = "^0.6.21" }
+scrapy = "^2.11.2"
+scrapy-playwright = {version ="^0.0.33"}
+spacy = "^3.7.5"
+unstructured = {version = "0.15.0", python=">=3.10,<3.13"}
+unstructured-inference = {version ="^0.7.23"}
+unstructured-pytesseract = {version ="^0.3.12"}
 weaviate-client = "^4.7.1"
 
 
