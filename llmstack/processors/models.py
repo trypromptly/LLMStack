@@ -3,13 +3,11 @@ import logging
 import uuid
 
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField as PGArrayField
-from django.db import connection, models
+from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from llmstack.assets.utils import get_asset_by_objref_internal
-from llmstack.common.utils.db_models import ArrayField
 
 logger = logging.getLogger(__name__)
 
@@ -403,21 +401,6 @@ class RunEntry(models.Model):
         blank=True,
         help_text="Response headers",
     )
-    processor_runs = (
-        PGArrayField(
-            models.JSONField(
-                default=dict,
-                blank=True,
-            ),
-            default=list,
-            help_text="Array of processor data for each endpoint including input and output data",
-        )
-        if connection.vendor == "postgresql"
-        else ArrayField(
-            null=True,
-            help_text="Array of processor data for each endpoint including input and output data",
-        )
-    )
     processor_runs_objref = models.CharField(
         default=None,
         blank=True,
@@ -457,7 +440,6 @@ class RunEntry(models.Model):
         # Clean the processor_runs field
         processor_runs = kwargs.pop("processor_runs", [])
         processor_runs_objref = self.create_processor_runs_objref(processor_runs)
-        self.processor_runs = []
         self.processor_runs_objref = processor_runs_objref
         super(RunEntry, self).save(*args, **kwargs)
 
