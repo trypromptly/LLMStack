@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
-from .models import ApiBackend, ApiProvider, Endpoint, Request, Response, RunEntry
+from .models import ApiBackend, ApiProvider, Endpoint, RunEntry
 
 
 class ApiProviderSerializer(serializers.ModelSerializer):
@@ -128,34 +128,6 @@ class EndpointSerializer(serializers.ModelSerializer):
             "is_app",
             "config",
             "input",
-        ]
-
-
-class RequestSerializer(serializers.ModelSerializer):
-    endpoint = EndpointSerializer()
-
-    class Meta:
-        model = Request
-        fields = [
-            "endpoint",
-            "input",
-            "param_values",
-            "prompt_values",
-            "created_on",
-        ]
-
-
-class ResponseSerializer(serializers.ModelSerializer):
-    request = RequestSerializer()
-
-    class Meta:
-        model = Response
-        fields = [
-            "request",
-            "raw_response",
-            "processed_response",
-            "response_code",
-            "created_on",
         ]
 
 
