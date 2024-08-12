@@ -187,7 +187,6 @@ Citations:
                 )
                 pipeline = datasource.create_data_query_pipeline()
                 search_query = input["question"]
-                search_filters = input["search_filters"]
                 if (
                     len(
                         self._chat_history,
@@ -210,7 +209,6 @@ Citations:
                     alpha=self._config.hybrid_semantic_search_ratio,
                     query=search_query,
                     limit=self._config.k,
-                    search_filters=search_filters,
                 )
             except Exception as e:
                 logger.error(

@@ -103,7 +103,6 @@ class DataSourceSearchProcessor(
                     query=input_data.query,
                     alpha=hybrid_semantic_search_ratio,
                     limit=self._config.document_limit,
-                    search_filters=self._config.search_filters,
                     use_hybrid_search=True,
                 )
                 documents.extend(result)
