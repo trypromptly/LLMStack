@@ -17,7 +17,13 @@ from llmstack.data.yaml_loader import (
 )
 from llmstack.jobs.adhoc import AddDataSourceEntryJob
 
-from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
+from .models import (
+    DataSource,
+    DataSourceEntry,
+    DataSourceEntryFiles,
+    DataSourceEntryStatus,
+    DataSourceType,
+)
 from .serializers import DataSourceEntrySerializer, DataSourceSerializer
 
 logger = logging.getLogger(__name__)
@@ -302,6 +308,30 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
 
         entry_config = {**datasource_entry_object.config}
         document = DataDocument(**entry_config)
+        if entry_config.get("input", {}).get("data", {}).get("file_data"):
+            # For legacy datasource entry objects that have file_data instead of content
+            document = DataDocument()
+            document.id_ = str(datasource_entry_object.uuid)
+            document.name = entry_config.get("input", {}).get("data", {}).get("file_name")
+            content_asset = DataSourceEntryFiles.create_from_bytes(
+                file_bytes=entry_config.get("input", {}).get("data", {}).get("file_data").encode(),
+                filename=entry_config.get("input", {}).get("data", {}).get("file_name"),
+                metadata={"datasource_uuid": str(datasource_entry_object.datasource.uuid)},
+            )
+            content_asset_objref = f"objref://datasource_entries/{content_asset.uuid}"
+            document.content = content_asset_objref
+            document.mimetype = entry_config.get("input", {}).get("data", {}).get("mime_type")
+            document.metadata = {
+                "file_name": entry_config.get("input", {}).get("data", {}).get("file_name"),
+                "mime_type": entry_config.get("input", {}).get("data", {}).get("mime_type"),
+                "source": entry_config.get("input", {}).get("data", {}).get("file_name"),
+                "datasource_uuid": str(datasource_entry_object.datasource.uuid),
+            }
+            document.datasource_uuid = str(datasource_entry_object.datasource.uuid)
+            document.node_ids = entry_config.get("document_ids", [])
+            logger.info(f"Resyncing datasource entry {document.content} with file data")
+        else:
+            document = DataDocument(**entry_config)
 
         pipeline = datasource_entry_object.datasource.create_data_ingestion_pipeline()
 
