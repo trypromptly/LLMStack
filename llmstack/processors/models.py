@@ -386,6 +386,12 @@ class RunEntry(models.Model):
         content = file_asset.file.read().decode("utf-8")
         return json.loads(content).get("processor_runs", [])
 
+    @classmethod
+    def get_processor_runs(cls, processor_runs_objref):
+        file_asset = get_asset_by_objref_internal(processor_runs_objref)
+        content = file_asset.file.read().decode("utf-8")
+        return json.loads(content).get("processor_runs", [])
+
 
 class Feedback(models.Model):
     """
