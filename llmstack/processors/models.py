@@ -382,12 +382,16 @@ class RunEntry(models.Model):
         return processor_runs_objrefs.objref
 
     def get_processor_runs_from_objref(self):
+        if not self.processor_runs_objref:
+            return []
         file_asset = get_asset_by_objref_internal(self.processor_runs_objref)
         content = file_asset.file.read().decode("utf-8")
         return json.loads(content).get("processor_runs", [])
 
     @classmethod
     def get_processor_runs(cls, processor_runs_objref):
+        if not processor_runs_objref:
+            return []
         file_asset = get_asset_by_objref_internal(processor_runs_objref)
         content = file_asset.file.read().decode("utf-8")
         return json.loads(content).get("processor_runs", [])
