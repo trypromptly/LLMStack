@@ -1,7 +1,7 @@
 name: llmstack
 services:
   api:
-    image: ${REGISTRY:-}llmstack-api:${TAG:-v0.2.2}
+    image: ${REGISTRY:-}llmstack-api:${TAG:-v0.2.3}
     command: apiserver
     links:
       - postgres:postgres
@@ -39,7 +39,7 @@ services:
     cap_add:
       - SYS_PTRACE
   rqworker:
-    image: ${REGISTRY:-}llmstack-api:${TAG:-v0.2.1}
+    image: ${REGISTRY:-}llmstack-api:${TAG:-v0.2.3}
     command: rqworker
     depends_on:
       - redis
@@ -73,7 +73,7 @@ services:
       SITE_NAME: ${SITE_NAME:-LLMStack}
       DEBUG: ${DEBUG:-True}
   app:
-    image: ${REGISTRY:-}llmstack-app:${TAG:-v0.2.1}
+    image: ${REGISTRY:-}llmstack-app:${TAG:-v0.2.3}
     ports:
       - ${LLMSTACK_PORT:-9000}:80
     depends_on:
