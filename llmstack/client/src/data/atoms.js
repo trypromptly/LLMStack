@@ -885,3 +885,15 @@ export const isUsageLimitReachedState = selector({
     }
   },
 });
+
+export const sheetsState = selector({
+  key: "sheetsState",
+  get: async () => {
+    try {
+      const sheets = await axios().get("/api/sheets");
+      return sheets.data;
+    } catch (error) {
+      return [];
+    }
+  },
+});

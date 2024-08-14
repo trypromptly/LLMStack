@@ -1,6 +1,6 @@
 from django.urls import path
 
-from llmstack.promptly_sheets.apis import PromptlySheetCellViewSet, PromptlySheetViewSet
+from llmstack.promptly_sheets.apis import PromptlySheetViewSet
 
 urlpatterns = [
     path("api/sheets", PromptlySheetViewSet.as_view({"get": "list", "post": "create"})),
@@ -13,15 +13,7 @@ urlpatterns = [
         PromptlySheetViewSet.as_view({"post": "execute"}),
     ),
     path(
-        "api/sheets/<str:sheet_uuid>/cells",
-        PromptlySheetCellViewSet.as_view({"get": "list", "post": "create"}),
-    ),
-    path(
-        "api/sheets/<str:sheet_uuid>/cells/<str:cell_uuid>",
-        PromptlySheetCellViewSet.as_view({"get": "list", "patch": "patch", "delete": "delete"}),
-    ),
-    path(
-        "api/sheets/<str:sheet_uuid>/cells/<str:cell_uuid>/execute",
-        PromptlySheetCellViewSet.as_view({"post": "execute"}),
+        "api/sheets/<str:sheet_uuid>/execute_async",
+        PromptlySheetViewSet.as_view({"post": "execute_async"}),
     ),
 ]

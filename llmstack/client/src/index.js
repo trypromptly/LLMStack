@@ -43,6 +43,7 @@ const AddDatasourceRefreshSchedulePage = lazy(
   () => import("./pages/AddDatasourceRefreshSchedule"),
 );
 const SessionExpiredPage = lazy(() => import("./pages/SessionExpired"));
+const SheetsPage = lazy(() => import("./pages/SheetsPage"));
 
 const defaultTheme = createTheme({
   spacing: 4,
@@ -496,6 +497,15 @@ let routes = [
     element: (
       <App>
         <Discover />
+      </App>
+    ),
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/sheets",
+    element: (
+      <App>
+        <SheetsPage />
       </App>
     ),
     errorElement: <ErrorPage />,
