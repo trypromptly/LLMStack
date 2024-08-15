@@ -502,7 +502,7 @@ let routes = [
     errorElement: <ErrorPage />,
   },
   {
-    path: "/sheets",
+    path: "/sheets/worksheets/:worksheetId",
     element: (
       <App>
         <SheetsPage />
