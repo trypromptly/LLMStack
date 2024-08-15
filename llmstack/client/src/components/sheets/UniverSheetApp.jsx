@@ -9,7 +9,10 @@ import { LocaleType, Tools, Univer, UniverInstanceType } from "@univerjs/core";
 import { defaultTheme } from "@univerjs/design";
 
 import { UniverUIPlugin } from "@univerjs/ui";
-
+import {
+  StringValueObject,
+  UniverFormulaEnginePlugin,
+} from "@univerjs/engine-formula";
 import { UniverDocsPlugin } from "@univerjs/docs";
 import { UniverDocsUIPlugin } from "@univerjs/docs-ui";
 
@@ -24,6 +27,65 @@ import SheetsEnUS from "@univerjs/sheets/locale/en-US";
 import SheetsUIEnUS from "@univerjs/sheets-ui/locale/en-US";
 import SheetsFormulaEnUS from "@univerjs/sheets-formula/locale/en-US";
 import { forwardRef, useRef, useEffect, useImperativeHandle } from "react";
+import { BaseFunction, FunctionType } from "@univerjs/engine-formula";
+
+import "./UniverSheetApp.css";
+const APPRUN = "APPRUN";
+const functionEnUS = {
+  formulaCustom: {
+    APPRUN: {
+      description: "Run an App",
+      abstract: "Add its arguments to the App's input and run the App",
+      functionParameter: {
+        appId: {
+          name: "App ID",
+        },
+        input: {
+          name: "App Input",
+        },
+      },
+    },
+  },
+};
+
+const FUNCTION_LIST_USER = [
+  {
+    functionName: APPRUN,
+    aliasFunctionName: "formulaCustom.APPRUN.aliasFunctionName",
+    functionType: FunctionType.User,
+    description: "formulaCustom.APPRUN.description",
+    abstract: "formulaCustom.APPRUN.abstract",
+    functionParameter: [
+      {
+        name: "formulaCustom.APPRUN.functionParameter.appId.name",
+        detail: "formulaCustom.APPRUN.functionParameter.appId.detail",
+        example: "<App UUID>",
+        require: 1,
+        repeat: 0,
+      },
+      {
+        name: "formulaCustom.APPRUN.functionParameter.input.name",
+        detail: "formulaCustom.APPRUN.functionParameter.input.detail",
+        example: "<App Input>",
+        require: 0,
+        repeat: 1,
+      },
+    ],
+  },
+];
+
+class Apprun extends BaseFunction {
+  calculate(...variants) {
+    let accumulatorAll = StringValueObject.create("");
+
+    console.log("variants", variants);
+    console.log(accumulatorAll);
+
+    return accumulatorAll;
+  }
+}
+
+const functionUser = [[Apprun, APPRUN]];
 
 // eslint-disable-next-line react/display-name
 const UniverSheetApp = forwardRef(({ data }, ref) => {
@@ -58,6 +120,7 @@ const UniverSheetApp = forwardRef(({ data }, ref) => {
           SheetsFormulaEnUS,
           UIEnUS,
           DesignEnUS,
+          functionEnUS,
         ),
       },
     });
@@ -65,8 +128,6 @@ const UniverSheetApp = forwardRef(({ data }, ref) => {
     univer.registerPlugin(UniverUIPlugin, {
       container: containerRef.current,
       toolbar: false,
-      footer: false,
-      contextMenu: false,
     });
 
     univer.registerPlugin(UniverDocsPlugin, {
@@ -78,7 +139,13 @@ const UniverSheetApp = forwardRef(({ data }, ref) => {
     // sheets
     univer.registerPlugin(UniverSheetsPlugin);
     univer.registerPlugin(UniverSheetsUIPlugin);
-    univer.registerPlugin(UniverSheetsFormulaPlugin);
+    univer.registerPlugin(UniverSheetsFormulaPlugin, {
+      description: FUNCTION_LIST_USER,
+    });
+
+    univer.registerPlugin(UniverFormulaEnginePlugin, {
+      function: functionUser,
+    });
 
     const univerAPI = FUniver.newAPI(univer);
 
