@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 @database_sync_to_async
 def update_sheet_channel_name(sheet_id, channel_name):
-    from llmstack.promptly_sheets.models import PromptlySheet
+    from llmstack.sheets.models import PromptlySheet
 
     # Update the channel name for the sheet
     sheet = PromptlySheet.objects.get(uuid=sheet_id)

@@ -1,4 +1,4 @@
-from llmstack.promptly_sheets.apis import PromptlySheetViewSet
+from llmstack.sheets.apis import PromptlySheetViewSet
 
 
 def process_sheet_execute_request(user_email, sheet_id):

@@ -9,9 +9,9 @@ from rest_framework.response import Response as DRFResponse
 
 from llmstack.base.models import Profile
 from llmstack.jobs.adhoc import ProcessingJob
-from llmstack.promptly_sheets.models import PromptlySheet, PromptlySheetCell
-from llmstack.promptly_sheets.serializers import PromptlySheetSeializer
-from llmstack.promptly_sheets.utils import parse_formula
+from llmstack.sheets.models import PromptlySheet, PromptlySheetCell
+from llmstack.sheets.serializers import PromptlySheetSeializer
+from llmstack.sheets.utils import parse_formula
 
 logger = logging.getLogger(__name__)
 

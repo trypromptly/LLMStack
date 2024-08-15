@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from llmstack.promptly_sheets.models import PromptlySheet
+from llmstack.sheets.models import PromptlySheet
 
 
 class PromptlySheetSeializer(serializers.ModelSerializer):
