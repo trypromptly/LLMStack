@@ -19,7 +19,7 @@ from llmstack.common.utils.provider_config import (
 )
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
 
-from .models import RunEntry
+from .models import Feedback, RunEntry
 from .serializers import HistorySerializer, LoginSerializer
 
 Schema = namedtuple("Schema", "type default is_required")
@@ -143,6 +143,8 @@ class HistoryViewSet(viewsets.ModelViewSet):
                     "Request Location",
                     "Request User Agent",
                     "Request Content Type",
+                    "Response Quality",
+                    "Response Feedback",
                 ],
             )
         yield ",".join(header) + "\n"
@@ -158,6 +160,7 @@ class HistoryViewSet(viewsets.ModelViewSet):
                 ),
             ]
             if not brief:
+                feedback = entry.feedback
                 output.extend(
                     [
                         entry.request_uuid,
@@ -166,6 +169,8 @@ class HistoryViewSet(viewsets.ModelViewSet):
                         entry.request_location,
                         entry.request_user_agent,
                         entry.request_content_type,
+                        feedback.response_quality if feedback else "",
+                        feedback.response_feedback if feedback else "",
                     ],
                 )
             yield ",".join(output) + "\n"
@@ -251,6 +256,20 @@ class HistoryViewSet(viewsets.ModelViewSet):
             raise Http404("Invalid request uuid")
 
         return DRFResponse(HistorySerializer(instance=object).data)
+
+    def patch(self, request, request_uuid):
+        run_entry = RunEntry.objects.filter(request_uuid=request_uuid, owner=request.user).first()
+        if "feedback" in request.data:
+            response_quality = request.data.get("feedback").get("response_quality")
+            response_feedback = request.data.get("feedback").get("response_feedback")
+            Feedback.objects.create(
+                request_uuid=run_entry.request_uuid,
+                response_quality=response_quality,
+                response_feedback=response_feedback,
+            )
+            return DRFResponse(status=status.HTTP_201_CREATED)
+
+        return DRFResponse(status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(APIView):

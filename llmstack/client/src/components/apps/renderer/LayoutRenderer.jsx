@@ -13,6 +13,8 @@ import {
   KeyboardArrowDownOutlined,
   KeyboardArrowRightOutlined,
   DownloadOutlined,
+  ThumbUp,
+  ThumbDown,
 } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 import { Liquid } from "liquidjs";
@@ -48,6 +50,7 @@ import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 import { appRunDataState, profileSelector } from "../../../data/atoms";
 import loadingImage from "../../../assets/images/loading.gif";
 import { isEqual, get } from "lodash";
+import { axios } from "../../../data/axios";
 
 import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-javascript";
@@ -62,8 +65,9 @@ const ThemedJsonForm = lazy(() => import("../../ThemedJsonForm"));
 
 const liquidEngine = new Liquid();
 
-const AppMessageToolbar = ({ message }) => {
+const AppMessageToolbar = ({ message, showFeedback, onFeedbackClick }) => {
   const messageToolbarRef = useRef(null);
+
   return (
     <Box
       sx={{
@@ -77,6 +81,36 @@ const AppMessageToolbar = ({ message }) => {
       }}
       ref={messageToolbarRef}
     >
+      <IconButton
+        disabled={!showFeedback}
+        onClick={() => {
+          axios()
+            .patch(`/api/history/${message.requestId}`, {
+              feedback: { response_quality: 100 },
+            })
+            .then(() => {
+              onFeedbackClick();
+            });
+        }}
+        sx={{ color: "#999" }}
+      >
+        <ThumbUp fontSize="small" />
+      </IconButton>
+      <IconButton
+        disabled={!showFeedback}
+        onClick={() => {
+          axios()
+            .patch(`/api/history/${message.requestId}`, {
+              feedback: { response_quality: 0 },
+            })
+            .then(() => {
+              onFeedbackClick();
+            });
+        }}
+        sx={{ color: "#999" }}
+      >
+        <ThumbDown fontSize="small" />
+      </IconButton>
       <IconButton
         onClick={() => {
           navigator.clipboard.write([
@@ -423,6 +457,7 @@ const AppMessage = memo(
   (props) => {
     const { message, workflow, assistantImage } = props;
     const [showToolbar, setShowToolbar] = useState(false);
+    const [showFeedback, setShowFeedback] = useState(true);
 
     return (
       <Box
@@ -444,7 +479,13 @@ const AppMessage = memo(
           onMouseEnter={() => setShowToolbar(true)}
           onMouseLeave={() => setShowToolbar(false)}
         >
-          {showToolbar && <AppMessageToolbar message={message} />}
+          {showToolbar && (
+            <AppMessageToolbar
+              message={message}
+              showFeedback={showFeedback}
+              onFeedbackClick={() => setShowFeedback(false)}
+            />
+          )}
           <LayoutRenderer>{message.content || ""}</LayoutRenderer>
         </Box>
       </Box>
@@ -459,6 +500,7 @@ const AgentMessage = memo(
   (props) => {
     const { message, workflow, assistantImage } = props;
     const [showToolbar, setShowToolbar] = useState(false);
+    const [showFeedback, setShowFeedback] = useState(true);
 
     return (
       <Box
@@ -484,7 +526,13 @@ const AgentMessage = memo(
           onMouseEnter={() => setShowToolbar(true)}
           onMouseLeave={() => setShowToolbar(false)}
         >
-          {showToolbar && <AppMessageToolbar message={message} />}
+          {showToolbar && (
+            <AppMessageToolbar
+              message={message}
+              showFeedback={showFeedback}
+              onFeedbackClick={() => setShowFeedback(false)}
+            />
+          )}
           <LayoutRenderer>{message.content || ""}</LayoutRenderer>
         </Box>
       </Box>

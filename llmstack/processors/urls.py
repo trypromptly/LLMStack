@@ -26,6 +26,6 @@ urlpatterns = [
     ),
     path(
         "api/history/<str:request_uuid>",
-        apis.HistoryViewSet.as_view({"get": "get"}),
+        apis.HistoryViewSet.as_view({"get": "get", "patch": "patch"}),
     ),
 ]
