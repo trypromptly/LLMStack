@@ -1,7 +1,7 @@
 import base64
 import json
 import uuid
-from typing import List
+from typing import Dict
 
 from django.db import models
 from django.db.models.signals import post_delete
@@ -94,14 +94,17 @@ def delete_sheet_data_objrefs(data_objrefs):
             pass
 
 
-def create_sheet_data_objrefs(cells: List[List[PromptlySheetCell]], sheet_name, sheet_uuid, page_size: int = 1000):
-    cell_chunks = [cells[i : i + page_size] for i in range(0, len(cells), page_size)]
-    for idx in range(0, len(cell_chunks)):
-        data = {"cells": [[cell.model_dump() for cell in cell_row] for cell_row in cell_chunks[idx]]}
-        data_json = json.dumps(data)
-        data_json_uri = (
-            f"data:application/json;name={sheet_name}_{idx}.json;base64,{base64.b64encode(data_json.encode()).decode()}"
-        )
+def create_sheet_data_objrefs(
+    cells: Dict[int, Dict[int, PromptlySheetCell]], sheet_name, sheet_uuid, page_size: int = 1000
+):
+    for i in range(0, len(cells), page_size):
+        chunk = {}
+        for j in range(i, min(i + page_size, len(cells))):
+            chunk[j] = dict(map(lambda entry: (entry[0], entry[1].model_dump()), cells[j].items()))
+
+        data_json = json.dumps(chunk)
+        filename = f"{sheet_name}_{str(uuid.uuid4())[:4]}_{i}.json"
+        data_json_uri = f"data:application/json;name={filename};base64,{base64.b64encode(data_json.encode()).decode()}"
         file_obj = PromptlySheetFiles.create_from_data_uri(
             data_json_uri, ref_id=sheet_uuid, metadata={"sheet_uuid": sheet_uuid}
         )
@@ -113,9 +116,24 @@ def get_sheet_cells(objref):
         category, uuid = objref.strip().split("//")[1].split("/")
         asset = PromptlySheetFiles.objects.get(uuid=uuid)
         with asset.file.open("rb") as f:
-            data = json.load(f)
-            cells = data.get("cells", [])
-            return [[PromptlySheetCell(**cell) for cell in cell_row] for cell_row in cells]
+            cells = json.load(f)
+
+            return dict(
+                map(
+                    lambda row_entry: (
+                        int(row_entry[0]),
+                        (
+                            dict(
+                                map(
+                                    lambda cell_entry: (int(cell_entry[0]), PromptlySheetCell(**cell_entry[1])),
+                                    row_entry[1].items(),
+                                )
+                            )
+                        ),
+                    ),
+                    cells.items(),
+                )
+            )
 
     except Exception:
         pass
@@ -151,15 +169,14 @@ class PromptlySheet(models.Model):
     def cells(self):
         for objref in self.data.get("cells", []):
             cells = get_sheet_cells(objref)
-            if cells:
-                yield cells
+            yield cells
 
     @property
     def rows(self):
         for objref in self.data.get("cells", []):
-            cells = get_sheet_cells(objref)
-            for cell_row in cells:
-                yield cell_row
+            cell_rows = get_sheet_cells(objref)
+            for cell_row in cell_rows:
+                yield cell_rows[cell_row]
 
     def save(self, *args, **kwargs):
         if kwargs.get("cells"):
@@ -178,6 +195,23 @@ class PromptlySheet(models.Model):
                 kwargs["update_fields"].append("data")
 
         super().save(*args, **kwargs)
+
+
+class PromptlySheetRunEntry(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile_uuid = models.UUIDField(blank=False, null=False, help_text="The UUID of the owner of the sheet")
+    sheet_uuid = models.UUIDField(blank=False, null=False, help_text="The UUID of the sheet")
+    run_snapshot = models.JSONField(blank=True, null=True, help_text="The data of the sheet", default={"cells": []})
+    created_at = models.DateTimeField(auto_now_add=True, help_text="The date and time the run was created")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["profile_uuid"]),
+            models.Index(fields=["sheet_uuid"]),
+        ]
+
+    def __str__(self):
+        return str(self.uuid)
 
 
 @receiver(post_delete, sender=PromptlySheet)

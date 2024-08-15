@@ -91,14 +91,23 @@ class PromptlySheetViewSet(viewsets.ViewSet):
             profile_uuid=profile.uuid,
             extra_data=request.data.get("extra_data", {"has_header": True}),
         )
+
         if "cells" in request.data:
-            cells_data = []
-            for row in range(len(request.data["cells"])):
-                cells_row_data = []
-                for column in range(len(request.data["cells"][row])):
-                    cell_data = request.data["cells"][row][column]
-                    cells_row_data.append(PromptlySheetCell(row=row, col=column, **cell_data))
-                cells_data.append(cells_row_data)
+            if not isinstance(request.data["cells"], dict):
+                raise ValueError("Invalid cells data")
+
+            cells_data = {}
+            for row_number in request.data["cells"]:
+                row_cell_data = {}
+                if not isinstance(request.data["cells"][row_number], dict):
+                    raise ValueError("Invalid cells data")
+                for column_number in request.data["cells"][row_number]:
+                    cell_data = request.data["cells"][row_number][column_number]
+                    row_cell_data[int(column_number)] = PromptlySheetCell(
+                        row=row_number, col=column_number, **cell_data
+                    )
+                cells_data[int(row_number)] = row_cell_data
+
             sheet.save(cells=cells_data)
 
         return DRFResponse(PromptlySheetSeializer(instance=sheet).data)

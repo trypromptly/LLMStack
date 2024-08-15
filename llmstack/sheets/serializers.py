@@ -7,11 +7,12 @@ class PromptlySheetSeializer(serializers.ModelSerializer):
     cells = serializers.SerializerMethodField()
 
     def get_cells(self, obj):
-        cells = []
+        cells = {}
         if self.context.get("include_cells", False):
-            for cells_page in obj.cells:
-                for cells_row in cells_page:
-                    cells.append([cell.model_dump() for cell in cells_row])
+            for page in obj.cells:
+                for cell_row in page:
+                    cells[str(cell_row)] = dict(map(lambda x: (str(x[0]), x[1].model_dump()), page[cell_row].items()))
+
         return cells
 
     class Meta:
