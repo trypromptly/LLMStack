@@ -1,46 +1,74 @@
-import { useEffect, useState } from "react";
-import {
-  Grid,
-  Button,
-  Box,
-  Stack,
-  Tab,
-  IconButton,
-  Menu,
-  ListItemText,
-  TextField,
-  MenuItem,
-  MenuList,
-  ListItemIcon,
-} from "@mui/material";
+import { useState, useRef, useEffect } from "react";
+import { Grid, Button, Box } from "@mui/material";
 import { useRecoilValue } from "recoil";
-import { TabList, TabContext, TabPanel } from "@mui/lab";
 import { sheetsState } from "../data/atoms";
 import { axios } from "../data/axios";
 import AddIcon from "@mui/icons-material/Add";
 import { SaveOutlined } from "@mui/icons-material";
-import { ArrowDropDown } from "@mui/icons-material";
-import { DeleteOutlineOutlined } from "@mui/icons-material";
-import {
-  DataGrid,
-  GridToolbarContainer,
-  GridToolbarColumnsButton,
-  GridToolbarFilterButton,
-  GridPagination,
-  useGridApiRef,
-  GridColumnMenu,
-  useGridApiContext,
-} from "@mui/x-data-grid";
+import { useParams } from "react-router-dom";
 
-const COLUMN_TYPES = {
-  string: {
-    type: "string",
-    editable: true,
-    sortable: false,
-    flex: 1,
+import { BooleanNumber, LocaleType, SheetTypes } from "@univerjs/core";
+
+import UniverSheetApp from "../components/sheets/UniverSheetApp";
+
+// const DEFAULT_WORKBOOK_DATA = {
+//   id: "default-workbook",
+//   locale: LocaleType.EN_US,
+//   name: "universheet",
+//   sheetOrder: ["sheet-01"],
+//   sheets: {
+//     "sheet-01": {
+//       type: SheetTypes.GRID,
+//       id: "sheet-01",
+//       cellData: {
+//         0: {
+//           0: {
+//             v: "Hello World",
+//           },
+//         },
+//       },
+//       name: "sheet1",
+//       tabColor: "red",
+//       hidden: BooleanNumber.FALSE,
+//       rowCount: 100,
+//       columnCount: 15,
+//       zoomRatio: 1,
+//       scrollTop: 200,
+//       scrollLeft: 100,
+//       defaultColumnWidth: 93,
+//       defaultRowHeight: 27,
+//       status: 1,
+//       showGridlines: 1,
+//       rightToLeft: BooleanNumber.FALSE,
+//     },
+//   },
+// };
+const DEFAULT_WORKBOOK_DATA = {
+  id: "default-workbook",
+  locale: LocaleType.EN_US,
+  name: "universheet",
+  sheetOrder: ["sheet-01"],
+  sheets: {
+    "sheet-01": {
+      type: SheetTypes.GRID,
+      id: "sheet-01",
+      cellData: {},
+      name: "sheet1",
+      tabColor: "red",
+      hidden: BooleanNumber.FALSE,
+      rowCount: 100,
+      columnCount: 15,
+      zoomRatio: 1,
+      scrollTop: 200,
+      scrollLeft: 100,
+      defaultColumnWidth: 93,
+      defaultRowHeight: 27,
+      status: 1,
+      showGridlines: 1,
+      rightToLeft: BooleanNumber.FALSE,
+    },
   },
 };
-
 function gridDataToApiData(columns, rows, apiRef) {
   const cells = [];
   const headerCells = columns.map((column) => ({
@@ -70,289 +98,21 @@ function gridDataToApiData(columns, rows, apiRef) {
   return cells;
 }
 
-const RowUpdateButton = () => {
-  const apiRef = useGridApiContext();
-  const selectedRows = apiRef.current.getSelectedRows();
-  const rows = apiRef.current.getRowModels();
-
-  return selectedRows.size ? (
-    <Button
-      variant="contained"
-      color="primary"
-      size="small"
-      onClick={() => {
-        selectedRows.forEach((row) => {
-          apiRef.current.updateRows([{ id: row.id, _action: "delete" }]);
-        });
-      }}
-    >
-      {`Delete ${selectedRows.size} record(s)`}
-    </Button>
-  ) : (
-    <Button
-      color="primary"
-      startIcon={<AddIcon />}
-      onClick={() => {
-        const newRow = {
-          id: rows.size,
-          ...Object.fromEntries(
-            apiRef.current
-              .getAllColumns()
-              .filter((entry) => entry.field !== "__check__")
-              .map((col) => [col.field, ""]),
-          ),
-        };
-        apiRef.current.updateRows([newRow]);
-      }}
-    >
-      Add record
-    </Button>
-  );
-};
-
-const AddColumnButton = ({ options, onSelect }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredOptions, setFilteredOptions] = useState(options);
-
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleSearch = (event) => {
-    const search = event.target.value.toLowerCase();
-    setSearchTerm(search);
-    setFilteredOptions(
-      options.filter((option) => option.name.toLowerCase().includes(search)),
-    );
-  };
-
-  const handleSelect = (option) => {
-    onSelect(option);
-    handleClose();
-  };
-
-  return (
-    <div>
-      <Button
-        variant="contained"
-        endIcon={<ArrowDropDown />}
-        onClick={handleClick}
-      >
-        Add Column
-      </Button>
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-        sx={{ maxHeight: "300px" }}
-      >
-        <div style={{ padding: "8px 16px" }}>
-          <TextField
-            variant="outlined"
-            fullWidth
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-        </div>
-        <MenuList>
-          {filteredOptions.map((option, index) => (
-            <MenuItem key={index} onClick={() => handleSelect(option)}>
-              {option.name}
-            </MenuItem>
-          ))}
-        </MenuList>
-      </Menu>
-    </div>
-  );
-};
-
-const CustomColumnItem = ({ columnProps, setColumns }) => {
-  return (
-    <MenuItem
-      onClick={(data) => {
-        setColumns((prevColumns) =>
-          prevColumns.filter((col) => col.field !== columnProps?.colDef?.field),
-        );
-      }}
-    >
-      <ListItemIcon>
-        <DeleteOutlineOutlined fontSize="small" />
-      </ListItemIcon>
-      <ListItemText primary="Delete Column" />
-    </MenuItem>
-  );
-};
-
-function SheetFooter() {
-  return (
-    <Stack direction={"row"} justifyContent={"space-between"}>
-      <RowUpdateButton />
-      <GridPagination />
-    </Stack>
-  );
-}
-
-function SheetToolbar({ setColumns, columns, sheet_id, addColumnOptions }) {
-  const apiRef = useGridApiContext();
-
-  return (
-    <GridToolbarContainer>
-      <GridToolbarColumnsButton />
-      <GridToolbarFilterButton />
-      <RowUpdateButton />
-
-      <IconButton
-        color="primary"
-        onClick={() => {
-          const updatedCellsData = gridDataToApiData(
-            columns,
-            apiRef.current.getRowModels(),
-            apiRef,
-          );
-          axios()
-            .patch(`/api/sheets/${sheet_id}`, {
-              cells: updatedCellsData,
-            })
-            .then((res) => {
-              window.location.reload();
-            });
-        }}
-      >
-        <SaveOutlined />
-      </IconButton>
-      <AddColumnButton
-        options={addColumnOptions}
-        onSelect={(option) => {
-          let newColumn = {
-            field: `0~${columns.length}`,
-            headerName: `New Column ${columns.length + 1}`,
-            ...COLUMN_TYPES[option.type],
-          };
-
-          setColumns((prevColumns) => [...prevColumns, newColumn]);
-        }}
-      />
-    </GridToolbarContainer>
-  );
-}
-
-function SheetColumnMenu(props) {
-  const { apiRef, columns, setColumns } = props;
-  return (
-    <GridColumnMenu
-      {...props}
-      slots={{ columnMenuSortItem: null, columnMenuUserItem: CustomColumnItem }}
-      slotProps={{
-        columnMenuUserItem: {
-          displayOrder: 1,
-          columnProps: props,
-          apiRef,
-          columns,
-          setColumns,
-        },
-      }}
-    />
-  );
-}
-
-function SheetGrid(props) {
-  const addColumnOptions = [{ type: "string", name: "String" }];
-
-  const apiRef = useGridApiRef();
-  const { id } = props;
-
-  const [columns, setColumns] = useState([]);
-  const [rows, setRows] = useState([]);
-
-  useEffect(() => {
-    axios()
-      .get(`/api/sheets/${id}?include_cells=true`)
-      .then((res) => {
-        if (res.data.cells) {
-          const headerCells = res.data.cells[0];
-          const columns = headerCells.map((cell, index) => ({
-            field: cell.cell_id,
-            headerName: cell.value,
-            ...COLUMN_TYPES[cell.value_type],
-          }));
-          const rows = res.data.cells.slice(1).map((row, rowIndex) =>
-            row.reduce(
-              (acc, cell, cellIndex) => ({
-                ...acc,
-                [headerCells[cellIndex].cell_id]: cell.value,
-              }),
-              { id: rowIndex },
-            ),
-          );
-          setColumns(columns);
-          setRows(rows);
-        }
-      });
-  }, [setColumns, setRows]);
-
-  useEffect(() => {
-    if (rows.length) {
-      const columnFields = columns.map((column) => column.field);
-      // From row remove keys that are not in columnFields except id
-      const newRows = Array.from(apiRef.current.getRowModels().values()).map(
-        (row) =>
-          Object.keys(row).reduce(
-            (acc, key) =>
-              key === "id" || columnFields.includes(key)
-                ? { ...acc, [key]: row[key] }
-                : acc,
-            {},
-          ),
-      );
-      setRows(newRows);
-    }
-  }, [columns]);
-
-  return (
-    <Box sx={{ width: "100%" }}>
-      <DataGrid
-        apiRef={apiRef}
-        editMode="row"
-        columns={columns}
-        rows={rows}
-        slots={{
-          toolbar: SheetToolbar,
-          footer: SheetFooter,
-          columnMenu: SheetColumnMenu,
-        }}
-        slotProps={{
-          toolbar: {
-            setRows,
-            setColumns,
-            columns,
-            sheet_id: id,
-            addColumnOptions,
-          },
-          columnMenu: { apiRef, columns, setColumns },
-        }}
-        checkboxSelection
-        disableRowSelectionOnClick
-      />
-    </Box>
-  );
-}
 export default function SheetsPage() {
-  const sheets = useRecoilValue(sheetsState);
-  const [selectedSheet, setSelectedSheet] = useState(sheets[0].uuid || "");
+  const { worksheetId } = useParams();
+  const univerRef = useRef(null);
+  const [sheetData, setSheetData] = useState(null);
 
-  const createSheet = () => {
+  useEffect(() => {
     axios()
-      .post("/api/sheets", { name: `New sheet ${sheets.length + 1}` })
-      .then((res) => {
-        window.location.reload();
+      .get(`/api/sheets/${worksheetId}?include_cells=true`)
+      .then((response) => {
+        const sheetName = response.data.name;
+        const cells = response.data.cells;
+        const workbookData = DEFAULT_WORKBOOK_DATA;
+        setSheetData(workbookData);
       });
-  };
+  }, [worksheetId]);
 
   return (
     <Box padding={4} sx={{ height: "100%" }}>
@@ -362,35 +122,24 @@ export default function SheetsPage() {
             <Grid xs={8}>
               <h1>Sheets</h1>
             </Grid>
-            <Grid xs={4}></Grid>
+            <Grid xs={4}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  console.log(univerRef.current.getData());
+                }}
+              >
+                Get Data
+              </Button>
+            </Grid>
           </Grid>
         </Grid>
         <Grid xs={12} sx={{ height: "80%" }}>
-          <Box sx={{ width: "100%", height: "50%" }}>
-            <TabContext value={selectedSheet}>
-              <Stack
-                sx={{ borderBottom: 1, borderColor: "divider" }}
-                direction={"row"}
-                justifyContent={"space-between"}
-              >
-                <TabList onChange={(e, value) => setSelectedSheet(value)}>
-                  {sheets.map((sheet) => {
-                    return <Tab label={sheet.name} value={sheet.uuid} />;
-                  })}
-                </TabList>
-                <Button variant="contained" onClick={createSheet}>
-                  New Sheet
-                </Button>
-              </Stack>
-              {sheets.map((sheet) => {
-                return (
-                  <TabPanel key={sheet.uuid} value={sheet.uuid}>
-                    <SheetGrid id={sheet.uuid} />
-                  </TabPanel>
-                );
-              })}
-            </TabContext>
-          </Box>
+          <UniverSheetApp
+            style={{ flex: 1 }}
+            ref={univerRef}
+            data={DEFAULT_WORKBOOK_DATA}
+          />
         </Grid>
         <Grid xs={12} sx={{ height: "5%" }}></Grid>
       </Grid>
