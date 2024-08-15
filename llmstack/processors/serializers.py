@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
-from .models import ApiBackend, ApiProvider, Endpoint, RunEntry
+from .models import ApiBackend, ApiProvider, Endpoint, Feedback, RunEntry
 
 
 class ApiProviderSerializer(serializers.ModelSerializer):
@@ -134,6 +134,7 @@ class EndpointSerializer(serializers.ModelSerializer):
 class HistorySerializer(serializers.ModelSerializer):
     app_detail = serializers.SerializerMethodField()
     processor_runs = serializers.SerializerMethodField()
+    feedback = serializers.SerializerMethodField()
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -145,6 +146,7 @@ class HistorySerializer(serializers.ModelSerializer):
             representation.pop("response_headers", None)
             representation.pop("response_content_type", None)
             representation.pop("processor_runs", None)
+            representation.pop("feedback", None)
 
         return representation
 
@@ -187,6 +189,12 @@ class HistorySerializer(serializers.ModelSerializer):
 
         return []
 
+    def get_feedback(self, obj):
+        feedback = obj.feedback
+        if feedback:
+            return FeedbackSerializer(feedback).data
+        return None
+
     class Meta:
         model = RunEntry
         fields = [
@@ -210,9 +218,16 @@ class HistorySerializer(serializers.ModelSerializer):
             "response_time",
             "processor_runs",
             "platform_data",
+            "feedback",
         ]
 
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = "__all__"
