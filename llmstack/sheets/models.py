@@ -174,9 +174,9 @@ class PromptlySheet(models.Model):
     @property
     def rows(self):
         for objref in self.data.get("cells", []):
-            cell_rows = get_sheet_cells(objref)
-            for cell_row in cell_rows:
-                yield cell_rows[cell_row]
+            cells = get_sheet_cells(objref)
+            for cell_row in cells:
+                yield (cell_row, cells[cell_row])
 
     def save(self, *args, **kwargs):
         if kwargs.get("cells"):
@@ -201,7 +201,7 @@ class PromptlySheetRunEntry(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     profile_uuid = models.UUIDField(blank=False, null=False, help_text="The UUID of the owner of the sheet")
     sheet_uuid = models.UUIDField(blank=False, null=False, help_text="The UUID of the sheet")
-    run_snapshot = models.JSONField(blank=True, null=True, help_text="The data of the sheet", default={"cells": []})
+    data = models.JSONField(blank=True, null=True, help_text="The data of the sheet", default={"cells": []})
     created_at = models.DateTimeField(auto_now_add=True, help_text="The date and time the run was created")
 
     class Meta:
@@ -212,6 +212,26 @@ class PromptlySheetRunEntry(models.Model):
 
     def __str__(self):
         return str(self.uuid)
+
+    def save(self, *args, **kwargs):
+        sheet = PromptlySheet.objects.get(uuid=self.sheet_uuid)
+
+        cell_objs = kwargs.pop("cells", {})
+        self.data = {
+            "cells": list(
+                create_sheet_data_objrefs(
+                    cell_objs,
+                    f"{sheet.name}_processed",
+                    str(sheet.uuid),
+                    page_size=sheet.extra_data.get("page_size", 1000),
+                )
+            )
+        }
+
+        if kwargs.get("update_fields"):
+            kwargs["update_fields"].append("data")
+
+        super().save(*args, **kwargs)
 
 
 @receiver(post_delete, sender=PromptlySheet)

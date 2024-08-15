@@ -9,7 +9,11 @@ from rest_framework.response import Response as DRFResponse
 
 from llmstack.base.models import Profile
 from llmstack.jobs.adhoc import ProcessingJob
-from llmstack.sheets.models import PromptlySheet, PromptlySheetCell
+from llmstack.sheets.models import (
+    PromptlySheet,
+    PromptlySheetCell,
+    PromptlySheetRunEntry,
+)
 from llmstack.sheets.serializers import PromptlySheetSeializer
 from llmstack.sheets.utils import parse_formula
 
@@ -154,15 +158,19 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         sheet.save(update_fields=["is_locked"])
 
         try:
-            processed_cells = []
-            for row in sheet.rows:
-                processed_cells_row = []
-                for cell in row:
-                    processed_cells_row.append(_execute_cell(cell, sheet))
-                processed_cells.append(processed_cells_row)
+            processed_cells = {}
+            for row_number, column_cells in sheet.rows:
+                processed_cells_row = {}
+                for column_number in column_cells:
+                    processed_cells_row[column_number] = _execute_cell(column_cells[column_number], sheet)
+                processed_cells[row_number] = processed_cells_row
 
             if processed_cells:
                 sheet.save(cells=processed_cells, update_fields=["updated_at"])
+                # Store the processed data in sheet runs table
+                run_entry = PromptlySheetRunEntry(sheet_uuid=sheet.uuid, profile_uuid=profile.uuid)
+                run_entry.save(cells=processed_cells)
+
         except Exception:
             logger.exception("Error executing sheet")
 
