@@ -12,6 +12,7 @@ from google.generativeai.types import content_types
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -287,6 +288,9 @@ class ChatProcessor(
                         content, mime_type = self.get_image_bytes_mime_type(
                             image_url,
                         )
+                    elif image_url.startswith("objref://"):
+                        data_uri = self._get_session_asset_data_uri(image_url, include_name=True)
+                        mime_type, _, content = validate_parse_data_uri(data_uri)
                     message_params.append(
                         {
                             "mime_type": mime_type,
