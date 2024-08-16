@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any, Dict, Generator, List, Optional, Union
 
 import requests
-from pydantic import Field, HttpUrl
+from pydantic import Field
 
 from llmstack.common.blocks.base.processor import (
     BaseConfiguration,
@@ -104,7 +104,7 @@ class HTMLBody(Schema):
 
 
 class HttpAPIProcessorInput(BaseInput):
-    url: HttpUrl
+    url: str
     method: HttpMethod = HttpMethod.GET
     headers: Optional[Dict[str, str]] = {}
     authorization: Union[

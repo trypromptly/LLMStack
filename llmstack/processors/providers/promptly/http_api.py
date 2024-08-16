@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import requests
 from asgiref.sync import async_to_sync
-from pydantic import Field, HttpUrl, model_validator
+from pydantic import Field, model_validator
 from requests.auth import HTTPBasicAuth
 
 from llmstack.apps.schemas import OutputTemplate
@@ -154,7 +154,7 @@ class ContentType(str, Enum):
 
 
 class HttpAPIProcessorConfiguration(Schema):
-    url: Optional[HttpUrl] = Field(
+    url: Optional[str] = Field(
         default=None,
         description="URL to make the request to",
         json_schema_extra={"advanced_parameter": False},
@@ -194,7 +194,7 @@ class HttpAPIProcessorConfiguration(Schema):
         description="OpenAPI spec",
         json_schema_extra={"widget": "textarea"},
     )
-    openapi_spec_url: Optional[HttpUrl] = Field(
+    openapi_spec_url: Optional[str] = Field(
         default=None,
         description="URL to the OpenAPI spec",
     )
