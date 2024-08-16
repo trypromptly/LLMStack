@@ -118,9 +118,7 @@ const generateTreeItemsFromSchema = (
       if (
         items &&
         items.$ref &&
-        Object.keys(definitions).find(
-          (d) => `#/definitions/${d}` === items.$ref,
-        )
+        Object.keys(definitions).find((d) => `#/$defs/${d}` === items.$ref)
       ) {
         const [nestedTreeItems, nestedCurrentKeys] =
           generateTreeItemsFromSchema(
