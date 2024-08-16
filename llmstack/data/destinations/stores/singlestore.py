@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 class SingleStore(BaseDestination):
     database: str = Field(description="Database name")
-    table: str = Field(description="Table name")
     deployment_name: Optional[str] = Field(description="Deployment name", default="*")
 
     _deployment_config: Optional[SinglestoreProviderConfig] = PrivateAttr()
