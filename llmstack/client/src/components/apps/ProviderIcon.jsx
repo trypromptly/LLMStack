@@ -27,6 +27,14 @@ import mistralAiIcon_light from "../../assets/images/mistral-icon-light.png";
 import mistralAiIcon_dark from "../../assets/images/mistral-icon-dark.png";
 import metaIcon_light from "../../assets/images/meta-icon-light.png";
 import metaIcon_dark from "../../assets/images/meta-icon-dark.png";
+import pineconeIcon_light from "../../assets/images/pinecone-icon-light.png";
+import pineconeIcon_dark from "../../assets/images/pinecone-icon-dark.png";
+import qdrantIcon_light from "../../assets/images/qdrant-icon-light.png";
+import qdrantIcon_dark from "../../assets/images/qdrant-icon-dark.png";
+import weaviateIcon_light from "../../assets/images/weaviate-icon-light.png";
+import weaviateIcon_dark from "../../assets/images/weaviate-icon-dark.png";
+import singlestoreIcon_light from "../../assets/images/singlestore-icon-light.png";
+import singlestoreIcon_dark from "../../assets/images/singlestore-icon-dark.png";
 
 const getIconImage = (icon, isActive) => {
   switch (icon?.replaceAll(" ", "").toLowerCase()) {
@@ -58,6 +66,14 @@ const getIconImage = (icon, isActive) => {
       return isActive ? mistralAiIcon_dark : mistralAiIcon_light;
     case "meta":
       return isActive ? metaIcon_dark : metaIcon_light;
+    case "pinecone":
+      return isActive ? pineconeIcon_dark : pineconeIcon_light;
+    case "qdrant":
+      return isActive ? qdrantIcon_dark : qdrantIcon_light;
+    case "weaviate":
+      return isActive ? weaviateIcon_dark : weaviateIcon_light;
+    case "singlestore":
+      return isActive ? singlestoreIcon_dark : singlestoreIcon_light;
     default:
       return promptlyIcon_light;
   }
