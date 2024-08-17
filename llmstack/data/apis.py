@@ -91,7 +91,12 @@ class PipelineViewSet(viewsets.ViewSet):
         )
 
     def destinations(self, request):
-        from llmstack.data.destinations import Pinecone, SingleStore, Weaviate
+        from llmstack.data.destinations import (
+            PandasStore,
+            Pinecone,
+            SingleStore,
+            Weaviate,
+        )
 
         return DRFResponse(
             [
@@ -112,6 +117,12 @@ class PipelineViewSet(viewsets.ViewSet):
                     "provider_slug": Pinecone.provider_slug(),
                     "schema": Pinecone.get_schema(),
                     "ui_schema": Pinecone.get_ui_schema(),
+                },
+                {
+                    "slug": PandasStore.slug(),
+                    "provider_slug": PandasStore.provider_slug(),
+                    "schema": PandasStore.get_schema(),
+                    "ui_schema": PandasStore.get_ui_schema(),
                 },
             ]
         )
