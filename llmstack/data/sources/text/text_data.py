@@ -2,6 +2,8 @@ import base64
 import logging
 import uuid
 
+from pydantic import Field
+
 from llmstack.data.sources.base import BaseSource, DataDocument
 from llmstack.data.sources.utils import create_source_document_asset
 
@@ -13,8 +15,13 @@ Entry configuration schema for text data source type
 
 
 class TextSchema(BaseSource):
-    name: str = "Untitled"
-    content: str = ""
+    name: str = Field(
+        default="Untitled", description="Name of the text data.", json_schema_extra={"advanced_parameter": False}
+    )
+    content: str = Field(
+        description="Text content to be processed",
+        json_schema_extra={"advanced_parameter": False, "widget": "textarea"},
+    )
 
     @classmethod
     def slug(cls):

@@ -21,6 +21,7 @@ class FileSchema(BaseSource):
     file: str = Field(
         description="File to be processed",
         json_schema_extra={
+            "advanced_parameter": False,
             "widget": "file",
             "maxSize": 25000000,
             "maxFiles": 4,

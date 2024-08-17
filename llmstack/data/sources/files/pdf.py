@@ -19,6 +19,7 @@ class PdfSchema(FileSchema):
     file: str = Field(
         description="File to be processed",
         json_schema_extra={
+            "advanced_parameter": False,
             "widget": "file",
             "accepts": {
                 "application/pdf": [],

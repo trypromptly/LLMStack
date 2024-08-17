@@ -130,7 +130,7 @@ function AdvancedForm({
             onChange={({ formData }) => {
               setSourceData(formData);
             }}
-            disableAdvanced={true}
+            disableAdvanced={false}
           />
         </AccordionDetails>
       </Accordion>
@@ -367,7 +367,7 @@ function TemplateForm({
         onChange={({ formData }) => {
           setSourceData(formData);
         }}
-        disableAdvanced={true}
+        disableAdvanced={false}
       />
       {datasource === null && selectedTemplate?.pipeline?.transformations && (
         <Accordion defaultExpanded={false}>
