@@ -1,10 +1,13 @@
 import base64
 import io
+import json
 import logging
 import uuid
 from typing import List
 
 import pandas as pd
+from llama_index.core.schema import TextNode
+from llama_index.core.vector_stores.types import VectorStoreQueryResult
 from pydantic import BaseModel, Field, PrivateAttr
 
 from llmstack.data.destinations.base import BaseDestination
@@ -49,6 +52,7 @@ class MappingEntry(BaseModel):
 
 
 class PandasStore(BaseDestination):
+    name: str = Field(description="Name of the table")
     schema: List[SchemaEntry] = Field(
         description="Schema of the table",
         default=[SchemaEntry(name="id", type="string"), SchemaEntry(name="text", type="string")],
@@ -112,7 +116,11 @@ class PandasStore(BaseDestination):
         self._asset.update_file(buffer.getvalue(), filename)
 
     def search(self, query: str, **kwargs):
-        return self._store.search(query, **kwargs)
+        result = self._dataframe.query(query).to_dict(orient="records")
+        result_text = json.dumps(result)
+        nodes = [TextNode(text=result_text, metadata={"query": query, "source": self.name})]
+        node_ids = []
+        return VectorStoreQueryResult(nodes=nodes, ids=node_ids, similarities=[])
 
     def create_collection(self):
         return self._store.create_collection()
@@ -123,4 +131,12 @@ class PandasStore(BaseDestination):
             self._asset.delete()
 
     def get_nodes(self, node_ids=None, filters=None):
-        pass
+        rows = self._dataframe[self._dataframe["id"].isin(node_ids)]
+
+        return list(
+            map(
+                lambda x: TextNode(id_=x["id"], text=json.dumps(x), metadata={"source": self.name}),
+                rows.to_dict(orient="records"),
+            )
+        )
+        return []
