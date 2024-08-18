@@ -371,7 +371,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         pipeline_template = get_data_pipeline_template_by_slug(type_slug)
 
-        if type_slug and not pipeline_template:
+        if type_slug and type_slug != "custom" and not pipeline_template:
             raise ValueError(f"Pipeline template not found for slug {request.data['type_slug']}")
 
         if pipeline_template:
