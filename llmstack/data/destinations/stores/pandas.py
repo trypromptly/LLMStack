@@ -8,12 +8,13 @@ import pandas as pd
 from pydantic import BaseModel, Field, PrivateAttr
 
 from llmstack.data.destinations.base import BaseDestination
+from llmstack.data.sources.base import DataDocument
 
 logger = logging.getLogger(__name__)
 
 
 def create_empty_csv(headers=[]):
-    filename = f"pandas_desctination_{str(uuid.uuid4())[:4]}.csv"
+    filename = f"pandas_destination_{str(uuid.uuid4())[:4]}.csv"
     empty_str = base64.b64encode(",".join(headers).encode()).decode("utf-8")
     return f"data:text/csv;name={filename};base64,{empty_str}"
 
@@ -82,27 +83,33 @@ class PandasStore(BaseDestination):
         self._dataframe = pd.read_csv(file_content)
 
     def add(self, document):
-        # Add to the pandas dataframe
-        document_dict = {"text": document.text, **document.extra_info}
-        entry_dict = {
-            "id": str(uuid.uuid4()),
-            **{mapping.source: document_dict[mapping.target] for mapping in self.mapping},
-        }
-        logger.info(f"Adding entry to pandas dataframe: {entry_dict}")
-        self._dataframe = self._dataframe._append(entry_dict, ignore_index=True)
-        logger.info(f"Dataframe shape: {self._dataframe.shape}")
-        logger.info(f"Dataframe columns: {self._dataframe.columns}")
-        logger.info(f"Dataframe data: {self._dataframe}")
+        filename = self._asset.metadata.get("file_name")
+
+        ids = [r.node_id for r in document.nodes]
+        for node in document.nodes:
+            document_dict = {"text": node.text, **document.extra_info}
+            entry_dict = {
+                "id": node.id_,
+                **{mapping.source: document_dict[mapping.target] for mapping in self.mapping},
+            }
+            self._dataframe = self._dataframe._append(entry_dict, ignore_index=True)
+
         buffer = io.BytesIO()
         self._dataframe.to_csv(buffer, index=False)
         buffer.seek(0)
+        self._asset.update_file(buffer.getvalue(), filename)
+        return ids
 
-        with self._asset.file.open("wb") as f:
-            f.write(buffer.getvalue())
-        self._asset.save()
+    def delete(self, document: DataDocument):
+        buffer = io.BytesIO()
+        filename = self._asset.metadata.get("file_name")
+        for node_id in document.node_ids:
+            self._dataframe = self._dataframe[self._dataframe["id"] != node_id]
 
-    def delete(self, document):
-        pass
+        buffer = io.BytesIO()
+        self._dataframe.to_csv(buffer, index=False)
+        buffer.seek(0)
+        self._asset.update_file(buffer.getvalue(), filename)
 
     def search(self, query: str, **kwargs):
         return self._store.search(query, **kwargs)
@@ -112,7 +119,8 @@ class PandasStore(BaseDestination):
 
     def delete_collection(self):
         if self._asset:
+            self._asset.file.delete()
             self._asset.delete()
 
     def get_nodes(self, node_ids=None, filters=None):
-        return self._store.get_nodes(node_ids=node_ids, filters=filters)
+        pass
