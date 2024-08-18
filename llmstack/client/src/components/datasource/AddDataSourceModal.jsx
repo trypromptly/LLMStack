@@ -91,51 +91,87 @@ function AdvancedForm({
           <Typography>Source</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <ButtonGroup
-            variant="outlined"
-            size="small"
-            style={{ display: "inline-block" }}
-          >
-            {sourceTypes.map((sourceType) => (
-              <Button
-                key={sourceType.slug}
-                variant={
-                  source?.slug === sourceType.slug &&
-                  source?.provider_slug === sourceType.provider_slug
-                    ? "contained"
-                    : "outlined"
-                }
-                onClick={(e) => {
-                  setSource(sourceType);
-                  setSourceData({});
-                }}
-              >
-                {sourceType.slug}
-              </Button>
-            ))}
-          </ButtonGroup>
-          <ThemedJsonForm
-            schema={source?.schema || {}}
-            validator={validator}
-            uiSchema={{
-              ...(source?.ui_schema || {}),
-              ...{
-                "ui:submitButtonOptions": {
-                  norender: true,
+          {datasource ? (
+            <ThemedJsonForm
+              schema={
+                sourceTypes.find(
+                  (s) =>
+                    s.slug === datasource?.pipeline?.source?.slug &&
+                    s.provider_slug ===
+                      datasource?.pipeline?.source?.provider_slug,
+                )?.schema || {}
+              }
+              validator={validator}
+              uiSchema={{
+                ...(sourceTypes.find(
+                  (s) =>
+                    s.slug === datasource?.pipeline?.source?.slug &&
+                    s.provider_slug ===
+                      datasource?.pipeline?.source?.provider_slug,
+                )?.ui_schema || {}),
+                ...{
+                  "ui:submitButtonOptions": {
+                    norender: true,
+                  },
+                  "ui:DescriptionFieldTemplate": () => null,
+                  "ui:TitleFieldTemplate": () => null,
                 },
-                "ui:DescriptionFieldTemplate": () => null,
-                "ui:TitleFieldTemplate": () => null,
-              },
-            }}
-            formData={sourceData}
-            onChange={({ formData }) => {
-              setSourceData(formData);
-            }}
-            disableAdvanced={false}
-          />
+              }}
+              formData={sourceData}
+              onChange={({ formData }) => {
+                setSourceData(formData);
+              }}
+              disableAdvanced={false}
+            />
+          ) : (
+            <Stack>
+              <ButtonGroup
+                variant="outlined"
+                size="small"
+                style={{ display: "inline-block" }}
+              >
+                {sourceTypes.map((sourceType) => (
+                  <Button
+                    key={sourceType.slug}
+                    variant={
+                      source?.slug === sourceType.slug &&
+                      source?.provider_slug === sourceType.provider_slug
+                        ? "contained"
+                        : "outlined"
+                    }
+                    onClick={(e) => {
+                      setSource(sourceType);
+                      setSourceData({});
+                    }}
+                  >
+                    {sourceType.slug}
+                  </Button>
+                ))}
+              </ButtonGroup>
+              <ThemedJsonForm
+                schema={source?.schema || {}}
+                validator={validator}
+                uiSchema={{
+                  ...(source?.ui_schema || {}),
+                  ...{
+                    "ui:submitButtonOptions": {
+                      norender: true,
+                    },
+                    "ui:DescriptionFieldTemplate": () => null,
+                    "ui:TitleFieldTemplate": () => null,
+                  },
+                }}
+                formData={sourceData}
+                onChange={({ formData }) => {
+                  setSourceData(formData);
+                }}
+                disableAdvanced={false}
+              />
+            </Stack>
+          )}
         </AccordionDetails>
       </Accordion>
-      <Accordion defaultExpanded={false}>
+      <Accordion defaultExpanded={false} disabled={datasource !== null}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="transformations-content"
@@ -233,7 +269,7 @@ function AdvancedForm({
           )}
         </AccordionDetails>
       </Accordion>
-      <Accordion defaultExpanded={false}>
+      <Accordion defaultExpanded={false} disabled={datasource !== null}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="destination-content"
