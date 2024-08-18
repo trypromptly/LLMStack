@@ -107,6 +107,7 @@ function AdvancedForm({
                 }
                 onClick={(e) => {
                   setSource(sourceType);
+                  setSourceData({});
                 }}
               >
                 {sourceType.slug}
@@ -344,6 +345,9 @@ function TemplateForm({
             }
             onClick={(e) => {
               setSelectedTemplate(template);
+              setSourceData({});
+              setTransformationsData([]);
+              setDestinationData({});
             }}
           >
             {template.name}
@@ -507,6 +511,9 @@ export function AddDataSourceModal({
                   setDestination({});
                   setDestinationData({});
                   setFormTab(newValue);
+                  if (newValue === "advanced") {
+                    setPipelineSlug("custom");
+                  }
                 }}
                 aria-label="simple tabs example"
               >
@@ -635,40 +642,43 @@ export function AddDataSourceModal({
                 return;
               }
 
+              const pipelineData = {};
+              if (source.slug && source.provider_slug) {
+                pipelineData.source = {
+                  slug: source.slug,
+                  provider_slug: source.provider_slug,
+                  data: sourceData,
+                };
+                if (embedding.slug && embedding.provider_slug) {
+                  pipelineData.embedding = {
+                    slug: embedding.slug,
+                    provider_slug: embedding.provider_slug,
+                    data: embeddingData,
+                  };
+                }
+                if (destination.slug && destination.provider_slug) {
+                  pipelineData.destination = {
+                    slug: destination.slug,
+                    provider_slug: destination.provider_slug,
+                    data: destinationFormData,
+                  };
+                }
+                if (transformations && transformations.length > 0) {
+                  pipelineData.transformations = transformations.map(
+                    (transformation, index) => ({
+                      slug: transformation.slug,
+                      provider_slug: transformation.provider_slug,
+                      data: transformationsData[index],
+                    }),
+                  );
+                }
+              }
+
               axios()
                 .post("/api/datasources", {
                   name: dataSourceName,
                   type_slug: pipelineSlug,
-                  pipeline: {
-                    source: source
-                      ? {
-                          slug: source.slug,
-                          provider_slug: source.provider_slug,
-                          data: {},
-                        }
-                      : {},
-                    transformations: transformations.map(
-                      (transformation, index) => ({
-                        slug: transformation.slug,
-                        provider_slug: transformation.provider_slug,
-                        data: transformationsData[index],
-                      }),
-                    ),
-                    embedding: embedding
-                      ? {
-                          slug: embedding.slug,
-                          provider_slug: embedding.provider_slug,
-                          data: embeddingData,
-                        }
-                      : {},
-                    destination: destination
-                      ? {
-                          slug: destination.slug,
-                          provider_slug: destination.provider_slug,
-                          data: destinationFormData,
-                        }
-                      : {},
-                  },
+                  pipeline: pipelineData,
                 })
                 .then((response) => {
                   // External data sources do not support adding entries
