@@ -364,15 +364,15 @@ class DataSourceViewSet(viewsets.ModelViewSet):
             raise ValueError(f"Pipeline template not found for slug {request.data['type_slug']}")
 
         if pipeline_template:
+            if pipeline_template.pipeline.source is None:
+                pipeline_data.pop("source", None)
+            if pipeline_template.pipeline.transformations is None:
+                pipeline_data.pop("transformations", None)
+            if pipeline_template.pipeline.embedding is None:
+                pipeline_data.pop("embedding", None)
+
             # If the request is from a pipeline template, use the pipeline template's embedding coffiguration
             if pipeline_template.pipeline.embedding:
-                if pipeline_template.pipeline.source is None:
-                    pipeline_data.pop("source", None)
-                if pipeline_template.pipeline.transformations is None:
-                    pipeline_data.pop("transformations", None)
-                if pipeline_template.pipeline.embedding is None:
-                    pipeline_data.pop("embedding", None)
-
                 embedding_data = {"embedding_provider_slug": "openai"}
                 if datasource.profile.vectostore_embedding_endpoint == VectorstoreEmbeddingEndpoint.AZURE_OPEN_AI:
                     embedding_data["embedding_provider_slug"] = "azure-openai"
