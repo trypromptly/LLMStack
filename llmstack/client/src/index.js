@@ -43,7 +43,7 @@ const AddDatasourceRefreshSchedulePage = lazy(
   () => import("./pages/AddDatasourceRefreshSchedule"),
 );
 const SessionExpiredPage = lazy(() => import("./pages/SessionExpired"));
-const SheetsPage = lazy(() => import("./pages/SheetsPage"));
+const SheetsPage = lazy(() => import("./pages/Sheets"));
 
 const defaultTheme = createTheme({
   spacing: 4,

@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "llmstack.jobs.apps.JobsConfig",
     "llmstack.organizations.apps.OrganizationsConfig",
     "llmstack.assets.apps.AssetsConfig",
+    "llmstack.sheets.apps.SheetsConfig",
     "flags",
     "allauth",
     "allauth.account",

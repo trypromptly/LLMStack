@@ -144,7 +144,7 @@ class PromptlySheet(models.Model):
     profile_uuid = models.UUIDField(blank=False, null=False, help_text="The UUID of the owner of the sheet")
     name = models.CharField(max_length=255, blank=False, null=False, help_text="The name of the sheet")
     extra_data = models.JSONField(blank=True, null=True, help_text="Extra data for the sheet")
-    data = models.JSONField(blank=True, null=True, help_text="The data of the sheet", default={"cells": []})
+    data = models.JSONField(blank=True, null=True, help_text="The data of the sheet", default=dict)
     is_locked = models.BooleanField(default=False, help_text="Whether the sheet is locked")
     created_at = models.DateTimeField(auto_now_add=True, help_text="The date and time the sheet was created")
     updated_at = models.DateTimeField(auto_now=True, help_text="The date and time the sheet was last updated")
