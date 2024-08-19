@@ -7,10 +7,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   FormControl,
-  IconButton,
   MenuItem,
   Select,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -49,6 +50,7 @@ function PublishModalInternal({
   const [done, setDone] = useState(false);
   const [visibility, setVisibility] = useState(app?.visibility);
   const [accessibleByEmail, setAccessibleByEmail] = useState("");
+  const [accessibleByAccess, setAccessibleByAccess] = useState(0);
   const [accessibleBy, setAccessibleBy] = useState(
     (
       app?.read_accessible_by?.map((entry) => ({
@@ -160,7 +162,14 @@ function PublishModalInternal({
   };
 
   return (
-    <Dialog open={show} onClose={() => setShow(false)} sx={shareDialogStyles}>
+    <Dialog
+      open={show}
+      onClose={() => {
+        setShow(false);
+        setDone(false);
+      }}
+      sx={shareDialogStyles}
+    >
       <DialogTitle>{editSharing ? "App Sharing" : "Publish App"}</DialogTitle>
       <DialogContent>
         {done && <p>App {editSharing ? "saved" : "published"} successfully!</p>}
@@ -203,42 +212,61 @@ function PublishModalInternal({
               }}
             >
               <p>Users with access:</p>
-              <TextField
-                label="Invite by email"
-                value={accessibleByEmail}
-                onChange={(e) => setAccessibleByEmail(e.target.value)}
-                size="small"
-                disabled={
-                  visibilityOptions.find((option) => option.value === 0) ===
-                  undefined
-                }
-              />
-              &nbsp;
-              <IconButton
-                variant="contained"
-                onClick={() => {
-                  // Verify email is valid
-                  if (
-                    !accessibleByEmail.match(
-                      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                    )
-                  ) {
-                    enqueueSnackbar("Invalid email address", {
-                      variant: "error",
-                    });
-                    return;
+              <Stack direction="row" spacing={1}>
+                <TextField
+                  label="Invite by email"
+                  value={accessibleByEmail}
+                  onChange={(e) => setAccessibleByEmail(e.target.value)}
+                  size="small"
+                  disabled={
+                    visibilityOptions.find((option) => option.value === 0) ===
+                    undefined
                   }
-                  const newAccessibleBy = [...accessibleBy];
-                  newAccessibleBy.push({
-                    email: accessibleByEmail,
-                    access: 0,
-                  });
-                  setAccessibleBy(newAccessibleBy);
-                  setAccessibleByEmail("");
-                }}
-              >
-                <PersonAddIcon />
-              </IconButton>
+                />
+                <Select
+                  id="access-permission"
+                  size="small"
+                  value={accessibleByAccess}
+                  onChange={(e) => setAccessibleByAccess(e.target.value)}
+                  renderValue={(value) =>
+                    value === 0 ? "Viewer" : "Collaborator"
+                  }
+                >
+                  {accessPermissionOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    // Verify email is valid
+                    if (
+                      !accessibleByEmail.match(
+                        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                      )
+                    ) {
+                      enqueueSnackbar("Invalid email address", {
+                        variant: "error",
+                      });
+                      return;
+                    }
+                    const newAccessibleBy = [...accessibleBy];
+                    newAccessibleBy.push({
+                      email: accessibleByEmail,
+                      access: accessibleByAccess,
+                    });
+                    setAccessibleBy(newAccessibleBy);
+                    setAccessibleByEmail("");
+                    setAccessibleByAccess(0);
+                  }}
+                  startIcon={<PersonAddIcon />}
+                >
+                  Add
+                </Button>
+              </Stack>
+              <Divider sx={{ marginTop: 2 }} />
               <Table>
                 <TableBody>
                   {accessibleBy.map((entry, index) => (
@@ -252,6 +280,14 @@ function PublishModalInternal({
                             value={entry.access}
                             onChange={(e) => {
                               const newAccessibleBy = [...accessibleBy];
+
+                              // Remove user from list
+                              if (e.target.value === -1) {
+                                newAccessibleBy.splice(index, 1);
+                                setAccessibleBy(newAccessibleBy);
+                                return;
+                              }
+
                               newAccessibleBy[index].access = e.target.value;
                               setAccessibleBy(newAccessibleBy);
                             }}
@@ -260,13 +296,24 @@ function PublishModalInternal({
                             }
                             variant="standard"
                           >
-                            {accessPermissionOptions.map((option) => (
-                              <MenuItem key={option.value} value={option.value}>
-                                {option.label}&nbsp;
-                                <br />
-                                <small>{option.description}</small>
-                              </MenuItem>
-                            ))}
+                            {accessPermissionOptions
+                              .concat([
+                                {
+                                  label: "Remove",
+                                  value: -1,
+                                  description: "Remove this user from the list",
+                                },
+                              ])
+                              .map((option) => (
+                                <MenuItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}&nbsp;
+                                  <br />
+                                  <small>{option.description}</small>
+                                </MenuItem>
+                              ))}
                           </Select>
                         </FormControl>
                       </TableCell>
@@ -279,7 +326,14 @@ function PublishModalInternal({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => setShow(false)}>Cancel</Button>
+        <Button
+          onClick={() => {
+            setShow(false);
+            setDone(false);
+          }}
+        >
+          Cancel
+        </Button>
         <Button onClick={publishApp} variant="contained">
           {isPublishing ? (
             <CircularProgress />
