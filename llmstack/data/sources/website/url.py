@@ -103,6 +103,7 @@ class URLSchema(BaseSource):
                     },
                     datasource_uuid=kwargs["datasource_uuid"],
                     request_data=dict(connection_id=self.connection_id, url=url),
+                    extra_info={"extra_data": self.get_extra_data()},
                 )
             )
         return documents

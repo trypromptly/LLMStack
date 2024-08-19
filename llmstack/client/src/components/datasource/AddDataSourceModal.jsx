@@ -649,7 +649,7 @@ export function AddDataSourceModal({
           onClick={() => {
             if (datasource) {
               axios()
-                .post(`/api/datasources/${datasource.uuid}/add_entry`, {
+                .post(`/api/datasources/${datasource.uuid}/add_entry_async`, {
                   source_data: sourceData,
                 })
                 .then(() => {
@@ -722,9 +722,12 @@ export function AddDataSourceModal({
                     const dataSource = response.data;
                     setDataSources([...dataSources, dataSource]);
                     axios()
-                      .post(`/api/datasources/${dataSource.uuid}/add_entry`, {
-                        source_data: sourceData,
-                      })
+                      .post(
+                        `/api/datasources/${dataSource.uuid}/add_entry_async`,
+                        {
+                          source_data: sourceData,
+                        },
+                      )
                       .then((response) => {
                         dataSourceAddedCb(dataSource);
                       });

@@ -52,7 +52,6 @@ class MappingEntry(BaseModel):
 
 
 class PandasStore(BaseDestination):
-    name: str = Field(description="Name of the table")
     schema: List[SchemaEntry] = Field(
         description="Schema of the table",
         default=[SchemaEntry(name="id", type="string"), SchemaEntry(name="text", type="string")],
@@ -63,6 +62,7 @@ class PandasStore(BaseDestination):
 
     _asset = PrivateAttr(default=None)
     _dataframe = PrivateAttr(default=None)
+    _name = PrivateAttr(default="pandas")
 
     @classmethod
     def slug(cls):
@@ -74,6 +74,7 @@ class PandasStore(BaseDestination):
 
     def initialize_client(self, *args, **kwargs):
         datasource = kwargs.get("datasource")
+        self._name = datasource.name
         document_id = str(datasource.uuid)
         asset = get_destination_document_asset_by_document_id(document_id)
 
@@ -90,8 +91,28 @@ class PandasStore(BaseDestination):
         filename = self._asset.metadata.get("file_name")
 
         ids = [r.node_id for r in document.nodes]
+        extra_data = {
+            k: v for k, v in document.extra_info.get("extra_data", {}).items() if k in [m.target for m in self.mapping]
+        }
+        for item in self.schema:
+            if item.name == "id" or item.name == "text":
+                continue
+            if item.name not in extra_data:
+                if item.type == "string":
+                    extra_data[item.name] = ""
+                elif item.type == "number":
+                    extra_data[item.name] = 0
+                elif item.type == "boolean":
+                    extra_data[item.name] = False
+            elif item.name in extra_data:
+                if item.type == "number":
+                    extra_data[item.name] = float(extra_data[item.name])
+                elif item.type == "boolean":
+                    extra_data[item.name] = bool(extra_data[item.name])
+                extra_data[item.name] = str(extra_data[item.name])
+
         for node in document.nodes:
-            document_dict = {"text": node.text, **document.extra_info}
+            document_dict = {"text": node.text, **extra_data}
             entry_dict = {
                 "id": node.id_,
                 **{mapping.source: document_dict[mapping.target] for mapping in self.mapping},
@@ -117,9 +138,10 @@ class PandasStore(BaseDestination):
 
     def search(self, query: str, **kwargs):
         result = self._dataframe.query(query).to_dict(orient="records")
-        result_text = json.dumps(result)
-        nodes = [TextNode(text=result_text, metadata={"query": query, "source": self.name})]
-        node_ids = []
+        nodes = list(
+            map(lambda x: TextNode(text=json.dumps(x), metadata={"query": query, "source": self._name}), result)
+        )
+        node_ids = list(map(lambda x: x["id"], result))
         return VectorStoreQueryResult(nodes=nodes, ids=node_ids, similarities=[])
 
     def create_collection(self):
@@ -135,7 +157,7 @@ class PandasStore(BaseDestination):
 
         return list(
             map(
-                lambda x: TextNode(id_=x["id"], text=json.dumps(x), metadata={"source": self.name}),
+                lambda x: TextNode(id_=x["id"], text=json.dumps(x), metadata={"source": self._name}),
                 rows.to_dict(orient="records"),
             )
         )
