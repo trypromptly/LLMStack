@@ -6,6 +6,7 @@
   "homepage": "https://llmstack.trypromptly.com",
   "dependencies": {
     "@fontsource/lato": "^5.0.20",
+    "@glideapps/glide-data-grid": "^6.0.3",
     "@jsonforms/material-renderers": "^3.1.0",
     "@jsonforms/react": "^3.0.0",
     "@lexical/react": "^0.9.2",

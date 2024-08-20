@@ -2,7 +2,7 @@ import {
   AppsOutlined,
   CorporateFareOutlined,
   DescriptionOutlined,
-  EventRepeatOutlined,
+  GridOnOutlined,
   HelpOutlineOutlined,
   HistoryOutlined,
   HomeOutlined,
@@ -59,7 +59,7 @@ const getNavItemIcon = (itemLabel) => {
     Apps: <AppsOutlined />,
     Data: <FolderOutlined />,
     Organization: <CorporateFareOutlined />,
-    Jobs: <EventRepeatOutlined />,
+    Sheets: <GridOnOutlined />,
   };
   return iconMap[itemLabel];
 };
