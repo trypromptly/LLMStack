@@ -26,14 +26,14 @@ const menuItems = [
     link: "/data",
   },
   {
-    key: "8",
-    label: "Jobs",
-    link: "/jobs",
-  },
-  {
     key: "3",
     label: "History",
     link: "/history",
+  },
+  {
+    key: "8",
+    label: "Sheets",
+    link: "/sheets",
   },
   {
     key: "5",
