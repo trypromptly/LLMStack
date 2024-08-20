@@ -91,50 +91,87 @@ function AdvancedForm({
           <Typography>Source</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <ButtonGroup
-            variant="outlined"
-            size="small"
-            style={{ display: "inline-block" }}
-          >
-            {sourceTypes.map((sourceType) => (
-              <Button
-                key={sourceType.slug}
-                variant={
-                  source?.slug === sourceType.slug &&
-                  source?.provider_slug === sourceType.provider_slug
-                    ? "contained"
-                    : "outlined"
-                }
-                onClick={(e) => {
-                  setSource(sourceType);
-                }}
-              >
-                {sourceType.slug}
-              </Button>
-            ))}
-          </ButtonGroup>
-          <ThemedJsonForm
-            schema={source?.schema || {}}
-            validator={validator}
-            uiSchema={{
-              ...(source?.ui_schema || {}),
-              ...{
-                "ui:submitButtonOptions": {
-                  norender: true,
+          {datasource ? (
+            <ThemedJsonForm
+              schema={
+                sourceTypes.find(
+                  (s) =>
+                    s.slug === datasource?.pipeline?.source?.slug &&
+                    s.provider_slug ===
+                      datasource?.pipeline?.source?.provider_slug,
+                )?.schema || {}
+              }
+              validator={validator}
+              uiSchema={{
+                ...(sourceTypes.find(
+                  (s) =>
+                    s.slug === datasource?.pipeline?.source?.slug &&
+                    s.provider_slug ===
+                      datasource?.pipeline?.source?.provider_slug,
+                )?.ui_schema || {}),
+                ...{
+                  "ui:submitButtonOptions": {
+                    norender: true,
+                  },
+                  "ui:DescriptionFieldTemplate": () => null,
+                  "ui:TitleFieldTemplate": () => null,
                 },
-                "ui:DescriptionFieldTemplate": () => null,
-                "ui:TitleFieldTemplate": () => null,
-              },
-            }}
-            formData={sourceData}
-            onChange={({ formData }) => {
-              setSourceData(formData);
-            }}
-            disableAdvanced={false}
-          />
+              }}
+              formData={sourceData}
+              onChange={({ formData }) => {
+                setSourceData(formData);
+              }}
+              disableAdvanced={false}
+            />
+          ) : (
+            <Stack>
+              <ButtonGroup
+                variant="outlined"
+                size="small"
+                style={{ display: "inline-block" }}
+              >
+                {sourceTypes.map((sourceType) => (
+                  <Button
+                    key={sourceType.slug}
+                    variant={
+                      source?.slug === sourceType.slug &&
+                      source?.provider_slug === sourceType.provider_slug
+                        ? "contained"
+                        : "outlined"
+                    }
+                    onClick={(e) => {
+                      setSource(sourceType);
+                      setSourceData({});
+                    }}
+                  >
+                    {sourceType.slug}
+                  </Button>
+                ))}
+              </ButtonGroup>
+              <ThemedJsonForm
+                schema={source?.schema || {}}
+                validator={validator}
+                uiSchema={{
+                  ...(source?.ui_schema || {}),
+                  ...{
+                    "ui:submitButtonOptions": {
+                      norender: true,
+                    },
+                    "ui:DescriptionFieldTemplate": () => null,
+                    "ui:TitleFieldTemplate": () => null,
+                  },
+                }}
+                formData={sourceData}
+                onChange={({ formData }) => {
+                  setSourceData(formData);
+                }}
+                disableAdvanced={false}
+              />
+            </Stack>
+          )}
         </AccordionDetails>
       </Accordion>
-      <Accordion defaultExpanded={false}>
+      <Accordion defaultExpanded={false} disabled={datasource !== null}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="transformations-content"
@@ -232,7 +269,7 @@ function AdvancedForm({
           )}
         </AccordionDetails>
       </Accordion>
-      <Accordion defaultExpanded={false}>
+      <Accordion defaultExpanded={false} disabled={datasource !== null}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="destination-content"
@@ -344,6 +381,9 @@ function TemplateForm({
             }
             onClick={(e) => {
               setSelectedTemplate(template);
+              setSourceData({});
+              setTransformationsData([]);
+              setDestinationData({});
             }}
           >
             {template.name}
@@ -497,7 +537,20 @@ export function AddDataSourceModal({
           <TabContext value={formTab}>
             <Box style={{ height: "100%" }}>
               <TabList
-                onChange={(event, newValue) => setFormTab(newValue)}
+                onChange={(event, newValue) => {
+                  setSource({});
+                  setSourceData({});
+                  setTransformations([]);
+                  setTransformationsData([]);
+                  setEmbedding({});
+                  setEmbeddingData({});
+                  setDestination({});
+                  setDestinationData({});
+                  setFormTab(newValue);
+                  if (newValue === "advanced") {
+                    setPipelineSlug("custom");
+                  }
+                }}
                 aria-label="simple tabs example"
               >
                 <Tab
@@ -625,40 +678,43 @@ export function AddDataSourceModal({
                 return;
               }
 
+              const pipelineData = {};
+              if (source.slug && source.provider_slug) {
+                pipelineData.source = {
+                  slug: source.slug,
+                  provider_slug: source.provider_slug,
+                  data: sourceData,
+                };
+                if (embedding.slug && embedding.provider_slug) {
+                  pipelineData.embedding = {
+                    slug: embedding.slug,
+                    provider_slug: embedding.provider_slug,
+                    data: embeddingData,
+                  };
+                }
+                if (destination.slug && destination.provider_slug) {
+                  pipelineData.destination = {
+                    slug: destination.slug,
+                    provider_slug: destination.provider_slug,
+                    data: destinationFormData,
+                  };
+                }
+                if (transformations && transformations.length > 0) {
+                  pipelineData.transformations = transformations.map(
+                    (transformation, index) => ({
+                      slug: transformation.slug,
+                      provider_slug: transformation.provider_slug,
+                      data: transformationsData[index],
+                    }),
+                  );
+                }
+              }
+
               axios()
                 .post("/api/datasources", {
                   name: dataSourceName,
                   type_slug: pipelineSlug,
-                  pipeline: {
-                    source: source
-                      ? {
-                          slug: source.slug,
-                          provider_slug: source.provider_slug,
-                          data: {},
-                        }
-                      : {},
-                    transformations: transformations.map(
-                      (transformation, index) => ({
-                        slug: transformation.slug,
-                        provider_slug: transformation.provider_slug,
-                        data: transformationsData[index],
-                      }),
-                    ),
-                    embedding: embedding
-                      ? {
-                          slug: embedding.slug,
-                          provider_slug: embedding.provider_slug,
-                          data: embeddingData,
-                        }
-                      : {},
-                    destination: destination
-                      ? {
-                          slug: destination.slug,
-                          provider_slug: destination.provider_slug,
-                          data: destinationFormData,
-                        }
-                      : {},
-                  },
+                  pipeline: pipelineData,
                 })
                 .then((response) => {
                   // External data sources do not support adding entries

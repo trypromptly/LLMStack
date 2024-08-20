@@ -26,7 +26,21 @@ class DataDocument(BaseModel):
     node_ids: Optional[List[str]] = []
 
 
+class ExtraData(BaseModel):
+    name: str
+    value: str
+
+
 class BaseSource(BaseModel):
+    extra_data: Optional[List[ExtraData]] = Field(
+        default=None,
+        description="Extra data to be passed from the source.",
+        json_schema_extra={"advanced_parameter": True},
+    )
+
+    def get_extra_data(self):
+        return {extra_data.name: extra_data.value for extra_data in self.extra_data}
+
     @classmethod
     def slug(cls):
         raise NotImplementedError

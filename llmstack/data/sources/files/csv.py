@@ -49,5 +49,6 @@ class CSVFileSchema(FileSchema):
                     "datasource_uuid": kwargs["datasource_uuid"],
                 },
                 datasource_uuid=kwargs["datasource_uuid"],
+                extra_info={"extra_data": self.get_extra_data()},
             )
         ]

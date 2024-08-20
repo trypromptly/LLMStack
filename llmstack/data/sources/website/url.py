@@ -64,12 +64,16 @@ class URLSchema(BaseSource):
         max_length=1600,
         json_schema_extra={
             "widget": "webpageurls",
+            "advanced_parameter": False,
         },
     )
     connection_id: Optional[str] = Field(
         default=None,
         description="Select connection if parsing loggedin page",
-        json_schema_extra={"widget": "connection"},
+        json_schema_extra={
+            "widget": "connection",
+            "advanced_parameter": False,
+        },
     )
     extractor_method: Optional[URLScraper] = Field(default=URLScraper.LOCAL, json_schema_extra={"widget": "hidden"})
 
@@ -99,6 +103,7 @@ class URLSchema(BaseSource):
                     },
                     datasource_uuid=kwargs["datasource_uuid"],
                     request_data=dict(connection_id=self.connection_id, url=url),
+                    extra_info={"extra_data": self.get_extra_data()},
                 )
             )
         return documents

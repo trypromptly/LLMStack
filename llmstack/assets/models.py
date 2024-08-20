@@ -64,6 +64,16 @@ class Assets(models.Model):
             response.content, file_name, {**metadata, "mime_type": mime_type, "file_name": file_name}, ref_id=ref_id
         )
 
+    def update_file(self, file_bytes, filename):
+        from django.core.files.base import ContentFile
+
+        self.file.delete()
+        self.file.save(filename, ContentFile(file_bytes))
+        bytes_size = len(file_bytes)
+        self.metadata = {**self.metadata, "file_size": bytes_size}
+        self.save()
+        return self
+
     @classmethod
     def create_asset(cls, metadata, ref_id, streaming=False):
         asset = cls(ref_id=ref_id)

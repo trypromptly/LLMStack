@@ -6,6 +6,7 @@ from .models import DataSource, DataSourceEntry
 class DataSourceSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()
     owner_email = serializers.SerializerMethodField()
+    pipeline = serializers.SerializerMethodField()
 
     def get_owner_email(self, obj):
         return obj.owner.email
@@ -22,9 +23,12 @@ class DataSourceSerializer(serializers.ModelSerializer):
                 "name": "Custom",
             }
 
+    def get_pipeline(self, obj):
+        return obj.config.get("pipeline", None)
+
     class Meta:
         model = DataSource
-        fields = ["name", "type", "uuid", "size", "created_at", "updated_at", "visibility", "owner_email"]
+        fields = ["name", "type", "uuid", "size", "created_at", "updated_at", "visibility", "owner_email", "pipeline"]
 
 
 class DataSourceEntrySerializer(serializers.ModelSerializer):
