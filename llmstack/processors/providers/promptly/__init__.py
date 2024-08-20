@@ -77,6 +77,25 @@ class DataDestinationConfig(BaseModel):
     )
 
 
+class SendgridEmailSenderConfig(BaseModel):
+    type: Literal["sendgrid"] = "sendgrid"
+    api_key: str = Field(
+        title="Sendgrid API Key",
+        description="API Key for Sendgrid",
+        default="",
+        json_schema_extra={"widget": "password", "advanced_parameter": False},
+    )
+    from_email: str = Field(
+        title="From Email",
+        description="From Email",
+        default="",
+        json_schema_extra={"advanced_parameter": False},
+    )
+
+
+EmailSenderConfig = Union[SendgridEmailSenderConfig]
+
+
 class PromptlyProviderConfig(ProviderConfig):
     provider_slug: str = "promptly"
     search_engine: Optional[SearchEngineConfig] = Field(
@@ -92,6 +111,11 @@ class PromptlyProviderConfig(ProviderConfig):
     data_destination_configuration: Optional[DataDestinationConfig] = Field(
         title="Default Data Destination Configuration",
         description="Default Data Destination Configuration",
+        default=None,
+    )
+    email_sender: Optional[EmailSenderConfig] = Field(
+        title="Email Sender Configuration",
+        description="Email Sender Configuration",
         default=None,
     )
 
