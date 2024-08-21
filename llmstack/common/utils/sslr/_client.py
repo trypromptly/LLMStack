@@ -157,6 +157,7 @@ class LLMClient(SyncAPIClient):
         response: httpx.Response,
         stream: bool,
         stream_cls: Union[type[LLMRestStream], type[AsyncStream[Any]], None],
+        **kwargs: Any,
     ) -> ResponseT:
         if self._llm_router_provider == PROVIDER_STABILITYAI:
             if response.is_success and response.request.url.path.endswith("/engines/list"):
@@ -258,6 +259,7 @@ class LLMClient(SyncAPIClient):
             response=response,
             stream=stream,
             stream_cls=stream_cls,
+            **kwargs,
         )
 
     def _request(
