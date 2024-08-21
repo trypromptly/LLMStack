@@ -517,7 +517,9 @@ export function AddDataSourceModal({
         : "advanced"
       : "template",
   );
-  const [refreshData, setRefreshData] = useState({});
+  const [refreshData, setRefreshData] = useState({
+    refresh_interval: datasource?.refresh_interval || "None",
+  });
   const [pipelineSlug, setPipelineSlug] = useState("");
 
   return (
