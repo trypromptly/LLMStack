@@ -36,6 +36,7 @@ import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { AddDataSourceModal } from "../components/datasource/AddDataSourceModal";
 import { DatasourceFormModal } from "../components/datasource/DataSourceFormModal";
+import { AddSourceEntryDataModal } from "../components/datasource/AddSourceEntryDataModal";
 import DataSourceEntryContent from "../components/datasource/DataSourceEntryContent";
 import ShareDataSourceModal from "../components/datasource/ShareDataSourceModal";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
@@ -251,6 +252,8 @@ export default function DataPage() {
   const [deleteModalTitle, setDeleteModalTitle] = useState("");
   const [deleteModalMessage, setDeleteModalMessage] = useState("");
   const [deleteId, setDeleteId] = useState(null);
+  const [addDataSourceEntryModalOpen, setAddDataSourceEntryModalOpen] =
+    useState(false);
   const [addDataSourceModalOpen, setAddDataSourceModalOpen] = useState(false);
   const [editDataSourceModalOpen, setEditDataSourceModalOpen] = useState(false);
   const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
@@ -379,7 +382,7 @@ export default function DataPage() {
                 onClick={(e) => {
                   setModalTitle("Add New Data Entry");
                   setSelectedDataSource(row);
-                  setAddDataSourceModalOpen(true);
+                  setAddDataSourceEntryModalOpen(true);
 
                   e.stopPropagation();
                 }}
@@ -635,6 +638,44 @@ export default function DataPage() {
             setEditDataSourceModalOpen(false);
             reloadDataSources();
           }}
+        />
+      )}
+      {addDataSourceEntryModalOpen && (
+        <AddSourceEntryDataModal
+          open={addDataSourceEntryModalOpen}
+          onCancel={() => {
+            setAddDataSourceEntryModalOpen(false);
+          }}
+          onSubmit={(sourceEntryData) => {
+            axios()
+              .post(
+                `/api/datasources/${selectedDataSource.uuid}/add_entry_async`,
+                {
+                  source_data: sourceEntryData,
+                },
+              )
+              .then(() => {
+                reloadDataSourceEntries();
+                enqueueSnackbar(
+                  "Processing Data, please refresh the page in a few minutes",
+                  {
+                    variant: "success",
+                  },
+                );
+              })
+              .catch((error) => {
+                enqueueSnackbar(
+                  `Failed to add entry. ${error?.response?.data}`,
+                  {
+                    variant: "error",
+                  },
+                );
+              })
+              .finally(() => {
+                setAddDataSourceEntryModalOpen(false);
+              });
+          }}
+          datasource={selectedDataSource}
         />
       )}
       {deleteConfirmationModalOpen && (
