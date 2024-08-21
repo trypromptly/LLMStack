@@ -114,12 +114,6 @@ export function DataSourceEntries({
       title: "Action",
       key: "operation",
       render: (record, row) => {
-        const isAdhocSyncSupported =
-          (row?.status === "READY" || row?.status === "ERROR") &&
-          (row?.datasource?.type?.name.toLowerCase() === "file" ||
-            row?.datasource?.type?.name.toLowerCase() === "pdf" ||
-            row?.datasource?.type?.name.toLowerCase() === "url" ||
-            row?.datasource?.type?.name.toLowerCase() === "gdrive_file");
         return (
           <Box>
             <Tooltip title="View contents">
@@ -133,7 +127,7 @@ export function DataSourceEntries({
                 <VisibilityOutlined />
               </IconButton>
             </Tooltip>
-            {isAdhocSyncSupported && (
+            {row?.datasource?.has_source && (
               <Tooltip title="Resync contents">
                 <IconButton
                   onClick={() => {
@@ -379,33 +373,51 @@ export default function DataPage() {
               </IconButton>
             </Tooltip>
 
-            {row?.pipeline?.source?.slug &&
-              row?.pipeline?.source?.provider_slug && (
-                <IconButton
-                  disabled={!row.isUserOwned}
-                  onClick={(e) => {
-                    setModalTitle("Add New Data Entry");
-                    setSelectedDataSource(row);
-                    setAddDataSourceModalOpen(true);
+            {row?.has_source && (
+              <IconButton
+                disabled={!row.isUserOwned}
+                onClick={(e) => {
+                  setModalTitle("Add New Data Entry");
+                  setSelectedDataSource(row);
+                  setAddDataSourceModalOpen(true);
 
-                    e.stopPropagation();
+                  e.stopPropagation();
+                }}
+              >
+                <AddOutlined />
+              </IconButton>
+            )}
+            {row?.has_source && (
+              <Tooltip title="Resync data">
+                <IconButton
+                  onClick={() => {
+                    axios()
+                      .post(`/api/datasources/${row.uuid}/resync_async`)
+                      .then((res) => {
+                        enqueueSnackbar("Resyncing data source", {
+                          variant: "success",
+                        });
+                      })
+                      .catch((err) => {
+                        enqueueSnackbar("Failed to resync data source entry", {
+                          variant: "error",
+                        });
+                      });
                   }}
                 >
-                  <AddOutlined />
+                  <SyncOutlined />
                 </IconButton>
-              )}
-            {!row?.pipeline?.source?.slug &&
-              !row?.pipeline?.source?.provider_slug &&
-              row?.pipeline?.destination?.slug &&
-              row?.pipeline?.destination?.provider_slug && (
-                <Tooltip title="External Connection">
-                  <span>
-                    <IconButton disabled={true}>
-                      <SettingsEthernet />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              )}
+              </Tooltip>
+            )}
+            {row?.is_destination_only && (
+              <Tooltip title="External Connection">
+                <span>
+                  <IconButton disabled={true}>
+                    <SettingsEthernet />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
             <IconButton
               disabled={!row.isUserOwned}
               onClick={() => {
