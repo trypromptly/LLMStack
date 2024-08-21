@@ -29,17 +29,7 @@ class YahooEmailProvider(BaseModel):
     type: Literal["yahoo"] = "yahoo"
 
 
-class PlatformEmailSenderProvider(BaseModel):
-    type: Literal["platform_email_sender"] = "platform_email_sender"
-    deployment_name: str = Field(
-        title="Deployment Name",
-        description="Deployment name of the platform email sender",
-        default="*",
-        json_schema_extra={"advanced_parameter": False},
-    )
-
-
-EmailProvider = Union[GmailEmailProvider, OutlookEmailProvider, YahooEmailProvider, PlatformEmailSenderProvider]
+EmailProvider = Union[GmailEmailProvider, OutlookEmailProvider, YahooEmailProvider]
 
 
 class EmailSenderInput(Schema):
@@ -52,7 +42,7 @@ class EmailSenderInput(Schema):
 
 class EmailSenderConfigurations(Schema):
     email_provider: EmailProvider = Field(
-        default=PlatformEmailSenderProvider(),
+        default=GmailEmailProvider(),
         description="Email provider to use",
         json_schema_extra={"advanced_parameter": False},
     )
@@ -158,61 +148,50 @@ class EmailSenderProcessor(ApiProcessorInterface[EmailSenderInput, EmailSenderOu
                 if attachment.startswith("objref://"):
                     attachment_data_uris.append(get_asset_by_objref_internal(attachment))
 
-        if isinstance(self._config.email_provider, PlatformEmailSenderProvider):
-            provider_config = self.get_provider_config(deployment_key=self._config.email_provider.deployment_name)
-            send_email_via_platform_email_sender(
-                recipients=recipient_emails,
-                subject=subject,
-                text_content=text_content,
-                html_content=html_content,
-                attachments=attachment_data_uris,
-                provider_config=provider_config,
+        email_msg = MIMEMultipart()
+
+        if not self._config.use_bcc:
+            email_msg["To"] = recipient_emails
+        email_msg["Subject"] = subject
+
+        if text_content:
+            email_msg.attach(MIMEText(text_content, "plain"))
+
+        if html_content:
+            email_msg.attach(MIMEText(html_content, "html"))
+
+        for attachment in attachment_data_uris:
+            mime_type, file_name, b64_encoded_data = validate_parse_data_uri(attachment)
+            data_bytes = base64.b64decode(b64_encoded_data)
+            part = MIMEBase("application", mime_type)
+            part.set_payload(data_bytes)
+            encoders.encode_base64(part)
+            part.add_header("Content-Disposition", f"attachment; filename={file_name}")
+            email_msg.attach(part)
+
+        connection = self._env["connections"][self._config.connection_id]["configuration"]
+
+        if isinstance(self._config.email_provider, GmailEmailProvider):
+            send_email_via_gmail(
+                recipients=self._input.recipient_email,
+                msg=email_msg,
+                smtp_username=connection["username"],
+                smtp_password=connection["password"],
             )
-        else:
-            email_msg = MIMEMultipart()
-
-            if not self._config.use_bcc:
-                email_msg["To"] = recipient_emails
-            email_msg["Subject"] = subject
-
-            if text_content:
-                email_msg.attach(MIMEText(text_content, "plain"))
-
-            if html_content:
-                email_msg.attach(MIMEText(html_content, "html"))
-
-            for attachment in attachment_data_uris:
-                mime_type, file_name, b64_encoded_data = validate_parse_data_uri(attachment)
-                data_bytes = base64.b64decode(b64_encoded_data)
-                part = MIMEBase("application", mime_type)
-                part.set_payload(data_bytes)
-                encoders.encode_base64(part)
-                part.add_header("Content-Disposition", f"attachment; filename={file_name}")
-                email_msg.attach(part)
-
-            connection = self._env["connections"][self._config.connection_id]["configuration"]
-
-            if isinstance(self._config.email_provider, GmailEmailProvider):
-                send_email_via_gmail(
-                    recipients=self._input.recipient_email,
-                    msg=email_msg,
-                    smtp_username=connection["username"],
-                    smtp_password=connection["password"],
-                )
-            elif isinstance(self._config.email_provider, OutlookEmailProvider):
-                send_email_via_outlook(
-                    recipients=self._input.recipient_email,
-                    msg=email_msg,
-                    smtp_username=connection["username"],
-                    smtp_password=connection["password"],
-                )
-            elif isinstance(self._config.email_provider, YahooEmailProvider):
-                send_email_via_yahoo(
-                    recipients=self._input.recipient_email,
-                    msg=email_msg,
-                    smtp_username=connection["username"],
-                    smtp_password=connection["password"],
-                )
+        elif isinstance(self._config.email_provider, OutlookEmailProvider):
+            send_email_via_outlook(
+                recipients=self._input.recipient_email,
+                msg=email_msg,
+                smtp_username=connection["username"],
+                smtp_password=connection["password"],
+            )
+        elif isinstance(self._config.email_provider, YahooEmailProvider):
+            send_email_via_yahoo(
+                recipients=self._input.recipient_email,
+                msg=email_msg,
+                smtp_username=connection["username"],
+                smtp_password=connection["password"],
+            )
 
         async_to_sync(self._output_stream.write)(EmailSenderOutput(code=200))
 
