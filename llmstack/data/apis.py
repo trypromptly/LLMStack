@@ -422,6 +422,16 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         json_data = DataSourceSerializer(instance=datasource).data
         return DRFResponse(json_data, status=201)
 
+    def patch(self, request, uid):
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
+
+        patch_data = request.data
+        if "refresh_interval" in patch_data:
+            datasource.config["refresh_interval"] = patch_data["refresh_interval"]
+            datasource.save()
+
+        return DRFResponse(status=204)
+
     def delete(self, request, uid):
         datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
 

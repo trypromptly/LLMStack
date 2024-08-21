@@ -43,7 +43,7 @@ urlpatterns = [
     ),
     path(
         "api/datasources/<str:uid>",
-        apis.DataSourceViewSet.as_view({"get": "get", "delete": "delete"}),
+        apis.DataSourceViewSet.as_view({"get": "get", "delete": "delete", "patch": "patch"}),
     ),
     path(
         "api/datasources/<str:uid>/entries",

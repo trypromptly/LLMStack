@@ -7,6 +7,7 @@ class DataSourceSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()
     owner_email = serializers.SerializerMethodField()
     pipeline = serializers.SerializerMethodField()
+    refresh_interval = serializers.SerializerMethodField()
 
     def get_owner_email(self, obj):
         return obj.owner.email
@@ -26,9 +27,23 @@ class DataSourceSerializer(serializers.ModelSerializer):
     def get_pipeline(self, obj):
         return obj.config.get("pipeline", None)
 
+    def get_refresh_interval(self, obj):
+        return obj.config.get("refresh_interval", None)
+
     class Meta:
         model = DataSource
-        fields = ["name", "type", "uuid", "size", "created_at", "updated_at", "visibility", "owner_email", "pipeline"]
+        fields = [
+            "name",
+            "type",
+            "uuid",
+            "size",
+            "created_at",
+            "updated_at",
+            "visibility",
+            "owner_email",
+            "pipeline",
+            "refresh_interval",
+        ]
 
 
 class DataSourceEntrySerializer(serializers.ModelSerializer):

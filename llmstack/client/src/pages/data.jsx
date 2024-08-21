@@ -35,6 +35,7 @@ import { enqueueSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { AddDataSourceModal } from "../components/datasource/AddDataSourceModal";
+import { DatasourceFormModal } from "../components/datasource/DataSourceFormModal";
 import DataSourceEntryContent from "../components/datasource/DataSourceEntryContent";
 import ShareDataSourceModal from "../components/datasource/ShareDataSourceModal";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
@@ -257,6 +258,7 @@ export default function DataPage() {
   const [deleteModalMessage, setDeleteModalMessage] = useState("");
   const [deleteId, setDeleteId] = useState(null);
   const [addDataSourceModalOpen, setAddDataSourceModalOpen] = useState(false);
+  const [editDataSourceModalOpen, setEditDataSourceModalOpen] = useState(false);
   const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
     useState(false);
   const [shareDataSourceModalOpen, setShareDataSourceModalOpen] =
@@ -364,22 +366,19 @@ export default function DataPage() {
       render: (record, row) => {
         return (
           <Box>
-            {row?.type?.is_external_datasource && (
-              <Tooltip title="Edit entry">
-                <IconButton
-                  disabled
-                  onClick={(e) => {
-                    setModalTitle("Edit Data Source");
-                    setAddDataSourceModalOpen(true);
-                    setSelectedDataSource(row);
+            <Tooltip title="Edit entry">
+              <IconButton
+                onClick={(e) => {
+                  setSelectedDataSource(row);
+                  console.log(row);
+                  setEditDataSourceModalOpen(true);
+                  e.stopPropagation();
+                }}
+              >
+                <EditOutlined />
+              </IconButton>
+            </Tooltip>
 
-                    e.stopPropagation();
-                  }}
-                >
-                  <EditOutlined />
-                </IconButton>
-              </Tooltip>
-            )}
             {row?.pipeline?.source?.slug &&
               row?.pipeline?.source?.provider_slug && (
                 <IconButton
@@ -611,6 +610,19 @@ export default function DataPage() {
           }}
           modalTitle={modalTitle}
           datasource={selectedDataSource}
+        />
+      )}
+      {editDataSourceModalOpen && (
+        <DatasourceFormModal
+          open={editDataSourceModalOpen}
+          cancelCb={() => {
+            setEditDataSourceModalOpen(false);
+          }}
+          datasource={selectedDataSource}
+          submitCb={() => {
+            setEditDataSourceModalOpen(false);
+            reloadDataSources();
+          }}
         />
       )}
       {deleteConfirmationModalOpen && (
