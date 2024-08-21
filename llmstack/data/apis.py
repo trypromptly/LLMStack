@@ -1,9 +1,12 @@
+import json
 import logging
 import uuid
+from datetime import timedelta
 from typing import List
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from flags.state import flag_enabled
 from langrocks.client import WebBrowser
 from rest_framework import viewsets
@@ -16,6 +19,7 @@ from llmstack.data.yaml_loader import (
     get_data_pipelines_from_contrib,
 )
 from llmstack.jobs.adhoc import AddDataSourceEntryJob
+from llmstack.jobs.models import RepeatableJob
 
 from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
 from .serializers import DataSourceEntrySerializer, DataSourceSerializer
@@ -427,7 +431,41 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         patch_data = request.data
         if "refresh_interval" in patch_data:
-            datasource.config["refresh_interval"] = patch_data["refresh_interval"]
+            old_job_id = datasource.config.get("refresh_job_id", None)
+            if old_job_id:
+                # Delete old refresh job if one exists
+                try:
+                    old_job = RepeatableJob.objects.get(uuid=uuid.UUID(old_job_id))
+                    old_job.delete()
+                except Exception as e:
+                    logger.error(f"Error deleting old refresh job {old_job_id}: {e}")
+                datasource.config["refresh_job_id"] = None
+
+            if patch_data["refresh_interval"] in ["Daily", "Weekly"]:
+                scheduled_time = timezone.now() + timedelta(minutes=2)
+                job_args = {
+                    "name": f"Datasource_{datasource.name[:4]}_refresh_job_{datasource.uuid}",
+                    "callable": "llmstack.data.tasks.process_datasource_resync_request",
+                    "callable_args": json.dumps([request.user.email, str(datasource.uuid)]),
+                    "callable_kwargs": json.dumps({}),
+                    "enabled": True,
+                    "queue": "default",
+                    "result_ttl": 86400,
+                    "owner": request.user,
+                    "scheduled_time": scheduled_time,
+                    "task_category": "data_refresh",
+                }
+                repeat_interval = 7 if patch_data["refresh_interval"] == "Weekly" else 1
+                job = RepeatableJob(
+                    interval=repeat_interval,
+                    interval_unit="days",
+                    **job_args,
+                )
+                job.save()
+                datasource.config["refresh_job_id"] = str(job.uuid)
+                datasource.config["refresh_interval"] = patch_data["refresh_interval"]
+            else:
+                datasource.config["refresh_interval"] = None
             datasource.save()
 
         return DRFResponse(status=204)
@@ -456,6 +494,14 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             logger.error(f"Error deleting all entries for datasource {datasource.uuid}: {e}")
+
+        refresh_job_id = datasource.config.get("refresh_job_id", None)
+        if refresh_job_id:
+            try:
+                job = RepeatableJob.objects.get(uuid=uuid.UUID(refresh_job_id))
+                job.delete()
+            except Exception as e:
+                logger.error(f"Error deleting refresh job {refresh_job_id}: {e}")
 
         datasource.delete()
         return DRFResponse(status=204)
