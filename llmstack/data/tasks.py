@@ -1,5 +1,7 @@
 import logging
 
+from django.contrib.auth.models import User
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,8 +53,7 @@ def process_datasource_entry_resync_request(user_email, entry_uuid):
     }
 
 
-def process_datasource_resync_request(user_email, datasource_uuid):
-    from django.contrib.auth.models import User
+def process_datasource_resync_request(user_email, datasource_uuid, **kwargs):
     from django.test import RequestFactory
 
     from llmstack.data.apis import DataSourceViewSet
@@ -64,9 +65,8 @@ def process_datasource_resync_request(user_email, datasource_uuid):
         format="json",
     )
     request.user = user
-    response = DataSourceViewSet().resync(request, datasource_uuid)
+    DataSourceViewSet().resync(request, datasource_uuid)
 
     return {
-        "status_code": response.status_code,
-        "data": response.data,
+        "status_code": 200,
     }

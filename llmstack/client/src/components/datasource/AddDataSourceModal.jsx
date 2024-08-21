@@ -32,7 +32,6 @@ import {
   embeddingTypesState,
 } from "../../data/atoms";
 import { axios } from "../../data/axios";
-import { useReloadDataSourceEntries } from "../../data/init";
 import ThemedJsonForm from "../ThemedJsonForm";
 
 const SOURCE_REFRESH_SCHEMA = {
@@ -43,7 +42,7 @@ const SOURCE_REFRESH_SCHEMA = {
       title: "Refresh Interval",
       description: "The interval at which the data source should be refreshed.",
       default: "None",
-      enum: ["None"],
+      enum: ["None", "Daily", "Weekly"],
     },
   },
 };
@@ -82,7 +81,10 @@ function AdvancedForm({
 
   return (
     <Stack>
-      <Accordion defaultExpanded={true}>
+      <Accordion
+        defaultExpanded={datasource === null}
+        disabled={datasource !== null}
+      >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="source-content"
@@ -390,25 +392,27 @@ function TemplateForm({
           </Button>
         ))}
       </ButtonGroup>
-      <ThemedJsonForm
-        schema={selectedTemplate?.pipeline?.source?.schema || {}}
-        validator={validator}
-        uiSchema={{
-          ...(selectedTemplate?.pipeline?.source?.ui_schema || {}),
-          ...{
-            "ui:submitButtonOptions": {
-              norender: true,
+      {datasource === null && (
+        <ThemedJsonForm
+          schema={selectedTemplate?.pipeline?.source?.schema || {}}
+          validator={validator}
+          uiSchema={{
+            ...(selectedTemplate?.pipeline?.source?.ui_schema || {}),
+            ...{
+              "ui:submitButtonOptions": {
+                norender: true,
+              },
+              "ui:DescriptionFieldTemplate": () => null,
+              "ui:TitleFieldTemplate": () => null,
             },
-            "ui:DescriptionFieldTemplate": () => null,
-            "ui:TitleFieldTemplate": () => null,
-          },
-        }}
-        formData={sourceData}
-        onChange={({ formData }) => {
-          setSourceData(formData);
-        }}
-        disableAdvanced={false}
-      />
+          }}
+          formData={sourceData}
+          onChange={({ formData }) => {
+            setSourceData(formData);
+          }}
+          disableAdvanced={false}
+        />
+      )}
       {datasource === null && selectedTemplate?.pipeline?.transformations && (
         <Accordion defaultExpanded={false}>
           <AccordionSummary
@@ -494,8 +498,6 @@ export function AddDataSourceModal({
 
   const [dataSources, setDataSources] = useRecoilState(dataSourcesState);
 
-  const reloadDataSourceEntries = useReloadDataSourceEntries();
-
   const [source, setSource] = useState({});
   const [sourceData, setSourceData] = useState({});
 
@@ -515,7 +517,9 @@ export function AddDataSourceModal({
         : "advanced"
       : "template",
   );
-  const [refreshData, setRefreshData] = useState({});
+  const [refreshData, setRefreshData] = useState({
+    refresh_interval: datasource?.refresh_interval || "None",
+  });
   const [pipelineSlug, setPipelineSlug] = useState("");
 
   return (
@@ -606,8 +610,8 @@ export function AddDataSourceModal({
               />
             </TabPanel>
           </TabContext>
-          {datasource === null && source && (
-            <Accordion defaultExpanded={false}>
+          {source && (
+            <Accordion defaultExpanded={true}>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="refresh-content"
@@ -648,28 +652,10 @@ export function AddDataSourceModal({
           variant="contained"
           onClick={() => {
             if (datasource) {
+              // This is DataSource Edit mode, send a patch request
               axios()
-                .post(`/api/datasources/${datasource.uuid}/add_entry_async`, {
-                  source_data: sourceData,
-                })
-                .then(() => {
-                  reloadDataSourceEntries();
-                  enqueueSnackbar(
-                    "Processing Data, please refresh the page in a few minutes",
-                    {
-                      variant: "success",
-                    },
-                  );
-                })
-                .catch((error) => {
-                  enqueueSnackbar(
-                    `Failed to add entry. ${error?.response?.data}`,
-                    {
-                      variant: "error",
-                    },
-                  );
-                })
-                .finally(() => {
+                .patch(`/api/datasources/${datasource.uuid}`, refreshData)
+                .then((response) => {
                   handleCancelCb();
                 });
             } else {

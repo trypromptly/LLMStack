@@ -35,6 +35,7 @@ import { enqueueSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { AddDataSourceModal } from "../components/datasource/AddDataSourceModal";
+import { AddSourceEntryDataModal } from "../components/datasource/AddSourceEntryDataModal";
 import DataSourceEntryContent from "../components/datasource/DataSourceEntryContent";
 import ShareDataSourceModal from "../components/datasource/ShareDataSourceModal";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
@@ -113,12 +114,6 @@ export function DataSourceEntries({
       title: "Action",
       key: "operation",
       render: (record, row) => {
-        const isAdhocSyncSupported =
-          (row?.status === "READY" || row?.status === "ERROR") &&
-          (row?.datasource?.type?.name.toLowerCase() === "file" ||
-            row?.datasource?.type?.name.toLowerCase() === "pdf" ||
-            row?.datasource?.type?.name.toLowerCase() === "url" ||
-            row?.datasource?.type?.name.toLowerCase() === "gdrive_file");
         return (
           <Box>
             <Tooltip title="View contents">
@@ -132,7 +127,7 @@ export function DataSourceEntries({
                 <VisibilityOutlined />
               </IconButton>
             </Tooltip>
-            {isAdhocSyncSupported && (
+            {row?.datasource?.has_source && (
               <Tooltip title="Resync contents">
                 <IconButton
                   onClick={() => {
@@ -256,7 +251,10 @@ export default function DataPage() {
   const [deleteModalTitle, setDeleteModalTitle] = useState("");
   const [deleteModalMessage, setDeleteModalMessage] = useState("");
   const [deleteId, setDeleteId] = useState(null);
+  const [addDataSourceEntryModalOpen, setAddDataSourceEntryModalOpen] =
+    useState(false);
   const [addDataSourceModalOpen, setAddDataSourceModalOpen] = useState(false);
+  const [editDataSourceModalOpen, setEditDataSourceModalOpen] = useState(false);
   const [deleteConfirmationModalOpen, setDeleteConfirmationModalOpen] =
     useState(false);
   const [shareDataSourceModalOpen, setShareDataSourceModalOpen] =
@@ -364,29 +362,26 @@ export default function DataPage() {
       render: (record, row) => {
         return (
           <Box>
-            {row?.type?.is_external_datasource && (
-              <Tooltip title="Edit entry">
-                <IconButton
-                  disabled
-                  onClick={(e) => {
-                    setModalTitle("Edit Data Source");
-                    setAddDataSourceModalOpen(true);
-                    setSelectedDataSource(row);
+            <Tooltip title="Edit Source Configuration">
+              <IconButton
+                onClick={(e) => {
+                  setSelectedDataSource(row);
+                  setModalTitle("Edit Source Configuration");
+                  setEditDataSourceModalOpen(true);
+                  e.stopPropagation();
+                }}
+              >
+                <EditOutlined />
+              </IconButton>
+            </Tooltip>
 
-                    e.stopPropagation();
-                  }}
-                >
-                  <EditOutlined />
-                </IconButton>
-              </Tooltip>
-            )}
-            {!row?.type?.is_external_datasource && (
+            {row?.has_source && (
               <IconButton
                 disabled={!row.isUserOwned}
                 onClick={(e) => {
                   setModalTitle("Add New Data Entry");
                   setSelectedDataSource(row);
-                  setAddDataSourceModalOpen(true);
+                  setAddDataSourceEntryModalOpen(true);
 
                   e.stopPropagation();
                 }}
@@ -394,7 +389,29 @@ export default function DataPage() {
                 <AddOutlined />
               </IconButton>
             )}
-            {row?.type?.is_external_datasource && (
+            {row?.has_source && (
+              <Tooltip title="Resync data">
+                <IconButton
+                  onClick={() => {
+                    axios()
+                      .post(`/api/datasources/${row.uuid}/resync_async`)
+                      .then((res) => {
+                        enqueueSnackbar("Resyncing data source", {
+                          variant: "success",
+                        });
+                      })
+                      .catch((err) => {
+                        enqueueSnackbar("Failed to resync data source entry", {
+                          variant: "error",
+                        });
+                      });
+                  }}
+                >
+                  <SyncOutlined />
+                </IconButton>
+              </Tooltip>
+            )}
+            {row?.is_destination_only && (
               <Tooltip title="External Connection">
                 <span>
                   <IconButton disabled={true}>
@@ -606,6 +623,55 @@ export default function DataPage() {
             setAddDataSourceModalOpen(false);
           }}
           modalTitle={modalTitle}
+          datasource={selectedDataSource}
+        />
+      )}
+      {editDataSourceModalOpen && (
+        <AddDataSourceModal
+          open={editDataSourceModalOpen}
+          handleCancelCb={() => {
+            setSelectedDataSource(null);
+            setEditDataSourceModalOpen(false);
+          }}
+          datasource={selectedDataSource}
+          modalTitle={modalTitle}
+        />
+      )}
+      {addDataSourceEntryModalOpen && (
+        <AddSourceEntryDataModal
+          open={addDataSourceEntryModalOpen}
+          onCancel={() => {
+            setAddDataSourceEntryModalOpen(false);
+          }}
+          onSubmit={(sourceEntryData) => {
+            axios()
+              .post(
+                `/api/datasources/${selectedDataSource.uuid}/add_entry_async`,
+                {
+                  source_data: sourceEntryData,
+                },
+              )
+              .then(() => {
+                reloadDataSourceEntries();
+                enqueueSnackbar(
+                  "Processing Data, please refresh the page in a few minutes",
+                  {
+                    variant: "success",
+                  },
+                );
+              })
+              .catch((error) => {
+                enqueueSnackbar(
+                  `Failed to add entry. ${error?.response?.data}`,
+                  {
+                    variant: "error",
+                  },
+                );
+              })
+              .finally(() => {
+                setAddDataSourceEntryModalOpen(false);
+              });
+          }}
           datasource={selectedDataSource}
         />
       )}

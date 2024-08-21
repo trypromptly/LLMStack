@@ -43,7 +43,7 @@ urlpatterns = [
     ),
     path(
         "api/datasources/<str:uid>",
-        apis.DataSourceViewSet.as_view({"get": "get", "delete": "delete"}),
+        apis.DataSourceViewSet.as_view({"get": "get", "delete": "delete", "patch": "patch"}),
     ),
     path(
         "api/datasources/<str:uid>/entries",
@@ -56,6 +56,10 @@ urlpatterns = [
     path(
         "api/datasources/<str:uid>/add_entry_async",
         apis.DataSourceViewSet.as_view({"post": "add_entry_async"}),
+    ),
+    path(
+        "api/datasources/<str:uid>/resync_async",
+        apis.DataSourceViewSet.as_view({"post": "resync_async"}),
     ),
     # Data source entries
     path(
