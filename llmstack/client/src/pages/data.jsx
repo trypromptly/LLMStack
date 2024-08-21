@@ -362,11 +362,11 @@ export default function DataPage() {
       render: (record, row) => {
         return (
           <Box>
-            <Tooltip title="Edit entry">
+            <Tooltip title="Edit Source Configuration">
               <IconButton
                 onClick={(e) => {
                   setSelectedDataSource(row);
-                  console.log(row);
+                  setModalTitle("Edit Source Configuration");
                   setEditDataSourceModalOpen(true);
                   e.stopPropagation();
                 }}
@@ -634,6 +634,7 @@ export default function DataPage() {
             setEditDataSourceModalOpen(false);
           }}
           datasource={selectedDataSource}
+          modalTitle={modalTitle}
         />
       )}
       {addDataSourceEntryModalOpen && (
