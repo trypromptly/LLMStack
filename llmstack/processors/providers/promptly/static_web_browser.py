@@ -122,6 +122,11 @@ class StaticWebBrowser(
             interactive=self._config.stream_video,
             capture_screenshot=True,
             tags_to_extract=self._config.tags_to_extract,
+            session_data=(
+                self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
+                if self._config.connection_id
+                else ""
+            ),
         ) as web_browser:
             if self._config.stream_video and web_browser.get_wss_url():
                 async_to_sync(
