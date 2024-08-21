@@ -685,29 +685,29 @@ export function AddDataSourceModal({
                   provider_slug: source.provider_slug,
                   data: sourceData,
                 };
-                if (embedding.slug && embedding.provider_slug) {
-                  pipelineData.embedding = {
-                    slug: embedding.slug,
-                    provider_slug: embedding.provider_slug,
-                    data: embeddingData,
-                  };
-                }
-                if (destination.slug && destination.provider_slug) {
-                  pipelineData.destination = {
-                    slug: destination.slug,
-                    provider_slug: destination.provider_slug,
-                    data: destinationFormData,
-                  };
-                }
-                if (transformations && transformations.length > 0) {
-                  pipelineData.transformations = transformations.map(
-                    (transformation, index) => ({
-                      slug: transformation.slug,
-                      provider_slug: transformation.provider_slug,
-                      data: transformationsData[index],
-                    }),
-                  );
-                }
+              }
+              if (embedding.slug && embedding.provider_slug) {
+                pipelineData.embedding = {
+                  slug: embedding.slug,
+                  provider_slug: embedding.provider_slug,
+                  data: embeddingData,
+                };
+              }
+              if (destination.slug && destination.provider_slug) {
+                pipelineData.destination = {
+                  slug: destination.slug,
+                  provider_slug: destination.provider_slug,
+                  data: destinationFormData,
+                };
+              }
+              if (transformations && transformations.length > 0) {
+                pipelineData.transformations = transformations.map(
+                  (transformation, index) => ({
+                    slug: transformation.slug,
+                    provider_slug: transformation.provider_slug,
+                    data: transformationsData[index],
+                  }),
+                );
               }
 
               axios()
