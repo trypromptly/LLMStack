@@ -380,29 +380,33 @@ export default function DataPage() {
                 </IconButton>
               </Tooltip>
             )}
-            {!row?.type?.is_external_datasource && (
-              <IconButton
-                disabled={!row.isUserOwned}
-                onClick={(e) => {
-                  setModalTitle("Add New Data Entry");
-                  setSelectedDataSource(row);
-                  setAddDataSourceModalOpen(true);
+            {row?.pipeline?.source?.slug &&
+              row?.pipeline?.source?.provider_slug && (
+                <IconButton
+                  disabled={!row.isUserOwned}
+                  onClick={(e) => {
+                    setModalTitle("Add New Data Entry");
+                    setSelectedDataSource(row);
+                    setAddDataSourceModalOpen(true);
 
-                  e.stopPropagation();
-                }}
-              >
-                <AddOutlined />
-              </IconButton>
-            )}
-            {row?.type?.is_external_datasource && (
-              <Tooltip title="External Connection">
-                <span>
-                  <IconButton disabled={true}>
-                    <SettingsEthernet />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            )}
+                    e.stopPropagation();
+                  }}
+                >
+                  <AddOutlined />
+                </IconButton>
+              )}
+            {!row?.pipeline?.source?.slug &&
+              !row?.pipeline?.source?.provider_slug &&
+              row?.pipeline?.destination?.slug &&
+              row?.pipeline?.destination?.provider_slug && (
+                <Tooltip title="External Connection">
+                  <span>
+                    <IconButton disabled={true}>
+                      <SettingsEthernet />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
             <IconButton
               disabled={!row.isUserOwned}
               onClick={() => {
