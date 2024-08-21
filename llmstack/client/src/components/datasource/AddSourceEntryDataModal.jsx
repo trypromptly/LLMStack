@@ -43,7 +43,7 @@ export function AddSourceEntryDataModal({
         setSource(source);
       }
     }
-  }, [datasource, sourceTypes, setSource]);
+  }, [datasource, templates, sourceTypes, setSource]);
 
   return (
     <Dialog open={open} onClose={onCancel} sx={{ zIndex: 900 }}>

@@ -35,7 +35,6 @@ import { enqueueSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { AddDataSourceModal } from "../components/datasource/AddDataSourceModal";
-import { DatasourceFormModal } from "../components/datasource/DataSourceFormModal";
 import { AddSourceEntryDataModal } from "../components/datasource/AddSourceEntryDataModal";
 import DataSourceEntryContent from "../components/datasource/DataSourceEntryContent";
 import ShareDataSourceModal from "../components/datasource/ShareDataSourceModal";
@@ -628,16 +627,13 @@ export default function DataPage() {
         />
       )}
       {editDataSourceModalOpen && (
-        <DatasourceFormModal
+        <AddDataSourceModal
           open={editDataSourceModalOpen}
-          cancelCb={() => {
+          handleCancelCb={() => {
+            setSelectedDataSource(null);
             setEditDataSourceModalOpen(false);
           }}
           datasource={selectedDataSource}
-          submitCb={() => {
-            setEditDataSourceModalOpen(false);
-            reloadDataSources();
-          }}
         />
       )}
       {addDataSourceEntryModalOpen && (
