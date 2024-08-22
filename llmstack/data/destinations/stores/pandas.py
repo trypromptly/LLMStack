@@ -115,7 +115,7 @@ class PandasStore(BaseDestination):
             document_dict = {"text": node.text, **extra_data}
             entry_dict = {
                 "id": node.id_,
-                **{mapping.source: document_dict[mapping.target] for mapping in self.mapping},
+                **{mapping.source: document_dict.get(mapping.target) for mapping in self.mapping},
             }
             self._dataframe = self._dataframe._append(entry_dict, ignore_index=True)
 

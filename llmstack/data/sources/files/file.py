@@ -5,8 +5,7 @@ from typing import List
 
 from pydantic import Field
 
-from llmstack.common.blocks.data.source import DataSourceEnvironmentSchema
-from llmstack.common.blocks.data.source.uri import Uri, UriConfiguration, UriInput
+from llmstack.common.utils.text_extract import extract_text_elements
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.data.sources.base import BaseSource, DataDocument
 from llmstack.data.sources.utils import (
@@ -28,14 +27,12 @@ class FileSchema(BaseSource):
             "accepts": {
                 "application/pdf": [],
                 "application/json": [],
-                "audio/mpeg": [],
                 "application/rtf": [],
                 "text/plain": [],
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
-                "audio/mp3": [],
-                "video/mp4": [],
-                "video/webm": [],
+                "text/csv": [],
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
             },
         },
     )
@@ -78,11 +75,13 @@ class FileSchema(BaseSource):
     @classmethod
     def process_document(cls, document: DataDocument) -> DataDocument:
         data_uri = get_source_document_asset_by_objref(document.content)
-        result = Uri().process(
-            input=UriInput(env=DataSourceEnvironmentSchema(), uri=data_uri),
-            configuration=UriConfiguration(),
+        mime_type, file_name, file_data = validate_parse_data_uri(data_uri)
+        decoded_file_data = base64.b64decode(file_data)
+        elements = extract_text_elements(
+            mime_type=mime_type, data=decoded_file_data, file_name=file_name, extra_params=None
         )
-        text_content = result.documents[0].content_text
+        text_content = "".join([element.text for element in elements])
+
         text_data_uri = (
             f"data:text/plain;name={document.id_}_text.txt;base64,{base64.b64encode(text_content.encode()).decode()}"
         )

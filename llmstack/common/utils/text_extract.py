@@ -14,6 +14,7 @@ from unstructured.partition.md import partition_md
 from unstructured.partition.pdf import partition_pdf
 from unstructured.partition.pptx import partition_pptx
 from unstructured.partition.text import partition_text
+from unstructured.partition.xlsx import partition_xlsx
 
 from llmstack.common.utils.audio_loader import (
     partition_audio,
@@ -105,6 +106,8 @@ def extract_text_elements(
                 metadata=ElementMetadata(filename=file_name),
             ),
         ]
+    elif mime_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+        elements = partition_xlsx(file=data_fp, chunking_strategy=chunking_strategy)
     elif mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         elements = partition_docx(file=data_fp, chunking_strategy=chunking_strategy)
     elif mime_type == "application/msword":
