@@ -26,21 +26,22 @@ class DataSourceSerializer(serializers.ModelSerializer):
                 "name": "Custom",
             }
 
-    def _get_config(self, obj):
-        return obj.config or {}
-
     def get_pipeline(self, obj):
-        return self._get_config(obj=obj).get("pipeline", None)
+        config = obj.config or {}
+        return config.get("pipeline", None)
 
     def get_refresh_interval(self, obj):
-        return self._get_config(obj=obj).get("refresh_interval", None)
+        config = obj.config or {}
+        return config.get("refresh_interval", None)
 
     def get_has_source(self, obj):
-        return self._get_config(obj=obj).get("pipeline", {}).get("source", {}).get("slug", None) is not None
+        config = obj.config or {}
+        return config.get("pipeline", {}).get("source", {}).get("slug", None) is not None
 
     def get_is_destination_only(self, obj):
+        config = obj.config or {}
         return (
-            self._get_config(obj=obj).get("pipeline", {}).get("destination", {}).get("slug", None) is not None
+            config.get("pipeline", {}).get("destination", {}).get("slug", None) is not None
             and self.get_has_source(obj) is False
         )
 
