@@ -43,7 +43,7 @@ export const columnTypeToDatagridMapping = {
 const AppRunForm = ({ columns, data, setData }) => {
   const [selectedAppSlug, setSelectedAppSlug] = useState(data?.app_slug || "");
   const storeApps = useRecoilValue(storeAppsBriefState);
-  const app = useRecoilValue(storeAppState(selectedAppSlug));
+  const app = useRecoilValue(storeAppState(selectedAppSlug || "super-agent"));
   const [appInputSchema, setAppInputSchema] = useState({});
   const [appInputUiSchema, setAppInputUiSchema] = useState({});
   const formDataRef = useRef(data?.input || {});
@@ -112,12 +112,10 @@ const AppRunForm = ({ columns, data, setData }) => {
           validator={validator}
           formData={formDataRef.current}
           onChange={(e) => {
-            setTimeout(() => {
-              setData({
-                app_slug: app.slug,
-                input: e.formData,
-              });
-            }, 10);
+            setData({
+              app_slug: app.slug,
+              input: e.formData,
+            });
             formDataRef.current = e.formData;
           }}
           fields={{
