@@ -1,12 +1,314 @@
-import React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Box,
+  Button,
+  Stack,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
+import {
+  DataEditor,
+  GridCellKind,
+  GridColumnIcon,
+} from "@glideapps/glide-data-grid";
+import { SheetColumnMenu, SheetColumnMenuButton } from "./SheetColumnMenu";
+import { axios } from "../../data/axios";
+import { Ws } from "../../data/ws";
+import { enqueueSnackbar } from "notistack";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 
-function Sheet() {
+const SheetHeader = ({ sheet, setRunId }) => {
+  const saveSheet = () => {
+    axios()
+      .patch(`/api/sheets/${sheet.uuid}`, sheet)
+      .then((response) => {
+        enqueueSnackbar("Sheet saved successfully", {
+          variant: "success",
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        enqueueSnackbar(
+          `Error saving sheet: ${
+            error?.response?.data?.detail || error.message
+          }`,
+          {
+            variant: "error",
+          },
+        );
+      });
+  };
+
+  const runSheet = () => {
+    axios()
+      .post(`/api/sheets/${sheet.uuid}/run`)
+      .then((response) => {
+        setRunId(response.data.run_id);
+      })
+      .catch((error) => {
+        console.error(error);
+        enqueueSnackbar(
+          `Error running sheet: ${
+            error?.response?.data?.detail || error.message
+          }`,
+          {
+            variant: "error",
+          },
+        );
+      });
+  };
+
   return (
-    <div>
-      <h1>Sheet</h1>
-    </div>
+    <Stack>
+      <Typography variant="h5" className="section-header">
+        <Stack direction={"row"} sx={{ justifyContent: "space-between" }}>
+          <Stack>
+            {sheet?.name}
+            <br />
+            <Typography variant="caption" sx={{ color: "#666" }}>
+              {sheet?.data?.description || ""}
+            </Typography>
+          </Stack>
+          <Stack direction={"row"} gap={1}>
+            <Button variant="contained" size="medium" onClick={saveSheet}>
+              Save
+            </Button>
+            <Button variant="contained" size="medium" onClick={runSheet}>
+              Run
+            </Button>
+          </Stack>
+        </Stack>
+      </Typography>
+    </Stack>
+  );
+};
+
+function Sheet(props) {
+  const { sheetId } = props;
+  const [sheet, setSheet] = useState(null);
+  const [columns, setColumns] = useState([]);
+  const [cells, setCells] = useState({});
+  const [runId, setRunId] = useState(null);
+  const [selectedColumnId, setSelectedColumnId] = useState(null);
+  const [showEditColumnMenu, setShowEditColumnMenu] = useState(false);
+  const [numRows, setNumRows] = useState(0);
+  const editColumnAnchorEl = useRef(null);
+  const sheetRef = useRef(null);
+  const wsUrlPrefix = `${
+    window.location.protocol === "https:" ? "wss" : "ws"
+  }://${
+    process.env.NODE_ENV === "development"
+      ? process.env.REACT_APP_API_SERVER || "localhost:9000"
+      : window.location.host
+  }/ws`;
+
+  const getCellContent = useCallback(
+    ([row, column]) => {
+      const cell = cells[row]?.[column];
+      return {
+        kind: cell?.kind || GridCellKind.Text,
+        displayData: cell?.displayData || cell?.data || "",
+        data: cell?.data || "",
+        allowOverlay: true,
+      };
+    },
+    [cells],
+  );
+
+  const parseSheetColumnsIntoGridColumns = (columns) => {
+    if (!columns) {
+      return [];
+    }
+
+    return columns.map((column) => {
+      return {
+        col: column.col,
+        title: column.title,
+        kind: column.kind,
+        data: column.data,
+        hasMenu: true,
+        icon: GridColumnIcon.HeaderString,
+      };
+    });
+  };
+
+  useEffect(() => {
+    if (sheetId) {
+      axios()
+        .get(`/api/sheets/${sheetId}?include_cells=true`)
+        .then((response) => {
+          setSheet(response.data);
+          setCells(response.data?.cells || {});
+          setColumns(
+            parseSheetColumnsIntoGridColumns(response.data?.columns || []),
+          );
+          setNumRows(response.data?.total_rows || 0);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  }, [sheetId]);
+
+  useEffect(() => {
+    setSheet((sheet) => ({
+      ...sheet,
+      data: {
+        ...(sheet?.data || {}),
+        columns: columns,
+      },
+    }));
+  }, [columns]);
+
+  useEffect(() => {
+    if (Object.keys(cells).length > 0) {
+      setSheet((sheet) => ({
+        ...sheet,
+        data: {
+          ...(sheet?.data || {}),
+          cells: cells,
+        },
+      }));
+    }
+  }, [cells]);
+
+  useEffect(() => {
+    setSheet((sheet) => ({
+      ...sheet,
+      data: {
+        ...(sheet?.data || {}),
+        total_rows: numRows,
+      },
+    }));
+  }, [numRows]);
+
+  useEffect(() => {
+    if (runId) {
+      // Connect to ws and listen for updates
+      const ws = new Ws(`${wsUrlPrefix}/sheets/${sheet.uuid}/run/${runId}`);
+      if (ws) {
+        ws.setOnMessage((evt) => {
+          const event = JSON.parse(evt.data);
+
+          if (event.type === "cell.update") {
+            const cell = event.cell;
+            const [row, col] = cell.id.split("-");
+
+            setCells((cells) => ({
+              ...cells,
+              [row]: {
+                ...cells[row],
+                [col]: {
+                  ...cells[row]?.[col],
+                  ...cell,
+                },
+              },
+            }));
+
+            sheetRef.current?.updateCells([{ cell: [row, col] }]);
+          }
+        });
+
+        ws.send(JSON.stringify({ event: "run" }));
+      }
+    }
+  }, [runId, sheet?.uuid, wsUrlPrefix]);
+
+  return sheet ? (
+    <Stack>
+      <SheetHeader sheet={sheet} setRunId={setRunId} />
+      <Box>
+        <DataEditor
+          ref={sheetRef}
+          getCellContent={getCellContent}
+          columns={columns}
+          smoothScrollX={true}
+          smoothScrollY={true}
+          rowMarkers={"both"}
+          freezeTrailingRows={2}
+          trailingRowOptions={{
+            sticky: true,
+            tint: true,
+            hint: "New row...",
+          }}
+          onRowAppended={() => {
+            setCells((cells) => ({
+              ...cells,
+              [numRows]: {
+                ...columns.reduce((acc, column) => {
+                  acc[column.col] = {
+                    kind: GridCellKind.Text,
+                    displayData: "",
+                    data: "",
+                  };
+                  return acc;
+                }, {}),
+              },
+            }));
+            setNumRows(numRows + 1);
+          }}
+          width={"100%"}
+          getCellsForSelection={true}
+          rightElement={
+            <SheetColumnMenuButton
+              addColumn={(column) => {
+                setColumns([...columns, column]);
+              }}
+              columns={columns}
+            />
+          }
+          onCellEdited={(cell, value) => {
+            setCells((cells) => ({
+              ...cells,
+              [cell[0]]: {
+                ...cells[cell[0]],
+                [cell[1]]: {
+                  ...(cells[cell[0]]?.[cell[1]] || {}),
+                  ...value,
+                  displayData: value.displayData || value.data,
+                },
+              },
+            }));
+            sheetRef.current?.updateCells([{ cell: cell }]);
+          }}
+          onHeaderMenuClick={(column, bounds) => {
+            setSelectedColumnId(column);
+            editColumnAnchorEl.current = {
+              getBoundingClientRect: () => DOMRect.fromRect(bounds),
+            };
+            setShowEditColumnMenu(true);
+          }}
+          rows={numRows}
+        />
+      </Box>
+      <div id="portal" />
+      {showEditColumnMenu && (
+        <SheetColumnMenu
+          onClose={() => setShowEditColumnMenu(false)}
+          column={selectedColumnId !== null ? columns[selectedColumnId] : null}
+          open={showEditColumnMenu}
+          setOpen={setShowEditColumnMenu}
+          anchorEl={editColumnAnchorEl.current}
+          columns={columns}
+          updateColumn={(column) => {
+            setColumns((columns) => {
+              const newColumns = [...columns];
+              newColumns[selectedColumnId] = column;
+              return newColumns;
+            });
+          }}
+          deleteColumn={(column) => {
+            setColumns((columns) => {
+              return columns.filter((c) => c.col !== column.col);
+            });
+            setSelectedColumnId(null);
+          }}
+        />
+      )}
+    </Stack>
+  ) : (
+    <CircularProgress />
   );
 }
 
