@@ -7,6 +7,7 @@ from typing import List, Optional
 from striprtf.striprtf import rtf_to_text
 from unstructured.documents.elements import Element, ElementMetadata, Text
 from unstructured.partition.auto import partition_html
+from unstructured.partition.doc import partition_doc
 from unstructured.partition.docx import partition_docx
 from unstructured.partition.epub import partition_epub
 from unstructured.partition.image import partition_image
@@ -108,6 +109,8 @@ def extract_text_elements(
         ]
     elif mime_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
         elements = partition_xlsx(file=data_fp, chunking_strategy=chunking_strategy)
+    elif mime_type == "application/msword":
+        elements = partition_doc(file=data_fp, chunking_strategy=chunking_strategy)
     elif mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         elements = partition_docx(file=data_fp, chunking_strategy=chunking_strategy)
     elif mime_type == "application/msword":

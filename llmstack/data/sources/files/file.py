@@ -29,6 +29,7 @@ class FileSchema(BaseSource):
                 "application/json": [],
                 "application/rtf": [],
                 "text/plain": [],
+                "application/msword": [],
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation": [],
                 "text/csv": [],
