@@ -36,14 +36,13 @@ class DataSourceSerializer(serializers.ModelSerializer):
 
     def get_has_source(self, obj):
         config = obj.config or {}
-        return config.get("pipeline", {}).get("source", {}).get("slug", None) is not None
+        source = config.get("pipeline", {}).get("source", {}) or {}
+        return source.get("slug", None) is not None
 
     def get_is_destination_only(self, obj):
         config = obj.config or {}
-        return (
-            config.get("pipeline", {}).get("destination", {}).get("slug", None) is not None
-            and self.get_has_source(obj) is False
-        )
+        destination = config.get("pipeline", {}).get("destination", {}) or {}
+        return destination.get("slug", None) is not None and self.get_has_source(obj) is False
 
     class Meta:
         model = DataSource
