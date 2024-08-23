@@ -16,8 +16,8 @@ from llmstack.common.blocks.base.processor import (
     ProcessorInterface,
 )
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
-from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.provider_config import get_matched_provider_config
+from llmstack.common.utils.utils import hydrate_input
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
@@ -34,31 +34,6 @@ IMAGE_WIDGET_NAME = "output_image"
 AUDIO_WIDGET_NAME = "output_audio"
 CHAT_WIDGET_NAME = "output_chat"
 FILE_WIDGET_NAME = "file"
-
-
-def hydrate_input(input, values):
-    def render(value):
-        if isinstance(value, str):
-            try:
-                return render_template(value, values)
-            except Exception:
-                logger.exception("Error rendering template when hydrating input")
-
-        return value
-
-    def traverse(obj):
-        if isinstance(obj, dict):
-            return {key: traverse(render(value)) for key, value in obj.items()}
-        elif isinstance(obj, list):
-            return [traverse(render(item)) for item in obj]
-        elif isinstance(obj, BaseModel):
-            cls = obj.__class__
-            return cls.model_validate(traverse(obj.model_dump()))
-        elif isinstance(obj, str):
-            return render(obj)
-        return obj
-
-    return traverse(input)
 
 
 class ApiProcessorSchema(_Schema):
