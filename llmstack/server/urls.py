@@ -12,6 +12,7 @@ urlpatterns = [
     path("", include("llmstack.data.urls")),
     path("", include("llmstack.connections.urls")),
     path("", include("llmstack.jobs.urls")),
+    path("", include("llmstack.sheets.urls")),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.GENERATEDFILES_ROOT and settings.GENERATEDFILES_URL:

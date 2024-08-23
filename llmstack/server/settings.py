@@ -330,6 +330,15 @@ CACHES = {
     },
 }
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/5"],
+        },
+    },
+}
+
 APP_SESSION_TIMEOUT = int(os.getenv("APP_SESSION_TIMEOUT", 3600))
 
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
