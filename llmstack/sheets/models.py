@@ -1,7 +1,8 @@
 import base64
 import json
+import logging
 import uuid
-from typing import Dict
+from typing import List
 
 from django.db import models
 from django.db.models.signals import post_delete
@@ -10,17 +11,19 @@ from pydantic import BaseModel
 
 from llmstack.assets.models import Assets
 
+logger = logging.getLogger(__name__)
+
 
 class PromptlySheetCell(BaseModel):
     row: int
     col: int
-    value: str = ""
-    value_type: str = "string"
-    extra_data: dict = {}
+    data: str = ""
+    formula: str = ""
+    kind: str = "string"
 
     @property
     def is_formula(self):
-        return self.value.startswith("=")
+        return bool(self.formula)
 
     @property
     def cell_id(self):
@@ -94,13 +97,17 @@ def delete_sheet_data_objrefs(data_objrefs):
             pass
 
 
-def create_sheet_data_objrefs(
-    cells: Dict[int, Dict[int, PromptlySheetCell]], sheet_name, sheet_uuid, page_size: int = 1000
-):
-    for i in range(0, len(cells), page_size):
+def create_sheet_data_objrefs(cells: List[PromptlySheetCell], sheet_name, sheet_uuid, page_size: int = 1000):
+    # Sort the cells by row and columns
+    cells = sorted(cells, key=lambda cell: (cell.row, cell.col))
+    max_rows = max(cells, key=lambda cell: cell.row).row + 1
+
+    for i in range(0, max_rows, page_size):
         chunk = {}
-        for j in range(i, min(i + page_size, len(cells))):
-            chunk[j] = dict(map(lambda entry: (entry[0], entry[1].model_dump()), cells[j].items()))
+        for j in range(i, min(i + page_size, max_rows)):
+            # Find cells from this row and add them to the chunk
+            cells_in_row = list(filter(lambda cell: cell.row == j, cells))
+            chunk[j] = dict(map(lambda cell: (cell.col, cell.model_dump()), cells_in_row))
 
         data_json = json.dumps(chunk)
         filename = f"{sheet_name}_{str(uuid.uuid4())[:4]}_{i}.json"
@@ -135,8 +142,11 @@ def get_sheet_cells(objref):
                 )
             )
 
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error loading sheet data from objref: {e}")
         pass
+
+    return {}
 
 
 class PromptlySheet(models.Model):
@@ -178,19 +188,22 @@ class PromptlySheet(models.Model):
             for cell_row in cells:
                 yield (cell_row, cells[cell_row])
 
+    @property
+    def columns(self):
+        return self.data.get("columns", [])
+
     def save(self, *args, **kwargs):
-        if kwargs.get("cells"):
+        if "cells" in kwargs:
             if self.data and self.data.get("cells"):
                 # Delete the older objrefs
                 delete_sheet_data_objrefs(self.data.get("cells", []))
             cell_objs = kwargs.pop("cells")
-            self.data = {
-                "cells": list(
-                    create_sheet_data_objrefs(
-                        cell_objs, self.name, str(self.uuid), page_size=self.extra_data.get("page_size", 1000)
-                    )
+
+            self.data["cells"] = list(
+                create_sheet_data_objrefs(
+                    cell_objs, self.name, str(self.uuid), page_size=self.extra_data.get("page_size", 1000)
                 )
-            }
+            )
             if kwargs.get("update_fields"):
                 kwargs["update_fields"].append("data")
 

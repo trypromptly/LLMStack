@@ -9,11 +9,7 @@ urlpatterns = [
         PromptlySheetViewSet.as_view({"get": "list", "patch": "patch", "delete": "delete"}),
     ),
     path(
-        "api/sheets/<str:sheet_uuid>/execute",
-        PromptlySheetViewSet.as_view({"post": "execute"}),
-    ),
-    path(
-        "api/sheets/<str:sheet_uuid>/execute_async",
-        PromptlySheetViewSet.as_view({"post": "execute_async"}),
+        "api/sheets/<str:sheet_uuid>/run",
+        PromptlySheetViewSet.as_view({"post": "run_async"}),
     ),
 ]

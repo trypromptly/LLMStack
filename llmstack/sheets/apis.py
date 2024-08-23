@@ -1,8 +1,6 @@
 import logging
 import uuid
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
@@ -14,49 +12,15 @@ from llmstack.sheets.models import (
     PromptlySheetCell,
     PromptlySheetRunEntry,
 )
-from llmstack.sheets.serializers import PromptlySheetSeializer
-from llmstack.sheets.utils import parse_formula
+from llmstack.sheets.serializers import PromptlySheetSerializer
 
 logger = logging.getLogger(__name__)
-
-
-def write_to_ws_channel(channel_name, message):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.send)(channel_name, {"type": "send.message", "message": message})
 
 
 class PromptlySheetAppExecuteJob(ProcessingJob):
     @classmethod
     def generate_job_id(cls):
         return "{}".format(str(uuid.uuid4()))
-
-
-def _execute_cell(cell: PromptlySheetCell, sheet: PromptlySheet) -> PromptlySheetCell:
-    if not cell.is_formula:
-        return cell
-
-    # Else execute the formula
-    function_name, params = parse_formula(cell.value)
-    if not function_name or not params:
-        display_value = f"Invalid formula: {cell.value}"
-    else:
-        resolved_params = [""] * len(params)
-        for param_index in range(len(params)):
-            if "-" in params[param_index]:
-                column, row = params[param_index].split("-")
-                resolved_cell = sheet.get_cell(int(row), int(column))
-                resolved_params[param_index] = resolved_cell.value
-
-        display_value = f"Executing {function_name}({', '.join(resolved_params)})"
-
-    extra_data = {**cell.extra_data}
-    extra_data["display_value"] = display_value
-    new_cell = cell.model_copy(update={"extra_data": extra_data})
-    ws_channel_name = sheet.extra_data.get("channel_name")
-    if ws_channel_name:
-        write_to_ws_channel(ws_channel_name, new_cell.model_dump())
-
-    return new_cell
 
 
 class PromptlySheetViewSet(viewsets.ViewSet):
@@ -69,7 +33,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         if sheet_uuid:
             sheet = PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
             return DRFResponse(
-                PromptlySheetSeializer(
+                PromptlySheetSerializer(
                     instance=sheet,
                     context={
                         "include_cells": include_cells,
@@ -78,7 +42,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
             )
         sheets = PromptlySheet.objects.filter(profile_uuid=profile.uuid)
         return DRFResponse(
-            PromptlySheetSeializer(
+            PromptlySheetSerializer(
                 instance=sheets,
                 many=True,
                 context={
@@ -93,6 +57,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         sheet = PromptlySheet.objects.create(
             name=request.data.get("name"),
             profile_uuid=profile.uuid,
+            data=request.data.get("data", {}),
             extra_data=request.data.get("extra_data", {"has_header": True}),
         )
 
@@ -114,7 +79,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
 
             sheet.save(cells=cells_data)
 
-        return DRFResponse(PromptlySheetSeializer(instance=sheet).data)
+        return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
 
     def delete(self, request, sheet_uuid=None):
         profile = Profile.objects.get(user=request.user)
@@ -130,58 +95,50 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         sheet = PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
         sheet.name = request.data.get("name", sheet.name)
         sheet.extra_data = request.data.get("extra_data", sheet.extra_data)
+
+        if "data" in request.data:
+            if "columns" in request.data["data"]:
+                sheet.data["columns"] = request.data["data"]["columns"]
+
+            if "total_rows" in request.data["data"]:
+                sheet.data["total_rows"] = request.data["data"]["total_rows"]
+
+            if "description" in request.data["data"]:
+                sheet.data["description"] = request.data["data"]["description"]
+
         sheet.save()
 
-        if "cells" in request.data:
+        if "data" in request.data and "cells" in request.data["data"]:
             cells_data = []
-            for row in range(len(request.data["cells"])):
-                cells_row_data = []
-                for column in range(len(request.data["cells"][row])):
-                    cell_data = request.data["cells"][row][column]
-                    cells_row_data.append(PromptlySheetCell(row=row, col=column, **cell_data))
-                cells_data.append(cells_row_data)
+            for row_number in request.data["data"]["cells"]:
+                if not isinstance(request.data["data"]["cells"][row_number], dict):
+                    raise ValueError("Invalid cells data")
+                for column_number in request.data["data"]["cells"][row_number]:
+                    cell_data = request.data["data"]["cells"][row_number][column_number]
+                    cell_data.pop("row", None)
+                    cell_data.pop("col", None)
+                    cells_data.append(PromptlySheetCell(row=row_number, col=column_number, **cell_data))
             sheet.save(cells=cells_data)
 
-        return DRFResponse(PromptlySheetSeializer(instance=sheet).data)
+        return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
 
-    def execute(self, request, sheet_uuid=None):
+    def run_async(self, request, sheet_uuid=None):
         profile = Profile.objects.get(user=request.user)
-
         sheet = PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
         if sheet.is_locked:
             return DRFResponse(
-                {"detail": "The sheet is locked and cannot be executed"},
+                {"detail": "The sheet is locked and cannot be run at this time."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         sheet.is_locked = True
         sheet.save(update_fields=["is_locked"])
 
-        try:
-            processed_cells = {}
-            for row_number, column_cells in sheet.rows:
-                processed_cells_row = {}
-                for column_number in column_cells:
-                    processed_cells_row[column_number] = _execute_cell(column_cells[column_number], sheet)
-                processed_cells[row_number] = processed_cells_row
+        run_entry = PromptlySheetRunEntry(sheet_uuid=sheet.uuid, profile_uuid=profile.uuid)
 
-            if processed_cells:
-                sheet.save(cells=processed_cells, update_fields=["updated_at"])
-                # Store the processed data in sheet runs table
-                run_entry = PromptlySheetRunEntry(sheet_uuid=sheet.uuid, profile_uuid=profile.uuid)
-                run_entry.save(cells=processed_cells)
-
-        except Exception:
-            logger.exception("Error executing sheet")
-
-        sheet.is_locked = False
-        sheet.save(update_fields=["is_locked"])
-        return DRFResponse(PromptlySheetSeializer(instance=sheet).data)
-
-    def execute_async(self, request, sheet_uuid=None):
         job = PromptlySheetAppExecuteJob.create(
-            func="llmstack.promptly_sheets.tasks.process_sheet_execute_request",
-            args=[request.user.email, sheet_uuid],
+            func="llmstack.sheets.tasks.run_sheet",
+            args=[sheet, run_entry],
         ).add_to_queue()
 
-        return DRFResponse({"job_id": job.id}, status=202)
+        return DRFResponse({"job_id": job.id, "run_id": run_entry.uuid}, status=202)
