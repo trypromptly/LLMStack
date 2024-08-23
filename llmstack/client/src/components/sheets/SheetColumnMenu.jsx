@@ -40,13 +40,13 @@ export const columnTypeToDatagridMapping = {
 };
 
 // Allow the user to pick an app, and then show the form for that app input
-const AppRunForm = ({ columns, setData }) => {
-  const [selectedAppSlug, setSelectedAppSlug] = useState("");
+const AppRunForm = ({ columns, data, setData }) => {
+  const [selectedAppSlug, setSelectedAppSlug] = useState(data?.app_slug || "");
   const storeApps = useRecoilValue(storeAppsBriefState);
   const app = useRecoilValue(storeAppState(selectedAppSlug));
   const [appInputSchema, setAppInputSchema] = useState({});
   const [appInputUiSchema, setAppInputUiSchema] = useState({});
-  const formDataRef = useRef(null);
+  const formDataRef = useRef(data?.input || {});
 
   const TextWidget = (props) => {
     return (
@@ -61,6 +61,13 @@ const AppRunForm = ({ columns, setData }) => {
       />
     );
   };
+
+  useEffect(() => {
+    if (data) {
+      setSelectedAppSlug(data.app_slug);
+      formDataRef.current = data.input || {};
+    }
+  }, [data]);
 
   useEffect(() => {
     if (app) {
@@ -127,23 +134,33 @@ const AppRunForm = ({ columns, setData }) => {
   );
 };
 
-function SheetColumnMenu({ columns, addColumn }) {
-  const [open, setOpen] = useState(false);
-  const [columnName, setColumnName] = useState("");
+export function SheetColumnMenu({
+  anchorEl,
+  column,
+  columns,
+  addColumn,
+  updateColumn,
+  deleteColumn,
+  open,
+  setOpen,
+}) {
+  const [columnName, setColumnName] = useState(column?.title || "");
   const [columnType, setColumnType] = useState(GridCellKind.Text);
-  const anchorRef = useRef(null);
-  const columnAppRunData = useRef(null);
+  const columnAppRunData = useRef(column?.data || {});
 
-  const handleClose = (event) => {
-    if (anchorRef.current && anchorRef.current.contains(event.target)) {
-      return;
+  useEffect(() => {
+    if (column?.kind === GridCellKind.Custom) {
+      setColumnType(column?.data?.kind || GridCellKind.Text);
+    } else {
+      setColumnType(column?.kind || GridCellKind.Text);
     }
 
-    setOpen(false);
-  };
+    setColumnName(column?.title || "");
+    columnAppRunData.current = column?.data || {};
+  }, [column]);
 
-  const handleAddColumn = () => {
-    addColumn({
+  const handleAddOrEditColumn = () => {
+    const newColumn = {
       col: columns.length,
       title: columnName || "New Column",
       kind: columnTypeToDatagridMapping[columnType].kind,
@@ -151,11 +168,102 @@ function SheetColumnMenu({ columns, addColumn }) {
         columnType === "app_run" && columnAppRunData.current
           ? { ...columnAppRunData.current, kind: columnType }
           : {},
-    });
+    };
+
+    if (column) {
+      updateColumn(newColumn);
+    } else {
+      addColumn(newColumn);
+    }
     setOpen(false);
     setColumnName("");
     setColumnType(GridCellKind.Text);
   };
+
+  const handleColumnDelete = () => {
+    deleteColumn(column);
+    setOpen(false);
+    setColumnName("");
+    setColumnType(GridCellKind.Text);
+  };
+
+  return (
+    <Popper
+      open={open}
+      anchorEl={anchorEl}
+      role={undefined}
+      placement="bottom-start"
+      transition
+      sx={{ width: "450px" }}
+    >
+      {({ TransitionProps, placement }) => (
+        <Grow
+          {...TransitionProps}
+          style={{
+            transformOrigin:
+              placement === "bottom-start" ? "left top" : "left bottom",
+          }}
+        >
+          <Paper>
+            <Stack gap={2} sx={{ padding: 2 }}>
+              <TextField
+                label="Name"
+                value={columnName}
+                placeholder="Column Name"
+                variant="outlined"
+                onChange={(e) => setColumnName(e.target.value)}
+              />
+              <Select
+                value={columnType}
+                id="column-type-select"
+                aria-label="Column Type"
+                placeholder="Column Type"
+                helperText="Select the type of data this column will contain"
+                onChange={(e) => setColumnType(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MenuItem value={"text"}>Text</MenuItem>
+                <MenuItem value={"number"}>Number</MenuItem>
+                <MenuItem value={"image"}>Image</MenuItem>
+                <MenuItem value={"app_run"}>App Run</MenuItem>
+              </Select>
+              {columnType === "app_run" && (
+                <AppRunForm
+                  setData={(data) => {
+                    columnAppRunData.current = data;
+                  }}
+                  data={columnAppRunData.current}
+                  columns={columns}
+                />
+              )}
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{ width: "100%", justifyContent: "center", mt: 2 }}
+              >
+                <Button variant="standard" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="contained" onClick={handleAddOrEditColumn}>
+                  {column ? "Update" : "Add"}
+                </Button>
+                {column && (
+                  <Button variant="contained" onClick={handleColumnDelete}>
+                    Delete
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+          </Paper>
+        </Grow>
+      )}
+    </Popper>
+  );
+}
+
+export function SheetColumnMenuButton({ columns, addColumn }) {
+  const anchorRef = useRef(null);
+  const [open, setOpen] = useState(false);
 
   return (
     <Box>
@@ -169,72 +277,13 @@ function SheetColumnMenu({ columns, addColumn }) {
       >
         <AddOutlined />
       </IconButton>
-      <Popper
+      <SheetColumnMenu
+        columns={columns}
+        addColumn={addColumn}
         open={open}
+        setOpen={setOpen}
         anchorEl={anchorRef.current}
-        role={undefined}
-        placement="bottom-start"
-        transition
-        sx={{ width: "450px" }}
-      >
-        {({ TransitionProps, placement }) => (
-          <Grow
-            {...TransitionProps}
-            style={{
-              transformOrigin:
-                placement === "bottom-start" ? "left top" : "left bottom",
-            }}
-          >
-            <Paper>
-              <Stack gap={2} sx={{ padding: 2 }}>
-                <TextField
-                  label="Name"
-                  value={columnName}
-                  placeholder="Column Name"
-                  variant="outlined"
-                  onChange={(e) => setColumnName(e.target.value)}
-                />
-                <Select
-                  value={columnType}
-                  id="column-type-select"
-                  aria-label="Column Type"
-                  placeholder="Column Type"
-                  helperText="Select the type of data this column will contain"
-                  onChange={(e) => setColumnType(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MenuItem value={"text"}>Text</MenuItem>
-                  <MenuItem value={"number"}>Number</MenuItem>
-                  <MenuItem value={"image"}>Image</MenuItem>
-                  <MenuItem value={"app_run"}>App Run</MenuItem>
-                </Select>
-                {columnType === "app_run" && (
-                  <AppRunForm
-                    setData={(data) => {
-                      columnAppRunData.current = data;
-                    }}
-                    columns={columns}
-                  />
-                )}
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  sx={{ width: "100%", justifyContent: "center", mt: 2 }}
-                >
-                  <Button variant="standard" onClick={handleClose}>
-                    Cancel
-                  </Button>
-                  <Button variant="contained" onClick={handleAddColumn}>
-                    Add
-                  </Button>
-                </Stack>
-              </Stack>
-            </Paper>
-          </Grow>
-        )}
-      </Popper>
+      />
     </Box>
   );
 }
-
-export default SheetColumnMenu;
