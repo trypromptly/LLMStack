@@ -4,7 +4,7 @@ from . import apis
 
 urlpatterns = [
     path("api/store/search", apis.AppStoreSearchViewSet.as_view({"get": "list"})),
-    path("api/store/apps", apis.AppStoreAppViewSet.as_view({"get": "list", "post": "create", "patch": "patch"})),
+    path("api/store/apps", apis.AppStoreAppViewSet.as_view({"get": "list", "post": "create"})),
     path("api/store/apps/<str:slug>", apis.AppStoreAppViewSet.as_view({"get": "get"})),
     path(
         "api/store/categories",
