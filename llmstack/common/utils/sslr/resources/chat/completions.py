@@ -12,6 +12,9 @@ from openai.resources.chat import (
     CompletionsWithStreamingResponse,
 )
 from openai.types import chat, completion_create_params
+from openai.types.chat.chat_completion_stream_options_param import (
+    ChatCompletionStreamOptionsParam,
+)
 
 from ..._streaming import (
     LLMAnthropicStream,
@@ -36,6 +39,7 @@ from ...constants import (
     PROVIDER_CUSTOM,
     PROVIDER_GOOGLE,
     PROVIDER_MISTRAL,
+    PROVIDER_OPENAI,
 )
 from ...types import chat as _chat
 from ...types.chat.chat_completion_message_param import ChatCompletionMessageParam
@@ -92,6 +96,7 @@ class Completions(OpenAICompletions):
         seed: Union[Optional[int], NotGiven] = NOT_GIVEN,
         stop: Union[Optional[str], List[str], NotGiven] = NOT_GIVEN,
         stream: Union[Literal[False], Literal[True], NotGiven] = NOT_GIVEN,
+        stream_options: Optional[ChatCompletionStreamOptionsParam] | NotGiven = NOT_GIVEN,
         temperature: Union[Optional[float], NotGiven] = NOT_GIVEN,
         tool_choice: Union[chat.ChatCompletionToolChoiceOptionParam, NotGiven] = NOT_GIVEN,
         tools: Union[List[chat.ChatCompletionToolParam], NotGiven] = NOT_GIVEN,
@@ -236,6 +241,9 @@ class Completions(OpenAICompletions):
 
         elif self._client._llm_router_provider == PROVIDER_CUSTOM:
             post_body_data["model"] = self._client.deployment_config.model_name
+
+        elif self._client._llm_router_provider == PROVIDER_OPENAI:
+            post_body_data["stream_options"] = stream_options
 
         return self._post(
             path=path,

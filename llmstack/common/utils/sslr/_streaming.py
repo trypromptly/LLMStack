@@ -1,5 +1,4 @@
 import json
-from itertools import groupby
 from typing import Any, Iterator, Optional, TypeVar, cast
 
 import httpx
@@ -7,20 +6,7 @@ from openai import APIError, AsyncStream, Stream
 from openai._streaming import ServerSentEvent, SSEDecoder
 from openai._utils import is_dict, is_mapping
 
-from ._utils import num_tokens_from_messages
-
 _T = TypeVar("_T")
-
-
-def _stitch_list_deltas(deltas):
-    result = {}
-    for entry in deltas:
-        for key, value in entry.items():
-            if key not in result:
-                result[key] = value
-            else:
-                result[key] += value
-    return result
 
 
 class LLMRestStream(Stream[_T]):
@@ -32,52 +18,29 @@ class LLMRestStream(Stream[_T]):
         collect_choices = [None] * 100
         id = None
         model = None
-        output_tokens = 0
+        max_choice_idx = 0
         created = 0
+        usage_data = {}
+
         for sse in iterator:
             if sse.data.startswith("[DONE]"):
-                collect_choices = [
-                    list(map(lambda entry: entry["delta"], choice)) for choice in collect_choices if choice is not None
+                choices = [
+                    {
+                        "delta": {},
+                        "index": i,
+                        "logprobs": None,
+                        "finish_reason": "usage",
+                    }
+                    for i in range(0, max_choice_idx + 1)
                 ]
-                collect_choices = [delta for delta in collect_choices if delta != {}]
-                stitched_choices = []
-                for idx, choice in enumerate(collect_choices):
-                    tool_calls = [None] * 100
-                    result = _stitch_list_deltas(choice)
-                    if "tool_calls" in result:
-                        for key, value in {
-                            key: list(group) for key, group in groupby(result["tool_calls"], key=lambda e: e["index"])
-                        }.items():
-                            tool_calls[key] = value
-                        tool_calls = [
-                            list(map(lambda entry: entry["function"], entry))
-                            for entry in tool_calls
-                            if entry is not None
-                        ]
-                        tool_calls = [_stitch_list_deltas(entry) for entry in tool_calls]
-                        result["tool_calls"] = tool_calls
-
-                    stitched_choices.append(result)
-                output_tokens = num_tokens_from_messages(stitched_choices, model)
-
                 yield process_data(
                     data={
                         "id": id,
                         "object": "chat.completion.chunk",
                         "created": created,
                         "model": model,
-                        "choices": list(
-                            map(
-                                lambda entry: {
-                                    "delta": {},
-                                    "index": idx,
-                                    "logprobs": None,
-                                    "finish_reason": "usage",
-                                },
-                                stitched_choices,
-                            )
-                        ),
-                        "usage": {"input_tokens": 0, "output_tokens": output_tokens},
+                        "choices": choices,
+                        "usage": usage_data,
                     },
                     cast_to=cast_to,
                     response=response,
@@ -100,11 +63,15 @@ class LLMRestStream(Stream[_T]):
                     created = data["created"]
                 if "choices" in data:
                     for choice in data["choices"]:
+                        max_choice_idx = max(max_choice_idx, choice["index"])
                         if choice["index"] is not None:
                             if collect_choices[choice["index"]] is None:
                                 collect_choices[choice["index"]] = [choice]
                             else:
                                 collect_choices[choice["index"]].append(choice)
+                if "usage" in data and data["usage"]:
+                    usage_data = data["usage"]
+                    continue
 
                 yield process_data(data=data, cast_to=cast_to, response=response)
 
