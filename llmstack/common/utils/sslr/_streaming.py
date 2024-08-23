@@ -380,7 +380,16 @@ class LLMGRPCStream(Stream):
         iterator = self._iter_events()
 
         for entry in iterator:
-            yield self._process_data(chunk=entry)
+            yield self._process_data(
+                chunk=entry,
+                usage_data={
+                    "prompt_tokens": entry.usage_metadata.prompt_token_count,
+                    "input_tokens": entry.usage_metadata.prompt_token_count,
+                    "output_tokens": entry.usage_metadata.candidates_token_count,
+                    "completion_tokens": entry.usage_metadata.candidates_token_count,
+                    "total_tokens": entry.usage_metadata.total_token_count,
+                },
+            )
 
         for _entry in iterator:
             ...

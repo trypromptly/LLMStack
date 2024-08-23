@@ -337,7 +337,7 @@ class Completions(OpenAICompletions):
                 created=0,
             )
 
-        def _transform_streaming_grpc_response(chunk):
+        def _transform_streaming_grpc_response(chunk, usage_data=None):
             choices = []
             for entry in chunk.candidates:
                 index = entry.index
@@ -410,6 +410,7 @@ class Completions(OpenAICompletions):
                     model=model,
                     object="chat.completion.chunk",
                     created=0,
+                    usage=usage_data,
                 )
 
         if stream:
