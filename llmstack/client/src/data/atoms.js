@@ -788,6 +788,29 @@ export const appsBriefState = atom({
   default: appsBriefFetchSelector,
 });
 
+const storeAppsBriefFetchSelector = selector({
+  key: "storeAppsBriefFetchSelector",
+  get: async () => {
+    let next = "/api/store/apps";
+    let apps = [];
+    try {
+      while (next) {
+        const response = await axios().get(next);
+        apps = apps.concat(response.data.results);
+        next = response.data.next;
+      }
+      return apps;
+    } catch (error) {
+      return [];
+    }
+  },
+});
+
+export const storeAppsBriefState = atom({
+  key: "storeAppsBriefState",
+  default: storeAppsBriefFetchSelector,
+});
+
 export const profileFlagsState = atom({
   key: "profileFlagsState",
   default: {},
@@ -886,8 +909,8 @@ export const isUsageLimitReachedState = selector({
   },
 });
 
-export const sheetsState = selector({
-  key: "sheetsState",
+export const sheetsListState = selector({
+  key: "sheetsListState",
   get: async () => {
     try {
       const sheets = await axios().get("/api/sheets");
