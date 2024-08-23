@@ -243,7 +243,7 @@ class Completions(OpenAICompletions):
             post_body_data["model"] = self._client.deployment_config.model_name
 
         elif self._client._llm_router_provider == PROVIDER_OPENAI:
-            post_body_data["stream_options"] = stream_options
+            post_body_data["stream_options"] = stream_options or {"include_usage": True}
 
         return self._post(
             path=path,
