@@ -325,9 +325,10 @@ export default function TextFieldWithVars(props) {
               Template Variables
             </Typography>
             <Typography variant="body2" style={{ marginBottom: 10 }}>
-              Below are the available variables across your input and
-              processors. Click on a variable to insert it into the text field
-              and use it during processing.
+              {props.introText ||
+                "Below are the available variables across your input and \
+              processors. Click on a variable to insert it into the text field \
+              and use it during processing."}
             </Typography>
             {memoizedSchemaTrees
               .map((val, index, array) => array[array.length - 1 - index])
@@ -343,6 +344,14 @@ export default function TextFieldWithVars(props) {
                       <StackLabel
                         name={schemas[schemas.length - 1 - index].label}
                       />
+                    }
+                    onClick={(e) =>
+                      schemaTree
+                        ? e.stopPropagation()
+                        : editorRef.current.dispatchCommand(
+                            INSERT_TEMPLATE_VARIABLE_COMMAND,
+                            `{{${schemas[schemas.length - 1 - index].id}}}`,
+                          )
                     }
                   >
                     {schemaTree}
