@@ -40,7 +40,11 @@ class LLMRestStream(Stream[_T]):
                         "created": created,
                         "model": model,
                         "choices": choices,
-                        "usage": usage_data,
+                        "usage": {
+                            **usage_data,
+                            "input_tokens": usage_data.get("prompt_tokens"),
+                            "output_tokens": usage_data.get("completion_tokens"),
+                        },
                     },
                     cast_to=cast_to,
                     response=response,
@@ -176,6 +180,7 @@ class LLMAnthropicStream(Stream[_T]):
                         "usage": {
                             "input_tokens": input_tokens,
                             "output_tokens": output_tokens,
+                            "total_tokens": input_tokens + output_tokens,
                         },
                     }
                 else:
