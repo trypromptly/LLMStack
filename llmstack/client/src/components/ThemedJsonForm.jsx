@@ -325,6 +325,7 @@ const ThemedJsonForm = ({
   templates = {},
   widgets = {},
   disableAdvanced = false,
+  fields = {},
   ...props
 }) => {
   const { createAsset } = props;
@@ -381,6 +382,7 @@ const ThemedJsonForm = ({
             onCancel={props.onCancel}
           />
         ),
+        ...fields,
       }}
       widgets={{
         ...{
