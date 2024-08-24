@@ -67,7 +67,7 @@ const SheetHeader = ({ sheet, setRunId }) => {
             {sheet?.name}
             <br />
             <Typography variant="caption" sx={{ color: "#666" }}>
-              {sheet?.data?.description || ""}
+              {sheet?.description || sheet?.data?.description || ""}
             </Typography>
           </Stack>
           <Stack direction={"row"} gap={1}>
