@@ -59,7 +59,7 @@ const SheetHeader = ({ sheet, setRunId, hasChanges, onSave }) => {
             <Tooltip title="Back to Sheets List">
               <IconButton
                 onClick={() => navigate("/sheets")}
-                sx={{ color: "action.disabled" }}
+                sx={{ color: "action.disabled", padding: 0 }}
               >
                 <ArrowBackIcon
                   fontSize="small"
