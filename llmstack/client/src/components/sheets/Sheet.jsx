@@ -5,12 +5,16 @@ import {
   Stack,
   Typography,
   CircularProgress,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import {
   DataEditor,
   GridCellKind,
   GridColumnIcon,
 } from "@glideapps/glide-data-grid";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useNavigate } from "react-router-dom";
 import { SheetColumnMenu, SheetColumnMenuButton } from "./SheetColumnMenu";
 import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
@@ -19,6 +23,7 @@ import { enqueueSnackbar } from "notistack";
 import "@glideapps/glide-data-grid/dist/index.css";
 
 const SheetHeader = ({ sheet, setRunId }) => {
+  const navigate = useNavigate();
   const saveSheet = () => {
     axios()
       .patch(`/api/sheets/${sheet.uuid}`, sheet)
@@ -62,13 +67,31 @@ const SheetHeader = ({ sheet, setRunId }) => {
   return (
     <Stack>
       <Typography variant="h5" className="section-header">
-        <Stack direction={"row"} sx={{ justifyContent: "space-between" }}>
-          <Stack>
-            {sheet?.name}
-            <br />
-            <Typography variant="caption" sx={{ color: "#666" }}>
-              {sheet?.description || sheet?.data?.description || ""}
-            </Typography>
+        <Stack
+          direction={"row"}
+          sx={{ justifyContent: "space-between", alignItems: "center" }}
+        >
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Tooltip title="Back to Sheets List">
+              <IconButton
+                onClick={() => navigate("/sheets")}
+                sx={{ color: "action.disabled" }}
+              >
+                <ArrowBackIcon
+                  fontSize="small"
+                  sx={{
+                    color: "action.disabled",
+                    padding: 0,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Stack>
+              {sheet?.name}
+              <Typography variant="caption" sx={{ color: "#666" }}>
+                {sheet?.description || sheet?.data?.description || ""}
+              </Typography>
+            </Stack>
           </Stack>
           <Stack direction={"row"} gap={1}>
             <Button variant="contained" size="medium" onClick={saveSheet}>
