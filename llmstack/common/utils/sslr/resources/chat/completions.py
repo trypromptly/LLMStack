@@ -444,6 +444,11 @@ class Completions(OpenAICompletions):
         import google.ai.generativelanguage as glm
         import google.generativeai as genai
 
+        system_messages = list(filter(lambda message: message["role"] == "system", messages))
+        system_message = None
+        if len(system_messages) and system_messages[0]["content"]:
+            system_message = system_messages[0]["content"]
+
         genai.configure(api_key=self._client.api_key)
         if tools:
             google_tools = list(
@@ -464,6 +469,9 @@ class Completions(OpenAICompletions):
             )
 
         for message in messages:
+            if message["role"] == "system":
+                continue
+
             if isinstance(message["content"], list):
                 parts = []
                 for part in message["content"]:
@@ -517,7 +525,9 @@ class Completions(OpenAICompletions):
             else:
                 raise ValueError("Invalid message content")
 
-        model_response = genai.GenerativeModel(model, tools=google_tools).generate_content(
+        model_response = genai.GenerativeModel(
+            model, tools=google_tools, system_instruction=system_message
+        ).generate_content(
             contents=messages_google_format,
             generation_config=genai.GenerationConfig(
                 candidate_count=n or 1,
