@@ -125,7 +125,13 @@ class PromptlySheetViewSet(viewsets.ViewSet):
                     cell_data.pop("row", None)
                     cell_data.pop("col", None)
                     cells_data.append(PromptlySheetCell(row=row_number, col=column_number, **cell_data))
-            sheet.save(cells=cells_data)
+
+            if cells_data:  # Only save cells if there's data
+                sheet.save(cells=cells_data)
+            else:
+                # If there are no cells, update the total_rows to 0
+                sheet.data["total_rows"] = 0
+                sheet.save()
 
         return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
 

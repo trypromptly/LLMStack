@@ -264,17 +264,20 @@ class PromptlySheetRunEntry(models.Model):
     def save(self, *args, **kwargs):
         sheet = PromptlySheet.objects.get(uuid=self.sheet_uuid)
 
-        cell_objs = kwargs.pop("cells", {})
-        self.data = {
-            "cells": list(
-                create_sheet_data_objrefs(
-                    cell_objs,
-                    f"{sheet.name}_processed",
-                    str(sheet.uuid),
-                    page_size=sheet.extra_data.get("page_size", 1000),
+        cell_objs = kwargs.pop("cells", [])
+        if not cell_objs:
+            self.data = {"cells": []}
+        else:
+            self.data = {
+                "cells": list(
+                    create_sheet_data_objrefs(
+                        cell_objs,
+                        f"{sheet.name}_processed",
+                        str(sheet.uuid),
+                        page_size=sheet.extra_data.get("page_size", 1000),
+                    )
                 )
-            )
-        }
+            }
 
         if kwargs.get("update_fields"):
             kwargs["update_fields"].append("data")
