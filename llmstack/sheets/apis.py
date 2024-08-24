@@ -10,6 +10,7 @@ from llmstack.jobs.adhoc import ProcessingJob
 from llmstack.sheets.models import (
     PromptlySheet,
     PromptlySheetCell,
+    PromptlySheetColumn,
     PromptlySheetRunEntry,
 )
 from llmstack.sheets.serializers import PromptlySheetSerializer
@@ -98,7 +99,9 @@ class PromptlySheetViewSet(viewsets.ViewSet):
 
         if "data" in request.data:
             if "columns" in request.data["data"]:
-                sheet.data["columns"] = request.data["data"]["columns"]
+                sheet.data["columns"] = [
+                    PromptlySheetColumn(**column_data).model_dump() for column_data in request.data["data"]["columns"]
+                ]
 
             if "total_rows" in request.data["data"]:
                 sheet.data["total_rows"] = request.data["data"]["total_rows"]
@@ -138,7 +141,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
 
         job = PromptlySheetAppExecuteJob.create(
             func="llmstack.sheets.tasks.run_sheet",
-            args=[sheet, run_entry],
+            args=[sheet, run_entry, request.user],
         ).add_to_queue()
 
         return DRFResponse({"job_id": job.id, "run_id": run_entry.uuid}, status=202)

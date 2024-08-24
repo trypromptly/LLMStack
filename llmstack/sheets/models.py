@@ -2,7 +2,8 @@ import base64
 import json
 import logging
 import uuid
-from typing import List
+from enum import Enum
+from typing import List, Optional
 
 from django.db import models
 from django.db.models.signals import post_delete
@@ -14,12 +15,43 @@ from llmstack.assets.models import Assets
 logger = logging.getLogger(__name__)
 
 
+class PromptlySheetColumnType(str, Enum):
+    TEXT = "text"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    DATE = "date"
+    TIME = "time"
+    DATETIME = "datetime"
+    DURATION = "duration"
+    PERCENTAGE = "percentage"
+    CURRENCY = "currency"
+    URL = "url"
+    EMAIL = "email"
+    PHONE = "phone"
+    IMAGE = "image"
+    FILE = "file"
+    FORMULA = "formula"
+    APP_RUN = "app_run"
+    PROCESSOR_RUN = "processor_run"
+
+    def __str__(self):
+        return self.value
+
+
+class PromptlySheetColumn(BaseModel):
+    title: str
+    kind: PromptlySheetColumnType = PromptlySheetColumnType.TEXT
+    data: dict = {}
+    col: int
+    width: Optional[int] = None
+
+
 class PromptlySheetCell(BaseModel):
     row: int
     col: int
     data: str = ""
     formula: str = ""
-    kind: str = "string"
+    kind: PromptlySheetColumnType = PromptlySheetColumnType.TEXT
 
     @property
     def is_formula(self):
@@ -27,7 +59,7 @@ class PromptlySheetCell(BaseModel):
 
     @property
     def cell_id(self):
-        return f"{self.col}-{self.row}"
+        return f"{self.row}-{self.col}"
 
     def model_dump(
         self,
@@ -132,7 +164,10 @@ def get_sheet_cells(objref):
                         (
                             dict(
                                 map(
-                                    lambda cell_entry: (int(cell_entry[0]), PromptlySheetCell(**cell_entry[1])),
+                                    lambda cell_entry: (
+                                        int(cell_entry[0]),
+                                        PromptlySheetCell(**cell_entry[1]),
+                                    ),
                                     row_entry[1].items(),
                                 )
                             )
@@ -185,12 +220,12 @@ class PromptlySheet(models.Model):
     def rows(self):
         for objref in self.data.get("cells", []):
             cells = get_sheet_cells(objref)
-            for cell_row in cells:
-                yield (cell_row, cells[cell_row])
+            for row, row_cells in cells.items():
+                yield (row, row_cells)
 
     @property
     def columns(self):
-        return self.data.get("columns", [])
+        return [PromptlySheetColumn(**column) for column in self.data.get("columns", [])]
 
     def save(self, *args, **kwargs):
         if "cells" in kwargs:
