@@ -30,7 +30,7 @@ const SheetHeader = ({ sheet, setRunId, hasChanges, onSave }) => {
   };
 
   const runSheet = () => {
-    onSave().then(() => {
+    const runSheetAction = () => {
       axios()
         .post(`/api/sheets/${sheet.uuid}/run`)
         .then((response) => {
@@ -45,7 +45,13 @@ const SheetHeader = ({ sheet, setRunId, hasChanges, onSave }) => {
             { variant: "error" },
           );
         });
-    });
+    };
+
+    if (hasChanges) {
+      onSave().then(runSheetAction);
+    } else {
+      runSheetAction();
+    }
   };
 
   return (
