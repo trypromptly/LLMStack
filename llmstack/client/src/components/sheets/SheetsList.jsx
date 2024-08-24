@@ -44,7 +44,7 @@ function SheetListItem({ sheet, onDelete }) {
       }}
     >
       <TableCell>
-        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: "normal" }}>
           {sheet.name}
         </Typography>
       </TableCell>
@@ -127,9 +127,9 @@ function SheetsList() {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Actions</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }}>Name</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }}>Description</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
