@@ -4,11 +4,8 @@ import logging
 from enum import Enum
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
-import google.generativeai as genai
 import requests
 from asgiref.sync import async_to_sync
-from google.ai.generativelanguage_v1beta.types import content as gag_content
-from google.generativeai.types import content_types
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
@@ -17,10 +14,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.processors.providers.google import (
-    API_KEY,
-    get_google_credentials_from_json_key,
-)
+from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
 
@@ -239,152 +233,103 @@ class ChatProcessor(
         return {"chat_history": self._chat_history}
 
     def process(self) -> dict:
-        history = self._chat_history if self._config.retain_history else []
+        tools = []
+        messages = self._chat_history if self._config.retain_history else []
 
-        google_provider_config = self.get_provider_config(model_slug=self._config.model.value)
-        if google_provider_config is None:
-            raise ValueError(f"Model deployment config not found for {self.provider_slug()}/{self._config.model}")
+        if self._input.functions:
+            for tool_function in self._input.functions:
+                tools.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": tool_function.name,
+                            "description": tool_function.description,
+                            "parameters": json.loads(tool_function.parameters),
+                        },
+                    }
+                )
 
-        if google_provider_config.api_key:
-            token = google_provider_config.api_key
-            token_type = API_KEY
-        else:
-            token, token_type = get_google_credentials_from_json_key(google_provider_config.service_account_json_key)
-            if token_type != API_KEY:
-                raise ValueError("Invalid token type. Gemini needs an API key.")
-
-        genai.configure(api_key=token)
-
-        messages = []
-        # Add history to messages
-        for message in history:
-            messages.append(message)
-
-        # Add system message to message_params
-        message_params = (
-            [
-                {"text": self._input.system_message},
-            ]
-            if self._input.system_message
-            else []
-        )
-
-        if self._config.model.value == GeminiModel.GEMINI_1_0_PRO:
-            for message in self._input.messages:
-                if message.type == "image_url":
-                    raise ValueError(
-                        "Gemini Pro does not support image input.",
+        if self._input.messages:
+            for input_message in self._input.messages:
+                if isinstance(input_message, TextMessage):
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": input_message.text,
+                        }
                     )
-                elif message.type == "text":
-                    message_params.append({"text": message.text})
+                elif isinstance(input_message, UrlImageMessage):
+                    image_url = input_message.image_url
+                    logger.info(f"Image URL: {image_url}")
 
-        else:
-            for message in self._input.messages:
-                if message.type == "image_url":
-                    image_url = message.image_url
                     if image_url.startswith("data:"):
                         content, mime_type = image_url.split(",", 1)
                     elif image_url.startswith("http"):
-                        content, mime_type = self.get_image_bytes_mime_type(
-                            image_url,
-                        )
+                        content, mime_type = self.get_image_bytes_mime_type(image_url)
                     elif image_url.startswith("objref://"):
                         data_uri = self._get_session_asset_data_uri(image_url, include_name=True)
                         mime_type, _, content = validate_parse_data_uri(data_uri)
-                    message_params.append(
+
+                    messages.append(
                         {
-                            "mime_type": mime_type,
-                            "data": content,
-                        },
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "blob",
+                                    "data": content,
+                                    "mime_type": mime_type,
+                                }
+                            ],
+                        }
                     )
-                elif message.type == "text":
-                    message_params.append({"text": message.text})
 
-        # Add current user provided input to messages
-        messages.append({"parts": message_params, "role": "user"})
+        client = get_llm_client_from_provider_config("google", self._config.model.value, self.get_provider_config)
 
-        if self._input.functions:
-            tools = []
-            for function in self._input.functions:
-                function_declarations = gag_content.FunctionDeclaration(
-                    {
-                        "name": function.name,
-                        "description": function.description,
-                        "parameters": _convert_schema_dict_to_gapic(
-                            json.loads(
-                                function.parameters,
-                            ),
-                        ),
-                    },
-                )
-
-                tools.append(
-                    gag_content.Tool(
-                        {"function_declarations": [function_declarations]},
-                    ),
-                )
-
-        else:
-            tools = None
-
-        model = genai.GenerativeModel(self._config.model.value, tools=tools)
-
-        # Send it over to the model
-        response = model.generate_content(
-            contents=content_types.to_contents(messages),
-            generation_config={
-                "max_output_tokens": self._config.generation_config.max_output_tokens,
-                "temperature": self._config.generation_config.temperature,
-            },
-            stream=True,
+        messages_to_send = (
+            [
+                {
+                    "role": "system",
+                    "content": self._input.system_message,
+                },
+            ]
+            + messages
+            if self._input.system_message
+            else messages
         )
 
-        for chunk in response:
-            result_text = ""
-            function_calls = []
-            for part in chunk.parts:
-                if part.text:
-                    result_text += part.text
-                elif part.function_call:
-                    function_calls.append(
-                        {"name": part.function_call.name, "args": dict(part.function_call.args.items())},
+        response = client.chat.completions.create(
+            messages=messages_to_send,
+            tools=tools,
+            model=self._config.model.value,
+            stream=True,
+            n=1,
+            max_tokens=self._config.generation_config.max_output_tokens,
+            temperature=self._config.generation_config.temperature,
+        )
+
+        for result in response:
+            choice = result.choices[0]
+            for content in choice.delta.content:
+                if content["type"] == "text":
+                    async_to_sync(self._output_stream.write)(ChatOutput(content=content["data"]))
+                elif content["type"] == "tool_call":
+                    async_to_sync(self._output_stream.write)(
+                        ChatOutput(
+                            function_calls=[
+                                ToolCall(
+                                    id=content["id"],
+                                    function=FunctionCall(name=content["tool_name"], parameters=content["tool_args"]),
+                                    type="function",
+                                )
+                            ]
+                        )
                     )
-
-            tool_calls = list(
-                map(
-                    lambda x: ToolCall(
-                        type="function",
-                        function=FunctionCall(
-                            name=x["name"],
-                            parameters=json.dumps(x["args"]),
-                        ),
-                    ),
-                    function_calls,
-                ),
-            )
-
-            if len(result_text) > 0:
-                async_to_sync(
-                    self._output_stream.write,
-                )(
-                    ChatOutput(
-                        content=result_text,
-                    ),
-                )
-            elif len(tool_calls) > 0:
-                async_to_sync(
-                    self._output_stream.write,
-                )(
-                    ChatOutput(
-                        function_calls=tool_calls,
-                    ),
-                )
 
         output = self._output_stream.finalize()
 
         # Persist history if requested
         if self._config.retain_history:
-            history = history + messages + [{"parts": [{"text": output.prediction.content}], "role": "model"}]
-            self._chat_history = history
+            self._chat_history = copy.deepcopy(messages)
+            self._chat_history.append({"role": "assistant", "message": output.content})
 
         return output
