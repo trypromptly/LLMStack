@@ -909,14 +909,25 @@ export const isUsageLimitReachedState = selector({
   },
 });
 
-export const sheetsListState = selector({
+const sheetsListState = atom({
   key: "sheetsListState",
-  get: async () => {
-    try {
-      const sheets = await axios().get("/api/sheets");
-      return sheets.data;
-    } catch (error) {
-      return [];
+  default: [],
+});
+
+export const sheetsListSelector = selector({
+  key: "sheetsListSelector",
+  get: async ({ get }) => {
+    const currentSheets = get(sheetsListState);
+    if (currentSheets.length === 0) {
+      try {
+        const response = await axios().get("/api/sheets");
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching sheets:", error);
+        return [];
+      }
     }
+    return currentSheets;
   },
+  set: ({ set }, newValue) => set(sheetsListState, newValue),
 });

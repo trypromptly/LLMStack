@@ -2,33 +2,105 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Stack, Typography } from "@mui/material";
 import { AddOutlined } from "@mui/icons-material";
-import { useRecoilValue } from "recoil";
-import { sheetsListState } from "../../data/atoms";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { sheetsListSelector } from "../../data/atoms";
 import { SheetFromTemplateDialog } from "./SheetFromTemplateDialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  IconButton,
+} from "@mui/material";
+import { enqueueSnackbar } from "notistack";
+import { DeleteOutlineOutlined, EditOutlined } from "@mui/icons-material";
+import { axios } from "../../data/axios";
+import SheetDeleteDialog from "./SheetDeleteDialog";
+import { useEffect } from "react";
 
-function SheetListItem(props) {
-  const { sheet } = props;
+function SheetListItem({ sheet, onDelete }) {
   const navigate = useNavigate();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleDelete = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    onDelete(sheet.uuid);
+    setDeleteDialogOpen(false);
+  };
 
   return (
-    <Stack
-      key={sheet.id}
-      onClick={() => {
-        navigate(`/sheets/${sheet.uuid}`);
+    <TableRow
+      key={sheet.uuid}
+      onClick={() => navigate(`/sheets/${sheet.uuid}`)}
+      sx={{
+        cursor: "pointer",
+        "&:hover": {
+          backgroundColor: "rgba(0, 0, 0, 0.04)",
+        },
       }}
     >
-      <Typography variant="h6">{sheet.name}</Typography>
-      <Typography variant="caption" sx={{ color: "#666" }}>
-        {sheet.data?.description}
-      </Typography>
-    </Stack>
+      <TableCell>
+        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+          {sheet.name}
+        </Typography>
+      </TableCell>
+      <TableCell>
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          {sheet.data?.description || "No description available"}
+        </Typography>
+      </TableCell>
+      <TableCell>
+        <IconButton aria-label="edit" onClick={(e) => e.stopPropagation()}>
+          <EditOutlined />
+        </IconButton>
+        <IconButton
+          aria-label="delete"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete();
+          }}
+        >
+          <DeleteOutlineOutlined />
+        </IconButton>
+      </TableCell>
+      <SheetDeleteDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        sheetName={sheet.name}
+      />
+    </TableRow>
   );
 }
 
-function SheetsList(props) {
-  const { selectedSheet, selectSheet } = props;
+function SheetsList() {
   const [newSheetDialogOpen, setNewSheetDialogOpen] = useState(false);
-  const sheets = useRecoilValue(sheetsListState);
+  const sheets = useRecoilValue(sheetsListSelector);
+  const setSheets = useSetRecoilState(sheetsListSelector);
+
+  useEffect(() => {
+    // This will trigger the selector to fetch sheets if they're not already loaded
+    setSheets([]);
+  }, [setSheets]);
+
+  const handleDeleteSheet = (sheetId) => {
+    axios()
+      .delete(`/api/sheets/${sheetId}`)
+      .then(() => {
+        setSheets((prevSheets) =>
+          prevSheets.filter((sheet) => sheet.uuid !== sheetId),
+        );
+        enqueueSnackbar("Sheet deleted successfully", { variant: "success" });
+      })
+      .catch((error) => {
+        console.error("Error deleting sheet:", error);
+        enqueueSnackbar("Failed to delete sheet", { variant: "error" });
+      });
+  };
 
   return (
     <Stack>
@@ -52,14 +124,32 @@ function SheetsList(props) {
           </Button>
         </Stack>
       </Typography>
-      {Object.values(sheets).map((sheet) => (
-        <SheetListItem
-          key={sheet.uuid}
-          sheet={sheet}
-          selected={selectedSheet === sheet.uuid}
-          selectSheet={selectSheet}
-        />
-      ))}
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Name</TableCell>
+            <TableCell>Description</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {sheets.length > 0 ? (
+            sheets.map((sheet) => (
+              <SheetListItem
+                key={sheet.uuid}
+                sheet={sheet}
+                onDelete={handleDeleteSheet}
+              />
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={3}>
+                <Typography align="center">No sheets available</Typography>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
       <SheetFromTemplateDialog
         open={newSheetDialogOpen}
         setOpen={setNewSheetDialogOpen}

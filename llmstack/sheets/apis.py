@@ -86,6 +86,10 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         profile = Profile.objects.get(user=request.user)
 
         sheet = PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
+
+        # Delete associated PromptlySheetRunEntry entries
+        PromptlySheetRunEntry.objects.filter(sheet_uuid=sheet.uuid).delete()
+
         sheet.delete()
 
         return DRFResponse(status=status.HTTP_204_NO_CONTENT)

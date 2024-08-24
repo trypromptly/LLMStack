@@ -286,3 +286,9 @@ class PromptlySheetRunEntry(models.Model):
 def register_sheet_delete(sender, instance: PromptlySheet, **kwargs):
     if instance.data:
         delete_sheet_data_objrefs(instance.data.get("cells", []))
+
+
+@receiver(post_delete, sender=PromptlySheetRunEntry)
+def register_sheet_run_entry_delete(sender, instance: PromptlySheetRunEntry, **kwargs):
+    if instance.data:
+        delete_sheet_data_objrefs(instance.data.get("cells", []))
