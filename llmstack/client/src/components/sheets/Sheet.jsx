@@ -22,46 +22,30 @@ import { enqueueSnackbar } from "notistack";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 
-const SheetHeader = ({ sheet, setRunId }) => {
+const SheetHeader = ({ sheet, setRunId, hasChanges, onSave }) => {
   const navigate = useNavigate();
+
   const saveSheet = () => {
-    axios()
-      .patch(`/api/sheets/${sheet.uuid}`, sheet)
-      .then((response) => {
-        enqueueSnackbar("Sheet saved successfully", {
-          variant: "success",
-        });
-      })
-      .catch((error) => {
-        console.error(error);
-        enqueueSnackbar(
-          `Error saving sheet: ${
-            error?.response?.data?.detail || error.message
-          }`,
-          {
-            variant: "error",
-          },
-        );
-      });
+    onSave();
   };
 
   const runSheet = () => {
-    axios()
-      .post(`/api/sheets/${sheet.uuid}/run`)
-      .then((response) => {
-        setRunId(response.data.run_id);
-      })
-      .catch((error) => {
-        console.error(error);
-        enqueueSnackbar(
-          `Error running sheet: ${
-            error?.response?.data?.detail || error.message
-          }`,
-          {
-            variant: "error",
-          },
-        );
-      });
+    onSave().then(() => {
+      axios()
+        .post(`/api/sheets/${sheet.uuid}/run`)
+        .then((response) => {
+          setRunId(response.data.run_id);
+        })
+        .catch((error) => {
+          console.error(error);
+          enqueueSnackbar(
+            `Error running sheet: ${
+              error?.response?.data?.detail || error.message
+            }`,
+            { variant: "error" },
+          );
+        });
+    });
   };
 
   return (
@@ -94,7 +78,12 @@ const SheetHeader = ({ sheet, setRunId }) => {
             </Stack>
           </Stack>
           <Stack direction={"row"} gap={1}>
-            <Button variant="contained" size="medium" onClick={saveSheet}>
+            <Button
+              variant="contained"
+              size="medium"
+              onClick={saveSheet}
+              disabled={!hasChanges}
+            >
               Save
             </Button>
             <Button variant="contained" size="medium" onClick={runSheet}>
@@ -116,6 +105,12 @@ function Sheet(props) {
   const [selectedColumnId, setSelectedColumnId] = useState(null);
   const [showEditColumnMenu, setShowEditColumnMenu] = useState(false);
   const [numRows, setNumRows] = useState(0);
+  const [userChanges, setUserChanges] = useState({
+    columns: {},
+    cells: {},
+    numRows: null,
+    addedColumns: [],
+  });
   const editColumnAnchorEl = useRef(null);
   const sheetRef = useRef(null);
   const wsUrlPrefix = `${
@@ -176,6 +171,12 @@ function Sheet(props) {
             parseSheetColumnsIntoGridColumns(response.data?.columns || []),
           );
           setNumRows(response.data?.total_rows || 0);
+          setUserChanges({
+            columns: {},
+            cells: {},
+            numRows: null,
+            addedColumns: [],
+          });
         })
         .catch((error) => {
           console.error(error);
@@ -183,37 +184,125 @@ function Sheet(props) {
     }
   }, [sheetId]);
 
-  useEffect(() => {
-    setSheet((sheet) => ({
-      ...sheet,
-      data: {
-        ...(sheet?.data || {}),
-        columns: columns,
+  const hasChanges = useCallback(() => {
+    return (
+      Object.keys(userChanges.columns).length > 0 ||
+      Object.keys(userChanges.cells).length > 0 ||
+      userChanges.numRows !== null ||
+      userChanges.addedColumns.length > 0
+    );
+  }, [userChanges]);
+
+  const updateUserChanges = useCallback((type, key, value) => {
+    setUserChanges((prev) => ({
+      ...prev,
+      [type]:
+        type === "addedColumns"
+          ? [...prev[type], key]
+          : { ...prev[type], [key]: value },
+    }));
+  }, []);
+
+  const onColumnChange = useCallback(
+    (columnIndex, newColumn) => {
+      setColumns((prevColumns) => {
+        const newColumns = [...prevColumns];
+        newColumns[columnIndex] = newColumn;
+        updateUserChanges("columns", columnIndex, newColumn);
+        return newColumns;
+      });
+    },
+    [updateUserChanges],
+  );
+
+  const addColumn = useCallback(
+    (column) => {
+      setColumns((prevColumns) => [...prevColumns, column]);
+      updateUserChanges("addedColumns", column.col, column);
+    },
+    [updateUserChanges],
+  );
+
+  const onCellEdited = useCallback(
+    (cell, value) => {
+      setCells((prevCells) => {
+        const newCells = {
+          ...prevCells,
+          [cell[1]]: {
+            ...prevCells[cell[1]],
+            [columns[cell[0]].col]: {
+              ...(prevCells[cell[1]]?.[columns[cell[0]].col] || {}),
+              ...value,
+              kind: columns[cell[0]].kind,
+              data: value.data,
+              displayData: value.displayData || value.data,
+            },
+          },
+        };
+        updateUserChanges("cells", `${cell[1]}-${columns[cell[0]].col}`, value);
+        return newCells;
+      });
+      sheetRef.current?.updateCells([{ cell: cell }]);
+    },
+    [columns, updateUserChanges],
+  );
+
+  const onRowAppended = useCallback(() => {
+    setCells((prevCells) => ({
+      ...prevCells,
+      [numRows]: {
+        ...columns.reduce((acc, column) => {
+          acc[column.col] = {
+            kind: GridCellKind.Text,
+            displayData: "",
+            data: "",
+          };
+          return acc;
+        }, {}),
       },
     }));
-  }, [columns]);
+    setNumRows((prevNumRows) => {
+      const newNumRows = prevNumRows + 1;
+      setUserChanges((prev) => ({ ...prev, numRows: newNumRows }));
+      return newNumRows;
+    });
+  }, [numRows, columns]);
 
-  useEffect(() => {
-    if (Object.keys(cells).length > 0) {
-      setSheet((sheet) => ({
+  const saveSheet = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      const updatedSheet = {
         ...sheet,
         data: {
-          ...(sheet?.data || {}),
+          ...sheet.data,
+          columns: columns,
           cells: cells,
+          total_rows: numRows,
         },
-      }));
-    }
-  }, [cells]);
-
-  useEffect(() => {
-    setSheet((sheet) => ({
-      ...sheet,
-      data: {
-        ...(sheet?.data || {}),
-        total_rows: numRows,
-      },
-    }));
-  }, [numRows]);
+      };
+      axios()
+        .patch(`/api/sheets/${sheet.uuid}`, updatedSheet)
+        .then((response) => {
+          setUserChanges({
+            columns: {},
+            cells: {},
+            numRows: null,
+            addedColumns: [],
+          });
+          enqueueSnackbar("Sheet saved successfully", { variant: "success" });
+          resolve();
+        })
+        .catch((error) => {
+          console.error(error);
+          enqueueSnackbar(
+            `Error saving sheet: ${
+              error?.response?.data?.detail || error.message
+            }`,
+            { variant: "error" },
+          );
+          reject(error);
+        });
+    });
+  }, [sheet, columns, cells, numRows]);
 
   useEffect(() => {
     if (runId) {
@@ -276,7 +365,12 @@ function Sheet(props) {
 
   return sheet ? (
     <Stack>
-      <SheetHeader sheet={sheet} setRunId={setRunId} />
+      <SheetHeader
+        sheet={sheet}
+        setRunId={setRunId}
+        hasChanges={hasChanges()}
+        onSave={saveSheet}
+      />
       <Box>
         <DataEditor
           ref={sheetRef}
@@ -291,48 +385,13 @@ function Sheet(props) {
             tint: true,
             hint: "New row...",
           }}
-          onRowAppended={() => {
-            setCells((cells) => ({
-              ...cells,
-              [numRows]: {
-                ...columns.reduce((acc, column) => {
-                  acc[column.col] = {
-                    kind: GridCellKind.Text,
-                    displayData: "",
-                    data: "",
-                  };
-                  return acc;
-                }, {}),
-              },
-            }));
-            setNumRows(numRows + 1);
-          }}
+          onRowAppended={onRowAppended}
           width={"100%"}
           getCellsForSelection={true}
           rightElement={
-            <SheetColumnMenuButton
-              addColumn={(column) => {
-                setColumns([...columns, column]);
-              }}
-              columns={columns}
-            />
+            <SheetColumnMenuButton addColumn={addColumn} columns={columns} />
           }
-          onCellEdited={(cell, value) => {
-            setCells((cells) => ({
-              ...cells,
-              [cell[1]]: {
-                ...cells[cell[1]],
-                [cell[0]]: {
-                  ...(cells[cell[1]]?.[cell[0]] || {}),
-                  ...value,
-                  kind: columns[cell[0]].kind,
-                  data: value.data,
-                  displayData: value.displayData || value.data,
-                },
-              },
-            }));
-            sheetRef.current?.updateCells([{ cell: cell }]);
-          }}
+          onCellEdited={onCellEdited}
           onHeaderMenuClick={(column, bounds) => {
             setSelectedColumnId(column);
             editColumnAnchorEl.current = {
@@ -341,14 +400,10 @@ function Sheet(props) {
             setShowEditColumnMenu(true);
           }}
           onColumnResize={(column, width) => {
-            setColumns((columns) => {
-              const newColumns = [...columns];
-              const columnIndex = newColumns.findIndex(
-                (c) => c.col === column.col,
-              );
-              newColumns[columnIndex].width = width;
-              return newColumns;
-            });
+            onColumnChange(
+              columns.findIndex((c) => c.col === column.col),
+              { ...column, width },
+            );
           }}
           rows={numRows}
         />
@@ -366,12 +421,15 @@ function Sheet(props) {
             setColumns((columns) => {
               const newColumns = [...columns];
               newColumns[selectedColumnId] = column;
+              updateUserChanges("columns", selectedColumnId, column);
               return newColumns;
             });
           }}
           deleteColumn={(column) => {
             setColumns((columns) => {
-              return columns.filter((c) => c.col !== column.col);
+              const newColumns = columns.filter((c) => c.col !== column.col);
+              updateUserChanges("columns", column.col, null); // Mark column as deleted
+              return newColumns;
             });
             setSelectedColumnId(null);
           }}
