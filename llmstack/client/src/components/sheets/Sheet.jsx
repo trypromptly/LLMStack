@@ -104,16 +104,24 @@ function Sheet(props) {
   }/ws`;
 
   const getCellContent = useCallback(
-    ([row, column]) => {
-      const cell = cells[row]?.[column];
+    ([column, row]) => {
+      // Find the column in cells
+      const col = columns[column].col;
+      const cell = cells[row]?.[col];
+
       return {
-        kind: cell?.kind || GridCellKind.Text,
+        kind:
+          (cell?.kind === "app_run" ? GridCellKind.Text : cell?.kind) ||
+          columns[column].kind,
         displayData: cell?.displayData || cell?.data || "",
         data: cell?.data || "",
         allowOverlay: true,
+        allowWrapping: true,
+        skeletonWidth: 80,
+        skeletonWidthVariability: 25,
       };
     },
-    [cells],
+    [cells, columns],
   );
 
   const parseSheetColumnsIntoGridColumns = (columns) => {
@@ -129,6 +137,7 @@ function Sheet(props) {
         data: column.data,
         hasMenu: true,
         icon: GridColumnIcon.HeaderString,
+        width: column.width || 200,
       };
     });
   };
@@ -194,6 +203,7 @@ function Sheet(props) {
           if (event.type === "cell.update") {
             const cell = event.cell;
             const [row, col] = cell.id.split("-");
+            const column = columns.find((c) => c.col === col);
 
             setCells((cells) => ({
               ...cells,
@@ -201,19 +211,45 @@ function Sheet(props) {
                 ...cells[row],
                 [col]: {
                   ...cells[row]?.[col],
-                  ...cell,
+                  ...{
+                    kind: column?.kind || GridCellKind.Text,
+                    data: cell.data,
+                    displayData: cell.data,
+                  },
                 },
               },
             }));
 
-            sheetRef.current?.updateCells([{ cell: [row, col] }]);
+            sheetRef.current?.updateCells([
+              { cell: [columns.findIndex((c) => c.col === col), row] },
+            ]);
+          } else if (event.type === "cell.updating") {
+            const cell = event.cell;
+            const [row, col] = cell.id.split("-");
+
+            setCells((cells) => ({
+              ...cells,
+              [row]: {
+                ...cells[row],
+                [col]: {
+                  ...cells[row]?.[col],
+                  ...{
+                    kind: GridCellKind.Loading,
+                  },
+                },
+              },
+            }));
+
+            sheetRef.current?.updateCells([
+              { cell: [columns.findIndex((c) => c.col === col), row] },
+            ]);
           }
         });
 
         ws.send(JSON.stringify({ event: "run" }));
       }
     }
-  }, [runId, sheet?.uuid, wsUrlPrefix]);
+  }, [runId, sheet?.uuid, wsUrlPrefix, columns]);
 
   return sheet ? (
     <Stack>
@@ -261,11 +297,13 @@ function Sheet(props) {
           onCellEdited={(cell, value) => {
             setCells((cells) => ({
               ...cells,
-              [cell[0]]: {
-                ...cells[cell[0]],
-                [cell[1]]: {
-                  ...(cells[cell[0]]?.[cell[1]] || {}),
+              [cell[1]]: {
+                ...cells[cell[1]],
+                [cell[0]]: {
+                  ...(cells[cell[1]]?.[cell[0]] || {}),
                   ...value,
+                  kind: columns[cell[0]].kind,
+                  data: value.data,
                   displayData: value.displayData || value.data,
                 },
               },
@@ -278,6 +316,16 @@ function Sheet(props) {
               getBoundingClientRect: () => DOMRect.fromRect(bounds),
             };
             setShowEditColumnMenu(true);
+          }}
+          onColumnResize={(column, width) => {
+            setColumns((columns) => {
+              const newColumns = [...columns];
+              const columnIndex = newColumns.findIndex(
+                (c) => c.col === column.col,
+              );
+              newColumns[columnIndex].width = width;
+              return newColumns;
+            });
           }}
           rows={numRows}
         />

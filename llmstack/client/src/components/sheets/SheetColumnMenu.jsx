@@ -21,22 +21,13 @@ import ThemedJsonForm from "../ThemedJsonForm";
 import TextFieldWithVars from "../apps/TextFieldWithVars";
 import "@glideapps/glide-data-grid/dist/index.css";
 
-export const columnTypeToDatagridMapping = {
-  text: {
-    kind: GridCellKind.Text,
-  },
-  number: {
-    kind: GridCellKind.Number,
-  },
-  image: {
-    kind: GridCellKind.Image,
-  },
-  file: {
-    kind: GridCellKind.Image,
-  },
-  app_run: {
-    kind: GridCellKind.Custom,
-  },
+const numberToLetters = (num) => {
+  let letters = "";
+  while (num >= 0) {
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[num % 26] + letters;
+    num = Math.floor(num / 26) - 1;
+  }
+  return letters;
 };
 
 // Allow the user to pick an app, and then show the form for that app input
@@ -54,9 +45,9 @@ const AppRunForm = ({ columns, data, setData }) => {
         {...props}
         introText={"Available columns"}
         schemas={columns.map((c, index) => ({
-          id: `${index}`,
-          pillPrefix: `${index}:${c.title}`,
-          label: `${index}: ${c.title}`,
+          id: `${numberToLetters(index)}`,
+          pillPrefix: `${numberToLetters(index)}:${c.title}`,
+          label: `${numberToLetters(index)}: ${c.title}`,
         }))}
       />
     );
@@ -147,12 +138,7 @@ export function SheetColumnMenu({
   const columnAppRunData = useRef(column?.data || {});
 
   useEffect(() => {
-    if (column?.kind === GridCellKind.Custom) {
-      setColumnType(column?.data?.kind || GridCellKind.Text);
-    } else {
-      setColumnType(column?.kind || GridCellKind.Text);
-    }
-
+    setColumnType(column?.kind || GridCellKind.Text);
     setColumnName(column?.title || "");
     columnAppRunData.current = column?.data || {};
   }, [column]);
@@ -161,10 +147,10 @@ export function SheetColumnMenu({
     const newColumn = {
       col: columns.length,
       title: columnName || "New Column",
-      kind: columnTypeToDatagridMapping[columnType].kind,
+      kind: columnType,
       data:
         columnType === "app_run" && columnAppRunData.current
-          ? { ...columnAppRunData.current, kind: columnType }
+          ? columnAppRunData.current
           : {},
     };
 
