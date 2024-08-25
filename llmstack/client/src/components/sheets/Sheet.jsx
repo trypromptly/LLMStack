@@ -74,7 +74,7 @@ function Sheet(props) {
         kind:
           (cell?.kind === "app_run" || cell?.kind === "processor_run"
             ? GridCellKind.Text
-            : cell?.kind) || columns[column].kind,
+            : cell?.kind) || GridCellKind.Custom,
         displayData: cell?.display_data || "",
         data: cell?.display_data || "",
         allowOverlay: true,
