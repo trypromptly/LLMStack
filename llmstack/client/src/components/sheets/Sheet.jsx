@@ -514,6 +514,16 @@ function Sheet(props) {
               updateUserChanges("columns", column.col, null); // Mark column as deleted
               return newColumns;
             });
+            setCells((cells) => {
+              const newCells = { ...cells };
+              Object.keys(newCells).forEach((cellId) => {
+                if (cells[cellId].col === column.col) {
+                  delete newCells[cellId];
+                  updateUserChanges("cells", cellId, null); // Mark cell as deleted
+                }
+              });
+              return newCells;
+            });
             setSelectedColumnId(null);
           }}
         />
