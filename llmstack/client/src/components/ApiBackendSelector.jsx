@@ -30,7 +30,7 @@ import {
 } from "../data/atoms";
 import { ProviderIcon } from "./apps/ProviderIcon";
 
-export default function ApiBackendSelector() {
+export default function ApiBackendSelector({ hideDescription = false }) {
   const apiprovidersDropdown = useRecoilValue(apiProviderDropdownListState);
   const apibackendsDropdown = useRecoilValue(apiBackendDropdownListState);
   const apibackends = useRecoilValue(apiBackendsState);
@@ -168,34 +168,36 @@ export default function ApiBackendSelector() {
             </FormControl>
           </Box>
         )}
-        <Box>
-          <Typography
-            variant="body1"
-            sx={{
-              display: "flex",
-              border: "solid 1px #ccc",
-              borderRadius: 2,
-              padding: "3px",
-              maxWidth: isMobile ? "100%" : "350px",
-              color: "#666",
-              alignItems: "center",
-              textAlign: "left",
-              gap: 1,
-              backgroundColor: "#f0f7ff",
-            }}
-          >
-            <a
-              href={`https://docs.trypromptly.com/processors/${apiBackendSelected?.api_provider?.slug}`}
-              target="_blank"
-              aria-label="Learn more about this API Backend"
-              rel="noreferrer"
+        {!hideDescription && (
+          <Box>
+            <Typography
+              variant="body1"
+              sx={{
+                display: "flex",
+                border: "solid 1px #ccc",
+                borderRadius: 2,
+                padding: "3px",
+                maxWidth: isMobile ? "100%" : "350px",
+                color: "#666",
+                alignItems: "center",
+                textAlign: "left",
+                gap: 1,
+                backgroundColor: "#f0f7ff",
+              }}
             >
-              <LightbulbIcon color="info" />
-            </a>
-            {apiBackendSelected?.description ||
-              "Select a processor from this provider"}
-          </Typography>
-        </Box>
+              <a
+                href={`https://docs.trypromptly.com/processors/${apiBackendSelected?.api_provider?.slug}`}
+                target="_blank"
+                aria-label="Learn more about this API Backend"
+                rel="noreferrer"
+              >
+                <LightbulbIcon color="info" />
+              </a>
+              {apiBackendSelected?.description ||
+                "Select a processor from this provider"}
+            </Typography>
+          </Box>
+        )}
       </Grid>
     </Grid>
   );
