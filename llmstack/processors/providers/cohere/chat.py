@@ -1,8 +1,8 @@
+import copy
 import logging
 from enum import Enum
 from typing import Optional
 
-import cohere
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
@@ -11,6 +11,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
 
@@ -128,33 +129,43 @@ class CohereChatProcessor(
         return {"chat_history": self._chat_history}
 
     def process(self) -> dict:
-        history = self._chat_history if self._config.retain_history else []
+        client = get_llm_client_from_provider_config("cohere", self._config.model.value, self.get_provider_config)
+        messages = []
+        if self._config.system_message:
+            messages.append({"role": "system", "content": self._config.system_message})
 
-        output_stream = self._output_stream
-        provider_config = self.get_provider_config(model_slug=self._config.model)
-        client = cohere.Client(api_key=provider_config.api_key)
-        response = client.chat_stream(
-            preamble=self._config.system_message,
-            chat_history=list(map(lambda x: cohere.types.ChatMessage(**x), history)),
-            model=str(self._config.model),
-            message=self._input.message,
-            temperature=self._config.temperature,
+        if self._chat_history:
+            for message in self._chat_history:
+                messages.append(message)
+
+        if self._input.message:
+            messages.append({"role": "user", "content": self._input.message})
+
+        response = client.chat.completions.create(
+            messages=messages,
+            model=self._config.model.value,
             seed=self._config.seed,
             prompt_truncation=self._config.prompt_truncation,
             max_tokens=self._config.max_tokens,
-            connectors=[] if not self._config.enable_web_search else [{"id": "web-search"}],
+            stream=True,
+            temperature=self._config.temperature,
+            connectors=[{"id": "web-search"}] if self._config.enable_web_search else [],
         )
 
-        for event in response:
-            if event.event_type == "text-generation":
-                async_to_sync(output_stream.write)(CohereChatOutput(output_message=event.text))
+        for result in response:
+            choice = result.choices[0]
+            if choice.delta.content:
+                if isinstance(choice.delta.content, list):
+                    text_content = "".join(
+                        list(map(lambda entry: entry["data"] if entry["type"] == "text" else "", choice.delta.content))
+                    )
+                else:
+                    text_content = choice.delta.content
+                async_to_sync(self._output_stream.write)(CohereChatOutput(output_message=text_content))
 
         output = self._output_stream.finalize()
         if self._config.retain_history:
-            history = history + [
-                {"role": "USER", "message": self._input.message},
-                {"role": "CHATBOT", "message": output.output_message},
-            ]
-            self._chat_history = history
+            self._chat_history = copy.deepcopy(messages)
+            self._chat_history.append({"role": "assistant", "content": output.output_message})
 
         return output

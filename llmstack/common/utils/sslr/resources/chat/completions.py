@@ -12,6 +12,9 @@ from openai.resources.chat import (
     CompletionsWithStreamingResponse,
 )
 from openai.types import chat, completion_create_params
+from openai.types.chat.chat_completion_stream_options_param import (
+    ChatCompletionStreamOptionsParam,
+)
 
 from ..._streaming import (
     LLMAnthropicStream,
@@ -36,6 +39,7 @@ from ...constants import (
     PROVIDER_CUSTOM,
     PROVIDER_GOOGLE,
     PROVIDER_MISTRAL,
+    PROVIDER_OPENAI,
 )
 from ...types import chat as _chat
 from ...types.chat.chat_completion_message_param import ChatCompletionMessageParam
@@ -92,6 +96,7 @@ class Completions(OpenAICompletions):
         seed: Union[Optional[int], NotGiven] = NOT_GIVEN,
         stop: Union[Optional[str], List[str], NotGiven] = NOT_GIVEN,
         stream: Union[Literal[False], Literal[True], NotGiven] = NOT_GIVEN,
+        stream_options: Optional[ChatCompletionStreamOptionsParam] | NotGiven = NOT_GIVEN,
         temperature: Union[Optional[float], NotGiven] = NOT_GIVEN,
         tool_choice: Union[chat.ChatCompletionToolChoiceOptionParam, NotGiven] = NOT_GIVEN,
         tools: Union[List[chat.ChatCompletionToolParam], NotGiven] = NOT_GIVEN,
@@ -103,6 +108,7 @@ class Completions(OpenAICompletions):
         extra_query: Optional[Query] = None,
         extra_body: Optional[Body] = None,
         timeout: Union[float, httpx.Timeout, None, NotGiven] = NOT_GIVEN,
+        **kwargs,
     ) -> Union[_chat.ChatCompletion, Stream[_chat.ChatCompletionChunk]]:
         system = None
         path = "/chat/completions"
@@ -224,6 +230,13 @@ class Completions(OpenAICompletions):
                 else:
                     raise ValueError("Invalid message content")
             post_body_data["message"] = msg
+            if "connectors" in kwargs:
+                post_body_data["connectors"] = kwargs.pop("connectors")
+            if "search_queries_only" in kwargs:
+                post_body_data["search_queries_only"] = kwargs.pop("search_queries_only")
+            if "documents" in kwargs:
+                post_body_data["documents"] = kwargs.pop("documents")
+
         elif self._client._llm_router_provider == PROVIDER_MISTRAL:
             path = "/chat/completions"
             stream_cls = LLMRestStream[_chat.ChatCompletionChunk]
@@ -236,6 +249,10 @@ class Completions(OpenAICompletions):
 
         elif self._client._llm_router_provider == PROVIDER_CUSTOM:
             post_body_data["model"] = self._client.deployment_config.model_name
+
+        elif self._client._llm_router_provider == PROVIDER_OPENAI:
+            if stream:
+                post_body_data["stream_options"] = stream_options or {"include_usage": True}
 
         return self._post(
             path=path,
@@ -328,7 +345,7 @@ class Completions(OpenAICompletions):
                 created=0,
             )
 
-        def _transform_streaming_grpc_response(chunk):
+        def _transform_streaming_grpc_response(chunk, usage_data=None):
             choices = []
             for entry in chunk.candidates:
                 index = entry.index
@@ -401,6 +418,7 @@ class Completions(OpenAICompletions):
                     model=model,
                     object="chat.completion.chunk",
                     created=0,
+                    usage=usage_data,
                 )
 
         if stream:
@@ -434,6 +452,11 @@ class Completions(OpenAICompletions):
         import google.ai.generativelanguage as glm
         import google.generativeai as genai
 
+        system_messages = list(filter(lambda message: message["role"] == "system", messages))
+        system_message = None
+        if len(system_messages) and system_messages[0]["content"]:
+            system_message = system_messages[0]["content"]
+
         genai.configure(api_key=self._client.api_key)
         if tools:
             google_tools = list(
@@ -454,6 +477,9 @@ class Completions(OpenAICompletions):
             )
 
         for message in messages:
+            if message["role"] == "system":
+                continue
+
             if isinstance(message["content"], list):
                 parts = []
                 for part in message["content"]:
@@ -507,7 +533,9 @@ class Completions(OpenAICompletions):
             else:
                 raise ValueError("Invalid message content")
 
-        model_response = genai.GenerativeModel(model, tools=google_tools).generate_content(
+        model_response = genai.GenerativeModel(
+            model, tools=google_tools, system_instruction=system_message
+        ).generate_content(
             contents=messages_google_format,
             generation_config=genai.GenerationConfig(
                 candidate_count=n or 1,

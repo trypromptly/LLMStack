@@ -133,7 +133,7 @@ function SheetsList() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {sheets.length > 0 ? (
+          {sheets.length > 0 && Array.isArray(sheets) ? (
             sheets.map((sheet) => (
               <SheetListItem
                 key={sheet.uuid}
