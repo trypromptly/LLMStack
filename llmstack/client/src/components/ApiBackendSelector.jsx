@@ -96,7 +96,7 @@ export default function ApiBackendSelector() {
           }}
         >
           <FormControl fullWidth>
-            <InputLabel id="select-api-provider-label">API Provider</InputLabel>
+            <InputLabel id="select-api-provider-label">Provider</InputLabel>
             <Select
               onChange={(e) => {
                 setApiProviderSelected(e.target.value);
@@ -105,7 +105,7 @@ export default function ApiBackendSelector() {
                 resetInputValueState();
               }}
               value={apiProviderSelected ? apiProviderSelected : ""}
-              label="API Provider"
+              label="Provider"
             >
               {apiprovidersDropdown.map((option, index) => (
                 <MenuItem key={index} value={option.value}>
@@ -131,7 +131,7 @@ export default function ApiBackendSelector() {
         {apiProviderSelected && (
           <Box sx={{ minWidth: 150, width: isMobile ? "48%" : "auto" }}>
             <FormControl fullWidth>
-              <InputLabel id="select-api-backend-label">API Backend</InputLabel>
+              <InputLabel id="select-api-backend-label">Processor</InputLabel>
               <Select
                 sx={{
                   lineHeight: "32px",
@@ -150,7 +150,7 @@ export default function ApiBackendSelector() {
                   resetInputValueState();
                 }}
                 value={apiBackendSelected ? apiBackendSelected.id : ""}
-                label="API Backend"
+                label="Processor"
               >
                 {/* TODO: Find a better way to render Promptly App processor in playground */}
                 {apibackendsDropdown
@@ -192,7 +192,8 @@ export default function ApiBackendSelector() {
             >
               <LightbulbIcon color="info" />
             </a>
-            {apiBackendSelected?.description || "Select an API Backend "}
+            {apiBackendSelected?.description ||
+              "Select a processor from this provider"}
           </Typography>
         </Box>
       </Grid>
