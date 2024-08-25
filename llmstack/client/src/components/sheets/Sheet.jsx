@@ -22,6 +22,7 @@ import { enqueueSnackbar } from "notistack";
 import SaveIcon from "@mui/icons-material/Save";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
+import DownloadIcon from "@mui/icons-material/Download";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 
@@ -51,7 +52,14 @@ const gridCellToCellId = (gridCell, columns) => {
   return `${colLetter}${rowIndex + 1}`;
 };
 
-const SheetHeader = ({ sheet, setRunId, hasChanges, onSave, sheetRunning }) => {
+const SheetHeader = ({
+  sheet,
+  setRunId,
+  hasChanges,
+  onSave,
+  sheetRunning,
+  runId,
+}) => {
   const navigate = useNavigate();
 
   const saveSheet = () => {
@@ -81,6 +89,10 @@ const SheetHeader = ({ sheet, setRunId, hasChanges, onSave, sheetRunning }) => {
     } else {
       runSheetAction();
     }
+  };
+
+  const downloadSheet = () => {
+    window.open(`/api/sheets/${sheet.uuid}/download`, "_blank");
   };
 
   return (
@@ -124,6 +136,18 @@ const SheetHeader = ({ sheet, setRunId, hasChanges, onSave, sheetRunning }) => {
                 <SaveIcon />
               </Button>
             </Tooltip>
+            {!sheetRunning && (
+              <Tooltip title="Download CSV">
+                <Button
+                  onClick={downloadSheet}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
+                >
+                  <DownloadIcon />
+                </Button>
+              </Tooltip>
+            )}
             <Tooltip
               title={
                 sheetRunning ? "Sheet is already running" : "Run the sheet"
@@ -425,6 +449,7 @@ function Sheet(props) {
         hasChanges={hasChanges()}
         onSave={saveSheet}
         sheetRunning={sheetRunning}
+        runId={runId}
       />
       <Box>
         <DataEditor

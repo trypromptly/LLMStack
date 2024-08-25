@@ -1,6 +1,9 @@
+import csv
+import io
 import logging
 import uuid
 
+from django.http import StreamingHttpResponse
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
@@ -16,6 +19,32 @@ from llmstack.sheets.models import (
 from llmstack.sheets.serializers import PromptlySheetSerializer
 
 logger = logging.getLogger(__name__)
+
+
+def _get_sheet_csv(columns, cells, total_rows):
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+
+    # Write header
+    writer.writerow([col.title for col in columns])
+    yield output.getvalue()
+    output.seek(0)
+    output.truncate(0)
+
+    for row in range(1, total_rows + 1):
+        # Create a dict of cell_id to cell from this row
+        row_cells = {cell.cell_id: cell for cell in cells.values() if cell.row == row}
+
+        # Create a list of cell values for this row, using an empty string if the cell doesn't exist
+        row_values = []
+        for column in columns:
+            cell = row_cells.get(f"{column.col}{row}")
+            row_values.append(cell.display_data if cell else "")
+
+        writer.writerow(row_values)
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
 
 
 class PromptlySheetAppExecuteJob(ProcessingJob):
@@ -141,3 +170,39 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         ).add_to_queue()
 
         return DRFResponse({"job_id": job.id, "run_id": run_entry.uuid}, status=202)
+
+    def download(self, request, sheet_uuid=None):
+        if not sheet_uuid:
+            return DRFResponse(status=status.HTTP_400_BAD_REQUEST)
+
+        profile = Profile.objects.get(user=request.user)
+
+        sheet = PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
+        if not sheet:
+            return DRFResponse(status=status.HTTP_404_NOT_FOUND)
+
+        response = StreamingHttpResponse(
+            streaming_content=_get_sheet_csv(sheet.columns, sheet.cells, sheet.data.get("total_rows", 0)),
+            content_type="text/csv",
+        )
+        response["Content-Disposition"] = f'attachment; filename="sheet_{sheet_uuid}.csv"'
+        return response
+
+    def download_run(self, request, sheet_uuid=None, run_id=None):
+        if not sheet_uuid or not run_id:
+            return DRFResponse(status=status.HTTP_400_BAD_REQUEST)
+
+        profile = Profile.objects.get(user=request.user)
+
+        sheet = PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
+        run_entry = PromptlySheetRunEntry.objects.get(uuid=run_id, sheet_uuid=sheet.uuid)
+
+        if not run_entry:
+            return DRFResponse(status=status.HTTP_404_NOT_FOUND)
+
+        response = StreamingHttpResponse(
+            streaming_content=_get_sheet_csv(sheet.columns, sheet.cells, sheet.data.get("total_rows", 0)),
+            content_type="text/csv",
+        )
+        response["Content-Disposition"] = f'attachment; filename="sheet_{sheet_uuid}_{run_id}.csv"'
+        return response
