@@ -268,11 +268,12 @@ class LLMCohereStream(Stream[_T]):
         for chunk in iterator:
             chunk_json = json.loads(chunk)
             if chunk_json["event_type"] == "stream-end":
-                input_tokens = chunk_json.get("token_count", {}).get("prompt_tokens", 0)
-                output_tokens = chunk_json.get("token_count", {}).get("response_tokens", 0)
-                total_tokens = chunk_json.get("token_count", {}).get("total_tokens", 0)
-                finish_reason = chunk_json.get("finish_reason", "stop")
-
+                input_tokens = chunk_json.get("response").get("meta", {}).get("billed_units", {}).get("input_tokens", 0)
+                output_tokens = (
+                    chunk_json.get("response").get("meta", {}).get("billed_units", {}).get("output_tokens", 0)
+                )
+                total_tokens = input_tokens + output_tokens
+                finish_reason = "usage"
                 data = {
                     "id": id,
                     "object": "chat.completion.chunk",
