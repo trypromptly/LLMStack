@@ -296,6 +296,11 @@ function Sheet(props) {
           } else if (event.type === "sheet.status") {
             const { running } = event.sheet;
             setSheetRunning(running && event.sheet.id === sheet.uuid);
+
+            // If running is false, we can disconnect
+            if (!running) {
+              ws.close();
+            }
           }
         });
 
