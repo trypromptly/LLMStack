@@ -149,6 +149,7 @@ class CohereChatProcessor(
             max_tokens=self._config.max_tokens,
             stream=True,
             temperature=self._config.temperature,
+            connectors=[{"id": "web-search"}] if self._config.enable_web_search else [],
         )
 
         for result in response:
