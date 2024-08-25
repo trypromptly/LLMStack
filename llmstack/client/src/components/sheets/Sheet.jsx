@@ -72,8 +72,9 @@ function Sheet(props) {
 
       return {
         kind:
-          (cell?.kind === "app_run" ? GridCellKind.Text : cell?.kind) ||
-          columns[column].kind,
+          (cell?.kind === "app_run" || cell?.kind === "processor_run"
+            ? GridCellKind.Text
+            : cell?.kind) || columns[column].kind,
         displayData: cell?.display_data || "",
         data: cell?.display_data || "",
         allowOverlay: true,
@@ -98,7 +99,7 @@ function Sheet(props) {
         data: column.data,
         hasMenu: true,
         icon:
-          column.kind === "app_run"
+          column.kind === "app_run" || column.kind === "processor_run"
             ? GridColumnIcon.HeaderRollup
             : GridColumnIcon.HeaderString,
         width: column.width || 300,

@@ -14,6 +14,7 @@ import {
 import { DeleteOutlined, AddOutlined } from "@mui/icons-material";
 import { GridCellKind } from "@glideapps/glide-data-grid";
 import AppRunForm from "./AppRunForm";
+import ProcessorRunForm from "./ProcessorRunForm"; // Added this import
 import "@glideapps/glide-data-grid/dist/index.css";
 
 const numberToLetters = (num) => {
@@ -37,12 +38,12 @@ export function SheetColumnMenu({
 }) {
   const [columnName, setColumnName] = useState(column?.title || "");
   const [columnType, setColumnType] = useState(GridCellKind.Text);
-  const columnAppRunData = useRef(column?.data || {});
+  const columnRunData = useRef(column?.data || {});
 
   useEffect(() => {
     setColumnType(column?.kind || GridCellKind.Text);
     setColumnName(column?.title || "");
-    columnAppRunData.current = column?.data || {};
+    columnRunData.current = column?.data || {};
   }, [column]);
 
   const handleAddOrEditColumn = () => {
@@ -51,8 +52,9 @@ export function SheetColumnMenu({
       title: columnName || "New Column",
       kind: columnType,
       data:
-        columnType === "app_run" && columnAppRunData.current
-          ? columnAppRunData.current
+        (columnType === "app_run" || columnType === "processor_run") &&
+        columnRunData.current
+          ? columnRunData.current
           : {},
     };
 
@@ -80,7 +82,12 @@ export function SheetColumnMenu({
       role={undefined}
       placement="bottom-start"
       transition
-      sx={{ width: "450px" }}
+      sx={{
+        width: "450px",
+        maxHeight: "90vh",
+        overflowY: "auto",
+        padding: "0px 2px 8px 2px",
+      }}
     >
       {({ TransitionProps, placement }) => (
         <Grow
@@ -131,14 +138,36 @@ export function SheetColumnMenu({
                 <MenuItem value={"number"}>Number</MenuItem>
                 <MenuItem value={"image"}>Image</MenuItem>
                 <MenuItem value={"app_run"}>App Run</MenuItem>
+                <MenuItem value={"processor_run"}>Processor Run</MenuItem>
               </Select>
               {columnType === "app_run" && (
                 <AppRunForm
                   setData={(data) => {
-                    columnAppRunData.current = data;
+                    columnRunData.current = {
+                      ...columnRunData.current,
+                      ...data,
+                    };
                   }}
-                  appSlug={columnAppRunData.current?.app_slug}
-                  appInput={columnAppRunData.current?.input}
+                  appSlug={columnRunData.current?.app_slug}
+                  appInput={columnRunData.current?.input}
+                  columns={columns}
+                />
+              )}
+              {columnType === "processor_run" && (
+                <ProcessorRunForm
+                  setData={(data) => {
+                    columnRunData.current = {
+                      ...columnRunData.current,
+                      ...data,
+                    };
+                  }}
+                  providerSlug={columnRunData.current?.provider_slug}
+                  processorSlug={columnRunData.current?.processor_slug}
+                  processorInput={columnRunData.current?.input}
+                  processorConfig={columnRunData.current?.config}
+                  processorOutputTemplate={
+                    columnRunData.current?.output_template
+                  }
                   columns={columns}
                 />
               )}
