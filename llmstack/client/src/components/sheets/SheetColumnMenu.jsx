@@ -33,7 +33,9 @@ const numberToLetters = (num) => {
 
 // Allow the user to pick an app, and then show the form for that app input
 const AppRunForm = ({ columns, data, setData }) => {
-  const [selectedAppSlug, setSelectedAppSlug] = useState(data?.app_slug || "");
+  const [selectedAppSlug, setSelectedAppSlug] = useState(
+    data?.app_slug || "super-agent",
+  );
   const storeApps = useRecoilValue(storeAppsBriefState);
   const app = useRecoilValue(storeAppState(selectedAppSlug || "super-agent"));
   const [appInputSchema, setAppInputSchema] = useState({});
