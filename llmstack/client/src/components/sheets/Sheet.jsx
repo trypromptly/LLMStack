@@ -300,6 +300,7 @@ function Sheet(props) {
             // If running is false, we can disconnect
             if (!running) {
               ws.close();
+              setRunId(null);
             }
           }
         });
