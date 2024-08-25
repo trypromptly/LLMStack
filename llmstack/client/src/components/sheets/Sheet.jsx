@@ -19,6 +19,9 @@ import { SheetColumnMenu, SheetColumnMenuButton } from "./SheetColumnMenu";
 import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
 import { enqueueSnackbar } from "notistack";
+import SaveIcon from "@mui/icons-material/Save";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import PauseIcon from "@mui/icons-material/Pause";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 
@@ -110,14 +113,17 @@ const SheetHeader = ({ sheet, setRunId, hasChanges, onSave, sheetRunning }) => {
             </Stack>
           </Stack>
           <Stack direction={"row"} gap={1}>
-            <Button
-              variant="contained"
-              size="medium"
-              onClick={saveSheet}
-              disabled={!hasChanges}
-            >
-              Save
-            </Button>
+            <Tooltip title="Save changes">
+              <Button
+                onClick={saveSheet}
+                disabled={!hasChanges}
+                color="primary"
+                variant="outlined"
+                sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
+              >
+                <SaveIcon />
+              </Button>
+            </Tooltip>
             <Tooltip
               title={
                 sheetRunning ? "Sheet is already running" : "Run the sheet"
@@ -128,8 +134,15 @@ const SheetHeader = ({ sheet, setRunId, hasChanges, onSave, sheetRunning }) => {
                 size="medium"
                 onClick={runSheet}
                 disabled={sheetRunning}
+                sx={{
+                  bgcolor: "success.main",
+                  "&:hover": { bgcolor: "success.dark" },
+                  minWidth: "40px",
+                  padding: "5px",
+                  borderRadius: "4px !important",
+                }}
               >
-                {sheetRunning ? "Running..." : "Run"}
+                {sheetRunning ? <PauseIcon /> : <PlayArrowIcon />}
               </Button>
             </Tooltip>
           </Stack>
