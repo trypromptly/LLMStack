@@ -387,6 +387,7 @@ function Sheet(props) {
               }));
 
               sheetRef.current?.updateCells([{ cell: gridCell }]);
+              sheetRef.current?.scrollTo(gridCell[0], gridCell[1]);
             }
           } else if (event.type === "cell.updating") {
             const cell = event.cell;
