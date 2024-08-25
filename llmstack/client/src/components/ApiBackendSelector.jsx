@@ -30,7 +30,11 @@ import {
 } from "../data/atoms";
 import { ProviderIcon } from "./apps/ProviderIcon";
 
-export default function ApiBackendSelector({ hideDescription = false }) {
+export default function ApiBackendSelector({
+  hideDescription = false,
+  defaultProvider = "promptly",
+  defaultProcessor = "llm",
+}) {
   const apiprovidersDropdown = useRecoilValue(apiProviderDropdownListState);
   const apibackendsDropdown = useRecoilValue(apiBackendDropdownListState);
   const apibackends = useRecoilValue(apiBackendsState);
@@ -60,11 +64,14 @@ export default function ApiBackendSelector({ hideDescription = false }) {
   useEffect(() => {
     if (!apiProviderSelected && apibackends && apibackends.length > 0) {
       setApiProviderSelected(
-        apibackends.find((backend) => backend.id === "openai/chatgpt")
-          ?.api_provider.name,
+        apibackends.find(
+          (backend) => backend.id === `${defaultProvider}/${defaultProcessor}`,
+        )?.api_provider.name,
       );
       setApiBackendSelected(
-        apibackends.find((backend) => backend.id === "openai/chatgpt"),
+        apibackends.find(
+          (backend) => backend.id === `${defaultProvider}/${defaultProcessor}`,
+        ),
       );
     } else if (
       !apiBackendSelected &&
@@ -72,7 +79,9 @@ export default function ApiBackendSelector({ hideDescription = false }) {
       apiProviderSelected === "Open AI"
     ) {
       setApiBackendSelected(
-        apibackends.find((backend) => backend.id === "opennai/chatgpt"),
+        apibackends.find(
+          (backend) => backend.id === `${defaultProvider}/${defaultProcessor}`,
+        ),
       );
     }
   }, [
@@ -81,6 +90,8 @@ export default function ApiBackendSelector({ hideDescription = false }) {
     apiProviderSelected,
     setApiBackendSelected,
     setApiProviderSelected,
+    defaultProvider,
+    defaultProcessor,
   ]);
 
   return (
