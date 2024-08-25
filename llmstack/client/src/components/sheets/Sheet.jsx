@@ -210,8 +210,11 @@ function Sheet(props) {
         kind: column.kind,
         data: column.data,
         hasMenu: true,
-        icon: GridColumnIcon.HeaderString,
-        width: column.width || 200,
+        icon:
+          column.kind === "app_run"
+            ? GridColumnIcon.HeaderRollup
+            : GridColumnIcon.HeaderString,
+        width: column.width || 300,
       };
     });
   };
