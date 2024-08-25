@@ -11,6 +11,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
+import { DeleteOutlined } from "@mui/icons-material";
 import validator from "@rjsf/validator-ajv8";
 import { GridCellKind } from "@glideapps/glide-data-grid";
 import { useRecoilValue } from "recoil";
@@ -190,6 +191,25 @@ export function SheetColumnMenu({
         >
           <Paper>
             <Stack gap={2} sx={{ padding: 2 }}>
+              <Stack
+                direction="row"
+                gap={2}
+                sx={{ justifyContent: "flex-end" }}
+              >
+                {column && (
+                  <IconButton
+                    variant="outlined"
+                    onClick={handleColumnDelete}
+                    sx={{
+                      color: "text.secondary",
+                      minWidth: "30px",
+                      padding: 0,
+                    }}
+                  >
+                    <DeleteOutlined />
+                  </IconButton>
+                )}
+              </Stack>
               <TextField
                 label="Name"
                 value={columnName}
@@ -231,11 +251,6 @@ export function SheetColumnMenu({
                 <Button variant="contained" onClick={handleAddOrEditColumn}>
                   {column ? "Update" : "Add"}
                 </Button>
-                {column && (
-                  <Button variant="contained" onClick={handleColumnDelete}>
-                    Delete
-                  </Button>
-                )}
               </Stack>
             </Stack>
           </Paper>
