@@ -137,7 +137,8 @@ export function SheetColumnMenu({
                   setData={(data) => {
                     columnAppRunData.current = data;
                   }}
-                  data={columnAppRunData.current}
+                  appSlug={columnAppRunData.current?.app_slug}
+                  appInput={columnAppRunData.current?.input}
                   columns={columns}
                 />
               )}

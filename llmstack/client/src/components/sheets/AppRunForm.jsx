@@ -16,15 +16,15 @@ const numberToLetters = (num) => {
   return letters;
 };
 
-const AppRunForm = ({ columns, data, setData }) => {
+const AppRunForm = ({ columns, appSlug, appInput, setData }) => {
   const [selectedAppSlug, setSelectedAppSlug] = useState(
-    data?.app_slug || "super-agent",
+    appSlug || "super-agent",
   );
   const storeApps = useRecoilValue(storeAppsBriefState);
   const app = useRecoilValue(storeAppState(selectedAppSlug || "super-agent"));
   const [appInputSchema, setAppInputSchema] = useState({});
   const [appInputUiSchema, setAppInputUiSchema] = useState({});
-  const formDataRef = useRef(data?.input || {});
+  const formDataRef = useRef(appInput || {});
 
   const TextWidget = (props) => {
     return (
@@ -36,16 +36,10 @@ const AppRunForm = ({ columns, data, setData }) => {
           pillPrefix: `${numberToLetters(index)}:${c.title}`,
           label: `${numberToLetters(index)}: ${c.title}`,
         }))}
+        value={props.formData}
       />
     );
   };
-
-  useEffect(() => {
-    if (data) {
-      setSelectedAppSlug(data.app_slug);
-      formDataRef.current = data.input || {};
-    }
-  }, [data]);
 
   useEffect(() => {
     if (app) {
