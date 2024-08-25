@@ -79,8 +79,8 @@ function Sheet(props) {
         data: cell?.display_data || "",
         allowOverlay: true,
         allowWrapping: true,
-        skeletonWidth: 80,
-        skeletonWidthVariability: 25,
+        skeletonWidth: columns[column].width || 100,
+        skeletonWidthVariability: 100,
       };
     },
     [cells, columns],
