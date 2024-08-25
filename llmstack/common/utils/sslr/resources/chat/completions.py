@@ -108,6 +108,7 @@ class Completions(OpenAICompletions):
         extra_query: Optional[Query] = None,
         extra_body: Optional[Body] = None,
         timeout: Union[float, httpx.Timeout, None, NotGiven] = NOT_GIVEN,
+        **kwargs,
     ) -> Union[_chat.ChatCompletion, Stream[_chat.ChatCompletionChunk]]:
         system = None
         path = "/chat/completions"
@@ -229,6 +230,13 @@ class Completions(OpenAICompletions):
                 else:
                     raise ValueError("Invalid message content")
             post_body_data["message"] = msg
+            if "connectors" in kwargs:
+                post_body_data["connectors"] = kwargs.pop("connectors")
+            if "search_queries_only" in kwargs:
+                post_body_data["search_queries_only"] = kwargs.pop("search_queries_only")
+            if "documents" in kwargs:
+                post_body_data["documents"] = kwargs.pop("documents")
+
         elif self._client._llm_router_provider == PROVIDER_MISTRAL:
             path = "/chat/completions"
             stream_cls = LLMRestStream[_chat.ChatCompletionChunk]
