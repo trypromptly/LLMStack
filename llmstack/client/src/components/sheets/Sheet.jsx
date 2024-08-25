@@ -48,7 +48,7 @@ const gridCellToCellId = (gridCell, columns) => {
   return `${colLetter}${rowIndex + 1}`;
 };
 
-const SheetHeader = ({ sheet, setRunId, hasChanges, onSave }) => {
+const SheetHeader = ({ sheet, setRunId, hasChanges, onSave, sheetRunning }) => {
   const navigate = useNavigate();
 
   const saveSheet = () => {
@@ -118,9 +118,20 @@ const SheetHeader = ({ sheet, setRunId, hasChanges, onSave }) => {
             >
               Save
             </Button>
-            <Button variant="contained" size="medium" onClick={runSheet}>
-              Run
-            </Button>
+            <Tooltip
+              title={
+                sheetRunning ? "Sheet is already running" : "Run the sheet"
+              }
+            >
+              <Button
+                variant="contained"
+                size="medium"
+                onClick={runSheet}
+                disabled={sheetRunning}
+              >
+                {sheetRunning ? "Running..." : "Run"}
+              </Button>
+            </Tooltip>
           </Stack>
         </Stack>
       </Typography>
@@ -130,6 +141,7 @@ const SheetHeader = ({ sheet, setRunId, hasChanges, onSave }) => {
 
 function Sheet(props) {
   const { sheetId } = props;
+  const [sheetRunning, setSheetRunning] = useState(false);
   const [sheet, setSheet] = useState(null);
   const [columns, setColumns] = useState([]);
   const [cells, setCells] = useState({});
@@ -198,6 +210,7 @@ function Sheet(props) {
         .then((response) => {
           setSheet(response.data);
           setCells(response.data?.cells || {});
+          setSheetRunning(response.data?.running || false);
           setColumns(
             parseSheetColumnsIntoGridColumns(response.data?.columns || []),
           );
@@ -376,6 +389,9 @@ function Sheet(props) {
 
               sheetRef.current?.updateCells([{ cell: gridCell }]);
             }
+          } else if (event.type === "sheet.status") {
+            const { running } = event.sheet;
+            setSheetRunning(running && event.sheet.id === sheet.uuid);
           }
         });
 
@@ -391,6 +407,7 @@ function Sheet(props) {
         setRunId={setRunId}
         hasChanges={hasChanges()}
         onSave={saveSheet}
+        sheetRunning={sheetRunning}
       />
       <Box>
         <DataEditor

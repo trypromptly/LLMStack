@@ -129,6 +129,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        sheet.extra_data["running"] = True
         sheet.is_locked = True
         sheet.save(update_fields=["is_locked"])
 

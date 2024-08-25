@@ -40,3 +40,6 @@ class SheetAppConsumer(AsyncWebsocketConsumer):
 
     async def cell_updating(self, event):
         await self.send(text_data=json.dumps(event))
+
+    async def sheet_status(self, event):
+        await self.send(text_data=json.dumps(event))

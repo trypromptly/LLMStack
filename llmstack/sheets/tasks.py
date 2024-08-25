@@ -41,10 +41,6 @@ def _execute_cell(
     if column.kind != "app_run":
         return cell
 
-    logger.info(f"Executing cell {cell.model_dump()}")
-    logger.info(f"Row: {row}")
-    logger.info(f"column: {column.model_dump()}")
-
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
 
     app_slug = column.data["app_slug"]
@@ -85,6 +81,10 @@ def run_sheet(sheet, run_entry, user):
         existing_cells = list(existing_cells_dict.values())
         existing_cols = sheet.columns
 
+        async_to_sync(channel_layer.group_send)(
+            str(run_entry.uuid), {"type": "sheet.status", "sheet": {"id": str(sheet.uuid), "running": True}}
+        )
+
         for row_number in range(1, sheet.data.get("total_rows", 0) + 1):
             for column in existing_cols:
                 if column.kind != "app_run":
@@ -117,6 +117,12 @@ def run_sheet(sheet, run_entry, user):
     except Exception:
         logger.exception("Error executing sheet")
 
+    sheet.extra_data["running"] = False
     sheet.is_locked = False
-    sheet.save(update_fields=["is_locked"])
+    sheet.save(update_fields=["is_locked", "extra_data"])
+
+    async_to_sync(channel_layer.group_send)(
+        str(run_entry.uuid), {"type": "sheet.status", "sheet": {"id": str(sheet.uuid), "running": False}}
+    )
+
     return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
