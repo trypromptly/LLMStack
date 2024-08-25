@@ -83,15 +83,17 @@ const SheetHeader = ({
           </Stack>
           <Stack direction={"row"} gap={1}>
             <Tooltip title="Save changes">
-              <Button
-                onClick={saveSheet}
-                disabled={!hasChanges}
-                color="primary"
-                variant="outlined"
-                sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
-              >
-                <SaveIcon />
-              </Button>
+              <span>
+                <Button
+                  onClick={saveSheet}
+                  disabled={!hasChanges}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
+                >
+                  <SaveIcon />
+                </Button>
+              </span>
             </Tooltip>
             {!sheetRunning && (
               <Tooltip title="Download CSV">
@@ -110,21 +112,23 @@ const SheetHeader = ({
                 sheetRunning ? "Sheet is already running" : "Run the sheet"
               }
             >
-              <Button
-                variant="contained"
-                size="medium"
-                onClick={runSheet}
-                disabled={sheetRunning}
-                sx={{
-                  bgcolor: "success.main",
-                  "&:hover": { bgcolor: "success.dark" },
-                  minWidth: "40px",
-                  padding: "5px",
-                  borderRadius: "4px !important",
-                }}
-              >
-                {sheetRunning ? <PauseIcon /> : <PlayArrowIcon />}
-              </Button>
+              <span>
+                <Button
+                  variant="contained"
+                  size="medium"
+                  onClick={runSheet}
+                  disabled={sheetRunning}
+                  sx={{
+                    bgcolor: "success.main",
+                    "&:hover": { bgcolor: "success.dark" },
+                    minWidth: "40px",
+                    padding: "5px",
+                    borderRadius: "4px !important",
+                  }}
+                >
+                  {sheetRunning ? <PauseIcon /> : <PlayArrowIcon />}
+                </Button>
+              </span>
             </Tooltip>
           </Stack>
         </Stack>
