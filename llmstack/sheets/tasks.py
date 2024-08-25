@@ -1,3 +1,4 @@
+import ast
 import logging
 import uuid
 from typing import List
@@ -8,6 +9,7 @@ from django.contrib.auth.models import User
 from django.test import RequestFactory
 from rest_framework.response import Response as DRFResponse
 
+from llmstack.apps.apis import AppViewSet
 from llmstack.common.utils.utils import hydrate_input
 from llmstack.sheets.models import PromptlySheet, PromptlySheetCell, PromptlySheetColumn
 from llmstack.sheets.serializers import PromptlySheetSerializer
@@ -38,32 +40,75 @@ def _execute_cell(
     run_id: str,
     user: User,
 ) -> PromptlySheetCell:
-    if column.kind != "app_run":
+    if column.kind != "app_run" and column.kind != "processor_run":
         return cell
 
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
 
-    app_slug = column.data["app_slug"]
     input_values = {cell.col: cell.display_data for cell in row}
-    input = hydrate_input(column.data["input"], input_values)
+    response = None
+    if column.kind == "app_run":
+        app_slug = column.data["app_slug"]
+        input = hydrate_input(column.data["input"], input_values)
 
-    request = RequestFactory().post(
-        f"/api/store/apps/{app_slug}",
-        format="json",
-    )
-    request.data = {
-        "stream": False,
-        "input": input,
-    }
-    request.user = user
+        request = RequestFactory().post(
+            f"/api/store/apps/{app_slug}",
+            format="json",
+        )
+        request.data = {
+            "stream": False,
+            "input": input,
+        }
+        request.user = user
 
-    # Execute the app
-    response = async_to_sync(AppStoreAppViewSet().run_app_internal_async)(
-        slug=app_slug,
-        session_id=None,
-        request_uuid=str(uuid.uuid4()),
-        request=request,
-    )
+        # Execute the app
+        response = async_to_sync(AppStoreAppViewSet().run_app_internal_async)(
+            slug=app_slug,
+            session_id=None,
+            request_uuid=str(uuid.uuid4()),
+            request=request,
+        )
+    elif column.kind == "processor_run":
+        api_provider_slug = column.data["provider_slug"]
+        api_backend_slug = column.data["processor_slug"]
+        processor_input = column.data["input"]
+        processor_config = column.data["config"]
+        processor_output_template = column.data.get("output_template", {}).get("markdown", "")
+
+        input = hydrate_input(processor_input, input_values)
+        config = hydrate_input(processor_config, input_values)
+
+        request = RequestFactory().post(
+            f"/api/playground/{api_provider_slug}_{api_backend_slug}/run",
+            format="json",
+        )
+        request.data = {
+            "stream": False,
+            "input": {
+                "input": input,
+                "config": config,
+                "api_provider_slug": api_provider_slug,
+                "api_backend_slug": api_backend_slug,
+            },
+        }
+        request.user = user
+
+        # Run the processor
+        response = async_to_sync(AppViewSet().run_playground_internal_async)(
+            session_id=None,
+            request_uuid=str(uuid.uuid4()),
+            request=request,
+            preview=False,
+        )
+
+        # Render the output template using response.output
+        if response.get("output") and processor_output_template:
+            try:
+                processor_output = ast.literal_eval(response.get("output"))
+                response["output"] = hydrate_input(processor_output_template, processor_output)
+            except Exception as e:
+                logger.error(f"Error rendering output template: {e}")
+                pass
 
     output = response.get("output", "")
     async_to_sync(channel_layer.group_send)(
@@ -87,7 +132,7 @@ def run_sheet(sheet, run_entry, user):
 
         for row_number in range(1, sheet.data.get("total_rows", 0) + 1):
             for column in existing_cols:
-                if column.kind != "app_run":
+                if column.kind != "app_run" and column.kind != "processor_run":
                     if f"{column.col}{row_number}" in existing_cells_dict:
                         processed_cells.append(existing_cells_dict[f"{column.col}{row_number}"])
                     continue
