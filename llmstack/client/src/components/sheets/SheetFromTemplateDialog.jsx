@@ -30,19 +30,23 @@ export function SheetFromTemplateDialog({
     setOpen(false);
   };
 
-  const createSheet = () => {
+  const handleSave = () => {
     const payload = {
       name: sheetName,
-      data: {
-        description: sheetDescription,
-      },
+      description: sheetDescription,
     };
+    const method = sheetId ? "patch" : "post";
+    const url = sheetId ? `/api/sheets/${sheetId}` : "/api/sheets";
+
     axios()
-      .post(`/api/sheets`, payload)
+      [method](url, payload)
       .then((response) => {
         setSheetId(response.data.uuid);
+        setSheet(response.data);
         setOpen(false);
-        navigate(`/sheets/${response.data.uuid}`);
+        if (!sheetId) {
+          navigate(`/sheets/${response.data.uuid}`);
+        }
       });
   };
 
@@ -75,8 +79,8 @@ export function SheetFromTemplateDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={createSheet} variant="contained">
-          Create Sheet
+        <Button onClick={handleSave} variant="contained">
+          {sheetId ? "Save Changes" : "Create Sheet"}
         </Button>
       </DialogActions>
     </Dialog>

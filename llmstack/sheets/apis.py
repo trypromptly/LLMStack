@@ -87,7 +87,9 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         sheet = PromptlySheet.objects.create(
             name=request.data.get("name"),
             profile_uuid=profile.uuid,
-            data=request.data.get("data", {}),
+            data={
+                "description": request.data.get("description", ""),
+            },
             extra_data=request.data.get("extra_data", {"has_header": True}),
         )
 

@@ -19,9 +19,10 @@ import { axios } from "../../data/axios";
 import SheetDeleteDialog from "./SheetDeleteDialog";
 import { useEffect } from "react";
 
-function SheetListItem({ sheet, onDelete }) {
+function SheetListItem({ sheet, onDelete, onEdit }) {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleDelete = () => {
     setDeleteDialogOpen(true);
@@ -32,48 +33,63 @@ function SheetListItem({ sheet, onDelete }) {
     setDeleteDialogOpen(false);
   };
 
+  const handleEdit = (e) => {
+    e.stopPropagation();
+    setEditDialogOpen(true);
+  };
+
   return (
-    <TableRow
-      key={sheet.uuid}
-      onClick={() => navigate(`/sheets/${sheet.uuid}`)}
-      sx={{
-        cursor: "pointer",
-        "&:hover": {
-          backgroundColor: "rgba(0, 0, 0, 0.04)",
-        },
-      }}
-    >
-      <TableCell>
-        <Typography variant="subtitle2" sx={{ fontWeight: "normal" }}>
-          {sheet.name}
-        </Typography>
-      </TableCell>
-      <TableCell>
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          {sheet.data?.description || "No description available"}
-        </Typography>
-      </TableCell>
-      <TableCell>
-        <IconButton aria-label="edit" onClick={(e) => e.stopPropagation()}>
-          <EditOutlined />
-        </IconButton>
-        <IconButton
-          aria-label="delete"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDelete();
-          }}
-        >
-          <DeleteOutlineOutlined />
-        </IconButton>
-      </TableCell>
+    <>
+      <TableRow
+        key={sheet.uuid}
+        onClick={() => navigate(`/sheets/${sheet.uuid}`)}
+        sx={{
+          cursor: "pointer",
+          "&:hover": {
+            backgroundColor: "rgba(0, 0, 0, 0.04)",
+          },
+        }}
+      >
+        <TableCell>
+          <Typography variant="subtitle2" sx={{ fontWeight: "normal" }}>
+            {sheet.name}
+          </Typography>
+        </TableCell>
+        <TableCell>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {sheet.description || "No description available"}
+          </Typography>
+        </TableCell>
+        <TableCell>
+          <IconButton aria-label="edit" onClick={handleEdit}>
+            <EditOutlined />
+          </IconButton>
+          <IconButton
+            aria-label="delete"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
+          >
+            <DeleteOutlineOutlined />
+          </IconButton>
+        </TableCell>
+      </TableRow>
       <SheetDeleteDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
         sheetName={sheet.name}
       />
-    </TableRow>
+      <SheetFromTemplateDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        sheet={sheet}
+        setSheet={onEdit}
+        sheetId={sheet.uuid}
+        setSheetId={() => {}}
+      />
+    </>
   );
 }
 
@@ -100,6 +116,15 @@ function SheetsList() {
         console.error("Error deleting sheet:", error);
         enqueueSnackbar("Failed to delete sheet", { variant: "error" });
       });
+  };
+
+  const handleEditSheet = (updatedSheet) => {
+    setSheets((prevSheets) =>
+      prevSheets.map((sheet) =>
+        sheet.uuid === updatedSheet.uuid ? updatedSheet : sheet,
+      ),
+    );
+    enqueueSnackbar("Sheet updated successfully", { variant: "success" });
   };
 
   return (
@@ -139,6 +164,7 @@ function SheetsList() {
                 key={sheet.uuid}
                 sheet={sheet}
                 onDelete={handleDeleteSheet}
+                onEdit={handleEditSheet}
               />
             ))
           ) : (
