@@ -1,5 +1,6 @@
 import logging
 import uuid
+from typing import List
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -32,7 +33,7 @@ def number_to_letters(num):
 def _execute_cell(
     cell: PromptlySheetCell,
     column: PromptlySheetColumn,
-    row: dict[str, PromptlySheetCell],
+    row: List[PromptlySheetCell],
     sheet: PromptlySheet,
     run_id: str,
     user: User,
@@ -40,10 +41,14 @@ def _execute_cell(
     if column.kind != "app_run":
         return cell
 
+    logger.info(f"Executing cell {cell.model_dump()}")
+    logger.info(f"Row: {row}")
+    logger.info(f"column: {column.model_dump()}")
+
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
 
     app_slug = column.data["app_slug"]
-    input_values = {number_to_letters(col): cell.data for col, cell in row.items()}
+    input_values = {cell.col: cell.display_data for cell in row}
     input = hydrate_input(column.data["input"], input_values)
 
     request = RequestFactory().post(
@@ -68,7 +73,7 @@ def _execute_cell(
     async_to_sync(channel_layer.group_send)(
         run_id, {"type": "cell.update", "cell": {"id": cell.cell_id, "data": response.get("output", "")}}
     )
-    cell.data = output
+    cell.display_data = output if isinstance(output, str) else str(output)
 
     return cell
 
@@ -76,22 +81,15 @@ def _execute_cell(
 def run_sheet(sheet, run_entry, user):
     try:
         processed_cells = []
-        existing_rows = list(sheet.rows)
+        existing_cells_dict = sheet.cells
+        existing_cells = list(existing_cells_dict.values())
         existing_cols = sheet.columns
 
-        for row_number in range(sheet.data.get("total_rows", 0)):
-            # Find existing row and the cell
-            existing_row = next(filter(lambda row: row[0] == row_number, existing_rows), None)
-            existing_row_cells = existing_row[1] if existing_row else {}
-
+        for row_number in range(1, sheet.data.get("total_rows", 0) + 1):
             for column in existing_cols:
                 if column.kind != "app_run":
-                    if existing_row:
-                        existing_cell = next(
-                            filter(lambda cell: cell.col == column.col, existing_row_cells.values()), None
-                        )
-                        if existing_cell:
-                            processed_cells.append(existing_cell)
+                    if f"{column.col}{row_number}" in existing_cells_dict:
+                        processed_cells.append(existing_cells_dict[f"{column.col}{row_number}"])
                     continue
 
                 # Create a new cell
@@ -101,7 +99,14 @@ def run_sheet(sheet, run_entry, user):
                     kind=column.kind,
                 )
                 processed_cells.append(
-                    _execute_cell(cell_to_execute, column, existing_row_cells, sheet, str(run_entry.uuid), user)
+                    _execute_cell(
+                        cell_to_execute,
+                        column,
+                        list(filter(lambda cell: cell.row == row_number, existing_cells)),
+                        sheet,
+                        str(run_entry.uuid),
+                        user,
+                    )
                 )
 
         if processed_cells:

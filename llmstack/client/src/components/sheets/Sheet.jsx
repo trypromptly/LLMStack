@@ -22,6 +22,32 @@ import { enqueueSnackbar } from "notistack";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 
+const columnIndexToLetter = (index) => {
+  let temp = index + 1;
+  let letter = "";
+  while (temp > 0) {
+    let remainder = (temp - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter;
+    temp = Math.floor((temp - 1) / 26);
+  }
+  return letter;
+};
+
+const cellIdToGridCell = (cellId, columns) => {
+  const match = cellId.match(/([A-Z]+)(\d+)/);
+  if (!match) return null;
+  const [, colLetter, rowString] = match;
+  const row = parseInt(rowString, 10) - 1;
+  const col = columns.findIndex((c) => c.col === colLetter);
+  return [col, row];
+};
+
+const gridCellToCellId = (gridCell, columns) => {
+  const [colIndex, rowIndex] = gridCell;
+  const colLetter = columns[colIndex].col;
+  return `${colLetter}${rowIndex + 1}`;
+};
+
 const SheetHeader = ({ sheet, setRunId, hasChanges, onSave }) => {
   const navigate = useNavigate();
 
@@ -129,16 +155,15 @@ function Sheet(props) {
 
   const getCellContent = useCallback(
     ([column, row]) => {
-      // Find the column in cells
-      const col = columns[column].col;
-      const cell = cells[row]?.[col];
+      const colLetter = columns[column].col;
+      const cell = cells[`${colLetter}${row + 1}`];
 
       return {
         kind:
           (cell?.kind === "app_run" ? GridCellKind.Text : cell?.kind) ||
           columns[column].kind,
-        displayData: cell?.displayData || cell?.data || "",
-        data: cell?.data || "",
+        displayData: cell?.display_data || "",
+        data: cell?.display_data || "",
         allowOverlay: true,
         allowWrapping: true,
         skeletonWidth: 80,
@@ -153,9 +178,9 @@ function Sheet(props) {
       return [];
     }
 
-    return columns.map((column) => {
+    return columns.map((column, index) => {
       return {
-        col: column.col,
+        col: columnIndexToLetter(index),
         title: column.title,
         kind: column.kind,
         data: column.data,
@@ -231,41 +256,44 @@ function Sheet(props) {
 
   const onCellEdited = useCallback(
     (cell, value) => {
+      const [col, row] = cell;
+      const cellId = gridCellToCellId(cell, columns);
+
       setCells((prevCells) => {
         const newCells = {
           ...prevCells,
-          [cell[1]]: {
-            ...prevCells[cell[1]],
-            [columns[cell[0]].col]: {
-              ...(prevCells[cell[1]]?.[columns[cell[0]].col] || {}),
-              ...value,
-              kind: columns[cell[0]].kind,
-              data: value.data,
-              displayData: value.displayData || value.data,
-            },
+          [cellId]: {
+            ...(prevCells[cellId] || {}),
+            row: row + 1,
+            col: columns[col]?.col,
+            kind: GridCellKind.Text,
+            display_data: value.displayData || value.data,
           },
         };
-        updateUserChanges("cells", `${cell[1]}-${columns[cell[0]].col}`, value);
+        updateUserChanges("cells", cellId, value);
         return newCells;
       });
       sheetRef.current?.updateCells([{ cell: cell }]);
     },
-    [columns, updateUserChanges],
+    [columns, updateUserChanges, sheetRef],
   );
 
   const onRowAppended = useCallback(() => {
+    const newRowIndex = numRows + 1;
+    const newCells = columns.reduce((acc, column) => {
+      const cellId = `${column.col}${newRowIndex}`;
+      acc[cellId] = {
+        kind: GridCellKind.Text,
+        display_data: "",
+        row: newRowIndex,
+        col: column.col,
+      };
+      return acc;
+    }, {});
+
     setCells((prevCells) => ({
       ...prevCells,
-      [numRows]: {
-        ...columns.reduce((acc, column) => {
-          acc[column.col] = {
-            kind: GridCellKind.Text,
-            displayData: "",
-            data: "",
-          };
-          return acc;
-        }, {}),
-      },
+      ...newCells,
     }));
     setNumRows((prevNumRows) => {
       const newNumRows = prevNumRows + 1;
@@ -278,12 +306,9 @@ function Sheet(props) {
     return new Promise((resolve, reject) => {
       const updatedSheet = {
         ...sheet,
-        data: {
-          ...sheet.data,
-          columns: columns,
-          cells: cells,
-          total_rows: numRows,
-        },
+        columns: columns,
+        cells: cells,
+        total_rows: numRows,
       };
       axios()
         .patch(`/api/sheets/${sheet.uuid}`, updatedSheet)
@@ -320,47 +345,37 @@ function Sheet(props) {
 
           if (event.type === "cell.update") {
             const cell = event.cell;
-            const [row, col] = cell.id.split("-");
-            const column = columns.find((c) => c.col === col);
+            const gridCell = cellIdToGridCell(cell.id, columns);
+            if (gridCell) {
+              const [colIndex] = gridCell;
+              const column = columns[colIndex];
 
-            setCells((cells) => ({
-              ...cells,
-              [row]: {
-                ...cells[row],
-                [col]: {
-                  ...cells[row]?.[col],
-                  ...{
-                    kind: column?.kind || GridCellKind.Text,
-                    data: cell.data,
-                    displayData: cell.data,
-                  },
+              setCells((cells) => ({
+                ...cells,
+                [cell.id]: {
+                  ...cells[cell.id],
+                  kind: column?.kind || GridCellKind.Text,
+                  data: cell.data,
+                  display_data: cell.data,
                 },
-              },
-            }));
+              }));
 
-            sheetRef.current?.updateCells([
-              { cell: [columns.findIndex((c) => c.col === col), row] },
-            ]);
+              sheetRef.current?.updateCells([{ cell: gridCell }]);
+            }
           } else if (event.type === "cell.updating") {
             const cell = event.cell;
-            const [row, col] = cell.id.split("-");
-
-            setCells((cells) => ({
-              ...cells,
-              [row]: {
-                ...cells[row],
-                [col]: {
-                  ...cells[row]?.[col],
-                  ...{
-                    kind: GridCellKind.Loading,
-                  },
+            const gridCell = cellIdToGridCell(cell.id, columns);
+            if (gridCell) {
+              setCells((cells) => ({
+                ...cells,
+                [cell.id]: {
+                  ...cells[cell.id],
+                  kind: GridCellKind.Loading,
                 },
-              },
-            }));
+              }));
 
-            sheetRef.current?.updateCells([
-              { cell: [columns.findIndex((c) => c.col === col), row] },
-            ]);
+              sheetRef.current?.updateCells([{ cell: gridCell }]);
+            }
           }
         });
 
@@ -399,7 +414,9 @@ function Sheet(props) {
           }
           onCellEdited={onCellEdited}
           onHeaderMenuClick={(column, bounds) => {
-            setSelectedColumnId(column);
+            setSelectedColumnId(
+              columns.findIndex((c) => c.col === columnIndexToLetter(column)),
+            );
             editColumnAnchorEl.current = {
               getBoundingClientRect: () => DOMRect.fromRect(bounds),
             };
@@ -426,7 +443,8 @@ function Sheet(props) {
           updateColumn={(column) => {
             setColumns((columns) => {
               const newColumns = [...columns];
-              newColumns[selectedColumnId] = column;
+              const index = columns.findIndex((c) => c.col === column.col);
+              newColumns[index] = column;
               updateUserChanges("columns", selectedColumnId, column);
               return newColumns;
             });

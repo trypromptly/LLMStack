@@ -1,8 +1,10 @@
 import base64
 import json
 import logging
+import string
 import uuid
 from enum import Enum
+from functools import cache
 from typing import List, Optional
 
 from django.db import models
@@ -42,14 +44,38 @@ class PromptlySheetColumn(BaseModel):
     title: str
     kind: PromptlySheetColumnType = PromptlySheetColumnType.TEXT
     data: dict = {}
-    col: int
+    col: str
     width: Optional[int] = None
+
+    @staticmethod
+    def column_index_to_letter(index):
+        result = ""
+        while index > 0:
+            index -= 1
+            result = string.ascii_uppercase[index % 26] + result
+            index //= 26
+        return result or "A"
+
+    @staticmethod
+    def column_letter_to_index(letter):
+        return sum((ord(c) - 64) * (26**i) for i, c in enumerate(reversed(letter.upper()))) - 1
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if isinstance(self.col, int):
+            self.col = self.column_index_to_letter(self.col)
+
+    class Config:
+        json_encoders = {
+            PromptlySheetColumnType: lambda v: v.value,
+        }
 
 
 class PromptlySheetCell(BaseModel):
     row: int
-    col: int
-    data: str = ""
+    col: str
+    data: dict = {}
+    display_data: str = ""
     formula: str = ""
     kind: PromptlySheetColumnType = PromptlySheetColumnType.TEXT
 
@@ -59,38 +85,20 @@ class PromptlySheetCell(BaseModel):
 
     @property
     def cell_id(self):
-        return f"{self.row}-{self.col}"
+        return f"{self.col}{self.row}"
 
-    def model_dump(
-        self,
-        *,
-        mode="python",
-        include=None,
-        exclude=None,
-        context=None,
-        by_alias=False,
-        exclude_unset=False,
-        exclude_defaults=False,
-        exclude_none=False,
-        round_trip=False,
-        warnings=True,
-        serialize_as_any=False,
-    ):
-        model_dict = super().model_dump(
-            mode=mode,
-            include=include,
-            exclude=exclude,
-            context=context,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            round_trip=round_trip,
-            warnings=warnings,
-            serialize_as_any=serialize_as_any,
-        )
-        model_dict["cell_id"] = self.cell_id
-        return model_dict
+    @staticmethod
+    def column_index_to_letter(index):
+        result = ""
+        while index > 0:
+            index -= 1
+            result = string.ascii_uppercase[index % 26] + result
+            index //= 26
+        return result or "A"
+
+    @staticmethod
+    def column_letter_to_index(letter):
+        return sum((ord(c) - 64) * (26**i) for i, c in enumerate(reversed(letter.upper()))) - 1
 
 
 class PromptlySheetFiles(Assets):
@@ -129,17 +137,16 @@ def delete_sheet_data_objrefs(data_objrefs):
             pass
 
 
-def create_sheet_data_objrefs(cells: List[PromptlySheetCell], sheet_name, sheet_uuid, page_size: int = 1000):
+def create_sheet_data_objrefs(cell_objs: List[PromptlySheetCell], sheet_name, sheet_uuid, page_size: int = 1000):
     # Sort the cells by row and columns
-    cells = sorted(cells, key=lambda cell: (cell.row, cell.col))
-    max_rows = max(cells, key=lambda cell: cell.row).row + 1
+    cells = sorted(cell_objs, key=lambda cell: (cell.row, cell.col))
+    max_rows = max(cell_objs, key=lambda cell: cell.row).row + 1
 
     for i in range(0, max_rows, page_size):
         chunk = {}
-        for j in range(i, min(i + page_size, max_rows)):
-            # Find cells from this row and add them to the chunk
-            cells_in_row = list(filter(lambda cell: cell.row == j, cells))
-            chunk[j] = dict(map(lambda cell: (cell.col, cell.model_dump()), cells_in_row))
+        cells_in_page = list(filter(lambda cell: cell.row >= i and cell.row < i + page_size, cells))
+        for cell in cells_in_page:
+            chunk[cell.cell_id] = cell.model_dump()
 
         data_json = json.dumps(chunk)
         filename = f"{sheet_name}_{str(uuid.uuid4())[:4]}_{i}.json"
@@ -148,40 +155,6 @@ def create_sheet_data_objrefs(cells: List[PromptlySheetCell], sheet_name, sheet_
             data_json_uri, ref_id=sheet_uuid, metadata={"sheet_uuid": sheet_uuid}
         )
         yield f"objref://sheets/{file_obj.uuid}"
-
-
-def get_sheet_cells(objref):
-    try:
-        category, uuid = objref.strip().split("//")[1].split("/")
-        asset = PromptlySheetFiles.objects.get(uuid=uuid)
-        with asset.file.open("rb") as f:
-            cells = json.load(f)
-
-            return dict(
-                map(
-                    lambda row_entry: (
-                        int(row_entry[0]),
-                        (
-                            dict(
-                                map(
-                                    lambda cell_entry: (
-                                        int(cell_entry[0]),
-                                        PromptlySheetCell(**cell_entry[1]),
-                                    ),
-                                    row_entry[1].items(),
-                                )
-                            )
-                        ),
-                    ),
-                    cells.items(),
-                )
-            )
-
-    except Exception as e:
-        logger.error(f"Error loading sheet data from objref: {e}")
-        pass
-
-    return {}
 
 
 class PromptlySheet(models.Model):
@@ -202,26 +175,40 @@ class PromptlySheet(models.Model):
     def __str__(self):
         return self.name
 
+    @cache
+    def get_sheet_cells(self, objref):
+        try:
+            category, uuid = objref.strip().split("//")[1].split("/")
+            asset = PromptlySheetFiles.objects.get(uuid=uuid)
+            cells = {}
+            with asset.file.open("rb") as f:
+                data = json.load(f)
+                for cell_id, cell_data in data.items():
+                    cells[cell_id] = PromptlySheetCell(**cell_data)
+
+                return cells
+
+        except Exception as e:
+            logger.error(f"Error loading sheet data from objref: {e}")
+            pass
+
+        return {}
+
     def get_cell(self, row, col):
         page_size = self.extra_data.get("page_size", 1000)
         page = row // page_size
         pages = self.data.get("cells", [])
         page_objref = pages[page]
-        cells = get_sheet_cells(page_objref)
-        return cells[row % page_size][col]
+        cells = self.get_sheet_cells(page_objref)
+        return cells.get(f"{col}{row}", {})
 
     @property
     def cells(self):
+        cells = {}
         for objref in self.data.get("cells", []):
-            cells = get_sheet_cells(objref)
-            yield cells
+            cells.update(self.get_sheet_cells(objref))
 
-    @property
-    def rows(self):
-        for objref in self.data.get("cells", []):
-            cells = get_sheet_cells(objref)
-            for row, row_cells in cells.items():
-                yield (row, row_cells)
+        return cells
 
     @property
     def columns(self):
@@ -268,6 +255,10 @@ class PromptlySheetRunEntry(models.Model):
         if not cell_objs:
             self.data = {"cells": []}
         else:
+            # Convert column letters to indices before saving
+            for cell in cell_objs:
+                cell.col = PromptlySheetCell.column_letter_to_index(cell.col)
+
             self.data = {
                 "cells": list(
                     create_sheet_data_objrefs(

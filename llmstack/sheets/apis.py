@@ -101,37 +101,22 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         sheet.name = request.data.get("name", sheet.name)
         sheet.extra_data = request.data.get("extra_data", sheet.extra_data)
 
-        if "data" in request.data:
-            if "columns" in request.data["data"]:
-                sheet.data["columns"] = [
-                    PromptlySheetColumn(**column_data).model_dump() for column_data in request.data["data"]["columns"]
-                ]
+        if "total_rows" in request.data:
+            sheet.data["total_rows"] = request.data["total_rows"]
 
-            if "total_rows" in request.data["data"]:
-                sheet.data["total_rows"] = request.data["data"]["total_rows"]
+        if "description" in request.data:
+            sheet.data["description"] = request.data["description"]
 
-            if "description" in request.data["data"]:
-                sheet.data["description"] = request.data["data"]["description"]
+        if "columns" in request.data:
+            sheet.data["columns"] = [
+                PromptlySheetColumn(**column_data).model_dump() for column_data in request.data["columns"]
+            ]
 
         sheet.save()
 
-        if "data" in request.data and "cells" in request.data["data"]:
-            cells_data = []
-            for row_number in request.data["data"]["cells"]:
-                if not isinstance(request.data["data"]["cells"][row_number], dict):
-                    raise ValueError("Invalid cells data")
-                for column_number in request.data["data"]["cells"][row_number]:
-                    cell_data = request.data["data"]["cells"][row_number][column_number]
-                    cell_data.pop("row", None)
-                    cell_data.pop("col", None)
-                    cells_data.append(PromptlySheetCell(row=row_number, col=column_number, **cell_data))
-
-            if cells_data:  # Only save cells if there's data
-                sheet.save(cells=cells_data)
-            else:
-                # If there are no cells, update the total_rows to 0
-                sheet.data["total_rows"] = 0
-                sheet.save()
+        if "cells" in request.data:
+            cells = [PromptlySheetCell(**cell_data) for cell_data in request.data.get("cells", {}).values()]
+            sheet.save(cells=cells, update_fields=["data"])
 
         return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
 

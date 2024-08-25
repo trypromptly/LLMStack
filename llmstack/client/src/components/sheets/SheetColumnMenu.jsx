@@ -145,7 +145,7 @@ export function SheetColumnMenu({
 
   const handleAddOrEditColumn = () => {
     const newColumn = {
-      col: columns.length,
+      col: column ? column.col : numberToLetters(columns.length),
       title: columnName || "New Column",
       kind: columnType,
       data:

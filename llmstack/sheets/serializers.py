@@ -16,14 +16,13 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
     def get_cells(self, obj):
         cells = {}
         if self.context.get("include_cells", False):
-            for page in obj.cells:
-                for cell_row in page:
-                    cells[str(cell_row)] = dict(map(lambda x: (str(x[0]), x[1].model_dump()), page[cell_row].items()))
+            for cell_id, cell in obj.cells.items():
+                cells[cell_id] = cell.model_dump()
 
         return cells
 
     def get_columns(self, obj):
-        return obj.data.get("columns", [])
+        return [col.model_dump() for col in obj.columns]
 
     def get_description(self, obj):
         return obj.data.get("description", "")
