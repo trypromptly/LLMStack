@@ -27,6 +27,7 @@ RUN poetry install --no-root --only data
 
 RUN python -m nltk.downloader -d /usr/local/share/nltk_data 'punkt'
 RUN python -m nltk.downloader -d /usr/local/share/nltk_data 'averaged_perceptron_tagger'
+RUN python -m nltk.downloader -d /usr/local/share/nltk_data 'stopwords'
 RUN python -m spacy download en_core_web_sm
 
 # Hack for installing chromadb embedding models
