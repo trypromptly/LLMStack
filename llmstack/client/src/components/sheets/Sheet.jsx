@@ -192,6 +192,53 @@ function Sheet(props) {
     [columns, updateUserChanges, sheetRef],
   );
 
+  const onPaste = useCallback(
+    (cell, value) => {
+      const [startCol, startRow] = cell;
+      const newCells = {};
+      let maxRow = startRow;
+
+      value.forEach((row, rowIndex) => {
+        row.forEach((cellValue, colIndex) => {
+          const currentRow = startRow + rowIndex;
+          const currentCol = startCol + colIndex;
+          if (currentCol < columns.length) {
+            const cellId = gridCellToCellId([currentCol, currentRow], columns);
+            newCells[cellId] = {
+              kind: GridCellKind.Text,
+              display_data: cellValue,
+              row: currentRow + 1,
+              col: columns[currentCol].col,
+            };
+            maxRow = Math.max(maxRow, currentRow);
+          }
+        });
+      });
+
+      setCells((prevCells) => ({
+        ...prevCells,
+        ...newCells,
+      }));
+
+      setNumRows((prevNumRows) => {
+        const newNumRows = Math.max(prevNumRows, maxRow + 1);
+        if (newNumRows > prevNumRows) {
+          setUserChanges((prev) => ({ ...prev, numRows: newNumRows }));
+        }
+        return newNumRows;
+      });
+
+      // Update cells in the grid
+      const cellsToUpdate = Object.keys(newCells).map((cellId) => ({
+        cell: cellIdToGridCell(cellId, columns),
+      }));
+      sheetRef.current?.updateCells(cellsToUpdate);
+
+      return true;
+    },
+    [columns, setUserChanges],
+  );
+
   const onRowAppended = useCallback(() => {
     const newRowIndex = numRows + 1;
     const newCells = columns.reduce((acc, column) => {
@@ -336,6 +383,7 @@ function Sheet(props) {
       <Box>
         <DataEditor
           ref={sheetRef}
+          onPaste={onPaste}
           getCellContent={getCellContent}
           columns={columns}
           smoothScrollX={true}
