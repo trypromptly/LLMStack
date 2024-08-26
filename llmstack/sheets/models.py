@@ -221,10 +221,14 @@ class PromptlySheet(models.Model):
                 delete_sheet_data_objrefs(self.data.get("cells", []))
             cell_objs = kwargs.pop("cells")
 
-            self.data["cells"] = list(
-                create_sheet_data_objrefs(
-                    cell_objs, self.name, str(self.uuid), page_size=self.extra_data.get("page_size", 1000)
+            self.data["cells"] = (
+                list(
+                    create_sheet_data_objrefs(
+                        cell_objs, self.name, str(self.uuid), page_size=self.extra_data.get("page_size", 1000)
+                    )
                 )
+                if cell_objs
+                else []
             )
             if kwargs.get("update_fields"):
                 kwargs["update_fields"].append("data")
