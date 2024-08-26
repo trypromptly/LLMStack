@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Stack, CircularProgress } from "@mui/material";
-import {
-  DataEditor,
-  GridCellKind,
-  GridColumnIcon,
-} from "@glideapps/glide-data-grid";
+import { DataEditor, GridCellKind } from "@glideapps/glide-data-grid";
 import { SheetColumnMenu, SheetColumnMenuButton } from "./SheetColumnMenu";
 import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
 import { enqueueSnackbar } from "notistack";
 import SheetHeader from "./SheetHeader";
+import { headerIcons } from "./headerIcons";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 
@@ -101,10 +98,7 @@ function Sheet(props) {
         kind: column.kind,
         data: column.data,
         hasMenu: true,
-        icon:
-          column.kind === "app_run" || column.kind === "processor_run"
-            ? GridColumnIcon.HeaderRollup
-            : GridColumnIcon.HeaderString,
+        icon: column.kind,
         width: column.width || 300,
       };
     });
@@ -376,6 +370,7 @@ function Sheet(props) {
             );
           }}
           rows={numRows}
+          headerIcons={headerIcons}
         />
       </Box>
       <div id="portal" />

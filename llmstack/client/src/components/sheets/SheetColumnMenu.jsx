@@ -15,7 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { DeleteOutlined, AddOutlined, InfoOutlined } from "@mui/icons-material";
-import { GridCellKind } from "@glideapps/glide-data-grid";
+import { GridCellKind, GridColumnIcon } from "@glideapps/glide-data-grid";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm"; // Added this import
 import "@glideapps/glide-data-grid/dist/index.css";
@@ -29,6 +29,14 @@ const numberToLetters = (num) => {
   }
   return letters;
 };
+
+const columnTypes = [
+  { value: "text", label: "Text", icon: GridColumnIcon.HeaderString },
+  { value: "number", label: "Number", icon: GridColumnIcon.HeaderNumber },
+  { value: "image", label: "Image", icon: GridColumnIcon.HeaderImage },
+  { value: "app_run", label: "App Run", icon: "app_run" },
+  { value: "processor_run", label: "Processor Run", icon: "processor_run" },
+];
 
 export function SheetColumnMenu({
   anchorEl,
@@ -81,6 +89,7 @@ export function SheetColumnMenu({
       col: column ? column.col : numberToLetters(columns.length),
       title: columnName || "New Column",
       kind: columnType,
+      icon: columnTypes.find((type) => type.value === columnType)?.icon,
       data:
         (columnType === "app_run" || columnType === "processor_run") &&
         columnRunData.current
@@ -170,11 +179,11 @@ export function SheetColumnMenu({
                 onChange={(e) => setColumnType(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
               >
-                <MenuItem value={"text"}>Text</MenuItem>
-                <MenuItem value={"number"}>Number</MenuItem>
-                <MenuItem value={"image"}>Image</MenuItem>
-                <MenuItem value={"app_run"}>App Run</MenuItem>
-                <MenuItem value={"processor_run"}>Processor Run</MenuItem>
+                {columnTypes.map((type) => (
+                  <MenuItem key={type.value} value={type.value}>
+                    {type.label}
+                  </MenuItem>
+                ))}
               </Select>
               {columnType === "app_run" && (
                 <AppRunForm
