@@ -326,9 +326,9 @@ export default function TextFieldWithVars(props) {
             </Typography>
             <Typography variant="body2" style={{ marginBottom: 10 }}>
               {props.introText ||
-                "Below are the available variables across your input and \
-              processors. Click on a variable to insert it into the text field \
-              and use it during processing."}
+                `Below are the available variables across your input and 
+              processors. Click on a variable to insert it into the text field 
+              and use it during processing.`}
             </Typography>
             {memoizedSchemaTrees
               .map((val, index, array) => array[array.length - 1 - index])
