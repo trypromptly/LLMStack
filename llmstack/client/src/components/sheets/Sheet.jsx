@@ -66,20 +66,23 @@ function Sheet(props) {
   }/ws`;
 
   const getCellContent = useCallback(
-    ([column, row]) => {
-      const colLetter = columns[column].col;
+    ([col, row]) => {
+      const column = columns[col];
+      const colLetter = column.col;
       const cell = cells[`${colLetter}${row + 1}`];
 
       return {
         kind:
-          (cell?.kind === "app_run" || cell?.kind === "processor_run"
+          cell?.kind ||
+          (column?.kind === "app_run" || column?.kind === "processor_run"
             ? GridCellKind.Text
-            : cell?.kind) || GridCellKind.Custom,
+            : column?.kind) ||
+          GridCellKind.Custom,
         displayData: cell?.display_data || "",
         data: cell?.display_data || "",
         allowOverlay: true,
         allowWrapping: true,
-        skeletonWidth: columns[column].width || 100,
+        skeletonWidth: column.width || 100,
         skeletonWidthVariability: 100,
       };
     },
@@ -271,7 +274,11 @@ function Sheet(props) {
                 ...cells,
                 [cell.id]: {
                   ...cells[cell.id],
-                  kind: column?.kind || GridCellKind.Text,
+                  kind:
+                    column?.kind === "app_run" ||
+                    column?.kind === "processor_run"
+                      ? GridCellKind.Text
+                      : column?.kind || GridCellKind.Text,
                   data: cell.data,
                   display_data: cell.data,
                 },
@@ -296,13 +303,24 @@ function Sheet(props) {
             }
           } else if (event.type === "sheet.status") {
             const { running } = event.sheet;
-            setSheetRunning(running && event.sheet.id === sheet.uuid);
+            setSheetRunning(running);
 
             // If running is false, we can disconnect
             if (!running) {
               ws.close();
               setRunId(null);
             }
+          } else if (event.type === "sheet.update") {
+            const { total_rows } = event.sheet;
+            setNumRows(total_rows);
+          } else if (event.type === "cell.error") {
+            const { error } = event.cell;
+            enqueueSnackbar(
+              `Failed to execute cell ${event.cell?.id}: ${error}`,
+              {
+                variant: "error",
+              },
+            );
           }
         });
 

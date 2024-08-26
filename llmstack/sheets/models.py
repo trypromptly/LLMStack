@@ -77,7 +77,6 @@ class PromptlySheetCell(BaseModel):
     data: dict = {}
     display_data: str = ""
     formula: str = ""
-    kind: PromptlySheetColumnType = PromptlySheetColumnType.TEXT
 
     @property
     def is_formula(self):
@@ -213,6 +212,10 @@ class PromptlySheet(models.Model):
     @property
     def columns(self):
         return [PromptlySheetColumn(**column) for column in self.data.get("columns", [])]
+
+    def update_total_rows(self, total_rows):
+        self.data["total_rows"] = total_rows
+        self.save(update_fields=["data"])
 
     def save(self, *args, **kwargs):
         if "cells" in kwargs:

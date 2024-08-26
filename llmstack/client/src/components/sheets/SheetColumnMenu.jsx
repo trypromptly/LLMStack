@@ -14,11 +14,12 @@ import {
   FormControlLabel,
   Typography,
 } from "@mui/material";
-import { DeleteOutlined, AddOutlined } from "@mui/icons-material";
+import { DeleteOutlined, AddOutlined, InfoOutlined } from "@mui/icons-material";
 import { GridCellKind } from "@glideapps/glide-data-grid";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm"; // Added this import
 import "@glideapps/glide-data-grid/dist/index.css";
+import Tooltip from "@mui/material/Tooltip";
 
 const numberToLetters = (num) => {
   let letters = "";
@@ -44,6 +45,7 @@ export function SheetColumnMenu({
   const columnRunData = useRef(column?.data || {});
   const [transformData, setTransformData] = useState(false);
   const [transformationTemplate, setTransformationTemplate] = useState("");
+  const [fillRowsWithOutput, setFillRowsWithOutput] = useState(false);
 
   useEffect(() => {
     setColumnType(column?.kind || GridCellKind.Text);
@@ -51,6 +53,7 @@ export function SheetColumnMenu({
     columnRunData.current = column?.data || {};
     setTransformData(!!column?.data?.transformation_template);
     setTransformationTemplate(column?.data?.transformation_template || "");
+    setFillRowsWithOutput(!!column?.data?.fill_rows_with_output);
   }, [column]);
 
   const memoizedProcessorRunForm = useMemo(
@@ -86,6 +89,7 @@ export function SheetColumnMenu({
               transformation_template: transformData
                 ? transformationTemplate
                 : undefined,
+              fill_rows_with_output: fillRowsWithOutput,
             }
           : {},
     };
@@ -187,31 +191,67 @@ export function SheetColumnMenu({
               )}
               {columnType === "processor_run" && memoizedProcessorRunForm}
               {(columnType === "app_run" || columnType === "processor_run") && (
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={transformData}
-                      onChange={(e) => setTransformData(e.target.checked)}
-                    />
-                  }
-                  label="Transform output data"
-                />
-              )}
-              {transformData && (
                 <>
-                  <TextField
-                    label="Transformation Template"
-                    value={transformationTemplate}
-                    onChange={(e) => setTransformationTemplate(e.target.value)}
-                    multiline
-                    rows={4}
-                    placeholder="Enter LiquidJS template"
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={transformData}
+                        onChange={(e) => setTransformData(e.target.checked)}
+                      />
+                    }
+                    label="Transform output data"
                   />
-                  <Typography variant="caption" color="text.secondary">
-                    Use LiquidJS syntax to transform the output. Example:
-                    <code>{`{{ output | split: ' ' | first }}`}</code>. The
-                    'output' variable contains the original result.
-                  </Typography>
+                  {transformData && (
+                    <>
+                      <TextField
+                        label="Transformation Template"
+                        value={transformationTemplate}
+                        onChange={(e) =>
+                          setTransformationTemplate(e.target.value)
+                        }
+                        multiline
+                        rows={4}
+                        placeholder="Enter LiquidJS template"
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        Use LiquidJS syntax to transform the output. Example:
+                        <code>{`{{ output | split: ' ' | first }}`}</code>. The
+                        'output' variable contains the original result.
+                      </Typography>
+                    </>
+                  )}
+                  <Box sx={{ my: 2 }}>
+                    {" "}
+                    {/* Added spacing */}
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={fillRowsWithOutput}
+                          onChange={(e) =>
+                            setFillRowsWithOutput(e.target.checked)
+                          }
+                        />
+                      }
+                      label={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <span>Fill rows with output</span>
+                          <Tooltip title="When checked, this column will be run once without row data. The output will be used to populate rows below.">
+                            <InfoOutlined fontSize="small" color="action" />
+                          </Tooltip>
+                        </Stack>
+                      }
+                    />
+                  </Box>
+                  {fillRowsWithOutput && (
+                    <Typography variant="caption" color="text.secondary">
+                      The output will be processed as follows:
+                      <ul>
+                        <li>If it's a list, each item will fill a row.</li>
+                        <li>Otherwise, it will fill only the first row.</li>
+                      </ul>
+                      Transformation template will be applied if provided.
+                    </Typography>
+                  )}
                 </>
               )}
               <Stack

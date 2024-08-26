@@ -1,4 +1,5 @@
 import ast
+import json
 import logging
 import uuid
 from typing import List
@@ -7,10 +8,10 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth.models import User
 from django.test import RequestFactory
-from liquid import Template
 from rest_framework.response import Response as DRFResponse
 
 from llmstack.apps.apis import AppViewSet
+from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.utils import hydrate_input
 from llmstack.sheets.models import PromptlySheet, PromptlySheetCell, PromptlySheetColumn
 from llmstack.sheets.serializers import PromptlySheetSerializer
@@ -40,13 +41,15 @@ def _execute_cell(
     sheet: PromptlySheet,
     run_id: str,
     user: User,
-) -> PromptlySheetCell:
-    if column.kind != "app_run" and column.kind != "processor_run":
-        return cell
+) -> List[PromptlySheetCell]:
+    if column.kind not in ["app_run", "processor_run"]:
+        return [cell]
 
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
 
-    input_values = {cell.col: cell.display_data for cell in row}
+    fill_rows_with_output = column.data.get("fill_rows_with_output", False)
+    input_values = {} if fill_rows_with_output else {cell.col: cell.display_data for cell in row}
+
     response = None
     if column.kind == "app_run":
         app_slug = column.data["app_slug"]
@@ -112,64 +115,134 @@ def _execute_cell(
                 pass
 
     output = response.get("output", "")
-    cell.display_data = output if isinstance(output, str) else str(output)
 
     # Apply transformation template if present
     transformation_template = column.data.get("transformation_template")
     if transformation_template:
         try:
-            template = Template(transformation_template)
-            transformed_output = template.render({"output": cell.display_data})
-            cell.display_data = transformed_output
+            output = render_template(transformation_template, {"output": output})
         except Exception as e:
             logger.error(f"Error applying transformation template: {e}")
+            async_to_sync(channel_layer.group_send)(
+                run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
+            )
 
-    async_to_sync(channel_layer.group_send)(
-        run_id, {"type": "cell.update", "cell": {"id": cell.cell_id, "data": cell.display_data}}
-    )
+    # Fill rows with output if we are executing the column for the first time
+    if fill_rows_with_output and len(row) == 0 and cell.row == 1:
+        try:
+            output_list = json.loads(output) if isinstance(output, str) else output
+            if isinstance(output_list, list):
+                output_list = [
+                    PromptlySheetCell(
+                        row=cell.row + i,
+                        col=cell.col,
+                        data=cell.data,
+                        formula=cell.formula,
+                        display_data=str(item),
+                    )
+                    for i, item in enumerate(output_list)
+                ]
 
-    return cell
+                # If we have more rows than total_rows, we need to update the total_rows and send a message to the frontend
+                if len(output_list) > sheet.data.get("total_rows", 0):
+                    sheet.update_total_rows(len(output_list))
+
+                    async_to_sync(channel_layer.group_send)(
+                        run_id,
+                        {
+                            "type": "sheet.update",
+                            "sheet": {"id": str(sheet.uuid), "total_rows": len(output_list)},
+                        },
+                    )
+
+                for cell in output_list:
+                    async_to_sync(channel_layer.group_send)(
+                        run_id, {"type": "cell.update", "cell": {"id": cell.cell_id, "data": cell.display_data}}
+                    )
+
+                return output_list
+            else:
+                cell.display_data = str(output)
+                return [cell]
+        except json.JSONDecodeError:
+            cell.display_data = str(output)
+            return [cell]
+    else:
+        cell.display_data = str(output)
+        async_to_sync(channel_layer.group_send)(
+            run_id, {"type": "cell.update", "cell": {"id": cell.cell_id, "data": cell.display_data}}
+        )
+        return [cell]
 
 
 def run_sheet(sheet, run_entry, user):
     try:
-        processed_cells = []
         existing_cells_dict = sheet.cells
-        existing_cells = list(existing_cells_dict.values())
         existing_cols = sheet.columns
 
         async_to_sync(channel_layer.group_send)(
-            str(run_entry.uuid), {"type": "sheet.status", "sheet": {"id": str(sheet.uuid), "running": True}}
+            str(run_entry.uuid),
+            {
+                "type": "sheet.status",
+                "sheet": {"id": str(sheet.uuid), "running": True},
+            },
         )
 
-        for row_number in range(1, sheet.data.get("total_rows", 0) + 1):
-            for column in existing_cols:
-                if column.kind != "app_run" and column.kind != "processor_run":
-                    if f"{column.col}{row_number}" in existing_cells_dict:
-                        processed_cells.append(existing_cells_dict[f"{column.col}{row_number}"])
-                    continue
+        # Execute cells that are not dependent on other cells
+        for column in existing_cols:
+            if column.kind not in ["app_run", "processor_run"]:
+                continue
 
-                # Create a new cell
+            fill_rows_with_output = column.data.get("fill_rows_with_output", False)
+            if fill_rows_with_output:
                 cell_to_execute = PromptlySheetCell(
-                    row=row_number,
+                    row=1,
                     col=column.col,
                     kind=column.kind,
                 )
-                processed_cells.append(
-                    _execute_cell(
-                        cell_to_execute,
-                        column,
-                        list(filter(lambda cell: cell.row == row_number, existing_cells)),
-                        sheet,
-                        str(run_entry.uuid),
-                        user,
-                    )
+                executed_cells = _execute_cell(
+                    cell_to_execute,
+                    column,
+                    [],
+                    sheet,
+                    str(run_entry.uuid),
+                    user,
                 )
+                for cell in executed_cells:
+                    existing_cells_dict[f"{cell.col}{cell.row}"] = cell
 
-        if processed_cells:
-            sheet.save(cells=processed_cells, update_fields=["updated_at"])
-            # Store the processed data in sheet runs table
-            run_entry.save(cells=processed_cells)
+        # Execute cells that are dependent on other cells
+        for row_number in range(1, sheet.data.get("total_rows", 0) + 1):
+            for col in existing_cols:
+                if col.kind not in ["app_run", "processor_run"]:
+                    continue
+
+                # Skip if this column is to fill rows with output
+                if col.data.get("fill_rows_with_output", False):
+                    continue
+
+                cell_to_execute = PromptlySheetCell(
+                    row=row_number,
+                    col=col.col,
+                    data=col.data,
+                )
+                executed_cells = _execute_cell(
+                    cell_to_execute,
+                    col,
+                    [
+                        existing_cells_dict.get(f"{col.col}{row_number}")
+                        for col in existing_cols
+                        if existing_cells_dict.get(f"{col.col}{row_number}")
+                    ],
+                    sheet,
+                    str(run_entry.uuid),
+                    user,
+                )
+                for cell in executed_cells:
+                    existing_cells_dict[f"{cell.col}{cell.row}"] = cell
+
+        sheet.save(cells=list(existing_cells_dict.values()), update_fields=["updated_at"])
+        run_entry.save(cells=list(existing_cells_dict.values()))
 
     except Exception:
         logger.exception("Error executing sheet")
@@ -179,7 +252,11 @@ def run_sheet(sheet, run_entry, user):
     sheet.save(update_fields=["is_locked", "extra_data"])
 
     async_to_sync(channel_layer.group_send)(
-        str(run_entry.uuid), {"type": "sheet.status", "sheet": {"id": str(sheet.uuid), "running": False}}
+        str(run_entry.uuid),
+        {
+            "type": "sheet.status",
+            "sheet": {"id": str(sheet.uuid), "running": False},
+        },
     )
 
     return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
