@@ -35,8 +35,12 @@ EmailProvider = Union[GmailEmailProvider, OutlookEmailProvider, YahooEmailProvid
 class EmailSearchInput(Schema):
     sender: Optional[str] = Field(None, description="Filter by email sender")
     subject: Optional[str] = Field(None, description="Filter by email subject")
-    since: Optional[date] = Field(None, description="Filter emails since a specific date")
-    before: Optional[date] = Field(None, description="Filter emails before a specific date")
+    since: Optional[date] = Field(
+        None, description="Filter emails since a specific date", json_schema_extra={"widget": "date"}
+    )
+    before: Optional[date] = Field(
+        None, description="Filter emails before a specific date", json_schema_extra={"widget": "date"}
+    )
     unseen: bool = Field(False, description="Filter for unread emails")
     seen: bool = Field(False, description="Filter for read emails")
 

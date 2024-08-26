@@ -7,7 +7,9 @@ from llmstack.connections.types import ConnectionTypeInterface
 
 class BasicAuthenticationConfiguration(BaseSchema):
     username: str = Field(..., description="The username to use for basic authentication")
-    password: str = Field(..., description="The password to use for basic authentication", widget="password")
+    password: str = Field(
+        ..., description="The password to use for basic authentication", json_schema_extra={"widget": "password"}
+    )
 
 
 class BasicAuthenticationBasedAPILogin(

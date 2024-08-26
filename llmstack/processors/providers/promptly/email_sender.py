@@ -34,6 +34,7 @@ EmailProvider = Union[GmailEmailProvider, OutlookEmailProvider, YahooEmailProvid
 
 class EmailSenderInput(Schema):
     recipient_email: List[str] = Field(default=[], description="Recipient email")
+    sender_name: Optional[str] = Field(default=None, description="Sender name")
     subject: str = Field(description="Subject of the email")
     text_body: Optional[str] = Field(default=None, json_schema_extra={"widget": "textarea"})
     html_body: Optional[str] = Field(default=None, json_schema_extra={"widget": "textarea"})
@@ -58,7 +59,7 @@ class EmailSenderConfigurations(Schema):
 
 
 class EmailSenderOutput(Schema):
-    code: int
+    code: int = Field(description="Status code of the email send")
 
 
 def send_email_via_gmail(recipients, msg, smtp_username, smtp_password):
