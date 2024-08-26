@@ -1,11 +1,13 @@
+from pydantic import Field
+
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.connections.models import ConnectionType
 from llmstack.connections.types import ConnectionTypeInterface
 
 
 class BasicAuthenticationConfiguration(BaseSchema):
-    username: str
-    password: str
+    username: str = Field(..., description="The username to use for basic authentication")
+    password: str = Field(..., description="The password to use for basic authentication", widget="password")
 
 
 class BasicAuthenticationBasedAPILogin(
