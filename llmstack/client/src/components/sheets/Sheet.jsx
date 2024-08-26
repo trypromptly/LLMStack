@@ -349,7 +349,7 @@ function Sheet(props) {
             editColumnAnchorEl.current = {
               getBoundingClientRect: () => DOMRect.fromRect(bounds),
             };
-            setShowEditColumnMenu(true);
+            setShowEditColumnMenu(!showEditColumnMenu);
           }}
           onColumnResize={(column, width) => {
             onColumnChange(
