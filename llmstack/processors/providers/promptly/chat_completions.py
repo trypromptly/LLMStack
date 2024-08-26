@@ -127,6 +127,7 @@ class MistralModelConfig(BaseModel):
 class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         description="The system message for the LLM",
+        default="You are a helpful assistant.",
         json_schema_extra={"widget": "textarea", "advanced_parameter": False},
     )
 
