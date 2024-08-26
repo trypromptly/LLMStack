@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Box,
   Button,
@@ -52,6 +52,26 @@ export function SheetColumnMenu({
     setTransformData(!!column?.data?.transformation_template);
     setTransformationTemplate(column?.data?.transformation_template || "");
   }, [column]);
+
+  const memoizedProcessorRunForm = useMemo(
+    () => (
+      <ProcessorRunForm
+        setData={(data) => {
+          columnRunData.current = {
+            ...columnRunData.current,
+            ...data,
+          };
+        }}
+        providerSlug={columnRunData.current?.provider_slug}
+        processorSlug={columnRunData.current?.processor_slug}
+        processorInput={columnRunData.current?.input}
+        processorConfig={columnRunData.current?.config}
+        processorOutputTemplate={columnRunData.current?.output_template}
+        columns={columns}
+      />
+    ),
+    [columns],
+  );
 
   const handleAddOrEditColumn = () => {
     const newColumn = {
@@ -165,24 +185,7 @@ export function SheetColumnMenu({
                   columns={columns}
                 />
               )}
-              {columnType === "processor_run" && (
-                <ProcessorRunForm
-                  setData={(data) => {
-                    columnRunData.current = {
-                      ...columnRunData.current,
-                      ...data,
-                    };
-                  }}
-                  providerSlug={columnRunData.current?.provider_slug}
-                  processorSlug={columnRunData.current?.processor_slug}
-                  processorInput={columnRunData.current?.input}
-                  processorConfig={columnRunData.current?.config}
-                  processorOutputTemplate={
-                    columnRunData.current?.output_template
-                  }
-                  columns={columns}
-                />
-              )}
+              {columnType === "processor_run" && memoizedProcessorRunForm}
               {(columnType === "app_run" || columnType === "processor_run") && (
                 <FormControlLabel
                   control={
