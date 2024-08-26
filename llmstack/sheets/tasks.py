@@ -7,6 +7,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth.models import User
 from django.test import RequestFactory
+from liquid import Template
 from rest_framework.response import Response as DRFResponse
 
 from llmstack.apps.apis import AppViewSet
@@ -71,8 +72,8 @@ def _execute_cell(
     elif column.kind == "processor_run":
         api_provider_slug = column.data["provider_slug"]
         api_backend_slug = column.data["processor_slug"]
-        processor_input = column.data["input"]
-        processor_config = column.data["config"]
+        processor_input = column.data.get("input", {})
+        processor_config = column.data.get("config", {})
         processor_output_template = column.data.get("output_template", {}).get("markdown", "")
 
         input = hydrate_input(processor_input, input_values)
@@ -111,10 +112,21 @@ def _execute_cell(
                 pass
 
     output = response.get("output", "")
-    async_to_sync(channel_layer.group_send)(
-        run_id, {"type": "cell.update", "cell": {"id": cell.cell_id, "data": response.get("output", "")}}
-    )
     cell.display_data = output if isinstance(output, str) else str(output)
+
+    # Apply transformation template if present
+    transformation_template = column.data.get("transformation_template")
+    if transformation_template:
+        try:
+            template = Template(transformation_template)
+            transformed_output = template.render({"output": cell.display_data})
+            cell.display_data = transformed_output
+        except Exception as e:
+            logger.error(f"Error applying transformation template: {e}")
+
+    async_to_sync(channel_layer.group_send)(
+        run_id, {"type": "cell.update", "cell": {"id": cell.cell_id, "data": cell.display_data}}
+    )
 
     return cell
 

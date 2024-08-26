@@ -10,6 +10,9 @@ import {
   Select,
   Stack,
   TextField,
+  Checkbox,
+  FormControlLabel,
+  Typography,
 } from "@mui/material";
 import { DeleteOutlined, AddOutlined } from "@mui/icons-material";
 import { GridCellKind } from "@glideapps/glide-data-grid";
@@ -39,11 +42,15 @@ export function SheetColumnMenu({
   const [columnName, setColumnName] = useState(column?.title || "");
   const [columnType, setColumnType] = useState(GridCellKind.Text);
   const columnRunData = useRef(column?.data || {});
+  const [transformData, setTransformData] = useState(false);
+  const [transformationTemplate, setTransformationTemplate] = useState("");
 
   useEffect(() => {
     setColumnType(column?.kind || GridCellKind.Text);
     setColumnName(column?.title || "");
     columnRunData.current = column?.data || {};
+    setTransformData(!!column?.data?.transformation_template);
+    setTransformationTemplate(column?.data?.transformation_template || "");
   }, [column]);
 
   const handleAddOrEditColumn = () => {
@@ -54,7 +61,12 @@ export function SheetColumnMenu({
       data:
         (columnType === "app_run" || columnType === "processor_run") &&
         columnRunData.current
-          ? columnRunData.current
+          ? {
+              ...columnRunData.current,
+              transformation_template: transformData
+                ? transformationTemplate
+                : undefined,
+            }
           : {},
     };
 
@@ -170,6 +182,34 @@ export function SheetColumnMenu({
                   }
                   columns={columns}
                 />
+              )}
+              {(columnType === "app_run" || columnType === "processor_run") && (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={transformData}
+                      onChange={(e) => setTransformData(e.target.checked)}
+                    />
+                  }
+                  label="Transform output data"
+                />
+              )}
+              {transformData && (
+                <>
+                  <TextField
+                    label="Transformation Template"
+                    value={transformationTemplate}
+                    onChange={(e) => setTransformationTemplate(e.target.value)}
+                    multiline
+                    rows={4}
+                    placeholder="Enter LiquidJS template"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    Use LiquidJS syntax to transform the output. Example:
+                    <code>{`{{ output | split: ' ' | first }}`}</code>. The
+                    'output' variable contains the original result.
+                  </Typography>
+                </>
               )}
               <Stack
                 direction="row"
