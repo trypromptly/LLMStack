@@ -86,36 +86,33 @@ function Sheet(props) {
     [cells, columns],
   );
 
-  const parseSheetColumnsIntoGridColumns = (columns) => {
+  const parseSheetColumnsIntoGridColumns = useCallback((columns) => {
     if (!columns) {
       return [];
     }
 
-    return columns.map((column, index) => {
-      return {
-        col: columnIndexToLetter(index),
-        title: column.title,
-        kind: column.kind,
-        data: column.data,
-        hasMenu: true,
-        icon: column.kind,
-        width: column.width || 300,
-      };
-    });
-  };
+    return columns.map((column, index) => ({
+      col: columnIndexToLetter(index),
+      title: column.title,
+      kind: column.kind,
+      data: column.data,
+      hasMenu: true,
+      icon: column.kind,
+      width: column.width || 300,
+    }));
+  }, []);
 
   useEffect(() => {
     if (sheetId) {
       axios()
         .get(`/api/sheets/${sheetId}?include_cells=true`)
         .then((response) => {
-          setSheet(response.data);
-          setCells(response.data?.cells || {});
-          setSheetRunning(response.data?.running || false);
-          setColumns(
-            parseSheetColumnsIntoGridColumns(response.data?.columns || []),
-          );
-          setNumRows(response.data?.total_rows || 0);
+          const { data } = response;
+          setSheet(data);
+          setCells(data?.cells || {});
+          setSheetRunning(data?.running || false);
+          setColumns(parseSheetColumnsIntoGridColumns(data?.columns || []));
+          setNumRows(data?.total_rows || 0);
           setUserChanges({
             columns: {},
             cells: {},
@@ -125,9 +122,12 @@ function Sheet(props) {
         })
         .catch((error) => {
           console.error(error);
+          enqueueSnackbar(`Error loading sheet: ${error.message}`, {
+            variant: "error",
+          });
         });
     }
-  }, [sheetId]);
+  }, [sheetId, parseSheetColumnsIntoGridColumns]);
 
   const hasChanges = useCallback(() => {
     return (
