@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Stack, CircularProgress } from "@mui/material";
 import { DataEditor, GridCellKind } from "@glideapps/glide-data-grid";
-import { SheetColumnMenu, SheetColumnMenuButton } from "./SheetColumnMenu";
+import {
+  SheetColumnMenu,
+  SheetColumnMenuButton,
+  sheetColumnTypes,
+} from "./SheetColumnMenu";
 import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
 import { enqueueSnackbar } from "notistack";
@@ -67,11 +71,15 @@ function Sheet(props) {
       const column = columns[col];
       const colLetter = column.col;
       const cell = cells[`${colLetter}${row + 1}`];
+      const columnType = sheetColumnTypes[column.type];
 
       return {
-        kind: cell?.kind || GridCellKind.Text,
-        displayData: cell?.display_data || "",
-        data: cell?.display_data || "",
+        kind:
+          cell?.kind === GridCellKind.Loading
+            ? GridCellKind.Loading
+            : columnType?.kind || GridCellKind.Text,
+        displayData: columnType?.getCellDisplayData(cell) || "",
+        data: columnType?.getCellData(cell) || "",
         allowOverlay: true,
         allowWrapping: true,
         skeletonWidth: column.width || 100,
@@ -86,15 +94,18 @@ function Sheet(props) {
       return [];
     }
 
-    return columns.map((column, index) => ({
+    const cols = columns.map((column, index) => ({
       col: columnIndexToLetter(index),
       title: column.title,
-      kind: column.kind,
+      type: column.type,
+      kind: sheetColumnTypes[column.type]?.kind || GridCellKind.Text,
       data: column.data,
       hasMenu: true,
-      icon: column.kind,
+      icon: sheetColumnTypes[column.type]?.icon,
       width: column.width || 300,
     }));
+
+    return cols;
   }, []);
 
   useEffect(() => {
@@ -169,15 +180,18 @@ function Sheet(props) {
       const cellId = gridCellToCellId(cell, columns);
 
       setCells((prevCells) => {
+        const newCell = {
+          row: row + 1,
+          col: columns[col]?.col,
+          kind: sheetColumnTypes[columns[col]?.type]?.kind || GridCellKind.Text,
+          data:
+            sheetColumnTypes[columns[col]?.type]?.getCellDataFromValue(value) ||
+            "",
+        };
+
         const newCells = {
           ...prevCells,
-          [cellId]: {
-            ...(prevCells[cellId] || {}),
-            row: row + 1,
-            col: columns[col]?.col,
-            kind: GridCellKind.Text,
-            display_data: value.displayData || value.data,
-          },
+          [cellId]: newCell,
         };
         updateUserChanges("cells", cellId, value);
         return newCells;
@@ -305,17 +319,18 @@ function Sheet(props) {
             if (gridCell) {
               const [colIndex] = gridCell;
               const column = columns[colIndex];
+              const columnType = sheetColumnTypes[column.type];
 
               setCells((cells) => ({
                 ...cells,
                 [cell.id]: {
                   ...cells[cell.id],
-                  kind:
-                    column.kind === "processor_run" || column.kind === "app_run"
-                      ? GridCellKind.Text
-                      : column.kind,
-                  data: column.data,
-                  display_data: cell.data,
+                  kind: GridCellKind.Text,
+                  data: {
+                    ...cells[cell.id].data,
+                    ...columnType?.getCellDataFromValue(cell.output),
+                  },
+                  display_data: cell.output || "",
                 },
               }));
 
@@ -413,41 +428,6 @@ function Sheet(props) {
           }}
           rows={numRows}
           headerIcons={headerIcons}
-          customRenderers={[
-            {
-              kind: "app_run",
-              isMatch: (cell) => cell.kind === "app_run",
-            },
-            {
-              kind: "processor_run",
-              isMatch: (cell) => cell.kind === "processor_run",
-              draw: (args, cell) => {
-                const { ctx, theme, rect } = args;
-                const { markdown } = cell.data;
-
-                let data = markdown;
-                if (data.includes("\n")) {
-                  // new lines are rare and split is relatively expensive compared to the search
-                  // it pays off to not do the split contantly.
-                  data = data.split(/\r?\n/)[0];
-                }
-                const max = rect.width / 4; // no need to round, slice will just truncate this
-                if (data.length > max) {
-                  data = data.slice(0, max);
-                }
-
-                ctx.fillStyle = theme.textDark;
-                ctx.fillText(
-                  data,
-                  rect.x + theme.cellHorizontalPadding,
-                  rect.y + rect.height / 2,
-                );
-
-                return true;
-              },
-            },
-          ]}
-          drawCell={(args, drawContent) => drawContent()}
         />
       </Box>
       <div id="portal" />

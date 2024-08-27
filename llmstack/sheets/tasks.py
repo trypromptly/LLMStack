@@ -42,16 +42,16 @@ def _execute_cell(
     run_id: str,
     user: User,
 ) -> List[PromptlySheetCell]:
-    if column.kind not in ["app_run", "processor_run"]:
+    if column.type not in ["app_run", "processor_run"]:
         return [cell]
 
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
 
     fill_rows_with_output = column.data.get("fill_rows_with_output", False)
-    input_values = {} if fill_rows_with_output else {cell.col: cell.display_data for cell in row}
+    input_values = {} if fill_rows_with_output else {cell.col: cell.data for cell in row}
 
     response = None
-    if column.kind == "app_run":
+    if column.type == "app_run":
         app_slug = column.data["app_slug"]
         input = hydrate_input(column.data["input"], input_values)
 
@@ -72,7 +72,7 @@ def _execute_cell(
             request_uuid=str(uuid.uuid4()),
             request=request,
         )
-    elif column.kind == "processor_run":
+    elif column.type == "processor_run":
         api_provider_slug = column.data["provider_slug"]
         api_backend_slug = column.data["processor_slug"]
         processor_input = column.data.get("input", {})
@@ -136,9 +136,8 @@ def _execute_cell(
                     PromptlySheetCell(
                         row=cell.row + i,
                         col=cell.col,
-                        data=cell.data,
+                        data=str(item),
                         formula=cell.formula,
-                        display_data=str(item),
                     )
                     for i, item in enumerate(output_list)
                 ]
@@ -157,20 +156,28 @@ def _execute_cell(
 
                 for cell in output_list:
                     async_to_sync(channel_layer.group_send)(
-                        run_id, {"type": "cell.update", "cell": {"id": cell.cell_id, "data": cell.display_data}}
+                        run_id,
+                        {
+                            "type": "cell.update",
+                            "cell": {"id": cell.cell_id, "output": cell.data.get("output", "")},
+                        },
                     )
 
                 return output_list
             else:
-                cell.display_data = str(output)
+                cell.data = {"output": str(output)}
                 return [cell]
         except json.JSONDecodeError:
-            cell.display_data = str(output)
+            cell.data = {"output": str(output)}
             return [cell]
     else:
-        cell.display_data = str(output)
+        cell.data = {"output": str(output)}
         async_to_sync(channel_layer.group_send)(
-            run_id, {"type": "cell.update", "cell": {"id": cell.cell_id, "data": cell.display_data}}
+            run_id,
+            {
+                "type": "cell.update",
+                "cell": {"id": cell.cell_id, "output": cell.data.get("output", "")},
+            },
         )
         return [cell]
 
@@ -190,7 +197,7 @@ def run_sheet(sheet, run_entry, user):
 
         # Execute cells that are not dependent on other cells
         for column in existing_cols:
-            if column.kind not in ["app_run", "processor_run"]:
+            if column.type not in ["app_run", "processor_run"]:
                 continue
 
             fill_rows_with_output = column.data.get("fill_rows_with_output", False)
@@ -214,7 +221,7 @@ def run_sheet(sheet, run_entry, user):
         # Execute cells that are dependent on other cells
         for row_number in range(1, sheet.data.get("total_rows", 0) + 1):
             for col in existing_cols:
-                if col.kind not in ["app_run", "processor_run"]:
+                if col.type not in ["app_run", "processor_run"]:
                     continue
 
                 # Skip if this column is to fill rows with output

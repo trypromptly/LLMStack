@@ -5,7 +5,7 @@ import string
 import uuid
 from enum import Enum
 from functools import cache
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from django.db import models
 from django.db.models.signals import post_delete
@@ -21,18 +21,9 @@ class PromptlySheetColumnType(str, Enum):
     TEXT = "text"
     NUMBER = "number"
     BOOLEAN = "boolean"
-    DATE = "date"
-    TIME = "time"
-    DATETIME = "datetime"
-    DURATION = "duration"
-    PERCENTAGE = "percentage"
-    CURRENCY = "currency"
-    URL = "url"
-    EMAIL = "email"
-    PHONE = "phone"
+    URI = "uri"
+    MARKDOWN = "markdown"
     IMAGE = "image"
-    FILE = "file"
-    FORMULA = "formula"
     APP_RUN = "app_run"
     PROCESSOR_RUN = "processor_run"
 
@@ -40,9 +31,24 @@ class PromptlySheetColumnType(str, Enum):
         return self.value
 
 
+class PromptlySheetCellKind(str, Enum):
+    TEXT = "text"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    IMAGE = "image"
+    URI = "uri"
+    MARKDOWN = "markdown"
+    LOADING = "loading"
+    CUSTOM = "custom"
+
+    def __str__(self):
+        return self.value
+
+
 class PromptlySheetColumn(BaseModel):
     title: str
-    kind: PromptlySheetColumnType = PromptlySheetColumnType.TEXT
+    type: PromptlySheetColumnType = PromptlySheetColumnType.TEXT
+    kind: PromptlySheetCellKind = PromptlySheetCellKind.TEXT
     data: dict = {}
     col: str
     width: Optional[int] = None
@@ -74,8 +80,7 @@ class PromptlySheetColumn(BaseModel):
 class PromptlySheetCell(BaseModel):
     row: int
     col: str
-    data: dict = {}
-    display_data: str = ""
+    data: Optional[Any] = None
     formula: str = ""
 
     @property

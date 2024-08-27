@@ -30,38 +30,63 @@ const numberToLetters = (num) => {
   return letters;
 };
 
-const columnTypes = [
-  {
+export const sheetColumnTypes = {
+  text: {
     value: "text",
     label: "Text",
     icon: GridColumnIcon.HeaderString,
     kind: GridCellKind.Text,
+    getCellDataFromValue: (value) => value?.data || "",
+    getCellData: (cell) => cell?.data || "",
+    getCellDisplayData: (cell) => cell?.data || "",
   },
-  {
+  number: {
     value: "number",
     label: "Number",
     icon: GridColumnIcon.HeaderNumber,
     kind: GridCellKind.Number,
+    getCellDataFromValue: (value) => value?.data || "",
+    getCellData: (cell) => cell?.data || 0,
+    getCellDisplayData: (cell) => cell?.data?.toLocaleString() || "",
   },
-  {
-    value: "image",
-    label: "Image",
-    icon: GridColumnIcon.HeaderImage,
-    kind: GridCellKind.Image,
+  uri: {
+    value: "uri",
+    label: "URI",
+    icon: GridColumnIcon.HeaderUri,
+    kind: GridCellKind.Uri,
+    getCellDataFromValue: (value) => value?.data || "",
+    getCellData: (cell) => cell?.data || "",
+    getCellDisplayData: (cell) => cell?.data || "",
   },
-  {
+  app_run: {
     value: "app_run",
     label: "App Run",
     icon: "app_run",
-    kind: "app_run",
+    kind: GridCellKind.Text,
+    getCellDataFromValue: (value) => {
+      return {
+        output: value?.data,
+      };
+    },
+    getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
+    getCellDisplayData: (cell) =>
+      cell?.data?.output || cell?.display_data || "",
   },
-  {
+  processor_run: {
     value: "processor_run",
     label: "Processor Run",
     icon: "processor_run",
-    kind: "processor_run",
+    kind: GridCellKind.Text,
+    getCellDataFromValue: (value) => {
+      return {
+        output: value?.data,
+      };
+    },
+    getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
+    getCellDisplayData: (cell) =>
+      cell?.data?.output || cell?.display_data || "",
   },
-];
+};
 
 export function SheetColumnMenu({
   anchorEl,
@@ -81,7 +106,7 @@ export function SheetColumnMenu({
   const [fillRowsWithOutput, setFillRowsWithOutput] = useState(false);
 
   useEffect(() => {
-    setColumnType(column?.kind || GridCellKind.Text);
+    setColumnType(column?.type || GridCellKind.Text);
     setColumnName(column?.title || "");
     columnRunData.current = column?.data || {};
     setTransformData(!!column?.data?.transformation_template);
@@ -113,8 +138,11 @@ export function SheetColumnMenu({
     const newColumn = {
       col: column ? column.col : numberToLetters(columns.length),
       title: columnName || "New Column",
-      kind: columnTypes.find((type) => type.value === columnType)?.kind,
-      icon: columnTypes.find((type) => type.value === columnType)?.icon,
+      type: columnType,
+      kind: sheetColumnTypes[columnType]?.kind,
+      icon: sheetColumnTypes[columnType]?.icon,
+      hasMenu: column?.hasMenu || true,
+      width: column?.width || 300,
       data:
         (columnType === "app_run" || columnType === "processor_run") &&
         columnRunData.current
@@ -205,9 +233,9 @@ export function SheetColumnMenu({
                 onChange={(e) => setColumnType(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
               >
-                {columnTypes.map((type) => (
-                  <MenuItem key={type.value} value={type.value}>
-                    {type.label}
+                {Object.keys(sheetColumnTypes).map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {sheetColumnTypes[type].label}
                   </MenuItem>
                 ))}
               </Select>
