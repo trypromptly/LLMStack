@@ -31,11 +31,36 @@ const numberToLetters = (num) => {
 };
 
 const columnTypes = [
-  { value: "text", label: "Text", icon: GridColumnIcon.HeaderString },
-  { value: "number", label: "Number", icon: GridColumnIcon.HeaderNumber },
-  { value: "image", label: "Image", icon: GridColumnIcon.HeaderImage },
-  { value: "app_run", label: "App Run", icon: "app_run" },
-  { value: "processor_run", label: "Processor Run", icon: "processor_run" },
+  {
+    value: "text",
+    label: "Text",
+    icon: GridColumnIcon.HeaderString,
+    kind: GridCellKind.Text,
+  },
+  {
+    value: "number",
+    label: "Number",
+    icon: GridColumnIcon.HeaderNumber,
+    kind: GridCellKind.Number,
+  },
+  {
+    value: "image",
+    label: "Image",
+    icon: GridColumnIcon.HeaderImage,
+    kind: GridCellKind.Image,
+  },
+  {
+    value: "app_run",
+    label: "App Run",
+    icon: "app_run",
+    kind: "app_run",
+  },
+  {
+    value: "processor_run",
+    label: "Processor Run",
+    icon: "processor_run",
+    kind: "processor_run",
+  },
 ];
 
 export function SheetColumnMenu({
@@ -88,7 +113,7 @@ export function SheetColumnMenu({
     const newColumn = {
       col: column ? column.col : numberToLetters(columns.length),
       title: columnName || "New Column",
-      kind: columnType,
+      kind: columnTypes.find((type) => type.value === columnType)?.kind,
       icon: columnTypes.find((type) => type.value === columnType)?.icon,
       data:
         (columnType === "app_run" || columnType === "processor_run") &&
@@ -99,6 +124,7 @@ export function SheetColumnMenu({
                 ? transformationTemplate
                 : undefined,
               fill_rows_with_output: fillRowsWithOutput,
+              kind: columnType,
             }
           : {},
     };

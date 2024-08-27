@@ -69,12 +69,7 @@ function Sheet(props) {
       const cell = cells[`${colLetter}${row + 1}`];
 
       return {
-        kind:
-          cell?.kind ||
-          (column?.kind === "app_run" || column?.kind === "processor_run"
-            ? GridCellKind.Text
-            : column?.kind) ||
-          GridCellKind.Custom,
+        kind: cell?.kind || GridCellKind.Text,
         displayData: cell?.display_data || "",
         data: cell?.display_data || "",
         allowOverlay: true,
@@ -244,7 +239,7 @@ function Sheet(props) {
     const newCells = columns.reduce((acc, column) => {
       const cellId = `${column.col}${newRowIndex}`;
       acc[cellId] = {
-        kind: GridCellKind.Text,
+        kind: column.kind || GridCellKind.Text,
         display_data: "",
         row: newRowIndex,
         col: column.col,
@@ -316,11 +311,10 @@ function Sheet(props) {
                 [cell.id]: {
                   ...cells[cell.id],
                   kind:
-                    column?.kind === "app_run" ||
-                    column?.kind === "processor_run"
+                    column.kind === "processor_run" || column.kind === "app_run"
                       ? GridCellKind.Text
-                      : column?.kind || GridCellKind.Text,
-                  data: cell.data,
+                      : column.kind,
+                  data: column.data,
                   display_data: cell.data,
                 },
               }));
@@ -419,6 +413,41 @@ function Sheet(props) {
           }}
           rows={numRows}
           headerIcons={headerIcons}
+          customRenderers={[
+            {
+              kind: "app_run",
+              isMatch: (cell) => cell.kind === "app_run",
+            },
+            {
+              kind: "processor_run",
+              isMatch: (cell) => cell.kind === "processor_run",
+              draw: (args, cell) => {
+                const { ctx, theme, rect } = args;
+                const { markdown } = cell.data;
+
+                let data = markdown;
+                if (data.includes("\n")) {
+                  // new lines are rare and split is relatively expensive compared to the search
+                  // it pays off to not do the split contantly.
+                  data = data.split(/\r?\n/)[0];
+                }
+                const max = rect.width / 4; // no need to round, slice will just truncate this
+                if (data.length > max) {
+                  data = data.slice(0, max);
+                }
+
+                ctx.fillStyle = theme.textDark;
+                ctx.fillText(
+                  data,
+                  rect.x + theme.cellHorizontalPadding,
+                  rect.y + rect.height / 2,
+                );
+
+                return true;
+              },
+            },
+          ]}
+          drawCell={(args, drawContent) => drawContent()}
         />
       </Box>
       <div id="portal" />
@@ -435,15 +464,17 @@ function Sheet(props) {
               const newColumns = [...columns];
               const index = columns.findIndex((c) => c.col === column.col);
               newColumns[index] = column;
+
               updateUserChanges("columns", selectedColumnId, column);
-              return newColumns;
+
+              return parseSheetColumnsIntoGridColumns(newColumns);
             });
           }}
           deleteColumn={(column) => {
             setColumns((columns) => {
               const newColumns = columns.filter((c) => c.col !== column.col);
               updateUserChanges("columns", column.col, null); // Mark column as deleted
-              return newColumns;
+              return parseSheetColumnsIntoGridColumns(newColumns);
             });
             setCells((cells) => {
               const newCells = { ...cells };
