@@ -17,6 +17,7 @@ from llmstack.sheets.models import (
     PromptlySheetRunEntry,
 )
 from llmstack.sheets.serializers import PromptlySheetSerializer
+from llmstack.sheets.yaml_loader import load_sheet_templates
 
 logger = logging.getLogger(__name__)
 
@@ -89,27 +90,15 @@ class PromptlySheetViewSet(viewsets.ViewSet):
             profile_uuid=profile.uuid,
             data={
                 "description": request.data.get("description", ""),
+                "columns": request.data.get("columns", []),
+                "total_rows": request.data.get("total_rows", 0),
             },
             extra_data=request.data.get("extra_data", {"has_header": True}),
         )
 
         if "cells" in request.data:
-            if not isinstance(request.data["cells"], dict):
-                raise ValueError("Invalid cells data")
-
-            cells_data = {}
-            for row_number in request.data["cells"]:
-                row_cell_data = {}
-                if not isinstance(request.data["cells"][row_number], dict):
-                    raise ValueError("Invalid cells data")
-                for column_number in request.data["cells"][row_number]:
-                    cell_data = request.data["cells"][row_number][column_number]
-                    row_cell_data[int(column_number)] = PromptlySheetCell(
-                        row=row_number, col=column_number, **cell_data
-                    )
-                cells_data[int(row_number)] = row_cell_data
-
-            sheet.save(cells=cells_data)
+            cells = [PromptlySheetCell(**cell_data) for cell_data in request.data.get("cells", {}).values()]
+            sheet.save(cells=cells, update_fields=["data"])
 
         return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
 
@@ -208,3 +197,14 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         )
         response["Content-Disposition"] = f'attachment; filename="sheet_{sheet_uuid}_{run_id}.csv"'
         return response
+
+
+class PromptlySheetTemplateViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list_templates(self, request, slug=None):
+        templates = load_sheet_templates()
+        if slug:
+            return DRFResponse(templates.get(slug))
+
+        return DRFResponse(templates)

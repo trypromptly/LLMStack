@@ -654,6 +654,12 @@ APP_TEMPLATES_DIR = (
     else [os.path.join(BASE_DIR, "contrib", "apps", "templates")]
 )
 
+SHEET_TEMPLATES_DIR = (
+    os.getenv("SHEET_TEMPLATES_DIR").split(",")
+    if os.getenv("SHEET_TEMPLATES_DIR")
+    else [os.path.join(BASE_DIR, "contrib", "sheets")]
+)
+
 DATA_PIPELINES_DIR = (
     os.getenv("DATA_PIPELINES_DIR").split(",")
     if os.getenv("DATA_PIPELINES_DIR")

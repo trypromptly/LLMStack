@@ -931,3 +931,26 @@ export const sheetsListSelector = selector({
   },
   set: ({ set }, newValue) => set(sheetsListState, newValue),
 });
+
+export const sheetTemplatesState = atom({
+  key: "sheetTemplatesState",
+  default: [],
+});
+
+export const sheetTemplatesSelector = selector({
+  key: "sheetTemplatesSelector",
+  get: async ({ get }) => {
+    const currentTemplates = get(sheetTemplatesState);
+    if (currentTemplates.length === 0) {
+      try {
+        const response = await axios().get("/api/sheets/templates");
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching sheet templates:", error);
+        return [];
+      }
+    }
+    return currentTemplates;
+  },
+  set: ({ set }, newValue) => set(sheetTemplatesState, newValue),
+});

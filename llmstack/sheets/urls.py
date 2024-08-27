@@ -1,8 +1,10 @@
 from django.urls import path
 
-from llmstack.sheets.apis import PromptlySheetViewSet
+from llmstack.sheets.apis import PromptlySheetTemplateViewSet, PromptlySheetViewSet
 
 urlpatterns = [
+    path("api/sheets/templates", PromptlySheetTemplateViewSet.as_view({"get": "list_templates"})),
+    path("api/sheets/templates/<str:slug>", PromptlySheetTemplateViewSet.as_view({"get": "list_templates"})),
     path("api/sheets", PromptlySheetViewSet.as_view({"get": "list", "post": "create"})),
     path(
         "api/sheets/<str:sheet_uuid>",

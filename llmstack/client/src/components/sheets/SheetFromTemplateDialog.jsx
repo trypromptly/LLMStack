@@ -7,10 +7,16 @@ import {
   Stack,
   TextField,
   Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { axios } from "../../data/axios";
+import { useRecoilValue } from "recoil";
+import { sheetTemplatesSelector } from "../../data/atoms";
 
 export function SheetFromTemplateDialog({
   open,
@@ -24,6 +30,11 @@ export function SheetFromTemplateDialog({
   const [sheetDescription, setSheetDescription] = useState(
     sheet?.description || "",
   );
+  const [sheetTemplate, setSheetTemplate] = useState("");
+  const [sheetCells, setSheetCells] = useState({});
+  const [sheetColumns, setSheetColumns] = useState([]);
+  const [sheetRows, setSheetRows] = useState(0);
+  const sheetTemplates = useRecoilValue(sheetTemplatesSelector);
   const navigate = useNavigate();
 
   const handleClose = () => {
@@ -31,10 +42,17 @@ export function SheetFromTemplateDialog({
   };
 
   const handleSave = () => {
-    const payload = {
+    let payload = {
       name: sheetName,
       description: sheetDescription,
     };
+
+    if (!sheetId) {
+      payload.cells = sheetCells;
+      payload.columns = sheetColumns;
+      payload.total_rows = sheetRows;
+    }
+
     const method = sheetId ? "patch" : "post";
     const url = sheetId ? `/api/sheets/${sheetId}` : "/api/sheets";
 
@@ -48,6 +66,15 @@ export function SheetFromTemplateDialog({
           navigate(`/sheets/${response.data.uuid}`);
         }
       });
+  };
+
+  const handleTemplateChange = (templateSlug) => {
+    setSheetTemplate(templateSlug);
+    const template = sheetTemplates[templateSlug];
+
+    setSheetCells(template?.cells || {});
+    setSheetColumns(template?.columns || []);
+    setSheetRows(template?.total_rows || 0);
   };
 
   return (
@@ -65,16 +92,43 @@ export function SheetFromTemplateDialog({
             value={sheetName}
             variant="outlined"
             onChange={(e) => setSheetName(e.target.value)}
+            onFocus={(e) => e.target.select()}
           />
           <TextField
             label="Description"
             value={sheetDescription}
             multiline
-            rows={4}
+            rows={2}
             placeholder="Enter a description for your sheet"
             helperText="This is optional description of your sheet. It will help you and others understand what this sheet is for."
             onChange={(e) => setSheetDescription(e.target.value)}
           />
+          {!sheetId && sheetTemplates && (
+            <FormControl fullWidth>
+              <InputLabel id="template-select-label">
+                Use an existing template (optional)
+              </InputLabel>
+              <Select
+                labelId="template-select-label"
+                id="template-select"
+                value={sheetTemplate}
+                onChange={(e) => handleTemplateChange(e.target.value)}
+                variant="filled"
+                sx={{ lineHeight: "0.5em" }}
+              >
+                {Object.values(sheetTemplates).map((template) => (
+                  <MenuItem key={template.slug} value={template.slug}>
+                    <Stack direction={"column"}>
+                      <Typography variant="body1">{template.name}</Typography>
+                      <Typography variant="caption">
+                        {template.description}
+                      </Typography>
+                    </Stack>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
