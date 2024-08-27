@@ -171,6 +171,8 @@ class ApiProcessorInterface(
         self._request = request
         self._metadata = metadata
         self._session_enabled = session_enabled
+        self._billing_metrics = {}
+        self._usage_data = {"invocation": 1}
 
         self.process_session_data(session_data if session_enabled else {})
 
@@ -270,7 +272,22 @@ class ApiProcessorInterface(
 
     # Used to track usage data
     def usage_data(self) -> dict:
-        return {"credits": 1000}
+        billing_details = {}
+        pricing_metrics = self._billing_metrics.get("pricing_metrics", {})
+
+        for billing_metric_type, billing_metric in pricing_metrics.items():
+            cost = billing_metric.calculate_cost(**self._usage_data)
+            billing_details[billing_metric_type] = {
+                "unit_cost": billing_metric.unit_cost,
+                "cost": cost,
+                "provider_config_source": self._billing_metrics.get("provider_config_source"),
+            }
+
+        return {
+            "credits": sum([x["cost"] for x in billing_details.values()]),
+            "usage_data": self._usage_data,
+            "billing_details": billing_details,
+        }
 
     def is_output_cacheable(self) -> bool:
         return True

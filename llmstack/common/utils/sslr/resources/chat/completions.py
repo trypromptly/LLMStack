@@ -47,6 +47,51 @@ from ...types.chat.chat_completion_message_param import ChatCompletionMessagePar
 __all__ = ["Completions", "AsyncCompletions"]
 
 
+def _convert_to_anthropic_format(messages):
+    anthropic_messages = []
+    last_role = None
+    for message in messages:
+        if message["role"] == "system":
+            continue
+
+        if last_role != message["role"]:
+            anthropic_messages.append({"role": message["role"], "content": []})
+            last_role = message["role"]
+
+        if isinstance(message["content"], str):
+            anthropic_messages[-1]["content"].append({"type": "text", "text": message["content"]})
+        elif isinstance(message["content"], list):
+            for part in message["content"]:
+                if part["type"] == "text":
+                    anthropic_messages[-1]["content"].append({"type": "text", "text": part["data"]})
+                elif part["type"] == "file":
+                    if part["mime_type"].startswith("image"):
+                        anthropic_messages[-1]["content"].append(
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": part["mime_type"],
+                                    "data": base64.b64encode(part["data"]).decode("utf-8"),
+                                },
+                            }
+                        )
+                elif part["type"] == "blob":
+                    if part["mime_type"].startswith("image"):
+                        anthropic_messages[-1]["content"].append(
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": part["mime_type"],
+                                    "data": base64.b64encode(part["data"]).decode("utf-8"),
+                                },
+                            }
+                        )
+
+    return anthropic_messages
+
+
 class Completions(OpenAICompletions):
     @cached_property
     def with_raw_response(self) -> CompletionsWithRawResponse:
@@ -157,7 +202,7 @@ class Completions(OpenAICompletions):
                                         {
                                             "image_url": {
                                                 "url": f"data:{part['mime_type']};base64,{base64.b64encode(part['data']).decode('utf-8')}",
-                                                "detail": part["resolution"],
+                                                "detail": part.get("resolution"),
                                             },
                                             "type": "image_url",
                                         }
@@ -200,7 +245,7 @@ class Completions(OpenAICompletions):
         if self._client._llm_router_provider == PROVIDER_ANTHROPIC:
             path = "/messages"
             stream_cls = LLMAnthropicStream[_chat.ChatCompletionChunk]
-            user_messages = list(filter(lambda message: message["role"] != "system", messages_openai_format))
+            user_messages = _convert_to_anthropic_format(messages=messages)
             system_messages = list(filter(lambda message: message["role"] == "system", messages_openai_format))
             if system_messages and "content" in system_messages[0] and isinstance(system_messages[0]["content"], str):
                 system = system_messages[0]["content"]
@@ -209,6 +254,7 @@ class Completions(OpenAICompletions):
 
             post_body_data["messages"] = user_messages
             post_body_data.pop("seed")
+            post_body_data.pop("n")
 
         elif self._client._llm_router_provider == PROVIDER_COHERE:
             path = "/chat"

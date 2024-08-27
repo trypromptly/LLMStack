@@ -31,6 +31,9 @@ class ImageModel(str, Enum):
     def __str__(self):
         return self.value
 
+    def model_name(self):
+        return self.value
+
 
 class Size(str, Enum):
     field_256x256 = "256x256"
@@ -127,12 +130,6 @@ class ImagesGenerations(
 {% endfor %}""",
         )
 
-    def usage_data(self) -> dict:
-        if self._config.model == ImageModel.DALL_E_2:
-            return {"credits": 5000}
-        elif self._config.model == ImageModel.DALL_E_3:
-            return {"credits": 20000}
-
     def process(self) -> dict:
         prompt = self._input.prompt
 
@@ -140,6 +137,11 @@ class ImagesGenerations(
             raise Exception("No prompt found in input")
 
         provider_config = self.get_provider_config(model_slug=self._config.model)
+        self._billing_metrics = provider_config.get_billing_metrics(
+            provider_slug=self.provider_slug(),
+            processor_slug=self.slug(),
+            model_slug=self._config.model.value,
+        )
         client = openai.OpenAI(api_key=provider_config.api_key)
         result = client.images.generate(
             prompt=prompt,
@@ -160,6 +162,8 @@ class ImagesGenerations(
                 data=[image.b64_json or image.url for image in result.data],
             ),
         )
+        self._usage_data["resolution"] = self._config.size.value
+        self._usage_data["quality"] = self._config.quality.value
 
         output = self._output_stream.finalize()
 

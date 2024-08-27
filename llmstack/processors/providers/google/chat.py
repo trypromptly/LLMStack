@@ -27,6 +27,9 @@ class GeminiModel(str, Enum):
     def __str__(self):
         return self.value
 
+    def model_name(self):
+        return self.value
+
 
 class TextMessage(BaseModel):
     type: Literal["text"]
@@ -234,6 +237,7 @@ class ChatProcessor(
 
     def process(self) -> dict:
         tools = []
+
         messages = self._chat_history if self._config.retain_history else []
 
         if self._input.functions:
@@ -260,7 +264,6 @@ class ChatProcessor(
                     )
                 elif isinstance(input_message, UrlImageMessage):
                     image_url = input_message.image_url
-                    logger.info(f"Image URL: {image_url}")
 
                     if image_url.startswith("data:"):
                         content, mime_type = image_url.split(",", 1)
@@ -284,6 +287,11 @@ class ChatProcessor(
                     )
 
         client = get_llm_client_from_provider_config("google", self._config.model.value, self.get_provider_config)
+        self._billing_metrics = self.get_provider_config(
+            model_slug=self._config.model.value, provider_slug=self.provider_slug(), processor_slug=self.slug()
+        ).get_billing_metrics(
+            model_slug=self._config.model.value, provider_slug=self.provider_slug(), processor_slug=self.slug()
+        )
 
         messages_to_send = (
             [
@@ -308,22 +316,32 @@ class ChatProcessor(
         )
 
         for result in response:
+            if result.usage:
+                self._usage_data["input_tokens"] = result.usage.input_tokens
+                self._usage_data["output_tokens"] = result.usage.output_tokens
+
             choice = result.choices[0]
-            for content in choice.delta.content:
-                if content["type"] == "text":
-                    async_to_sync(self._output_stream.write)(ChatOutput(content=content["data"]))
-                elif content["type"] == "tool_call":
-                    async_to_sync(self._output_stream.write)(
-                        ChatOutput(
-                            function_calls=[
-                                ToolCall(
-                                    id=content["id"],
-                                    function=FunctionCall(name=content["tool_name"], parameters=content["tool_args"]),
-                                    type="function",
+            if choice.delta.content:
+                if isinstance(choice.delta.content, str):
+                    async_to_sync(self._output_stream.write)(ChatOutput(content=choice.delta.content))
+                elif isinstance(choice.delta.content, list):
+                    for content in choice.delta.content:
+                        if content["type"] == "text":
+                            async_to_sync(self._output_stream.write)(ChatOutput(content=content["data"]))
+                        elif content["type"] == "tool_call":
+                            async_to_sync(self._output_stream.write)(
+                                ChatOutput(
+                                    function_calls=[
+                                        ToolCall(
+                                            id=content["id"],
+                                            function=FunctionCall(
+                                                name=content["tool_name"], parameters=content["tool_args"]
+                                            ),
+                                            type="function",
+                                        )
+                                    ]
                                 )
-                            ]
-                        )
-                    )
+                            )
 
         output = self._output_stream.finalize()
 

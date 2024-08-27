@@ -717,3 +717,5 @@ CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES = os.getenv("CONNECTION_TYPE_INTERFA
 DEFAULT_DATA_DESTINATION_CONFIG = {"provider_slug": "weaviate", "processor_slug": "vector-store"}
 
 DEFAULT_EMBEDDINGS_GENERATOR_CONFIG = {"provider_slug": "openai", "embedding_model_slug": "text-embedding-ada-002"}
+
+BILLING_MODULE = "llmstack.base.billing"

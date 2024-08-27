@@ -1,12 +1,13 @@
-import base64
+import copy
 import logging
 from typing import Annotated, List, Literal, Optional, Union
 
-import requests
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.utils import prequests
+from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.anthropic.messages import (
     MessagesConfiguration,
     MessagesOutput,
@@ -81,63 +82,71 @@ class MessagesVisionProcessor(ApiProcessorInterface[MessagesVisionInput, Message
         if self._config.retain_history:
             return {"chat_history": self._chat_history}
 
+    def get_image_bytes_mime_type(self, image_url: str):
+        response = prequests.get(image_url)
+        if response.status_code != 200:
+            raise ValueError(f"Invalid image URL: {image_url}")
+        image_bytes = response.content
+        mime_type = response.headers["Content-Type"]
+        return image_bytes, mime_type
+
     def process(self) -> MessagesOutput:
+        messages = self._chat_history if self._config.retain_history else []
+
+        if self._input.messages:
+            parts = []
+            for input_message in self._input.messages:
+                if isinstance(input_message, TextMessage):
+                    parts.append(
+                        {
+                            "mime_type": "text/plain",
+                            "type": "text",
+                            "data": input_message.text,
+                        }
+                    )
+                elif isinstance(input_message, UrlImageMessage):
+                    image_url = input_message.image_url
+                    content = None
+                    mime_type = None
+                    if image_url.startswith("data:"):
+                        content, mime_type = image_url.split(",", 1)
+                    elif image_url.startswith("http"):
+                        content, mime_type = self.get_image_bytes_mime_type(image_url)
+                    elif image_url.startswith("objref://"):
+                        data_uri = self._get_session_asset_data_uri(image_url, include_name=True)
+                        mime_type, _, content = validate_parse_data_uri(data_uri)
+                    if content and mime_type:
+                        parts.append(
+                            {
+                                "type": "blob",
+                                "data": content,
+                                "mime_type": mime_type,
+                            }
+                        )
+
+            messages.append(
+                {
+                    "role": "user",
+                    "content": parts,
+                }
+            )
         client = get_llm_client_from_provider_config(
-            "anthropic", self._config.model.model_name(), self.get_provider_config
+            self.provider_slug(), self._config.model.model_name(), self.get_provider_config
         )
-        messages = []
+        self._billing_metrics = self.get_provider_config(
+            model_slug=self._config.model.value, provider_slug=self.provider_slug(), processor_slug=self.slug()
+        ).get_billing_metrics(
+            model_slug=self._config.model.value, provider_slug=self.provider_slug(), processor_slug=self.slug()
+        )
 
-        if self._config.system_prompt:
-            messages.append({"role": "system", "content": self._config.system_message})
-
-        if self._chat_history:
-            for message in self._chat_history:
-                messages.append({"role": message["role"], "content": message["message"]})
-
-        for msg in self._input.messages:
-            if msg.type == "image_url":
-                asset_uri = self._get_session_asset_data_uri(msg.image_url, include_name=False)
-                if asset_uri and asset_uri.startswith("data:"):
-                    data_uri = asset_uri
-                else:
-                    asset_response = requests.get(asset_uri)
-                    mime_type = asset_response.headers.get("content-type", "image/png")
-                    data_uri = f"data:{mime_type};base64,{base64.b64encode(asset_response.content).decode('utf-8')}"
-                msg.image_url = data_uri
-
-        input_messages = []
-
-        for msg in self._input.messages:
-            if isinstance(msg, TextMessage):
-                input_messages.append(
-                    {
-                        "type": "text",
-                        "text": msg.text,
-                    }
-                )
-            elif isinstance(msg, UrlImageMessage):
-                mime_type = msg.image_url.split(",")[0].split(":")[1].split(";")[0]
-                data = msg.image_url.split(",")[1]
-                input_messages.append(
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": mime_type,
-                            "data": data,
-                        },
-                    }
-                )
-
-        messages.append(
-            {
-                "role": "user",
-                "content": input_messages,
-            },
+        messages_to_send = (
+            [{"role": "system", "content": self._config.system_message}] + messages
+            if self._config.system_prompt
+            else messages
         )
 
         response = client.chat.completions.create(
-            messages=messages,
+            messages=messages_to_send,
             model=self._config.model.model_name(),
             max_tokens=self._config.max_tokens,
             stream=True,
@@ -145,6 +154,9 @@ class MessagesVisionProcessor(ApiProcessorInterface[MessagesVisionInput, Message
         )
 
         for result in response:
+            if result.usage:
+                self._usage_data["input_tokens"] = result.usage.input_tokens
+                self._usage_data["output_tokens"] = result.usage.output_tokens
             choice = result.choices[0]
             if choice.delta.content:
                 text_content = "".join(
@@ -156,9 +168,12 @@ class MessagesVisionProcessor(ApiProcessorInterface[MessagesVisionInput, Message
         output = self._output_stream.finalize()
 
         if self._config.retain_history:
-            for message in self._input.messages:
-                self._chat_history = messages[:]
-
-            self._chat_history.append({"role": "assistant", "message": output.message})
+            self._chat_history = copy.deepcopy(messages)
+            self._chat_history.append(
+                {
+                    "role": "assistant",
+                    "message": output.message,
+                }
+            )
 
         return output

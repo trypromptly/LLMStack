@@ -10,7 +10,11 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.openai.images_generations import (
+    ImageModel as OpenAIModel,
+)
 from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
+from llmstack.processors.providers.stabilityai.text_to_image import StabilityAIModel
 
 logger = logging.getLogger(__name__)
 
@@ -32,53 +36,14 @@ class LLMImageGeneratorProcessorOutput(ApiProcessorSchema):
     output_str: str = ""
 
 
-class OpenAIModel(str, Enum):
-    DALLE_2 = "dall-e-2"
-    DALLE_3 = "dall-e-3"
-
-    def __str__(self):
-        return self.value
-
-    def model_name(self):
-        return self.value
-
-
 class OpenAIModelConfig(BaseModel):
     provider: Literal["openai"] = "openai"
-    model: OpenAIModel = Field(default=OpenAIModel.DALLE_3, description="The model for the LLM")
-
-
-class StabilityAIModel(str, Enum):
-    STABLE_DIFFUSION_XL = "stable-diffusion-xl"
-    STABLE_DIFFUSION = "stable-diffusion"
-    STABLE_DIFFUSION_XL_BETA = "stable-diffusion-xl-beta"
-    CORE = "core"
-    SD_3 = "sd3"
-    SD_3_TURBO = "sd3-turbo"
-
-    def __str__(self) -> str:
-        return self.value
-
-    def model_name(self):
-        if self.value == "stable-diffusion-xl":
-            return "stable-diffusion-xl-1024-v1-0"
-        elif self.value == "stable-diffusion":
-            return "stable-diffusion-v1-6"
-        elif self.value == "stable-diffusion-xl-beta":
-            return "stable-diffusion-xl-beta-v2-2-2"
-        elif self.value == "core":
-            return "core"
-        elif self.value == "sd3":
-            return "sd3"
-        elif self.value == "sd3-turbo":
-            return "sd3-turbo"
-        else:
-            raise ValueError(f"Unknown model {self.value}")
+    model: OpenAIModel = Field(default=OpenAIModel.DALL_E_2, description="The model for the LLM")
 
 
 class StabilityAIModelConfig(BaseModel):
     provider: Literal["stabilityai"] = "stabilityai"
-    model: StabilityAIModel = Field(default=StabilityAIModel.STABLE_DIFFUSION, description="The model for the LLM")
+    model: StabilityAIModel = Field(default=StabilityAIModel.SD_3_MEDIUM, description="The model for the LLM")
 
 
 class LLMImageGeneratorProcessorConfiguration(ApiProcessorSchema):
@@ -139,14 +104,6 @@ class LLMImageGeneratorProcessor(
             markdown="""<pa-asset url="{{output_str}}" type="image/png"></pa-asset>""",
         )
 
-    def usage_data(self) -> dict:
-        if self._config.provider_config.model == OpenAIModel.DALLE_2:
-            return {"credits": 5000}
-        elif self._config.provider_config.model == OpenAIModel.DALLE_3:
-            return {"credits": 20000}
-
-        return {"credits": 2000}
-
     def process(self) -> dict:
         output_stream = self._output_stream
 
@@ -155,14 +112,27 @@ class LLMImageGeneratorProcessor(
             model_slug=self._config.provider_config.model.model_name(),
             get_provider_config_fn=self.get_provider_config,
         )
+        self._billing_metrics = self.get_provider_config(
+            model_slug=self._config.provider_config.model.model_name(),
+            provider_slug=self.provider_slug(),
+            processor_slug=self.slug(),
+        ).get_billing_metrics(
+            model_slug=self._config.provider_config.model.model_name(),
+            provider_slug=self.provider_slug(),
+            processor_slug=self.slug(),
+            deployment_name=str(self._config.provider_config.provider),
+        )
+        size = f"{self._config.width}x{self._config.height}"
 
         result = client.images.generate(
             prompt=self._input.input_message,
             model=self._config.provider_config.model.model_name(),
             n=1,
             response_format="b64_json",
-            size=f"{self._config.width}x{self._config.height}",
+            size=size,
         )
+        self._usage_data["resolution"] = size
+        self._usage_data["api_invocation"] = 1
         image = result.data[0]
         data_uri = image.data_uri(include_name=True)
         objref = self._upload_asset_from_url(asset=data_uri).objref

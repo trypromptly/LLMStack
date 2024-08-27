@@ -226,8 +226,8 @@ class Images(OpenAIImages):
                 ImageGenerateParams,
             )
         elif self._client._llm_router_provider == PROVIDER_STABILITYAI:
-            if model == "core":
-                path = "v2beta/stable-image/generate/core"
+            if model == "core" or model == "ultra":
+                path = f"v2beta/stable-image/generate/{model}"
                 body = {"prompt": prompt, "output_format": "png"}
                 if aspect_ratio:
                     body["aspect_ratio"] = aspect_ratio
@@ -261,7 +261,7 @@ class Images(OpenAIImages):
                     )
                 else:
                     raise self._client._make_status_error("Error in generating image.", body=body, response=response)
-            elif model == "sd3" or model == "sd3-turbo":
+            elif model == "sd3" or model == "sd3-turbo" or model == "sd3-large" or model == "sd3-medium":
                 path = "v2beta/stable-image/generate/sd3"
                 body = {"prompt": prompt, "output_format": "png", "mode": "text-to-image", "model": model}
                 if aspect_ratio:

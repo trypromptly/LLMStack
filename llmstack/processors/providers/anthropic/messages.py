@@ -1,3 +1,4 @@
+import copy
 import logging
 from enum import Enum
 from typing import List, Optional
@@ -136,19 +137,25 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         client = get_llm_client_from_provider_config(
             "anthropic", self._config.model.model_name(), self.get_provider_config
         )
-        messages = []
-        if self._config.system_prompt:
-            messages.append({"role": "system", "content": self._config.system_prompt})
+        self._billing_metrics = self.get_provider_config(
+            model_slug=self._config.model.value, provider_slug=self.provider_slug(), processor_slug=self.slug()
+        ).get_billing_metrics(
+            model_slug=self._config.model.value, provider_slug=self.provider_slug(), processor_slug=self.slug()
+        )
 
-        if self._chat_history:
-            for message in self._chat_history:
-                messages.append({"role": message["role"], "content": message["message"]})
+        messages = self._chat_history if self._config.retain_history else []
 
         for message in self._input.messages:
             messages.append({"role": str(message.role), "content": str(message.message)})
 
+        messages_to_send = (
+            [{"role": "system", "content": self._config.system_prompt}] + messages
+            if self._config.system_prompt
+            else messages
+        )
+
         response = client.chat.completions.create(
-            messages=messages,
+            messages=messages_to_send,
             model=self._config.model.model_name(),
             max_tokens=self._config.max_tokens,
             stream=True,
@@ -156,20 +163,24 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         )
 
         for result in response:
+            if result.usage:
+                self._usage_data["input_tokens"] = result.usage.input_tokens
+                self._usage_data["output_tokens"] = result.usage.output_tokens
+
             choice = result.choices[0]
             if choice.delta.content:
-                text_content = "".join(
-                    list(map(lambda entry: entry["data"] if entry["type"] == "text" else "", choice.delta.content))
-                )
+                if isinstance(choice.delta.content, list):
+                    text_content = "".join(
+                        list(map(lambda entry: entry["data"] if entry["type"] == "text" else "", choice.delta.content))
+                    )
+                else:
+                    text_content = choice.delta.content
                 async_to_sync(self._output_stream.write)(MessagesOutput(message=text_content))
                 text_content = ""
 
         output = self._output_stream.finalize()
-
         if self._config.retain_history:
-            for message in self._input.messages:
-                self._chat_history.append({"role": str(message.role), "message": str(message.message)})
-
+            self._chat_history = copy.deepcopy(messages)
             self._chat_history.append({"role": "assistant", "message": output.message})
 
         return output
