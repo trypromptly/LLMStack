@@ -17,7 +17,7 @@ from llmstack.sheets.models import PromptlySheet, PromptlySheetCell, PromptlyShe
 from llmstack.sheets.serializers import PromptlySheetSerializer
 
 try:
-    from promptly.promptly_app_store.apis import AppStoreAppViewSet
+    from promptly_app_store.apis import AppStoreAppViewSet
 except ImportError:
     from llmstack.app_store.apis import AppStoreAppViewSet
 
