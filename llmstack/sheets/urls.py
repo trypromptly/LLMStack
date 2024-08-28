@@ -15,11 +15,15 @@ urlpatterns = [
         PromptlySheetViewSet.as_view({"post": "run_async"}),
     ),
     path(
+        "api/sheets/<str:sheet_uuid>/runs",
+        PromptlySheetViewSet.as_view({"get": "list_runs"}),
+    ),
+    path(
         "api/sheets/<str:sheet_uuid>/download",
         PromptlySheetViewSet.as_view({"get": "download"}),
     ),
     path(
-        "api/sheets/<str:sheet_uuid>/<str:run_id>/download",
+        "api/sheets/<str:sheet_uuid>/runs/<str:run_id>/download",
         PromptlySheetViewSet.as_view({"get": "download_run"}),
     ),
 ]

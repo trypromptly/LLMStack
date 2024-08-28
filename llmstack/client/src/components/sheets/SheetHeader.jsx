@@ -12,6 +12,7 @@ import {
   Divider,
   ListItemIcon,
   ListItemText,
+  ClickAwayListener,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -23,6 +24,7 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
 import { axios } from "../../data/axios";
+import PreviousRunsModal from "./PreviousRunsModal"; // We'll create this component
 
 const SheetHeader = ({
   sheet,
@@ -34,6 +36,8 @@ const SheetHeader = ({
 }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [isPreviousRunsModalOpen, setIsPreviousRunsModalOpen] = useState(false);
 
   const runSheet = () => {
     const runSheetAction = () => {
@@ -59,12 +63,6 @@ const SheetHeader = ({
       runSheetAction();
     }
   };
-
-  const handleSettingsClick = (event) => {
-    setAnchorEl(anchorEl ? null : event.currentTarget);
-  };
-
-  const open = Boolean(anchorEl);
 
   return (
     <Stack>
@@ -120,53 +118,76 @@ const SheetHeader = ({
                 </Button>
               </span>
             </Tooltip>
-            <Tooltip title={"Settings"}>
-              <span>
-                <Button
-                  variant="contained"
-                  size="medium"
-                  onClick={handleSettingsClick}
-                  sx={{
-                    bgcolor: "gray.main",
-                    "&:hover": { bgcolor: "white" },
-                    color: "#999",
-                    minWidth: "40px",
-                    padding: "5px",
-                    borderRadius: "4px !important",
-                  }}
-                >
-                  <SettingsIcon />
-                </Button>
-              </span>
-            </Tooltip>
-            <Popper open={open} anchorEl={anchorEl} placement="bottom-end">
-              <Paper>
-                <MenuList>
-                  <MenuItem onClick={() => {}}>
-                    <ListItemIcon>
-                      <HistoryIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Previous Runs</ListItemText>
-                  </MenuItem>
-                  <MenuItem onClick={() => {}}>
-                    <ListItemIcon>
-                      <AutorenewIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Automated Runs</ListItemText>
-                  </MenuItem>
-                  <Divider />
-                  <MenuItem onClick={() => {}}>
-                    <ListItemIcon>
-                      <DeleteIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Delete Sheet</ListItemText>
-                  </MenuItem>
-                </MenuList>
-              </Paper>
-            </Popper>
+            <ClickAwayListener onClickAway={() => setOpen(false)}>
+              <div>
+                <Tooltip title={"Settings"}>
+                  <Button
+                    variant="contained"
+                    size="medium"
+                    onClick={(event) => {
+                      setAnchorEl(event.currentTarget);
+                      setOpen((prev) => !prev);
+                    }}
+                    sx={{
+                      bgcolor: "gray.main",
+                      "&:hover": { bgcolor: "white" },
+                      color: "#999",
+                      minWidth: "40px",
+                      padding: "5px",
+                      borderRadius: "4px !important",
+                    }}
+                  >
+                    <SettingsIcon />
+                  </Button>
+                </Tooltip>
+                <Popper open={open} anchorEl={anchorEl} placement="bottom-end">
+                  <Paper>
+                    <MenuList>
+                      <MenuItem
+                        onClick={() => {
+                          setIsPreviousRunsModalOpen(true);
+                          setOpen(false);
+                        }}
+                      >
+                        <ListItemIcon>
+                          <HistoryIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Previous Runs</ListItemText>
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          setOpen(false);
+                        }}
+                      >
+                        <ListItemIcon>
+                          <AutorenewIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Automated Runs</ListItemText>
+                      </MenuItem>
+                      <Divider />
+                      <MenuItem
+                        onClick={() => {
+                          setOpen(false);
+                        }}
+                      >
+                        <ListItemIcon>
+                          <DeleteIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Delete Sheet</ListItemText>
+                      </MenuItem>
+                    </MenuList>
+                  </Paper>
+                </Popper>
+              </div>
+            </ClickAwayListener>
           </Stack>
         </Stack>
       </Typography>
+      <PreviousRunsModal
+        open={isPreviousRunsModalOpen}
+        onClose={() => setIsPreviousRunsModalOpen(false)}
+        sheetUuid={sheet.uuid}
+      />
     </Stack>
   );
 };

@@ -5,6 +5,7 @@ import uuid
 
 from django.http import StreamingHttpResponse
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 
@@ -197,6 +198,15 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         )
         response["Content-Disposition"] = f'attachment; filename="sheet_{sheet_uuid}_{run_id}.csv"'
         return response
+
+    @action(detail=True, methods=["get"])
+    def list_runs(self, request, sheet_uuid=None):
+        profile = Profile.objects.get(user=request.user)
+        sheet = PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
+
+        run_entries = PromptlySheetRunEntry.objects.filter(sheet_uuid=sheet.uuid).order_by("-created_at")
+
+        return DRFResponse([{"uuid": entry.uuid, "created_at": entry.created_at} for entry in run_entries])
 
 
 class PromptlySheetTemplateViewSet(viewsets.ViewSet):
