@@ -19,6 +19,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import "@glideapps/glide-data-grid/dist/index.css";
+import SheetCellMenu from "./SheetCellMenu";
 
 const columnIndexToLetter = (index) => {
   let temp = index + 1;
@@ -92,6 +93,9 @@ function Sheet(props) {
   const [selectedCellValue, setSelectedCellValue] = useState(
     "<p style='color: #999; font-size: 14px;'>Select a cell to view data</p>",
   );
+  const [cellMenuAnchorEl, setCellMenuAnchorEl] = useState(null);
+  const [cellMenuOpen, setCellMenuOpen] = useState(false);
+  const [selectedCell, setSelectedCell] = useState(null);
 
   const getCellContent = useCallback(
     ([col, row]) => {
@@ -472,6 +476,38 @@ function Sheet(props) {
     [gridColumns, cells],
   );
 
+  const onCellContextMenu = useCallback((cell, event) => {
+    event.preventDefault();
+    setSelectedCell(cell);
+    setCellMenuAnchorEl({
+      getBoundingClientRect: () => DOMRect.fromRect(event?.bounds),
+    });
+    setCellMenuOpen(true);
+  }, []);
+
+  const handleCellCopy = useCallback(() => {
+    if (selectedCell) {
+      const cellValue = getCellContent(selectedCell);
+      navigator.clipboard.writeText(cellValue.displayData);
+    }
+    setCellMenuOpen(false);
+  }, [selectedCell, getCellContent]);
+
+  const handleCellPaste = useCallback(async () => {
+    if (selectedCell) {
+      const text = await navigator.clipboard.readText();
+      onCellEdited(selectedCell, text);
+    }
+    setCellMenuOpen(false);
+  }, [selectedCell, onCellEdited]);
+
+  const handleCellDelete = useCallback(() => {
+    if (selectedCell) {
+      onCellEdited(selectedCell, "");
+    }
+    setCellMenuOpen(false);
+  }, [selectedCell, onCellEdited]);
+
   return sheet ? (
     <Stack>
       <SheetHeader
@@ -594,6 +630,7 @@ function Sheet(props) {
           headerIcons={headerIcons}
           gridSelection={gridSelection}
           onGridSelectionChange={onGridSelectionChange}
+          onCellContextMenu={onCellContextMenu}
         />
       </Box>
       <div id="portal" />
@@ -638,6 +675,14 @@ function Sheet(props) {
           }}
         />
       )}
+      <SheetCellMenu
+        anchorEl={cellMenuAnchorEl}
+        open={cellMenuOpen}
+        onClose={() => setCellMenuOpen(false)}
+        onCopy={handleCellCopy}
+        onPaste={handleCellPaste}
+        onDelete={handleCellDelete}
+      />
     </Stack>
   ) : (
     <CircularProgress />
