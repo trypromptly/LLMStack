@@ -438,7 +438,7 @@ function Sheet(props) {
         <Box
           sx={{
             minHeight: "40px",
-            maxHeight: "400px",
+            maxHeight: "200px",
             width: "100%",
             overflow: "auto",
             resize: "vertical",
