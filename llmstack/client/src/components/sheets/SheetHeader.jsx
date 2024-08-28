@@ -25,6 +25,9 @@ import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
 import { axios } from "../../data/axios";
 import PreviousRunsModal from "./PreviousRunsModal"; // We'll create this component
+import SheetDeleteDialog from "./SheetDeleteDialog"; // Add this import
+import { useSetRecoilState } from "recoil"; // Add this import
+import { sheetsListSelector } from "../../data/atoms"; // Add this import
 
 const SheetHeader = ({
   sheet,
@@ -38,6 +41,8 @@ const SheetHeader = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const [open, setOpen] = useState(false);
   const [isPreviousRunsModalOpen, setIsPreviousRunsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // Add this state
+  const setSheets = useSetRecoilState(sheetsListSelector); // Add this
 
   const runSheet = () => {
     const runSheetAction = () => {
@@ -62,6 +67,23 @@ const SheetHeader = ({
     } else {
       runSheetAction();
     }
+  };
+
+  // Add this function
+  const handleDeleteSheet = () => {
+    axios()
+      .delete(`/api/sheets/${sheet.uuid}`)
+      .then(() => {
+        setSheets((prevSheets) =>
+          prevSheets.filter((s) => s.uuid !== sheet.uuid),
+        );
+        enqueueSnackbar("Sheet deleted successfully", { variant: "success" });
+        navigate("/sheets"); // Redirect to sheets list after deletion
+      })
+      .catch((error) => {
+        console.error("Error deleting sheet:", error);
+        enqueueSnackbar("Failed to delete sheet", { variant: "error" });
+      });
   };
 
   return (
@@ -167,6 +189,7 @@ const SheetHeader = ({
                       <Divider />
                       <MenuItem
                         onClick={() => {
+                          setIsDeleteDialogOpen(true);
                           setOpen(false);
                         }}
                       >
@@ -187,6 +210,12 @@ const SheetHeader = ({
         open={isPreviousRunsModalOpen}
         onClose={() => setIsPreviousRunsModalOpen(false)}
         sheetUuid={sheet.uuid}
+      />
+      <SheetDeleteDialog
+        open={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteSheet}
+        sheetName={sheet.name}
       />
     </Stack>
   );
