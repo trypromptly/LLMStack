@@ -1329,7 +1329,7 @@ export default function LayoutRenderer({
           const { alt, src } = props;
           const [showDownloadIcon, setShowDownloadIcon] = useState(false);
           // We provide alt text and style as altText|style where style is a string
-          const [altText, style] = alt?.split("|");
+          const [altText, style] = alt?.split("|") || [alt, {}];
           let styleJson = {};
           try {
             styleJson = JSON.parse(style);
