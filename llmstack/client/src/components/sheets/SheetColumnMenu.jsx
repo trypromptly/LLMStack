@@ -165,6 +165,10 @@ export function SheetColumnMenu({
     setOpen(false);
     setColumnName("");
     setColumnType(GridCellKind.Text);
+    columnRunData.current = {};
+    setFillRowsWithOutput(false);
+    setTransformData(false);
+    setTransformationTemplate("");
   };
 
   const handleColumnDelete = () => {
