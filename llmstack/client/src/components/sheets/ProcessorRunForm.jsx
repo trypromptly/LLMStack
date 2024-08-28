@@ -84,7 +84,11 @@ export default function ProcessorRunForm({
           <TextFieldWithVars
             label="Output Template"
             multiline
-            value={processorOutputTemplate?.markdown || ""}
+            value={
+              processorOutputTemplate?.markdown ||
+              apiBackendSelected?.output_template?.markdown ||
+              ""
+            }
             onChange={(text) => {
               setData({
                 output_template: { markdown: text },
