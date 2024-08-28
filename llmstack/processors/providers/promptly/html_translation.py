@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 from pydantic import Field
 
+from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.base.schema import BaseSchema
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -103,6 +104,12 @@ class HTMLTranslationProcessor(
     @staticmethod
     def provider_slug() -> str:
         return "promptly"
+
+    @classmethod
+    def get_output_template(cls) -> OutputTemplate | None:
+        return OutputTemplate(
+            markdown="{{translated_html}}",
+        )
 
     def _translate_with_provider(self, chunk: str) -> str:
         try:
