@@ -193,8 +193,8 @@ class EmailSenderProcessor(ApiProcessorInterface[EmailSearchInput, EmailSearchOu
                         subject=msg["subject"],
                         sender=msg["from"],
                     )
-                    email_data.cc = msg["cc"] if "cc" in msg else []
-                    email_data.bcc = msg["bcc"] if "bcc" in msg else []
+                    email_data.cc = list(map(str, msg["cc"].addresses)) if "cc" in msg else []
+                    email_data.bcc = list(map(str, msg["bcc"].addresses)) if "bcc" in msg else []
                     if msg.is_multipart():
                         for part in msg.iter_parts():
                             if part.get_content_type() == "text/plain":
@@ -210,7 +210,7 @@ class EmailSenderProcessor(ApiProcessorInterface[EmailSearchInput, EmailSearchOu
                                 )
                                 objref = self._upload_asset_from_url(
                                     attachment_data_uri, attachment_name, part.get_content_type()
-                                )
+                                ).objref
                                 email_data.attachments.append(objref)
                     else:
                         content_type = msg.get_content_type()
