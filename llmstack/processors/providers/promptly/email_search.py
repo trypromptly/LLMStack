@@ -78,7 +78,7 @@ class EmailSearchConfigurations(Schema):
     )
     connection_id: Optional[str] = Field(
         default=None,
-        json_schema_extra={"widget": "connection"},
+        json_schema_extra={"widget": "connection", "advanced_parameter": False},
         description="Use your authenticated connection to make the request",
     )
     mailbox: str = Field(
