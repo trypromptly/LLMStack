@@ -189,7 +189,8 @@ class PromptlySheet(models.Model):
             cells = {}
             with asset.file.open("rb") as f:
                 data = json.load(f)
-                for cell_id, cell_data in data.items():
+                cell_items = data.items() if isinstance(data, dict) else enumerate(data)
+                for cell_id, cell_data in cell_items:
                     cells[cell_id] = PromptlySheetCell(**cell_data)
 
                 return cells
@@ -219,7 +220,11 @@ class PromptlySheet(models.Model):
     @property
     def columns(self):
         return sorted(
-            [PromptlySheetColumn(**column) for column in self.data.get("columns", {}).values()],
+            [
+                PromptlySheetColumn(**column)
+                for column in self.data.get("columns", {}).values()
+                if isinstance(column, dict)
+            ],
             key=lambda x: (x.position, x.col),
         )
 
