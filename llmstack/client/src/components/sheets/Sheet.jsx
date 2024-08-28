@@ -76,7 +76,9 @@ function Sheet(props) {
     rows: CompactSelection.empty(),
     current: undefined,
   });
-  const [selectedCellValue, setSelectedCellValue] = useState("");
+  const [selectedCellValue, setSelectedCellValue] = useState(
+    "<p style='color: #999; font-size: 14px;'>Select a cell to view data</p>",
+  );
 
   const getCellContent = useCallback(
     ([col, row]) => {

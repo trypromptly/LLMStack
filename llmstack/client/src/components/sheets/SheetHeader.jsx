@@ -1,12 +1,28 @@
-import React from "react";
-import { Stack, Typography, Button, IconButton, Tooltip } from "@mui/material";
+import React, { useState } from "react";
+import {
+  Stack,
+  Typography,
+  Button,
+  IconButton,
+  Tooltip,
+  Popper,
+  Paper,
+  MenuList,
+  MenuItem,
+  Divider,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
+import SettingsIcon from "@mui/icons-material/Settings";
+import DeleteIcon from "@mui/icons-material/Delete";
+import HistoryIcon from "@mui/icons-material/History";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
 import { axios } from "../../data/axios";
-import SettingsIcon from "@mui/icons-material/Settings";
 
 const SheetHeader = ({
   sheet,
@@ -17,6 +33,7 @@ const SheetHeader = ({
   runId,
 }) => {
   const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const runSheet = () => {
     const runSheetAction = () => {
@@ -42,6 +59,12 @@ const SheetHeader = ({
       runSheetAction();
     }
   };
+
+  const handleSettingsClick = (event) => {
+    setAnchorEl(anchorEl ? null : event.currentTarget);
+  };
+
+  const open = Boolean(anchorEl);
 
   return (
     <Stack>
@@ -73,26 +96,6 @@ const SheetHeader = ({
             </Stack>
           </Stack>
           <Stack direction={"row"} gap={1} sx={{ marginRight: "-8px" }}>
-            <Tooltip title={"Settings"}>
-              <span>
-                <Button
-                  variant="contained"
-                  size="medium"
-                  onClick={() => {}}
-                  disabled={sheetRunning}
-                  sx={{
-                    bgcolor: "gray.main",
-                    "&:hover": { bgcolor: "gray.main" },
-                    color: "#999",
-                    minWidth: "40px",
-                    padding: "5px",
-                    borderRadius: "4px !important",
-                  }}
-                >
-                  <SettingsIcon />
-                </Button>
-              </span>
-            </Tooltip>
             <Tooltip
               title={
                 sheetRunning ? "Sheet is already running" : "Run the sheet"
@@ -117,6 +120,50 @@ const SheetHeader = ({
                 </Button>
               </span>
             </Tooltip>
+            <Tooltip title={"Settings"}>
+              <span>
+                <Button
+                  variant="contained"
+                  size="medium"
+                  onClick={handleSettingsClick}
+                  sx={{
+                    bgcolor: "gray.main",
+                    "&:hover": { bgcolor: "white" },
+                    color: "#999",
+                    minWidth: "40px",
+                    padding: "5px",
+                    borderRadius: "4px !important",
+                  }}
+                >
+                  <SettingsIcon />
+                </Button>
+              </span>
+            </Tooltip>
+            <Popper open={open} anchorEl={anchorEl} placement="bottom-end">
+              <Paper>
+                <MenuList>
+                  <MenuItem onClick={() => {}}>
+                    <ListItemIcon>
+                      <HistoryIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Previous Runs</ListItemText>
+                  </MenuItem>
+                  <MenuItem onClick={() => {}}>
+                    <ListItemIcon>
+                      <AutorenewIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Automated Runs</ListItemText>
+                  </MenuItem>
+                  <Divider />
+                  <MenuItem onClick={() => {}}>
+                    <ListItemIcon>
+                      <DeleteIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Delete Sheet</ListItemText>
+                  </MenuItem>
+                </MenuList>
+              </Paper>
+            </Popper>
           </Stack>
         </Stack>
       </Typography>
