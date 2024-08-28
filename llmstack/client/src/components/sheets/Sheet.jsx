@@ -31,6 +31,17 @@ const columnIndexToLetter = (index) => {
   return letter;
 };
 
+const columnLetterToIndex = (letter) => {
+  return (
+    letter.split("").reduce((acc, char, index) => {
+      return (
+        acc +
+        (char.charCodeAt(0) - 64) * Math.pow(26, letter.length - index - 1)
+      );
+    }, 0) - 1
+  );
+};
+
 const cellIdToGridCell = (cellId, columns) => {
   const match = cellId.match(/([A-Z]+)(\d+)/);
   if (!match) return null;
@@ -50,13 +61,14 @@ function Sheet(props) {
   const { sheetId } = props;
   const [sheetRunning, setSheetRunning] = useState(false);
   const [sheet, setSheet] = useState(null);
-  const [columns, setColumns] = useState([]);
+  const [columns, setColumns] = useState({});
   const [gridColumns, setGridColumns] = useState([]);
   const [cells, setCells] = useState({});
   const [runId, setRunId] = useState(null);
   const [selectedColumnId, setSelectedColumnId] = useState(null);
   const [showEditColumnMenu, setShowEditColumnMenu] = useState(false);
   const [numRows, setNumRows] = useState(0);
+  const [numColumns, setNumColumns] = useState(0);
   const [userChanges, setUserChanges] = useState({
     columns: {},
     cells: {},
@@ -83,7 +95,7 @@ function Sheet(props) {
 
   const getCellContent = useCallback(
     ([col, row]) => {
-      const column = columns[col];
+      const column = gridColumns[col];
       const colLetter = column.col;
       const cell = cells[`${colLetter}${row + 1}`];
       const columnType = sheetColumnTypes[column.type];
@@ -101,27 +113,54 @@ function Sheet(props) {
         skeletonWidthVariability: 100,
       };
     },
-    [cells, columns],
+    [cells, gridColumns],
   );
 
-  const parseSheetColumnsIntoGridColumns = useCallback((columns) => {
-    if (!columns) {
-      return [];
-    }
+  const parseSheetColumnsIntoGridColumns = useCallback(
+    (columns) => {
+      const cols = Object.keys(columns || []).map((colLetter, index) => ({
+        col: colLetter,
+        title: columns[colLetter].title,
+        type: columns[colLetter].type,
+        kind:
+          sheetColumnTypes[columns[colLetter].type]?.kind || GridCellKind.Text,
+        data: columns[colLetter].data,
+        hasMenu: true,
+        icon: sheetColumnTypes[columns[colLetter].type]?.icon,
+        width: columns[colLetter].width || 300,
+      }));
 
-    const cols = columns.map((column, index) => ({
-      col: columnIndexToLetter(index),
-      title: column.title,
-      type: column.type,
-      kind: sheetColumnTypes[column.type]?.kind || GridCellKind.Text,
-      data: column.data,
-      hasMenu: true,
-      icon: sheetColumnTypes[column.type]?.icon,
-      width: column.width || 300,
-    }));
+      // Sort columns by position and then by col letter
+      cols.sort((a, b) => {
+        if (a.position !== b.position) {
+          return a.position - b.position;
+        }
+        return columnLetterToIndex(a.col) - columnLetterToIndex(b.col);
+      });
 
-    return cols;
-  }, []);
+      // Find the last column and fill up to the end with empty columns
+      const lastColumn = cols[cols.length - 1];
+      for (
+        let i = lastColumn?.col ? lastColumn?.col.charCodeAt(0) - 64 : 0;
+        i < numColumns;
+        i++
+      ) {
+        cols.push({
+          col: columnIndexToLetter(i),
+          title: "",
+          type: "text",
+          kind: GridCellKind.Text,
+          data: "",
+          hasMenu: true,
+          icon: null,
+          width: 300,
+        });
+      }
+
+      return cols;
+    },
+    [numColumns],
+  );
 
   useEffect(() => {
     if (sheetId) {
@@ -132,7 +171,8 @@ function Sheet(props) {
           setSheet(data);
           setCells(data?.cells || {});
           setSheetRunning(data?.running || false);
-          setColumns(data?.columns || []);
+          setColumns(data?.columns || {});
+          setNumColumns(data?.total_columns || 26);
           setNumRows(data?.total_rows || 0);
           setUserChanges({
             columns: {},
@@ -151,9 +191,7 @@ function Sheet(props) {
   }, [sheetId]);
 
   useEffect(() => {
-    if (columns.length > 0) {
-      setGridColumns(parseSheetColumnsIntoGridColumns(columns));
-    }
+    setGridColumns(parseSheetColumnsIntoGridColumns(columns));
   }, [columns, parseSheetColumnsIntoGridColumns]);
 
   const hasChanges = useCallback(() => {
@@ -178,21 +216,28 @@ function Sheet(props) {
   const onColumnChange = useCallback(
     (columnIndex, newColumn) => {
       setColumns((prevColumns) => {
-        const newColumns = [...prevColumns];
-        newColumns[columnIndex] = newColumn;
-        updateUserChanges("columns", columnIndex, newColumn);
+        const colLetter = gridColumns[columnIndex].col;
+        const newColumns = { ...prevColumns };
+        newColumns[colLetter] = newColumn;
+        updateUserChanges("columns", colLetter, newColumn);
         return newColumns;
       });
     },
-    [updateUserChanges],
+    [updateUserChanges, gridColumns],
   );
 
   const addColumn = useCallback(
     (column) => {
-      setColumns((prevColumns) => [...prevColumns, column]);
-      updateUserChanges("addedColumns", column.col, column);
+      setColumns((prevColumns) => {
+        // Get max letter from existing columns
+        const colLetter = columnIndexToLetter(numColumns + 1);
+        const newColumns = { ...prevColumns };
+        newColumns[colLetter] = column;
+        updateUserChanges("addedColumns", colLetter, column);
+        return newColumns;
+      });
     },
-    [updateUserChanges],
+    [updateUserChanges, numColumns],
   );
 
   const onCellEdited = useCallback(
@@ -564,25 +609,25 @@ function Sheet(props) {
           columns={gridColumns}
           updateColumn={(column) => {
             setColumns((columns) => {
-              const newColumns = [...columns];
-              const index = columns.findIndex((c) => c.col === column.col);
-              newColumns[index] = column;
+              const newColumns = { ...columns };
+              newColumns[column.col] = column;
 
-              updateUserChanges("columns", selectedColumnId, column);
+              updateUserChanges("columns", column.col, column);
 
-              return parseSheetColumnsIntoGridColumns(newColumns);
+              return newColumns;
             });
           }}
           deleteColumn={(column) => {
             setColumns((columns) => {
-              const newColumns = columns.filter((c) => c.col !== column.col);
+              const newColumns = { ...columns };
+              delete newColumns[column.col];
               updateUserChanges("columns", column.col, null); // Mark column as deleted
-              return parseSheetColumnsIntoGridColumns(newColumns);
+              return newColumns;
             });
             setCells((cells) => {
               const newCells = { ...cells };
               Object.keys(newCells).forEach((cellId) => {
-                if (cells[cellId].col === column.col) {
+                if (newCells[cellId].col === column.col) {
                   delete newCells[cellId];
                   updateUserChanges("cells", cellId, null); // Mark cell as deleted
                 }

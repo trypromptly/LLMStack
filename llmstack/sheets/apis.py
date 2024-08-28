@@ -91,8 +91,9 @@ class PromptlySheetViewSet(viewsets.ViewSet):
             profile_uuid=profile.uuid,
             data={
                 "description": request.data.get("description", ""),
-                "columns": request.data.get("columns", []),
+                "columns": request.data.get("columns", {}),
                 "total_rows": request.data.get("total_rows", 0),
+                "total_columns": request.data.get("total_columns", 26),
             },
             extra_data=request.data.get("extra_data", {"has_header": True}),
         )
@@ -125,13 +126,17 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         if "total_rows" in request.data:
             sheet.data["total_rows"] = request.data["total_rows"]
 
+        if "total_columns" in request.data:
+            sheet.data["total_columns"] = request.data["total_columns"]
+
         if "description" in request.data:
             sheet.data["description"] = request.data["description"]
 
         if "columns" in request.data:
-            sheet.data["columns"] = [
-                PromptlySheetColumn(**column_data).model_dump() for column_data in request.data["columns"]
-            ]
+            sheet.data["columns"] = {
+                column_data["col"]: PromptlySheetColumn(**column_data).model_dump()
+                for column_data in request.data["columns"].values()
+            }
 
         sheet.save()
 

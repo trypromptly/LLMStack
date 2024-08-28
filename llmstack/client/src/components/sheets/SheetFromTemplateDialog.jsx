@@ -32,8 +32,9 @@ export function SheetFromTemplateDialog({
   );
   const [sheetTemplate, setSheetTemplate] = useState("");
   const [sheetCells, setSheetCells] = useState({});
-  const [sheetColumns, setSheetColumns] = useState([]);
-  const [sheetRows, setSheetRows] = useState(0);
+  const [sheetColumns, setSheetColumns] = useState({});
+  const [sheetTotalColumns, setSheetTotalColumns] = useState(26);
+  const [sheetTotalRows, setSheetTotalRows] = useState(1);
   const sheetTemplates = useRecoilValue(sheetTemplatesSelector);
   const navigate = useNavigate();
 
@@ -50,7 +51,8 @@ export function SheetFromTemplateDialog({
     if (!sheetId) {
       payload.cells = sheetCells;
       payload.columns = sheetColumns;
-      payload.total_rows = sheetRows;
+      payload.total_rows = sheetTotalRows;
+      payload.total_columns = sheetTotalColumns;
     }
 
     const method = sheetId ? "patch" : "post";
@@ -73,8 +75,9 @@ export function SheetFromTemplateDialog({
     const template = sheetTemplates[templateSlug];
 
     setSheetCells(template?.cells || {});
-    setSheetColumns(template?.columns || []);
-    setSheetRows(template?.total_rows || 0);
+    setSheetColumns(template?.columns || {});
+    setSheetTotalRows(template?.total_rows || 1);
+    setSheetTotalColumns(template?.total_columns || 26);
   };
 
   return (

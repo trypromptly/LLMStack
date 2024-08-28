@@ -52,6 +52,7 @@ class PromptlySheetColumn(BaseModel):
     kind: PromptlySheetCellKind = PromptlySheetCellKind.TEXT
     data: dict = {}
     col: str
+    position: int = 0
     width: Optional[int] = None
 
     @staticmethod
@@ -217,7 +218,10 @@ class PromptlySheet(models.Model):
 
     @property
     def columns(self):
-        return [PromptlySheetColumn(**column) for column in self.data.get("columns", [])]
+        return sorted(
+            [PromptlySheetColumn(**column) for column in self.data.get("columns", {}).values()],
+            key=lambda x: (x.position, x.col),
+        )
 
     def update_total_rows(self, total_rows):
         self.data["total_rows"] = total_rows

@@ -74,9 +74,15 @@ const SheetHeader = ({
     axios()
       .delete(`/api/sheets/${sheet.uuid}`)
       .then(() => {
-        setSheets((prevSheets) =>
-          prevSheets.filter((s) => s.uuid !== sheet.uuid),
-        );
+        // Update sheets list after successful deletion
+        axios()
+          .get("/api/sheets")
+          .then((response) => {
+            setSheets(response.data);
+          })
+          .catch((error) => {
+            console.error("Error fetching updated sheets list:", error);
+          });
         enqueueSnackbar("Sheet deleted successfully", { variant: "success" });
         navigate("/sheets"); // Redirect to sheets list after deletion
       })

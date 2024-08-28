@@ -12,6 +12,7 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
     columns = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     total_rows = serializers.SerializerMethodField()
+    total_columns = serializers.SerializerMethodField()
     running = serializers.SerializerMethodField()
 
     def get_cells(self, obj):
@@ -23,13 +24,16 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
         return cells
 
     def get_columns(self, obj):
-        return [col.model_dump() for col in obj.columns]
+        return {col.col: col.model_dump() for col in obj.columns}
 
     def get_description(self, obj):
         return obj.data.get("description", "")
 
     def get_total_rows(self, obj):
         return obj.data.get("total_rows", 0)
+
+    def get_total_columns(self, obj):
+        return obj.data.get("total_columns", 0)
 
     def get_running(self, obj):
         return obj.extra_data.get("running", False)
@@ -43,6 +47,7 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
             "cells",
             "columns",
             "total_rows",
+            "total_columns",
             "description",
             "created_at",
             "updated_at",
