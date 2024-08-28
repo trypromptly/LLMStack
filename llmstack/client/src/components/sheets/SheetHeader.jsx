@@ -1,13 +1,12 @@
 import React from "react";
 import { Stack, Typography, Button, IconButton, Tooltip } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import SaveIcon from "@mui/icons-material/Save";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
-import DownloadIcon from "@mui/icons-material/Download";
 import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
 import { axios } from "../../data/axios";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 const SheetHeader = ({
   sheet,
@@ -18,10 +17,6 @@ const SheetHeader = ({
   runId,
 }) => {
   const navigate = useNavigate();
-
-  const saveSheet = () => {
-    onSave();
-  };
 
   const runSheet = () => {
     const runSheetAction = () => {
@@ -46,10 +41,6 @@ const SheetHeader = ({
     } else {
       runSheetAction();
     }
-  };
-
-  const downloadSheet = () => {
-    window.open(`/api/sheets/${sheet.uuid}/download`, "_blank");
   };
 
   return (
@@ -81,32 +72,27 @@ const SheetHeader = ({
               </Typography>
             </Stack>
           </Stack>
-          <Stack direction={"row"} gap={1}>
-            <Tooltip title="Save changes">
+          <Stack direction={"row"} gap={1} sx={{ marginRight: "-8px" }}>
+            <Tooltip title={"Settings"}>
               <span>
                 <Button
-                  onClick={saveSheet}
-                  disabled={!hasChanges}
-                  color="primary"
-                  variant="outlined"
-                  sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
+                  variant="contained"
+                  size="medium"
+                  onClick={() => {}}
+                  disabled={sheetRunning}
+                  sx={{
+                    bgcolor: "gray.main",
+                    "&:hover": { bgcolor: "gray.main" },
+                    color: "#999",
+                    minWidth: "40px",
+                    padding: "5px",
+                    borderRadius: "4px !important",
+                  }}
                 >
-                  <SaveIcon />
+                  <SettingsIcon />
                 </Button>
               </span>
             </Tooltip>
-            {!sheetRunning && (
-              <Tooltip title="Download CSV">
-                <Button
-                  onClick={downloadSheet}
-                  color="primary"
-                  variant="outlined"
-                  sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
-                >
-                  <DownloadIcon />
-                </Button>
-              </Tooltip>
-            )}
             <Tooltip
               title={
                 sheetRunning ? "Sheet is already running" : "Run the sheet"
@@ -127,6 +113,7 @@ const SheetHeader = ({
                   }}
                 >
                   {sheetRunning ? <PauseIcon /> : <PlayArrowIcon />}
+                  {sheetRunning ? "Pause" : "Execute"}
                 </Button>
               </span>
             </Tooltip>

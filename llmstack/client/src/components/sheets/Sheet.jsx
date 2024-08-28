@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Box,
-  Stack,
-  CircularProgress,
-  Typography,
-  IconButton,
-} from "@mui/material";
+import { Box, Stack, CircularProgress, Button, Tooltip } from "@mui/material";
 import {
   DataEditor,
   GridCellKind,
@@ -397,8 +391,8 @@ function Sheet(props) {
     }
   }, [runId, sheet?.uuid, wsUrlPrefix, columns]);
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
+  const downloadSheet = () => {
+    window.open(`/api/sheets/${sheet.uuid}/download`, "_blank");
   };
 
   const onGridSelectionChange = useCallback(
@@ -433,14 +427,16 @@ function Sheet(props) {
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "normal",
+          alignItems: "center",
           padding: 0,
+          gap: 1,
           borderBottom: "1px solid #e0e0e0",
         }}
       >
         <Box
           sx={{
-            height: "50px",
+            minHeight: "40px",
+            maxHeight: "400px",
             width: "100%",
             overflow: "auto",
             resize: "vertical",
@@ -452,20 +448,42 @@ function Sheet(props) {
             scrollbarWidth: "thin",
             fontSize: "14px",
             fontFamily: "Arial",
+            borderRight: "none",
+            "& p": {
+              margin: 0,
+            },
           }}
         >
           <LayoutRenderer>{selectedCellValue}</LayoutRenderer>
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Typography variant="caption" sx={{ mr: 2 }} color="text.secondary">
-            Last updated: {formatDate(sheet.updated_at)}
-          </Typography>
-          <IconButton onClick={saveSheet} disabled={!hasChanges()}>
-            <SaveIcon />
-          </IconButton>
-          <IconButton>
-            <DownloadIcon />
-          </IconButton>
+        <Box>
+          <Stack direction={"row"} gap={1}>
+            <Tooltip title="Save changes">
+              <span>
+                <Button
+                  onClick={saveSheet}
+                  disabled={!hasChanges()}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
+                >
+                  <SaveIcon />
+                </Button>
+              </span>
+            </Tooltip>
+            {!sheetRunning && (
+              <Tooltip title="Download CSV">
+                <Button
+                  onClick={downloadSheet}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
+                >
+                  <DownloadIcon />
+                </Button>
+              </Tooltip>
+            )}
+          </Stack>
         </Box>
       </Box>
       <Box>
