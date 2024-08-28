@@ -341,7 +341,7 @@ function Sheet(props) {
                   ...cells[cell.id],
                   kind: GridCellKind.Text,
                   data: {
-                    ...cells[cell.id].data,
+                    ...(cells[cell.id]?.data || {}),
                     ...columnType?.getCellDataFromValue(cell.output),
                   },
                   display_data: cell.output || "",
