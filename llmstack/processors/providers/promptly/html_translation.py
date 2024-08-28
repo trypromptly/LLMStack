@@ -3,6 +3,7 @@ import json
 import logging
 import uuid
 from collections import namedtuple
+from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
@@ -16,6 +17,11 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
+from llmstack.processors.providers.promptly.chat_completions import (
+    OpenAIModelConfig,
+    ProviderConfigType,
+)
 
 ELEMENT = namedtuple("Element", ["id", "element", "text"])
 ELEMENT_WITH_ATTRIBUTE = namedtuple("ElementWithAttribute", ["id", "element", "attribute", "text"])
@@ -27,13 +33,21 @@ def has_non_text_nodes(element):
     return any(child for child in element.contents if child.name is not None)
 
 
+class Language(str, Enum):
+    ENGLISH = "english"
+    GERMAN = "german"
+    FRENCH = "french"
+    SPANISH = "spanish"
+    PORTUGUESE = "portuguese"
+
+    def __str__(self):
+        return self.value
+
+
 class HTMLTranslationInput(ApiProcessorSchema):
     html: str = Field(description="Input HTML to translate", json_schema_extra={"widget": "textarea"})
-    instructions: str = Field(
-        description="Instructions for the translations",
-        default="The output should be a JSON list without any code blocks. Translate the English content below between 2 lines of 0CigC9JQ9VLKOSYDkAfJVEnPv to German, and follow the guidelines below.",
-        json_schema_extra={"widget": "textarea"},
-    )
+    input_language: Language = Field(description="Language to translate from", default=Language.ENGLISH)
+    output_language: Language = Field(description="Language to translate to", default=Language.SPANISH)
 
 
 class HTMLTranslationOutput(ApiProcessorSchema):
@@ -52,14 +66,20 @@ class HTMLSelectorAttribute(BaseSchema):
 class HTMLTranslationConfiguration(ApiProcessorSchema):
     system_message: str = Field(
         description="System message to use for LLM",
-        default="You are a language translator.",
-        json_schema_extra={"widget": "textarea", "advanced_parameter": False},
+        default="You are a language translator. Translating text content from a HTML document. The text strings are provided as a JSON object with key-value pairs. The key is a unique identifier for the text provided in the value. Always reply a valid JSON object.",
+        json_schema_extra={"widget": "textarea"},
     )
+    translation_guideline: Optional[str] = Field(
+        description="Instructions for the translations",
+        default=None,
+        json_schema_extra={"widget": "textarea"},
+    )
+    provider_config: ProviderConfigType = Field(description="Provider configuration", default=OpenAIModelConfig())
 
     chunk_size: int = Field(
         description="Chunk size for translation",
         default=1000,
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={},
     )
 
     html_selectors: List[str] = Field(
@@ -71,14 +91,20 @@ class HTMLTranslationConfiguration(ApiProcessorSchema):
         description="List of HTML selectors attributes to translate",
         default=[HTMLSelectorAttribute(selector="img", attribute="alt")],
     )
-    placeholder_variable: str = Field(
-        description="Placeholder variable to replace in the processed text",
-        default="<CHUNK_PLACEHOLDER>",
-    )
     max_parallel_requests: int = Field(
         description="Max parallel requests to make to the translation provider",
         default=4,
         le=10,
+    )
+    temperature: float = Field(
+        description="The temperature of the random number generator.",
+        default=0.7,
+        le=1.0,
+        ge=0.0,
+    )
+    seed: Optional[int] = Field(
+        description="The seed used to generate the random number.",
+        default=None,
     )
 
 
@@ -112,45 +138,58 @@ class HTMLTranslationProcessor(
         )
 
     def _translate_with_provider(self, chunk: str) -> str:
+        json_input = json.loads(chunk)
+        llm_client = get_llm_client_from_provider_config(
+            str(self._config.provider_config.provider),
+            self._config.provider_config.model.value,
+            self.get_provider_config,
+        )
+
+        if llm_client is None:
+            raise ValueError("LLM client not found")
+
+        translation_prompt = (
+            "You are provided a JSON object with key-value pairs."
+            + "The key is a unique identifier for the text provided in the value."
+            + "Your task is to tranlate text in the value. You will translate the text"
+            + f" from {self._input.input_language} language to {self._input.output_language}"
+            + " language. Always respond with a valid JSON object only."
+        )
+
+        if self._config.translation_guideline:
+            translation_prompt += f"\nIn addition to the above instructions follow the following guidelines for translation {self._config.translation_guideline}"
+
+        translation_prompt += f"\n---\n{chunk}"
+
+        messages = [
+            {"role": "system", "content": self._config.system_message},
+            {"role": "user", "content": translation_prompt},
+        ]
+
+        response = llm_client.chat.completions.create(
+            messages=messages,
+            model=self._config.provider_config.model.value,
+            temperature=self._config.temperature,
+            stream=True,
+            seed=self._config.seed,
+            n=1,
+        )
+        model_response = ""
+
+        for result in response:
+            model_response += result.choices[0].delta.content_str
+
+        json_result = {}
         try:
-            from openai import OpenAI
-
-            json_input = json.loads(chunk)
-
-            openai_provider_config = self._config.provider_config(
-                provider_slug="openai",
-                processor_slug="*",
-            )
-            openai_client = OpenAI(api_key=openai_provider_config.api_key)
-            system_message = {
-                "role": "system",
-                "content": self._config.system_message,
-            }
-
-            if self._config.placeholder_variable in self._input.instructions:
-                message = f"{self._input.instructions.replace(self._config.placeholder_variable, chunk)}"
-            else:
-                message = f"{self._input.instructions}{chunk}"
-
-            result = openai_client.chat.completions.create(
-                model="gpt-4-turbo",
-                messages=[system_message] + [{"role": "user", "content": message}],
-                temperature=0.5,
-                stream=False,
-                seed=10,
-                max_tokens=3000,
-                response_format={"type": "json_object"},
-            )
-
-            json_result = json.loads(result.choices[0].message.content)
-
-            for entry in json_input:
-                if entry not in json_result:
-                    json_result[entry] = json_input[entry]
-            return json_result
+            json_result = json.loads(model_response)
         except Exception as e:
-            logger.error(f"Error: {e}")
-            return {}
+            logger.error(f"Error: {e}, response: {model_response}")
+
+        for entry in json_input:
+            if entry not in json_result:
+                json_result[entry] = json_input[entry]
+
+        return json_result
 
     def _get_elements_with_text(self, html_element: BeautifulSoup) -> List[str]:
         if html_element.name is None:

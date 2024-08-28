@@ -124,6 +124,11 @@ class MistralModelConfig(BaseModel):
     model: MistralModel = Field(default=MistralModel.MIXTRAL_SMALL, description="The model for the LLM")
 
 
+ProviderConfigType = Union[
+    OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig, MistralModelConfig
+]
+
+
 class LLMProcessorConfiguration(ApiProcessorSchema):
     system_message: Optional[str] = Field(
         description="The system message for the LLM",
