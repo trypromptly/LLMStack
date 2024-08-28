@@ -51,6 +51,7 @@ function Sheet(props) {
   const [sheetRunning, setSheetRunning] = useState(false);
   const [sheet, setSheet] = useState(null);
   const [columns, setColumns] = useState([]);
+  const [gridColumns, setGridColumns] = useState([]);
   const [cells, setCells] = useState({});
   const [runId, setRunId] = useState(null);
   const [selectedColumnId, setSelectedColumnId] = useState(null);
@@ -131,7 +132,7 @@ function Sheet(props) {
           setSheet(data);
           setCells(data?.cells || {});
           setSheetRunning(data?.running || false);
-          setColumns(parseSheetColumnsIntoGridColumns(data?.columns || []));
+          setColumns(data?.columns || []);
           setNumRows(data?.total_rows || 0);
           setUserChanges({
             columns: {},
@@ -147,7 +148,13 @@ function Sheet(props) {
           });
         });
     }
-  }, [sheetId, parseSheetColumnsIntoGridColumns]);
+  }, [sheetId]);
+
+  useEffect(() => {
+    if (columns.length > 0) {
+      setGridColumns(parseSheetColumnsIntoGridColumns(columns));
+    }
+  }, [columns, parseSheetColumnsIntoGridColumns]);
 
   const hasChanges = useCallback(() => {
     return (
@@ -191,16 +198,18 @@ function Sheet(props) {
   const onCellEdited = useCallback(
     (cell, value) => {
       const [col, row] = cell;
-      const cellId = gridCellToCellId(cell, columns);
+      const cellId = gridCellToCellId(cell, gridColumns);
 
       setCells((prevCells) => {
         const newCell = {
           row: row + 1,
-          col: columns[col]?.col,
-          kind: sheetColumnTypes[columns[col]?.type]?.kind || GridCellKind.Text,
+          col: gridColumns[col]?.col,
+          kind:
+            sheetColumnTypes[gridColumns[col]?.type]?.kind || GridCellKind.Text,
           data:
-            sheetColumnTypes[columns[col]?.type]?.getCellDataFromValue(value) ||
-            "",
+            sheetColumnTypes[gridColumns[col]?.type]?.getCellDataFromValue(
+              value,
+            ) || "",
         };
 
         const newCells = {
@@ -212,7 +221,7 @@ function Sheet(props) {
       });
       sheetRef.current?.updateCells([{ cell: cell }]);
     },
-    [columns, updateUserChanges, sheetRef],
+    [gridColumns, updateUserChanges, sheetRef],
   );
 
   const onPaste = useCallback(
@@ -225,13 +234,16 @@ function Sheet(props) {
         row.forEach((cellValue, colIndex) => {
           const currentRow = startRow + rowIndex;
           const currentCol = startCol + colIndex;
-          if (currentCol < columns.length) {
-            const cellId = gridCellToCellId([currentCol, currentRow], columns);
+          if (currentCol < gridColumns.length) {
+            const cellId = gridCellToCellId(
+              [currentCol, currentRow],
+              gridColumns,
+            );
             newCells[cellId] = {
               kind: GridCellKind.Text,
               display_data: cellValue,
               row: currentRow + 1,
-              col: columns[currentCol].col,
+              col: gridColumns[currentCol].col,
             };
             maxRow = Math.max(maxRow, currentRow);
           }
@@ -253,18 +265,18 @@ function Sheet(props) {
 
       // Update cells in the grid
       const cellsToUpdate = Object.keys(newCells).map((cellId) => ({
-        cell: cellIdToGridCell(cellId, columns),
+        cell: cellIdToGridCell(cellId, gridColumns),
       }));
       sheetRef.current?.updateCells(cellsToUpdate);
 
       return true;
     },
-    [columns, setUserChanges],
+    [gridColumns, setUserChanges],
   );
 
   const onRowAppended = useCallback(() => {
     const newRowIndex = numRows + 1;
-    const newCells = columns.reduce((acc, column) => {
+    const newCells = gridColumns.reduce((acc, column) => {
       const cellId = `${column.col}${newRowIndex}`;
       acc[cellId] = {
         kind: column.kind || GridCellKind.Text,
@@ -284,7 +296,7 @@ function Sheet(props) {
       setUserChanges((prev) => ({ ...prev, numRows: newNumRows }));
       return newNumRows;
     });
-  }, [numRows, columns]);
+  }, [numRows, gridColumns]);
 
   const saveSheet = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -329,10 +341,10 @@ function Sheet(props) {
 
           if (event.type === "cell.update") {
             const cell = event.cell;
-            const gridCell = cellIdToGridCell(cell.id, columns);
+            const gridCell = cellIdToGridCell(cell.id, gridColumns);
             if (gridCell) {
               const [colIndex] = gridCell;
-              const column = columns[colIndex];
+              const column = gridColumns[colIndex];
               const columnType = sheetColumnTypes[column.type];
 
               setCells((cells) => ({
@@ -353,7 +365,7 @@ function Sheet(props) {
             }
           } else if (event.type === "cell.updating") {
             const cell = event.cell;
-            const gridCell = cellIdToGridCell(cell.id, columns);
+            const gridCell = cellIdToGridCell(cell.id, gridColumns);
             if (gridCell) {
               setCells((cells) => ({
                 ...cells,
@@ -391,7 +403,7 @@ function Sheet(props) {
         ws.send(JSON.stringify({ event: "run" }));
       }
     }
-  }, [runId, sheet?.uuid, wsUrlPrefix, columns]);
+  }, [runId, sheet?.uuid, wsUrlPrefix, gridColumns]);
 
   const downloadSheet = () => {
     window.open(`/api/sheets/${sheet.uuid}/download`, "_blank");
@@ -403,8 +415,8 @@ function Sheet(props) {
       if (selection.current) {
         const { cell } = selection.current;
         const [col, row] = cell;
-        const cellId = gridCellToCellId([col, row], columns);
-        const columnType = sheetColumnTypes[columns[col].type];
+        const cellId = gridCellToCellId([col, row], gridColumns);
+        const columnType = sheetColumnTypes[gridColumns[col].type];
         setSelectedCellValue(
           columnType?.getCellDisplayData(cells[cellId]) || "",
         );
@@ -412,7 +424,7 @@ function Sheet(props) {
         setSelectedCellValue("");
       }
     },
-    [columns, cells],
+    [gridColumns, cells],
   );
 
   return sheet ? (
@@ -493,7 +505,7 @@ function Sheet(props) {
           ref={sheetRef}
           onPaste={onPaste}
           getCellContent={getCellContent}
-          columns={columns.map((c) => ({
+          columns={gridColumns.map((c) => ({
             ...c,
             title: `${c.col}: ${c.title}`,
           }))}
@@ -510,12 +522,17 @@ function Sheet(props) {
           width={"100%"}
           getCellsForSelection={true}
           rightElement={
-            <SheetColumnMenuButton addColumn={addColumn} columns={columns} />
+            <SheetColumnMenuButton
+              addColumn={addColumn}
+              columns={gridColumns}
+            />
           }
           onCellEdited={onCellEdited}
           onHeaderMenuClick={(column, bounds) => {
             setSelectedColumnId(
-              columns.findIndex((c) => c.col === columnIndexToLetter(column)),
+              gridColumns.findIndex(
+                (c) => c.col === columnIndexToLetter(column),
+              ),
             );
             editColumnAnchorEl.current = {
               getBoundingClientRect: () => DOMRect.fromRect(bounds),
@@ -524,7 +541,7 @@ function Sheet(props) {
           }}
           onColumnResize={(column, width) => {
             onColumnChange(
-              columns.findIndex((c) => c.col === column.col),
+              gridColumns.findIndex((c) => c.col === column.col),
               { ...column, width },
             );
           }}
@@ -538,11 +555,13 @@ function Sheet(props) {
       {showEditColumnMenu && (
         <SheetColumnMenu
           onClose={() => setShowEditColumnMenu(false)}
-          column={selectedColumnId !== null ? columns[selectedColumnId] : null}
+          column={
+            selectedColumnId !== null ? gridColumns[selectedColumnId] : null
+          }
           open={showEditColumnMenu}
           setOpen={setShowEditColumnMenu}
           anchorEl={editColumnAnchorEl.current}
-          columns={columns}
+          columns={gridColumns}
           updateColumn={(column) => {
             setColumns((columns) => {
               const newColumns = [...columns];
