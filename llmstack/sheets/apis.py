@@ -40,7 +40,7 @@ def _get_sheet_csv(columns, cells, total_rows):
         row_values = []
         for column in columns:
             cell = row_cells.get(f"{column.col}{row}")
-            row_values.append(cell.display_data if cell else "")
+            row_values.append(cell.data.get("output", "") if isinstance(cell.data, dict) else cell.data if cell else "")
 
         writer.writerow(row_values)
         yield output.getvalue()
