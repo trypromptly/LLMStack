@@ -493,7 +493,10 @@ function Sheet(props) {
           ref={sheetRef}
           onPaste={onPaste}
           getCellContent={getCellContent}
-          columns={columns}
+          columns={columns.map((c) => ({
+            ...c,
+            title: `${c.col}: ${c.title}`,
+          }))}
           smoothScrollX={true}
           smoothScrollY={true}
           rowMarkers={"both"}
