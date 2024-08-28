@@ -42,7 +42,7 @@ def _execute_cell(
     run_id: str,
     user: User,
 ) -> List[PromptlySheetCell]:
-    if column.type not in ["app_run", "processor_run"]:
+    if column.type not in ["app_run", "processor_run", "data_transformer"]:
         return [cell]
 
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
@@ -114,13 +114,16 @@ def _execute_cell(
                 logger.error(f"Error rendering output template: {e}")
                 pass
 
-    output = response.get("output", "")
+    output = response.get("output", "") if column.type != "data_transformer" else ""
 
     # Apply transformation template if present
     transformation_template = column.data.get("transformation_template")
     if transformation_template:
         try:
-            output = render_template(transformation_template, {"output": output})
+            output = render_template(
+                transformation_template,
+                input_values if column.type == "data_transformer" else {"output": output},
+            )
         except Exception as e:
             logger.error(f"Error applying transformation template: {e}")
             async_to_sync(channel_layer.group_send)(
@@ -203,7 +206,7 @@ def run_sheet(sheet, run_entry, user):
 
         # Execute cells that are not dependent on other cells
         for column in existing_cols:
-            if column.type not in ["app_run", "processor_run"]:
+            if column.type not in ["app_run", "processor_run", "data_transformer"]:
                 continue
 
             fill_rows_with_output = column.data.get("fill_rows_with_output", False)
@@ -227,7 +230,7 @@ def run_sheet(sheet, run_entry, user):
         # Execute cells that are dependent on other cells
         for row_number in range(1, sheet.data.get("total_rows", 0) + 1):
             for col in existing_cols:
-                if col.type not in ["app_run", "processor_run"]:
+                if col.type not in ["app_run", "processor_run", "data_transformer"]:
                     continue
 
                 # Skip if this column is to fill rows with output

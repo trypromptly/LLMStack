@@ -24,6 +24,7 @@ class PromptlySheetColumnType(str, Enum):
     URI = "uri"
     MARKDOWN = "markdown"
     IMAGE = "image"
+    DATA_TRANSFORMER = "data_transformer"
     APP_RUN = "app_run"
     PROCESSOR_RUN = "processor_run"
 

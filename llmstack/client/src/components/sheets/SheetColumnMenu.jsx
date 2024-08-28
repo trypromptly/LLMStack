@@ -86,6 +86,20 @@ export const sheetColumnTypes = {
     getCellDisplayData: (cell) =>
       cell?.data?.output || cell?.display_data || "",
   },
+  data_transformer: {
+    value: "data_transformer",
+    label: "Data Transformer",
+    icon: "data_transformer",
+    kind: GridCellKind.Text,
+    getCellDataFromValue: (value) => {
+      return {
+        output: value?.data,
+      };
+    },
+    getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
+    getCellDisplayData: (cell) =>
+      cell?.data?.output || cell?.display_data || "",
+  },
 };
 
 export function SheetColumnMenu({
@@ -144,13 +158,16 @@ export function SheetColumnMenu({
       hasMenu: column?.hasMenu || true,
       width: column?.width || 300,
       data:
-        (columnType === "app_run" || columnType === "processor_run") &&
+        (columnType === "app_run" ||
+          columnType === "processor_run" ||
+          columnType === "data_transformer") &&
         columnRunData.current
           ? {
               ...columnRunData.current,
-              transformation_template: transformData
-                ? transformationTemplate
-                : undefined,
+              transformation_template:
+                transformData || columnType === "data_transformer"
+                  ? transformationTemplate
+                  : undefined,
               fill_rows_with_output: fillRowsWithOutput,
               kind: columnType,
             }
@@ -319,6 +336,23 @@ export function SheetColumnMenu({
                       Transformation template will be applied if provided.
                     </Typography>
                   )}
+                </>
+              )}
+              {columnType === "data_transformer" && (
+                <>
+                  <TextField
+                    label="Transformation Template"
+                    value={transformationTemplate}
+                    onChange={(e) => setTransformationTemplate(e.target.value)}
+                    multiline
+                    rows={4}
+                    placeholder="Enter LiquidJS template"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    Use LiquidJS syntax to transform the input. Example:
+                    <code>{`{{ input | upcase }}`}</code>. The 'input' variable
+                    contains the original cell value.
+                  </Typography>
                 </>
               )}
               <Stack
