@@ -161,11 +161,12 @@ def get_llm_client_from_provider_config(provider, model_slug, get_provider_confi
     except Exception:
         cohere_provider_config = None
 
-    google_api_key, token_type = (
-        get_google_credentials_from_json_key(google_provider_config.service_account_json_key)
-        if google_provider_config
-        else (None, None)
-    )
+    if google_provider_config:
+        google_api_key = None
+        if google_provider_config.service_account_json_key:
+            google_api_key, _ = get_google_credentials_from_json_key(google_provider_config.service_account_json_key)
+        elif google_provider_config.api_key:
+            google_api_key = google_provider_config.api_key
 
     return LLM(
         provider=provider,
