@@ -136,7 +136,7 @@ def _execute_cell(
                     PromptlySheetCell(
                         row=cell.row + i,
                         col=cell.col,
-                        data=str(item),
+                        data={"output": str(item)},
                         formula=cell.formula,
                     )
                     for i, item in enumerate(output_list)
@@ -159,7 +159,10 @@ def _execute_cell(
                         run_id,
                         {
                             "type": "cell.update",
-                            "cell": {"id": cell.cell_id, "output": cell.data.get("output", "")},
+                            "cell": {
+                                "id": cell.cell_id,
+                                "output": cell.data.get("output", "") if isinstance(cell.data, dict) else cell.data,
+                            },
                         },
                     )
 
@@ -176,7 +179,10 @@ def _execute_cell(
             run_id,
             {
                 "type": "cell.update",
-                "cell": {"id": cell.cell_id, "output": cell.data.get("output", "")},
+                "cell": {
+                    "id": cell.cell_id,
+                    "output": cell.data.get("output", "") if isinstance(cell.data, dict) else cell.data,
+                },
             },
         )
         return [cell]
