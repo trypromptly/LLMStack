@@ -13,13 +13,13 @@ import {
   Checkbox,
   FormControlLabel,
   Typography,
+  Tooltip,
 } from "@mui/material";
 import { DeleteOutlined, AddOutlined, InfoOutlined } from "@mui/icons-material";
 import { GridCellKind, GridColumnIcon } from "@glideapps/glide-data-grid";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm"; // Added this import
 import "@glideapps/glide-data-grid/dist/index.css";
-import Tooltip from "@mui/material/Tooltip";
 
 const numberToLetters = (num) => {
   let letters = "";
@@ -39,6 +39,7 @@ export const sheetColumnTypes = {
     getCellDataFromValue: (value) => value?.data || "",
     getCellData: (cell) => cell?.data || "",
     getCellDisplayData: (cell) => cell?.data || "",
+    description: "Plain text content",
   },
   number: {
     value: "number",
@@ -48,6 +49,7 @@ export const sheetColumnTypes = {
     getCellDataFromValue: (value) => value?.data || "",
     getCellData: (cell) => cell?.data || 0,
     getCellDisplayData: (cell) => cell?.data?.toLocaleString() || "",
+    description: "Numeric values",
   },
   uri: {
     value: "uri",
@@ -57,6 +59,7 @@ export const sheetColumnTypes = {
     getCellDataFromValue: (value) => value?.data || "",
     getCellData: (cell) => cell?.data || "",
     getCellDisplayData: (cell) => cell?.data || "",
+    description: "Uniform Resource Identifier",
   },
   app_run: {
     value: "app_run",
@@ -71,6 +74,7 @@ export const sheetColumnTypes = {
     getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
     getCellDisplayData: (cell) =>
       cell?.data?.output || cell?.display_data || "",
+    description: "Results from running an app",
   },
   processor_run: {
     value: "processor_run",
@@ -85,6 +89,7 @@ export const sheetColumnTypes = {
     getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
     getCellDisplayData: (cell) =>
       cell?.data?.output || cell?.display_data || "",
+    description: "Results from running a processor",
   },
   data_transformer: {
     value: "data_transformer",
@@ -99,6 +104,7 @@ export const sheetColumnTypes = {
     getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
     getCellDisplayData: (cell) =>
       cell?.data?.output || cell?.display_data || "",
+    description: "Create new columns from existing columns",
   },
 };
 
@@ -256,7 +262,14 @@ export function SheetColumnMenu({
               >
                 {Object.keys(sheetColumnTypes).map((type) => (
                   <MenuItem key={type} value={type}>
-                    {sheetColumnTypes[type].label}
+                    <Stack spacing={0}>
+                      <Typography variant="body1">
+                        {sheetColumnTypes[type].label}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {sheetColumnTypes[type].description}
+                      </Typography>
+                    </Stack>
                   </MenuItem>
                 ))}
               </Select>
