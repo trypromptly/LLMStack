@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Box, Stack, CircularProgress } from "@mui/material";
-import { DataEditor, GridCellKind } from "@glideapps/glide-data-grid";
+import {
+  Box,
+  Stack,
+  CircularProgress,
+  Typography,
+  IconButton,
+} from "@mui/material";
+import {
+  DataEditor,
+  GridCellKind,
+  CompactSelection,
+} from "@glideapps/glide-data-grid";
 import {
   SheetColumnMenu,
   SheetColumnMenuButton,
@@ -11,7 +21,9 @@ import { Ws } from "../../data/ws";
 import { enqueueSnackbar } from "notistack";
 import SheetHeader from "./SheetHeader";
 import { headerIcons } from "./headerIcons";
-
+import SaveIcon from "@mui/icons-material/Save";
+import DownloadIcon from "@mui/icons-material/Download";
+import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import "@glideapps/glide-data-grid/dist/index.css";
 
 const columnIndexToLetter = (index) => {
@@ -65,6 +77,12 @@ function Sheet(props) {
       ? process.env.REACT_APP_API_SERVER || "localhost:9000"
       : window.location.host
   }/ws`;
+  const [gridSelection, setGridSelection] = useState({
+    columns: CompactSelection.empty(),
+    rows: CompactSelection.empty(),
+    current: undefined,
+  });
+  const [selectedCellValue, setSelectedCellValue] = useState("");
 
   const getCellContent = useCallback(
     ([col, row]) => {
@@ -379,6 +397,28 @@ function Sheet(props) {
     }
   }, [runId, sheet?.uuid, wsUrlPrefix, columns]);
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString();
+  };
+
+  const onGridSelectionChange = useCallback(
+    (selection) => {
+      setGridSelection(selection);
+      if (selection.current) {
+        const { cell } = selection.current;
+        const [col, row] = cell;
+        const cellId = gridCellToCellId([col, row], columns);
+        const columnType = sheetColumnTypes[columns[col].type];
+        setSelectedCellValue(
+          columnType?.getCellDisplayData(cells[cellId]) || "",
+        );
+      } else {
+        setSelectedCellValue("");
+      }
+    },
+    [columns, cells],
+  );
+
   return sheet ? (
     <Stack>
       <SheetHeader
@@ -389,6 +429,45 @@ function Sheet(props) {
         sheetRunning={sheetRunning}
         runId={runId}
       />
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "normal",
+          padding: 0,
+          borderBottom: "1px solid #e0e0e0",
+        }}
+      >
+        <Box
+          sx={{
+            height: "50px",
+            width: "100%",
+            overflow: "auto",
+            resize: "vertical",
+            border: "1px solid #e0e0e0",
+            borderRadius: "4px",
+            padding: "8px",
+            textAlign: "left",
+            scrollBehavior: "smooth",
+            scrollbarWidth: "thin",
+            fontSize: "14px",
+            fontFamily: "Arial",
+          }}
+        >
+          <LayoutRenderer>{selectedCellValue}</LayoutRenderer>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Typography variant="caption" sx={{ mr: 2 }} color="text.secondary">
+            Last updated: {formatDate(sheet.updated_at)}
+          </Typography>
+          <IconButton onClick={saveSheet} disabled={!hasChanges()}>
+            <SaveIcon />
+          </IconButton>
+          <IconButton>
+            <DownloadIcon />
+          </IconButton>
+        </Box>
+      </Box>
       <Box>
         <DataEditor
           ref={sheetRef}
@@ -428,6 +507,8 @@ function Sheet(props) {
           }}
           rows={numRows}
           headerIcons={headerIcons}
+          gridSelection={gridSelection}
+          onGridSelectionChange={onGridSelectionChange}
         />
       </Box>
       <div id="portal" />
