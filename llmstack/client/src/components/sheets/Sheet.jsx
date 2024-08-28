@@ -615,9 +615,13 @@ function Sheet(props) {
                 (c) => c.col === columnIndexToLetter(column),
               ),
             );
-            editColumnAnchorEl.current = {
-              getBoundingClientRect: () => DOMRect.fromRect(bounds),
-            };
+            if (editColumnAnchorEl.current) {
+              editColumnAnchorEl.current.style.position = "absolute";
+              editColumnAnchorEl.current.style.left = `${bounds.x}px`;
+              editColumnAnchorEl.current.style.top = `${bounds.y}px`;
+              editColumnAnchorEl.current.style.width = `${bounds.width}px`;
+              editColumnAnchorEl.current.style.height = `${bounds.height}px`;
+            }
             setShowEditColumnMenu(!showEditColumnMenu);
           }}
           onColumnResize={(column, width) => {
@@ -634,6 +638,7 @@ function Sheet(props) {
         />
       </Box>
       <div id="portal" />
+      <div id="sheet-column-menu" ref={editColumnAnchorEl} />
       {showEditColumnMenu && (
         <SheetColumnMenu
           onClose={() => setShowEditColumnMenu(false)}
