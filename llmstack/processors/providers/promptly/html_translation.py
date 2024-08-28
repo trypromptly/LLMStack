@@ -34,11 +34,11 @@ def has_non_text_nodes(element):
 
 
 class Language(str, Enum):
-    ENGLISH = "english"
-    GERMAN = "german"
-    FRENCH = "french"
-    SPANISH = "spanish"
-    PORTUGUESE = "portuguese"
+    ENGLISH = "English"
+    GERMAN = "German"
+    FRENCH = "French"
+    SPANISH = "Spanish"
+    PORTUGUESE = "Portuguese"
 
     def __str__(self):
         return self.value
