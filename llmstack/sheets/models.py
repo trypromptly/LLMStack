@@ -93,6 +93,14 @@ class PromptlySheetCell(BaseModel):
     def cell_id(self):
         return f"{self.col}{self.row}"
 
+    @property
+    def is_output(self):
+        return bool(self.data.get("output")) if isinstance(self.data, dict) else bool(self.data)
+
+    @property
+    def output(self):
+        return self.data.get("output") if isinstance(self.data, dict) else self.data
+
     @staticmethod
     def column_index_to_letter(index):
         result = ""

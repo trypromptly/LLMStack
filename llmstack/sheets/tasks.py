@@ -2,7 +2,7 @@ import ast
 import json
 import logging
 import uuid
-from typing import List
+from typing import Any, Dict, List
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -37,7 +37,7 @@ def number_to_letters(num):
 def _execute_cell(
     cell: PromptlySheetCell,
     column: PromptlySheetColumn,
-    row: List[PromptlySheetCell],
+    input_values: Dict[str, Any],
     sheet: PromptlySheet,
     run_id: str,
     user: User,
@@ -48,7 +48,6 @@ def _execute_cell(
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
 
     fill_rows_with_output = column.data.get("fill_rows_with_output", False)
-    input_values = {} if fill_rows_with_output else {cell.col: cell.data for cell in row}
 
     response = None
     if column.type == "app_run":
@@ -131,7 +130,7 @@ def _execute_cell(
             )
 
     # Fill rows with output if we are executing the column for the first time
-    if fill_rows_with_output and len(row) == 0 and cell.row == 1:
+    if fill_rows_with_output and len(input_values.values()) == 0 and cell.row == 1:
         try:
             output_list = json.loads(output) if isinstance(output, str) else output
             if isinstance(output_list, list):
@@ -219,7 +218,7 @@ def run_sheet(sheet, run_entry, user):
                 executed_cells = _execute_cell(
                     cell_to_execute,
                     column,
-                    [],
+                    {},
                     sheet,
                     str(run_entry.uuid),
                     user,
@@ -237,6 +236,16 @@ def run_sheet(sheet, run_entry, user):
                 if col.data.get("fill_rows_with_output", False):
                     continue
 
+                valid_cells_in_row = [
+                    existing_cells_dict.get(f"{col.col}{row_number}")
+                    for col in existing_cols
+                    if existing_cells_dict.get(f"{col.col}{row_number}")
+                ]
+
+                # Skip if none of the cells have any valid data["output"]
+                if not any(cell.is_output for cell in valid_cells_in_row):
+                    continue
+
                 cell_to_execute = PromptlySheetCell(
                     row=row_number,
                     col=col.col,
@@ -245,11 +254,7 @@ def run_sheet(sheet, run_entry, user):
                 executed_cells = _execute_cell(
                     cell_to_execute,
                     col,
-                    [
-                        existing_cells_dict.get(f"{col.col}{row_number}")
-                        for col in existing_cols
-                        if existing_cells_dict.get(f"{col.col}{row_number}")
-                    ],
+                    {cell.col: cell.output for cell in valid_cells_in_row},
                     sheet,
                     str(run_entry.uuid),
                     user,
