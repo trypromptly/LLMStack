@@ -73,7 +73,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
                     },
                 ).data
             )
-        sheets = PromptlySheet.objects.filter(profile_uuid=profile.uuid)
+        sheets = PromptlySheet.objects.filter(profile_uuid=profile.uuid).order_by("-updated_at")
         return DRFResponse(
             PromptlySheetSerializer(
                 instance=sheets,
