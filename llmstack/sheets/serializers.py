@@ -14,6 +14,7 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
     total_rows = serializers.SerializerMethodField()
     total_columns = serializers.SerializerMethodField()
     running = serializers.SerializerMethodField()
+    formula_cells = serializers.SerializerMethodField()
 
     def get_cells(self, obj):
         cells = {}
@@ -38,6 +39,9 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
     def get_running(self, obj):
         return obj.extra_data.get("running", False)
 
+    def get_formula_cells(self, obj):
+        return obj.data.get("formula_cells", {})
+
     class Meta:
         model = PromptlySheet
         fields = [
@@ -52,4 +56,5 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "running",
+            "formula_cells",
         ]

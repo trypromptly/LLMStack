@@ -23,10 +23,12 @@ import { enqueueSnackbar } from "notistack";
 import SheetHeader from "./SheetHeader";
 import { headerIcons } from "./headerIcons";
 import SaveIcon from "@mui/icons-material/Save";
+import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
 import DownloadIcon from "@mui/icons-material/Download";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import "@glideapps/glide-data-grid/dist/index.css";
 import SheetCellMenu from "./SheetCellMenu";
+import SheetFormulaMenu from "./SheetFormulaMenu";
 
 const columnIndexToLetter = (index) => {
   let temp = index + 1;
@@ -72,10 +74,13 @@ function Sheet(props) {
   const [columns, setColumns] = useState({});
   const [gridColumns, setGridColumns] = useState([]);
   const [cells, setCells] = useState({});
+  const [formulaCells, setFormulaCells] = useState({});
   const [runId, setRunId] = useState(null);
   const [selectedGrid, setSelectedGrid] = useState([]);
   const [selectedColumnId, setSelectedColumnId] = useState(null);
   const [showEditColumnMenu, setShowEditColumnMenu] = useState(false);
+  const [showFormulaMenu, setShowFormulaMenu] = useState(false);
+  const [selectedCellId, setSelectedCellId] = useState(null);
   const [numRows, setNumRows] = useState(0);
   const [numColumns, setNumColumns] = useState(0);
   const [userChanges, setUserChanges] = useState({
@@ -86,6 +91,7 @@ function Sheet(props) {
   });
   const editColumnAnchorEl = useRef(null);
   const sheetRef = useRef(null);
+  const formulaMenuAnchorEl = useRef(null);
   const wsUrlPrefix = `${
     window.location.protocol === "https:" ? "wss" : "ws"
   }://${
@@ -182,6 +188,7 @@ function Sheet(props) {
           const { data } = response;
           setSheet(data);
           setCells(data?.cells || {});
+          setFormulaCells(data?.formula_cells || {});
           setSheetRunning(data?.running || false);
           setColumns(data?.columns || {});
           setNumColumns(data?.total_columns || 26);
@@ -191,6 +198,7 @@ function Sheet(props) {
             cells: {},
             numRows: null,
             addedColumns: [],
+            formulaCells: {},
           });
         })
         .catch((error) => {
@@ -210,6 +218,7 @@ function Sheet(props) {
     return (
       Object.keys(userChanges.columns).length > 0 ||
       Object.keys(userChanges.cells).length > 0 ||
+      Object.keys(userChanges.formulaCells).length > 0 ||
       userChanges.numRows !== null ||
       userChanges.addedColumns.length > 0
     );
@@ -361,6 +370,7 @@ function Sheet(props) {
         ...sheet,
         columns: columns,
         cells: cells,
+        formula_cells: formulaCells,
         total_rows: numRows,
       };
       axios()
@@ -371,6 +381,7 @@ function Sheet(props) {
             cells: {},
             numRows: null,
             addedColumns: [],
+            formulaCells: {},
           });
           enqueueSnackbar("Sheet saved successfully", { variant: "success" });
           resolve();
@@ -386,7 +397,7 @@ function Sheet(props) {
           reject(error);
         });
     });
-  }, [sheet, columns, cells, numRows]);
+  }, [sheet, columns, cells, numRows, formulaCells]);
 
   useEffect(() => {
     if (runId) {
@@ -485,8 +496,10 @@ function Sheet(props) {
         setSelectedCellValue(
           columnType?.getCellDisplayData(cells[cellId]) || "",
         );
+        setSelectedCellId(cellId);
       } else {
         setSelectedCellValue("");
+        setSelectedCellId(null);
       }
     },
     [gridColumns, cells],
@@ -549,6 +562,18 @@ function Sheet(props) {
         >
           {selectedGrid}
         </Typography>
+        <Tooltip title="Formula">
+          <Button
+            onClick={() => setShowFormulaMenu(!showFormulaMenu)}
+            disabled={selectedGrid?.length !== 1}
+            color="primary"
+            variant="outlined"
+            sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
+            ref={formulaMenuAnchorEl}
+          >
+            <SettingsSuggestIcon />
+          </Button>
+        </Tooltip>
         <Box
           sx={{
             minHeight: "40px",
@@ -708,6 +733,41 @@ function Sheet(props) {
         onCopy={handleCellCopy}
         onPaste={handleCellPaste}
         onDelete={handleCellDelete}
+      />
+      <SheetFormulaMenu
+        anchorEl={formulaMenuAnchorEl.current}
+        open={showFormulaMenu}
+        onClose={() => setShowFormulaMenu(false)}
+        cellId={selectedCellId}
+        formulaCells={formulaCells}
+        setFormulaCell={(cellId, formulaData) => {
+          const [col, row] = cellIdToGridCell(cellId, gridColumns);
+
+          if (!formulaData) {
+            setFormulaCells((prev) => {
+              const newFormulaCells = { ...prev };
+              delete newFormulaCells[cellId];
+              return newFormulaCells;
+            });
+            setUserChanges((prev) => ({
+              ...prev,
+              formulaCells: { ...prev.formulaCells, [cellId]: null },
+            }));
+            return;
+          }
+
+          setFormulaCells((prev) => ({
+            [cellId]: {
+              row: row + 1,
+              col: gridColumns[col]?.col,
+              formula: formulaData,
+            },
+          }));
+          setUserChanges((prev) => ({
+            ...prev,
+            formulaCells: { ...prev.formulaCells, [cellId]: formulaData },
+          }));
+        }}
       />
     </Stack>
   ) : (

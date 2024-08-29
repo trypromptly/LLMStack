@@ -83,11 +83,6 @@ class PromptlySheetCell(BaseModel):
     row: int
     col: str
     data: Optional[Any] = None
-    formula: str = ""
-
-    @property
-    def is_formula(self):
-        return bool(self.formula)
 
     @property
     def cell_id(self):
@@ -124,6 +119,24 @@ class PromptlySheetCell(BaseModel):
         row = int(number_part)
 
         return (row, letter_part)
+
+
+class PromptlySheetFormulaCellType(str, Enum):
+    DATA_TRANSFORMER = "data_transformer"
+    APP_RUN = "app_run"
+    PROCESSOR_RUN = "processor_run"
+
+    def __str__(self):
+        return self.value
+
+
+class PromptlySheetFormulaCellData(BaseModel):
+    type: PromptlySheetFormulaCellType = PromptlySheetFormulaCellType.DATA_TRANSFORMER
+    data: dict = {}
+
+
+class PromptlySheetFormulaCell(PromptlySheetCell):
+    formula: PromptlySheetFormulaCellData
 
 
 class PromptlySheetFiles(Assets):
@@ -235,6 +248,10 @@ class PromptlySheet(models.Model):
             cells.update(self.get_sheet_cells(objref))
 
         return cells
+
+    @property
+    def formula_cells(self):
+        return self.data.get("formula_cells", {})
 
     @property
     def columns(self):

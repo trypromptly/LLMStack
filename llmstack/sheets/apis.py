@@ -15,6 +15,7 @@ from llmstack.sheets.models import (
     PromptlySheet,
     PromptlySheetCell,
     PromptlySheetColumn,
+    PromptlySheetFormulaCell,
     PromptlySheetRunEntry,
 )
 from llmstack.sheets.serializers import PromptlySheetSerializer
@@ -92,6 +93,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
             data={
                 "description": request.data.get("description", ""),
                 "columns": request.data.get("columns", {}),
+                "formula_cells": request.data.get("formula_cells", {}),
                 "total_rows": request.data.get("total_rows", 0),
                 "total_columns": request.data.get("total_columns", 26),
             },
@@ -131,6 +133,12 @@ class PromptlySheetViewSet(viewsets.ViewSet):
 
         if "description" in request.data:
             sheet.data["description"] = request.data["description"]
+
+        if "formula_cells" in request.data:
+            sheet.data["formula_cells"] = {
+                cell_id: PromptlySheetFormulaCell(**cell_data).model_dump()
+                for cell_id, cell_data in request.data["formula_cells"].items()
+            }
 
         if "columns" in request.data:
             sheet.data["columns"] = {

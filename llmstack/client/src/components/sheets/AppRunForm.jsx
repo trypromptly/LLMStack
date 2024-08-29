@@ -16,7 +16,7 @@ const numberToLetters = (num) => {
   return letters;
 };
 
-const AppRunForm = ({ columns, appSlug, appInput, setData }) => {
+const AppRunForm = ({ columns = [], appSlug, appInput, setData }) => {
   const [selectedAppSlug, setSelectedAppSlug] = useState(
     appSlug || "super-agent",
   );
