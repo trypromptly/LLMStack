@@ -14,12 +14,17 @@ import {
   IconButton,
 } from "@mui/material";
 import { enqueueSnackbar } from "notistack";
-import { DeleteOutlineOutlined, EditOutlined } from "@mui/icons-material";
+import {
+  DeleteOutlineOutlined,
+  EditOutlined,
+  ContentCopyOutlined,
+} from "@mui/icons-material";
 import { axios } from "../../data/axios";
 import SheetDeleteDialog from "./SheetDeleteDialog";
 import { useEffect } from "react";
+import { SheetDuplicateDialog } from "./SheetDuplicateDialog";
 
-function SheetListItem({ sheet, onDelete, onEdit }) {
+function SheetListItem({ sheet, onDelete, onEdit, onDuplicate }) {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -36,6 +41,11 @@ function SheetListItem({ sheet, onDelete, onEdit }) {
   const handleEdit = (e) => {
     e.stopPropagation();
     setEditDialogOpen(true);
+  };
+
+  const handleDuplicate = (e) => {
+    e.stopPropagation();
+    onDuplicate(sheet);
   };
 
   return (
@@ -60,9 +70,12 @@ function SheetListItem({ sheet, onDelete, onEdit }) {
             {sheet.description || "No description available"}
           </Typography>
         </TableCell>
-        <TableCell>
+        <TableCell align="center">
           <IconButton aria-label="edit" onClick={handleEdit}>
             <EditOutlined />
+          </IconButton>
+          <IconButton aria-label="duplicate" onClick={handleDuplicate}>
+            <ContentCopyOutlined sx={{ fontSize: "20px" }} />
           </IconButton>
           <IconButton
             aria-label="delete"
@@ -95,6 +108,8 @@ function SheetListItem({ sheet, onDelete, onEdit }) {
 
 function SheetsList() {
   const [newSheetDialogOpen, setNewSheetDialogOpen] = useState(false);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [sheetToDuplicate, setSheetToDuplicate] = useState(null);
   const sheets = useRecoilValue(sheetsListSelector);
   const setSheets = useSetRecoilState(sheetsListSelector);
 
@@ -127,6 +142,16 @@ function SheetsList() {
     enqueueSnackbar("Sheet updated successfully", { variant: "success" });
   };
 
+  const handleDuplicateSheet = (sheet) => {
+    setSheetToDuplicate(sheet);
+    setDuplicateDialogOpen(true);
+  };
+
+  const handleDuplicateComplete = (newSheet) => {
+    setSheets((prevSheets) => [...prevSheets, newSheet]);
+    enqueueSnackbar("Sheet duplicated successfully", { variant: "success" });
+  };
+
   return (
     <Stack>
       <Typography variant="h5" className="section-header">
@@ -154,7 +179,9 @@ function SheetsList() {
           <TableRow>
             <TableCell sx={{ fontWeight: "bold" }}>Name</TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Description</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Actions</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }} align="center">
+              Actions
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -165,6 +192,7 @@ function SheetsList() {
                 sheet={sheet}
                 onDelete={handleDeleteSheet}
                 onEdit={handleEditSheet}
+                onDuplicate={handleDuplicateSheet}
               />
             ))
           ) : (
@@ -183,6 +211,12 @@ function SheetsList() {
         setSheet={() => {}}
         sheetId={null}
         setSheetId={() => {}}
+      />
+      <SheetDuplicateDialog
+        open={duplicateDialogOpen}
+        setOpen={setDuplicateDialogOpen}
+        sheet={sheetToDuplicate}
+        onDuplicate={handleDuplicateComplete}
       />
     </Stack>
   );
