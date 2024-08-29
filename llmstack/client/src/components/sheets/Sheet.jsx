@@ -632,7 +632,6 @@ function Sheet(props) {
             maxHeight: "400px",
             width: "100%",
             overflow: "auto",
-            resize: "vertical",
             borderBottom: "none",
             borderLeft: "1px solid #e0e0e0",
             borderRadius: "none",
@@ -643,9 +642,46 @@ function Sheet(props) {
             fontSize: "14px",
             fontFamily: "Arial",
             borderRight: "none",
+            position: "relative",
             "& p": {
               margin: 0,
             },
+          }}
+          ref={(el) => {
+            if (el) {
+              const resizer = document.createElement("div");
+              resizer.style.cssText = `
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 5px;
+                cursor: ns-resize;
+              `;
+              el.appendChild(resizer);
+
+              let startY, startHeight;
+
+              const resize = (e) => {
+                const newHeight = startHeight + e.clientY - startY;
+                el.style.height = `${newHeight}px`;
+              };
+
+              const stopResize = () => {
+                window.removeEventListener("mousemove", resize);
+                window.removeEventListener("mouseup", stopResize);
+              };
+
+              resizer.addEventListener("mousedown", (e) => {
+                startY = e.clientY;
+                startHeight = parseInt(
+                  document.defaultView.getComputedStyle(el).height,
+                  10,
+                );
+                window.addEventListener("mousemove", resize);
+                window.addEventListener("mouseup", stopResize);
+              });
+            }
           }}
         >
           <LayoutRenderer>{selectedCellValue}</LayoutRenderer>
