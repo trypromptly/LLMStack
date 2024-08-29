@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Box, Stack, CircularProgress, Button, Tooltip } from "@mui/material";
+import {
+  Box,
+  Stack,
+  CircularProgress,
+  Button,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import {
   DataEditor,
   GridCellKind,
@@ -66,6 +73,7 @@ function Sheet(props) {
   const [gridColumns, setGridColumns] = useState([]);
   const [cells, setCells] = useState({});
   const [runId, setRunId] = useState(null);
+  const [selectedGrid, setSelectedGrid] = useState([]);
   const [selectedColumnId, setSelectedColumnId] = useState(null);
   const [showEditColumnMenu, setShowEditColumnMenu] = useState(false);
   const [numRows, setNumRows] = useState(0);
@@ -462,10 +470,18 @@ function Sheet(props) {
     (selection) => {
       setGridSelection(selection);
       if (selection.current) {
-        const { cell } = selection.current;
+        const { cell, range } = selection.current;
         const [col, row] = cell;
         const cellId = gridCellToCellId([col, row], gridColumns);
         const columnType = sheetColumnTypes[gridColumns[col].type];
+        setSelectedGrid([
+          range.width === 1 && range.height === 1
+            ? cellId
+            : `${cellId}:${gridCellToCellId(
+                [col + range.width - 1, row + range.height - 1],
+                gridColumns,
+              )}`,
+        ]);
         setSelectedCellValue(
           columnType?.getCellDisplayData(cells[cellId]) || "",
         );
@@ -528,6 +544,11 @@ function Sheet(props) {
           borderBottom: "1px solid #e0e0e0",
         }}
       >
+        <Typography
+          sx={{ fontSize: "14px", fontFamily: "Arial", fontWeight: "semibold" }}
+        >
+          {selectedGrid}
+        </Typography>
         <Box
           sx={{
             minHeight: "40px",
