@@ -9,6 +9,7 @@ import {
   MenuItem,
   Button,
   Typography,
+  InputLabel,
 } from "@mui/material";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
@@ -41,7 +42,7 @@ const SheetFormulaMenu = ({
   columns,
 }) => {
   const [formulaType, setFormulaType] = useState(
-    formulaCells[cellId]?.formula?.type || "data_transformer",
+    formulaCells[cellId]?.formula?.type || "",
   );
   const [transformationTemplate, setTransformationTemplate] = useState(
     formulaCells[cellId]?.formula?.data?.transformation_template || "",
@@ -56,7 +57,7 @@ const SheetFormulaMenu = ({
   // Add this useEffect hook
   useEffect(() => {
     formulaDataRef.current = formulaCells[cellId]?.formula?.data || {};
-    setFormulaType(formulaCells[cellId]?.formula?.type || "data_transformer");
+    setFormulaType(formulaCells[cellId]?.formula?.type || "");
     setTransformationTemplate(
       formulaCells[cellId]?.formula?.data?.transformation_template || "",
     );
@@ -126,6 +127,10 @@ const SheetFormulaMenu = ({
         >
           <Paper>
             <Stack gap={2} sx={{ padding: 2 }}>
+              <InputLabel>Formula: {cellId}</InputLabel>
+              <Typography variant="caption" color="text.secondary">
+                Select the type of formula you want to apply
+              </Typography>
               <Select
                 value={formulaType}
                 onChange={(e) => setFormulaType(e.target.value)}

@@ -40,7 +40,7 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
         return obj.extra_data.get("running", False)
 
     def get_formula_cells(self, obj):
-        return obj.data.get("formula_cells", {})
+        return {cell_id: cell.model_dump() for cell_id, cell in obj.formula_cells.items()}
 
     class Meta:
         model = PromptlySheet

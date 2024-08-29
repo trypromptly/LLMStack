@@ -251,7 +251,9 @@ class PromptlySheet(models.Model):
 
     @property
     def formula_cells(self):
-        return self.data.get("formula_cells", {})
+        return {
+            cell_id: PromptlySheetFormulaCell(**cell) for cell_id, cell in self.data.get("formula_cells", {}).items()
+        }
 
     @property
     def columns(self):

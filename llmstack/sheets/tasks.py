@@ -2,7 +2,7 @@ import ast
 import json
 import logging
 import uuid
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -13,7 +13,12 @@ from rest_framework.response import Response as DRFResponse
 from llmstack.apps.apis import AppViewSet
 from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.utils import hydrate_input
-from llmstack.sheets.models import PromptlySheet, PromptlySheetCell, PromptlySheetColumn
+from llmstack.sheets.models import (
+    PromptlySheet,
+    PromptlySheetCell,
+    PromptlySheetColumn,
+    PromptlySheetFormulaCell,
+)
 from llmstack.sheets.serializers import PromptlySheetSerializer
 
 try:
@@ -36,23 +41,26 @@ def number_to_letters(num):
 
 def _execute_cell(
     cell: PromptlySheetCell,
-    column: PromptlySheetColumn,
+    column: Optional[PromptlySheetColumn],
     input_values: Dict[str, Any],
     sheet: PromptlySheet,
     run_id: str,
     user: User,
 ) -> List[PromptlySheetCell]:
-    if column.type not in ["app_run", "processor_run", "data_transformer"]:
+    is_formula_cell = isinstance(cell, PromptlySheetFormulaCell)
+    if not is_formula_cell and column.type not in ["app_run", "processor_run", "data_transformer"]:
         return [cell]
 
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
 
-    fill_rows_with_output = column.data.get("fill_rows_with_output", False)
-
     response = None
-    if column.type == "app_run":
-        app_slug = column.data["app_slug"]
-        input = hydrate_input(column.data["input"], input_values)
+    fill_rows_with_output = not is_formula_cell and column.data.get("fill_rows_with_output", False)
+    execution_type = column.type if not is_formula_cell else cell.formula.type
+    execution_data = column.data if not is_formula_cell else cell.formula.data
+
+    if execution_type == "app_run":
+        app_slug = execution_data["app_slug"]
+        input = hydrate_input(execution_data["input"], input_values)
 
         request = RequestFactory().post(
             f"/api/store/apps/{app_slug}",
@@ -71,12 +79,12 @@ def _execute_cell(
             request_uuid=str(uuid.uuid4()),
             request=request,
         )
-    elif column.type == "processor_run":
-        api_provider_slug = column.data["provider_slug"]
-        api_backend_slug = column.data["processor_slug"]
-        processor_input = column.data.get("input", {})
-        processor_config = column.data.get("config", {})
-        processor_output_template = column.data.get("output_template", {}).get("markdown", "")
+    elif execution_type == "processor_run":
+        api_provider_slug = execution_data["provider_slug"]
+        api_backend_slug = execution_data["processor_slug"]
+        processor_input = execution_data.get("input", {})
+        processor_config = execution_data.get("config", {})
+        processor_output_template = execution_data.get("output_template", {}).get("markdown", "")
 
         input = hydrate_input(processor_input, input_values)
         config = hydrate_input(processor_config, input_values)
@@ -113,15 +121,15 @@ def _execute_cell(
                 logger.error(f"Error rendering output template: {e}")
                 pass
 
-    output = response.get("output", "") if column.type != "data_transformer" else ""
+    output = response.get("output", "") if execution_type != "data_transformer" else ""
 
     # Apply transformation template if present
-    transformation_template = column.data.get("transformation_template")
+    transformation_template = execution_data.get("transformation_template")
     if transformation_template:
         try:
             output = render_template(
                 transformation_template,
-                input_values if column.type == "data_transformer" else {"output": output},
+                input_values if execution_type == "data_transformer" else {"output": output},
             )
         except Exception as e:
             logger.error(f"Error applying transformation template: {e}")
@@ -139,7 +147,6 @@ def _execute_cell(
                         row=cell.row + i,
                         col=cell.col,
                         data={"output": str(item)},
-                        formula=cell.formula,
                     )
                     for i, item in enumerate(output_list)
                 ]
@@ -261,6 +268,53 @@ def run_sheet(sheet, run_entry, user):
                 )
                 for cell in executed_cells:
                     existing_cells_dict[f"{cell.col}{cell.row}"] = cell
+
+        # Execute formula cells
+        for cell_id, formula_cell in sheet.formula_cells.items():
+            input_values = {}
+
+            def process_formula_data(data):
+                if isinstance(data, dict):
+                    for key, value in data.items():
+                        process_formula_data(value)
+                elif isinstance(data, list):
+                    for item in data:
+                        process_formula_data(item)
+                elif isinstance(data, str):
+                    # Extract cell references and ranges from the string
+                    import re
+
+                    cell_refs = re.findall(r"([A-Z]+\d+(?:-[A-Z]+\d+)?)", data)
+                    for ref in cell_refs:
+                        if "-" in ref:
+                            start, end = ref.split("-")
+                            start_row, start_col = PromptlySheetCell.cell_id_to_row_and_col(start)
+                            end_row, end_col = PromptlySheetCell.cell_id_to_row_and_col(end)
+                            range_values = []
+                            for row in range(start_row, end_row + 1):
+                                for col in range(ord(start_col), ord(end_col) + 1):
+                                    cell_id = f"{chr(col)}{row}"
+                                    if cell_id in existing_cells_dict:
+                                        range_values.append(existing_cells_dict[cell_id].output)
+                            input_values[ref] = range_values
+                        else:
+                            if ref in existing_cells_dict:
+                                input_values[ref] = existing_cells_dict[ref].output
+
+            # Start the recursive process with the formula data
+            process_formula_data(formula_cell.formula.data)
+
+            executed_cells = _execute_cell(
+                formula_cell,
+                None,
+                input_values,
+                sheet,
+                str(run_entry.uuid),
+                user,
+            )
+
+            for cell in executed_cells:
+                existing_cells_dict[f"{cell.col}{cell.row}"] = cell
 
         sheet.save(cells=list(existing_cells_dict.values()), update_fields=["updated_at"])
         run_entry.save(cells=list(existing_cells_dict.values()))

@@ -428,6 +428,8 @@ function Sheet(props) {
                 },
               }));
 
+              setSelectedCellValue(cell.output || "");
+
               sheetRef.current?.updateCells([{ cell: gridCell }]);
               sheetRef.current?.scrollTo(gridCell[0], gridCell[1]);
             }
@@ -488,7 +490,7 @@ function Sheet(props) {
         setSelectedGrid([
           range.width === 1 && range.height === 1
             ? cellId
-            : `${cellId}:${gridCellToCellId(
+            : `${cellId}-${gridCellToCellId(
                 [col + range.width - 1, row + range.height - 1],
                 gridColumns,
               )}`,

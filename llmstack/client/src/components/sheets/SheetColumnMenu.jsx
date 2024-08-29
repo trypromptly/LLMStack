@@ -38,7 +38,8 @@ export const sheetColumnTypes = {
     kind: GridCellKind.Text,
     getCellDataFromValue: (value) => value?.data || "",
     getCellData: (cell) => cell?.data || "",
-    getCellDisplayData: (cell) => cell?.data || "",
+    getCellDisplayData: (cell) =>
+      typeof cell?.data === "object" ? cell?.data?.output : cell?.data || "",
     description: "Plain text content",
   },
   number: {
