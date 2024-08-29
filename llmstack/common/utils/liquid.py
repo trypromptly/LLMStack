@@ -17,9 +17,20 @@ def todict(value):
         return {}
 
 
+def escape_unicode(value):
+    if isinstance(value, str):
+        return value.encode().decode("unicode_escape")
+    elif isinstance(value, dict):
+        return {k: escape_unicode(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [escape_unicode(v) for v in value]
+    return value
+
+
 env.add_filter("urlencode", quote_plus)
 env.add_filter("tojson", json.dumps)
 env.add_filter("todict", todict)
+env.add_filter("escape_unicode", escape_unicode)
 
 
 def render_template(template, data):
