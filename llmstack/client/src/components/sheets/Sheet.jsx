@@ -572,8 +572,8 @@ function Sheet(props) {
         </Tooltip>
         <Box
           sx={{
-            minHeight: "40px",
-            maxHeight: "200px",
+            height: "40px",
+            maxHeight: "400px",
             width: "100%",
             overflow: "auto",
             resize: "vertical",
