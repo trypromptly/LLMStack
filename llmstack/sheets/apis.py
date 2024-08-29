@@ -8,6 +8,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
+from rq import Callback
 
 from llmstack.base.models import Profile
 from llmstack.jobs.adhoc import ProcessingJob
@@ -172,18 +173,46 @@ class PromptlySheetViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        sheet.extra_data["running"] = True
-        sheet.is_locked = True
-        sheet.save(update_fields=["is_locked"])
-
         run_entry = PromptlySheetRunEntry(sheet_uuid=sheet.uuid, profile_uuid=profile.uuid)
 
         job = PromptlySheetAppExecuteJob.create(
             func="llmstack.sheets.tasks.run_sheet",
             args=[sheet, run_entry, request.user],
+            on_stopped=Callback("llmstack.sheets.tasks.on_sheet_run_stopped"),
+            on_success=Callback("llmstack.sheets.tasks.on_sheet_run_success"),
+            on_failure=Callback("llmstack.sheets.tasks.on_sheet_run_failed"),
         ).add_to_queue()
 
+        # Add the job_id and run_id to the sheet
+        sheet.is_locked = True
+        sheet.extra_data["running"] = True
+        sheet.extra_data["job_id"] = str(job.id)
+        sheet.extra_data["run_id"] = str(run_entry.uuid)
+        sheet.save(update_fields=["extra_data", "is_locked"])
+
         return DRFResponse({"job_id": job.id, "run_id": run_entry.uuid}, status=202)
+
+    def cancel_run(self, request, sheet_uuid=None, run_id=None):
+        profile = Profile.objects.get(user=request.user)
+        sheet = PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
+
+        if not run_id:
+            return DRFResponse(status=status.HTTP_400_BAD_REQUEST)
+
+        run_id_in_sheet = sheet.extra_data.get("run_id")
+        job_id = sheet.extra_data.get("job_id")
+
+        if run_id_in_sheet != run_id:
+            return DRFResponse(status=status.HTTP_400_BAD_REQUEST)
+        PromptlySheetAppExecuteJob.cancel(job_id)
+
+        sheet.extra_data["running"] = False
+        sheet.extra_data["job_id"] = None
+        sheet.extra_data["run_id"] = None
+        sheet.is_locked = False
+        sheet.save(update_fields=["extra_data", "is_locked"])
+
+        return DRFResponse(status=status.HTTP_204_NO_CONTENT)
 
     def download(self, request, sheet_uuid=None):
         if not sheet_uuid:

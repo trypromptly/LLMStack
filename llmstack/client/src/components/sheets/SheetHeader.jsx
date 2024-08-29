@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Stack,
   Typography,
@@ -33,11 +33,12 @@ import DownloadIcon from "@mui/icons-material/Download";
 
 const SheetHeader = ({
   sheet,
+  runId,
   setRunId,
   hasChanges,
   onSave,
   sheetRunning,
-  runId,
+  setSheetRunning,
 }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -46,12 +47,13 @@ const SheetHeader = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const setSheets = useSetRecoilState(sheetsListSelector);
 
-  const runSheet = () => {
+  const runSheet = useCallback(() => {
     const runSheetAction = () => {
       axios()
         .post(`/api/sheets/${sheet.uuid}/run`)
         .then((response) => {
           setRunId(response.data.run_id);
+          setSheetRunning(true);
         })
         .catch((error) => {
           console.error(error);
@@ -69,7 +71,23 @@ const SheetHeader = ({
     } else {
       runSheetAction();
     }
-  };
+  }, [sheet.uuid, hasChanges, onSave, setRunId, setSheetRunning]);
+
+  const cancelSheetRun = useCallback(() => {
+    if (!runId) {
+      return;
+    }
+
+    axios()
+      .post(`/api/sheets/${sheet.uuid}/runs/${runId}/cancel`)
+      .then(() => {
+        setRunId(null);
+        setSheetRunning(false);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [sheet.uuid, runId, setRunId, setSheetRunning]);
 
   const handleDeleteSheet = () => {
     axios()
@@ -246,11 +264,12 @@ const SheetHeader = ({
                 <Button
                   variant="contained"
                   size="medium"
-                  onClick={runSheet}
-                  disabled={sheetRunning}
+                  onClick={sheetRunning ? cancelSheetRun : runSheet}
                   sx={{
-                    bgcolor: "success.main",
-                    "&:hover": { bgcolor: "success.dark" },
+                    bgcolor: sheetRunning ? "warning.main" : "success.main",
+                    "&:hover": {
+                      bgcolor: sheetRunning ? "warning.dark" : "success.dark",
+                    },
                     minWidth: "40px",
                     padding: "5px",
                     borderRadius: "4px !important",

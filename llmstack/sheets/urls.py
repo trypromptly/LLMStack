@@ -26,4 +26,8 @@ urlpatterns = [
         "api/sheets/<str:sheet_uuid>/runs/<str:run_id>/download",
         PromptlySheetViewSet.as_view({"get": "download_run"}),
     ),
+    path(
+        "api/sheets/<str:sheet_uuid>/runs/<str:run_id>/cancel",
+        PromptlySheetViewSet.as_view({"post": "cancel_run"}),
+    ),
 ]

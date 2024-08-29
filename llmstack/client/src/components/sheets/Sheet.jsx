@@ -100,6 +100,7 @@ function Sheet(props) {
   });
   const editColumnAnchorEl = useRef(null);
   const sheetRef = useRef(null);
+  const wsRef = useRef(null);
   const formulaMenuAnchorEl = useRef(null);
   const wsUrlPrefix = `${
     window.location.protocol === "https:" ? "wss" : "ws"
@@ -218,6 +219,7 @@ function Sheet(props) {
           setCells(data?.cells || {});
           setFormulaCells(data?.formula_cells || {});
           setSheetRunning(data?.running || false);
+          setRunId(data?.run_id || null);
           setColumns(data?.columns || {});
           setNumColumns(data?.total_columns || 26);
           setNumRows(data?.total_rows || 0);
@@ -428,11 +430,12 @@ function Sheet(props) {
   }, [sheet, columns, cells, numRows, formulaCells]);
 
   useEffect(() => {
-    if (runId) {
+    if (runId && !wsRef.current) {
       // Connect to ws and listen for updates
       const ws = new Ws(`${wsUrlPrefix}/sheets/${sheet.uuid}/run/${runId}`);
       if (ws) {
-        ws.setOnMessage((evt) => {
+        wsRef.current = ws;
+        wsRef.current.setOnMessage((evt) => {
           const event = JSON.parse(evt.data);
 
           if (event.type === "cell.update") {
@@ -489,12 +492,26 @@ function Sheet(props) {
 
             // If running is false, we can disconnect
             if (!running) {
-              ws.close();
-              setRunId(null);
+              wsRef.current.close();
+              wsRef.current = null;
             }
           } else if (event.type === "sheet.update") {
             const { total_rows } = event.sheet;
             setNumRows(total_rows);
+          } else if (event.type === "sheet.disconnect") {
+            setRunId(null);
+            setSheetRunning(false);
+            wsRef.current.close();
+            wsRef.current = null;
+            enqueueSnackbar(`Sheet run stopped: ${event.reason}`, {
+              variant: "warning",
+            });
+          } else if (event.type === "sheet.error") {
+            enqueueSnackbar(`Error running sheet: ${event.error}`, {
+              variant: "error",
+            });
+            wsRef.current.close();
+            wsRef.current = null;
           } else if (event.type === "cell.error") {
             const { error } = event.cell;
             enqueueSnackbar(
@@ -506,9 +523,16 @@ function Sheet(props) {
           }
         });
 
-        ws.send(JSON.stringify({ event: "run" }));
+        wsRef.current.send(JSON.stringify({ event: "connect" }));
       }
     }
+
+    return () => {
+      if (!runId && wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
   }, [runId, sheet?.uuid, wsUrlPrefix, gridColumns]);
 
   const onGridSelectionChange = useCallback(
@@ -579,6 +603,7 @@ function Sheet(props) {
         hasChanges={hasChanges}
         onSave={saveSheet}
         sheetRunning={sheetRunning}
+        setSheetRunning={setSheetRunning}
         runId={runId}
       />
       <Box

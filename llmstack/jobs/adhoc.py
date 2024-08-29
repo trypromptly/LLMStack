@@ -4,6 +4,7 @@ from queue import Queue
 
 import django_rq
 from django.conf import settings
+from rq.command import send_stop_job_command
 from rq.job import Job
 
 
@@ -46,6 +47,15 @@ class ProcessingJob(Job):
             connection=cls.get_connection(),
             **kwargs,
         )
+
+    @classmethod
+    def cancel(cls, job_id: str):
+        if cls._use_redis:
+            conn = django_rq.get_connection("default")
+            send_stop_job_command(conn, job_id)
+        else:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                executor.submit(cls.func, *cls.args, **cls.kwargs).cancel()
 
     def add_to_queue(self, *args, **kwargs) -> Job:
         if self._use_redis:

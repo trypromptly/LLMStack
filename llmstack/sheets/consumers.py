@@ -49,3 +49,11 @@ class SheetAppConsumer(AsyncWebsocketConsumer):
 
     async def sheet_update(self, event):
         await self.send(text_data=json.dumps(event))
+
+    async def sheet_disconnect(self, event):
+        await self.send(text_data=json.dumps(event))
+        await self.channel_layer.group_discard(self.run_id, self.channel_name)
+
+    async def sheet_error(self, event):
+        await self.send(text_data=json.dumps(event))
+        await self.channel_layer.group_discard(self.run_id, self.channel_name)

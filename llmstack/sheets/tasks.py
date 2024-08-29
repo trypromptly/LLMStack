@@ -322,16 +322,37 @@ def run_sheet(sheet, run_entry, user):
     except Exception:
         logger.exception("Error executing sheet")
 
-    sheet.extra_data["running"] = False
     sheet.is_locked = False
+    sheet.extra_data["running"] = False
+    sheet.extra_data["job_id"] = None
+    sheet.extra_data["run_id"] = None
     sheet.save(update_fields=["is_locked", "extra_data"])
 
+    return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
+
+
+def on_sheet_run_success(job, connection, result, *args, **kwargs):
+    sheet_uuid = str(job.args[0].uuid)
+    run_uuid = str(job.args[1].uuid)
+
     async_to_sync(channel_layer.group_send)(
-        str(run_entry.uuid),
+        run_uuid,
         {
             "type": "sheet.status",
-            "sheet": {"id": str(sheet.uuid), "running": False},
+            "sheet": {"id": str(sheet_uuid), "running": False},
         },
     )
 
-    return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
+
+def on_sheet_run_failed(job, connection, type, value, traceback):
+    run_uuid = str(job.args[1].uuid)
+
+    async_to_sync(channel_layer.group_send)(
+        run_uuid, {"type": "sheet.error", "error": f"Sheet run failed: {str(type)} - {str(value)}"}
+    )
+
+
+def on_sheet_run_stopped(job, connection):
+    run_uuid = str(job.args[1].uuid)
+
+    async_to_sync(channel_layer.group_send)(run_uuid, {"type": "sheet.disconnect", "reason": "Cancelled by user"})
