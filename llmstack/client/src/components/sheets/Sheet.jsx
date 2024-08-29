@@ -449,6 +449,14 @@ function Sheet(props) {
             const { running } = event.sheet;
             setSheetRunning(running);
 
+            if (running) {
+              enqueueSnackbar("Sheet is running", { variant: "info" });
+            } else {
+              enqueueSnackbar("Sheet has finished running", {
+                variant: "success",
+              });
+            }
+
             // If running is false, we can disconnect
             if (!running) {
               ws.close();
