@@ -27,11 +27,11 @@ import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
 import { enqueueSnackbar } from "notistack";
 import SheetHeader from "./SheetHeader";
-import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import "@glideapps/glide-data-grid/dist/index.css";
 import SheetCellMenu from "./SheetCellMenu";
 import SheetFormulaMenu from "./SheetFormulaMenu";
+import { ReactComponent as FormulaIcon } from "../../assets/images/icons/formula.svg";
 
 const columnIndexToLetter = (index) => {
   let temp = index + 1;
@@ -589,34 +589,53 @@ function Sheet(props) {
           padding: 0,
           gap: 1,
           borderBottom: "1px solid #e0e0e0",
+          borderLeft: "1px solid #e0e0e0",
         }}
       >
-        <Typography
-          sx={{ fontSize: "14px", fontFamily: "Arial", fontWeight: "semibold" }}
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            alignItems: "center",
+            width: "120px",
+            justifyContent: "center",
+            paddingLeft: "4px",
+          }}
         >
-          {selectedGrid}
-        </Typography>
-        <Tooltip title="Formula">
-          <Button
-            onClick={() => setShowFormulaMenu(!showFormulaMenu)}
-            disabled={selectedGrid?.length !== 1}
-            color="primary"
-            variant="outlined"
-            sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
-            ref={formulaMenuAnchorEl}
+          <Typography
+            sx={{
+              fontSize: "14px",
+              fontFamily: "Arial",
+              fontWeight: "semibold",
+            }}
           >
-            <SettingsSuggestIcon />
-          </Button>
-        </Tooltip>
+            {selectedGrid}
+          </Typography>
+          <Tooltip title="Formula">
+            <Button
+              onClick={() => setShowFormulaMenu(!showFormulaMenu)}
+              disabled={selectedGrid?.length !== 1}
+              color="primary"
+              variant="standard"
+              sx={{ minWidth: "30px", padding: "5px" }}
+              ref={formulaMenuAnchorEl}
+            >
+              <FormulaIcon
+                sx={{ width: "20px", height: "20px", color: "white" }}
+              />
+            </Button>
+          </Tooltip>
+        </Stack>
         <Box
           sx={{
-            height: "40px",
+            height: "42px",
             maxHeight: "400px",
             width: "100%",
             overflow: "auto",
             resize: "vertical",
-            border: "1px solid #e0e0e0",
-            borderRadius: "4px",
+            borderBottom: "none",
+            borderLeft: "1px solid #e0e0e0",
+            borderRadius: "none",
             padding: "8px",
             textAlign: "left",
             scrollBehavior: "smooth",
