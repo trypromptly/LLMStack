@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
 import {
   Box,
   Stack,
@@ -64,6 +70,12 @@ const gridCellToCellId = (gridCell, columns) => {
   return `${colLetter}${rowIndex + 1}`;
 };
 
+const MemoizedSheetHeader = React.memo(SheetHeader);
+const MemoizedSheetColumnMenuButton = React.memo(SheetColumnMenuButton);
+const MemoizedSheetColumnMenu = React.memo(SheetColumnMenu);
+const MemoizedSheetCellMenu = React.memo(SheetCellMenu);
+const MemoizedSheetFormulaMenu = React.memo(SheetFormulaMenu);
+
 function Sheet(props) {
   const { sheetId } = props;
   const [sheetRunning, setSheetRunning] = useState(false);
@@ -79,7 +91,7 @@ function Sheet(props) {
   const [showFormulaMenu, setShowFormulaMenu] = useState(false);
   const [selectedCellId, setSelectedCellId] = useState(null);
   const [numRows, setNumRows] = useState(0);
-  const [numColumns, setNumColumns] = useState(0);
+  const [numColumns, setNumColumns] = useState(26);
   const [userChanges, setUserChanges] = useState({
     columns: {},
     cells: {},
@@ -109,6 +121,9 @@ function Sheet(props) {
   const [selectedCell, setSelectedCell] = useState(null);
 
   const headerIcons = useMemo(() => {
+    if (!columns || typeof columns !== "object") {
+      return {};
+    }
     const icons = {};
     for (let i = 0; i < numColumns; i++) {
       const colLetter = columnIndexToLetter(i);
@@ -119,7 +134,7 @@ function Sheet(props) {
     </svg>`;
     }
     return icons;
-  }, [numColumns]);
+  }, [columns, numColumns]);
 
   const getCellContent = useCallback(
     ([col, row]) => {
@@ -146,13 +161,17 @@ function Sheet(props) {
 
   const parseSheetColumnsIntoGridColumns = useCallback(
     (columns) => {
-      const cols = Object.keys(columns || []).map((colLetter, index) => ({
+      if (!columns || typeof columns !== "object") {
+        return [];
+      }
+
+      const cols = Object.keys(columns).map((colLetter, index) => ({
         col: colLetter,
-        title: columns[colLetter].title,
-        type: columns[colLetter].type,
+        title: columns[colLetter].title || "",
+        type: columns[colLetter].type || "text",
         kind:
           sheetColumnTypes[columns[colLetter].type]?.kind || GridCellKind.Text,
-        data: columns[colLetter].data,
+        data: columns[colLetter].data || "",
         hasMenu: true,
         icon: colLetter,
         width: columns[colLetter].width || 300,
@@ -168,11 +187,10 @@ function Sheet(props) {
 
       // Find the last column and fill up to the end with empty columns
       const lastColumn = cols[cols.length - 1];
-      for (
-        let i = lastColumn?.col ? lastColumn?.col.charCodeAt(0) - 64 : 0;
-        i < numColumns;
-        i++
-      ) {
+      const lastColumnIndex = lastColumn
+        ? columnLetterToIndex(lastColumn.col)
+        : -1;
+      for (let i = lastColumnIndex + 1; i < numColumns; i++) {
         cols.push({
           col: columnIndexToLetter(i),
           title: "",
@@ -224,13 +242,13 @@ function Sheet(props) {
     setGridColumns(parseSheetColumnsIntoGridColumns(columns));
   }, [columns, parseSheetColumnsIntoGridColumns]);
 
-  const hasChanges = useCallback(() => {
+  const hasChanges = useMemo(() => {
     return (
-      Object.keys(userChanges.columns).length > 0 ||
-      Object.keys(userChanges.cells).length > 0 ||
-      Object.keys(userChanges.formulaCells).length > 0 ||
-      userChanges.numRows !== null ||
-      userChanges.addedColumns.length > 0
+      Object.keys(userChanges?.columns || {}).length > 0 ||
+      Object.keys(userChanges?.cells || {}).length > 0 ||
+      Object.keys(userChanges?.formulaCells || {}).length > 0 ||
+      userChanges?.numRows !== null ||
+      userChanges?.addedColumns?.length > 0
     );
   }, [userChanges]);
 
@@ -555,10 +573,10 @@ function Sheet(props) {
 
   return sheet ? (
     <Stack>
-      <SheetHeader
+      <MemoizedSheetHeader
         sheet={sheet}
         setRunId={setRunId}
-        hasChanges={hasChanges()}
+        hasChanges={hasChanges}
         onSave={saveSheet}
         sheetRunning={sheetRunning}
         runId={runId}
@@ -633,7 +651,7 @@ function Sheet(props) {
           width={"100%"}
           getCellsForSelection={true}
           rightElement={
-            <SheetColumnMenuButton
+            <MemoizedSheetColumnMenuButton
               addColumn={addColumn}
               columns={gridColumns}
             />
@@ -670,7 +688,7 @@ function Sheet(props) {
       <div id="portal" />
       <div id="sheet-column-menu" ref={editColumnAnchorEl} />
       {showEditColumnMenu && (
-        <SheetColumnMenu
+        <MemoizedSheetColumnMenu
           onClose={() => setShowEditColumnMenu(false)}
           column={
             selectedColumnId !== null ? gridColumns[selectedColumnId] : null
@@ -710,7 +728,7 @@ function Sheet(props) {
           }}
         />
       )}
-      <SheetCellMenu
+      <MemoizedSheetCellMenu
         anchorEl={cellMenuAnchorEl}
         open={cellMenuOpen}
         onClose={() => setCellMenuOpen(false)}
@@ -718,7 +736,7 @@ function Sheet(props) {
         onPaste={handleCellPaste}
         onDelete={handleCellDelete}
       />
-      <SheetFormulaMenu
+      <MemoizedSheetFormulaMenu
         anchorEl={formulaMenuAnchorEl.current}
         open={showFormulaMenu}
         onClose={() => setShowFormulaMenu(false)}
@@ -759,4 +777,4 @@ function Sheet(props) {
   );
 }
 
-export default Sheet;
+export default React.memo(Sheet);
