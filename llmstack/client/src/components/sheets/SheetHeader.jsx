@@ -24,10 +24,12 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
 import { axios } from "../../data/axios";
-import PreviousRunsModal from "./PreviousRunsModal"; // We'll create this component
-import SheetDeleteDialog from "./SheetDeleteDialog"; // Add this import
-import { useSetRecoilState } from "recoil"; // Add this import
-import { sheetsListSelector } from "../../data/atoms"; // Add this import
+import PreviousRunsModal from "./PreviousRunsModal";
+import SheetDeleteDialog from "./SheetDeleteDialog";
+import { useSetRecoilState } from "recoil";
+import { sheetsListSelector } from "../../data/atoms";
+import SaveIcon from "@mui/icons-material/Save";
+import DownloadIcon from "@mui/icons-material/Download";
 
 const SheetHeader = ({
   sheet,
@@ -41,8 +43,8 @@ const SheetHeader = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const [open, setOpen] = useState(false);
   const [isPreviousRunsModalOpen, setIsPreviousRunsModalOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // Add this state
-  const setSheets = useSetRecoilState(sheetsListSelector); // Add this
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const setSheets = useSetRecoilState(sheetsListSelector);
 
   const runSheet = () => {
     const runSheetAction = () => {
@@ -69,12 +71,10 @@ const SheetHeader = ({
     }
   };
 
-  // Add this function
   const handleDeleteSheet = () => {
     axios()
       .delete(`/api/sheets/${sheet.uuid}`)
       .then(() => {
-        // Update sheets list after successful deletion
         axios()
           .get("/api/sheets")
           .then((response) => {
@@ -84,7 +84,7 @@ const SheetHeader = ({
             console.error("Error fetching updated sheets list:", error);
           });
         enqueueSnackbar("Sheet deleted successfully", { variant: "success" });
-        navigate("/sheets"); // Redirect to sheets list after deletion
+        navigate("/sheets");
       })
       .catch((error) => {
         console.error("Error deleting sheet:", error);
@@ -122,30 +122,58 @@ const SheetHeader = ({
             </Stack>
           </Stack>
           <Stack direction={"row"} gap={1} sx={{ marginRight: "-8px" }}>
-            <Tooltip
-              title={
-                sheetRunning ? "Sheet is already running" : "Run the sheet"
-              }
-            >
-              <span>
+            <div>
+              <Tooltip title="Save changes">
                 <Button
+                  onClick={onSave}
+                  disabled={!hasChanges}
                   variant="contained"
-                  size="medium"
-                  onClick={runSheet}
-                  disabled={sheetRunning}
                   sx={{
-                    bgcolor: "success.main",
-                    "&:hover": { bgcolor: "success.dark" },
+                    bgcolor: "gray.main",
+                    "&:hover": { bgcolor: "white" },
+                    color: "#999",
                     minWidth: "40px",
                     padding: "5px",
                     borderRadius: "4px !important",
+
+                    "&:disabled": {
+                      bgcolor: "#ccc",
+                      color: "#999",
+                      padding: "5px",
+                      borderRadius: "4px !important",
+                    },
                   }}
                 >
-                  {sheetRunning ? <PauseIcon /> : <PlayArrowIcon />}
-                  {sheetRunning ? "Pause" : "Execute"}
+                  <SaveIcon />
                 </Button>
-              </span>
-            </Tooltip>
+              </Tooltip>
+            </div>
+            {!sheetRunning && (
+              <div>
+                <Tooltip title="Download CSV">
+                  <Button
+                    onClick={() =>
+                      window.open(
+                        `/api/sheets/${sheet.uuid}/download`,
+                        "_blank",
+                      )
+                    }
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      bgcolor: "gray.main",
+                      "&:hover": { bgcolor: "white" },
+                      color: "#999",
+                      minWidth: "40px",
+                      padding: "5px",
+                      borderRadius: "4px !important",
+                    }}
+                  >
+                    <DownloadIcon />
+                  </Button>
+                </Tooltip>
+              </div>
+            )}
             <ClickAwayListener onClickAway={() => setOpen(false)}>
               <div>
                 <Tooltip title={"Settings"}>
@@ -209,6 +237,29 @@ const SheetHeader = ({
                 </Popper>
               </div>
             </ClickAwayListener>
+            <Tooltip
+              title={
+                sheetRunning ? "Sheet is already running" : "Run the sheet"
+              }
+            >
+              <span>
+                <Button
+                  variant="contained"
+                  size="medium"
+                  onClick={runSheet}
+                  disabled={sheetRunning}
+                  sx={{
+                    bgcolor: "success.main",
+                    "&:hover": { bgcolor: "success.dark" },
+                    minWidth: "40px",
+                    padding: "5px",
+                    borderRadius: "4px !important",
+                  }}
+                >
+                  {sheetRunning ? <PauseIcon /> : <PlayArrowIcon />}
+                </Button>
+              </span>
+            </Tooltip>
           </Stack>
         </Stack>
       </Typography>

@@ -22,9 +22,7 @@ import { Ws } from "../../data/ws";
 import { enqueueSnackbar } from "notistack";
 import SheetHeader from "./SheetHeader";
 import { headerIcons } from "./headerIcons";
-import SaveIcon from "@mui/icons-material/Save";
 import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
-import DownloadIcon from "@mui/icons-material/Download";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import "@glideapps/glide-data-grid/dist/index.css";
 import SheetCellMenu from "./SheetCellMenu";
@@ -475,10 +473,6 @@ function Sheet(props) {
     }
   }, [runId, sheet?.uuid, wsUrlPrefix, gridColumns]);
 
-  const downloadSheet = () => {
-    window.open(`/api/sheets/${sheet.uuid}/download`, "_blank");
-  };
-
   const onGridSelectionChange = useCallback(
     (selection) => {
       setGridSelection(selection);
@@ -598,35 +592,6 @@ function Sheet(props) {
           }}
         >
           <LayoutRenderer>{selectedCellValue}</LayoutRenderer>
-        </Box>
-        <Box>
-          <Stack direction={"row"} gap={1}>
-            <Tooltip title="Save changes">
-              <span>
-                <Button
-                  onClick={saveSheet}
-                  disabled={!hasChanges()}
-                  color="primary"
-                  variant="outlined"
-                  sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
-                >
-                  <SaveIcon />
-                </Button>
-              </span>
-            </Tooltip>
-            {!sheetRunning && (
-              <Tooltip title="Download CSV">
-                <Button
-                  onClick={downloadSheet}
-                  color="primary"
-                  variant="outlined"
-                  sx={{ minWidth: "40px", padding: "5px", borderRadius: "4px" }}
-                >
-                  <DownloadIcon />
-                </Button>
-              </Tooltip>
-            )}
-          </Stack>
         </Box>
       </Box>
       <Box>
