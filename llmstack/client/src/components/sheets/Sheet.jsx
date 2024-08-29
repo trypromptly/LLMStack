@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import {
   Box,
   Stack,
@@ -21,7 +21,6 @@ import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
 import { enqueueSnackbar } from "notistack";
 import SheetHeader from "./SheetHeader";
-import { headerIcons } from "./headerIcons";
 import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import "@glideapps/glide-data-grid/dist/index.css";
@@ -109,6 +108,19 @@ function Sheet(props) {
   const [cellMenuOpen, setCellMenuOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState(null);
 
+  const headerIcons = useMemo(() => {
+    const icons = {};
+    for (let i = 0; i < numColumns; i++) {
+      const colLetter = columnIndexToLetter(i);
+      icons[colLetter] = (p) =>
+        `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="2" width="16" height="16" rx="2" fill="${p.bgColor}"/>
+      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="${p.fgColor}">${colLetter}</text>
+    </svg>`;
+    }
+    return icons;
+  }, [numColumns]);
+
   const getCellContent = useCallback(
     ([col, row]) => {
       const column = gridColumns[col];
@@ -142,7 +154,7 @@ function Sheet(props) {
           sheetColumnTypes[columns[colLetter].type]?.kind || GridCellKind.Text,
         data: columns[colLetter].data,
         hasMenu: true,
-        icon: sheetColumnTypes[columns[colLetter].type]?.icon,
+        icon: colLetter,
         width: columns[colLetter].width || 300,
       }));
 
@@ -168,7 +180,7 @@ function Sheet(props) {
           kind: GridCellKind.Text,
           data: "",
           hasMenu: true,
-          icon: null,
+          icon: columnIndexToLetter(i),
           width: 300,
         });
       }
@@ -607,10 +619,7 @@ function Sheet(props) {
           ref={sheetRef}
           onPaste={onPaste}
           getCellContent={getCellContent}
-          columns={gridColumns.map((c) => ({
-            ...c,
-            title: `${c.col}: ${c.title}`,
-          }))}
+          columns={gridColumns}
           smoothScrollX={true}
           smoothScrollY={true}
           rowMarkers={"both"}
