@@ -114,6 +114,17 @@ class PromptlySheetCell(BaseModel):
     def column_letter_to_index(letter):
         return sum((ord(c) - 64) * (26**i) for i, c in enumerate(reversed(letter.upper()))) - 1
 
+    @classmethod
+    def cell_id_to_row_and_col(cls, cell_id):
+        # Split the cell_id into letter and number parts
+        letter_part = "".join(filter(str.isalpha, cell_id))
+        number_part = "".join(filter(str.isdigit, cell_id))
+
+        # Convert the number part to row
+        row = int(number_part)
+
+        return (row, letter_part)
+
 
 class PromptlySheetFiles(Assets):
     def select_storage():

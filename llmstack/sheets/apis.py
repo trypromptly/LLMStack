@@ -141,7 +141,16 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         sheet.save()
 
         if "cells" in request.data:
-            cells = [PromptlySheetCell(**cell_data) for cell_data in request.data.get("cells", {}).values()]
+            cell_objects = []
+            for cell_id, cell_data in request.data.get("cells", {}).items():
+                # Get the row and col from the cell_id
+                row, col = PromptlySheetCell.cell_id_to_row_and_col(cell_id)
+                cell_data["row"] = row
+                cell_data["col"] = col
+
+                cell_objects.append(cell_data)
+
+            cells = [PromptlySheetCell(**cell_data) for cell_data in cell_objects]
             sheet.save(cells=cells, update_fields=["data"])
 
         return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
