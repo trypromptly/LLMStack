@@ -138,7 +138,7 @@ class HttpAPIProcessorOutput(BaseOutput):
     url: Optional[str] = None
     encoding: Optional[str] = None
     cookies: Optional[Dict[str, str]] = None
-    elapsed: Optional[int] = None
+    elapsed: Optional[float] = None
 
 
 class HttpAPIProcessorConfiguration(BaseConfiguration):
