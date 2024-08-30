@@ -290,6 +290,9 @@ export default function TextFieldWithVars(props) {
           setTextFocus(false);
         }}
         sx={{ marginBottom: "-20px" }}
+        onClick={(e) => {
+          editorRef.current.setEditable(true);
+        }}
       >
         <LexicalEditor
           templateVariables={templateVariables}

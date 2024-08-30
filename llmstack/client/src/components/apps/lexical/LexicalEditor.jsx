@@ -283,6 +283,7 @@ function TemplateVariablesPlugin({
               }
             }
           });
+          editor.setEditable(false);
         }
       });
     }

@@ -427,7 +427,7 @@ export function ProcessorEditor({
               Output Template
             </AccordionSummary>
             <AccordionDetails>
-              <memoizedTextFieldWithVars
+              <TextFieldWithVars
                 label="Output Template"
                 multiline
                 value={toolOutputTemplate.current}
