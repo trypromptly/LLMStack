@@ -10,6 +10,7 @@ import {
   Stack,
   CircularProgress,
   Button,
+  SvgIcon,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -698,9 +699,18 @@ function Sheet(props) {
               sx={{ minWidth: "30px", padding: "5px" }}
               ref={formulaMenuAnchorEl}
             >
-              <FormulaIcon
-                sx={{ width: "20px", height: "20px", color: "white" }}
-              />
+              <SvgIcon
+                sx={{
+                  width: "20px",
+                  height: "20px",
+                  color:
+                    selectedCellId && formulaCells[selectedCellId]
+                      ? "green"
+                      : "inherit",
+                }}
+              >
+                <FormulaIcon />
+              </SvgIcon>
             </Button>
           </Tooltip>
         </Stack>
