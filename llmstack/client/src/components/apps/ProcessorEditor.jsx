@@ -8,7 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
-import { lazy, useEffect, useRef, useState } from "react";
+import { lazy, useEffect, useRef, useState, useMemo } from "react";
 import { useRecoilValue } from "recoil";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 import { appsState } from "../../data/atoms";
@@ -197,7 +197,7 @@ export function ProcessorEditor({
   const apiBackend = processor?.api_backend;
   const [errors, setErrors] = useState([]);
   const inputFields = useRef(processor?.input_fields || []);
-
+  const toolOutputTemplate = useRef(processor?.output_template?.markdown || "");
   useEffect(() => {
     let newErrors = [];
     if (!isTool && processor?.api_backend?.input_schema?.required) {
@@ -269,6 +269,15 @@ export function ProcessorEditor({
     setValidationErrorsForId,
     clearValidationErrorsForId,
   ]);
+
+  const memoizedTextFieldWithVars = useMemo(() => {
+    return (props) => (
+      <TextFieldWithVars
+        {...props}
+        schemas={outputSchemas.slice(0, index + 1)}
+      />
+    );
+  }, [outputSchemas, index]);
 
   return processor?.provider_slug === "promptly" &&
     processor?.processor_slug === "app" ? (
@@ -368,14 +377,7 @@ export function ProcessorEditor({
                 setProcessors([...processors]);
               }}
               widgets={{
-                TextWidget: (props) => {
-                  return (
-                    <TextFieldWithVars
-                      {...props}
-                      schemas={outputSchemas.slice(0, index + 1)}
-                    />
-                  );
-                },
+                TextWidget: memoizedTextFieldWithVars,
               }}
               disableAdvanced={true}
             />
@@ -425,11 +427,12 @@ export function ProcessorEditor({
               Output Template
             </AccordionSummary>
             <AccordionDetails>
-              <TextFieldWithVars
+              <memoizedTextFieldWithVars
                 label="Output Template"
                 multiline
-                value={processor?.output_template?.markdown || ""}
+                value={toolOutputTemplate.current}
                 onChange={(text) => {
+                  toolOutputTemplate.current = text;
                   processors[index].output_template = { markdown: text };
                   setProcessors([...processors]);
                 }}
