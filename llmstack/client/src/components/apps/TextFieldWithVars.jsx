@@ -282,12 +282,15 @@ export default function TextFieldWithVars(props) {
       <Box
         onKeyDown={(e) => {
           setTextFocus(true);
+          editorRef.current.setEditable(true);
         }}
         onMouseDown={(e) => {
           setTextFocus(true);
+          editorRef.current.setEditable(true);
         }}
         onBlur={() => {
           setTextFocus(false);
+          editorRef.current.setEditable(false);
         }}
         sx={{ marginBottom: "-20px" }}
         onClick={(e) => {
