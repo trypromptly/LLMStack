@@ -8,15 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 @database_sync_to_async
-def update_sheet_channel_name(sheet_id, channel_name):
+def _get_sheet(sheet_id, user):
+    from llmstack.base.models import Profile
     from llmstack.sheets.models import PromptlySheet
 
-    # Update the channel name for the sheet
-    sheet = PromptlySheet.objects.get(uuid=sheet_id)
-    sheet_extra_data = sheet.extra_data or {}
-    sheet_extra_data["channel_name"] = channel_name
-    sheet.extra_data = sheet_extra_data
-    sheet.save(update_fields=["extra_data"])
+    profile = Profile.objects.get(user=user)
+    return PromptlySheet.objects.get(uuid=sheet_id, profile_uuid=profile.uuid)
 
 
 class SheetAppConsumer(AsyncWebsocketConsumer):
@@ -24,16 +21,24 @@ class SheetAppConsumer(AsyncWebsocketConsumer):
         self.sheet_id = self.scope["url_route"]["kwargs"]["sheet_id"]
         self.run_id = self.scope["url_route"]["kwargs"]["run_id"]
         self._user = self.scope.get("user", None)
-        # Update the channel name for the sheet
+
+        sheet = await _get_sheet(self.sheet_id, self._user)
+
+        if not sheet or sheet.extra_data.get("run_id") != self.run_id:
+            logger.error(f"Sheet {self.sheet_id} not found or run id mismatch")
+            await self.close()
+            return
+
+        # Add this channel to the group
         await self.channel_layer.group_add(self.run_id, self.channel_name)
-        await super().connect()
+        await self.accept()
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.run_id, self.channel_name)
 
     async def close(self, code=None, reason=None):
-        await update_sheet_channel_name(self.sheet_id, None)
-        await super().close(code, reason)
+        await self.disconnect(code)
+        await super().close(code)
 
     async def cell_update(self, event):
         await self.send(text_data=json.dumps(event))
