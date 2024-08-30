@@ -35,7 +35,7 @@ class AgentConfigSchema(BaseSchema):
         json_schema_extra={"advanced_parameter": True},
     )
     user_message: Optional[str] = Field(
-        default=None,
+        default="",
         title="User Message",
         description="The user message to use with the Agent. This is the message that the user provides to the agent in the input.",
         json_schema_extra={"widget": "textwithvars"},
