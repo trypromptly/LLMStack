@@ -590,6 +590,7 @@ function Sheet(props) {
   const onGridSelectionChange = useCallback(
     (selection) => {
       setGridSelection(selection);
+      setShowFormulaMenu(false);
       if (selection.current) {
         const { cell, range } = selection.current;
         const [col, row] = cell;
