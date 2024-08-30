@@ -28,6 +28,11 @@ export default function ProcessorRunForm({
     setData({
       processor_slug: apiBackendSelected?.slug,
       provider_slug: apiBackendSelected?.api_provider?.slug,
+      output_template: {
+        markdown: apiBackendSelected?.output_template?.markdown || "",
+      },
+      input: {},
+      config: {},
     });
   }, [apiBackendSelected, setData]);
 
@@ -55,7 +60,7 @@ export default function ProcessorRunForm({
             uiSchema={
               apiBackendSelected ? apiBackendSelected.input_ui_schema : {}
             }
-            formData={processorInput}
+            formData={processorInput || {}}
             validator={validator}
             onChange={(e) => {
               setData({
@@ -71,7 +76,7 @@ export default function ProcessorRunForm({
             uiSchema={
               apiBackendSelected ? apiBackendSelected.config_ui_schema : {}
             }
-            formData={processorConfig}
+            formData={processorConfig || {}}
             validator={validator}
             onChange={(e) => {
               setData({
