@@ -209,6 +209,58 @@ function Sheet(props) {
     [numColumns],
   );
 
+  const drawCell = useCallback(
+    (args, drawContent) => {
+      drawContent();
+
+      const { ctx, rect, row, col } = args;
+
+      if (!row || !col) {
+        return;
+      }
+
+      const colLetter = columnIndexToLetter(col);
+      const cellId = `${colLetter}${row + 1}`;
+      const isFormulaCell = formulaCells[cellId];
+
+      if (!isFormulaCell) {
+        return;
+      }
+
+      // Define the size and position of the formula icon
+      const iconSize = 14;
+      const margin = 4;
+      const iconX = rect.x + rect.width - iconSize - margin;
+      const iconY = rect.y + margin;
+
+      // Draw the formula icon
+      ctx.save();
+
+      // Create gradient
+      const gradient = ctx.createLinearGradient(
+        iconX,
+        iconY,
+        iconX,
+        iconY + iconSize,
+      );
+      gradient.addColorStop(0, "rgba(255, 255, 255, 0.8)");
+      gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+      // Draw gradient background
+      ctx.fillStyle = gradient;
+      ctx.fillRect(iconX, iconY, iconSize, iconSize);
+
+      // Draw the 'fx' symbol in italics
+      ctx.fillStyle = "#107C41";
+      ctx.font = `italic bold ${iconSize}px Arial`;
+      ctx.textBaseline = "top";
+      ctx.fillText("fx", iconX, iconY);
+
+      ctx.restore();
+    },
+    [formulaCells],
+  );
+
   useEffect(() => {
     if (sheetId) {
       axios()
@@ -763,6 +815,7 @@ function Sheet(props) {
           gridSelection={gridSelection}
           onGridSelectionChange={onGridSelectionChange}
           onCellContextMenu={onCellContextMenu}
+          drawCell={drawCell}
         />
       </Box>
       <div id="portal" />
