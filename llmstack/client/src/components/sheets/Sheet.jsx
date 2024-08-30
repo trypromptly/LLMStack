@@ -892,6 +892,7 @@ function Sheet(props) {
           }
 
           setFormulaCells((prev) => ({
+            ...prev,
             [cellId]: {
               row: row + 1,
               col: gridColumns[col]?.col,
