@@ -13,7 +13,6 @@ import {
   Button,
   CircularProgress,
   Grid,
-  Link,
   Paper,
   Stack,
   SvgIcon,
@@ -44,11 +43,7 @@ import { AppVersions } from "../components/apps/AppVersions";
 import { AppDetailsEditor } from "../components/apps/AppDetailsEditor";
 import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
 import { useValidationErrorsForAppConsole } from "../data/appValidation";
-import {
-  apiBackendsState,
-  profileFlagsSelector,
-  profileSelector,
-} from "../data/atoms";
+import { apiBackendsState, profileSelector } from "../data/atoms";
 import { axios } from "../data/axios";
 import StoreListingModal from "../components/store/StoreListingModal";
 import {
@@ -195,10 +190,8 @@ export default function AppConsolePage(props) {
   const [isLoading, setIsLoading] = useState(true);
   const [appTemplate, setAppTemplate] = useState(null);
   const [appOutputTemplate, setAppOutputTemplate] = useState({});
-  const [missingKeys, setMissingKeys] = useState([]);
   const [selectedMenuItem, setSelectedMenuItem] = useState(page || "editor");
   const profile = useRecoilValue(profileSelector);
-  const profileFlags = useRecoilValue(profileFlagsSelector);
   const validationErrors = useValidationErrorsForAppConsole();
 
   useEffect(() => {
@@ -241,28 +234,6 @@ export default function AppConsolePage(props) {
         });
     }
   }, [appId, page]);
-
-  useEffect(() => {
-    let missingKeys = new Set();
-    app?.processors
-      ?.map((processor) => {
-        return [
-          processor.apiBackend?.api_provider?.slug,
-          processor.apiBackend?.api_provider?.name,
-        ];
-      })
-      .forEach(([slug, name]) => {
-        if (slug === "promptly") {
-          if (!profile.openai_key) {
-            missingKeys = missingKeys.add("Open AI");
-          }
-        } else {
-          if (!profile[`${slug}_key`]) missingKeys = missingKeys.add(name);
-        }
-      });
-
-    setMissingKeys(Array.from(missingKeys));
-  }, [app?.processors, profile]);
 
   useEffect(() => {
     // If processors are coming from app.data, replace provider_slug and processor_slug with api_backend
@@ -527,42 +498,6 @@ export default function AppConsolePage(props) {
           </Paper>
         )}
       </AppBar>
-      <Stack>
-        {false &&
-          missingKeys.length > 0 &&
-          !profileFlags.IS_ORGANIZATION_MEMBER && (
-            <Alert
-              severity="error"
-              style={{ width: "100%", margin: "10px 0", textAlign: "left" }}
-            >
-              <AlertTitle>Missing API Keys</AlertTitle>
-              <p>
-                You are missing API keys for the following providers:{" "}
-                <strong>{missingKeys.join(", ")}</strong>. Please add them in
-                your <Link href="/settings">profile</Link> to use these
-                processors in your app successfully. If you don't have an API
-                key for a provider, you can get one from their websites. For
-                example by visiting{" "}
-                <Link
-                  href="https://platform.openai.com/account/api-keys"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open AI
-                </Link>
-                ,{" "}
-                <Link
-                  href="https://beta.dreamstudio.ai/membership?tab=apiKeys"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Dream Studio
-                </Link>{" "}
-                etc.
-              </p>
-            </Alert>
-          )}
-      </Stack>
       <Grid
         container
         sx={{ maxWidth: "1200px !important", margin: "auto", flex: "1 1 auto" }}
