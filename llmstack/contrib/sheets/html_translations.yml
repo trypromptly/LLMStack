@@ -1,0 +1,79 @@
+name: HTML Translations
+slug: html-translations
+description: >-
+  Extracts the HTML content from a URL and translates it to a different language.
+total_rows: 10
+total_columns: 26
+columns:
+  A:
+    col: A
+    title: URL
+    type: uri
+    width: 300
+    position: 0
+  B:
+    col: B
+    title: HTML Content
+    type: processor_run
+    width: 400
+    position: 1
+    data:
+      kind: processor_run
+      input:
+        url: "{{A}}"
+        body: null
+      config:
+        method: GET
+        headers: []
+      provider_slug: promptly
+      processor_slug: simple_http
+      output_template:
+        markdown: "{{response}}"
+      fill_rows_with_output: false
+  C:
+    col: C
+    title: Translated Content
+    type: processor_run
+    width: 400
+    position: 2
+    data:
+      kind: processor_run
+      input:
+        html: "{{B}}"
+        instructions: "The output should be a JSON list without any code blocks. Translate the English content below between 2 lines of CHUNKED_TEXTaskd9wijdfoiwe to German, and follow the guidelines below."
+        input_language: English
+        output_language: Spanish
+      config:
+        seed: null
+        chunk_size: 1000
+        temperature: 0.7
+        html_selectors:
+          - p
+          - h1
+          - h2
+          - h3
+          - h4
+          - h5
+          - h6
+          - a
+          - span
+          - li
+          - td
+          - th
+          - caption
+          - label
+        system_message: You are a language translator.
+        provider_config:
+          model: gpt-4o-mini
+          provider: openai
+        placeholder_variable: <CHUNKED_TEXTaskd9wijdfoiwe>
+        max_parallel_requests: 4
+        translation_guideline: null
+        html_selectors_attributes:
+          - selector: img
+            attribute: alt
+      provider_slug: promptly
+      processor_slug: html-translation
+      output_template:
+        markdown: "{{translated_html}}"
+      fill_rows_with_output: false

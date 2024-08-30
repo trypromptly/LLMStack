@@ -1,7 +1,7 @@
 name: Bulk GPT-4o-Mini
 slug: bulk-gpt-4o-mini
 description: >-
-  This app allows you to run GPT-4o-mini on a large number of text inputs at once.
+  Allows you to run GPT-4o-mini on a large number of text inputs at once.
 total_rows: 10
 total_columns: 26
 columns:
