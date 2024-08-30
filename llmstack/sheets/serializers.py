@@ -44,7 +44,7 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
         return {cell_id: cell.model_dump() for cell_id, cell in obj.formula_cells.items()}
 
     def get_run_id(self, obj):
-        return obj.extra_data.get("job_id", None)
+        return obj.extra_data.get("run_id", None)
 
     class Meta:
         model = PromptlySheet
