@@ -176,8 +176,16 @@ const SheetFormulaMenu = ({
               {formulaType === "processor_run" && memoizedProcessorRunForm}
 
               <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <Button onClick={handleClearFormula}>Clear</Button>
-                <Button onClick={onClose}>Cancel</Button>
+                <Button sx={{ textTransform: "none" }} onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button
+                  sx={{ textTransform: "none" }}
+                  variant="outlined"
+                  onClick={handleClearFormula}
+                >
+                  Clear
+                </Button>
                 <Button variant="contained" onClick={handleApplyFormula}>
                   Apply
                 </Button>

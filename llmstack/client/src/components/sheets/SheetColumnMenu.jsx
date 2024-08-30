@@ -374,7 +374,11 @@ export function SheetColumnMenu({
                 spacing={2}
                 sx={{ width: "100%", justifyContent: "center", mt: 2 }}
               >
-                <Button variant="standard" onClick={() => setOpen(false)}>
+                <Button
+                  sx={{ textTransform: "none" }}
+                  variant="standard"
+                  onClick={() => setOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button variant="contained" onClick={handleAddOrEditColumn}>
