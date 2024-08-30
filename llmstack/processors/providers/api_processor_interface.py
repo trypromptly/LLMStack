@@ -22,6 +22,7 @@ from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
 from llmstack.processors.providers.config import ProviderConfig
+from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
@@ -171,8 +172,7 @@ class ApiProcessorInterface(
         self._request = request
         self._metadata = metadata
         self._session_enabled = session_enabled
-        self._billing_metrics = {}
-        self._usage_data = {"invocation": 1}
+        self._usage_data = [("promptly/*/*/*", MetricType.INVOCATION, 1)]
 
         self.process_session_data(session_data if session_enabled else {})
 
@@ -272,22 +272,9 @@ class ApiProcessorInterface(
 
     # Used to track usage data
     def usage_data(self) -> dict:
-        billing_details = {}
-        pricing_metrics = self._billing_metrics.get("pricing_metrics", {})
-
-        for billing_metric_type, billing_metric in pricing_metrics.items():
-            cost = billing_metric.calculate_cost(**self._usage_data)
-            billing_details[billing_metric_type] = {
-                "unit_cost": billing_metric.unit_cost,
-                "cost": cost,
-                "provider_config_source": self._billing_metrics.get("provider_config_source"),
-            }
-
-        return {
-            "credits": sum([x["cost"] for x in billing_details.values()]),
-            "usage_data": self._usage_data,
-            "billing_details": billing_details,
-        }
+        logger.info("Usage data")
+        logger.info(self._usage_data)
+        return {"credits": 1000, "usage_metrics": self._usage_data}
 
     def is_output_cacheable(self) -> bool:
         return True

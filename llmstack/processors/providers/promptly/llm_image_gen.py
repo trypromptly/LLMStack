@@ -10,6 +10,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
 from llmstack.processors.providers.openai.images_generations import (
     ImageModel as OpenAIModel,
 )
@@ -112,16 +113,6 @@ class LLMImageGeneratorProcessor(
             model_slug=self._config.provider_config.model.model_name(),
             get_provider_config_fn=self.get_provider_config,
         )
-        self._billing_metrics = self.get_provider_config(
-            model_slug=self._config.provider_config.model.model_name(),
-            provider_slug=self.provider_slug(),
-            processor_slug=self.slug(),
-        ).get_billing_metrics(
-            model_slug=self._config.provider_config.model.model_name(),
-            provider_slug=self.provider_slug(),
-            processor_slug=self.slug(),
-            deployment_name=str(self._config.provider_config.provider),
-        )
         size = f"{self._config.width}x{self._config.height}"
 
         result = client.images.generate(
@@ -131,8 +122,20 @@ class LLMImageGeneratorProcessor(
             response_format="b64_json",
             size=size,
         )
-        self._usage_data["resolution"] = size
-        self._usage_data["api_invocation"] = 1
+        self._usage_data.append(
+            (
+                f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                MetricType.RESOLUTION,
+                size,
+            )
+        )
+        self._usage_data.append(
+            (
+                f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                MetricType.API_INVOCATION,
+                1,
+            )
+        )
         image = result.data[0]
         data_uri = image.data_uri(include_name=True)
         objref = self._upload_asset_from_url(asset=data_uri).objref

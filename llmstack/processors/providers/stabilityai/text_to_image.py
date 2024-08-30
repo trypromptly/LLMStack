@@ -10,6 +10,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
@@ -96,15 +97,7 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
     def process(self) -> dict:
         from llmstack.common.utils.sslr import LLM
 
-        provider_config = self.get_provider_config(
-            model_slug=self._config.engine_id.model_name(),
-        )
-        self._billing_metrics = provider_config.get_billing_metrics(
-            provider_slug=self.provider_slug(),
-            processor_slug=self.slug(),
-            model_slug=self._config.engine_id.value,
-            deployment_name="*",
-        )
+        provider_config = self.get_provider_config(model_slug=self._config.engine_id.model_name())
         client = LLM(
             provider="stabilityai",
             stabilityai_api_key=provider_config.api_key,
@@ -117,7 +110,13 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
             response_format="b64_json",
             size=f"{self._config.width}x{self._config.height}",
         )
-        self._usage_data["api_invocation"] = 1
+        self._usage_data.append(
+            (
+                f"{self.provider_slug()}/*/{self._config.engine_id.value}/*",
+                MetricType.API_INVOCATION,
+                1,
+            )
+        )
         image = result.data[0]
         data_uri = image.data_uri(include_name=True)
         objref = self._upload_asset_from_url(asset=data_uri).objref

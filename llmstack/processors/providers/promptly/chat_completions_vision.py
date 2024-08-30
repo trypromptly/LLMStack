@@ -16,6 +16,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorSchema,
 )
 from llmstack.processors.providers.google.chat import GeminiModel as GoogleModel
+from llmstack.processors.providers.metrics import MetricType
 from llmstack.processors.providers.openai.chat_completions_vision import (
     ChatCompletionsVisionModel as OpenAIModel,
 )
@@ -224,16 +225,6 @@ class LLMVisionProcessor(
             model_slug=self._config.provider_config.model.value,
             get_provider_config_fn=self.get_provider_config,
         )
-        self._billing_metrics = self.get_provider_config(
-            model_slug=self._config.provider_config.model.model_name(),
-            provider_slug=self.provider_slug(),
-            processor_slug=self.slug(),
-        ).get_billing_metrics(
-            model_slug=self._config.provider_config.model.model_name(),
-            provider_slug=self.provider_slug(),
-            processor_slug=self.slug(),
-            deployment_name=str(self._config.provider_config.provider),
-        )
 
         messages_to_send = (
             [{"role": "system", "content": self._config.system_message}] + messages
@@ -251,8 +242,20 @@ class LLMVisionProcessor(
 
         for result in response:
             if result.usage:
-                self._usage_data["input_tokens"] = result.usage.input_tokens
-                self._usage_data["output_tokens"] = result.usage.output_tokens
+                self._usage_data.append(
+                    (
+                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                        MetricType.INPUT_TOKENS,
+                        result.usage.input_tokens,
+                    )
+                )
+                self._usage_data.append(
+                    (
+                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                        MetricType.OUTPUT_TOKENS,
+                        result.usage.output_tokens,
+                    )
+                )
 
             choice = result.choices[0]
             if choice.delta.content:

@@ -16,6 +16,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
 from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
@@ -133,11 +134,6 @@ class MessagesVisionProcessor(ApiProcessorInterface[MessagesVisionInput, Message
         client = get_llm_client_from_provider_config(
             self.provider_slug(), self._config.model.model_name(), self.get_provider_config
         )
-        self._billing_metrics = self.get_provider_config(
-            model_slug=self._config.model.value, provider_slug=self.provider_slug(), processor_slug=self.slug()
-        ).get_billing_metrics(
-            model_slug=self._config.model.value, provider_slug=self.provider_slug(), processor_slug=self.slug()
-        )
 
         messages_to_send = (
             [{"role": "system", "content": self._config.system_message}] + messages
@@ -155,8 +151,21 @@ class MessagesVisionProcessor(ApiProcessorInterface[MessagesVisionInput, Message
 
         for result in response:
             if result.usage:
-                self._usage_data["input_tokens"] = result.usage.input_tokens
-                self._usage_data["output_tokens"] = result.usage.output_tokens
+                self._usage_data.append(
+                    (
+                        f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
+                        MetricType.INPUT_TOKENS,
+                        result.usage.input_tokens,
+                    )
+                )
+                self._usage_data.append(
+                    (
+                        f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
+                        MetricType.OUTPUT_TOKENS,
+                        result.usage.output_tokens,
+                    )
+                )
+
             choice = result.choices[0]
             if choice.delta.content:
                 text_content = "".join(

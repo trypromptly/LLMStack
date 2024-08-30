@@ -12,6 +12,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
@@ -137,11 +138,7 @@ class ImagesGenerations(
             raise Exception("No prompt found in input")
 
         provider_config = self.get_provider_config(model_slug=self._config.model)
-        self._billing_metrics = provider_config.get_billing_metrics(
-            provider_slug=self.provider_slug(),
-            processor_slug=self.slug(),
-            model_slug=self._config.model.value,
-        )
+
         client = openai.OpenAI(api_key=provider_config.api_key)
         result = client.images.generate(
             prompt=prompt,
@@ -162,8 +159,12 @@ class ImagesGenerations(
                 data=[image.b64_json or image.url for image in result.data],
             ),
         )
-        self._usage_data["resolution"] = self._config.size.value
-        self._usage_data["quality"] = self._config.quality.value
+        self._usage_data.append(
+            (f"{self.provider_slug()}/*/{self._config.model.value}/*", MetricType.RESOLUTION, self._config.size.value)
+        )
+        self._usage_data.append(
+            (f"{self.provider_slug()}/*/{self._config.model.value}/*", MetricType.QUALITY, self._config.quality.value)
+        )
 
         output = self._output_stream.finalize()
 

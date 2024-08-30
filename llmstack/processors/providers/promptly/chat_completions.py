@@ -15,6 +15,7 @@ from llmstack.processors.providers.api_processor_interface import (
 )
 from llmstack.processors.providers.cohere.chat import CohereModel
 from llmstack.processors.providers.google.chat import GeminiModel as GoogleModel
+from llmstack.processors.providers.metrics import MetricType
 from llmstack.processors.providers.mistral.chat_completions import (
     MessagesModel as MistralModel,
 )
@@ -165,16 +166,6 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             model_slug=self._config.provider_config.model.value,
             get_provider_config_fn=self.get_provider_config,
         )
-        self._billing_metrics = self.get_provider_config(
-            model_slug=self._config.provider_config.model.model_name(),
-            provider_slug=self.provider_slug(),
-            processor_slug=self.slug(),
-        ).get_billing_metrics(
-            model_slug=self._config.provider_config.model.model_name(),
-            provider_slug=self.provider_slug(),
-            processor_slug=self.slug(),
-            deployment_name=str(self._config.provider_config.provider),
-        )
 
         messages = []
         if self._config.system_message:
@@ -209,8 +200,20 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
         for entry in result:
             if entry.usage:
-                self._usage_data["input_tokens"] = entry.usage.input_tokens
-                self._usage_data["output_tokens"] = entry.usage.output_tokens
+                self._usage_data.append(
+                    (
+                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                        MetricType.INPUT_TOKENS,
+                        entry.usage.input_tokens,
+                    )
+                )
+                self._usage_data.append(
+                    (
+                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                        MetricType.OUTPUT_TOKENS,
+                        entry.usage.output_tokens,
+                    )
+                )
 
             # Stream the output if objref is not enabled
             if not self._config.objref:

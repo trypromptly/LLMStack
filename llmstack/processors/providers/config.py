@@ -1,9 +1,7 @@
 from enum import Enum
-from typing import Dict
 
 from pydantic import ConfigDict, Field
 
-from llmstack.base.billing import BaseBillingMetric
 from llmstack.common.blocks.base.schema import BaseSchema, CustomGenerateJsonSchema
 
 
@@ -69,32 +67,3 @@ class ProviderConfig(BaseSchema):
     @classmethod
     def get_config_ui_schema(cls) -> dict:
         return cls.get_ui_schema()
-
-    def get_billing_metrics(
-        self, provider_slug=None, processor_slug=None, model_slug=None, deployment_name=None
-    ) -> Dict[str, BaseBillingMetric]:
-        import importlib
-
-        from django.conf import settings
-
-        get_pricing_data = getattr(importlib.import_module(settings.BILLING_MODULE), "get_pricing_data")
-
-        pricing_provider_slug = provider_slug or self.provider_slug
-        pricing_processor_slug = processor_slug or self.processor_slug
-        pricing_model_slug = model_slug or self.model_slug
-        pricing_deployment_name = deployment_name or self.deployment_key
-
-        pricing_metrics = get_pricing_data(
-            pricing_provider_slug,
-            pricing_processor_slug,
-            pricing_model_slug,
-            pricing_deployment_name,
-        )
-        return {
-            **pricing_metrics,
-            "provider_slug": pricing_provider_slug,
-            "processor_slug": pricing_processor_slug,
-            "model_slug": pricing_model_slug,
-            "deployment_key": pricing_deployment_name,
-            "provider_config_source": str(self.provider_config_source),
-        }
