@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Stack, Box, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import ApiBackendSelector from "../ApiBackendSelector";
@@ -15,9 +15,15 @@ export default function ProcessorRunForm({
   processorInput,
   processorConfig,
   processorOutputTemplate,
-  columns,
 }) {
   const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
+  const inputDataRef = useRef(processorInput || {});
+  const configDataRef = useRef(processorConfig || {});
+  const outputTemplateRef = useRef(
+    processorOutputTemplate?.markdown ||
+      apiBackendSelected?.output_template?.markdown ||
+      "",
+  );
   const [tabValue, setTabValue] = useState("input");
 
   const handleTabChange = (event, newValue) => {
@@ -29,10 +35,10 @@ export default function ProcessorRunForm({
       processor_slug: apiBackendSelected?.slug,
       provider_slug: apiBackendSelected?.api_provider?.slug,
       output_template: {
-        markdown: apiBackendSelected?.output_template?.markdown || "",
+        markdown: outputTemplateRef.current,
       },
-      input: {},
-      config: {},
+      input: inputDataRef.current,
+      config: configDataRef.current,
     });
   }, [apiBackendSelected, setData]);
 
@@ -60,12 +66,13 @@ export default function ProcessorRunForm({
             uiSchema={
               apiBackendSelected ? apiBackendSelected.input_ui_schema : {}
             }
-            formData={processorInput || {}}
+            formData={inputDataRef.current || {}}
             validator={validator}
             onChange={(e) => {
               setData({
                 input: e.formData,
               });
+              inputDataRef.current = e.formData;
             }}
             disableAdvanced={true}
           />
@@ -76,12 +83,13 @@ export default function ProcessorRunForm({
             uiSchema={
               apiBackendSelected ? apiBackendSelected.config_ui_schema : {}
             }
-            formData={processorConfig || {}}
+            formData={configDataRef.current || {}}
             validator={validator}
             onChange={(e) => {
               setData({
                 config: e.formData,
               });
+              configDataRef.current = e.formData;
             }}
           />
         </TabPanel>
@@ -89,15 +97,12 @@ export default function ProcessorRunForm({
           <TextFieldWithVars
             label="Output Template"
             multiline
-            value={
-              processorOutputTemplate?.markdown ||
-              apiBackendSelected?.output_template?.markdown ||
-              ""
-            }
+            value={outputTemplateRef.current}
             onChange={(text) => {
               setData({
                 output_template: { markdown: text },
               });
+              outputTemplateRef.current = text;
             }}
             sx={{ width: "100%" }}
             introText="Use the {{ }} syntax to reference data from the processor's own output."

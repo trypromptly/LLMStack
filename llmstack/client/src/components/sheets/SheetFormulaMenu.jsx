@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Popper,
   Paper,
@@ -54,7 +54,16 @@ const SheetFormulaMenu = ({
     formulaCells[cellId]?.formula?.data || {},
   );
 
-  // Add this useEffect hook
+  const setDataHandler = useCallback(
+    (data) => {
+      formulaDataRef.current = {
+        ...formulaDataRef.current,
+        ...data,
+      };
+    },
+    [formulaDataRef],
+  );
+
   useEffect(() => {
     formulaDataRef.current = formulaCells[cellId]?.formula?.data || {};
     setFormulaType(formulaCells[cellId]?.formula?.type || "");
@@ -62,17 +71,12 @@ const SheetFormulaMenu = ({
       formulaCells[cellId]?.formula?.data?.transformation_template || "",
     );
     setFormulaData(formulaCells[cellId]?.formula?.data || {});
-  }, [cellId, formulaCells]);
+  }, [cellId, formulaCells, setFormulaData, setFormulaType]);
 
   const memoizedProcessorRunForm = useMemo(
     () => (
       <ProcessorRunForm
-        setData={(data) => {
-          formulaDataRef.current = {
-            ...formulaDataRef.current,
-            ...data,
-          };
-        }}
+        setData={setDataHandler}
         providerSlug={formulaData?.provider_slug}
         processorSlug={formulaData?.processor_slug}
         processorInput={formulaData?.input}
@@ -80,7 +84,7 @@ const SheetFormulaMenu = ({
         processorOutputTemplate={formulaData?.output_template}
       />
     ),
-    [formulaData],
+    [setDataHandler, formulaData],
   );
 
   const handleApplyFormula = () => {
