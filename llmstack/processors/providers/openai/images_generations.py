@@ -163,7 +163,7 @@ class ImagesGenerations(
             (
                 f"{self.provider_slug()}/*/{self._config.model.value}/*",
                 MetricType.RESOLUTION,
-                (self._config.size.value, self._config.quality.value),
+                (provider_config.provider_config_source, self._config.size.value, self._config.quality.value),
             )
         )
 

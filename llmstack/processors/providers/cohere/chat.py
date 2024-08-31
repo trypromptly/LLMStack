@@ -134,6 +134,7 @@ class CohereChatProcessor(
 
     def process(self) -> dict:
         client = get_llm_client_from_provider_config("cohere", self._config.model.value, self.get_provider_config)
+        provider_config = self.get_provider_config(provider_slug="cohere", model_slug=self._config.model.value)
 
         messages = self._chat_history if self._config.retain_history else []
 
@@ -163,14 +164,14 @@ class CohereChatProcessor(
                     (
                         f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
                         MetricType.INPUT_TOKENS,
-                        result.usage.input_tokens,
+                        (provider_config.provider_config_source, result.usage.input_tokens),
                     )
                 )
                 self._usage_data.append(
                     (
                         f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
                         MetricType.OUTPUT_TOKENS,
-                        result.usage.output_tokens,
+                        (provider_config.provider_config_source, result.usage.output_tokens),
                     )
                 )
 

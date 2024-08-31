@@ -21,7 +21,7 @@ from llmstack.common.utils.utils import hydrate_input
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
-from llmstack.processors.providers.config import ProviderConfig
+from llmstack.processors.providers.config import ProviderConfig, ProviderConfigSource
 from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
@@ -172,7 +172,7 @@ class ApiProcessorInterface(
         self._request = request
         self._metadata = metadata
         self._session_enabled = session_enabled
-        self._usage_data = [("promptly/*/*/*", MetricType.INVOCATION, 1)]
+        self._usage_data = [("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1))]
 
         self.process_session_data(session_data if session_enabled else {})
 

@@ -225,6 +225,9 @@ class LLMVisionProcessor(
             model_slug=self._config.provider_config.model.value,
             get_provider_config_fn=self.get_provider_config,
         )
+        provider_config = self.get_provider_config(
+            provider_slug=self._config.provider_config.provider, model_slug=self._config.provider_config.model.value
+        )
 
         messages_to_send = (
             [{"role": "system", "content": self._config.system_message}] + messages
@@ -246,14 +249,14 @@ class LLMVisionProcessor(
                     (
                         f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
                         MetricType.INPUT_TOKENS,
-                        result.usage.input_tokens,
+                        (provider_config.provider_config_source, result.usage.input_tokens),
                     )
                 )
                 self._usage_data.append(
                     (
                         f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
                         MetricType.OUTPUT_TOKENS,
-                        result.usage.output_tokens,
+                        (provider_config.provider_config_source, result.usage.output_tokens),
                     )
                 )
 

@@ -114,7 +114,7 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
             (
                 f"{self.provider_slug()}/*/{self._config.engine_id.value}/*",
                 MetricType.API_INVOCATION,
-                1,
+                (provider_config.provider_config_source, 1),
             )
         )
         image = result.data[0]

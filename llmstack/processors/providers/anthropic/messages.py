@@ -138,6 +138,9 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         client = get_llm_client_from_provider_config(
             "anthropic", self._config.model.model_name(), self.get_provider_config
         )
+        provider_config = self.get_provider_config(
+            provider_slug="anthropic", model_slug=self._config.model.model_name()
+        )
 
         messages = self._chat_history if self._config.retain_history else []
 
@@ -164,14 +167,14 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
                     (
                         f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
                         MetricType.INPUT_TOKENS,
-                        result.usage.input_tokens,
+                        (provider_config.provider_config_source, result.usage.input_tokens),
                     )
                 )
                 self._usage_data.append(
                     (
                         f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
                         MetricType.OUTPUT_TOKENS,
-                        result.usage.output_tokens,
+                        (provider_config.provider_config_source, result.usage.output_tokens),
                     )
                 )
 

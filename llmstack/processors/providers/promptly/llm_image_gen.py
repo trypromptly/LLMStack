@@ -113,6 +113,10 @@ class LLMImageGeneratorProcessor(
             model_slug=self._config.provider_config.model.model_name(),
             get_provider_config_fn=self.get_provider_config,
         )
+        provider_config = self.get_provider_config(
+            provider_slug=self._config.provider_config.provider,
+            model_slug=self._config.provider_config.model.model_name(),
+        )
         size = f"{self._config.width}x{self._config.height}"
 
         result = client.images.generate(
@@ -126,14 +130,14 @@ class LLMImageGeneratorProcessor(
             (
                 f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
                 MetricType.RESOLUTION,
-                (size, "hd"),
+                (provider_config.provider_config_source, size, "hd"),
             )
         )
         self._usage_data.append(
             (
                 f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
                 MetricType.API_INVOCATION,
-                1,
+                (provider_config.provider_config_source, 1),
             )
         )
         image = result.data[0]

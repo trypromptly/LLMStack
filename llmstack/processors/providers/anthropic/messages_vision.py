@@ -134,6 +134,9 @@ class MessagesVisionProcessor(ApiProcessorInterface[MessagesVisionInput, Message
         client = get_llm_client_from_provider_config(
             self.provider_slug(), self._config.model.model_name(), self.get_provider_config
         )
+        provider_config = self.get_provider_config(
+            provider_slug=self.provider_slug(), model_slug=self._config.model.model_name()
+        )
 
         messages_to_send = (
             [{"role": "system", "content": self._config.system_message}] + messages
@@ -155,14 +158,14 @@ class MessagesVisionProcessor(ApiProcessorInterface[MessagesVisionInput, Message
                     (
                         f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
                         MetricType.INPUT_TOKENS,
-                        result.usage.input_tokens,
+                        (provider_config.provider_config_source, result.usage.input_tokens),
                     )
                 )
                 self._usage_data.append(
                     (
                         f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
                         MetricType.OUTPUT_TOKENS,
-                        result.usage.output_tokens,
+                        (provider_config.provider_config_source, result.usage.output_tokens),
                     )
                 )
 

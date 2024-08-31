@@ -166,6 +166,9 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             model_slug=self._config.provider_config.model.value,
             get_provider_config_fn=self.get_provider_config,
         )
+        provider_config = self.get_provider_config(
+            provider_slug=self._config.provider_config.provider, model_slug=self._config.provider_config.model.value
+        )
 
         messages = []
         if self._config.system_message:
@@ -204,14 +207,14 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
                     (
                         f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
                         MetricType.INPUT_TOKENS,
-                        entry.usage.input_tokens,
+                        (provider_config.provider_config_source, entry.usage.input_tokens),
                     )
                 )
                 self._usage_data.append(
                     (
                         f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
                         MetricType.OUTPUT_TOKENS,
-                        entry.usage.output_tokens,
+                        (provider_config.provider_config_source, entry.usage.output_tokens),
                     )
                 )
 

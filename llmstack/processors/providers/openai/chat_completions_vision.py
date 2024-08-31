@@ -202,7 +202,7 @@ class ChatCompletionsVision(
             )
 
         client = get_llm_client_from_provider_config("openai", self._config.model, self.get_provider_config)
-
+        provider_config = self.get_provider_config(provider_slug="openai", model_slug=self._config.model)
         messages_to_send = (
             [{"role": "system", "content": self._input.system_message}] + messages
             if self._input.system_message
@@ -224,14 +224,14 @@ class ChatCompletionsVision(
                     (
                         f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
                         MetricType.INPUT_TOKENS,
-                        result.usage.input_tokens,
+                        (provider_config.provider_config_source, result.usage.input_tokens),
                     )
                 )
                 self._usage_data.append(
                     (
                         f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
                         MetricType.OUTPUT_TOKENS,
-                        result.usage.output_tokens,
+                        (provider_config.provider_config_source, result.usage.output_tokens),
                     )
                 )
 
