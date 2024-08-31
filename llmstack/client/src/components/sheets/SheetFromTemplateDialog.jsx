@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { axios } from "../../data/axios";
 import { useRecoilValue } from "recoil";
 import { sheetTemplatesSelector } from "../../data/atoms";
-
+import { columnIndexToLetter } from "./utils";
 export function SheetFromTemplateDialog({
   open,
   setOpen,
@@ -32,7 +32,14 @@ export function SheetFromTemplateDialog({
   );
   const [sheetTemplate, setSheetTemplate] = useState("");
   const [sheetCells, setSheetCells] = useState({});
-  const [sheetColumns, setSheetColumns] = useState({});
+  const [sheetColumns, setSheetColumns] = useState(() => {
+    const columns = {};
+    for (let i = 0; i < 26; i++) {
+      const letter = columnIndexToLetter(i);
+      columns[letter] = { title: "", col: letter, kind: "text", data: {} };
+    }
+    return columns;
+  });
   const [sheetTotalColumns, setSheetTotalColumns] = useState(26);
   const [sheetTotalRows, setSheetTotalRows] = useState(1);
   const sheetTemplates = useRecoilValue(sheetTemplatesSelector);
@@ -74,8 +81,25 @@ export function SheetFromTemplateDialog({
     setSheetTemplate(templateSlug);
     const template = sheetTemplates[templateSlug];
 
+    // Iterate through total_columns and create columns if they don't exist
+    const newColumns = {};
+    for (let i = 0; i < template.total_columns; i++) {
+      const letter = columnIndexToLetter(i);
+
+      if (template.columns[letter]) {
+        newColumns[letter] = template.columns[letter];
+      } else {
+        newColumns[letter] = {
+          title: "",
+          col: letter,
+          kind: "text",
+          data: {},
+        };
+      }
+    }
+
     setSheetCells(template?.cells || {});
-    setSheetColumns(template?.columns || {});
+    setSheetColumns(newColumns);
     setSheetTotalRows(template?.total_rows || 1);
     setSheetTotalColumns(template?.total_columns || 26);
   };
