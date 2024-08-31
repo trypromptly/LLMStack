@@ -184,13 +184,15 @@ function Sheet(props) {
       drawContent();
 
       const { ctx, rect, row, col } = args;
+      const column = gridColumns[col];
 
-      if (!row || !col) {
+      if (!column) {
         return;
       }
 
-      const colLetter = columnIndexToLetter(col);
+      const colLetter = column.col;
       const cellId = `${colLetter}${row + 1}`;
+
       const isFormulaCell = formulaCells[cellId];
 
       if (!isFormulaCell) {
@@ -228,7 +230,7 @@ function Sheet(props) {
 
       ctx.restore();
     },
-    [formulaCells],
+    [formulaCells, gridColumns],
   );
 
   useEffect(() => {
