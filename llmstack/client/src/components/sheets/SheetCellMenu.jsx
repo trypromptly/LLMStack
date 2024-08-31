@@ -7,7 +7,16 @@ import {
   Stack,
 } from "@mui/material";
 
-function SheetCellMenu({ anchorEl, open, onClose, onCopy, onPaste, onDelete }) {
+function SheetCellMenu({
+  anchorEl,
+  open,
+  onClose,
+  onCopy,
+  onPaste,
+  onDelete,
+  isFormula,
+  onOpenFormula,
+}) {
   const handleClose = (event) => {
     if (anchorEl.current && anchorEl.current.contains(event.target)) {
       return;
@@ -31,6 +40,11 @@ function SheetCellMenu({ anchorEl, open, onClose, onCopy, onPaste, onDelete }) {
                 <MenuItem onClick={onCopy}>Copy</MenuItem>
                 <MenuItem onClick={onPaste}>Paste</MenuItem>
                 <MenuItem onClick={onDelete}>Delete</MenuItem>
+                {
+                  <MenuItem onClick={onOpenFormula}>
+                    {isFormula ? "Edit Formula" : "Add Formula"}
+                  </MenuItem>
+                }
               </Stack>
             </ClickAwayListener>
           </Paper>

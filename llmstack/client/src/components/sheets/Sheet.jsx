@@ -852,6 +852,11 @@ function Sheet(props) {
         onCopy={handleCellCopy}
         onPaste={handleCellPaste}
         onDelete={handleCellDelete}
+        isFormula={formulaCells[selectedCellId]}
+        onOpenFormula={() => {
+          setCellMenuOpen(false);
+          setShowFormulaMenu(true);
+        }}
       />
       <MemoizedSheetFormulaMenu
         anchorEl={formulaMenuAnchorEl.current}
