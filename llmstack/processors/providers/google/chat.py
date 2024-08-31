@@ -14,6 +14,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
 from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,9 @@ class GeminiModel(str, Enum):
     GEMINI_1_0_PRO = "gemini-1.0-pro"
 
     def __str__(self):
+        return self.value
+
+    def model_name(self):
         return self.value
 
 
@@ -234,6 +238,7 @@ class ChatProcessor(
 
     def process(self) -> dict:
         tools = []
+
         messages = self._chat_history if self._config.retain_history else []
 
         if self._input.functions:
@@ -260,7 +265,6 @@ class ChatProcessor(
                     )
                 elif isinstance(input_message, UrlImageMessage):
                     image_url = input_message.image_url
-                    logger.info(f"Image URL: {image_url}")
 
                     if image_url.startswith("data:"):
                         content, mime_type = image_url.split(",", 1)
@@ -284,6 +288,7 @@ class ChatProcessor(
                     )
 
         client = get_llm_client_from_provider_config("google", self._config.model.value, self.get_provider_config)
+        provider_config = self.get_provider_config(provider_slug="google", model_slug=self._config.model.value)
 
         messages_to_send = (
             [
@@ -308,22 +313,44 @@ class ChatProcessor(
         )
 
         for result in response:
-            choice = result.choices[0]
-            for content in choice.delta.content:
-                if content["type"] == "text":
-                    async_to_sync(self._output_stream.write)(ChatOutput(content=content["data"]))
-                elif content["type"] == "tool_call":
-                    async_to_sync(self._output_stream.write)(
-                        ChatOutput(
-                            function_calls=[
-                                ToolCall(
-                                    id=content["id"],
-                                    function=FunctionCall(name=content["tool_name"], parameters=content["tool_args"]),
-                                    type="function",
-                                )
-                            ]
-                        )
+            if result.usage:
+                self._usage_data.append(
+                    (
+                        f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
+                        MetricType.INPUT_TOKENS,
+                        (provider_config.provider_config_source, result.usage.input_tokens),
                     )
+                )
+                self._usage_data.append(
+                    (
+                        f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
+                        MetricType.OUTPUT_TOKENS,
+                        (provider_config.provider_config_source, result.usage.output_tokens),
+                    )
+                )
+
+            choice = result.choices[0]
+            if choice.delta.content:
+                if isinstance(choice.delta.content, str):
+                    async_to_sync(self._output_stream.write)(ChatOutput(content=choice.delta.content))
+                elif isinstance(choice.delta.content, list):
+                    for content in choice.delta.content:
+                        if content["type"] == "text":
+                            async_to_sync(self._output_stream.write)(ChatOutput(content=content["data"]))
+                        elif content["type"] == "tool_call":
+                            async_to_sync(self._output_stream.write)(
+                                ChatOutput(
+                                    function_calls=[
+                                        ToolCall(
+                                            id=content["id"],
+                                            function=FunctionCall(
+                                                name=content["tool_name"], parameters=content["tool_args"]
+                                            ),
+                                            type="function",
+                                        )
+                                    ]
+                                )
+                            )
 
         output = self._output_stream.finalize()
 

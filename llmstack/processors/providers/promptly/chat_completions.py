@@ -1,6 +1,5 @@
 import logging
 import uuid
-from enum import Enum
 from typing import Literal, Optional, Union
 
 from asgiref.sync import async_to_sync
@@ -14,34 +13,18 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.cohere.chat import CohereModel
+from llmstack.processors.providers.google.chat import GeminiModel as GoogleModel
+from llmstack.processors.providers.metrics import MetricType
 from llmstack.processors.providers.mistral.chat_completions import (
     MessagesModel as MistralModel,
+)
+from llmstack.processors.providers.openai.chat_completions import (
+    ChatCompletionsModel as OpenAIModel,
 )
 from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
-
-
-class Model(str, Enum):
-    GPT_3_5_TURBO = "gpt-3.5-turbo"
-    GPT_4 = "gpt-4"
-    GPT_4_O = "gpt-4o"
-    GPT_4_O_MINI = "gpt-4o-mini"
-    GPT_4_TURBO_PREVIEW = "gpt-4-turbo-preview"
-    GEMINI_PRO = "gemini-pro"
-    CLAUDE_2_1 = "claude-2.1"
-
-    def __str__(self):
-        return self.value
-
-
-class Provider(str, Enum):
-    OPENAI = "openai"
-    GOOGLE = "google"
-    ANTHROPIC = "anthropic"
-
-    def __str__(self):
-        return self.value
 
 
 class LLMProcessorInput(ApiProcessorSchema):
@@ -62,56 +45,19 @@ class LLMProcessorOutput(ApiProcessorSchema):
     )
 
 
-class OpenAIModel(str, Enum):
-    GPT_3_5_TURBO = "gpt-3.5-turbo"
-    GPT_4 = "gpt-4"
-    GPT_4_TURBO_PREVIEW = "gpt-4-turbo-preview"
-    GPT_4_O = "gpt-4o"
-    GPT_4_O_MINI = "gpt-4o-mini"
-
-    def __str__(self):
-        return self.value
-
-    def model_name(self):
-        return self.value
-
-
 class OpenAIModelConfig(BaseModel):
     provider: Literal["openai"] = "openai"
     model: OpenAIModel = Field(default=OpenAIModel.GPT_4_O_MINI, description="The model for the LLM")
 
 
-class GoogleModel(str, Enum):
-    GEMINI_PRO = "gemini-pro"
-
-    def __str__(self):
-        return self.value
-
-    def model_name(self):
-        return self.value
-
-
 class GoogleModelConfig(BaseModel):
     provider: Literal["google"] = "google"
-    model: GoogleModel = Field(default=GoogleModel.GEMINI_PRO, description="The model for the LLM")
+    model: GoogleModel = Field(default=GoogleModel.GEMINI_1_5_FLASH, description="The model for the LLM")
 
 
 class AnthropicModelConfig(BaseModel):
     provider: Literal["anthropic"] = "anthropic"
     model: AnthropicModel = Field(default=AnthropicModel.CLAUDE_3_Haiku, description="The model for the LLM")
-
-
-class CohereModel(str, Enum):
-    COMMAND = "command"
-    COMMAND_LIGHT = "command-light"
-    COMMAND_NIGHTLY = "command-nightly"
-    COMMAND_LIGHT_NIGHTLY = "command-light-nightly"
-
-    def __str__(self):
-        return self.value
-
-    def model_name(self):
-        return self.value
 
 
 class CohereModelConfig(BaseModel):
@@ -138,7 +84,9 @@ class LLMProcessorConfiguration(ApiProcessorSchema):
 
     provider_config: Union[
         OpenAIModelConfig, GoogleModelConfig, AnthropicModelConfig, CohereModelConfig, MistralModelConfig
-    ] = Field(json_schema_extra={"advanced_parameter": False, "descrmination_field": "provider"})
+    ] = Field(
+        default=OpenAIModelConfig(), json_schema_extra={"advanced_parameter": False, "descrmination_field": "provider"}
+    )
 
     max_tokens: Optional[int] = Field(
         default=100,
@@ -215,8 +163,11 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
         output_stream = self._output_stream
         client = get_llm_client_from_provider_config(
             provider=self._config.provider_config.provider,
-            model_slug=self._config.provider_config.model.model_name(),
+            model_slug=self._config.provider_config.model.value,
             get_provider_config_fn=self.get_provider_config,
+        )
+        provider_config = self.get_provider_config(
+            provider_slug=self._config.provider_config.provider, model_slug=self._config.provider_config.model.value
         )
 
         messages = []
@@ -251,6 +202,22 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
             )
 
         for entry in result:
+            if entry.usage:
+                self._usage_data.append(
+                    (
+                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                        MetricType.INPUT_TOKENS,
+                        (provider_config.provider_config_source, entry.usage.input_tokens),
+                    )
+                )
+                self._usage_data.append(
+                    (
+                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                        MetricType.OUTPUT_TOKENS,
+                        (provider_config.provider_config_source, entry.usage.output_tokens),
+                    )
+                )
+
             # Stream the output if objref is not enabled
             if not self._config.objref:
                 async_to_sync(output_stream.write)(

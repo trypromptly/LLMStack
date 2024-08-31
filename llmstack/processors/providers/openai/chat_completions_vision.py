@@ -1,9 +1,9 @@
+import copy
 import logging
 from enum import Enum
 from typing import Annotated, List, Literal, Optional, Union
 
 from asgiref.sync import async_to_sync
-from openai import OpenAI
 from pydantic import BaseModel, Field, confloat, conint
 
 from llmstack.apps.schemas import OutputTemplate
@@ -14,6 +14,8 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
+from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +38,9 @@ class ChatCompletionsVisionModel(str, Enum):
     GPT_4_O_MINI = "gpt-4o-mini"
 
     def __str__(self):
+        return self.value
+
+    def model_name(self):
         return self.value
 
 
@@ -159,101 +164,83 @@ class ChatCompletionsVision(
         return {"chat_history": self._chat_history}
 
     def process(self) -> dict:
-        output_stream = self._output_stream
+        messages = self._chat_history if self._config.retain_history else []
 
-        chat_history = self._chat_history if self._config.retain_history else []
-        messages = []
-        messages.append(
-            {"role": "system", "content": self._input.system_message},
-        )
-
-        for msg in chat_history:
-            messages.append(msg)
-
-        # If message is a UrlImageMessage, check if it has objref and convert it to a data URI
-        for msg in self._input.messages:
-            if msg.type == "image_url":
-                # Convert objref to data URI if it exists
-                msg.image_url = self._get_session_asset_data_uri(msg.image_url, include_name=False)
-
-        if self._config.model == ChatCompletionsVisionModel.GPT_4_Vision:
-            messages.append(
-                {
-                    "role": "user",
-                    "content": [msg.model_dump() for msg in self._input.messages],
-                },
-            )
-        else:
-            input_messages = []
-            for msg in self._input.messages:
-                if isinstance(msg, TextMessage):
-                    input_messages.append(
+        if self._input.messages:
+            user_message_content = []
+            for input_message in self._input.messages:
+                if isinstance(input_message, TextMessage):
+                    user_message_content.append(
                         {
                             "type": "text",
-                            "text": msg.text,
+                            "text": input_message.text,
                         }
                     )
-                elif isinstance(msg, UrlImageMessage):
-                    input_messages.append(
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": msg.image_url,
-                            },
-                        }
-                    )
+                elif isinstance(input_message, UrlImageMessage):
+                    image_url = input_message.image_url
+                    data_uri = None
+                    if image_url.startswith("data:") or image_url.startswith("http"):
+                        data_uri = image_url
+                    elif image_url.startswith("objref://"):
+                        data_uri = self._get_session_asset_data_uri(image_url, include_name=False)
+
+                    if data_uri:
+                        user_message_content.append(
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": data_uri,
+                                },
+                            }
+                        )
+
             messages.append(
                 {
                     "role": "user",
-                    "content": input_messages,
-                },
+                    "content": user_message_content,
+                }
             )
 
-        provider_config = self.get_provider_config(
-            model_slug=self._config.model,
-        )
-        openai_client = OpenAI(api_key=provider_config.api_key)
-        result = openai_client.chat.completions.create(
-            model=self._config.model,
-            messages=messages,
-            temperature=self._config.temperature,
-            stream=True,
-            max_tokens=self._config.max_tokens,
+        client = get_llm_client_from_provider_config("openai", self._config.model, self.get_provider_config)
+        provider_config = self.get_provider_config(provider_slug="openai", model_slug=self._config.model)
+        messages_to_send = (
+            [{"role": "system", "content": self._input.system_message}] + messages
+            if self._input.system_message
+            else messages
         )
 
-        for data in result:
-            if (
-                data.object == "chat.completion.chunk"
-                and len(
-                    data.choices,
+        response = client.chat.completions.create(
+            messages=messages_to_send,
+            model=self._config.model,
+            stream=True,
+            n=1,
+            max_tokens=self._config.max_tokens,
+            temperature=self._config.temperature,
+        )
+
+        for result in response:
+            if result.usage:
+                self._usage_data.append(
+                    (
+                        f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
+                        MetricType.INPUT_TOKENS,
+                        (provider_config.provider_config_source, result.usage.input_tokens),
+                    )
                 )
-                > 0
-                and data.choices[0].delta
-                and data.choices[0].delta.content
-            ):
-                async_to_sync(output_stream.write)(
-                    ChatCompletionsVisionOutput(
-                        result=data.choices[0].delta.content,
-                    ),
+                self._usage_data.append(
+                    (
+                        f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
+                        MetricType.OUTPUT_TOKENS,
+                        (provider_config.provider_config_source, result.usage.output_tokens),
+                    )
                 )
+
+            choice = result.choices[0]
+            if choice.delta.content:
+                async_to_sync(self._output_stream.write)(ChatCompletionsVisionOutput(result=choice.delta.content))
 
         output = self._output_stream.finalize()
-
-        # Update chat history
-        for message in self._input.messages:
-            self._chat_history.append(message)
-        self._chat_history.append(
-            {
-                "role": "assistant",
-                "content": (
-                    output["result"]
-                    if isinstance(
-                        output,
-                        dict,
-                    )
-                    else output.result
-                ),
-            },
-        )
-
+        if self._config.retain_history:
+            self._chat_history = copy.deepcopy(messages)
+            self._chat_history.append({"role": "assistant", "content": output.result})
         return output

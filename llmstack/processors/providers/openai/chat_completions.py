@@ -1,14 +1,13 @@
+import copy
 import json
 import logging
 from enum import Enum
 from typing import List, Optional
 
-import openai
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field, confloat, conint
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.common.blocks.llm.openai import FunctionCall as OpenAIFunctionCall
 from llmstack.common.blocks.llm.openai import (
     OpenAIChatCompletionsAPIProcessorConfiguration,
 )
@@ -17,6 +16,8 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
+from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,9 @@ class ChatCompletionsModel(str, Enum):
     GPT_4_1106_PREVIEW = "gpt-4-1106-preview"
 
     def __str__(self):
+        return self.value
+
+    def model_name(self):
         return self.value
 
 
@@ -287,84 +291,114 @@ class ChatCompletions(
         return {"chat_history": self._chat_history}
 
     def process(self) -> dict:
-        if not self._config.stream:
-            raise Exception("Stream must be true for this processor.")
+        tools = []
+        messages = self._chat_history if self._config.retain_history else []
 
-        chat_history = self._chat_history if self._config.retain_history else []
-        messages = []
+        if self._input.functions:
+            for tool_function in self._input.functions:
+                tools.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": tool_function.name,
+                            "description": tool_function.description,
+                            "parameters": json.loads(tool_function.parameters),
+                        },
+                    }
+                )
+        if self._input.messages:
+            for input_message in self._input.messages:
+                if input_message.role == Role.USER or input_message.role == Role.ASSISTANT:
+                    messages.append(
+                        {
+                            "role": str(input_message.role),
+                            "content": input_message.content,
+                        }
+                    )
 
-        if self._input.system_message:
-            messages.append(
+        client = get_llm_client_from_provider_config("openai", self._config.model, self.get_provider_config)
+        provider_config = self.get_provider_config(provider_slug="openai", model_slug=self._config.model)
+        messages_to_send = (
+            [
                 {
                     "role": "system",
                     "content": self._input.system_message,
                 }
-            )
-
-        for message in chat_history:
-            messages.append(message)
-
-        for message in self._input.messages:
-            if message.role == Role.FUNCTION:
-                raise NotImplementedError("Function calls are not yet supported.")
-            else:
-                messages.append(
-                    {
-                        "role": str(message.role),
-                        "content": message.content,
-                    }
-                )
-
-        openai_functions = None
-        if self._input.functions is not None:
-            openai_functions = []
-            for function in self._input.functions:
-                openai_functions.append(
-                    OpenAIFunctionCall(
-                        name=function.name,
-                        description=function.description,
-                        parameters=(
-                            json.loads(
-                                function.parameters,
-                            )
-                            if function.parameters is not None
-                            else {}
-                        ),
-                    ),
-                )
-
-        provider_config = self.get_provider_config(model_slug=self._config.model)
-        openai_client = openai.OpenAI(api_key=provider_config.api_key, base_url=provider_config.base_url)
-        result = openai_client.chat.completions.create(
-            model=str(self._config.model),
-            messages=messages,
-            temperature=self._config.temperature,
+            ]
+            + messages
+            if self._input.system_message
+            else messages
+        )
+        response = client.chat.completions.create(
+            messages=messages_to_send,
+            tools=tools if tools else None,
+            model=self._config.model,
             stream=True,
-            seed=self._config.seed,
+            n=1,
+            max_tokens=self._config.max_tokens,
+            temperature=self._config.temperature,
         )
-
-        async_to_sync(self._output_stream.write)(
-            ChatCompletionsOutput(choices=[ChatMessage(role=Role.ASSISTANT)]),
-        )
-
-        for data in result:
-            if (
-                data.object == "chat.completion.chunk"
-                and len(data.choices) > 0
-                and data.choices[0].delta
-                and data.choices[0].delta.content
-            ):
-                async_to_sync(self._output_stream.write)(
-                    ChatCompletionsOutput(choices=[ChatMessage(content=data.choices[0].delta.content)]),
+        async_to_sync(self._output_stream.write)(ChatCompletionsOutput(choices=[ChatMessage(role=Role.ASSISTANT)]))
+        for result in response:
+            if result.usage:
+                self._usage_data.append(
+                    (
+                        f"{self.provider_slug()}/*/{self._config.model}/*",
+                        MetricType.INPUT_TOKENS,
+                        (provider_config.provider_config_source, result.usage.input_tokens),
+                    )
                 )
+                self._usage_data.append(
+                    (
+                        f"{self.provider_slug()}/*/{self._config.model}/*",
+                        MetricType.OUTPUT_TOKENS,
+                        (provider_config.provider_config_source, result.usage.output_tokens),
+                    )
+                )
+
+            choice = result.choices[0]
+            if choice.delta.content:
+                if isinstance(choice.delta.content, str):
+                    async_to_sync(self._output_stream.write)(
+                        ChatCompletionsOutput(choices=[ChatMessage(content=choice.delta.content)])
+                    )
+                elif isinstance(choice.delta.content, list):
+                    for content in choice.delta.content:
+                        if isinstance(content, str):
+                            async_to_sync(self._output_stream.write)(
+                                ChatCompletionsOutput(choices=[ChatMessage(content=content)])
+                            )
+                        elif isinstance(content, dict) and content["type"] == "text":
+                            async_to_sync(self._output_stream.write)(
+                                ChatCompletionsOutput(choices=[ChatMessage(content=content["data"])])
+                            )
+            if choice.delta.tool_calls:
+                for tool_call in choice.delta.tool_calls:
+                    if tool_call.function.name:
+                        async_to_sync(self._output_stream.write)(
+                            ChatCompletionsOutput(
+                                choices=[
+                                    ChatMessage(
+                                        function_call=FunctionCallResponse(
+                                            name=tool_call.function.name, arguments=tool_call.function.arguments
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    elif tool_call.function.arguments:
+                        async_to_sync(self._output_stream.write)(
+                            ChatCompletionsOutput(
+                                choices=[
+                                    ChatMessage(
+                                        function_call=FunctionCallResponse(arguments=tool_call.function.arguments)
+                                    )
+                                ]
+                            )
+                        )
 
         output = self._output_stream.finalize()
-        self._chat_history = messages[1:]
-        self._chat_history.append(
-            {
-                "role": "assistant",
-                "content": output.choices[0].content,
-            },
-        )
-
+        if self._config.retain_history:
+            self._chat_history = copy.deepcopy(messages)
+            self._chat_history.append({"role": "assistant", "content": output.choices[0].content})
         return output

@@ -12,6 +12,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,9 @@ class ImageModel(str, Enum):
     DALL_E_2 = "dall-e-2"
 
     def __str__(self):
+        return self.value
+
+    def model_name(self):
         return self.value
 
 
@@ -127,12 +131,6 @@ class ImagesGenerations(
 {% endfor %}""",
         )
 
-    def usage_data(self) -> dict:
-        if self._config.model == ImageModel.DALL_E_2:
-            return {"credits": 5000}
-        elif self._config.model == ImageModel.DALL_E_3:
-            return {"credits": 20000}
-
     def process(self) -> dict:
         prompt = self._input.prompt
 
@@ -140,6 +138,7 @@ class ImagesGenerations(
             raise Exception("No prompt found in input")
 
         provider_config = self.get_provider_config(model_slug=self._config.model)
+
         client = openai.OpenAI(api_key=provider_config.api_key)
         result = client.images.generate(
             prompt=prompt,
@@ -159,6 +158,13 @@ class ImagesGenerations(
             ImagesGenerationsOutput(
                 data=[image.b64_json or image.url for image in result.data],
             ),
+        )
+        self._usage_data.append(
+            (
+                f"{self.provider_slug()}/*/{self._config.model.value}/*",
+                MetricType.RESOLUTION,
+                (provider_config.provider_config_source, self._config.size.value, self._config.quality.value),
+            )
         )
 
         output = self._output_stream.finalize()
