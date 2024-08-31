@@ -1,6 +1,6 @@
 import ast
-import json
 import logging
+import re
 import uuid
 from typing import Any, Dict, List, Optional
 
@@ -17,6 +17,7 @@ from llmstack.sheets.models import (
     PromptlySheet,
     PromptlySheetCell,
     PromptlySheetColumn,
+    PromptlySheetColumnType,
     PromptlySheetFormulaCell,
 )
 from llmstack.sheets.serializers import PromptlySheetSerializer
@@ -53,8 +54,8 @@ def _execute_cell(
 
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
 
-    response = None
-    fill_rows_with_output = not is_formula_cell and column.data.get("fill_rows_with_output", False)
+    output = None
+    output_cells = []
     execution_type = column.type if not is_formula_cell else cell.formula.type
     execution_data = column.data if not is_formula_cell else cell.formula.data
 
@@ -79,6 +80,7 @@ def _execute_cell(
             request_uuid=str(uuid.uuid4()),
             request=request,
         )
+        output = response.get("output", "")
     elif execution_type == "processor_run":
         api_provider_slug = execution_data["provider_slug"]
         api_backend_slug = execution_data["processor_slug"]
@@ -116,91 +118,77 @@ def _execute_cell(
         if response.get("output") and processor_output_template:
             try:
                 processor_output = ast.literal_eval(response.get("output"))
-                response["output"] = hydrate_input(processor_output_template, processor_output)
+                output = hydrate_input(processor_output_template, processor_output)
             except Exception as e:
                 logger.error(f"Error rendering output template: {e}")
-                pass
+                output = ""
+        else:
+            output = response.get("output", "")
+    elif execution_type == "data_transformer":
+        transformation_template = execution_data.get("transformation_template")
+        if transformation_template:
+            try:
+                output = render_template(transformation_template, input_values)
+            except Exception as e:
+                logger.error(f"Error applying transformation template: {e}")
+                async_to_sync(channel_layer.group_send)(
+                    run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
+                )
+        else:
+            output = ""
 
-    output = response.get("output", "") if execution_type != "data_transformer" else ""
-
-    # Apply transformation template if present
-    transformation_template = execution_data.get("transformation_template")
-    if transformation_template:
+    if is_formula_cell:
         try:
-            output = render_template(
-                transformation_template,
-                input_values if execution_type == "data_transformer" else {"output": output},
-            )
-        except Exception as e:
-            logger.error(f"Error applying transformation template: {e}")
-            async_to_sync(channel_layer.group_send)(
-                run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
-            )
-
-    # Fill rows with output if we are executing the column for the first time
-    if fill_rows_with_output and len(input_values.values()) == 0 and cell.row == 1:
-        try:
-            output_list = json.loads(output) if isinstance(output, str) else output
-            if isinstance(output_list, list):
-                output_list = [
+            processed_output = ast.literal_eval(output)
+            if isinstance(processed_output, list):
+                output_cells = [
                     PromptlySheetCell(
                         row=cell.row + i,
                         col=cell.col,
                         data={"output": str(item)},
                     )
-                    for i, item in enumerate(output_list)
+                    for i, item in enumerate(processed_output)
                 ]
-
-                # If we have more rows than total_rows, we need to update the total_rows and send a message to the frontend
-                if len(output_list) > sheet.data.get("total_rows", 0):
-                    sheet.update_total_rows(len(output_list))
-
-                    async_to_sync(channel_layer.group_send)(
-                        run_id,
-                        {
-                            "type": "sheet.update",
-                            "sheet": {"id": str(sheet.uuid), "total_rows": len(output_list)},
-                        },
+            elif isinstance(processed_output, str):
+                output_cells = [
+                    PromptlySheetCell(
+                        row=cell.row,
+                        col=cell.col,
+                        data={"output": str(processed_output)},
                     )
-
-                for cell in output_list:
-                    async_to_sync(channel_layer.group_send)(
-                        run_id,
-                        {
-                            "type": "cell.update",
-                            "cell": {
-                                "id": cell.cell_id,
-                                "output": cell.data.get("output", "") if isinstance(cell.data, dict) else cell.data,
-                            },
-                        },
+                ]
+            elif isinstance(processed_output, list) and all(isinstance(item, list) for item in processed_output):
+                output_cells = [
+                    PromptlySheetCell(
+                        row=cell.row + i,
+                        col=PromptlySheetColumn.column_index_to_letter(
+                            PromptlySheetColumn.column_letter_to_index(cell.col) + j
+                        ),
+                        data={"output": str(item)},
                     )
-
-                return output_list
+                    for i, row in enumerate(processed_output)
+                    for j, item in enumerate(row)
+                ]
             else:
                 cell.data = {"output": str(output)}
-                return [cell]
-        except json.JSONDecodeError:
+                output_cells = [cell]
+        except Exception:
             cell.data = {"output": str(output)}
-            return [cell]
+            output_cells = [cell]
     else:
-        cell.data = {"output": str(output)}
-        async_to_sync(channel_layer.group_send)(
-            run_id,
-            {
-                "type": "cell.update",
-                "cell": {
-                    "id": cell.cell_id,
-                    "output": cell.data.get("output", "") if isinstance(cell.data, dict) else cell.data,
-                },
-            },
-        )
-        return [cell]
+        cell.data = {"output": output}
+        output_cells = [cell]
+
+    return output_cells
 
 
 def run_sheet(sheet, run_entry, user):
     try:
         existing_cells_dict = sheet.cells
-        existing_cols = sheet.columns
+        columns_dict = {col.col: col for col in sheet.columns}
+        formula_cells_dict = sheet.formula_cells
+        total_rows = sheet.data.get("total_rows", 0)
+        total_cols = max((PromptlySheetColumn.column_letter_to_index(col.col) for col in sheet.columns), default=0)
 
         async_to_sync(channel_layer.group_send)(
             str(run_entry.uuid),
@@ -210,114 +198,144 @@ def run_sheet(sheet, run_entry, user):
             },
         )
 
-        # Execute cells that are not dependent on other cells
-        for column in existing_cols:
-            if column.type not in ["app_run", "processor_run", "data_transformer"]:
-                continue
+        def process_formula_data(data, input_values=None):
+            if input_values is None:
+                input_values = {}
 
-            fill_rows_with_output = column.data.get("fill_rows_with_output", False)
-            if fill_rows_with_output:
-                cell_to_execute = PromptlySheetCell(
-                    row=1,
-                    col=column.col,
-                    kind=column.kind,
-                )
-                executed_cells = _execute_cell(
-                    cell_to_execute,
-                    column,
-                    {},
-                    sheet,
-                    str(run_entry.uuid),
-                    user,
-                )
-                for cell in executed_cells:
-                    existing_cells_dict[f"{cell.col}{cell.row}"] = cell
+            if isinstance(data, dict):
+                for value in data.values():
+                    process_formula_data(value, input_values)
+            elif isinstance(data, list):
+                for item in data:
+                    process_formula_data(item, input_values)
+            elif isinstance(data, str):
+                cell_refs = re.findall(r"([A-Z]+\d+(?:-[A-Z]+\d+)?)", data)
+                for ref in cell_refs:
+                    if "-" in ref:
+                        start, end = ref.split("-")
+                        start_row, start_col = PromptlySheetCell.cell_id_to_row_and_col(start)
+                        end_row, end_col = PromptlySheetCell.cell_id_to_row_and_col(end)
+                        range_values = [
+                            existing_cells_dict[f"{chr(col)}{row}"].output
+                            for row in range(start_row, end_row + 1)
+                            for col in range(ord(start_col), ord(end_col) + 1)
+                            if f"{chr(col)}{row}" in existing_cells_dict
+                        ]
+                        input_values[ref] = range_values
+                    elif ref in existing_cells_dict:
+                        input_values[ref] = existing_cells_dict[ref].output
 
-        # Execute cells that are dependent on other cells
-        for row_number in range(1, sheet.data.get("total_rows", 0) + 1):
-            for col in existing_cols:
-                if col.type not in ["app_run", "processor_run", "data_transformer"]:
-                    continue
+            return input_values
 
-                # Skip if this column is to fill rows with output
-                if col.data.get("fill_rows_with_output", False):
-                    continue
+        current_row = 1
+        while current_row <= total_rows:
+            current_col_index = 0
+            while current_col_index < total_cols:
+                current_col = number_to_letters(current_col_index)
+                current_cell_id = f"{current_col}{current_row}"
 
+                executed_cells = []
                 valid_cells_in_row = [
-                    existing_cells_dict.get(f"{col.col}{row_number}")
-                    for col in existing_cols
-                    if existing_cells_dict.get(f"{col.col}{row_number}")
+                    cell
+                    for cell in existing_cells_dict.values()
+                    if cell.row == current_row
+                    and PromptlySheetColumn.column_letter_to_index(cell.col) < current_col_index
                 ]
 
-                # Skip if none of the cells have any valid data["output"]
-                if not any(cell.is_output for cell in valid_cells_in_row):
-                    continue
+                if current_cell_id in formula_cells_dict:
+                    input_values = process_formula_data(formula_cells_dict[current_cell_id].formula.data)
 
-                cell_to_execute = PromptlySheetCell(
-                    row=row_number,
-                    col=col.col,
-                    data=col.data,
-                )
-                executed_cells = _execute_cell(
-                    cell_to_execute,
-                    col,
-                    {cell.col: cell.output for cell in valid_cells_in_row},
-                    sheet,
-                    str(run_entry.uuid),
-                    user,
-                )
+                    # For formula cells, we pass entire columns data as input values
+                    for col in columns_dict.values():
+                        if col.col != current_col:
+                            input_values[col.col] = [
+                                cell.output for cell in existing_cells_dict.values() if cell.col == col.col
+                            ]
+
+                    executed_cells = _execute_cell(
+                        formula_cells_dict[current_cell_id],
+                        None,
+                        input_values,
+                        sheet,
+                        str(run_entry.uuid),
+                        user,
+                    )
+                elif (
+                    current_col in columns_dict
+                    and columns_dict[current_col].type
+                    in [
+                        PromptlySheetColumnType.DATA_TRANSFORMER,
+                        PromptlySheetColumnType.APP_RUN,
+                        PromptlySheetColumnType.PROCESSOR_RUN,
+                    ]
+                    and valid_cells_in_row
+                ):
+                    input_values = process_formula_data(columns_dict[current_col].data)
+
+                    for cell in valid_cells_in_row:
+                        input_values[cell.col] = cell.output
+
+                    cell_to_execute = PromptlySheetCell(
+                        row=current_row,
+                        col=current_col,
+                        data=columns_dict[current_col].data,
+                    )
+                    executed_cells = _execute_cell(
+                        cell_to_execute,
+                        columns_dict[current_col],
+                        input_values,
+                        sheet,
+                        str(run_entry.uuid),
+                        user,
+                    )
+
                 for cell in executed_cells:
+                    async_to_sync(channel_layer.group_send)(
+                        str(run_entry.uuid),
+                        {
+                            "type": "cell.update",
+                            "cell": {
+                                "id": cell.cell_id,
+                                "output": cell.output,
+                            },
+                        },
+                    )
                     existing_cells_dict[f"{cell.col}{cell.row}"] = cell
 
-        # Execute formula cells
-        for cell_id, formula_cell in sheet.formula_cells.items():
-            input_values = {}
+                if executed_cells:
+                    sheet_grid_changed = False
+                    if total_rows < max(cell.row for cell in executed_cells):
+                        total_rows = max(total_rows, max(cell.row for cell in executed_cells))
+                        sheet_grid_changed = True
 
-            def process_formula_data(data):
-                if isinstance(data, dict):
-                    for key, value in data.items():
-                        process_formula_data(value)
-                elif isinstance(data, list):
-                    for item in data:
-                        process_formula_data(item)
-                elif isinstance(data, str):
-                    # Extract cell references and ranges from the string
-                    import re
+                    if total_cols < max(
+                        PromptlySheetColumn.column_letter_to_index(cell.col) for cell in executed_cells
+                    ):
+                        total_cols = max(
+                            total_cols,
+                            max(PromptlySheetColumn.column_letter_to_index(cell.col) for cell in executed_cells) + 1,
+                        )
+                        sheet_grid_changed = True
 
-                    cell_refs = re.findall(r"([A-Z]+\d+(?:-[A-Z]+\d+)?)", data)
-                    for ref in cell_refs:
-                        if "-" in ref:
-                            start, end = ref.split("-")
-                            start_row, start_col = PromptlySheetCell.cell_id_to_row_and_col(start)
-                            end_row, end_col = PromptlySheetCell.cell_id_to_row_and_col(end)
-                            range_values = []
-                            for row in range(start_row, end_row + 1):
-                                for col in range(ord(start_col), ord(end_col) + 1):
-                                    cell_id = f"{chr(col)}{row}"
-                                    if cell_id in existing_cells_dict:
-                                        range_values.append(existing_cells_dict[cell_id].output)
-                            input_values[ref] = range_values
-                        else:
-                            if ref in existing_cells_dict:
-                                input_values[ref] = existing_cells_dict[ref].output
+                    if sheet_grid_changed:
+                        async_to_sync(channel_layer.group_send)(
+                            str(run_entry.uuid),
+                            {
+                                "type": "sheet.update",
+                                "sheet": {"id": str(sheet.uuid), "total_rows": total_rows, "total_cols": total_cols},
+                            },
+                        )
 
-            # Start the recursive process with the formula data
-            process_formula_data(formula_cell.formula.data)
+                current_col_index += 1
+            current_row += 1
 
-            executed_cells = _execute_cell(
-                formula_cell,
-                None,
-                input_values,
-                sheet,
-                str(run_entry.uuid),
-                user,
-            )
+        sheet.data["total_rows"] = total_rows
+        sheet.data["total_cols"] = total_cols
+        sheet.save(cells=list(existing_cells_dict.values()), update_fields=["data", "updated_at"])
 
-            for cell in executed_cells:
-                existing_cells_dict[f"{cell.col}{cell.row}"] = cell
-
-        sheet.save(cells=list(existing_cells_dict.values()), update_fields=["updated_at"])
-        run_entry.save(cells=list(existing_cells_dict.values()))
+        run_entry.data["total_rows"] = total_rows
+        run_entry.data["total_cols"] = total_cols
+        run_entry.save(cells=list(existing_cells_dict.values()), update_fields=["data", "updated_at"])
 
     except Exception:
         logger.exception("Error executing sheet")
@@ -326,7 +344,7 @@ def run_sheet(sheet, run_entry, user):
     sheet.extra_data["running"] = False
     sheet.extra_data["job_id"] = None
     sheet.extra_data["run_id"] = None
-    sheet.save(update_fields=["is_locked", "extra_data"])
+    sheet.save(update_fields=["is_locked", "extra_data", "updated_at"])
 
     return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
 
