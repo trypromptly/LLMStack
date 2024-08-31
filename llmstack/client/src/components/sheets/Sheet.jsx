@@ -662,27 +662,29 @@ function Sheet(props) {
             {selectedGrid}
           </Typography>
           <Tooltip title="Formula">
-            <Button
-              onClick={() => setShowFormulaMenu(!showFormulaMenu)}
-              disabled={selectedGrid?.length !== 1}
-              color="primary"
-              variant="standard"
-              sx={{ minWidth: "30px", padding: "5px" }}
-              ref={formulaMenuAnchorEl}
-            >
-              <SvgIcon
-                sx={{
-                  width: "20px",
-                  height: "20px",
-                  color:
-                    selectedCellId && formulaCells[selectedCellId]
-                      ? "green"
-                      : "inherit",
-                }}
+            <span>
+              <Button
+                onClick={() => setShowFormulaMenu(!showFormulaMenu)}
+                disabled={selectedGrid?.length !== 1}
+                color="primary"
+                variant="standard"
+                sx={{ minWidth: "30px", padding: "5px" }}
+                ref={formulaMenuAnchorEl}
               >
-                <FormulaIcon />
-              </SvgIcon>
-            </Button>
+                <SvgIcon
+                  sx={{
+                    width: "20px",
+                    height: "20px",
+                    color:
+                      selectedCellId && formulaCells[selectedCellId]
+                        ? "green"
+                        : "inherit",
+                  }}
+                >
+                  <FormulaIcon />
+                </SvgIcon>
+              </Button>
+            </span>
           </Tooltip>
         </Stack>
         <Box

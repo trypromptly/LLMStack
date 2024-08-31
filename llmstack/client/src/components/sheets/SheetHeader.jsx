@@ -119,18 +119,20 @@ const SheetHeader = ({
         >
           <Stack direction="row" alignItems="center" spacing={2}>
             <Tooltip title="Back to Sheets List">
-              <IconButton
-                onClick={() => navigate("/sheets")}
-                sx={{ color: "action.disabled", padding: 0 }}
-              >
-                <ArrowBackIcon
-                  fontSize="small"
-                  sx={{
-                    color: "action.disabled",
-                    padding: 0,
-                  }}
-                />
-              </IconButton>
+              <span>
+                <IconButton
+                  onClick={() => navigate("/sheets")}
+                  sx={{ color: "action.disabled", padding: 0 }}
+                >
+                  <ArrowBackIcon
+                    fontSize="small"
+                    sx={{
+                      color: "action.disabled",
+                      padding: 0,
+                    }}
+                  />
+                </IconButton>
+              </span>
             </Tooltip>
             <Stack>
               {sheet?.name}
@@ -142,42 +144,11 @@ const SheetHeader = ({
           <Stack direction={"row"} gap={1} sx={{ marginRight: "-8px" }}>
             <div>
               <Tooltip title="Save changes">
-                <Button
-                  onClick={onSave}
-                  disabled={!hasChanges}
-                  variant="contained"
-                  sx={{
-                    bgcolor: "gray.main",
-                    "&:hover": { bgcolor: "white" },
-                    color: "#999",
-                    minWidth: "40px",
-                    padding: "5px",
-                    borderRadius: "4px !important",
-
-                    "&:disabled": {
-                      bgcolor: "#ccc",
-                      color: "#999",
-                      padding: "5px",
-                      borderRadius: "4px !important",
-                    },
-                  }}
-                >
-                  <SaveIcon />
-                </Button>
-              </Tooltip>
-            </div>
-            {!sheetRunning && (
-              <div>
-                <Tooltip title="Download CSV">
+                <span>
                   <Button
-                    onClick={() =>
-                      window.open(
-                        `/api/sheets/${sheet.uuid}/download`,
-                        "_blank",
-                      )
-                    }
+                    onClick={onSave}
+                    disabled={!hasChanges}
                     variant="contained"
-                    size="medium"
                     sx={{
                       bgcolor: "gray.main",
                       "&:hover": { bgcolor: "white" },
@@ -185,34 +156,71 @@ const SheetHeader = ({
                       minWidth: "40px",
                       padding: "5px",
                       borderRadius: "4px !important",
+
+                      "&:disabled": {
+                        bgcolor: "#ccc",
+                        color: "#999",
+                        padding: "5px",
+                        borderRadius: "4px !important",
+                      },
                     }}
                   >
-                    <DownloadIcon />
+                    <SaveIcon />
                   </Button>
+                </span>
+              </Tooltip>
+            </div>
+            {!sheetRunning && (
+              <div>
+                <Tooltip title="Download CSV">
+                  <span>
+                    <Button
+                      onClick={() =>
+                        window.open(
+                          `/api/sheets/${sheet.uuid}/download`,
+                          "_blank",
+                        )
+                      }
+                      variant="contained"
+                      size="medium"
+                      sx={{
+                        bgcolor: "gray.main",
+                        "&:hover": { bgcolor: "white" },
+                        color: "#999",
+                        minWidth: "40px",
+                        padding: "5px",
+                        borderRadius: "4px !important",
+                      }}
+                    >
+                      <DownloadIcon />
+                    </Button>
+                  </span>
                 </Tooltip>
               </div>
             )}
             <ClickAwayListener onClickAway={() => setOpen(false)}>
               <div>
                 <Tooltip title={"Settings"}>
-                  <Button
-                    variant="contained"
-                    size="medium"
-                    onClick={(event) => {
-                      setAnchorEl(event.currentTarget);
-                      setOpen((prev) => !prev);
-                    }}
-                    sx={{
-                      bgcolor: "gray.main",
-                      "&:hover": { bgcolor: "white" },
-                      color: "#999",
-                      minWidth: "40px",
-                      padding: "5px",
-                      borderRadius: "4px !important",
-                    }}
-                  >
-                    <SettingsIcon />
-                  </Button>
+                  <span>
+                    <Button
+                      variant="contained"
+                      size="medium"
+                      onClick={(event) => {
+                        setAnchorEl(event.currentTarget);
+                        setOpen((prev) => !prev);
+                      }}
+                      sx={{
+                        bgcolor: "gray.main",
+                        "&:hover": { bgcolor: "white" },
+                        color: "#999",
+                        minWidth: "40px",
+                        padding: "5px",
+                        borderRadius: "4px !important",
+                      }}
+                    >
+                      <SettingsIcon />
+                    </Button>
+                  </span>
                 </Tooltip>
                 <Popper open={open} anchorEl={anchorEl} placement="bottom-end">
                   <Paper>
