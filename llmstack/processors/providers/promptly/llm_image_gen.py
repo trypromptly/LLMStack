@@ -126,7 +126,7 @@ class LLMImageGeneratorProcessor(
             (
                 f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
                 MetricType.RESOLUTION,
-                size,
+                (size, "hd"),
             )
         )
         self._usage_data.append(

@@ -6,8 +6,7 @@ class MetricType(Enum):
     INPUT_TOKENS = 2
     OUTPUT_TOKENS = 3
     RESOLUTION = 4
-    QUALITY = 5
-    API_INVOCATION = 6
+    API_INVOCATION = 5
 
     def __str__(self):
         return str(self.value)

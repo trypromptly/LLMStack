@@ -160,10 +160,11 @@ class ImagesGenerations(
             ),
         )
         self._usage_data.append(
-            (f"{self.provider_slug()}/*/{self._config.model.value}/*", MetricType.RESOLUTION, self._config.size.value)
-        )
-        self._usage_data.append(
-            (f"{self.provider_slug()}/*/{self._config.model.value}/*", MetricType.QUALITY, self._config.quality.value)
+            (
+                f"{self.provider_slug()}/*/{self._config.model.value}/*",
+                MetricType.RESOLUTION,
+                (self._config.size.value, self._config.quality.value),
+            )
         )
 
         output = self._output_stream.finalize()
