@@ -289,19 +289,7 @@ def run_sheet(sheet, run_entry, user):
                         user,
                     )
 
-                for cell in executed_cells:
-                    async_to_sync(channel_layer.group_send)(
-                        str(run_entry.uuid),
-                        {
-                            "type": "cell.update",
-                            "cell": {
-                                "id": cell.cell_id,
-                                "output": cell.output,
-                            },
-                        },
-                    )
-                    existing_cells_dict[f"{cell.col}{cell.row}"] = cell
-
+                # Update total rows and cols if the executed cells are beyond the current grid
                 if executed_cells:
                     sheet_grid_changed = False
                     if total_rows < max(cell.row for cell in executed_cells):
@@ -325,6 +313,20 @@ def run_sheet(sheet, run_entry, user):
                                 "sheet": {"id": str(sheet.uuid), "total_rows": total_rows, "total_cols": total_cols},
                             },
                         )
+
+                # Update the executed cells
+                for cell in executed_cells:
+                    async_to_sync(channel_layer.group_send)(
+                        str(run_entry.uuid),
+                        {
+                            "type": "cell.update",
+                            "cell": {
+                                "id": cell.cell_id,
+                                "output": cell.output,
+                            },
+                        },
+                    )
+                    existing_cells_dict[f"{cell.col}{cell.row}"] = cell
 
                 current_col_index += 1
             current_row += 1
