@@ -16,35 +16,22 @@ import {
 } from "@mui/material";
 import Form from "@rjsf/mui";
 import { getTemplate, getUiOptions } from "@rjsf/utils";
-import { lazy, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-const TextFieldWithVars = lazy(() => import("./apps/TextFieldWithVars"));
-const AppVersionSelector = lazy(() => import("./apps/AppVersionSelector"));
-const CustomObjectFieldTemplate = lazy(
-  () => import("./ConfigurationFormObjectFieldTemplate"),
-);
-const ConnectionSelector = lazy(
-  () => import("./connections/ConnectionSelector"),
-);
-const DataSourceSelector = lazy(
-  () => import("./datasource/DataSourceSelector"),
-);
-const FileUploadWidget = lazy(() => import("./form/DropzoneFileWidget"));
-const GdriveFileSelector = lazy(() => import("./form/GdriveFileSelector"));
-const SecretTextField = lazy(() => import("./form/SecretTextField"));
-const WebpageURLExtractorWidget = lazy(
-  () => import("./form/WebpageURLExtractorWidget"),
-);
-const VoiceRecorderWidget = lazy(() => import("./form/VoiceRecorderWidget"));
-const MuiCustomSelect = lazy(() => import("./MuiCustomSelect"));
-const MultiInputField = lazy(() => import("./form/MultiInputField"));
-const StreamingVoiceInputWidget = lazy(
-  () => import("./form/StreamingVoiceInputWidget"),
-);
-
-const PromptlyAppSelector = lazy(
-  () => import("./form/PromptlyAppSelectorWidget"),
-);
+import TextFieldWithVars from "./apps/TextFieldWithVars";
+import AppVersionSelector from "./apps/AppVersionSelector";
+import CustomObjectFieldTemplate from "./ConfigurationFormObjectFieldTemplate";
+import ConnectionSelector from "./connections/ConnectionSelector";
+import DataSourceSelector from "./datasource/DataSourceSelector";
+import FileUploadWidget from "./form/DropzoneFileWidget";
+import GdriveFileSelector from "./form/GdriveFileSelector";
+import SecretTextField from "./form/SecretTextField";
+import WebpageURLExtractorWidget from "./form/WebpageURLExtractorWidget";
+import VoiceRecorderWidget from "./form/VoiceRecorderWidget";
+import MuiCustomSelect from "./MuiCustomSelect";
+import MultiInputField from "./form/MultiInputField";
+import StreamingVoiceInputWidget from "./form/StreamingVoiceInputWidget";
+import PromptlyAppSelector from "./form/PromptlyAppSelectorWidget";
 
 function CustomGdriveFileWidget(props) {
   return <GdriveFileSelector {...props} />;
