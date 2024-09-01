@@ -12,6 +12,10 @@ import {
   isMobileState,
   profileFlagsSelector,
   isLoggedInState,
+  apiProvidersState,
+  apiBackendsState,
+  organizationState,
+  apiBackendSelectedState,
 } from "./data/atoms";
 
 const menuItems = [
@@ -46,6 +50,10 @@ export default function App({ children }) {
   const location = useLocation();
   const isLoggedIn = useRecoilValue(isLoggedInState);
   const [_, setCookie] = useCookies(["irclickid"]); // eslint-disable-line
+  const apiProviders = useRecoilValue(apiProvidersState); // eslint-disable-line
+  const apiBackends = useRecoilValue(apiBackendsState); // eslint-disable-line
+  const organization = useRecoilValue(organizationState); // eslint-disable-line
+  const apiBackendSelected = useRecoilValue(apiBackendSelectedState); // eslint-disable-line
 
   let allMenuItems = menuItems;
 
