@@ -138,6 +138,10 @@ class PromptlySheetFormulaCellData(BaseModel):
 class PromptlySheetFormulaCell(PromptlySheetCell):
     formula: PromptlySheetFormulaCellData
 
+    @property
+    def spread_output(self):
+        return self.formula.data.get("spread_output", False)
+
 
 class PromptlySheetFiles(Assets):
     def select_storage():

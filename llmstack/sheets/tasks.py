@@ -140,7 +140,7 @@ def _execute_cell(
     if is_formula_cell:
         try:
             processed_output = ast.literal_eval(output)
-            if isinstance(processed_output, list):
+            if isinstance(processed_output, list) and cell.spread_output:
                 output_cells = [
                     PromptlySheetCell(
                         row=cell.row + i,
@@ -149,7 +149,7 @@ def _execute_cell(
                     )
                     for i, item in enumerate(processed_output)
                 ]
-            elif isinstance(processed_output, str):
+            elif isinstance(processed_output, str) and cell.spread_output:
                 output_cells = [
                     PromptlySheetCell(
                         row=cell.row,
@@ -157,7 +157,11 @@ def _execute_cell(
                         data={"output": str(processed_output)},
                     )
                 ]
-            elif isinstance(processed_output, list) and all(isinstance(item, list) for item in processed_output):
+            elif (
+                isinstance(processed_output, list)
+                and cell.spread_output
+                and all(isinstance(item, list) for item in processed_output)
+            ):
                 output_cells = [
                     PromptlySheetCell(
                         row=cell.row + i,

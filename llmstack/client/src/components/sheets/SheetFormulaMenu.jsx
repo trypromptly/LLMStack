@@ -10,6 +10,8 @@ import {
   Button,
   Typography,
   InputLabel,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
@@ -39,7 +41,6 @@ const SheetFormulaMenu = ({
   cellId,
   formulaCells,
   setFormulaCell,
-  columns,
 }) => {
   const [formulaType, setFormulaType] = useState(
     formulaCells[cellId]?.formula?.type || "",
@@ -53,6 +54,7 @@ const SheetFormulaMenu = ({
   const formulaDataRef = React.useRef(
     formulaCells[cellId]?.formula?.data || {},
   );
+  const [spreadOutput, setSpreadOutput] = useState(false);
 
   const setDataHandler = useCallback(
     (data) => {
@@ -71,6 +73,9 @@ const SheetFormulaMenu = ({
       formulaCells[cellId]?.formula?.data?.transformation_template || "",
     );
     setFormulaData(formulaCells[cellId]?.formula?.data || {});
+    setSpreadOutput(
+      formulaCells[cellId]?.formula?.data?.spread_output || false,
+    );
   }, [cellId, formulaCells, setFormulaData, setFormulaType]);
 
   const memoizedProcessorRunForm = useMemo(
@@ -93,6 +98,7 @@ const SheetFormulaMenu = ({
       data: {
         ...formulaDataRef.current,
         transformation_template: transformationTemplate,
+        spread_output: spreadOutput,
       },
     };
     setFormulaCell(cellId, newFormula);
@@ -184,6 +190,25 @@ const SheetFormulaMenu = ({
               )}
 
               {formulaType === "processor_run" && memoizedProcessorRunForm}
+
+              {formulaType && (
+                <>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={spreadOutput}
+                        onChange={(e) => setSpreadOutput(e.target.checked)}
+                      />
+                    }
+                    label="Spread output into cells"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    If the output is a list, it will fill the column. If the
+                    output is a list of lists, it will populate the cells in
+                    rows and columns starting from the top-left cell.
+                  </Typography>
+                </>
+              )}
 
               <Stack direction="row" spacing={2} justifyContent="flex-end">
                 <Button sx={{ textTransform: "none" }} onClick={onClose}>
