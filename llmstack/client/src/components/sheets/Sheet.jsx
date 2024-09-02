@@ -638,6 +638,11 @@ function Sheet(props) {
         onCellEdited([0, row], "");
       });
       setNumRows((prevNumRows) => prevNumRows - selectedRows.length);
+      setGridSelection({
+        columns: CompactSelection.empty(),
+        rows: CompactSelection.empty(),
+        current: undefined,
+      });
     }
     setSelectedRows([]);
   }, [selectedRows, onCellEdited, setNumRows]);
@@ -831,6 +836,7 @@ function Sheet(props) {
           onGridSelectionChange={onGridSelectionChange}
           onCellContextMenu={onCellContextMenu}
           drawCell={drawCell}
+          selection={gridSelection}
         />
       </Box>
       <div id="portal" />
