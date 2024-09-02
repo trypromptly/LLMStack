@@ -4,7 +4,6 @@ import {
   Paper,
   Grow,
   Stack,
-  TextField,
   Select,
   MenuItem,
   Button,
@@ -164,18 +163,21 @@ const SheetFormulaMenu = ({
                   </MenuItem>
                 ))}
               </Select>
-
-              {formulaType === "data_transformer" && (
-                <TextField
-                  label="Transformation Template"
-                  value={transformationTemplate}
-                  onChange={(e) => setTransformationTemplate(e.target.value)}
-                  multiline
-                  rows={4}
-                  placeholder="Enter LiquidJS template"
-                />
+              {(formulaType === "data_transformer" ||
+                formulaType === "app_run" ||
+                formulaType === "processor_run") && (
+                <Typography variant="caption" color="text.secondary">
+                  You can access the output from previous cell or a range of
+                  cells using the cell ids. For example, <code>{"{{A1}}"}</code>{" "}
+                  refers to the value in the cell with column A and row 1.{" "}
+                  <code>{"{{A1-B10}}"}</code> returns a list of values from
+                  cells A1 to B10. To access all the values in a column as a
+                  list, use <code>{"{{A}}"}</code>, where A is the column
+                  letter.
+                  <br />
+                  &nbsp;
+                </Typography>
               )}
-
               {formulaType === "app_run" && (
                 <AppRunForm
                   setData={(data) => {
@@ -188,9 +190,7 @@ const SheetFormulaMenu = ({
                   appInput={formulaDataRef.current?.input}
                 />
               )}
-
               {formulaType === "processor_run" && memoizedProcessorRunForm}
-
               {formulaType && (
                 <>
                   <FormControlLabel
@@ -205,11 +205,12 @@ const SheetFormulaMenu = ({
                   <Typography variant="caption" color="text.secondary">
                     If the output is a list, it will fill the column. If the
                     output is a list of lists, it will populate the cells in
-                    rows and columns starting from the top-left cell.
+                    rows and columns starting from the top-left cell. Use{" "}
+                    <code>to_json</code> in the template to output a JSON object
+                    that can be parsed into a list of lists.
                   </Typography>
                 </>
               )}
-
               <Stack direction="row" spacing={2} justifyContent="flex-end">
                 <Button sx={{ textTransform: "none" }} onClick={onClose}>
                   Cancel

@@ -281,6 +281,16 @@ export function SheetColumnMenu({
                   </MenuItem>
                 ))}
               </Select>
+              {(columnType === "data_transformer" ||
+                columnType === "app_run" ||
+                columnType === "processor_run") && (
+                <Typography variant="caption" color="text.secondary">
+                  You can access the value of a cell in the current row using{" "}
+                  <code>{"{{A}}"}</code>, where A is the column letter.
+                  <br />
+                  &nbsp;
+                </Typography>
+              )}
               {columnType === "app_run" && (
                 <AppRunForm
                   setData={(data) => {
