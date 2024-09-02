@@ -343,7 +343,7 @@ def run_sheet(sheet, run_entry, user):
 
         run_entry.data["total_rows"] = total_rows
         run_entry.data["total_cols"] = total_cols
-        run_entry.save(cells=list(existing_cells_dict.values()), update_fields=["data", "updated_at"])
+        run_entry.save(cells=list(existing_cells_dict.values()), update_fields=["data"])
 
     except Exception:
         logger.exception("Error executing sheet")
