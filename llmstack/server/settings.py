@@ -349,6 +349,7 @@ SOCIALACCOUNT_PROVIDERS = {}
 ACCOUNT_ADAPTER = "llmstack.server.adapters.CustomAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "llmstack.server.adapters.CustomSocialAccountAdapter"
 
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
 DEFAULT_AWS_SECRET_ACCESS_KEY = os.getenv("DEFAULT_AWS_SECRET_ACCESS_KEY", "")
 DEFAULT_AWS_DEFAULT_REGION = os.getenv("DEFAULT_AWS_DEFAULT_REGION", "")
 DEFAULT_AWS_ACCESS_KEY_ID = os.getenv("DEFAULT_AWS_ACCESS_KEY_ID", "")
