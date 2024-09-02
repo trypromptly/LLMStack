@@ -29,7 +29,9 @@ def escape_unicode(value):
 
 env.add_filter("urlencode", quote_plus)
 env.add_filter("tojson", json.dumps)
+env.add_filter("to_json", json.dumps)
 env.add_filter("todict", todict)
+env.add_filter("to_dict", todict)
 env.add_filter("escape_unicode", escape_unicode)
 
 
