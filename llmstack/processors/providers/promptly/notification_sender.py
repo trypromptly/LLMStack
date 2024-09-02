@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class EmailProvider(BaseModel):
-    type: Literal["email"] = "email"
+    type: Literal["Email"] = "Email"
     recipient_email: List[str] = Field(default=[], description="Recipient email")
 
 
