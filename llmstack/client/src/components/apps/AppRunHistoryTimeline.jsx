@@ -80,7 +80,12 @@ const allcolumns = [
   { id: "response_status", label: "Status" },
 ];
 
-const ExpandedRowItem = ({ label, value, content_type = null }) => {
+const ExpandedRowItem = ({
+  label,
+  value,
+  content_type = null,
+  onClick = null,
+}) => {
   const renderedBody = useMemo(() => {
     if (content_type === "text/markdown") {
       return <LayoutRenderer>{value}</LayoutRenderer>;
@@ -141,13 +146,16 @@ const ExpandedRowItem = ({ label, value, content_type = null }) => {
             whiteSpace: "pre-wrap",
             wordBreak: "break-all",
             color: "#1b5c85",
+            cursor: onClick ? "pointer" : "default",
+            textDecoration: onClick ? "underline" : "none",
           }}
+          onClick={onClick}
         >
           {value}
         </Typography>
       );
     }
-  }, [value, content_type]);
+  }, [value, content_type, onClick]);
 
   return (
     <Box>
@@ -585,6 +593,12 @@ export function AppRunHistoryTimeline(props) {
                                 <ExpandedRowItem
                                   label="Request"
                                   value={row.request_uuid}
+                                  onClick={() => {
+                                    window.open(
+                                      `/api/history/${row.request_uuid}`,
+                                      "_blank",
+                                    );
+                                  }}
                                 />
                                 {row.app_uuid && (
                                   <ExpandedRowItem
