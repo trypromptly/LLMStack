@@ -234,6 +234,45 @@ function Sheet(props) {
     [formulaCells, gridColumns],
   );
 
+  const drawHeader = useCallback(
+    (args, drawContent) => {
+      drawContent();
+
+      const { column, ctx, menuBounds } = args;
+
+      const gridColumn = gridColumns.find((c) => c.col === column.icon);
+
+      if (!gridColumn) {
+        return;
+      }
+      const columnType = sheetColumnTypes[gridColumn.type];
+
+      if (!columnType) {
+        return;
+      }
+
+      const headerIconImage = columnType.getIconImage?.(gridColumn?.data);
+
+      if (headerIconImage) {
+        // Draw this image on the canvas
+        const img = new Image();
+        img.src = headerIconImage;
+
+        img.onload = () => {
+          const pixelRatio = window.devicePixelRatio || 1;
+          ctx.drawImage(
+            img,
+            (menuBounds.x - 10) * pixelRatio,
+            (menuBounds.y + 8) * pixelRatio,
+            (menuBounds.width - 15) * pixelRatio,
+            (menuBounds.height - 15) * pixelRatio,
+          );
+        };
+      }
+    },
+    [gridColumns],
+  );
+
   useEffect(() => {
     if (sheetId) {
       axios()
@@ -836,6 +875,7 @@ function Sheet(props) {
           onGridSelectionChange={onGridSelectionChange}
           onCellContextMenu={onCellContextMenu}
           drawCell={drawCell}
+          drawHeader={drawHeader}
           selection={gridSelection}
         />
       </Box>

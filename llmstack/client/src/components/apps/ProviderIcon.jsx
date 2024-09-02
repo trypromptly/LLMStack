@@ -36,7 +36,7 @@ import weaviateIcon_dark from "../../assets/images/weaviate-icon-dark.png";
 import singlestoreIcon_light from "../../assets/images/singlestore-icon-light.png";
 import singlestoreIcon_dark from "../../assets/images/singlestore-icon-dark.png";
 
-const getIconImage = (icon, isActive) => {
+export const getProviderIconImage = (icon, isActive) => {
   switch (icon?.replaceAll(" ", "").toLowerCase()) {
     case "promptly":
       return promptlyIcon_light;
@@ -82,7 +82,7 @@ const getIconImage = (icon, isActive) => {
 export function ProviderIcon({ providerSlug, isActive = false, style = null }) {
   return (
     <img
-      src={getIconImage(providerSlug, isActive)}
+      src={getProviderIconImage(providerSlug, isActive)}
       alt={providerSlug}
       style={style || { width: 40, height: 40, marginRight: 10 }}
     />

@@ -16,6 +16,7 @@ import { DeleteOutlined, AddOutlined } from "@mui/icons-material";
 import { GridCellKind, GridColumnIcon } from "@glideapps/glide-data-grid";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
+import { getProviderIconImage } from "../apps/ProviderIcon";
 import "@glideapps/glide-data-grid/dist/index.css";
 
 const numberToLetters = (num) => {
@@ -31,37 +32,38 @@ export const sheetColumnTypes = {
   text: {
     value: "text",
     label: "Text",
+    description: "Plain text content",
     icon: GridColumnIcon.HeaderString,
     kind: GridCellKind.Text,
     getCellDataFromValue: (value) => value?.data || value || "",
     getCellData: (cell) => cell?.data?.output || cell?.data || "",
     getCellDisplayData: (cell) =>
       typeof cell?.data === "object" ? cell?.data?.output : cell?.data || "",
-    description: "Plain text content",
   },
   number: {
     value: "number",
     label: "Number",
+    description: "Numeric values",
     icon: GridColumnIcon.HeaderNumber,
     kind: GridCellKind.Number,
     getCellDataFromValue: (value) => value?.data || value || "",
     getCellData: (cell) => cell?.data?.output || cell?.data || 0,
     getCellDisplayData: (cell) => cell?.data?.toLocaleString() || "",
-    description: "Numeric values",
   },
   uri: {
     value: "uri",
     label: "URI",
+    description: "Uniform Resource Identifier",
     icon: GridColumnIcon.HeaderUri,
     kind: GridCellKind.Uri,
     getCellDataFromValue: (value) => value?.data || "",
     getCellData: (cell) => cell?.data?.output || cell?.data || "",
     getCellDisplayData: (cell) => cell?.data?.output || cell?.data || "",
-    description: "Uniform Resource Identifier",
   },
   app_run: {
     value: "app_run",
     label: "App Run",
+    description: "Results from running an app",
     icon: "app_run",
     kind: GridCellKind.Text,
     getCellDataFromValue: (value) => {
@@ -72,12 +74,18 @@ export const sheetColumnTypes = {
     getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
     getCellDisplayData: (cell) =>
       cell?.data?.output || cell?.display_data || "",
-    description: "Results from running an app",
+    getIconImage: (columnData) => {
+      return getProviderIconImage("promptly", false);
+    },
   },
   processor_run: {
     value: "processor_run",
     label: "Processor Run",
+    description: "Results from running a processor",
     icon: "processor_run",
+    getIconImage: (columnData) => {
+      return getProviderIconImage(columnData?.provider_slug, false);
+    },
     kind: GridCellKind.Text,
     getCellDataFromValue: (value) => {
       return {
@@ -87,11 +95,11 @@ export const sheetColumnTypes = {
     getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
     getCellDisplayData: (cell) =>
       cell?.data?.output || cell?.display_data || "",
-    description: "Results from running a processor",
   },
   data_transformer: {
     value: "data_transformer",
     label: "Data Transformer",
+    description: "Create new columns from existing columns",
     icon: "data_transformer",
     kind: GridCellKind.Text,
     getCellDataFromValue: (value) => {
@@ -102,7 +110,9 @@ export const sheetColumnTypes = {
     getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
     getCellDisplayData: (cell) =>
       cell?.data?.output || cell?.display_data || "",
-    description: "Create new columns from existing columns",
+    getIconImage: (columnData) => {
+      return getProviderIconImage("promptly", false);
+    },
   },
 };
 
