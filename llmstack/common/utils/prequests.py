@@ -25,9 +25,10 @@ def request(method, url, **kwargs):
             elif connection.get("connection_type_slug", None) == "bearer_authentication":
                 assert "Authorization" not in kwargs["headers"]
                 token = connection.get("configuration", {}).get("token", None)
+                token_prefix = connection.get("configuration", {}).get("token_prefix", "Bearer")
                 kwargs["headers"] = {
                     **kwargs.get("headers", {}),
-                    **{"Authorization": "Bearer " + token},
+                    **{"Authorization": token_prefix + " " + token},
                 }
             elif connection.get("connection_type_slug", None) == "api_key_authentication":
                 header_key = connection.get(
