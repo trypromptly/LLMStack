@@ -182,10 +182,13 @@ class SimpleHTTPProcessor(
             response_text = objref
 
         response_json = None
-        if response.json():
-            response_json = response.json()
-            if isinstance(response_json, list):
-                response_json = {"data": response.json()}
+        try:
+            if response.json():
+                response_json = response.json()
+                if isinstance(response_json, list):
+                    response_json = {"data": response.json()}
+        except Exception:
+            pass
 
         async_to_sync(self._output_stream.write)(
             SimpleHTTPProcessorOutput(
