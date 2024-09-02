@@ -363,6 +363,7 @@ function Sheet(props) {
             newCells[cellId] = {
               kind: GridCellKind.Text,
               display_data: cellValue,
+              data: cellValue,
               row: currentRow + 1,
               col: gridColumns[currentCol].col,
             };
