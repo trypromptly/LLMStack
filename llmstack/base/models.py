@@ -19,6 +19,7 @@ from llmstack.common.utils.provider_config import validate_provider_configs
 from llmstack.connections.models import Connection
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
+from llmstack.processors.providers.promptly import SendgridEmailSenderConfig
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,11 @@ def get_vendor_env_platform_defaults():
 
     provider_configs = {}
     promptly_provider_config = PromptlyProviderConfig()
+    if settings.SENDGRID_API_KEY:
+        sendgrid_email_sender_config = SendgridEmailSenderConfig(api_key=settings.SENDGRID_API_KEY)
+        if settings.EMAIL_SENDER_FROM_ADDRESS:
+            sendgrid_email_sender_config.from_email = settings.EMAIL_SENDER_FROM_ADDRESS
+        promptly_provider_config.email_sender = sendgrid_email_sender_config
     if settings.DEFAULT_AZURE_OPENAI_API_KEY:
         provider_configs["azure/*/*/*"] = AzureProviderConfig(
             api_key=settings.DEFAULT_AZURE_OPENAI_API_KEY,

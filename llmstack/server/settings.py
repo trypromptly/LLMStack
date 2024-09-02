@@ -436,6 +436,7 @@ SITE_URL = os.getenv("SITE_URL", "https://trypromptly.com")
 
 INDEX_VIEW_MODULE = "llmstack.base.views"
 EMAIL_SENDER_CLASS = "llmstack.emails.sender.DefaultEmailSender"
+EMAIL_SENDER_FROM_ADDRESS = os.getenv("EMAIL_SENDER_FROM_ADDRESS", "")
 EMAIL_TEMPLATE_FACTORY_CLASS = "llmstack.emails.templates.factory.DefaultEmailTemplateFactory"
 FLAG_SOURCES = ["llmstack.base.flags.FlagSource"]
 
