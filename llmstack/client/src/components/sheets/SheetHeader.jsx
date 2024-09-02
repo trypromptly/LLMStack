@@ -142,12 +142,11 @@ const SheetHeader = ({
             </Stack>
           </Stack>
           <Stack direction={"row"} gap={1} sx={{ marginRight: "-8px" }}>
-            <div>
+            {hasChanges && (
               <Tooltip title="Save changes">
                 <span>
                   <Button
                     onClick={onSave}
-                    disabled={!hasChanges}
                     variant="contained"
                     sx={{
                       bgcolor: "gray.main",
@@ -169,7 +168,7 @@ const SheetHeader = ({
                   </Button>
                 </span>
               </Tooltip>
-            </div>
+            )}
             {!sheetRunning && (
               <div>
                 <Tooltip title="Download CSV">
