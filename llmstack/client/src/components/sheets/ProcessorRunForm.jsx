@@ -35,7 +35,9 @@ export default function ProcessorRunForm({
       processor_slug: apiBackendSelected?.slug,
       provider_slug: apiBackendSelected?.api_provider?.slug,
       output_template: {
-        markdown: outputTemplateRef.current,
+        markdown:
+          outputTemplateRef.current ||
+          apiBackendSelected?.output_template?.markdown,
       },
       input: inputDataRef.current,
       config: configDataRef.current,
@@ -97,7 +99,10 @@ export default function ProcessorRunForm({
           <TextFieldWithVars
             label="Output Template"
             multiline
-            value={outputTemplateRef.current}
+            value={
+              outputTemplateRef.current ||
+              apiBackendSelected?.output_template?.markdown
+            }
             onChange={(text) => {
               setData({
                 output_template: { markdown: text },
