@@ -33,7 +33,7 @@ export const sheetColumnTypes = {
     label: "Text",
     icon: GridColumnIcon.HeaderString,
     kind: GridCellKind.Text,
-    getCellDataFromValue: (value) => value?.data || "",
+    getCellDataFromValue: (value) => value?.data || value || "",
     getCellData: (cell) => cell?.data || "",
     getCellDisplayData: (cell) =>
       typeof cell?.data === "object" ? cell?.data?.output : cell?.data || "",
