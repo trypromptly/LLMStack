@@ -281,7 +281,6 @@ export function SheetColumnMenu({
                   }}
                   appSlug={columnRunData.current?.app_slug}
                   appInput={columnRunData.current?.input}
-                  columns={columns}
                 />
               )}
               {columnType === "processor_run" && memoizedProcessorRunForm}

@@ -7,16 +7,7 @@ import { storeAppsBriefState, storeAppState } from "../../data/atoms";
 import ThemedJsonForm from "../ThemedJsonForm";
 import TextFieldWithVars from "../apps/TextFieldWithVars";
 
-const numberToLetters = (num) => {
-  let letters = "";
-  while (num >= 0) {
-    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[num % 26] + letters;
-    num = Math.floor(num / 26) - 1;
-  }
-  return letters;
-};
-
-const AppRunForm = ({ columns = [], appSlug, appInput, setData }) => {
+const AppRunForm = ({ appSlug, appInput, setData }) => {
   const [selectedAppSlug, setSelectedAppSlug] = useState(
     appSlug || "super-agent",
   );
@@ -31,11 +22,6 @@ const AppRunForm = ({ columns = [], appSlug, appInput, setData }) => {
       <TextFieldWithVars
         {...props}
         introText={"Available columns"}
-        schemas={columns.map((c, index) => ({
-          id: `${numberToLetters(index)}`,
-          pillPrefix: `${numberToLetters(index)}:${c.title}`,
-          label: `${numberToLetters(index)}: ${c.title}`,
-        }))}
         value={props.formData}
       />
     );
