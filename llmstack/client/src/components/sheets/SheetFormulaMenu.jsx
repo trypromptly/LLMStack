@@ -129,7 +129,13 @@ const SheetFormulaMenu = ({
               placement === "bottom-start" ? "left top" : "left bottom",
           }}
         >
-          <Paper>
+          <Paper
+            sx={{
+              border: "solid 2px #e0e0e0",
+              borderTop: "none",
+              marginLeft: "-2px",
+            }}
+          >
             <Stack gap={2} sx={{ padding: 2 }}>
               <InputLabel>Formula: {cellId}</InputLabel>
               <Typography variant="caption" color="text.secondary">

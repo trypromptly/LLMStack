@@ -688,13 +688,20 @@ function Sheet(props) {
             {selectedGrid}
           </Typography>
           <Tooltip title="Formula">
-            <span>
+            <span
+              style={{
+                border: showFormulaMenu ? "solid 1px #e0e0e0" : "none",
+              }}
+            >
               <Button
                 onClick={() => setShowFormulaMenu(!showFormulaMenu)}
                 disabled={selectedGrid?.length !== 1}
                 color="primary"
                 variant="standard"
-                sx={{ minWidth: "30px", padding: "5px" }}
+                sx={{
+                  minWidth: "30px",
+                  padding: "5px",
+                }}
                 ref={formulaMenuAnchorEl}
               >
                 <SvgIcon
