@@ -234,17 +234,19 @@ def run_sheet(sheet, run_entry, user):
         current_row = 1
         while current_row <= total_rows:
             current_col_index = 0
+            valid_cells_in_row = []
             while current_col_index < total_cols:
                 current_col = number_to_letters(current_col_index)
                 current_cell_id = f"{current_col}{current_row}"
+                previous_cell_id = f"{number_to_letters(current_col_index - 1)}{current_row}"
 
                 executed_cells = []
-                valid_cells_in_row = [
-                    cell
-                    for cell in existing_cells_dict.values()
-                    if cell.row == current_row
-                    and PromptlySheetColumn.column_letter_to_index(cell.col) < current_col_index
-                ]
+                if (
+                    previous_cell_id in existing_cells_dict
+                    and existing_cells_dict[previous_cell_id].data
+                    and existing_cells_dict[previous_cell_id].output
+                ):
+                    valid_cells_in_row.append(existing_cells_dict.get(previous_cell_id))
 
                 if current_cell_id in formula_cells_dict:
                     input_values = process_formula_data(formula_cells_dict[current_cell_id].formula.data)
