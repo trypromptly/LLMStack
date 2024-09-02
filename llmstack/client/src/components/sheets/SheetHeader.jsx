@@ -39,6 +39,8 @@ const SheetHeader = ({
   onSave,
   sheetRunning,
   setSheetRunning,
+  selectedRows,
+  deleteSelectedRows,
 }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -142,6 +144,35 @@ const SheetHeader = ({
             </Stack>
           </Stack>
           <Stack direction={"row"} gap={1} sx={{ marginRight: "-8px" }}>
+            {selectedRows.length > 0 && (
+              <Tooltip
+                title={`Delete ${selectedRows.length} selected row${
+                  selectedRows.length > 1 ? "s" : ""
+                }`}
+              >
+                <span>
+                  <Button
+                    onClick={deleteSelectedRows}
+                    variant="contained"
+                    sx={{
+                      bgcolor: "gray.main",
+                      "&:hover": {
+                        bgcolor: "gray.dark",
+                        "& > svg": { color: "white" },
+                      },
+                      minWidth: "40px",
+                      padding: "5px",
+                      borderRadius: "4px !important",
+                    }}
+                  >
+                    <DeleteIcon
+                      color="error"
+                      sx={{ "&:hover": { color: "white" } }}
+                    />
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
             {hasChanges && (
               <Tooltip title="Save changes">
                 <span>

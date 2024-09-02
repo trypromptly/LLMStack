@@ -90,6 +90,7 @@ function Sheet(props) {
   const [cellMenuAnchorEl, setCellMenuAnchorEl] = useState(null);
   const [cellMenuOpen, setCellMenuOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
 
   const headerIcons = useMemo(() => {
     if (!columns || typeof columns !== "object") {
@@ -584,6 +585,19 @@ function Sheet(props) {
         setSelectedCellValue("");
         setSelectedCellId(null);
       }
+
+      // Update selectedRows state
+      if (selection.rows) {
+        const newSelectedRows = [];
+        selection.rows.items.forEach(([start, end]) => {
+          for (let i = start; i < end; i++) {
+            newSelectedRows.push(i);
+          }
+        });
+        setSelectedRows(newSelectedRows);
+      } else {
+        setSelectedRows([]);
+      }
     },
     [gridColumns, cells],
   );
@@ -620,6 +634,16 @@ function Sheet(props) {
     setCellMenuOpen(false);
   }, [selectedCell, onCellEdited]);
 
+  const deleteSelectedRows = useCallback(() => {
+    if (selectedRows.length > 0) {
+      selectedRows.forEach((row) => {
+        onCellEdited([0, row], "");
+      });
+      setNumRows((prevNumRows) => prevNumRows - selectedRows.length);
+    }
+    setSelectedRows([]);
+  }, [selectedRows, onCellEdited, setNumRows]);
+
   return sheet ? (
     <Stack>
       <MemoizedSheetHeader
@@ -629,6 +653,8 @@ function Sheet(props) {
         onSave={saveSheet}
         sheetRunning={sheetRunning}
         setSheetRunning={setSheetRunning}
+        selectedRows={selectedRows}
+        deleteSelectedRows={deleteSelectedRows}
         runId={runId}
       />
       <Box
