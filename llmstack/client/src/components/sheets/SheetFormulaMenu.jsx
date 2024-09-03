@@ -9,6 +9,7 @@ import {
   Button,
   Typography,
   InputLabel,
+  TextField,
   Checkbox,
   FormControlLabel,
 } from "@mui/material";
@@ -177,6 +178,24 @@ const SheetFormulaMenu = ({
                   <br />
                   &nbsp;
                 </Typography>
+              )}
+              {formulaType === "data_transformer" && (
+                <>
+                  <TextField
+                    label="Transformation Template"
+                    value={transformationTemplate}
+                    onChange={(e) => setTransformationTemplate(e.target.value)}
+                    multiline
+                    rows={4}
+                    placeholder="Enter LiquidJS template"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    Use LiquidJS syntax to transform data from other cells.
+                    Example:
+                    <code>{`{{ A1 | upcase }}`}</code>. The 'A1' variable
+                    contains the A1 cell's value.
+                  </Typography>
+                </>
               )}
               {formulaType === "app_run" && (
                 <AppRunForm
