@@ -24,7 +24,7 @@ import {
   Typography,
 } from "@mui/material";
 import moment from "moment";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AceEditor from "react-ace";
 import { useRecoilValue } from "recoil";
 import UAParser from "ua-parser-js";
@@ -451,6 +451,54 @@ export function AppRunHistoryTimeline(props) {
     }
   };
 
+  const getUsageMetricsFromObject = useCallback((usage_metrics) => {
+    let metrics = {};
+
+    Object.entries(usage_metrics).forEach(([processor, usages]) => {
+      usages.forEach(([path, type, [source, value]]) => {
+        if (!metrics[path]) {
+          metrics[path] = {
+            apiCalls: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            source,
+          };
+        }
+
+        switch (type) {
+          case 1:
+            metrics[path].apiCalls += value;
+            break;
+          case 2:
+            metrics[path].inputTokens += value;
+            break;
+          case 3:
+            metrics[path].outputTokens += value;
+            break;
+          default:
+            break;
+        }
+      });
+    });
+
+    return Object.entries(metrics)
+      .map(([path, { apiCalls, inputTokens, outputTokens, source }]) => {
+        let result = [];
+        if (apiCalls > 0)
+          result.push(`${apiCalls} call${apiCalls > 1 ? "s" : ""}`);
+        if (inputTokens > 0)
+          result.push(
+            `${inputTokens} input token${inputTokens > 1 ? "s" : ""}`,
+          );
+        if (outputTokens > 0)
+          result.push(
+            `${outputTokens} output token${outputTokens > 1 ? "s" : ""}`,
+          );
+        return `${path}: ${result.join(", ")} (${source})`;
+      })
+      .join("\n");
+  }, []);
+
   useEffect(() => {
     setLoading(true);
     axios()
@@ -606,6 +654,15 @@ export function AppRunHistoryTimeline(props) {
                                     value={
                                       expandedRows[row.request_uuid].session_key
                                     }
+                                  />
+                                )}
+                                {row.app_uuid && (
+                                  <ExpandedRowItem
+                                    label="Usage Metrics"
+                                    value={getUsageMetricsFromObject(
+                                      expandedRows[row.request_uuid]
+                                        .usage_metrics,
+                                    )}
                                   />
                                 )}
                                 <ExpandedRowItem
