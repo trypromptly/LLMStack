@@ -80,11 +80,23 @@ class BookKeepingActor(Actor):
             ):
                 logger.info("Not persisting history since disable_history is set to True")
                 return super().on_stop()
+
+            try:
+                usage_metrics = dict(
+                    map(
+                        lambda x: (x, self._bookkeeping_data_map.get(x).get("usage_data", {}).get("usage_metrics", [])),
+                        self._bookkeeping_data_map.keys(),
+                    )
+                )
+            except Exception:
+                usage_metrics = {}
+
             EventsViewSet().create(
                 "app.run.finished",
                 {
                     "processors": list(self._processor_configs.keys()),
                     "bookkeeping_data_map": self._bookkeeping_data_map,
+                    "usage_metrics": usage_metrics,
                 },
             )
         except Exception as e:

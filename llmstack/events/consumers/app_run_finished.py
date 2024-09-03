@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 class AppRunFinishedEventData(BaseModel):
     processors: list = []
     bookkeeping_data_map: dict = {}
+    usage_metrics: dict = {}
 
     @property
     def input(self):
