@@ -326,6 +326,11 @@ class RunEntry(models.Model):
         blank=True,
         help_text="Platform data for the run",
     )
+    usage_metrics = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Usage metrics for the run",
+    )
 
     class Meta:
         indexes = [
