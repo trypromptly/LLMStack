@@ -9,10 +9,10 @@ import {
   Button,
   Typography,
   InputLabel,
-  TextField,
   Checkbox,
   FormControlLabel,
 } from "@mui/material";
+import DataTransformerGeneratorWidget from "./DataTransformerGeneratorWidget";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
 
@@ -181,20 +181,17 @@ const SheetFormulaMenu = ({
               )}
               {formulaType === "data_transformer" && (
                 <>
-                  <TextField
+                  <DataTransformerGeneratorWidget
                     label="Transformation Template"
                     value={transformationTemplate}
-                    onChange={(e) => setTransformationTemplate(e.target.value)}
+                    onChange={(value) => setTransformationTemplate(value)}
                     multiline
                     rows={4}
                     placeholder="Enter LiquidJS template"
+                    helpText={
+                      "Use LiquidJS syntax to transform data from other cells. Example: {{ A1 | upcase }}. The 'A1' variable contains the A1 cell's value."
+                    }
                   />
-                  <Typography variant="caption" color="text.secondary">
-                    Use LiquidJS syntax to transform data from other cells.
-                    Example:
-                    <code>{`{{ A1 | upcase }}`}</code>. The 'A1' variable
-                    contains the A1 cell's value.
-                  </Typography>
                 </>
               )}
               {formulaType === "app_run" && (

@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { DeleteOutlined, AddOutlined } from "@mui/icons-material";
 import { GridCellKind, GridColumnIcon } from "@glideapps/glide-data-grid";
+import DataTransformerGeneratorWidget from "./DataTransformerGeneratorWidget";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
 import { getProviderIconImage } from "../apps/ProviderIcon";
@@ -305,22 +306,17 @@ export function SheetColumnMenu({
               )}
               {columnType === "processor_run" && memoizedProcessorRunForm}
               {columnType === "data_transformer" && (
-                <>
-                  <TextField
-                    label="Transformation Template"
-                    value={transformationTemplate}
-                    onChange={(e) => setTransformationTemplate(e.target.value)}
-                    multiline
-                    rows={4}
-                    placeholder="Enter LiquidJS template"
-                  />
-                  <Typography variant="caption" color="text.secondary">
-                    Use LiquidJS syntax to transform data from other columns in
-                    this row. Example:
-                    <code>{`{{ A | upcase }}`}</code>. The 'A' variable contains
-                    the value of the A column in this row.
-                  </Typography>
-                </>
+                <DataTransformerGeneratorWidget
+                  label="Transformation Template"
+                  value={transformationTemplate}
+                  onChange={(value) => setTransformationTemplate(value)}
+                  multiline
+                  rows={4}
+                  placeholder="Enter LiquidJS template"
+                  helpText={
+                    "Use LiquidJS syntax to transform data from other columns in this row. Example: {{ A | upcase }}. The 'A' variable contains the value of the A column in this row."
+                  }
+                />
               )}
               <Stack
                 direction="row"

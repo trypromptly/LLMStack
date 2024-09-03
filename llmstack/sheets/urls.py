@@ -3,6 +3,10 @@ from django.urls import path
 from llmstack.sheets.apis import PromptlySheetTemplateViewSet, PromptlySheetViewSet
 
 urlpatterns = [
+    path(
+        "api/sheets/data_transformation/generate",
+        PromptlySheetViewSet.as_view({"post": "generate_data_transformation_template"}),
+    ),
     path("api/sheets/templates", PromptlySheetTemplateViewSet.as_view({"get": "list_templates"})),
     path("api/sheets/templates/<str:slug>", PromptlySheetTemplateViewSet.as_view({"get": "list_templates"})),
     path("api/sheets", PromptlySheetViewSet.as_view({"get": "list", "post": "create"})),

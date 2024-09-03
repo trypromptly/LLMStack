@@ -11,6 +11,7 @@ from rest_framework.response import Response as DRFResponse
 from rq import Callback
 
 from llmstack.base.models import Profile
+from llmstack.common.utils.sslr._client import LLM
 from llmstack.jobs.adhoc import ProcessingJob
 from llmstack.sheets.models import (
     PromptlySheet,
@@ -258,6 +259,119 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         run_entries = PromptlySheetRunEntry.objects.filter(sheet_uuid=sheet.uuid).order_by("-created_at")
 
         return DRFResponse([{"uuid": entry.uuid, "created_at": entry.created_at} for entry in run_entries])
+
+    @action(detail=True, methods=["post"])
+    def generate_data_transformation_template(self, request):
+        # Generate a liquidjs template for data transformation
+        prompt = request.data.get("prompt")
+        user = request.user
+        profile = Profile.objects.get(user=user)
+
+        if not prompt or not profile:
+            return DRFResponse(status=status.HTTP_400_BAD_REQUEST)
+
+        system_message = """You are an AI assistant that generates a liquidjs template for data transformation. You do not generate any text other than the template.
+        """
+        message = f"""- You have access to data with variables available as excel cells and columns. For example, A cell in row 1 column B can be referred as `B1`.
+- When a column is directly referred as `B`, all the values of cells from that column will be available as a list in `B`.
+- Similarly a range of cells from column B row 1 to column B row 10 can be referred as `B1-B10`. And a range of cells from column B row 1 to column C row 10 can be referred as `B1-C10`.
+- Do not include any preamble or introduction. Do not include ```liquid or ```liquidjs
+- Do not wrap the template in ```.
+- Only include the template.
+- Evaluating the template should return a single string or a list of strings or a list of lists of strings depending on the transformation you need to perform. When returning a list or a list of lists, use  to_json filter.
+- Below are the list of valid filters that you can use. Do not include any other filters.
+- Make sure the template can handle Nil values as they are not JSON serializable.
+- You cannot use map on a sequence. For example, A1-A10 is a sequence and not a single value.
+
+abs
+append
+at_least
+at_most
+base64_decode
+base64_encode
+base64_url_safe_decode
+base64_url_safe_encode
+capitalize
+ceil
+compact
+concat
+date
+default
+divided_by
+downcase
+escape
+escape_once
+escape_unicode
+first
+floor
+join
+last
+lstrip
+map
+minus
+modulo
+newline_to_br
+plus
+prepend
+remove
+remove_first
+remove_last
+replace
+replace_first
+replace_last
+reverse
+round
+rstrip
+safe
+size
+slice
+sort
+sort_natural
+split
+strip
+strip_html
+strip_newlines
+sum
+times
+to_dict
+to_json
+truncate
+truncatewords
+uniq
+upcase
+url_decode
+url_encode
+where
+
+Now generate a liquidjs template for below instructions:
+
+        {prompt}
+        """
+
+        model_slug = "gpt-4o-mini"
+        provider_config = profile.get_provider_config(provider_slug="openai", processor_slug="*", model_slug=model_slug)
+        if not provider_config:
+            raise Exception(
+                "OpenAI provider config not found. Please add a provider config for OpenAI to generate a template."
+            )
+
+        llm_client = LLM(
+            provider="openai",
+            openai_api_key=provider_config.api_key if provider_config else "",
+        )
+
+        result = llm_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": message},
+            ],
+            model=model_slug,
+            max_tokens=1000,
+            temperature=0.5,
+            stream=False,
+        )
+
+        return DRFResponse({"template": result.choices[0].message.content})
 
 
 class PromptlySheetTemplateViewSet(viewsets.ViewSet):
