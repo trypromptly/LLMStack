@@ -63,6 +63,7 @@ class BookKeepingActor(Actor):
             self._output_stream.bookkeep_done()
 
     def on_stop(self) -> None:
+        usage_metrics = {}
         logger.info("Stopping BookKeepingActor")
         try:
             # Persist only if all the values in the bookkeeping data have disable_history set to False
@@ -82,13 +83,19 @@ class BookKeepingActor(Actor):
                 return super().on_stop()
 
             try:
-                usage_metrics = dict(
-                    map(
-                        lambda x: (x, self._bookkeeping_data_map.get(x).get("usage_data", {}).get("usage_metrics", [])),
-                        self._bookkeeping_data_map.keys(),
-                    )
-                )
+                for entry in self._bookkeeping_data_map:
+                    data = self._bookkeeping_data_map[entry]
+                    if isinstance(data, list):
+                        for data_element in data:
+                            if entry not in usage_metrics:
+                                usage_metrics[entry] = []
+                            for usage_metric_entry in data_element.get("usage_data", {}).get("usage_metrics", []):
+                                usage_metrics[entry].append(usage_metric_entry)
+                    elif isinstance(data, dict):
+                        usage_metrics[entry] = data.get("usage_data", {}).get("usage_metrics", [])
+
             except Exception:
+                logger.exception("Error getting usage metrics")
                 usage_metrics = {}
 
             EventsViewSet().create(
