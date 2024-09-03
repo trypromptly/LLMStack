@@ -1,7 +1,6 @@
 import base64
 import imaplib
 import logging
-import smtplib
 from datetime import date
 from email.parser import BytesParser
 from email.policy import default
@@ -105,35 +104,6 @@ class EmailSearchOutput(Schema):
         default=[],
         description="Email search results",
     )
-
-
-def search_email_via_gmail(recipients, msg, smtp_username, smtp_password):
-    smtp_server = "smtp.gmail.com"
-    port = 587  # For TLS
-    msg["From"] = smtp_username
-
-    with smtplib.SMTP(smtp_server, port) as server:
-        server.starttls()  # Upgrade the connection to a secure encrypted SSL/TLS connection
-        server.login(smtp_username, smtp_password)
-        server.sendmail(smtp_username, recipients, msg.as_string())
-
-
-def search_email_via_outlook(recipients, msg, smtp_username, smtp_password):
-    smtp_server = "smtp.outlook.com"
-    port = 587  # For TLS
-    with smtplib.SMTP(smtp_server, port) as server:
-        server.starttls()  # Upgrade the connection to a secure encrypted SSL/TLS connection
-        server.login(smtp_username, smtp_password)
-        server.sendmail(smtp_username, recipients, msg.as_string())
-
-
-def search_email_via_yahoo(recipients, msg, smtp_username, smtp_password):
-    smtp_server = "smtp.mail.yahoo.com"
-    port = 587  # For TLS
-    with smtplib.SMTP(smtp_server, port) as server:
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        server.sendmail(smtp_username, recipients, msg.as_string())
 
 
 class EmailSenderProcessor(ApiProcessorInterface[EmailSearchInput, EmailSearchOutput, EmailSearchConfigurations]):
