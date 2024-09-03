@@ -315,9 +315,10 @@ export function SheetColumnMenu({
                     placeholder="Enter LiquidJS template"
                   />
                   <Typography variant="caption" color="text.secondary">
-                    Use LiquidJS syntax to transform the input. Example:
-                    <code>{`{{ input | upcase }}`}</code>. The 'input' variable
-                    contains the original cell value.
+                    Use LiquidJS syntax to transform data from other columns in
+                    this row. Example:
+                    <code>{`{{ A | upcase }}`}</code>. The 'A' variable contains
+                    the value of the A column in this row.
                   </Typography>
                 </>
               )}
