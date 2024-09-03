@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 class EmailProvider(BaseModel):
     type: Literal["Email"] = "Email"
-    recipient_email: List[str] = Field(default=[], description="Recipient email")
 
 
 NotificationProvider = Union[EmailProvider]
@@ -109,7 +108,7 @@ class NotificationSenderProcessor(
 
         if isinstance(self._config.notification_provider, EmailProvider):
             provider_config = self.get_provider_config(provider_slug="promptly")
-            recipient_emails = ", ".join(self._config.notification_provider.recipient_email)
+            recipient_emails = self._request.user.email
 
             email_msg = MIMEMultipart()
             email_msg["To"] = recipient_emails
