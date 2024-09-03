@@ -15,6 +15,8 @@ from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.output import OutputResponse
 from llmstack.play.output_stream import Message, MessageType
+from llmstack.processors.providers.config import ProviderConfigSource
+from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +80,7 @@ class AgentActor(Actor):
                 ),
             },
         ]
+        self._provider_config = None
 
         if "data" in self._agent_app_session_data and "chat_history" in self._agent_app_session_data["data"]:
             self._chat_history = self._agent_app_session_data["data"]["chat_history"]
@@ -89,6 +92,8 @@ class AgentActor(Actor):
             provider_slug="openai",
             model_slug=self._config.get("model", "gpt-3.5-turbo"),
         )
+        self._provider_config = openai_provider_config
+
         self._openai_client = OpenAI(
             api_key=openai_provider_config.api_key,
             base_url=openai_provider_config.base_url,
@@ -104,6 +109,7 @@ class AgentActor(Actor):
         self._agent_messages = []
         self._tool_calls = []
         self._tool_call_outputs = []
+        self._usage_data = [("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1))]
 
         if "chat_history_limit" in self._config and self._config["chat_history_limit"] > 0:
             self._chat_history_limit = self._config["chat_history_limit"]
@@ -189,6 +195,7 @@ class AgentActor(Actor):
             timestamp=time.time(),
             usage_data={
                 "credits": self._base_price_per_message * len(self._agent_messages),
+                "usage_metrics": self._usage_data,
             },
         )
         self._output_stream.bookkeep(bookkeeping_data)
@@ -221,6 +228,7 @@ class AgentActor(Actor):
                 timestamp=time.time(),
                 usage_data={
                     "credits": self._base_price_per_message * len(self._agent_messages),
+                    "usage_metrics": self._usage_data,
                 },
             )
             self._output_stream.bookkeep(bookkeeping_data)
@@ -257,11 +265,27 @@ class AgentActor(Actor):
                 tools=[{"type": "function", "function": x} for x in self._functions],
                 seed=self._config.get("seed", None),
                 temperature=self._config.get("temperature", 0.7),
+                stream_options={"include_usage": True} if self._stream else None,
             )
             agent_message_id = str(uuid.uuid4())
             agent_function_call_id = None
 
             for data in result if self._stream else [result]:
+                if data.usage:
+                    self._usage_data.append(
+                        (
+                            f"openai/*/{model}/*",
+                            MetricType.INPUT_TOKENS,
+                            (self._provider_config.provider_config_source, data.usage.prompt_tokens),
+                        )
+                    )
+                    self._usage_data.append(
+                        (
+                            f"openai/*/{model}/*",
+                            MetricType.OUTPUT_TOKENS,
+                            (self._provider_config.provider_config_source, data.usage.completion_tokens),
+                        )
+                    )
                 if (
                     data.object == "chat.completion.chunk"
                     and len(
@@ -464,6 +488,7 @@ class AgentActor(Actor):
                     timestamp=time.time(),
                     usage_data={
                         "credits": self._base_price_per_message * len(self._agent_messages),
+                        "usage_metrics": self._usage_data,
                     },
                 )
                 # Persist session data
