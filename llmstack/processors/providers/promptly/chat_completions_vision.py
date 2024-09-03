@@ -180,6 +180,8 @@ class LLMVisionProcessor(
 
     def process(self) -> dict:
         messages = self._chat_history if self._config.retain_history else []
+        input_tokens = None
+        output_tokens = None
 
         if self._input.messages:
             parts = []
@@ -245,25 +247,29 @@ class LLMVisionProcessor(
 
         for result in response:
             if result.usage:
-                self._usage_data.append(
-                    (
-                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
-                        MetricType.INPUT_TOKENS,
-                        (provider_config.provider_config_source, result.usage.input_tokens),
-                    )
-                )
-                self._usage_data.append(
-                    (
-                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
-                        MetricType.OUTPUT_TOKENS,
-                        (provider_config.provider_config_source, result.usage.output_tokens),
-                    )
-                )
+                input_tokens = result.usage.input_tokens
+                output_tokens = result.usage.output_tokens
 
             choice = result.choices[0]
             if choice.delta.content:
                 async_to_sync(self._output_stream.write)(LLMVisionProcessorOutput(text=choice.delta.content_str))
 
+        if input_tokens:
+            self._usage_data.append(
+                (
+                    f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                    MetricType.INPUT_TOKENS,
+                    (provider_config.provider_config_source, input_tokens),
+                )
+            )
+        if output_tokens:
+            self._usage_data.append(
+                (
+                    f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                    MetricType.OUTPUT_TOKENS,
+                    (provider_config.provider_config_source, output_tokens),
+                )
+            )
         output = self._output_stream.finalize()
 
         if self._config.retain_history:

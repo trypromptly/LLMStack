@@ -160,6 +160,9 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
         self._chat_history = session_data.get("chat_history", [])
 
     def process(self) -> dict:
+        input_tokens = None
+        output_tokens = None
+
         output_stream = self._output_stream
         client = get_llm_client_from_provider_config(
             provider=self._config.provider_config.provider,
@@ -203,20 +206,8 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
         for entry in result:
             if entry.usage:
-                self._usage_data.append(
-                    (
-                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
-                        MetricType.INPUT_TOKENS,
-                        (provider_config.provider_config_source, entry.usage.input_tokens),
-                    )
-                )
-                self._usage_data.append(
-                    (
-                        f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
-                        MetricType.OUTPUT_TOKENS,
-                        (provider_config.provider_config_source, entry.usage.output_tokens),
-                    )
-                )
+                input_tokens = entry.usage.input_tokens
+                output_tokens = entry.usage.output_tokens
 
             # Stream the output if objref is not enabled
             if not self._config.objref:
@@ -233,6 +224,22 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
                     logger.error(f"Error streaming output: {e}")
                     break
 
+        if input_tokens:
+            self._usage_data.append(
+                (
+                    f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                    MetricType.INPUT_TOKENS,
+                    (provider_config.provider_config_source, input_tokens),
+                )
+            )
+        if output_tokens:
+            self._usage_data.append(
+                (
+                    f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                    MetricType.OUTPUT_TOKENS,
+                    (provider_config.provider_config_source, output_tokens),
+                )
+            )
         if asset_stream:
             asset_stream.finalize()
 
