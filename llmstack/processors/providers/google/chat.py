@@ -238,6 +238,8 @@ class ChatProcessor(
 
     def process(self) -> dict:
         tools = []
+        input_token_usage_data = None
+        output_token_usage_data = None
 
         messages = self._chat_history if self._config.retain_history else []
 
@@ -314,19 +316,15 @@ class ChatProcessor(
 
         for result in response:
             if result.usage:
-                self._usage_data.append(
-                    (
-                        f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
-                        MetricType.INPUT_TOKENS,
-                        (provider_config.provider_config_source, result.usage.input_tokens),
-                    )
+                input_token_usage_data = (
+                    f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
+                    MetricType.INPUT_TOKENS,
+                    (provider_config.provider_config_source, result.usage.input_tokens),
                 )
-                self._usage_data.append(
-                    (
-                        f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
-                        MetricType.OUTPUT_TOKENS,
-                        (provider_config.provider_config_source, result.usage.output_tokens),
-                    )
+                output_token_usage_data = (
+                    f"{self.provider_slug()}/*/{self._config.model.model_name()}/*",
+                    MetricType.OUTPUT_TOKENS,
+                    (provider_config.provider_config_source, result.usage.output_tokens),
                 )
 
             choice = result.choices[0]
@@ -353,6 +351,10 @@ class ChatProcessor(
                             )
 
         output = self._output_stream.finalize()
+        if input_token_usage_data:
+            self._usage_data.append(input_token_usage_data)
+        if output_token_usage_data:
+            self._usage_data.append(output_token_usage_data)
 
         # Persist history if requested
         if self._config.retain_history:
