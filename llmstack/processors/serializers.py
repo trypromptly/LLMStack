@@ -219,6 +219,7 @@ class HistorySerializer(serializers.ModelSerializer):
             "processor_runs",
             "platform_data",
             "feedback",
+            "usage_metrics",
         ]
 
 
