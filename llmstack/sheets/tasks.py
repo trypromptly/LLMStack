@@ -231,111 +231,133 @@ def run_sheet(sheet, run_entry, user):
 
             return input_values
 
-        current_row = 1
-        while current_row <= total_rows:
-            current_col_index = 0
-            valid_cells_in_row = []
-            while current_col_index < total_cols:
-                current_col = number_to_letters(current_col_index)
-                current_cell_id = f"{current_col}{current_row}"
-                previous_cell_id = f"{number_to_letters(current_col_index - 1)}{current_row}"
+        def split_into_subsheets(formula_cells_dict, total_cols):
+            formula_columns = sorted(
+                set(PromptlySheetColumn.column_letter_to_index(cell.col) for cell in formula_cells_dict.values())
+            )
+            subsheets = []
+            start = 0
+            for col in formula_columns:
+                if start < col:
+                    subsheets.append((start, col - 1))
+                subsheets.append((col, col))
+                start = col + 1
+            if start < total_cols:
+                subsheets.append((start, total_cols - 1))
+            return subsheets
 
-                executed_cells = []
-                if (
-                    previous_cell_id in existing_cells_dict
-                    and existing_cells_dict[previous_cell_id].data
-                    and existing_cells_dict[previous_cell_id].output
-                ):
-                    valid_cells_in_row.append(existing_cells_dict.get(previous_cell_id))
+        subsheets = split_into_subsheets(formula_cells_dict, total_cols)
 
-                if current_cell_id in formula_cells_dict:
-                    input_values = process_formula_data(formula_cells_dict[current_cell_id].formula.data)
+        for subsheet_start, subsheet_end in subsheets:
+            for current_row in range(1, total_rows + 1):
+                valid_cells_in_row = []
+                for current_col_index in range(subsheet_start, subsheet_end + 1):
+                    current_col = number_to_letters(current_col_index)
+                    current_cell_id = f"{current_col}{current_row}"
+                    previous_cell_id = f"{number_to_letters(current_col_index - 1)}{current_row}"
 
-                    # For formula cells, we pass entire columns data as input values
-                    for col in columns_dict.values():
-                        if col.col != current_col:
-                            input_values[col.col] = [
-                                cell.output for cell in existing_cells_dict.values() if cell.col == col.col
-                            ]
-
-                    executed_cells = _execute_cell(
-                        formula_cells_dict[current_cell_id],
-                        None,
-                        input_values,
-                        sheet,
-                        str(run_entry.uuid),
-                        user,
-                    )
-                elif (
-                    current_col in columns_dict
-                    and columns_dict[current_col].type
-                    in [
-                        PromptlySheetColumnType.DATA_TRANSFORMER,
-                        PromptlySheetColumnType.APP_RUN,
-                        PromptlySheetColumnType.PROCESSOR_RUN,
-                    ]
-                    and valid_cells_in_row
-                ):
-                    input_values = process_formula_data(columns_dict[current_col].data)
-
-                    for cell in valid_cells_in_row:
-                        input_values[cell.col] = cell.output
-
-                    cell_to_execute = PromptlySheetCell(
-                        row=current_row,
-                        col=current_col,
-                        data=columns_dict[current_col].data,
-                    )
-                    executed_cells = _execute_cell(
-                        cell_to_execute,
-                        columns_dict[current_col],
-                        input_values,
-                        sheet,
-                        str(run_entry.uuid),
-                        user,
-                    )
-
-                # Update total rows and cols if the executed cells are beyond the current grid
-                if executed_cells:
-                    sheet_grid_changed = False
-                    if total_rows < max(cell.row for cell in executed_cells):
-                        total_rows = max(total_rows, max(cell.row for cell in executed_cells))
-                        sheet_grid_changed = True
-
-                    if total_cols < max(
-                        PromptlySheetColumn.column_letter_to_index(cell.col) for cell in executed_cells
+                    executed_cells = []
+                    if (
+                        previous_cell_id in existing_cells_dict
+                        and existing_cells_dict[previous_cell_id].data
+                        and existing_cells_dict[previous_cell_id].output
                     ):
-                        total_cols = max(
-                            total_cols,
-                            max(PromptlySheetColumn.column_letter_to_index(cell.col) for cell in executed_cells) + 1,
-                        )
-                        sheet_grid_changed = True
+                        valid_cells_in_row.append(existing_cells_dict.get(previous_cell_id))
 
-                    if sheet_grid_changed:
+                    if current_cell_id in formula_cells_dict:
+                        input_values = process_formula_data(formula_cells_dict[current_cell_id].formula.data)
+
+                        # For formula cells, we pass entire columns data as input values
+                        for col in columns_dict.values():
+                            if col.col != current_col:
+                                input_values[col.col] = [
+                                    cell.output for cell in existing_cells_dict.values() if cell.col == col.col
+                                ]
+
+                        executed_cells = _execute_cell(
+                            formula_cells_dict[current_cell_id],
+                            None,
+                            input_values,
+                            sheet,
+                            str(run_entry.uuid),
+                            user,
+                        )
+                    elif (
+                        current_col in columns_dict
+                        and columns_dict[current_col].type
+                        in [
+                            PromptlySheetColumnType.DATA_TRANSFORMER,
+                            PromptlySheetColumnType.APP_RUN,
+                            PromptlySheetColumnType.PROCESSOR_RUN,
+                        ]
+                        and valid_cells_in_row
+                    ):
+                        input_values = process_formula_data(columns_dict[current_col].data)
+
+                        for cell in valid_cells_in_row:
+                            input_values[cell.col] = cell.output
+
+                        cell_to_execute = PromptlySheetCell(
+                            row=current_row,
+                            col=current_col,
+                            data=columns_dict[current_col].data,
+                        )
+                        executed_cells = _execute_cell(
+                            cell_to_execute,
+                            columns_dict[current_col],
+                            input_values,
+                            sheet,
+                            str(run_entry.uuid),
+                            user,
+                        )
+
+                    # Update total rows and cols if the executed cells are beyond the current grid
+                    if executed_cells:
+                        sheet_grid_changed = False
+                        if total_rows < max(cell.row for cell in executed_cells):
+                            total_rows = max(total_rows, max(cell.row for cell in executed_cells))
+                            sheet_grid_changed = True
+
+                        if total_cols < max(
+                            PromptlySheetColumn.column_letter_to_index(cell.col) for cell in executed_cells
+                        ):
+                            total_cols = max(
+                                total_cols,
+                                max(PromptlySheetColumn.column_letter_to_index(cell.col) for cell in executed_cells)
+                                + 1,
+                            )
+                            sheet_grid_changed = True
+
+                        if sheet_grid_changed:
+                            async_to_sync(channel_layer.group_send)(
+                                str(run_entry.uuid),
+                                {
+                                    "type": "sheet.update",
+                                    "sheet": {
+                                        "id": str(sheet.uuid),
+                                        "total_rows": total_rows,
+                                        "total_cols": total_cols,
+                                    },
+                                },
+                            )
+                            # Recompute subsheets if new columns were added
+                            if total_cols > subsheet_end + 1:
+                                subsheets = split_into_subsheets(formula_cells_dict, total_cols)
+                                break
+
+                    # Update the executed cells
+                    for cell in executed_cells:
                         async_to_sync(channel_layer.group_send)(
                             str(run_entry.uuid),
                             {
-                                "type": "sheet.update",
-                                "sheet": {"id": str(sheet.uuid), "total_rows": total_rows, "total_cols": total_cols},
+                                "type": "cell.update",
+                                "cell": {
+                                    "id": cell.cell_id,
+                                    "output": cell.output,
+                                },
                             },
                         )
-
-                # Update the executed cells
-                for cell in executed_cells:
-                    async_to_sync(channel_layer.group_send)(
-                        str(run_entry.uuid),
-                        {
-                            "type": "cell.update",
-                            "cell": {
-                                "id": cell.cell_id,
-                                "output": cell.output,
-                            },
-                        },
-                    )
-                    existing_cells_dict[f"{cell.col}{cell.row}"] = cell
-
-                current_col_index += 1
-            current_row += 1
+                        existing_cells_dict[f"{cell.col}{cell.row}"] = cell
 
         sheet.data["total_rows"] = total_rows
         sheet.data["total_cols"] = total_cols
