@@ -861,6 +861,7 @@ function Sheet(props) {
           onPaste={onPaste}
           getCellContent={getCellContent}
           columns={gridColumns}
+          keybindings={{ search: true }}
           smoothScrollX={true}
           smoothScrollY={true}
           rowMarkers={"both"}
