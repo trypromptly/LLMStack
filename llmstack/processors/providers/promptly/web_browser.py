@@ -1,73 +1,180 @@
 import base64
 import logging
+import uuid
 from enum import Enum
-from time import sleep
-from typing import Optional
+from typing import List, Literal, Optional, Union
 
-import grpc
-import openai
 import orjson as json
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from langrocks.common.models import tools_pb2, tools_pb2_grpc
-from pydantic import BaseModel, Field, field_validator
+from langrocks.client import WebBrowser as WebBrowserClient
+from langrocks.common.models.web_browser import WebBrowserCommand, WebBrowserCommandType
+from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
+from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SYSTEM_MESSAGE = """You are a helpful assistant that browses internet using a web browser tool and accomplishes user provided task.
-You can click on buttons, type into input fields, select options from dropdowns, copy text from elements, scroll the page and navigate to other pages.
-You can also use the text from the page to generate the next set of instructions. For example, you can use the text from a button to click on it.
-You can also use the text from a link to navigate to the URL specified in the link. Please follow the instructions below to accomplish the task.
 
-- ONLY return a valid JSON object (no other text is necessary). Use doublequotes for property names and values. For example, use {"output": "Hello World"} instead of {'output': 'Hello World'}. Thinking of the output as a JSON object will help you generate the output in the correct format.
-- Following is the JSON format for the output
-{
-    'output': <output>
-    'instructions': [{
-        'type': <type_of_instruction>,
-        'tag': <tag_to_use>,
-        'data': <data_to_use>
-    }]
-}
-where <output> is your response to the user and 'instructions' is an array of instructions to browse the page
-
-<type_of_instruction> can be one of the following:
-    'Click': Click on the element identified by the tag
-    'Type': Type the data into the element identified by the tag
-    'Wait': Wait for the element identified by the tag to appear
-    'Goto': Navigate to the URL specified in data
-    'Copy': Copy the text from the element identified by the tag
-    'Enter': Press the Enter key
-    'Scrollx': Scroll the page horizontally by the number of pixels specified in data
-    'Scrolly': Scroll the page vertically by the number of pixels specified in data
-    'Terminate': Terminate the browser session if no more instructions are needed
-<tag_to_use> is the identifier to use to identify the element to perform the instruction on. Identifiers are next to the elements on the page. For example all text areas have identifier with prefix `ta=`.
-Similar `in=`, `b=`, `a=`, `s=` are used for input fields, buttons, links and selects respectively.
-<data_to_use> is the data to use for the instruction. For example, if type_of_instruction is 'Type', then data_to_use is the text to type into the element identified by tag_to_use.
-If type_of_instruction is 'ScrollX' or 'ScrollY', then data_to_use is the number of pixels to scroll the page by.
-- If the task is done and no more instructions are needed, you can terminate the browser session by generating an instruction with type_of_instruction as 'Terminate'.
-
-For example, a valid output can be:
-{
-    "output": "Searching for OpenAI",
-    "instruction": {
-        "type": "Type",
-        "tag": "ta=0",
-        "data": "OpenAI",
-    }, {
-        "type": "Click",
-        "tag": "b=0",
-    }]
+GOTO_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "goto",
+        "description": "Navigate to a URL",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "explanation": {
+                    "type": "string",
+                    "description": "Human readable explanation of the action",
+                },
+                "url": {
+                    "type": "string",
+                    "description": "URL to navigate to",
+                },
+            },
+            "required": ["explanation", "url"],
+        },
+    },
 }
 
-Let's think step by step.
-"""
+COPY_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "copy",
+        "description": "Read text from an element on the page",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "explanation": {
+                    "type": "string",
+                    "description": "Human readable explanation of the action",
+                },
+                "annotated_tag_id": {
+                    "type": "string",
+                    "description": "annotated_tag_id to use for the command, if copying body text, use 'body'",
+                },
+            },
+            "required": ["explanation", "annotated_tag_id"],
+        },
+    },
+}
+
+CLICK_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "click",
+        "description": "Click on an element based on annotated_tag_id",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "explanation": {
+                    "type": "string",
+                    "description": "Human readable explanation of the action",
+                },
+                "annotated_tag_id": {
+                    "type": "string",
+                    "description": "annotated_tag_id to use for the command",
+                },
+            },
+            "required": ["explanation", "annotated_tag_id"],
+        },
+    },
+}
+
+SCROLL_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "scroll",
+        "description": "Scroll the page",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "explanation": {
+                    "type": "string",
+                    "description": "Human readable explanation of the action",
+                },
+                "direction": {
+                    "enum": ["up", "down", "left", "right"],
+                    "type": "string",
+                    "description": "Direction to scroll",
+                },
+            },
+            "required": ["explanation", "direction"],
+        },
+    },
+}
+
+
+TYPE_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "enter_text",
+        "description": "Type into an input field based on annotated_tag_id",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "explanation": {
+                    "type": "string",
+                    "description": "Human readable explanation of the action",
+                },
+                "annotated_tag_id": {
+                    "type": "string",
+                    "description": "annotated_tag_id to use for the command, annotated_tag_id is of form 'in=<number>'",
+                },
+                "text": {
+                    "type": "string",
+                    "description": "Text to type",
+                },
+            },
+            "required": ["explanation", "annotated_tag_id", "text"],
+        },
+    },
+}
+
+TERMINATE_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "terminate",
+        "description": "Terminate the browser session",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "explanation": {
+                    "type": "string",
+                    "description": "Human readable explanation of the action",
+                },
+            },
+            "required": ["explanation"],
+        },
+    },
+}
+
+TOOLS = [
+    GOTO_TOOL_SCHEMA,
+    COPY_TOOL_SCHEMA,
+    CLICK_TOOL_SCHEMA,
+    SCROLL_TOOL_SCHEMA,
+    TYPE_TOOL_SCHEMA,
+    TERMINATE_TOOL_SCHEMA,
+]
+
+
+DEFAULT_SYSTEM_MESSAGE = """You are a browser interaction assistant. Use the provided annotated image to understand the current state of the browser. All the interactive HTML elements on the page are annotated and have a annotated_tag_id associated with each element. Understand the user provided task and generate the required tool instructions to accomplish the task. You have access to the following tools to perform actions in the browser:
+- goto: Navigate to a URL
+- copy: Read text from an element on the page
+- click: Click on an element based on annotated_tag_id
+- scroll: Scroll the page
+- type: Type into an input field based on annotated_tag_id
+- terminate: Terminate the browser session
+You need to understand the broser state after each invocations, generate only one tool call at a time. After a user provided task is complete inovke the 'terminate' tool to end the session. Never ask for user input.
+"""  # noqa: E501
 
 
 class Model(str, Enum):
@@ -85,16 +192,58 @@ class Model(str, Enum):
         return self.value
 
 
+class GoogleVisionModel(str, Enum):
+    GEMINI_1_5_PRO = "gemini-1.5-pro"
+    GEMINI_1_5_FLASH = "gemini-1.5-flash"
+    GEMINI_1_0_PRO = "gemini-1.0-pro"
+
+    def __str__(self):
+        return self.value
+
+    def model_name(self):
+        return self.value
+
+
+class GoogleVisionToolModelConfig(BaseModel):
+    provider: Literal["google"] = "google"
+    model: GoogleVisionModel = Field(default=GoogleVisionModel.GEMINI_1_5_PRO, description="The model for the LLM")
+
+
+class OpenAIModel(str, Enum):
+    GPT_4_TURBO = "gpt-4-turbo"
+    GPT_4_TURBO_240409 = "gpt-4-turbo-2024-04-09"
+    GPT_4_O = "gpt-4o"
+    GPT_4_O_MINI = "gpt-4o-mini"
+
+    def __str__(self):
+        return self.value
+
+    def model_name(self):
+        return self.value
+
+
+class OpenAIVisionToolModelConfig(BaseModel):
+    provider: Literal["openai"] = "openai"
+    model: OpenAIModel = Field(default=OpenAIModel.GPT_4_O, description="The model for the LLM")
+
+
+ProviderConfigType = Union[OpenAIVisionToolModelConfig, GoogleVisionToolModelConfig]
+
+
 class WebBrowserConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
         default=None,
         description="Connection to use",
         json_schema_extra={"advanced_parameter": False, "widget": "connection"},
     )
-    model: Model = Field(
+    model: Optional[Model] = Field(
         description="Backing model to use",
         default=Model.GPT_4_O,
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "widget": "hidden"},
+    )
+    provider_config: ProviderConfigType = Field(
+        default=OpenAIVisionToolModelConfig(),
+        json_schema_extra={"advanced_parameter": False, "descrmination_field": "provider"},
     )
     stream_video: bool = Field(
         description="Stream video of the browser",
@@ -125,37 +274,15 @@ class WebBrowserConfiguration(ApiProcessorSchema):
         default=None,
         description="Seed to use for random number generator",
     )
+    tags_to_extract: List[str] = Field(
+        description="Tags to extract", default=["a", "button", "input", "textarea", "select"]
+    )
 
 
 class BrowserRemoteSessionData(BaseModel):
     ws_url: str = Field(
         description="Websocket URL to connect to",
     )
-
-
-class BrowserInstructionType(str, Enum):
-    CLICK = "Click"
-    TYPE = "Type"
-    WAIT = "Wait"
-    GOTO = "Goto"
-    COPY = "Copy"
-    TERMINATE = "Terminate"
-    ENTER = "Enter"
-    SCROLLX = "Scrollx"
-    SCROLLY = "Scrolly"
-
-    def __str__(self):
-        return self.value
-
-
-class BrowserInstruction(BaseModel):
-    type: BrowserInstructionType
-    selector: Optional[str] = None
-    data: Optional[str] = None
-
-    @field_validator("type")
-    def validate_type(cls, v):
-        return v.lower().capitalize()
 
 
 class WebBrowserOutput(ApiProcessorSchema):
@@ -172,12 +299,16 @@ class WebBrowserOutput(ApiProcessorSchema):
         default=None,
         description="Session data from the browser",
     )
+    steps: List[str] = Field(
+        default=[],
+        description="Steps taken to complete the task",
+    )
 
 
 class WebBrowserInput(ApiProcessorSchema):
     start_url: str = Field(
         description="URL to visit to start the session",
-        default="",
+        default="https://www.google.com",
     )
     task: str = Field(
         description="Details of the task to perform",
@@ -211,162 +342,19 @@ class WebBrowser(
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
-            markdown="""
-<promptly-web-browser-embed wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
-
-{{text}}
-""",
+            markdown="""<promptly-web-browser-embed wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
+        {{text}}""",
         )
-
-    def _process_browser_content(self, browser_response):
-        content = browser_response.content
-        output = ""
-
-        if content.error:
-            output += f"Error encountered running previous instructions: {content.error}\n\n"
-
-        if content.text:
-            output += f"Text from page:\n------\n{content.text[:10000]}\n"
-
-        if content.buttons:
-            output += "\nButtons on page:\n------\n"
-            for button in content.buttons:
-                output += f"selector: {button.selector}, text: {button.text}\n"
-
-        if content.links:
-            output += "\nLinks on page:\n------\n"
-            for link in content.links[:100]:
-                output += f"selector: {link.selector}, text: {link.text}\n"
-
-        if content.inputs:
-            output += "\nInput fields on page:\n------\n"
-            for input_field in content.inputs:
-                output += f"selector: {input_field.selector}, text: {input_field.text}\n"
-
-        if content.textareas:
-            output += "\nTextareas on page:\n------\n"
-            for textarea in content.textareas:
-                output += f"selector: {textarea.selector}, text: {textarea.text}\n"
-
-        if content.selects:
-            output += "\nSelects on page:\n------\n"
-            for select in content.selects:
-                output += f"selector: {select.selector}, text: {select.text}\n"
-
-        return output
-
-    def _request_iterator(
-        self,
-        start_url,
-    ) -> Optional[tools_pb2.WebBrowserRequest]:
-        # Our first instruction is always to goto the start_url
-        web_browser_start_request = tools_pb2.WebBrowserRequest()
-        web_browser_start_request.url = start_url
-        web_browser_start_request.timeout = (
-            self._config.timeout
-            if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100
-            else 100
-        )
-        web_browser_start_request.session_data = (
-            self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
-            if self._config.connection_id
-            else ""
-        )
-        web_browser_start_request.stream_video = self._config.stream_video
-
-        yield web_browser_start_request
-
-        while not self._terminated:
-            if self._instructions_processed_index >= len(self._instructions):
-                sleep(0.1)
-                continue
-
-            web_browser_request = tools_pb2.WebBrowserRequest()
-            instructions = self._instructions[self._instructions_processed_index]
-            for step in instructions["steps"]:
-                if step.type == BrowserInstructionType.GOTO:
-                    input = tools_pb2.BrowserInput(
-                        type=tools_pb2.GOTO,
-                        data=step.data,
-                    )
-                if step.type == BrowserInstructionType.CLICK:
-                    input = tools_pb2.BrowserInput(
-                        type=tools_pb2.CLICK,
-                        selector=step.selector,
-                    )
-                elif step.type == BrowserInstructionType.WAIT:
-                    input = tools_pb2.BrowserInput(
-                        type=tools_pb2.WAIT,
-                        selector=step.selector,
-                    )
-                elif step.type == BrowserInstructionType.COPY:
-                    input = tools_pb2.BrowserInput(
-                        type=tools_pb2.COPY,
-                        selector=step.selector,
-                    )
-                elif step.type == BrowserInstructionType.TYPE:
-                    input = tools_pb2.BrowserInput(
-                        type=tools_pb2.TYPE,
-                        selector=step.selector,
-                        data=step.data,
-                    )
-                elif step.type == BrowserInstructionType.SCROLLX:
-                    input = tools_pb2.BrowserInput(
-                        type=tools_pb2.SCROLL_X,
-                        selector=step.selector,
-                        data=step.data,
-                    )
-                elif step.type == BrowserInstructionType.SCROLLY:
-                    input = tools_pb2.BrowserInput(
-                        type=tools_pb2.SCROLL_Y,
-                        selector=step.selector,
-                        data=step.data,
-                    )
-                elif step.type == BrowserInstructionType.TERMINATE:
-                    input = tools_pb2.BrowserInput(
-                        type=tools_pb2.TERMINATE,
-                    )
-                elif step.type == BrowserInstructionType.ENTER:
-                    input = tools_pb2.BrowserInput(
-                        type=tools_pb2.ENTER,
-                    )
-                web_browser_request.steps.append(input)
-            web_browser_request.url = start_url
-            web_browser_request.timeout = (
-                self._config.timeout
-                if self._config.timeout and self._config.timeout > 0 and self._config.timeout <= 100
-                else 100
-            )
-            web_browser_request.session_data = (
-                self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
-                if self._config.connection_id
-                else ""
-            )
-            web_browser_request.stream_video = self._config.stream_video
-
-            self._instructions_processed_index += 1
-
-            yield web_browser_request
-
-        terminate_request = tools_pb2.WebBrowserRequest()
-        terminate_request.inputs.append(
-            tools_pb2.WebBrowserInput(
-                type=tools_pb2.TERMINATE,
-            ),
-        )
-        yield terminate_request
 
     def process(self) -> dict:
-        self._instructions = []
-        self._instructions_processed_index = 0
-
-        model = self._config.model if self._config.model else Model.GPT_3_5_LATEST
-        if model == "gpt-3.5-turbo-latest":
-            model = "gpt-3.5-turbo"
-        elif model == "gpt-4-turbo-latest":
-            model = "gpt-4-turbo"
-        elif model == "gpt-4-vision-latest":
-            model = "gpt-4-turbo"
+        client = get_llm_client_from_provider_config(
+            provider=self._config.provider_config.provider,
+            model_slug=self._config.provider_config.model.value,
+            get_provider_config_fn=self.get_provider_config,
+        )
+        provider_config = self.get_provider_config(
+            provider_slug=self._config.provider_config.provider, model_slug=self._config.provider_config.model.value
+        )
 
         messages = [
             {
@@ -378,247 +366,169 @@ class WebBrowser(
                 "content": f"Perform the following task: {self._input.task}",
             },
         ]
-
-        self._terminated = False
-        self._instructions = []
-        output_stream = self._output_stream
-        output_text = ""
-        channel = grpc.insecure_channel(
+        terminate = False
+        with WebBrowserClient(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
-        )
-        stub = tools_pb2_grpc.RunnerStub(channel)
+            interactive=self._config.stream_video,
+            capture_screenshot=True,
+            annotate=True,
+            tags_to_extract=self._config.tags_to_extract,
+            session_data=(
+                self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
+                if self._config.connection_id
+                else ""
+            ),
+        ) as web_browser:
+            # Start streaming video if enabled
+            if self._config.stream_video and web_browser.get_wss_url():
+                async_to_sync(self._output_stream.write)(
+                    WebBrowserOutput(
+                        session=BrowserRemoteSessionData(ws_url=web_browser.get_wss_url()),
+                    ),
+                )
+            # First command is to visit the start URL
+            commands = [
+                WebBrowserCommand(
+                    command_type=WebBrowserCommandType.GOTO,
+                    data=self._input.start_url,
+                ),
+            ]
+            commands_executed = []
+            browser_response = None
+            model_steps = []
+            while commands:
+                if len(commands_executed) > self._config.max_steps:
+                    break
 
-        web_browser_response_iter = stub.GetWebBrowser(
-            self._request_iterator(self._input.start_url),
-        )
-
-        # Wait till we get the first Web non video response
-        for response in web_browser_response_iter:
-            if response.content.text or response.content.screenshot:
-                browser_text_response = self._process_browser_content(response)
-                browser_response = browser_text_response
-                if (
-                    self._config.model == Model.GPT_4_V_LATEST
-                    or self._config.model == Model.GPT_4_LATEST
-                    or self._config.model == Model.GPT_4_O
-                ):
-                    browser_response = [
-                        {
-                            "type": "text",
-                            "text": browser_text_response,
-                        },
-                    ]
-                    if response.content.screenshot:
-                        browser_response.append(
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{base64.b64encode(response.content.screenshot).decode('utf-8')}",
-                                },
-                            },
-                        )
+                browser_response = web_browser.run_commands(commands=commands)
+                commands_executed.extend(commands)
+                if terminate:
+                    commands = []
+                    # We executed the final browser instruction, exit the loop
+                    break
                 messages.append(
                     {
                         "role": "user",
-                        "content": browser_response,
-                    },
-                )
-                break
-            elif response.session and response.session.ws_url:
-                # Send session info to the client
-                async_to_sync(
-                    output_stream.write,
-                )(
-                    WebBrowserOutput(
-                        session=BrowserRemoteSessionData(
-                            ws_url=response.session.ws_url,
-                        ),
-                    ),
-                )
-
-        if response.state == tools_pb2.TERMINATED:
-            output_text = "".join([x.text for x in response.output.outputs])
-            if not output_text:
-                output_text = response.content.text
-            self._terminated = True
-
-        provider_config = self.get_provider_config(
-            provider_slug="openai",
-            processor_slug="*",
-            model_slug=model,
-        )
-        openai_client = openai.OpenAI(api_key=provider_config.api_key)
-        total_steps = 1
-        while not self._terminated:
-            if total_steps > self._config.max_steps:
-                logger.info(
-                    f"Max steps reached: {total_steps} and {self._config.max_steps}",
-                )
-                self._terminated = True
-                break
-
-            total_steps += 1
-
-            # Check tool responses and trim old messages
-            if len(messages) > 3:
-                for message in messages[:-3]:
-                    if message["role"] == "user":
-                        if isinstance(message["content"], list):
-                            for content in message["content"]:
-                                if content["type"] == "image_url":
-                                    message["content"].remove(content)
-                                elif content["type"] == "text":
-                                    content["text"] = content["text"][:300]
-                        else:
-                            message["content"] = message["content"][:300]
-
-            chat_completions_args = {
-                "model": model,
-                "messages": messages,
-                "max_tokens": 4000,
-                "seed": self._config.seed,
-                "response_format": {
-                    "type": "json_object",
-                },
-            }
-
-            result = openai_client.chat.completions.create(
-                **chat_completions_args,
-            )
-
-            if result.object == "chat.completion":
-                # Clean up messages
-                try:
-                    content = result.choices[0].message.content
-                    if content.startswith("```json"):
-                        content = content.replace("```json", "")
-
-                    if content.startswith("```"):
-                        content = content.replace("```", "")
-
-                    if content.startswith("json"):
-                        content = content.replace("json", "")
-
-                    if content.endswith("```"):
-                        content = content.replace("```", "")
-
-                    try:
-                        result = json.loads(content)
-                    except BaseException:
-                        logger.error(f"Error parsing json: {content}")
-                        result = {
-                            "output": content,
-                        }
-
-                    # If output is json, convert that to string
-                    if "output" in result and not isinstance(
-                        result["output"],
-                        str,
-                    ):
-                        result["output"] = str(result["output"])
-
-                    if "instructions" in result:
-                        steps = []
-                        for instruction in result["instructions"]:
-                            instruction_type = instruction["type"]
-                            steps.append(
-                                BrowserInstruction(
-                                    type=instruction_type,
-                                    selector=(
-                                        instruction["selector"]
-                                        if "selector" in instruction
-                                        else instruction["tag"]
-                                        if "tag" in instruction
-                                        else None
-                                    ),
-                                    data=instruction["data"] if "data" in instruction else None,
-                                ),
-                            )
-
-                        self._instructions.append({"steps": steps})
-                    else:
-                        self._instructions.append(
+                        "content": [
                             {
-                                "steps": [
-                                    BrowserInstruction(
-                                        type="Wait",
-                                        data="1",
-                                    ),
-                                ],
+                                "mime_type": "text/plain",
+                                "type": "text",
+                                "data": "Current page: " + self._input.start_url,
                             },
+                            {
+                                "type": "blob",
+                                "mime_type": "image/png",
+                                "data": browser_response.screenshot,
+                            },
+                        ],
+                    }
+                )
+
+                response = client.chat.completions.create(
+                    model=self._config.provider_config.model.value,
+                    messages=messages,
+                    seed=self._config.seed,
+                    tools=TOOLS,
+                    stream=False,
+                )
+                choice = response.choices[0]
+                if choice.message.tool_calls:
+                    commands = []
+                    for tool_call in choice.message.tool_calls:
+                        messages.append(
+                            {
+                                "role": "assistant",
+                                "content": None,
+                                "function_call": {
+                                    "name": tool_call.function.name,
+                                    "arguments": tool_call.function.arguments,
+                                },
+                            }
                         )
 
+                        args = json.loads(tool_call.function.arguments)
+                        model_steps.append(args["explanation"])
+
+                        if tool_call.function.name == "goto":
+                            commands.append(
+                                WebBrowserCommand(
+                                    command_type=WebBrowserCommandType.GOTO,
+                                    data=args["url"],
+                                ),
+                            )
+                        elif tool_call.function.name == "copy":
+                            commands.append(
+                                WebBrowserCommand(
+                                    command_type=WebBrowserCommandType.COPY,
+                                    selector=args["annotated_tag_id"],
+                                ),
+                            )
+                        elif tool_call.function.name == "click":
+                            commands.append(
+                                WebBrowserCommand(
+                                    command_type=WebBrowserCommandType.CLICK,
+                                    selector=args["annotated_tag_id"],
+                                ),
+                            )
+                        elif tool_call.function.name == "scroll":
+                            commands.append(
+                                WebBrowserCommand(
+                                    command_type=WebBrowserCommandType.SCROLL_Y,
+                                ),
+                            )
+                        elif tool_call.function.name == "enter_text":
+                            commands.append(
+                                WebBrowserCommand(
+                                    command_type=WebBrowserCommandType.TYPE,
+                                    selector=args["annotated_tag_id"],
+                                    data=args["text"],
+                                ),
+                            )
+                        elif tool_call.function.name == "terminate":
+                            terminate = True
+
+                    async_to_sync(self._output_stream.write)(
+                        WebBrowserOutput(steps=model_steps),
+                    )
+                elif choice.message.content:
                     messages.append(
                         {
                             "role": "assistant",
-                            "content": result["output"] if "output" in result else "",
+                            "content": choice.message.content,
                         },
                     )
-
-                    if "output" in result and self._config.stream_text:
-                        async_to_sync(output_stream.write)(
-                            WebBrowserOutput(text=result["output"] + "\n\n"),
-                        )
-                    elif "output" in result:
-                        output_text += result["output"] + "\n\n"
-                except Exception as e:
-                    logger.exception(e)
-                    self._terminated = True
+                    async_to_sync(self._output_stream.write)(
+                        WebBrowserOutput(text=choice.message.content),
+                    )
+                else:
                     break
 
-            try:
-                # Get the next response from the browser and generate the next
-                # set of instructions
-                for response in web_browser_response_iter:
-                    if response.content.text or response.content.screenshot:
-                        browser_text_response = self._process_browser_content(
-                            response,
+                if response.usage:
+                    self._usage_data.append(
+                        (
+                            f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                            MetricType.INPUT_TOKENS,
+                            (provider_config.provider_config_source, response.usage.get_input_tokens()),
                         )
-                        browser_response = browser_text_response
-                        if (
-                            self._config.model == Model.GPT_4_V_LATEST
-                            or self._config.model == Model.GPT_4_LATEST
-                            or self._config.model == Model.GPT_4_O
-                        ):
-                            browser_response = [
-                                {
-                                    "type": "text",
-                                    "text": browser_text_response,
-                                },
-                            ]
-                            if response.content.screenshot:
-                                browser_response.append(
-                                    {
-                                        "type": "image_url",
-                                        "image_url": {
-                                            "url": f"data:image/png;base64,{base64.b64encode(response.content.screenshot).decode('utf-8')}",
-                                        },
-                                    },
-                                )
-                        messages.append(
-                            {
-                                "role": "user",
-                                "content": browser_response,
-                            },
+                    )
+                    self._usage_data.append(
+                        (
+                            f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                            MetricType.OUTPUT_TOKENS,
+                            (provider_config.provider_config_source, response.usage.get_output_tokens()),
                         )
-                        break
-                    else:
-                        self._terminated = True
-                        break
+                    )
 
-            except Exception as e:
-                self._terminated = True
-                logger.exception(e)
-                break
+        if browser_response:
+            browser_content = browser_response.model_dump(exclude=("screenshot",))
+            screenshot_asset = None
+            if browser_response.screenshot:
+                screenshot_asset = self._upload_asset_from_url(
+                    f"data:image/png;name={str(uuid.uuid4())};base64,{base64.b64encode(browser_response.screenshot).decode('utf-8')}",
+                    mime_type="image/png",
+                )
+            browser_content["screenshot"] = screenshot_asset.objref if screenshot_asset else None
+            async_to_sync(self._output_stream.write)(WebBrowserOutput(content=browser_content))
 
-        self._terminated = True
-        async_to_sync(output_stream.write)(
-            WebBrowserOutput(
-                text=output_text,
-            ),
-        )
-        output = output_stream.finalize()
-
-        channel.close()
-
+        output = self._output_stream.finalize()
         return output
