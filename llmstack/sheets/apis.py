@@ -3,6 +3,7 @@ import io
 import logging
 import uuid
 
+import django_rq
 from django.http import StreamingHttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -53,6 +54,13 @@ def _get_sheet_csv(columns, cells, total_rows):
 
 
 class PromptlySheetAppExecuteJob(ProcessingJob):
+    @classmethod
+    def get_connection(self):
+        if self._use_redis:
+            return django_rq.get_connection("sheets")
+        else:
+            return "local"  # Return a dummy connection
+
     @classmethod
     def generate_job_id(cls):
         return "{}".format(str(uuid.uuid4()))

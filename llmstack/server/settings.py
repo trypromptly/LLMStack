@@ -422,6 +422,27 @@ RQ_QUEUES = {
         ),
         "DEFAULT_TIMEOUT": 1500,
     },
+    "sheets": {
+        "HOST": os.getenv(
+            "REDIS_HOST",
+            os.getenv(
+                "RUNNER_RQ_REDIS_HOST",
+                "localhost",
+            ),
+        ),
+        "PORT": os.getenv(
+            "REDIS_PORT",
+            os.getenv(
+                "RUNNER_RQ_REDIS_PORT",
+                6379,
+            ),
+        ),
+        "DB": os.getenv(
+            "REDIS_DB",
+            9,
+        ),
+        "DEFAULT_TIMEOUT": 1500,
+    },
 }
 
 USE_REMOTE_JOB_QUEUE = os.getenv("USE_REMOTE_JOB_QUEUE", "True") == "True"
