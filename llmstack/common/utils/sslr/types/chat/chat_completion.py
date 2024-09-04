@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from openai.types.chat import ChatCompletion as _ChatCompletion
 from openai.types.chat.chat_completion import (
@@ -15,6 +15,8 @@ from openai.types.chat.chat_completion_message_tool_call import (  # noqa F401
 from llmstack.common.utils.sslr.types.chat.chat_completion_message_param import (
     ContentPartParam,
 )
+
+from ..completions_usage import CompletionUsage
 
 
 class ChatCompletionMessage(_ChatCompletionMessage):
@@ -50,3 +52,6 @@ class Choice(_Choice):
 
 class ChatCompletion(_ChatCompletion):
     choices: List[Choice]
+
+    usage: Optional[CompletionUsage] = None
+    """Usage statistics for the completion request."""
