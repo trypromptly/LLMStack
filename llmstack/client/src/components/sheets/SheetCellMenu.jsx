@@ -14,6 +14,7 @@ function SheetCellMenu({
   onCopy,
   onPaste,
   onDelete,
+  readOnly,
   isFormula,
   onOpenFormula,
 }) {
@@ -40,11 +41,11 @@ function SheetCellMenu({
                 <MenuItem onClick={onCopy}>Copy</MenuItem>
                 <MenuItem onClick={onPaste}>Paste</MenuItem>
                 <MenuItem onClick={onDelete}>Delete</MenuItem>
-                {
+                {!readOnly && (
                   <MenuItem onClick={onOpenFormula}>
                     {isFormula ? "Edit Formula" : "Add Formula"}
                   </MenuItem>
-                }
+                )}
               </Stack>
             </ClickAwayListener>
           </Paper>

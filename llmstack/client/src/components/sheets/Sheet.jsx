@@ -58,6 +58,7 @@ function Sheet(props) {
   const [selectedGrid, setSelectedGrid] = useState([]);
   const [selectedColumnId, setSelectedColumnId] = useState(null);
   const [showEditColumnMenu, setShowEditColumnMenu] = useState(false);
+  const [selectedCellReadOnly, setSelectedCellReadOnly] = useState(false);
   const [showFormulaMenu, setShowFormulaMenu] = useState(false);
   const [selectedCellId, setSelectedCellId] = useState(null);
   const [numRows, setNumRows] = useState(0);
@@ -114,18 +115,26 @@ function Sheet(props) {
       const colLetter = column.col;
       const cell = cells[`${colLetter}${row + 1}`];
       const columnType = sheetColumnTypes[column.type];
+      const displayData = columnType?.getCellDisplayData(cell) || "";
 
       return {
         kind:
           cell?.kind === GridCellKind.Loading
             ? GridCellKind.Loading
             : columnType?.kind || GridCellKind.Text,
-        displayData: (columnType?.getCellDisplayData(cell) || "").slice(0, 100),
+        displayData:
+          typeof displayData === "object"
+            ? JSON.stringify(displayData)
+            : displayData?.slice(0, 100),
         data: columnType?.getCellData(cell) || "",
         allowOverlay: true,
         allowWrapping: true,
         skeletonWidth: column.width || 100,
         skeletonWidthVariability: 100,
+        readonly:
+          columnType?.value === "processor_run" ||
+          columnType?.value === "app_run" ||
+          columnType?.value === "data_transformer",
       };
     },
     [cells, gridColumns],
@@ -307,6 +316,24 @@ function Sheet(props) {
   useEffect(() => {
     setGridColumns(parseSheetColumnsIntoGridColumns(columns));
   }, [columns, parseSheetColumnsIntoGridColumns]);
+
+  useEffect(() => {
+    if (selectedCellId) {
+      const [col] = cellIdToGridCell(selectedCellId, gridColumns);
+
+      if (!gridColumns[col]) {
+        return;
+      }
+
+      const columnType = sheetColumnTypes[gridColumns[col].type];
+
+      setSelectedCellReadOnly(
+        columnType?.value === "app_run" ||
+          columnType?.value === "processor_run" ||
+          columnType?.value === "data_transformer",
+      );
+    }
+  }, [selectedCellId, gridColumns]);
 
   const hasChanges = useMemo(() => {
     return (
@@ -734,7 +761,7 @@ function Sheet(props) {
           >
             {selectedGrid}
           </Typography>
-          <Tooltip title="Formula">
+          <Tooltip title={selectedCellReadOnly ? "Read Only" : "Formula"}>
             <span
               style={{
                 border: showFormulaMenu ? "solid 1px #e0e0e0" : "none",
@@ -742,7 +769,7 @@ function Sheet(props) {
             >
               <Button
                 onClick={() => setShowFormulaMenu(!showFormulaMenu)}
-                disabled={selectedGrid?.length !== 1}
+                disabled={selectedGrid?.length !== 1 || selectedCellReadOnly}
                 color="primary"
                 variant="standard"
                 sx={{
@@ -934,6 +961,7 @@ function Sheet(props) {
         onPaste={handleCellPaste}
         onDelete={handleCellDelete}
         isFormula={formulaCells[selectedCellId]}
+        readOnly={selectedCellReadOnly}
         onOpenFormula={() => {
           setCellMenuOpen(false);
           setShowFormulaMenu(true);
