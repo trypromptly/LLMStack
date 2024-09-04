@@ -186,6 +186,52 @@ def _execute_cell(
     return output_cells
 
 
+def process_cell_references(data, existing_cells_dict, input_values=None):
+    if input_values is None:
+        input_values = {}
+
+    if isinstance(data, dict):
+        for value in data.values():
+            process_cell_references(value, existing_cells_dict, input_values)
+    elif isinstance(data, list):
+        for item in data:
+            process_cell_references(item, existing_cells_dict, input_values)
+    elif isinstance(data, str):
+        cell_refs = re.findall(r"([A-Z]+\d+(?:-[A-Z]+\d+)?)", data)
+        for ref in cell_refs:
+            if "-" in ref:
+                start, end = ref.split("-")
+                start_row, start_col = PromptlySheetCell.cell_id_to_row_and_col(start)
+                end_row, end_col = PromptlySheetCell.cell_id_to_row_and_col(end)
+                range_values = [
+                    existing_cells_dict[f"{chr(col)}{row}"].output
+                    for row in range(start_row, end_row + 1)
+                    for col in range(ord(start_col), ord(end_col) + 1)
+                    if f"{chr(col)}{row}" in existing_cells_dict
+                ]
+                input_values[ref] = range_values
+            elif ref in existing_cells_dict:
+                input_values[ref] = existing_cells_dict[ref].output
+
+    return input_values
+
+
+def create_subsheets(formula_cells_dict, total_cols):
+    formula_columns = sorted(
+        set(PromptlySheetColumn.column_letter_to_index(cell.col) for cell in formula_cells_dict.values())
+    )
+    subsheets = []
+    start = 0
+    for col in formula_columns:
+        if start < col:
+            subsheets.append((start, col - 1))
+        subsheets.append((col, col))
+        start = col + 1
+    if start < total_cols:
+        subsheets.append((start, total_cols - 1))
+    return subsheets
+
+
 def run_sheet(sheet, run_entry, user):
     try:
         existing_cells_dict = sheet.cells
@@ -202,51 +248,7 @@ def run_sheet(sheet, run_entry, user):
             },
         )
 
-        def process_formula_data(data, input_values=None):
-            if input_values is None:
-                input_values = {}
-
-            if isinstance(data, dict):
-                for value in data.values():
-                    process_formula_data(value, input_values)
-            elif isinstance(data, list):
-                for item in data:
-                    process_formula_data(item, input_values)
-            elif isinstance(data, str):
-                cell_refs = re.findall(r"([A-Z]+\d+(?:-[A-Z]+\d+)?)", data)
-                for ref in cell_refs:
-                    if "-" in ref:
-                        start, end = ref.split("-")
-                        start_row, start_col = PromptlySheetCell.cell_id_to_row_and_col(start)
-                        end_row, end_col = PromptlySheetCell.cell_id_to_row_and_col(end)
-                        range_values = [
-                            existing_cells_dict[f"{chr(col)}{row}"].output
-                            for row in range(start_row, end_row + 1)
-                            for col in range(ord(start_col), ord(end_col) + 1)
-                            if f"{chr(col)}{row}" in existing_cells_dict
-                        ]
-                        input_values[ref] = range_values
-                    elif ref in existing_cells_dict:
-                        input_values[ref] = existing_cells_dict[ref].output
-
-            return input_values
-
-        def split_into_subsheets(formula_cells_dict, total_cols):
-            formula_columns = sorted(
-                set(PromptlySheetColumn.column_letter_to_index(cell.col) for cell in formula_cells_dict.values())
-            )
-            subsheets = []
-            start = 0
-            for col in formula_columns:
-                if start < col:
-                    subsheets.append((start, col - 1))
-                subsheets.append((col, col))
-                start = col + 1
-            if start < total_cols:
-                subsheets.append((start, total_cols - 1))
-            return subsheets
-
-        subsheets = split_into_subsheets(formula_cells_dict, total_cols)
+        subsheets = create_subsheets(formula_cells_dict, total_cols)
 
         for subsheet_start, subsheet_end in subsheets:
             for current_row in range(1, total_rows + 1):
@@ -265,7 +267,9 @@ def run_sheet(sheet, run_entry, user):
                         valid_cells_in_row.append(existing_cells_dict.get(previous_cell_id))
 
                     if current_cell_id in formula_cells_dict:
-                        input_values = process_formula_data(formula_cells_dict[current_cell_id].formula.data)
+                        input_values = process_cell_references(
+                            formula_cells_dict[current_cell_id].formula.data, existing_cells_dict
+                        )
 
                         # For formula cells, we pass entire columns data as input values
                         for col in columns_dict.values():
@@ -292,7 +296,7 @@ def run_sheet(sheet, run_entry, user):
                         ]
                         and valid_cells_in_row
                     ):
-                        input_values = process_formula_data(columns_dict[current_col].data)
+                        input_values = process_cell_references(columns_dict[current_col].data, existing_cells_dict)
 
                         for cell in valid_cells_in_row:
                             input_values[cell.col] = cell.output
@@ -342,7 +346,7 @@ def run_sheet(sheet, run_entry, user):
                             )
                             # Recompute subsheets if new columns were added
                             if total_cols > subsheet_end + 1:
-                                subsheets = split_into_subsheets(formula_cells_dict, total_cols)
+                                subsheets = create_subsheets(formula_cells_dict, total_cols)
                                 break
 
                     # Update the executed cells
