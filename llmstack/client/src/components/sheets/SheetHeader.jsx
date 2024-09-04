@@ -13,6 +13,7 @@ import {
   ListItemIcon,
   ListItemText,
   ClickAwayListener,
+  CircularProgress,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -48,9 +49,12 @@ const SheetHeader = ({
   const [isPreviousRunsModalOpen, setIsPreviousRunsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const setSheets = useSetRecoilState(sheetsListSelector);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
 
   const runSheet = useCallback(() => {
     const runSheetAction = () => {
+      setIsRunning(true);
       axios()
         .post(`/api/sheets/${sheet.uuid}/run`)
         .then((response) => {
@@ -65,6 +69,9 @@ const SheetHeader = ({
             }`,
             { variant: "error" },
           );
+        })
+        .finally(() => {
+          setIsRunning(false);
         });
     };
 
@@ -110,6 +117,13 @@ const SheetHeader = ({
         console.error("Error deleting sheet:", error);
         enqueueSnackbar("Failed to delete sheet", { variant: "error" });
       });
+  };
+
+  const handleSave = () => {
+    setIsSaving(true);
+    onSave().finally(() => {
+      setIsSaving(false);
+    });
   };
 
   return (
@@ -177,8 +191,9 @@ const SheetHeader = ({
               <Tooltip title="Save changes">
                 <span>
                   <Button
-                    onClick={onSave}
+                    onClick={handleSave}
                     variant="contained"
+                    disabled={isSaving}
                     sx={{
                       bgcolor: "gray.main",
                       "&:hover": { bgcolor: "white" },
@@ -186,7 +201,6 @@ const SheetHeader = ({
                       minWidth: "40px",
                       padding: "5px",
                       borderRadius: "4px !important",
-
                       "&:disabled": {
                         bgcolor: "#ccc",
                         color: "#999",
@@ -195,7 +209,11 @@ const SheetHeader = ({
                       },
                     }}
                   >
-                    <SaveIcon />
+                    {isSaving ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : (
+                      <SaveIcon />
+                    )}
                   </Button>
                 </span>
               </Tooltip>
@@ -303,6 +321,7 @@ const SheetHeader = ({
                   variant="contained"
                   size="medium"
                   onClick={sheetRunning ? cancelSheetRun : runSheet}
+                  disabled={isRunning}
                   sx={{
                     bgcolor: sheetRunning ? "warning.main" : "success.main",
                     "&:hover": {
@@ -313,7 +332,13 @@ const SheetHeader = ({
                     borderRadius: "4px !important",
                   }}
                 >
-                  {sheetRunning ? <PauseIcon /> : <PlayArrowIcon />}
+                  {isRunning ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : sheetRunning ? (
+                    <PauseIcon />
+                  ) : (
+                    <PlayArrowIcon />
+                  )}
                 </Button>
               </span>
             </Tooltip>
