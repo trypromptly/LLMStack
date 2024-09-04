@@ -120,7 +120,7 @@ function Sheet(props) {
           cell?.kind === GridCellKind.Loading
             ? GridCellKind.Loading
             : columnType?.kind || GridCellKind.Text,
-        displayData: columnType?.getCellDisplayData(cell) || "",
+        displayData: (columnType?.getCellDisplayData(cell) || "").slice(0, 100),
         data: columnType?.getCellData(cell) || "",
         allowOverlay: true,
         allowWrapping: true,
@@ -837,7 +837,6 @@ function Sheet(props) {
           smoothScrollX={true}
           smoothScrollY={true}
           rowMarkers={"both"}
-          freezeTrailingRows={2}
           trailingRowOptions={{
             sticky: true,
             tint: true,
