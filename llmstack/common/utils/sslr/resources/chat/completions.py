@@ -576,6 +576,21 @@ class Completions(OpenAICompletions):
                             parts=[glm.Part(text=message["content"])],
                         )
                     )
+            elif message["content"] is None and message["function_call"]:
+                if message["role"] == "assistant":
+                    messages_google_format.append(
+                        glm.Content(
+                            role="model",
+                            parts=[
+                                glm.Part(
+                                    function_call=glm.FunctionCall(
+                                        name=message["function_call"]["name"],
+                                        args=json.loads(message["function_call"]["arguments"]),
+                                    )
+                                )
+                            ],
+                        )
+                    )
             else:
                 raise ValueError("Invalid message content")
 
