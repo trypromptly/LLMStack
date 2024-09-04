@@ -686,6 +686,11 @@ function Sheet(props) {
     setSelectedRows([]);
   }, [selectedRows, onCellEdited, setNumRows]);
 
+  // Get the height of 100vh so we can use it to set the height of the data editor
+  const dataEditorContainerHeight = useMemo(() => {
+    return window.innerHeight - 110;
+  }, []);
+
   return sheet ? (
     <Stack>
       <MemoizedSheetHeader
@@ -876,7 +881,7 @@ function Sheet(props) {
           onCellContextMenu={onCellContextMenu}
           drawCell={drawCell}
           drawHeader={drawHeader}
-          selection={gridSelection}
+          height={dataEditorContainerHeight}
         />
       </Box>
       <div id="portal" />
