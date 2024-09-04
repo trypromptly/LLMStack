@@ -406,19 +406,38 @@ class WebBrowser(
                     commands = []
                     # We executed the final browser instruction, exit the loop
                     break
+
+                page_content = ""
+                if browser_response.text:
+                    page_content += f"Text on page:\n---\n{browser_response.text}\n---\n"
+                if browser_response.links:
+                    page_content += "Links on page:\n---\n"
+                    for link in browser_response.links:
+                        page_content += f"selector: {link.selector}, text: {link.text} url: {link.url}\n"
+                    page_content += "---\n"
+                if browser_response.buttons:
+                    page_content += "Buttons on page:\n---\n"
+                    for button in browser_response.buttons:
+                        page_content += f"selector: {button.selector}, text: {button.text}\n"
+                    page_content += "---\n"
+                if browser_response.select_fields:
+                    page_content += "\nSelects on page:\n------\n"
+                    for select in browser_response.select_fields:
+                        page_content += f"selector: {select.selector}, text: {select.text}\n"
+
                 messages.append(
                     {
                         "role": "user",
                         "content": [
                             {
-                                "mime_type": "text/plain",
-                                "type": "text",
-                                "data": "Current page: " + self._input.start_url,
-                            },
-                            {
                                 "type": "blob",
                                 "mime_type": "image/png",
                                 "data": browser_response.screenshot,
+                            },
+                            {
+                                "mime_type": "text/plain",
+                                "type": "text",
+                                "data": "Page content: " + page_content,
                             },
                         ],
                     }
@@ -434,6 +453,18 @@ class WebBrowser(
                 choice = response.choices[0]
                 if choice.message.tool_calls:
                     commands = []
+                    if choice.message.tool_calls:
+                        # We have new steps to perform remove the browser image from last message
+                        last_message = messages.pop()
+                        if (
+                            last_message["role"] == "user"
+                            and last_message["content"]
+                            and isinstance(last_message["content"], list)
+                        ):
+                            page_content_message = last_message["content"][-1]
+                            if page_content_message["mime_type"] == "text/plain":
+                                messages.append({"role": "user", "content": [page_content_message]})
+
                     for tool_call in choice.message.tool_calls:
                         messages.append(
                             {
@@ -520,6 +551,7 @@ class WebBrowser(
                     )
 
         if browser_response:
+            output_text = "\n".join(list(map(lambda entry: entry.output, browser_response.command_outputs)))
             browser_content = browser_response.model_dump(exclude=("screenshot",))
             screenshot_asset = None
             if browser_response.screenshot:
@@ -528,7 +560,7 @@ class WebBrowser(
                     mime_type="image/png",
                 )
             browser_content["screenshot"] = screenshot_asset.objref if screenshot_asset else None
-            async_to_sync(self._output_stream.write)(WebBrowserOutput(content=browser_content))
+            async_to_sync(self._output_stream.write)(WebBrowserOutput(text=output_text, content=browser_content))
 
         output = self._output_stream.finalize()
         return output
