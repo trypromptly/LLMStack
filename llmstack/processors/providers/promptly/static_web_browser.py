@@ -1,13 +1,14 @@
 import base64
 import logging
 import uuid
+from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from langrocks.client import WebBrowser
 from langrocks.common.models.web_browser import WebBrowserCommand, WebBrowserCommandType
-from pydantic import Field
+from pydantic import BaseModel, Field, field_validator
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.processors.providers.api_processor_interface import (
@@ -15,13 +16,36 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorSchema,
 )
 from llmstack.processors.providers.promptly.web_browser import (
-    BrowserInstruction,
-    BrowserInstructionType,
     BrowserRemoteSessionData,
     WebBrowserOutput,
 )
 
 logger = logging.getLogger(__name__)
+
+
+class BrowserInstructionType(str, Enum):
+    CLICK = "Click"
+    TYPE = "Type"
+    WAIT = "Wait"
+    GOTO = "Goto"
+    COPY = "Copy"
+    TERMINATE = "Terminate"
+    ENTER = "Enter"
+    SCROLLX = "Scrollx"
+    SCROLLY = "Scrolly"
+
+    def __str__(self):
+        return self.value
+
+
+class BrowserInstruction(BaseModel):
+    type: BrowserInstructionType
+    selector: Optional[str] = None
+    data: Optional[str] = None
+
+    @field_validator("type")
+    def validate_type(cls, v):
+        return v.lower().capitalize()
 
 
 class StaticWebBrowserConfiguration(ApiProcessorSchema):
