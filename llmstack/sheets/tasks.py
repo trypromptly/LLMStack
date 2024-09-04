@@ -404,7 +404,7 @@ def run_sheet(sheet, run_entry, user, parallel_rows=4):
                     )
 
                 # Execute run_row in parallel
-                with concurrent.futures.ThreadPoolExecutor() as executor:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
                     results = list(executor.map(lambda args: run_row(*args), parallel_args))
 
                 # Collect results
