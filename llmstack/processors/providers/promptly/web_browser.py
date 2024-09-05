@@ -395,13 +395,18 @@ class WebBrowser(
             ]
             commands_executed = []
             browser_response = None
-            model_steps = []
+            browser_steps = ["Navigate to URL: " + self._input.start_url]
             while commands:
                 if len(commands_executed) > self._config.max_steps:
                     break
 
                 browser_response = web_browser.run_commands(commands=commands)
+                if browser_response.command_outputs:
+                    output_text = "\n".join(list(map(lambda entry: entry.output, browser_response.command_outputs)))
+                    async_to_sync(self._output_stream.write)(WebBrowserOutput(text=output_text))
+
                 commands_executed.extend(commands)
+
                 if terminate:
                     commands = []
                     # We executed the final browser instruction, exit the loop
@@ -450,20 +455,17 @@ class WebBrowser(
                     tools=TOOLS,
                     stream=False,
                 )
+
                 choice = response.choices[0]
+
                 if choice.message.tool_calls:
                     commands = []
                     if choice.message.tool_calls:
                         # We have new steps to perform remove the browser image from last message
-                        last_message = messages.pop()
-                        if (
-                            last_message["role"] == "user"
-                            and last_message["content"]
-                            and isinstance(last_message["content"], list)
-                        ):
-                            page_content_message = last_message["content"][-1]
-                            if page_content_message["mime_type"] == "text/plain":
-                                messages.append({"role": "user", "content": [page_content_message]})
+                        messages.pop()
+                        messages.append({"role": "user", "content": [browser_steps[-1]]})
+
+                    tool_explanation = ""
 
                     for tool_call in choice.message.tool_calls:
                         messages.append(
@@ -478,7 +480,7 @@ class WebBrowser(
                         )
 
                         args = json.loads(tool_call.function.arguments)
-                        model_steps.append(args["explanation"])
+                        tool_explanation += args["explanation"] + "\n"
 
                         if tool_call.function.name == "goto":
                             commands.append(
@@ -518,8 +520,11 @@ class WebBrowser(
                         elif tool_call.function.name == "terminate":
                             terminate = True
 
+                    if tool_explanation:
+                        browser_steps.append(tool_explanation)
+
                     async_to_sync(self._output_stream.write)(
-                        WebBrowserOutput(steps=model_steps),
+                        WebBrowserOutput(steps=browser_steps),
                     )
                 elif choice.message.content:
                     messages.append(
