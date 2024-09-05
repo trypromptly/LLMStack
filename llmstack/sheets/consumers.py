@@ -3,8 +3,11 @@ import logging
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django_redis import get_redis_connection
 
 logger = logging.getLogger(__name__)
+
+sheet_run_data_store = get_redis_connection("sheet_run_data_store")
 
 
 @database_sync_to_async
@@ -33,6 +36,11 @@ class SheetAppConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.run_id, self.channel_name)
         await self.accept()
 
+        # Stream old events from redis
+        events = sheet_run_data_store.lrange(self.run_id, 0, -1)
+        for event in events:
+            await self.send(text_data=event.decode("utf-8"))
+
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.run_id, self.channel_name)
 
@@ -42,6 +50,7 @@ class SheetAppConsumer(AsyncWebsocketConsumer):
 
     async def cell_update(self, event):
         await self.send(text_data=json.dumps(event))
+        await self._append_event_to_redis(event)
 
     async def cell_updating(self, event):
         await self.send(text_data=json.dumps(event))
@@ -54,6 +63,7 @@ class SheetAppConsumer(AsyncWebsocketConsumer):
 
     async def sheet_update(self, event):
         await self.send(text_data=json.dumps(event))
+        await self._append_event_to_redis(event)
 
     async def sheet_disconnect(self, event):
         await self.send(text_data=json.dumps(event))
@@ -62,3 +72,9 @@ class SheetAppConsumer(AsyncWebsocketConsumer):
     async def sheet_error(self, event):
         await self.send(text_data=json.dumps(event))
         await self.channel_layer.group_discard(self.run_id, self.channel_name)
+
+    async def _append_event_to_redis(self, event):
+        try:
+            sheet_run_data_store.rpush(self.run_id, json.dumps(event))
+        except Exception as e:
+            logger.error(f"Error appending event to Redis: {str(e)}")

@@ -1,5 +1,6 @@
 import ast
 import concurrent
+import json
 import logging
 import re
 import uuid
@@ -9,7 +10,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth.models import User
 from django.test import RequestFactory
-from rest_framework.response import Response as DRFResponse
+from django_redis import get_redis_connection
 
 from llmstack.apps.apis import AppViewSet
 from llmstack.common.utils.liquid import render_template
@@ -20,8 +21,8 @@ from llmstack.sheets.models import (
     PromptlySheetColumn,
     PromptlySheetColumnType,
     PromptlySheetFormulaCell,
+    PromptlySheetRunEntry,
 )
-from llmstack.sheets.serializers import PromptlySheetSerializer
 
 try:
     from promptly_app_store.apis import AppStoreAppViewSet
@@ -31,6 +32,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 channel_layer = get_channel_layer()
+sheet_run_data_store = get_redis_connection("sheet_run_data_store")
 
 
 def number_to_letters(num):
@@ -348,8 +350,12 @@ def run_row(
     return executed_cells
 
 
-def run_sheet(sheet, run_entry, user, parallel_rows=4):
+def run_sheet(sheet_uuid, run_entry_uuid, user_id, parallel_rows=4):
     try:
+        sheet = PromptlySheet.objects.get(uuid=sheet_uuid)
+        run_entry = PromptlySheetRunEntry.objects.get(uuid=run_entry_uuid)
+        user = User.objects.get(id=user_id)
+
         existing_cells_dict = sheet.cells
         columns_dict = {col.col: col for col in sheet.columns}
         formula_cells_dict = sheet.formula_cells
@@ -436,49 +442,85 @@ def run_sheet(sheet, run_entry, user, parallel_rows=4):
                         if total_cols > subsheet_end + 1:
                             subsheets = create_subsheets(formula_cells_dict, total_cols)
                             break
-
-        sheet.data["total_rows"] = total_rows
-        sheet.data["total_cols"] = total_cols
-        sheet.save(cells=list(existing_cells_dict.values()), update_fields=["data", "updated_at"])
-
-        run_entry.data["total_rows"] = total_rows
-        run_entry.data["total_cols"] = total_cols
-        run_entry.save(cells=list(existing_cells_dict.values()), update_fields=["data"])
-
-    except Exception:
+    except Exception as e:
         logger.exception("Error executing sheet")
+        return f"Error executing sheet: {str(e)}"
+
+    return "Success"
+
+
+def update_sheet_with_post_run_data(sheet_uuid, run_uuid):
+    sheet = PromptlySheet.objects.get(uuid=sheet_uuid)
 
     sheet.is_locked = False
     sheet.extra_data["running"] = False
     sheet.extra_data["job_id"] = None
     sheet.extra_data["run_id"] = None
-    sheet.save(update_fields=["is_locked", "extra_data", "updated_at"])
 
-    return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
+    run_entry = PromptlySheetRunEntry.objects.get(uuid=run_uuid)
+    total_rows = sheet.data.get("total_rows", 0)
+    total_cols = sheet.data.get("total_cols", 0)
+    cells = sheet.cells
+
+    events = sheet_run_data_store.lrange(run_uuid, 0, -1)
+
+    for event in events:
+        try:
+            event = json.loads(event)
+        except json.JSONDecodeError:
+            logger.error(f"Error parsing event: {event}")
+            continue
+
+        if event["type"] == "cell.update":
+            (row, col) = PromptlySheetCell.cell_id_to_row_and_col(event["cell"]["id"])
+            cells[event["cell"]["id"]] = PromptlySheetCell(row=row, col=col, data={"output": event["cell"]["output"]})
+
+        if event["type"] == "sheet.update":
+            total_rows = event["sheet"]["total_rows"]
+            total_cols = event["sheet"]["total_cols"]
+
+    sheet.data["total_rows"] = total_rows
+    sheet.data["total_cols"] = total_cols
+    sheet.save(cells=cells.values(), update_fields=["data", "updated_at", "extra_data"])
+
+    run_entry.data["total_rows"] = total_rows
+    run_entry.data["total_cols"] = total_cols
+    run_entry.save(cells=cells.values(), update_fields=["data"])
+
+    # Delete the run data from redis
+    sheet_run_data_store.delete(run_uuid)
 
 
 def on_sheet_run_success(job, connection, result, *args, **kwargs):
-    sheet_uuid = str(job.args[0].uuid)
-    run_uuid = str(job.args[1].uuid)
+    sheet_uuid = job.args[0]
+    run_uuid = job.args[1]
 
     async_to_sync(channel_layer.group_send)(
         run_uuid,
         {
             "type": "sheet.status",
-            "sheet": {"id": str(sheet_uuid), "running": False},
+            "sheet": {"id": sheet_uuid, "running": False},
         },
     )
 
+    update_sheet_with_post_run_data(sheet_uuid, run_uuid)
+
 
 def on_sheet_run_failed(job, connection, type, value, traceback):
-    run_uuid = str(job.args[1].uuid)
+    sheet_uuid = job.args[0]
+    run_uuid = job.args[1]
 
     async_to_sync(channel_layer.group_send)(
         run_uuid, {"type": "sheet.error", "error": f"Sheet run failed: {str(type)} - {str(value)}"}
     )
 
+    update_sheet_with_post_run_data(sheet_uuid, run_uuid)
+
 
 def on_sheet_run_stopped(job, connection):
-    run_uuid = str(job.args[1].uuid)
+    run_uuid = job.args[1]
+    sheet_uuid = job.args[0]
 
     async_to_sync(channel_layer.group_send)(run_uuid, {"type": "sheet.disconnect", "reason": "Cancelled by user"})
+
+    update_sheet_with_post_run_data(sheet_uuid, run_uuid)

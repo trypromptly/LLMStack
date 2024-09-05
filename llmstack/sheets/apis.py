@@ -183,10 +183,11 @@ class PromptlySheetViewSet(viewsets.ViewSet):
             )
 
         run_entry = PromptlySheetRunEntry(sheet_uuid=sheet.uuid, profile_uuid=profile.uuid)
+        run_entry.save()
 
         job = PromptlySheetAppExecuteJob.create(
             func="llmstack.sheets.tasks.run_sheet",
-            args=[sheet, run_entry, request.user],
+            args=[str(sheet.uuid), str(run_entry.uuid), request.user.id],
             on_stopped=Callback("llmstack.sheets.tasks.on_sheet_run_stopped"),
             on_success=Callback("llmstack.sheets.tasks.on_sheet_run_success"),
             on_failure=Callback("llmstack.sheets.tasks.on_sheet_run_failed"),
