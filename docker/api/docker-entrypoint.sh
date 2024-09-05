@@ -37,7 +37,7 @@ apiserver() {
 
 rqworker() {
     echo "Starting RQ worker"
-    python manage.py rqworker default --verbosity=0 --with-scheduler
+    python manage.py rqworker default sheets --verbosity=0 --with-scheduler
 }
 
 until pg_isready -h $DATABASE_HOST; do
