@@ -455,15 +455,24 @@ class WebBrowser(
                     tools=TOOLS,
                     stream=False,
                 )
-
                 choice = response.choices[0]
-
                 if choice.message.tool_calls:
                     commands = []
                     if choice.message.tool_calls:
                         # We have new steps to perform remove the browser image from last message
                         messages.pop()
-                        messages.append({"role": "user", "content": [browser_steps[-1]]})
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "mime_type": "text/plain",
+                                        "type": "text",
+                                        "data": browser_steps[-1],
+                                    }
+                                ],
+                            }
+                        )
 
                     tool_explanation = ""
 
