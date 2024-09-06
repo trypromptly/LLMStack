@@ -6,6 +6,7 @@ export class Ws {
     this.ws = null;
     this.binaryType = binaryType;
     this.onMessage = null;
+    this.onClose = null;
     this.queue = []; // Queue to hold until messages are ready
   }
 
@@ -32,6 +33,9 @@ export class Ws {
     };
     this.ws.onclose = () => {
       console.log(`Websocket closed: ${this.url}`);
+      if (this.onClose) {
+        this.onClose();
+      }
     };
   }
 
@@ -55,5 +59,9 @@ export class Ws {
 
   setOnMessage(onMessage) {
     this.onMessage = onMessage;
+  }
+
+  setOnClose(onClose) {
+    this.onClose = onClose;
   }
 }
