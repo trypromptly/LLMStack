@@ -83,19 +83,20 @@ export function SheetFromTemplateDialog({
     const template = sheetTemplates[templateSlug];
 
     // Iterate through total_columns and create columns if they don't exist
-    const newColumns = {};
+    const newColumns = [];
     for (let i = 0; i < template.total_columns; i++) {
-      const letter = columnIndexToLetter(i);
+      const existingColumn = template.columns.find(
+        (column) => column.col_letter === columnIndexToLetter(i),
+      );
 
-      if (template.columns[letter]) {
-        newColumns[letter] = template.columns[letter];
+      if (existingColumn) {
+        newColumns.push(existingColumn);
       } else {
-        newColumns[letter] = {
+        newColumns.push({
           title: "",
-          col_letter: letter,
+          col_letter: columnIndexToLetter(i),
           cell_type: 0,
-          formula: {},
-        };
+        });
       }
     }
 

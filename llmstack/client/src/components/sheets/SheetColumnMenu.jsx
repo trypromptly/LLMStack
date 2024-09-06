@@ -60,6 +60,7 @@ export function SheetColumnMenu({
   const setDataHandler = useCallback(
     (data) => {
       formulaDataRef.current = {
+        ...formulaDataRef.current,
         ...data,
       };
     },
@@ -83,7 +84,7 @@ export function SheetColumnMenu({
   const handleAddOrEditColumn = () => {
     const newColumn = {
       col_letter: column ? column.col_letter : numberToLetters(columns.length),
-      title: columnName || "New Column",
+      title: columnName || "",
       cell_type: cellType,
       width: column?.width || 300,
       formula: showFormulaTypeSelect
@@ -245,7 +246,7 @@ export function SheetColumnMenu({
                   </Select>
                 </FormControl>
               )}
-              {formulaType && (
+              {showFormulaTypeSelect && formulaType && (
                 <Typography variant="caption" color="text.secondary">
                   You can access the value of a cell in the current row using{" "}
                   <code>{"{{A}}"}</code>, where A is the column letter.
@@ -253,7 +254,7 @@ export function SheetColumnMenu({
                   &nbsp;
                 </Typography>
               )}
-              {formulaType === 1 && (
+              {showFormulaTypeSelect && formulaType === 1 && (
                 <DataTransformerGeneratorWidget
                   label="Transformation Template"
                   value={formulaData?.transformation_template}
@@ -274,7 +275,7 @@ export function SheetColumnMenu({
                   }
                 />
               )}
-              {formulaType === 2 && (
+              {showFormulaTypeSelect && formulaType === 2 && (
                 <AppRunForm
                   setData={(data) => {
                     setFormulaData({
@@ -289,7 +290,9 @@ export function SheetColumnMenu({
                   appInput={formulaData.current?.input}
                 />
               )}
-              {formulaType === 3 && memoizedProcessorRunForm}
+              {showFormulaTypeSelect &&
+                formulaType === 3 &&
+                memoizedProcessorRunForm}
               <Stack
                 direction="row"
                 spacing={2}

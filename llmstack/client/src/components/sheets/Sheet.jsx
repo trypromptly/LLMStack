@@ -91,12 +91,62 @@ export const sheetCellTypes = {
     value: "number",
     description: "Numeric values",
     kind: GridCellKind.Number,
+    getDataGridCell: (cell, column) => {
+      if (!cell) {
+        return {
+          kind: GridCellKind.Number,
+          data: 0,
+          displayData: "",
+          readonly: column?.formula?.type > 0 || false,
+          allowOverlay: true,
+          allowWrapping: true,
+        };
+      }
+
+      return {
+        kind: GridCellKind.Number,
+        data: parseFloat(cell.value),
+        displayData: cell.value?.toString() || "",
+        readonly: cell.formula || column.formula?.type > 0 || false,
+        allowOverlay: true,
+        allowWrapping: true,
+      };
+    },
+    getCellValue: (cell) => {
+      return cell.data;
+    },
   },
   2: {
     label: "URI",
     value: "uri",
     description: "Uniform Resource Identifier",
     kind: GridCellKind.Uri,
+    getDataGridCell: (cell, column) => {
+      if (!cell) {
+        return {
+          kind: GridCellKind.Uri,
+          data: "",
+          displayData: "",
+          readonly: column?.formula?.type > 0 || false,
+          allowOverlay: true,
+          allowWrapping: true,
+          hoverEffect: true,
+        };
+      }
+
+      return {
+        kind: GridCellKind.Uri,
+        data: cell.value,
+        displayData: cell.value,
+        readonly: cell.formula || column.formula?.type > 0 || false,
+        allowOverlay: true,
+        allowWrapping: true,
+        hoverEffect: true,
+      };
+    },
+    getCellValue: (cell) => {
+      return cell.data;
+    },
   },
 };
 
@@ -479,7 +529,7 @@ function Sheet(props) {
           if (currentCol < columns.length) {
             const cellId = gridCellToCellId([currentCol, currentRow], columns);
             newCells[cellId] = {
-              row: currentRow,
+              row: currentRow + 1,
               col_letter: columns[currentCol].col_letter,
               value: cellValue,
             };
@@ -1024,8 +1074,6 @@ function Sheet(props) {
           const [col, row] = cellIdToGridCell(cellId, columns);
           const cellType = columns[col].cell_type;
 
-          console.log("formula", formula);
-
           if (!formula) {
             setCells((prev) => {
               const newCells = { ...prev };
@@ -1052,7 +1100,7 @@ function Sheet(props) {
             if (!newCells[cellId]) {
               newCells[cellId] = {
                 type: cellType,
-                row: row,
+                row: row + 1,
                 col_letter: columns[col].col_letter,
                 value: "",
               };
