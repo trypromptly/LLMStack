@@ -47,17 +47,35 @@ class TextCanvas:
                     else:
                         self.canvas[y][pos] = char
 
+    def _remove_empty_rows(self):
+        row_str = ""
+        for row in self.canvas:
+            for col in row:
+                row_str += col
+            if row_str.strip() == "":
+                self.canvas.remove(row)
+
+    def _remove_empty_columns(self):
+        for i in range(self.width):
+            col_str = ""
+            for row in self.canvas:
+                col_str += row[i]
+            if col_str.strip() == "":
+                for row in self.canvas:
+                    row[i] = ""
+
     def _merge_characters(self, old_char, new_char):
         # In case of overlap, concatenate both characters
         return old_char + new_char
 
     def to_string(self) -> str:
         final_text = ""
+        self._remove_empty_columns()
+        self._remove_empty_rows()
         for row in self.canvas:
             row_text = "".join(row)
-            if row_text.strip() == "":
-                continue
-            final_text += row_text + "\n"
+            if row_text.strip() != "":
+                final_text += row_text + "\n"
         return final_text
 
 
@@ -183,7 +201,49 @@ class GoogleVisionTextExtractionService(TextExtractionService):
         res = self.client.annotate_image(request)
 
         response = TextractResponse(pages=[])
-        if res.full_text_annotation and False:
+        if res.text_annotations:
+            page_width = res.text_annotations[0].bounding_poly.vertices[2].x
+            page_height = res.text_annotations[0].bounding_poly.vertices[2].y
+            page = Page(page_no=1, width=page_width, height=page_height)
+            font_height = None
+            font_width = None
+
+            for text_annotation in res.text_annotations[1:]:
+                if text_annotation.description:
+                    text_annotation_text = text_annotation.description
+                    box = text_annotation.bounding_poly.vertices
+                    font_height = (
+                        min(box[2].y - box[0].y, font_height)
+                        if font_height
+                        else box[2].y - box[0].y
+                        if box[2].y - box[0].y
+                        else None
+                    )
+                    font_width = (
+                        min((box[1].x - box[0].x) / len(text_annotation_text), font_width)
+                        if font_width
+                        else (
+                            (box[1].x - box[0].x) / len(text_annotation_text)
+                            if (box[1].x - box[0].x) / len(text_annotation_text)
+                            else None
+                        )
+                    )
+                    page_element = PageElement(
+                        text=text_annotation.description,
+                        coordinates=BoundingBox(
+                            top_left=(box[0].x, box[0].y),
+                            top_right=(box[1].x, box[1].y),
+                            bottom_right=(box[2].x, box[2].y),
+                            bottom_left=(box[3].x, box[3].y),
+                        ),
+                    )
+                    page_element.set_midpoint_normalized(page_width, page_height)
+                    page.elements.append(page_element)
+            page.elements = sorted(page.elements, key=lambda x: (x.normalized_midpoint[1], x.normalized_midpoint[0]))
+            page.font_height = math.ceil(font_height) if font_height else None
+            page.font_width = math.ceil(font_width) if font_width else None
+            response.pages.append(page)
+        elif res.full_text_annotation:
             response._full_text = res.full_text_annotation.text
             for page_number, annotated_page in enumerate(res.full_text_annotation.pages, start=1):
                 font_height = None
@@ -256,49 +316,6 @@ class GoogleVisionTextExtractionService(TextExtractionService):
                 page.font_height = math.ceil(font_height) if font_height else None
                 page.font_width = math.ceil(font_width) if font_width else None
                 response.pages.append(page)
-
-        elif res.text_annotations:
-            page_width = res.text_annotations[0].bounding_poly.vertices[2].x
-            page_height = res.text_annotations[0].bounding_poly.vertices[2].y
-            page = Page(page_no=1, width=page_width, height=page_height)
-            font_height = None
-            font_width = None
-
-            for text_annotation in res.text_annotations[1:]:
-                if text_annotation.description:
-                    text_annotation_text = text_annotation.description
-                    box = text_annotation.bounding_poly.vertices
-                    font_height = (
-                        min(box[2].y - box[0].y, font_height)
-                        if font_height
-                        else box[2].y - box[0].y
-                        if box[2].y - box[0].y
-                        else None
-                    )
-                    font_width = (
-                        min((box[1].x - box[0].x) / len(text_annotation_text), font_width)
-                        if font_width
-                        else (
-                            (box[1].x - box[0].x) / len(text_annotation_text)
-                            if (box[1].x - box[0].x) / len(text_annotation_text)
-                            else None
-                        )
-                    )
-                    page_element = PageElement(
-                        text=text_annotation.description,
-                        coordinates=BoundingBox(
-                            top_left=(box[0].x, box[0].y),
-                            top_right=(box[1].x, box[1].y),
-                            bottom_right=(box[2].x, box[2].y),
-                            bottom_left=(box[3].x, box[3].y),
-                        ),
-                    )
-                    page_element.set_midpoint_normalized(page_width, page_height)
-                    page.elements.append(page_element)
-            page.elements = sorted(page.elements, key=lambda x: (x.normalized_midpoint[1], x.normalized_midpoint[0]))
-            page.font_height = math.ceil(font_height) if font_height else None
-            page.font_width = math.ceil(font_width) if font_width else None
-            response.pages.append(page)
 
         return response
 
