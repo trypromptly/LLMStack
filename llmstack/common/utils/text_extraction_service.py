@@ -19,6 +19,18 @@ from unstructured.partition.text import partition_text
 from unstructured.partition.xlsx import partition_xlsx
 
 
+def table_html_to_text(table_html: str) -> str:
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(table_html, "html.parser")
+    text = ""
+    for row in soup.find_all("tr"):
+        for cell in row.find_all(["td", "th"]):
+            text += cell.get_text() + " "
+        text += "\n"
+    return text
+
+
 class TextCanvas:
     def __init__(self, width: int, height: int):
         self.width = width
@@ -61,6 +73,7 @@ class PageElement(BaseModel):
     coordinates: Optional[BoundingBox] = None
     normalized_midpoint: Optional[Tuple[float, float]] = (None, None)
     provider_data: Optional[Dict[str, Any]] = None
+    element_type: Optional[str] = None
 
     @property
     def midpoint(self):
@@ -83,6 +96,13 @@ class PageElement(BaseModel):
         self.normalized_midpoint = (
             (self.midpoint[0] / page_width, self.midpoint[1] / page_height) if self.midpoint else None
         )
+
+    @property
+    def formatted_text(self):
+        if self.provider_data.get("type") == "Table":
+            if self.provider_data.get("metadata", {}).get("text_as_html"):
+                return table_html_to_text(self.provider_data.get("metadata", {}).get("text_as_html"))
+        return self.text
 
 
 class Page(BaseModel):
@@ -109,7 +129,8 @@ class Page(BaseModel):
                 y = int(element.normalized_midpoint[1] * text_canvas_height)
                 text_canvas.insert_text(element.text, x, y)
             return text_canvas.to_string()
-        return self.text
+        else:
+            return "\n".join([element.formatted_text for element in self.elements])
 
 
 class TextractResponse(BaseModel):
@@ -284,8 +305,9 @@ class PromptlyTextExtractionService(TextExtractionService):
 
                     if element.metadata.coordinates.system.height:
                         page.height = element.metadata.coordinates.system.height
-            page_element = PageElement(text=element.text, provider_data=element.to_dict())
-            print(element.to_dict())
+            page_element = PageElement(
+                text=element.text, provider_data=element.to_dict(), element_type=element.category
+            )
             if element.metadata.coordinates and element.metadata.coordinates.points:
                 page_element.coordinates = BoundingBox(
                     top_left=(element.metadata.coordinates.points[0][0], element.metadata.coordinates.points[0][1]),
@@ -325,18 +347,3 @@ class PromptlyTextExtractionService(TextExtractionService):
         # Extract text from URI
         mime_type, filename, data = validate_parse_data_uri(file_uri)
         return super().extract_from_uri(data, mime_type=mime_type, filename=filename)
-
-
-if __name__ == "__main__":
-    service = PromptlyTextExtractionService()
-    with open(
-        "/Users/vigneshaigal/Projects/makerdojo/promptmanager/llmstack/llmstack/common/tests/fixtures/sample.docx",
-        "rb",
-    ) as f:
-        response = service.extract_from_bytes(
-            f.read(),
-            mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            filename="sample.docx",
-        )
-        for page in response.pages:
-            print(page.formatted_text)
