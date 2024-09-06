@@ -295,9 +295,9 @@ function Sheet(props) {
       }
 
       if (cell?.status === 2) {
-        // Visually indicate that the cell has an with a red background
+        // Visually indicate that the cell has an error with a red background
         ctx.save();
-        ctx.fillStyle = "#FF0000";
+        ctx.fillStyle = "#FF0000CC";
         ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
 
         // Draw error message from cell.error
@@ -305,10 +305,16 @@ function Sheet(props) {
         ctx.font = "12px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
+
+        const padding = 10;
+        const maxWidth = rect.width - 2 * padding;
+        const errorText = (cell.error || "Error").slice(0, 100);
+
         ctx.fillText(
-          cell.error || "Error",
+          errorText,
           rect.x + rect.width / 2,
           rect.y + rect.height / 2,
+          maxWidth,
         );
 
         ctx.restore();
@@ -652,7 +658,8 @@ function Sheet(props) {
                   row: gridCell[1] + 1,
                   col_letter: column.col_letter,
                   value: cell.value,
-                  status: 0,
+                  error: cells[cell.id]?.error || null,
+                  status: cell.value ? 0 : cells[cell.id]?.status || 0,
                 },
               }));
 
@@ -713,6 +720,7 @@ function Sheet(props) {
             const { id, error } = event.cell;
             const cell = cells[id];
             if (cell) {
+              cell.status = 2;
               cell.error = error;
               setCells((cells) => ({
                 ...cells,
@@ -758,7 +766,11 @@ function Sheet(props) {
                 columns,
               )}`,
         ]);
-        setSelectedCellValue(cells[cellId]?.value || "");
+        setSelectedCellValue(
+          cells[cellId]?.status === 2
+            ? cells[cellId]?.error || ""
+            : cells[cellId]?.value || "",
+        );
         setSelectedCellId(cellId);
       } else {
         setSelectedCellValue("");
