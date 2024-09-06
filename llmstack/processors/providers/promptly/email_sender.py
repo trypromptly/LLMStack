@@ -40,6 +40,7 @@ class EmailSenderInput(Schema):
     text_body: Optional[str] = Field(default=None, json_schema_extra={"widget": "textarea"})
     html_body: Optional[str] = Field(default=None, json_schema_extra={"widget": "textarea"})
     attachments: Optional[List[str]] = Field(default=[], description="Email Attachments")
+    orignal_message_id: Optional[str] = Field(default=None, description="Mail Id that is being replied to")
 
 
 class EmailSenderConfigurations(Schema):
@@ -152,6 +153,11 @@ class EmailSenderProcessor(ApiProcessorInterface[EmailSenderInput, EmailSenderOu
         if not self._config.use_bcc:
             email_msg["To"] = recipient_emails
         email_msg["Subject"] = subject
+
+        if self._input.orignal_message_id:
+            # This is a reply email
+            email_msg["In-Reply-To"] = self._input.orignal_message_id
+            email_msg["References"] = self._input.orignal_message_id
 
         if text_content:
             email_msg.attach(MIMEText(text_content, "plain"))
