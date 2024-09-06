@@ -624,6 +624,9 @@ function Sheet(props) {
       const ws = new Ws(`${wsUrlPrefix}/sheets/${sheet.uuid}/run/${runId}`);
       if (ws) {
         wsRef.current = ws;
+        wsRef.current.setOnClose(() => {
+          setRunId(null);
+        });
         wsRef.current.setOnMessage((evt) => {
           const event = JSON.parse(evt.data);
 
@@ -727,7 +730,7 @@ function Sheet(props) {
         wsRef.current = null;
       }
     };
-  }, [runId, sheet?.uuid, wsUrlPrefix, gridColumns, columns, cells, numRows]);
+  }, [runId, sheet?.uuid, wsUrlPrefix, columns, cells, numRows]);
 
   const onGridSelectionChange = useCallback(
     (selection) => {
