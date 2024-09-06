@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple
 
-# from google.cloud import vision
+from google.cloud import vision
 from pydantic import BaseModel
 from striprtf.striprtf import rtf_to_text
 from unstructured.documents.elements import ElementMetadata, Text
@@ -99,7 +99,7 @@ class PageElement(BaseModel):
 
     @property
     def formatted_text(self):
-        if self.provider_data.get("type") == "Table":
+        if self.provider_data and self.provider_data.get("type") == "Table":
             if self.provider_data.get("metadata", {}).get("text_as_html"):
                 return table_html_to_text(self.provider_data.get("metadata", {}).get("text_as_html"))
         return self.text
@@ -135,9 +135,12 @@ class Page(BaseModel):
 
 class TextractResponse(BaseModel):
     pages: List[Page] = []
+    _full_text: Optional[str] = None
 
     @property
     def text(self):
+        if self._full_text:
+            return self._full_text
         return "\n".join([page.text for page in self.pages])
 
     @property
@@ -162,72 +165,148 @@ class TextExtractionService(ABC):
         pass
 
 
-# class GoogleVisionTextExtractionService(TextExtractionService):
-#     def __init__(self, credentials: Dict[str, Any], provider: str = "google") -> None:
-#         super().__init__(provider)
+class GoogleVisionTextExtractionService(TextExtractionService):
+    def __init__(self, service_account_json, provider: str = "google") -> None:
+        super().__init__(provider)
 
-#         try:
-#             self.client = vision.ImageAnnotatorClient.from_service_account_info(credentials)
-#         except Exception:
-#             raise ValueError("Invalid credentials")
+        try:
+            self.client = vision.ImageAnnotatorClient.from_service_account_info(service_account_json)
+        except Exception:
+            raise ValueError("Invalid credentials")
 
-#         text_detection = vision.Feature()
-#         text_detection.type_ = vision.Feature.Type.TEXT_DETECTION
-#         self._features = [text_detection]
+        text_deteection_feature = vision.Feature()
+        text_deteection_feature.type_ = vision.Feature.Type.TEXT_DETECTION
+        self._features = [text_deteection_feature]
 
-#     def extract_from_bytes(self, file: bytes, **kwargs) -> TextractResponse:
-#         request = vision.AnnotateImageRequest()
-#         image = vision.Image()
-#         image.content = file
-#         request.image = image
-#         request.features = self._features
+    def extract_from_bytes(self, file: bytes, **kwargs) -> TextractResponse:
+        request = vision.AnnotateImageRequest(image=vision.Image(content=file), features=self._features)
+        res = self.client.annotate_image(request)
 
-#         res = self.client.annotate_image(request)
+        response = TextractResponse(pages=[])
+        if res.full_text_annotation and False:
+            response._full_text = res.full_text_annotation.text
+            for page_number, annotated_page in enumerate(res.full_text_annotation.pages, start=1):
+                font_height = None
+                font_width = None
+                page = Page(page_no=page_number, width=annotated_page.width, height=annotated_page.height)
+                for annotated_page_block in annotated_page.blocks:
+                    if annotated_page_block.block_type == vision.Block.BlockType.TEXT:
+                        for annotated_page_block_paragraph in annotated_page_block.paragraphs:
+                            for annotated_page_block_paragraph_word in annotated_page_block_paragraph.words:
+                                word_text = ""
+                                word_height = abs(
+                                    annotated_page_block_paragraph_word.bounding_box.vertices[2].y
+                                    - annotated_page_block_paragraph_word.bounding_box.vertices[0].y
+                                )
+                                word_width = abs(
+                                    annotated_page_block_paragraph_word.bounding_box.vertices[1].x
+                                    - annotated_page_block_paragraph_word.bounding_box.vertices[0].x
+                                )
+                                for (
+                                    annotated_page_block_paragraph_word_symbol
+                                ) in annotated_page_block_paragraph_word.symbols:
+                                    if annotated_page_block_paragraph_word_symbol.text:
+                                        word_text += annotated_page_block_paragraph_word_symbol.text
+                                if word_text:
+                                    font_height = (
+                                        min(word_height, font_height)
+                                        if font_height
+                                        else word_height
+                                        if word_height
+                                        else None
+                                    )
+                                    font_width = (
+                                        min(int(word_width / len(word_text)), font_width)
+                                        if font_width
+                                        else (
+                                            int(word_width / len(word_text))
+                                            if int(word_width / len(word_text))
+                                            else None
+                                        )
+                                    )
+                                page_element = PageElement(
+                                    text=word_text,
+                                    coordinates=BoundingBox(
+                                        top_left=(
+                                            annotated_page_block_paragraph_word.bounding_box.vertices[0].x,
+                                            annotated_page_block_paragraph_word.bounding_box.vertices[0].y,
+                                        ),
+                                        top_right=(
+                                            annotated_page_block_paragraph_word.bounding_box.vertices[1].x,
+                                            annotated_page_block_paragraph_word.bounding_box.vertices[1].y,
+                                        ),
+                                        bottom_right=(
+                                            annotated_page_block_paragraph_word.bounding_box.vertices[2].x,
+                                            annotated_page_block_paragraph_word.bounding_box.vertices[2].y,
+                                        ),
+                                        bottom_left=(
+                                            annotated_page_block_paragraph_word.bounding_box.vertices[3].x,
+                                            annotated_page_block_paragraph_word.bounding_box.vertices[3].y,
+                                        ),
+                                    ),
+                                )
+                                page_element.set_midpoint_normalized(page.width, page.height)
+                                page.elements.append(page_element)
+                    elif annotated_page_block.block_type == vision.Block.BlockType.TABLE:
+                        pass
 
-#         annotations = res.text_annotations
-#         if len(annotations) == 0:
-#             return TextractResponse(annotations=[], pages=[], formatted_pages=[])
+                page.elements = sorted(
+                    page.elements, key=lambda x: (x.normalized_midpoint[1], x.normalized_midpoint[0])
+                )
+                page.font_height = math.ceil(font_height) if font_height else None
+                page.font_width = math.ceil(font_width) if font_width else None
+                response.pages.append(page)
 
-#         whole_text_box_max = annotations[0].bounding_poly.vertices[2]
-#         max_width = whole_text_box_max.x
-#         max_height = whole_text_box_max.y
+        elif res.text_annotations:
+            page_width = res.text_annotations[0].bounding_poly.vertices[2].x
+            page_height = res.text_annotations[0].bounding_poly.vertices[2].y
+            page = Page(page_no=1, width=page_width, height=page_height)
+            font_height = None
+            font_width = None
 
-#         result = TextractResponse()
-#         annotations = []
-#         for text in annotations[1:]:
-#             box = text.bounding_poly.vertices
+            for text_annotation in res.text_annotations[1:]:
+                if text_annotation.description:
+                    text_annotation_text = text_annotation.description
+                    box = text_annotation.bounding_poly.vertices
+                    font_height = (
+                        min(box[2].y - box[0].y, font_height)
+                        if font_height
+                        else box[2].y - box[0].y
+                        if box[2].y - box[0].y
+                        else None
+                    )
+                    font_width = (
+                        min((box[1].x - box[0].x) / len(text_annotation_text), font_width)
+                        if font_width
+                        else (
+                            (box[1].x - box[0].x) / len(text_annotation_text)
+                            if (box[1].x - box[0].x) / len(text_annotation_text)
+                            else None
+                        )
+                    )
+                    page_element = PageElement(
+                        text=text_annotation.description,
+                        coordinates=BoundingBox(
+                            top_left=(box[0].x, box[0].y),
+                            top_right=(box[1].x, box[1].y),
+                            bottom_right=(box[2].x, box[2].y),
+                            bottom_left=(box[3].x, box[3].y),
+                        ),
+                    )
+                    page_element.set_midpoint_normalized(page_width, page_height)
+                    page.elements.append(page_element)
+            page.elements = sorted(page.elements, key=lambda x: (x.normalized_midpoint[1], x.normalized_midpoint[0]))
+            page.font_height = math.ceil(font_height) if font_height else None
+            page.font_width = math.ceil(font_width) if font_width else None
+            response.pages.append(page)
 
-#             # use the bottom left coordinate as the "midpoint"
-#             midpoint = (box[3].x, box[3].y)
+        return response
 
-#             annotations.append(
-#                 ImageAnnotation(
-#                     text=text.description,
-#                     midpoint=midpoint,
-#                     midpoint_normalized=(midpoint[0] / max_width, midpoint[1] / max_height),
-#                     width=box[1].x - box[0].x,
-#                     height=box[2].y - box[0].y,
-#                 )
-#             )
+    def extract_from_uri(self, file_uri: bytes) -> TextractResponse:
+        from llmstack.common.utils.utils import validate_parse_data_uri
 
-#         annotations = list(
-#             sorted(
-#                 annotations,
-#                 key=lambda x: (
-#                     x.midpoint_normalized[1],
-#                     x.midpoint_normalized[0],
-#                 ),
-#             )
-#         )
-#         result.annotations = annotations
-
-#         return result
-
-#     def extract_from_uri(self, file_uri: bytes) -> TextractResponse:
-#         from llmstack.common.utils.utils import validate_parse_data_uri
-
-#         mime_type, filename, data = validate_parse_data_uri(file_uri)
-#         return super().extract_from_uri(data)
+        mime_type, filename, data = validate_parse_data_uri(file_uri)
+        return super().extract_from_uri(data)
 
 
 class PromptlyTextExtractionService(TextExtractionService):
