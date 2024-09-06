@@ -113,7 +113,6 @@ function Sheet(props) {
   const [columns, setColumns] = useState([]);
   const [gridColumns, setGridColumns] = useState([]);
   const [cells, setCells] = useState({});
-  const [formulaCells, setFormulaCells] = useState({});
   const [runId, setRunId] = useState(null);
   const [selectedGrid, setSelectedGrid] = useState([]);
   const [selectedColumnId, setSelectedColumnId] = useState(null);
@@ -351,7 +350,6 @@ function Sheet(props) {
           const { data } = response;
           setSheet(data);
           setCells(data?.cells || {});
-          setFormulaCells(data?.formula_cells || {});
           setSheetRunning(data?.running || false);
           setRunId(data?.run_id || null);
           setColumns(data?.columns || []);
@@ -386,7 +384,9 @@ function Sheet(props) {
       }
 
       setSelectedCellReadOnly(
-        columns[col].formula || columns[col].formula?.type === 0 || false,
+        Boolean(
+          columns[col].formula || columns[col].formula?.type === 0 || false,
+        ),
       );
     }
   }, [selectedCellId, columns, cells]);
@@ -476,17 +476,12 @@ function Sheet(props) {
         row.forEach((cellValue, colIndex) => {
           const currentRow = startRow + rowIndex;
           const currentCol = startCol + colIndex;
-          if (currentCol < gridColumns.length) {
-            const cellId = gridCellToCellId(
-              [currentCol, currentRow],
-              gridColumns,
-            );
+          if (currentCol < columns.length) {
+            const cellId = gridCellToCellId([currentCol, currentRow], columns);
             newCells[cellId] = {
-              kind: GridCellKind.Text,
-              display_data: cellValue,
-              data: cellValue,
-              row: currentRow + 1,
-              col: gridColumns[currentCol].col,
+              row: currentRow,
+              col_letter: columns[currentCol].col_letter,
+              value: cellValue,
             };
             maxRow = Math.max(maxRow, currentRow);
           }
@@ -508,13 +503,13 @@ function Sheet(props) {
 
       // Update cells in the grid
       const cellsToUpdate = Object.keys(newCells).map((cellId) => ({
-        cell: cellIdToGridCell(cellId, gridColumns),
+        cell: cellIdToGridCell(cellId, columns),
       }));
       sheetRef.current?.updateCells(cellsToUpdate);
 
       return true;
     },
-    [gridColumns, setUserChanges],
+    [columns, setUserChanges],
   );
 
   const onRowAppended = useCallback(() => {
@@ -692,7 +687,7 @@ function Sheet(props) {
         const { cell, range } = selection.current;
         const [col, row] = cell;
         const cellId = gridCellToCellId([col, row], columns);
-        const cellType = sheetCellTypes[columns[col].cell_type];
+
         setSelectedGrid([
           range.width === 1 && range.height === 1
             ? cellId
@@ -701,7 +696,7 @@ function Sheet(props) {
                 columns,
               )}`,
         ]);
-        setSelectedCellValue(cellType?.getCellDisplayData(cells[cellId]) || "");
+        setSelectedCellValue(cells[cellId]?.value || "");
         setSelectedCellId(cellId);
       } else {
         setSelectedCellValue("");
@@ -841,7 +836,7 @@ function Sheet(props) {
                     width: "20px",
                     height: "20px",
                     color:
-                      selectedCellId && formulaCells[selectedCellId]
+                      selectedCellId && cells[selectedCellId]?.formula
                         ? "green"
                         : "inherit",
                   }}
@@ -1025,11 +1020,13 @@ function Sheet(props) {
         onClose={() => setShowFormulaMenu(false)}
         cellId={selectedCellId}
         selectedCell={cells[selectedCellId]}
-        setFormula={(cellId, formulaData, spreadOutput = false) => {
+        setFormula={(cellId, formula, spreadOutput = false) => {
           const [col, row] = cellIdToGridCell(cellId, columns);
           const cellType = columns[col].cell_type;
 
-          if (!formulaData) {
+          console.log("formula", formula);
+
+          if (!formula) {
             setCells((prev) => {
               const newCells = { ...prev };
               newCells[cellId].formula = null;
@@ -1061,7 +1058,7 @@ function Sheet(props) {
               };
             }
 
-            newCells[cellId].formula = formulaData;
+            newCells[cellId].formula = formula;
             newCells[cellId].spread_output = spreadOutput;
             return newCells;
           });
@@ -1072,7 +1069,7 @@ function Sheet(props) {
               ...prev.cells,
               [cellId]: {
                 ...prev.cells[cellId],
-                formula: formulaData,
+                formula: formula,
                 spread_output: spreadOutput,
               },
             },

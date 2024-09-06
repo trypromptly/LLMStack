@@ -84,7 +84,8 @@ const SheetFormulaMenu = ({
     setFormula(cellId, newFormula, spreadOutput);
     formulaDataRef.current = null;
     setTransformationTemplate("");
-    setFormulaType(1);
+    setFormulaType("");
+    setFormulaData({});
     onClose();
   };
 
@@ -132,10 +133,7 @@ const SheetFormulaMenu = ({
                 onChange={(e) => {
                   setFormulaType(parseInt(e.target.value));
                   setFormulaData({});
-                  formulaDataRef.current = {
-                    data: {},
-                    type: parseInt(e.target.value),
-                  };
+                  formulaDataRef.current = {};
                 }}
               >
                 {Object.keys(sheetFormulaTypes).map((type) => (

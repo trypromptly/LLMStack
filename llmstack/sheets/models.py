@@ -144,6 +144,10 @@ class SheetCell(BaseModel):
 
             if formula_type == SheetFormulaType.PROCESSOR_RUN:
                 data["formula"] = SheetFormula(type=formula_type, data=ProcessorRunFormulaData(**formula_data))
+            elif formula_type == SheetFormulaType.DATA_TRANSFORMER:
+                data["formula"] = SheetFormula(type=formula_type, data=DataTransformerFormulaData(**formula_data))
+            elif formula_type == SheetFormulaType.APP_RUN:
+                data["formula"] = SheetFormula(type=formula_type, data=AppRunFormulaData(**formula_data))
             else:
                 data["formula"] = SheetFormula(type=SheetFormulaType.NONE, data=NoneFormulaData())
 

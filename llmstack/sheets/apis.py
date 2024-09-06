@@ -44,7 +44,7 @@ def _get_sheet_csv(columns, cells, total_rows):
         row_values = []
         for column in columns:
             cell = row_cells.get(f"{column.col_letter}{row}")
-            row_values.append(cell.value)
+            row_values.append(cell.value if cell else "")
 
         writer.writerow(row_values)
         yield output.getvalue()
@@ -142,33 +142,15 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         if "description" in request.data:
             sheet.data["description"] = request.data["description"]
 
-        # if "formula_cells" in request.data:
-        #     sheet.data["formula_cells"] = {
-        #         cell_id: PromptlySheetFormulaCell(**cell_data).model_dump()
-        #         for cell_id, cell_data in request.data["formula_cells"].items()
-        #     }
-
         if "columns" in request.data:
-            logger.info(f"Updating columns: {request.data['columns']}")
             sheet.data["columns"] = [SheetColumn(**column_data).model_dump() for column_data in request.data["columns"]]
-            # sheet.data["columns"] = {
-            #     column_data["col"]: PromptlySheetColumn(**column_data).model_dump()
-            #     for column_data in request.data["columns"].values()
-            # }
 
         sheet.save()
 
         if "cells" in request.data:
-            cell_objects = []
-            for cell_id, cell_data in request.data.get("cells", {}).items():
-                # Get the row and col from the cell_id
-                row, col = SheetCell.cell_id_to_row_and_col(cell_id)
-                cell_data["row"] = row
-                cell_data["col"] = col
+            cell_data = request.data.get("cells", {}).values()
 
-                cell_objects.append(cell_data)
-
-            cells = [SheetCell(**cell_data) for cell_data in cell_objects]
+            cells = [SheetCell(**cell_data) for cell_data in cell_data]
             sheet.save(cells=cells, update_fields=["data"])
 
         return DRFResponse(PromptlySheetSerializer(instance=sheet).data)

@@ -60,7 +60,6 @@ export function SheetColumnMenu({
   const setDataHandler = useCallback(
     (data) => {
       formulaDataRef.current = {
-        ...formulaDataRef.current,
         ...data,
       };
     },
@@ -257,13 +256,16 @@ export function SheetColumnMenu({
               {formulaType === 1 && (
                 <DataTransformerGeneratorWidget
                   label="Transformation Template"
-                  value={formulaData.current?.transformation_template}
-                  onChange={(value) =>
+                  value={formulaData?.transformation_template}
+                  onChange={(value) => {
                     setFormulaData({
-                      ...formulaData,
                       transformation_template: value,
-                    })
-                  }
+                    });
+                    formulaDataRef.current = {
+                      ...formulaDataRef.current,
+                      transformation_template: value,
+                    };
+                  }}
                   multiline
                   rows={4}
                   placeholder="Enter LiquidJS template"
@@ -276,9 +278,12 @@ export function SheetColumnMenu({
                 <AppRunForm
                   setData={(data) => {
                     setFormulaData({
-                      ...formulaData,
                       ...data,
                     });
+                    formulaDataRef.current = {
+                      ...formulaDataRef.current,
+                      ...data,
+                    };
                   }}
                   appSlug={formulaData.current?.app_slug}
                   appInput={formulaData.current?.input}
