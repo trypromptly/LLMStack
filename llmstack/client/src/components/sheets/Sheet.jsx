@@ -272,6 +272,7 @@ function Sheet(props) {
       const column = columns[col];
 
       if (!column) {
+        drawContent();
         return;
       }
 
@@ -279,16 +280,23 @@ function Sheet(props) {
       const cellId = `${colLetter}${row + 1}`;
       const cell = cells[cellId];
 
+      if (!cell || !cell.status) {
+        drawContent();
+      }
+
       if (cell?.status === 1) {
         // Add a dark yellow background to the cell
+        ctx.save();
         ctx.fillStyle = "rgba(255, 255, 0, 0.1)";
         ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+        ctx.restore();
 
         return;
       }
 
       if (cell?.status === 2) {
         // Visually indicate that the cell has an with a red background
+        ctx.save();
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
 
@@ -303,6 +311,7 @@ function Sheet(props) {
           rect.y + rect.height / 2,
         );
 
+        ctx.restore();
         return;
       }
 
