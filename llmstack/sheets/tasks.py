@@ -132,6 +132,9 @@ def _execute_cell(
                 output = hydrate_input(processor_output_template, processor_output)
             except Exception as e:
                 logger.error(f"Error rendering output template: {e}")
+                async_to_sync(channel_layer.group_send)(
+                    run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
+                )
                 output = ""
         else:
             output = response.get("output", "")
