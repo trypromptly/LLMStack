@@ -16,10 +16,9 @@ from llmstack.common.utils.sslr._client import LLM
 from llmstack.jobs.adhoc import ProcessingJob
 from llmstack.sheets.models import (
     PromptlySheet,
-    PromptlySheetCell,
-    PromptlySheetColumn,
-    PromptlySheetFormulaCell,
     PromptlySheetRunEntry,
+    SheetCell,
+    SheetColumn,
 )
 from llmstack.sheets.serializers import PromptlySheetSerializer
 from llmstack.sheets.yaml_loader import load_sheet_templates
@@ -44,8 +43,8 @@ def _get_sheet_csv(columns, cells, total_rows):
         # Create a list of cell values for this row, using an empty string if the cell doesn't exist
         row_values = []
         for column in columns:
-            cell = row_cells.get(f"{column.col}{row}")
-            row_values.append(cell.data.get("output", "") if isinstance(cell.data, dict) else cell.data if cell else "")
+            cell = row_cells.get(f"{column.col_letter}{row}")
+            row_values.append(cell.value)
 
         writer.writerow(row_values)
         yield output.getvalue()
@@ -102,8 +101,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
             profile_uuid=profile.uuid,
             data={
                 "description": request.data.get("description", ""),
-                "columns": request.data.get("columns", {}),
-                "formula_cells": request.data.get("formula_cells", {}),
+                "columns": [SheetColumn(**column_data).model_dump() for column_data in request.data.get("columns", [])],
                 "total_rows": request.data.get("total_rows", 0),
                 "total_columns": request.data.get("total_columns", 26),
             },
@@ -111,7 +109,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         )
 
         if "cells" in request.data:
-            cells = [PromptlySheetCell(**cell_data) for cell_data in request.data.get("cells", {}).values()]
+            cells = [SheetCell(**cell_data) for cell_data in request.data.get("cells", {}).values()]
             sheet.save(cells=cells, update_fields=["data"])
 
         return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
@@ -144,17 +142,19 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         if "description" in request.data:
             sheet.data["description"] = request.data["description"]
 
-        if "formula_cells" in request.data:
-            sheet.data["formula_cells"] = {
-                cell_id: PromptlySheetFormulaCell(**cell_data).model_dump()
-                for cell_id, cell_data in request.data["formula_cells"].items()
-            }
+        # if "formula_cells" in request.data:
+        #     sheet.data["formula_cells"] = {
+        #         cell_id: PromptlySheetFormulaCell(**cell_data).model_dump()
+        #         for cell_id, cell_data in request.data["formula_cells"].items()
+        #     }
 
         if "columns" in request.data:
-            sheet.data["columns"] = {
-                column_data["col"]: PromptlySheetColumn(**column_data).model_dump()
-                for column_data in request.data["columns"].values()
-            }
+            logger.info(f"Updating columns: {request.data['columns']}")
+            sheet.data["columns"] = [SheetColumn(**column_data).model_dump() for column_data in request.data["columns"]]
+            # sheet.data["columns"] = {
+            #     column_data["col"]: PromptlySheetColumn(**column_data).model_dump()
+            #     for column_data in request.data["columns"].values()
+            # }
 
         sheet.save()
 
@@ -162,13 +162,13 @@ class PromptlySheetViewSet(viewsets.ViewSet):
             cell_objects = []
             for cell_id, cell_data in request.data.get("cells", {}).items():
                 # Get the row and col from the cell_id
-                row, col = PromptlySheetCell.cell_id_to_row_and_col(cell_id)
+                row, col = SheetCell.cell_id_to_row_and_col(cell_id)
                 cell_data["row"] = row
                 cell_data["col"] = col
 
                 cell_objects.append(cell_data)
 
-            cells = [PromptlySheetCell(**cell_data) for cell_data in cell_objects]
+            cells = [SheetCell(**cell_data) for cell_data in cell_objects]
             sheet.save(cells=cells, update_fields=["data"])
 
         return DRFResponse(PromptlySheetSerializer(instance=sheet).data)

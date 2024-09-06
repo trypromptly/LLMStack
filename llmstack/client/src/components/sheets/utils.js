@@ -25,12 +25,12 @@ export const cellIdToGridCell = (cellId, columns) => {
   if (!match) return null;
   const [, colLetter, rowString] = match;
   const row = parseInt(rowString, 10) - 1;
-  const col = columns.findIndex((c) => c.col === colLetter);
+  const col = columns.findIndex((c) => c.col_letter === colLetter);
   return [col, row];
 };
 
 export const gridCellToCellId = (gridCell, columns) => {
   const [colIndex, rowIndex] = gridCell;
-  const colLetter = columns[colIndex].col;
+  const colLetter = columns[colIndex].col_letter;
   return `${colLetter}${rowIndex + 1}`;
 };

@@ -14,7 +14,6 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
     total_rows = serializers.SerializerMethodField()
     total_columns = serializers.SerializerMethodField()
     running = serializers.SerializerMethodField()
-    formula_cells = serializers.SerializerMethodField()
     run_id = serializers.SerializerMethodField()
 
     def get_cells(self, obj):
@@ -26,7 +25,7 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
         return cells
 
     def get_columns(self, obj):
-        return {col.col: col.model_dump() for col in obj.columns}
+        return obj.data.get("columns", [])
 
     def get_description(self, obj):
         return obj.data.get("description", "")
@@ -39,9 +38,6 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
 
     def get_running(self, obj):
         return obj.extra_data.get("running", False)
-
-    def get_formula_cells(self, obj):
-        return {cell_id: cell.model_dump() for cell_id, cell in obj.formula_cells.items()}
 
     def get_run_id(self, obj):
         return obj.extra_data.get("run_id", None)
@@ -59,6 +55,5 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "running",
-            "formula_cells",
             "run_id",
         ]

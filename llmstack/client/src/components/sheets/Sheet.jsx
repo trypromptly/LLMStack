@@ -19,11 +19,7 @@ import {
   GridCellKind,
   CompactSelection,
 } from "@glideapps/glide-data-grid";
-import {
-  SheetColumnMenu,
-  SheetColumnMenuButton,
-  sheetColumnTypes,
-} from "./SheetColumnMenu";
+import { SheetColumnMenu, SheetColumnMenuButton } from "./SheetColumnMenu";
 import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
 import { enqueueSnackbar } from "notistack";
@@ -39,6 +35,70 @@ import {
   cellIdToGridCell,
   gridCellToCellId,
 } from "./utils";
+import { getProviderIconImage } from "../apps/ProviderIcon";
+
+export const sheetFormulaTypes = {
+  1: {
+    value: "data_transformer",
+    label: "Data Transformer",
+    description: "Transform data using a LiquidJS template",
+  },
+  2: {
+    value: "app_run",
+    label: "App Run",
+    description: "Run an app to generate formula output",
+  },
+  3: {
+    value: "processor_run",
+    label: "Processor Run",
+    description: "Run a processor to generate formula output",
+  },
+};
+
+export const sheetCellTypes = {
+  0: {
+    label: "Text",
+    value: "text",
+    description: "Plain text content",
+    kind: GridCellKind.Text,
+    getDataGridCell: (cell, column) => {
+      if (!cell) {
+        return {
+          kind: GridCellKind.Text,
+          data: "",
+          displayData: "",
+          readonly: column?.formula?.type > 0 || false,
+          allowOverlay: true,
+          allowWrapping: true,
+        };
+      }
+
+      return {
+        kind: GridCellKind.Text,
+        data: cell.value,
+        displayData: cell.value ? cell.value.slice(0, 100) : "",
+        readonly: cell.formula || column.formula?.type > 0 || false,
+        allowOverlay: true,
+        allowWrapping: true,
+      };
+    },
+    getCellValue: (cell) => {
+      return cell.data;
+    },
+  },
+  1: {
+    label: "Number",
+    value: "number",
+    description: "Numeric values",
+    kind: GridCellKind.Number,
+  },
+  2: {
+    label: "URI",
+    value: "uri",
+    description: "Uniform Resource Identifier",
+    kind: GridCellKind.Uri,
+  },
+};
 
 const MemoizedSheetHeader = React.memo(SheetHeader);
 const MemoizedSheetColumnMenuButton = React.memo(SheetColumnMenuButton);
@@ -50,7 +110,7 @@ function Sheet(props) {
   const { sheetId } = props;
   const [sheetRunning, setSheetRunning] = useState(false);
   const [sheet, setSheet] = useState(null);
-  const [columns, setColumns] = useState({});
+  const [columns, setColumns] = useState([]);
   const [gridColumns, setGridColumns] = useState([]);
   const [cells, setCells] = useState({});
   const [formulaCells, setFormulaCells] = useState({});
@@ -111,99 +171,95 @@ function Sheet(props) {
 
   const getCellContent = useCallback(
     ([col, row]) => {
-      const column = gridColumns[col];
-      const colLetter = column.col;
-      const cell = cells[`${colLetter}${row + 1}`];
-      const columnType = sheetColumnTypes[column.type];
-      const displayData = columnType?.getCellDisplayData(cell) || "";
+      const column = columns[col];
+      const cell = cells[`${column.col_letter}${row + 1}`];
+      const sheetCellType = sheetCellTypes[column.cell_type];
 
-      return {
-        kind:
-          cell?.kind === GridCellKind.Loading
-            ? GridCellKind.Loading
-            : columnType?.kind || GridCellKind.Text,
-        displayData:
-          typeof displayData === "object"
-            ? JSON.stringify(displayData)
-            : displayData?.slice(0, 100),
-        data: columnType?.getCellData(cell) || "",
-        allowOverlay: true,
+      const defaultCell = {
+        kind: GridCellKind.Text,
+        data: "",
+        displayData: "",
+        readonly: false,
         allowWrapping: true,
-        skeletonWidth: column.width || 100,
-        skeletonWidthVariability: 100,
-        readonly:
-          columnType?.value === "processor_run" ||
-          columnType?.value === "app_run" ||
-          columnType?.value === "data_transformer",
+        allowOverlay: true,
       };
+
+      return sheetCellType?.getDataGridCell(cell, column) || defaultCell;
     },
-    [cells, gridColumns],
+    [cells, columns],
   );
 
-  const parseSheetColumnsIntoGridColumns = useCallback(
-    (columns) => {
-      if (!columns || typeof columns !== "object") {
-        return [];
-      }
+  const parseSheetColumnsIntoGridColumns = useCallback((columns) => {
+    if (!columns) {
+      return [];
+    }
 
-      const cols = Object.keys(columns).map((colLetter, index) => ({
-        col: colLetter,
-        title: columns[colLetter].title || "",
-        type: columns[colLetter].type || "text",
-        kind:
-          sheetColumnTypes[columns[colLetter].type]?.kind || GridCellKind.Text,
-        data: columns[colLetter].data || "",
+    const cols = columns.map((column) => {
+      return {
+        title: column.title || "",
+        colLetter: column.col_letter,
         hasMenu: true,
-        icon: colLetter,
-        width: columns[colLetter].width || 300,
-      }));
+        icon: column.col_letter,
+        width: column.width || 300,
+      };
+    });
 
-      // Sort columns by position and then by col letter
-      cols.sort((a, b) => {
-        if (a.position !== b.position) {
-          return a.position - b.position;
-        }
-        return columnLetterToIndex(a.col) - columnLetterToIndex(b.col);
-      });
-
-      // Find the last column and fill up to the end with empty columns
-      const lastColumn = cols[cols.length - 1];
-      const lastColumnIndex = lastColumn
-        ? columnLetterToIndex(lastColumn.col)
-        : -1;
-      for (let i = lastColumnIndex + 1; i < numColumns; i++) {
-        cols.push({
-          col: columnIndexToLetter(i),
-          title: "",
-          type: "text",
-          kind: GridCellKind.Text,
-          data: "",
-          hasMenu: true,
-          icon: columnIndexToLetter(i),
-          width: 300,
-        });
+    // Sort columns by position and then by col letter
+    cols.sort((a, b) => {
+      if (a.position !== b.position) {
+        return a.position - b.position;
       }
+      return (
+        columnLetterToIndex(a.colLetter) - columnLetterToIndex(b.colLetter)
+      );
+    });
 
-      return cols;
-    },
-    [numColumns],
-  );
+    return cols;
+  }, []);
 
   const drawCell = useCallback(
     (args, drawContent) => {
-      drawContent();
-
       const { ctx, rect, row, col } = args;
-      const column = gridColumns[col];
+      const column = columns[col];
 
       if (!column) {
         return;
       }
 
-      const colLetter = column.col;
+      const colLetter = column.col_letter;
       const cellId = `${colLetter}${row + 1}`;
+      const cell = cells[cellId];
 
-      const isFormulaCell = formulaCells[cellId];
+      if (cell?.status === 1) {
+        // Add a dark yellow background to the cell
+        ctx.fillStyle = "rgba(255, 255, 0, 0.1)";
+        ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+
+        return;
+      }
+
+      if (cell?.status === 2) {
+        // Visually indicate that the cell has an with a red background
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+
+        // Draw error message from cell.error
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(
+          cell.error || "Error",
+          rect.x + rect.width / 2,
+          rect.y + rect.height / 2,
+        );
+
+        return;
+      }
+
+      drawContent();
+
+      const isFormulaCell = cells[cellId]?.formula || false;
 
       if (!isFormulaCell) {
         return;
@@ -240,7 +296,7 @@ function Sheet(props) {
 
       ctx.restore();
     },
-    [formulaCells, gridColumns],
+    [cells, columns],
   );
 
   const drawHeader = useCallback(
@@ -249,18 +305,23 @@ function Sheet(props) {
 
       const { column, ctx, menuBounds } = args;
 
-      const gridColumn = gridColumns.find((c) => c.col === column.icon);
+      const gridColumn = columns.find((c) => c.col_letter === column.icon);
 
       if (!gridColumn) {
         return;
       }
-      const columnType = sheetColumnTypes[gridColumn.type];
 
-      if (!columnType) {
+      if (!gridColumn.formula || gridColumn.formula.type === 0) {
         return;
       }
 
-      const headerIconImage = columnType.getIconImage?.(gridColumn?.data);
+      const headerIconImage =
+        gridColumn.formula.type === 3
+          ? getProviderIconImage(
+              gridColumn.formula.data?.provider_slug || "promptly",
+              false,
+            )
+          : getProviderIconImage("promptly", false);
 
       if (headerIconImage) {
         // Draw this image on the canvas
@@ -279,7 +340,7 @@ function Sheet(props) {
         };
       }
     },
-    [gridColumns],
+    [columns],
   );
 
   useEffect(() => {
@@ -293,15 +354,14 @@ function Sheet(props) {
           setFormulaCells(data?.formula_cells || {});
           setSheetRunning(data?.running || false);
           setRunId(data?.run_id || null);
-          setColumns(data?.columns || {});
+          setColumns(data?.columns || []);
           setNumColumns(data?.total_columns || 26);
           setNumRows(data?.total_rows || 0);
           setUserChanges({
-            columns: {},
+            columns: [],
             cells: {},
             numRows: null,
             addedColumns: [],
-            formulaCells: {},
           });
         })
         .catch((error) => {
@@ -319,27 +379,22 @@ function Sheet(props) {
 
   useEffect(() => {
     if (selectedCellId) {
-      const [col] = cellIdToGridCell(selectedCellId, gridColumns);
+      const [col] = cellIdToGridCell(selectedCellId, columns);
 
-      if (!gridColumns[col]) {
+      if (col < 0) {
         return;
       }
 
-      const columnType = sheetColumnTypes[gridColumns[col].type];
-
       setSelectedCellReadOnly(
-        columnType?.value === "app_run" ||
-          columnType?.value === "processor_run" ||
-          columnType?.value === "data_transformer",
+        columns[col].formula || columns[col].formula?.type === 0 || false,
       );
     }
-  }, [selectedCellId, gridColumns]);
+  }, [selectedCellId, columns, cells]);
 
   const hasChanges = useMemo(() => {
     return (
-      Object.keys(userChanges?.columns || {}).length > 0 ||
+      Object.keys(userChanges?.columns || []).length > 0 ||
       Object.keys(userChanges?.cells || {}).length > 0 ||
-      Object.keys(userChanges?.formulaCells || {}).length > 0 ||
       userChanges?.numRows !== null ||
       userChanges?.addedColumns?.length > 0
     );
@@ -385,30 +440,30 @@ function Sheet(props) {
   const onCellEdited = useCallback(
     (cell, value) => {
       const [col, row] = cell;
-      const cellId = gridCellToCellId(cell, gridColumns);
+      const cellId = gridCellToCellId(cell, columns);
+      const column = columns[col];
+      const cellType = sheetCellTypes[column.cell_type];
+      const colLetter = column.col_letter;
 
-      setCells((prevCells) => {
-        const newCell = {
-          row: row + 1,
-          col: gridColumns[col]?.col,
-          kind:
-            sheetColumnTypes[gridColumns[col]?.type]?.kind || GridCellKind.Text,
-          data:
-            sheetColumnTypes[gridColumns[col]?.type]?.getCellDataFromValue(
-              value,
-            ) || "",
-        };
+      const cellValue = cellType?.getCellValue(value);
 
-        const newCells = {
-          ...prevCells,
-          [cellId]: newCell,
-        };
-        updateUserChanges("cells", cellId, value);
-        return newCells;
-      });
-      sheetRef.current?.updateCells([{ cell: cell }]);
+      const existingCell = cells[cellId] || {
+        row: row + 1,
+        col_letter: colLetter,
+      };
+      const newCell = {
+        ...existingCell,
+        value: cellValue,
+      };
+
+      setCells((prevCells) => ({
+        ...prevCells,
+        [cellId]: newCell,
+      }));
+      updateUserChanges("cells", cellId, newCell);
+      sheetRef.current?.updateCells([{ cell: newCell }]);
     },
-    [gridColumns, updateUserChanges, sheetRef],
+    [updateUserChanges, sheetRef, columns, cells],
   );
 
   const onPaste = useCallback(
@@ -464,13 +519,12 @@ function Sheet(props) {
 
   const onRowAppended = useCallback(() => {
     const newRowIndex = numRows + 1;
-    const newCells = gridColumns.reduce((acc, column) => {
-      const cellId = `${column.col}${newRowIndex}`;
+    const newCells = columns.reduce((acc, column) => {
+      const cellId = `${column.col_letter}${newRowIndex}`;
       acc[cellId] = {
-        kind: column.kind || GridCellKind.Text,
-        display_data: "",
+        type: column.cell_type || 0,
         row: newRowIndex,
-        col: column.col,
+        col_letter: column.col_letter,
       };
       return acc;
     }, {});
@@ -484,7 +538,7 @@ function Sheet(props) {
       setUserChanges((prev) => ({ ...prev, numRows: newNumRows }));
       return newNumRows;
     });
-  }, [numRows, gridColumns]);
+  }, [numRows, columns]);
 
   const saveSheet = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -492,18 +546,16 @@ function Sheet(props) {
         ...sheet,
         columns: columns,
         cells: cells,
-        formula_cells: formulaCells,
         total_rows: numRows,
       };
       axios()
         .patch(`/api/sheets/${sheet.uuid}`, updatedSheet)
         .then((response) => {
           setUserChanges({
-            columns: {},
+            columns: [],
             cells: {},
             numRows: null,
             addedColumns: [],
-            formulaCells: {},
           });
           enqueueSnackbar("Sheet saved successfully", { variant: "success" });
           resolve();
@@ -519,7 +571,7 @@ function Sheet(props) {
           reject(error);
         });
     });
-  }, [sheet, columns, cells, numRows, formulaCells]);
+  }, [sheet, columns, cells, numRows]);
 
   useEffect(() => {
     if (runId && !wsRef.current) {
@@ -532,36 +584,35 @@ function Sheet(props) {
 
           if (event.type === "cell.update") {
             const cell = event.cell;
-            const gridCell = cellIdToGridCell(cell.id, gridColumns);
-            if (gridCell) {
-              const [colIndex] = gridCell;
-              const column = gridColumns[colIndex];
-              const columnType = sheetColumnTypes[column.type];
+            const gridCell = cellIdToGridCell(cell.id, columns);
+            const column = columns[gridCell[0]];
 
+            if (gridCell) {
               setCells((cells) => ({
                 ...cells,
                 [cell.id]: {
                   ...cells[cell.id],
-                  kind: GridCellKind.Text,
-                  data: columnType?.getCellDataFromValue(cell.output),
-                  display_data: cell.output || "",
+                  row: gridCell[1] + 1,
+                  col_letter: column.col_letter,
+                  value: cell.value,
+                  status: 0,
                 },
               }));
 
-              setSelectedCellValue(cell.output || "");
+              setSelectedCellValue(cell.value || "");
 
               sheetRef.current?.updateCells([{ cell: gridCell }]);
               sheetRef.current?.scrollTo(gridCell[0], gridCell[1]);
             }
           } else if (event.type === "cell.updating") {
             const cell = event.cell;
-            const gridCell = cellIdToGridCell(cell.id, gridColumns);
+            const gridCell = cellIdToGridCell(cell.id, columns);
             if (gridCell) {
               setCells((cells) => ({
                 ...cells,
                 [cell.id]: {
                   ...cells[cell.id],
-                  kind: GridCellKind.Loading,
+                  status: 1,
                 },
               }));
 
@@ -602,7 +653,16 @@ function Sheet(props) {
             wsRef.current.close();
             wsRef.current = null;
           } else if (event.type === "cell.error") {
-            const { error } = event.cell;
+            const { id, error } = event.cell;
+            const cell = cells[id];
+            if (cell) {
+              cell.error = error;
+              setCells((cells) => ({
+                ...cells,
+                [id]: cell,
+              }));
+            }
+
             enqueueSnackbar(
               `Failed to execute cell ${event.cell?.id}: ${error}`,
               {
@@ -622,7 +682,7 @@ function Sheet(props) {
         wsRef.current = null;
       }
     };
-  }, [runId, sheet?.uuid, wsUrlPrefix, gridColumns]);
+  }, [runId, sheet?.uuid, wsUrlPrefix, gridColumns, columns, cells, numRows]);
 
   const onGridSelectionChange = useCallback(
     (selection) => {
@@ -631,19 +691,17 @@ function Sheet(props) {
       if (selection.current) {
         const { cell, range } = selection.current;
         const [col, row] = cell;
-        const cellId = gridCellToCellId([col, row], gridColumns);
-        const columnType = sheetColumnTypes[gridColumns[col].type];
+        const cellId = gridCellToCellId([col, row], columns);
+        const cellType = sheetCellTypes[columns[col].cell_type];
         setSelectedGrid([
           range.width === 1 && range.height === 1
             ? cellId
             : `${cellId}-${gridCellToCellId(
                 [col + range.width - 1, row + range.height - 1],
-                gridColumns,
+                columns,
               )}`,
         ]);
-        setSelectedCellValue(
-          columnType?.getCellDisplayData(cells[cellId]) || "",
-        );
+        setSelectedCellValue(cellType?.getCellDisplayData(cells[cellId]) || "");
         setSelectedCellId(cellId);
       } else {
         setSelectedCellValue("");
@@ -663,7 +721,7 @@ function Sheet(props) {
         setSelectedRows([]);
       }
     },
-    [gridColumns, cells],
+    [columns, cells],
   );
 
   const onCellContextMenu = useCallback((cell, event) => {
@@ -881,11 +939,7 @@ function Sheet(props) {
           }
           onCellEdited={onCellEdited}
           onHeaderMenuClick={(column, bounds) => {
-            setSelectedColumnId(
-              gridColumns.findIndex(
-                (c) => c.col === columnIndexToLetter(column),
-              ),
-            );
+            setSelectedColumnId(column);
             if (editColumnAnchorEl.current) {
               editColumnAnchorEl.current.style.position = "absolute";
               editColumnAnchorEl.current.style.left = `${bounds.x}px`;
@@ -916,34 +970,29 @@ function Sheet(props) {
       {showEditColumnMenu && (
         <MemoizedSheetColumnMenu
           onClose={() => setShowEditColumnMenu(false)}
-          column={
-            selectedColumnId !== null ? gridColumns[selectedColumnId] : null
-          }
+          column={selectedColumnId !== null ? columns[selectedColumnId] : null}
           open={showEditColumnMenu}
           setOpen={setShowEditColumnMenu}
           anchorEl={editColumnAnchorEl.current}
-          columns={gridColumns}
+          columns={columns}
           updateColumn={(column) => {
-            setColumns((columns) => {
-              const newColumns = { ...columns };
-              newColumns[column.col] = column;
-
-              updateUserChanges("columns", column.col, column);
-
-              return newColumns;
-            });
+            const newColumns = [...columns];
+            newColumns[selectedColumnId] = column;
+            setColumns(newColumns);
+            updateUserChanges("columns", selectedColumnId, column);
           }}
           deleteColumn={(column) => {
+            const colLetter = column.col_letter;
             setColumns((columns) => {
               const newColumns = { ...columns };
-              delete newColumns[column.col];
-              updateUserChanges("columns", column.col, null); // Mark column as deleted
+              delete newColumns[colLetter];
+              updateUserChanges("columns", colLetter, null); // Mark column as deleted
               return newColumns;
             });
             setCells((cells) => {
               const newCells = { ...cells };
               Object.keys(newCells).forEach((cellId) => {
-                if (newCells[cellId].col === column.col) {
+                if (newCells[cellId].col === colLetter) {
                   delete newCells[cellId];
                   updateUserChanges("cells", cellId, null); // Mark cell as deleted
                 }
@@ -961,7 +1010,9 @@ function Sheet(props) {
         onCopy={handleCellCopy}
         onPaste={handleCellPaste}
         onDelete={handleCellDelete}
-        isFormula={formulaCells[selectedCellId]}
+        isFormula={
+          cells[selectedCellId]?.formula && cells[selectedCellId]?.formula?.type
+        }
         readOnly={selectedCellReadOnly}
         onOpenFormula={() => {
           setCellMenuOpen(false);
@@ -973,34 +1024,58 @@ function Sheet(props) {
         open={showFormulaMenu}
         onClose={() => setShowFormulaMenu(false)}
         cellId={selectedCellId}
-        formulaCells={formulaCells}
-        setFormulaCell={(cellId, formulaData) => {
-          const [col, row] = cellIdToGridCell(cellId, gridColumns);
+        selectedCell={cells[selectedCellId]}
+        setFormula={(cellId, formulaData, spreadOutput = false) => {
+          const [col, row] = cellIdToGridCell(cellId, columns);
+          const cellType = columns[col].cell_type;
 
           if (!formulaData) {
-            setFormulaCells((prev) => {
-              const newFormulaCells = { ...prev };
-              delete newFormulaCells[cellId];
-              return newFormulaCells;
+            setCells((prev) => {
+              const newCells = { ...prev };
+              newCells[cellId].formula = null;
+              return newCells;
             });
             setUserChanges((prev) => ({
               ...prev,
-              formulaCells: { ...prev.formulaCells, [cellId]: null },
+              cells: {
+                ...prev.cells,
+                [cellId]: {
+                  ...prev.cells[cellId],
+                  formula: null,
+                  spread_output: false,
+                },
+              },
             }));
             return;
           }
 
-          setFormulaCells((prev) => ({
-            ...prev,
-            [cellId]: {
-              row: row + 1,
-              col: gridColumns[col]?.col,
-              formula: formulaData,
-            },
-          }));
+          setCells((prev) => {
+            const newCells = { ...prev };
+
+            if (!newCells[cellId]) {
+              newCells[cellId] = {
+                type: cellType,
+                row: row,
+                col_letter: columns[col].col_letter,
+                value: "",
+              };
+            }
+
+            newCells[cellId].formula = formulaData;
+            newCells[cellId].spread_output = spreadOutput;
+            return newCells;
+          });
+
           setUserChanges((prev) => ({
             ...prev,
-            formulaCells: { ...prev.formulaCells, [cellId]: formulaData },
+            cells: {
+              ...prev.cells,
+              [cellId]: {
+                ...prev.cells[cellId],
+                formula: formulaData,
+                spread_output: spreadOutput,
+              },
+            },
           }));
         }}
       />

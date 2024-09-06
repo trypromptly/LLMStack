@@ -15,46 +15,29 @@ import {
 import DataTransformerGeneratorWidget from "./DataTransformerGeneratorWidget";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
-
-const formulaTypes = {
-  data_transformer: {
-    value: "data_transformer",
-    label: "Data Transformer",
-    description: "Transform data using a LiquidJS template",
-  },
-  app_run: {
-    value: "app_run",
-    label: "App Run",
-    description: "Run an app to generate formula output",
-  },
-  processor_run: {
-    value: "processor_run",
-    label: "Processor Run",
-    description: "Run a processor to generate formula output",
-  },
-};
+import { sheetFormulaTypes } from "./Sheet";
 
 const SheetFormulaMenu = ({
   anchorEl,
   open,
   onClose,
   cellId,
-  formulaCells,
-  setFormulaCell,
+  selectedCell,
+  setFormula,
 }) => {
   const [formulaType, setFormulaType] = useState(
-    formulaCells[cellId]?.formula?.type || "",
+    selectedCell?.formula?.type || "",
   );
   const [transformationTemplate, setTransformationTemplate] = useState(
-    formulaCells[cellId]?.formula?.data?.transformation_template || "",
+    selectedCell?.formula?.data?.transformation_template || "",
   );
   const [formulaData, setFormulaData] = useState(
-    formulaCells[cellId]?.formula?.data || {},
+    selectedCell?.formula?.data || {},
   );
-  const formulaDataRef = React.useRef(
-    formulaCells[cellId]?.formula?.data || {},
+  const formulaDataRef = React.useRef(selectedCell?.formula?.data || {});
+  const [spreadOutput, setSpreadOutput] = useState(
+    selectedCell?.spread_output || false,
   );
-  const [spreadOutput, setSpreadOutput] = useState(false);
 
   const setDataHandler = useCallback(
     (data) => {
@@ -67,16 +50,14 @@ const SheetFormulaMenu = ({
   );
 
   useEffect(() => {
-    formulaDataRef.current = formulaCells[cellId]?.formula?.data || {};
-    setFormulaType(formulaCells[cellId]?.formula?.type || "");
+    formulaDataRef.current = selectedCell?.formula?.data || {};
+    setFormulaType(selectedCell?.formula?.type || "");
     setTransformationTemplate(
-      formulaCells[cellId]?.formula?.data?.transformation_template || "",
+      selectedCell?.formula?.data?.transformation_template || "",
     );
-    setFormulaData(formulaCells[cellId]?.formula?.data || {});
-    setSpreadOutput(
-      formulaCells[cellId]?.formula?.data?.spread_output || false,
-    );
-  }, [cellId, formulaCells, setFormulaData, setFormulaType]);
+    setFormulaData(selectedCell?.formula?.data || {});
+    setSpreadOutput(selectedCell?.spread_output || false);
+  }, [selectedCell]);
 
   const memoizedProcessorRunForm = useMemo(
     () => (
@@ -98,18 +79,17 @@ const SheetFormulaMenu = ({
       data: {
         ...formulaDataRef.current,
         transformation_template: transformationTemplate,
-        spread_output: spreadOutput,
       },
     };
-    setFormulaCell(cellId, newFormula);
+    setFormula(cellId, newFormula, spreadOutput);
     formulaDataRef.current = null;
     setTransformationTemplate("");
-    setFormulaType("data_transformer");
+    setFormulaType(1);
     onClose();
   };
 
   const handleClearFormula = () => {
-    setFormulaCell(cellId, null);
+    setFormula(cellId, null, false);
     onClose();
   };
 
@@ -149,24 +129,31 @@ const SheetFormulaMenu = ({
               </Typography>
               <Select
                 value={formulaType}
-                onChange={(e) => setFormulaType(e.target.value)}
+                onChange={(e) => {
+                  setFormulaType(parseInt(e.target.value));
+                  setFormulaData({});
+                  formulaDataRef.current = {
+                    data: {},
+                    type: parseInt(e.target.value),
+                  };
+                }}
               >
-                {Object.keys(formulaTypes).map((type) => (
-                  <MenuItem key={type} value={type}>
+                {Object.keys(sheetFormulaTypes).map((type) => (
+                  <MenuItem key={type} value={type.toString()}>
                     <Stack spacing={0}>
                       <Typography variant="body1">
-                        {formulaTypes[type].label}
+                        {sheetFormulaTypes[type].label}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {formulaTypes[type].description}
+                        {sheetFormulaTypes[type].description}
                       </Typography>
                     </Stack>
                   </MenuItem>
                 ))}
               </Select>
-              {(formulaType === "data_transformer" ||
-                formulaType === "app_run" ||
-                formulaType === "processor_run") && (
+              {(formulaType === 1 ||
+                formulaType === 2 ||
+                formulaType === 3) && (
                 <Typography variant="caption" color="text.secondary">
                   You can access the output from previous cell or a range of
                   cells using the cell ids. For example, <code>{"{{A1}}"}</code>{" "}
@@ -179,7 +166,7 @@ const SheetFormulaMenu = ({
                   &nbsp;
                 </Typography>
               )}
-              {formulaType === "data_transformer" && (
+              {formulaType === 1 && (
                 <>
                   <DataTransformerGeneratorWidget
                     label="Transformation Template"
@@ -194,7 +181,7 @@ const SheetFormulaMenu = ({
                   />
                 </>
               )}
-              {formulaType === "app_run" && (
+              {formulaType === 2 && (
                 <AppRunForm
                   setData={(data) => {
                     formulaDataRef.current = {
@@ -206,7 +193,7 @@ const SheetFormulaMenu = ({
                   appInput={formulaDataRef.current?.input}
                 />
               )}
-              {formulaType === "processor_run" && memoizedProcessorRunForm}
+              {formulaType === 3 && memoizedProcessorRunForm}
               {formulaType && (
                 <>
                   <FormControlLabel

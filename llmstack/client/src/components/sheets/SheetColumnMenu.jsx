@@ -2,8 +2,11 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Box,
   Button,
+  Checkbox,
+  FormControl,
   Grow,
   IconButton,
+  InputLabel,
   MenuItem,
   Paper,
   Popper,
@@ -13,11 +16,10 @@ import {
   Typography,
 } from "@mui/material";
 import { DeleteOutlined, AddOutlined } from "@mui/icons-material";
-import { GridCellKind, GridColumnIcon } from "@glideapps/glide-data-grid";
 import DataTransformerGeneratorWidget from "./DataTransformerGeneratorWidget";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
-import { getProviderIconImage } from "../apps/ProviderIcon";
+import { sheetCellTypes, sheetFormulaTypes } from "./Sheet";
 import "@glideapps/glide-data-grid/dist/index.css";
 
 const numberToLetters = (num) => {
@@ -27,94 +29,6 @@ const numberToLetters = (num) => {
     num = Math.floor(num / 26) - 1;
   }
   return letters;
-};
-
-export const sheetColumnTypes = {
-  text: {
-    value: "text",
-    label: "Text",
-    description: "Plain text content",
-    icon: GridColumnIcon.HeaderString,
-    kind: GridCellKind.Text,
-    getCellDataFromValue: (value) => value?.data || value || "",
-    getCellData: (cell) => cell?.data?.output || cell?.data || "",
-    getCellDisplayData: (cell) =>
-      typeof cell?.data === "object" ? cell?.data?.output : cell?.data || "",
-  },
-  number: {
-    value: "number",
-    label: "Number",
-    description: "Numeric values",
-    icon: GridColumnIcon.HeaderNumber,
-    kind: GridCellKind.Number,
-    getCellDataFromValue: (value) => value?.data || value || "",
-    getCellData: (cell) => cell?.data?.output || cell?.data || 0,
-    getCellDisplayData: (cell) => cell?.data?.toLocaleString() || "",
-  },
-  uri: {
-    value: "uri",
-    label: "URI",
-    description: "Uniform Resource Identifier",
-    icon: GridColumnIcon.HeaderUri,
-    kind: GridCellKind.Uri,
-    getCellDataFromValue: (value) => value?.data || "",
-    getCellData: (cell) => cell?.data?.output || cell?.data || "",
-    getCellDisplayData: (cell) => cell?.data?.output || cell?.data || "",
-  },
-  app_run: {
-    value: "app_run",
-    label: "App Run",
-    description: "Results from running an app",
-    icon: "app_run",
-    kind: GridCellKind.Text,
-    getCellDataFromValue: (value) => {
-      return {
-        output: value?.data,
-      };
-    },
-    getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
-    getCellDisplayData: (cell) =>
-      cell?.data?.output || cell?.display_data || "",
-    getIconImage: (columnData) => {
-      return getProviderIconImage("promptly", false);
-    },
-  },
-  processor_run: {
-    value: "processor_run",
-    label: "Processor Run",
-    description: "Results from running a processor",
-    icon: "processor_run",
-    getIconImage: (columnData) => {
-      return getProviderIconImage(columnData?.provider_slug, false);
-    },
-    kind: GridCellKind.Text,
-    getCellDataFromValue: (value) => {
-      return {
-        output: value?.data,
-      };
-    },
-    getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
-    getCellDisplayData: (cell) =>
-      cell?.data?.output || cell?.display_data || "",
-  },
-  data_transformer: {
-    value: "data_transformer",
-    label: "Data Transformer",
-    description: "Create new columns from existing columns",
-    icon: "data_transformer",
-    kind: GridCellKind.Text,
-    getCellDataFromValue: (value) => {
-      return {
-        output: value?.data,
-      };
-    },
-    getCellData: (cell) => cell?.data?.output || cell?.display_data || "",
-    getCellDisplayData: (cell) =>
-      cell?.data?.output || cell?.display_data || "",
-    getIconImage: (columnData) => {
-      return getProviderIconImage("promptly", false);
-    },
-  },
 };
 
 export function SheetColumnMenu({
@@ -128,66 +42,57 @@ export function SheetColumnMenu({
   setOpen,
 }) {
   const [columnName, setColumnName] = useState(column?.title || "");
-  const [columnType, setColumnType] = useState(GridCellKind.Text);
-  const columnRunData = useRef(column?.data || {});
-  const [transformData, setTransformData] = useState(false);
-  const [transformationTemplate, setTransformationTemplate] = useState("");
+  const [cellType, setCellType] = useState(0);
+  const [formulaType, setFormulaType] = useState(column?.formula?.type || "");
+  const [formulaData, setFormulaData] = useState(column?.formula?.data || {});
+  const [showFormulaTypeSelect, setShowFormulaTypeSelect] = useState(
+    column?.formula?.type ? true : false,
+  );
+  const formulaDataRef = useRef(column?.formula?.data || {});
 
   useEffect(() => {
-    setColumnType(column?.type || GridCellKind.Text);
+    setCellType(column?.cell_type || 0);
     setColumnName(column?.title || "");
-    columnRunData.current = column?.data || {};
-    setTransformData(!!column?.data?.transformation_template);
-    setTransformationTemplate(column?.data?.transformation_template || "");
+    setFormulaType(column?.formula?.type || "");
+    setFormulaData(column?.formula?.data || {});
   }, [column]);
 
   const setDataHandler = useCallback(
     (data) => {
-      columnRunData.current = {
-        ...columnRunData.current,
+      formulaDataRef.current = {
+        ...formulaDataRef.current,
         ...data,
       };
     },
-    [columnRunData],
+    [formulaDataRef],
   );
 
   const memoizedProcessorRunForm = useMemo(
     () => (
       <ProcessorRunForm
         setData={setDataHandler}
-        providerSlug={columnRunData.current?.provider_slug}
-        processorSlug={columnRunData.current?.processor_slug}
-        processorInput={columnRunData.current?.input}
-        processorConfig={columnRunData.current?.config}
-        processorOutputTemplate={columnRunData.current?.output_template}
+        providerSlug={formulaDataRef.current?.provider_slug}
+        processorSlug={formulaDataRef.current?.processor_slug}
+        processorInput={formulaDataRef.current?.input}
+        processorConfig={formulaDataRef.current?.config}
+        processorOutputTemplate={formulaDataRef.current?.output_template}
       />
     ),
-    [setDataHandler],
+    [formulaDataRef, setDataHandler],
   );
 
   const handleAddOrEditColumn = () => {
     const newColumn = {
-      col: column ? column.col : numberToLetters(columns.length),
+      col_letter: column ? column.col_letter : numberToLetters(columns.length),
       title: columnName || "New Column",
-      type: columnType,
-      kind: sheetColumnTypes[columnType]?.kind,
-      icon: sheetColumnTypes[columnType]?.icon,
-      hasMenu: column?.hasMenu || true,
+      cell_type: cellType,
       width: column?.width || 300,
-      data:
-        (columnType === "app_run" ||
-          columnType === "processor_run" ||
-          columnType === "data_transformer") &&
-        columnRunData.current
-          ? {
-              ...columnRunData.current,
-              transformation_template:
-                transformData || columnType === "data_transformer"
-                  ? transformationTemplate
-                  : undefined,
-              kind: columnType,
-            }
-          : {},
+      formula: showFormulaTypeSelect
+        ? {
+            type: formulaType,
+            data: formulaDataRef.current,
+          }
+        : null,
     };
 
     if (column) {
@@ -197,17 +102,21 @@ export function SheetColumnMenu({
     }
     setOpen(false);
     setColumnName("");
-    setColumnType(GridCellKind.Text);
-    columnRunData.current = {};
-    setTransformData(false);
-    setTransformationTemplate("");
+    setCellType(0);
+    formulaDataRef.current = {};
+    setFormulaType("");
+    setFormulaData({});
+    formulaDataRef.current = {};
   };
 
   const handleColumnDelete = () => {
     deleteColumn(column);
     setOpen(false);
     setColumnName("");
-    setColumnType(GridCellKind.Text);
+    setCellType(0);
+    setFormulaType("");
+    setFormulaData({});
+    formulaDataRef.current = {};
   };
 
   return (
@@ -261,30 +170,83 @@ export function SheetColumnMenu({
                 onChange={(e) => setColumnName(e.target.value)}
               />
               <Select
-                value={columnType}
+                value={cellType}
                 id="column-type-select"
-                aria-label="Column Type"
-                placeholder="Column Type"
-                helperText="Select the type of data this column will contain"
-                onChange={(e) => setColumnType(e.target.value)}
+                aria-label="Cell Type"
+                placeholder="Cell Type"
+                onChange={(e) => setCellType(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
               >
-                {Object.keys(sheetColumnTypes).map((type) => (
+                {Object.keys(sheetCellTypes).map((type) => (
                   <MenuItem key={type} value={type}>
                     <Stack spacing={0}>
                       <Typography variant="body1">
-                        {sheetColumnTypes[type].label}
+                        {sheetCellTypes[type].label}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {sheetColumnTypes[type].description}
+                        {sheetCellTypes[type].description}
                       </Typography>
                     </Stack>
                   </MenuItem>
                 ))}
               </Select>
-              {(columnType === "data_transformer" ||
-                columnType === "app_run" ||
-                columnType === "processor_run") && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  paddingTop: 2,
+                  paddingBottom: 2,
+                  cursor: "pointer",
+                }}
+                onClick={() => setShowFormulaTypeSelect(!showFormulaTypeSelect)}
+              >
+                <Checkbox
+                  checked={showFormulaTypeSelect}
+                  onChange={(e) => setShowFormulaTypeSelect(e.target.checked)}
+                  inputProps={{ "aria-label": "Add dynamic data" }}
+                  sx={{
+                    paddingLeft: 0,
+                    marginLeft: 0,
+                  }}
+                />
+                <Typography variant="body2">
+                  Populate column with a formula
+                </Typography>
+              </Box>
+              {showFormulaTypeSelect && (
+                <FormControl>
+                  <InputLabel id="formula-type-select-label">
+                    Formula Type
+                  </InputLabel>
+                  <Select
+                    value={formulaType}
+                    id="formula-type-select"
+                    aria-label="Formula Type"
+                    onChange={(e) => {
+                      setFormulaType(parseInt(e.target.value));
+                      formulaDataRef.current = {};
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    variant="filled"
+                    label="Formula Type"
+                  >
+                    {Object.keys(sheetFormulaTypes).map((type) => (
+                      <MenuItem key={type} value={type.toString()}>
+                        <Stack spacing={0}>
+                          <Typography variant="body1">
+                            {sheetFormulaTypes[type].label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {sheetFormulaTypes[type].description}
+                          </Typography>
+                        </Stack>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              {formulaType && (
                 <Typography variant="caption" color="text.secondary">
                   You can access the value of a cell in the current row using{" "}
                   <code>{"{{A}}"}</code>, where A is the column letter.
@@ -292,24 +254,16 @@ export function SheetColumnMenu({
                   &nbsp;
                 </Typography>
               )}
-              {columnType === "app_run" && (
-                <AppRunForm
-                  setData={(data) => {
-                    columnRunData.current = {
-                      ...columnRunData.current,
-                      ...data,
-                    };
-                  }}
-                  appSlug={columnRunData.current?.app_slug}
-                  appInput={columnRunData.current?.input}
-                />
-              )}
-              {columnType === "processor_run" && memoizedProcessorRunForm}
-              {columnType === "data_transformer" && (
+              {formulaType === 1 && (
                 <DataTransformerGeneratorWidget
                   label="Transformation Template"
-                  value={transformationTemplate}
-                  onChange={(value) => setTransformationTemplate(value)}
+                  value={formulaData.current?.transformation_template}
+                  onChange={(value) =>
+                    setFormulaData({
+                      ...formulaData,
+                      transformation_template: value,
+                    })
+                  }
                   multiline
                   rows={4}
                   placeholder="Enter LiquidJS template"
@@ -318,6 +272,19 @@ export function SheetColumnMenu({
                   }
                 />
               )}
+              {formulaType === 2 && (
+                <AppRunForm
+                  setData={(data) => {
+                    setFormulaData({
+                      ...formulaData,
+                      ...data,
+                    });
+                  }}
+                  appSlug={formulaData.current?.app_slug}
+                  appInput={formulaData.current?.input}
+                />
+              )}
+              {formulaType === 3 && memoizedProcessorRunForm}
               <Stack
                 direction="row"
                 spacing={2}
@@ -326,7 +293,11 @@ export function SheetColumnMenu({
                 <Button
                   sx={{ textTransform: "none" }}
                   variant="standard"
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    setOpen(false);
+                    setFormulaData({});
+                    setFormulaType("");
+                  }}
                 >
                   Cancel
                 </Button>

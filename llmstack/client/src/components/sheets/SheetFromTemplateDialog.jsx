@@ -18,6 +18,7 @@ import { axios } from "../../data/axios";
 import { useRecoilValue } from "recoil";
 import { sheetTemplatesSelector } from "../../data/atoms";
 import { columnIndexToLetter } from "./utils";
+
 export function SheetFromTemplateDialog({
   open,
   setOpen,
@@ -33,15 +34,15 @@ export function SheetFromTemplateDialog({
   const [sheetTemplate, setSheetTemplate] = useState("");
   const [sheetCells, setSheetCells] = useState({});
   const [sheetColumns, setSheetColumns] = useState(() => {
-    const columns = {};
+    const columns = [];
     for (let i = 0; i < 26; i++) {
       const letter = columnIndexToLetter(i);
-      columns[letter] = { title: "", col: letter, kind: "text", data: {} };
+      columns.push({ title: "", col_letter: letter, cell_type: 0 });
     }
     return columns;
   });
   const [sheetTotalColumns, setSheetTotalColumns] = useState(26);
-  const [sheetTotalRows, setSheetTotalRows] = useState(1);
+  const [sheetTotalRows, setSheetTotalRows] = useState(20);
   const sheetTemplates = useRecoilValue(sheetTemplatesSelector);
   const navigate = useNavigate();
 
@@ -91,9 +92,9 @@ export function SheetFromTemplateDialog({
       } else {
         newColumns[letter] = {
           title: "",
-          col: letter,
-          kind: "text",
-          data: {},
+          col_letter: letter,
+          cell_type: 0,
+          formula: {},
         };
       }
     }

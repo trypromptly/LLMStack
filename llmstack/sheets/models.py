@@ -5,7 +5,7 @@ import string
 import uuid
 from enum import Enum
 from functools import cache
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 from django.db import models
 from django.db.models.signals import post_delete
@@ -17,43 +17,76 @@ from llmstack.assets.models import Assets
 logger = logging.getLogger(__name__)
 
 
-class PromptlySheetColumnType(str, Enum):
-    TEXT = "text"
-    NUMBER = "number"
-    BOOLEAN = "boolean"
-    URI = "uri"
-    MARKDOWN = "markdown"
-    IMAGE = "image"
-    DATA_TRANSFORMER = "data_transformer"
-    APP_RUN = "app_run"
-    PROCESSOR_RUN = "processor_run"
+class SheetCellType(int, Enum):
+    TEXT = 0
+    NUMBER = 1
+    BOOLEAN = 2
+    IMAGE = 3
+    URI = 4
+    BUBBLE = 5
 
     def __str__(self):
         return self.value
 
 
-class PromptlySheetCellKind(str, Enum):
-    TEXT = "text"
-    NUMBER = "number"
-    BOOLEAN = "boolean"
-    IMAGE = "image"
-    URI = "uri"
-    MARKDOWN = "markdown"
-    LOADING = "loading"
-    CUSTOM = "custom"
+class SheetCellStatus(int, Enum):
+    READY = 0
+    PROCESSING = 1
+    ERROR = 2
 
     def __str__(self):
         return self.value
 
 
-class PromptlySheetColumn(BaseModel):
+class SheetFormulaType(int, Enum):
+    NONE = 0
+    DATA_TRANSFORMER = 1
+    APP_RUN = 2
+    PROCESSOR_RUN = 3
+
+    def __str__(self):
+        return self.value
+
+
+class SheetFormulaData(BaseModel):
+    pass
+
+
+class NoneFormulaData(SheetFormulaData):
+    pass
+
+
+class AppRunFormulaData(SheetFormulaData):
+    app_slug: str
+    input: dict = {}
+
+
+class ProcessorRunFormulaData(SheetFormulaData):
+    provider_slug: str
+    processor_slug: str
+    input: dict = {}
+    config: dict = {}
+    output_template: dict = {
+        "markdown": "",
+    }
+
+
+class DataTransformerFormulaData(SheetFormulaData):
+    transformation_template: str
+
+
+class SheetFormula(BaseModel):
+    type: SheetFormulaType = SheetFormulaType.NONE
+    data: Union[NoneFormulaData, AppRunFormulaData, ProcessorRunFormulaData, DataTransformerFormulaData]
+
+
+class SheetColumn(BaseModel):
     title: str
-    type: PromptlySheetColumnType = PromptlySheetColumnType.TEXT
-    kind: PromptlySheetCellKind = PromptlySheetCellKind.TEXT
-    data: dict = {}
-    col: str
+    col_letter: str
+    cell_type: SheetCellType = SheetCellType.TEXT
     position: int = 0
-    width: Optional[int] = None
+    width: int = 300
+    formula: Optional[SheetFormula] = None
 
     @staticmethod
     def column_index_to_letter(index):
@@ -69,45 +102,73 @@ class PromptlySheetColumn(BaseModel):
         return sum((ord(c) - 64) * (26**i) for i, c in enumerate(reversed(letter.upper()))) - 1
 
     def __init__(self, **data):
+        if "formula" in data and isinstance(data["formula"], dict):
+            formula_type = SheetFormulaType(data["formula"]["type"])
+            formula_data = data["formula"]["data"]
+
+            if formula_type == SheetFormulaType.PROCESSOR_RUN:
+                data["formula"] = SheetFormula(type=formula_type, data=ProcessorRunFormulaData(**formula_data))
+            elif formula_type == SheetFormulaType.APP_RUN:
+                data["formula"] = SheetFormula(type=formula_type, data=AppRunFormulaData(**formula_data))
+            elif formula_type == SheetFormulaType.DATA_TRANSFORMER:
+                data["formula"] = SheetFormula(type=formula_type, data=DataTransformerFormulaData(**formula_data))
+            else:
+                data["formula"] = SheetFormula(type=SheetFormulaType.NONE, data=NoneFormulaData())
+
+        if "cell_type" in data and isinstance(data["cell_type"], int):
+            data["cell_type"] = SheetCellType(data["cell_type"])
+
         super().__init__(**data)
-        if isinstance(self.col, int):
-            self.col = self.column_index_to_letter(self.col)
+        if isinstance(self.col_letter, int):
+            self.col_letter = self.column_index_to_letter(self.col_letter)
 
     class Config:
         json_encoders = {
-            PromptlySheetColumnType: lambda v: v.value,
+            SheetCellType: lambda v: v.value,
         }
 
 
-class PromptlySheetCell(BaseModel):
+class SheetCell(BaseModel):
     row: int
-    col: str
-    data: Optional[Any] = None
+    col_letter: str
+    status: SheetCellStatus = SheetCellStatus.READY
+    error: Optional[str] = None
+    value: Optional[Any] = None
+    formula: Optional[SheetFormula] = None
+    spread_output: bool = False
+
+    def __init__(self, **data):
+        if "formula" in data and isinstance(data["formula"], dict):
+            formula_type = SheetFormulaType(data["formula"]["type"])
+            formula_data = data["formula"]["data"]
+
+            if formula_type == SheetFormulaType.PROCESSOR_RUN:
+                data["formula"] = SheetFormula(type=formula_type, data=ProcessorRunFormulaData(**formula_data))
+            else:
+                data["formula"] = SheetFormula(type=SheetFormulaType.NONE, data=NoneFormulaData())
+
+        if "cell_type" in data and isinstance(data["cell_type"], int):
+            data["cell_type"] = SheetCellType(data["cell_type"])
+
+        super().__init__(**data)
+        if isinstance(self.col_letter, int):
+            self.col_letter = self.column_index_to_letter(self.col_letter)
 
     @property
     def cell_id(self):
-        return f"{self.col}{self.row}"
+        return f"{self.col_letter}{self.row}"
 
     @property
-    def is_output(self):
-        return bool(self.data.get("output")) if isinstance(self.data, dict) else bool(self.data)
+    def has_output(self):
+        return bool(self.value)
+
+    @property
+    def is_formula(self):
+        return bool(self.formula)
 
     @property
     def output(self):
-        return self.data.get("output") if isinstance(self.data, dict) else self.data
-
-    @staticmethod
-    def column_index_to_letter(index):
-        result = ""
-        while index > 0:
-            index -= 1
-            result = string.ascii_uppercase[index % 26] + result
-            index //= 26
-        return result or "A"
-
-    @staticmethod
-    def column_letter_to_index(letter):
-        return sum((ord(c) - 64) * (26**i) for i, c in enumerate(reversed(letter.upper()))) - 1
+        return self.value
 
     @classmethod
     def cell_id_to_row_and_col(cls, cell_id):
@@ -119,28 +180,6 @@ class PromptlySheetCell(BaseModel):
         row = int(number_part)
 
         return (row, letter_part)
-
-
-class PromptlySheetFormulaCellType(str, Enum):
-    DATA_TRANSFORMER = "data_transformer"
-    APP_RUN = "app_run"
-    PROCESSOR_RUN = "processor_run"
-
-    def __str__(self):
-        return self.value
-
-
-class PromptlySheetFormulaCellData(BaseModel):
-    type: PromptlySheetFormulaCellType = PromptlySheetFormulaCellType.DATA_TRANSFORMER
-    data: dict = {}
-
-
-class PromptlySheetFormulaCell(PromptlySheetCell):
-    formula: PromptlySheetFormulaCellData
-
-    @property
-    def spread_output(self):
-        return self.formula.data.get("spread_output", False)
 
 
 class PromptlySheetFiles(Assets):
@@ -179,9 +218,9 @@ def delete_sheet_data_objrefs(data_objrefs):
             pass
 
 
-def create_sheet_data_objrefs(cell_objs: List[PromptlySheetCell], sheet_name, sheet_uuid, page_size: int = 1000):
+def create_sheet_data_objrefs(cell_objs: List[SheetCell], sheet_name, sheet_uuid, page_size: int = 1000):
     # Sort the cells by row and columns
-    cells = sorted(cell_objs, key=lambda cell: (cell.row, cell.col))
+    cells = sorted(cell_objs, key=lambda cell: (cell.row, SheetColumn.column_letter_to_index(cell.col_letter)))
     max_rows = max(cell_objs, key=lambda cell: cell.row).row + 1
 
     for i in range(0, max_rows, page_size):
@@ -227,7 +266,7 @@ class PromptlySheet(models.Model):
                 data = json.load(f)
                 cell_items = data.items() if isinstance(data, dict) else enumerate(data)
                 for cell_id, cell_data in cell_items:
-                    cells[cell_id] = PromptlySheetCell(**cell_data)
+                    cells[cell_id] = SheetCell(**cell_data)
 
                 return cells
 
@@ -254,21 +293,8 @@ class PromptlySheet(models.Model):
         return cells
 
     @property
-    def formula_cells(self):
-        return {
-            cell_id: PromptlySheetFormulaCell(**cell) for cell_id, cell in self.data.get("formula_cells", {}).items()
-        }
-
-    @property
     def columns(self):
-        return sorted(
-            [
-                PromptlySheetColumn(**column)
-                for column in self.data.get("columns", {}).values()
-                if isinstance(column, dict)
-            ],
-            key=lambda x: (x.position, x.col),
-        )
+        return [SheetColumn(**column) for column in self.data.get("columns", [])]
 
     def update_total_rows(self, total_rows):
         self.data["total_rows"] = total_rows
@@ -319,10 +345,6 @@ class PromptlySheetRunEntry(models.Model):
         if not cell_objs:
             self.data = {"cells": []}
         else:
-            # Convert column letters to indices before saving
-            for cell in cell_objs:
-                cell.col = PromptlySheetCell.column_letter_to_index(cell.col)
-
             self.data = {
                 "cells": list(
                     create_sheet_data_objrefs(
