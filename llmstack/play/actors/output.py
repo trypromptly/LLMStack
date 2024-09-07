@@ -85,7 +85,7 @@ class OutputActor(Actor):
             yield {"errors": list(self._error.values())}
 
         if self._stopped:
-            yield {"errors": ["Timed out waiting for response"]}
+            yield {"errors": ["Output interrupted"]}
 
     def get_output_stream(self):
         while True:
