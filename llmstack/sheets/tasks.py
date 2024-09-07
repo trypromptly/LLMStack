@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import uuid
+from threading import Lock
 from typing import Any, Dict, List
 
 from asgiref.sync import async_to_sync
@@ -32,6 +33,9 @@ except ImportError:
 logger = logging.getLogger(__name__)
 channel_layer = get_channel_layer()
 sheet_run_data_store = get_redis_connection("sheet_run_data_store")
+
+# Add a global lock for thread-safe operations
+global_lock = Lock()
 
 
 def number_to_letters(num):
@@ -145,20 +149,8 @@ def _execute_cell(
         processed_output = ast.literal_eval(output)
         if isinstance(processed_output, list) and spread_output:
             output_cells = [
-                SheetCell(
-                    row=cell.row + i,
-                    col_letter=cell.col_letter,
-                    value=str(item),
-                )
+                SheetCell(row=cell.row + i, col_letter=cell.col_letter, value=str(item))
                 for i, item in enumerate(processed_output)
-            ]
-        elif isinstance(processed_output, str) and spread_output:
-            output_cells = [
-                SheetCell(
-                    row=cell.row,
-                    col_letter=cell.col_letter,
-                    value=str(processed_output),
-                )
             ]
         elif (
             isinstance(processed_output, list)
@@ -177,7 +169,7 @@ def _execute_cell(
                 for j, item in enumerate(row)
             ]
         else:
-            cell.value = str(output)
+            cell.value = str(processed_output if isinstance(processed_output, str) else output)
             output_cells = [cell]
     except Exception:
         cell.value = str(output)
@@ -284,7 +276,7 @@ def run_row(
     for current_col_index in range(subsheet_start, subsheet_end + 1):
         current_col = SheetColumn.column_index_to_letter(current_col_index)
         current_cell_id = f"{current_col}{current_row}"
-        previous_cell_id = f"{SheetColumn.column_index_to_letter(current_col_index - 1)}{current_row}"
+        previous_cell_id = f"{SheetColumn.column_index_to_letter(current_col_index)}{current_row}"
 
         if (
             previous_cell_id in existing_cells_dict
@@ -381,77 +373,97 @@ def run_sheet(sheet_uuid, run_entry_uuid, user_id, parallel_rows=4):
 
         subsheets = create_subsheets(formula_cells_dict, total_cols)
 
-        for subsheet_start, subsheet_end in subsheets:
-            valid_cells_in_row_from_prev_cols = []
-            row_step = 1 if subsheet_start == subsheet_end and subsheet_start in formula_cell_columns else parallel_rows
-            for current_row in range(1, total_rows + 1, row_step):
-                executed_cells = []
+        max_iterations = 100  # Prevent infinite loop
+        iteration = 0
 
-                # Prepare arguments for parallel execution
-                parallel_args = []
-                for row_index in range(current_row, min(current_row + row_step, total_rows + 1)):
-                    # Compute valid cells from previous subsheets
-                    valid_cells_in_row_from_prev_cols = [
-                        cell
-                        for cell in existing_cells_dict.values()
-                        if cell.row == row_index
-                        and SheetColumn.column_letter_to_index(cell.col_letter) < subsheet_start
-                        and cell.value
-                    ]
+        while iteration < max_iterations:
+            iteration += 1
+            sheet_grid_changed = False
 
-                    parallel_args.append(
-                        (
-                            row_index,
-                            subsheet_start,
-                            subsheet_end,
-                            existing_cells_dict,
-                            columns_dict,
-                            formula_cells_dict,
-                            sheet,
-                            run_entry,
-                            user,
-                            valid_cells_in_row_from_prev_cols,
+            for subsheet_start, subsheet_end in subsheets:
+                valid_cells_in_row_from_prev_cols = []
+                row_step = (
+                    1 if subsheet_start == subsheet_end and subsheet_start in formula_cell_columns else parallel_rows
+                )
+
+                for current_row in range(1, total_rows + 1, row_step):
+                    executed_cells = []
+
+                    # Prepare arguments for parallel execution
+                    parallel_args = []
+                    for row_index in range(current_row, min(current_row + row_step, total_rows + 1)):
+                        valid_cells_in_row_from_prev_cols = [
+                            cell
+                            for cell in existing_cells_dict.values()
+                            if cell.row == row_index
+                            and SheetColumn.column_letter_to_index(cell.col_letter) < subsheet_start
+                            and cell.value
+                        ]
+
+                        parallel_args.append(
+                            (
+                                row_index,
+                                subsheet_start,
+                                subsheet_end,
+                                existing_cells_dict,
+                                columns_dict,
+                                formula_cells_dict,
+                                sheet,
+                                run_entry,
+                                user,
+                                valid_cells_in_row_from_prev_cols,
+                            )
                         )
-                    )
 
-                # Execute run_row in parallel
-                with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-                    results = list(executor.map(lambda args: run_row(*args), parallel_args))
+                    # Execute run_row in parallel
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=min(8, len(parallel_args))) as executor:
+                        results = list(executor.map(lambda args: run_row(*args), parallel_args))
 
-                # Collect results
-                for result in results:
-                    if result:
-                        executed_cells.extend(result)
+                    # Collect results
+                    for result in results:
+                        if result:
+                            executed_cells.extend(result)
 
-                # Update the executed cells
-                for cell in executed_cells:
-                    existing_cells_dict[f"{cell.col_letter}{cell.row}"] = cell
+                    # Update the executed cells
+                    with global_lock:
+                        for cell in executed_cells:
+                            existing_cells_dict[f"{cell.col_letter}{cell.row}"] = cell
 
-                # Update total rows and cols if the executed cells are beyond the current grid
-                if executed_cells:
-                    sheet_grid_changed = False
-                    max_row_in_executed_cells = max(cell.row for cell in executed_cells)
-                    max_col_in_executed_cells = max(
-                        SheetColumn.column_letter_to_index(cell.col_letter) for cell in executed_cells
-                    )
-                    if total_rows < max_row_in_executed_cells:
-                        total_rows = max_row_in_executed_cells
-                        sheet_grid_changed = True
+                    # Update total rows and cols if the executed cells are beyond the current grid
+                    if executed_cells:
+                        max_row_in_executed_cells = max(cell.row for cell in executed_cells)
+                        max_col_in_executed_cells = max(
+                            SheetColumn.column_letter_to_index(cell.col_letter) for cell in executed_cells
+                        )
+                        if total_rows < max_row_in_executed_cells:
+                            total_rows = max_row_in_executed_cells
+                            sheet_grid_changed = True
 
-                    if total_cols < max_col_in_executed_cells:
-                        total_cols = max_col_in_executed_cells + 1
-                        sheet_grid_changed = True
+                        if total_cols < max_col_in_executed_cells:
+                            total_cols = max_col_in_executed_cells + 1
+                            sheet_grid_changed = True
 
-                    if sheet_grid_changed:
-                        # Recompute subsheets if new columns were added
-                        if total_cols > subsheet_end + 1:
-                            subsheets = create_subsheets(formula_cells_dict, total_cols)
-                            break
+            if not sheet_grid_changed:
+                break
+
+            # Recompute subsheets if the grid changed
+            subsheets = create_subsheets(formula_cells_dict, total_cols)
+
+        if iteration == max_iterations:
+            logger.warning("Maximum iterations reached. The sheet might not have fully converged.")
+
     except Exception as e:
         logger.exception("Error executing sheet")
-        return f"Error executing sheet: {str(e)}"
+        async_to_sync(channel_layer.group_send)(
+            str(run_entry.uuid),
+            {
+                "type": "sheet.error",
+                "error": f"Error executing sheet: {str(e)}",
+            },
+        )
+        return False
 
-    return "Success"
+    return True
 
 
 def update_sheet_with_post_run_data(sheet_uuid, run_uuid):
@@ -467,29 +479,37 @@ def update_sheet_with_post_run_data(sheet_uuid, run_uuid):
     total_cols = sheet.data.get("total_cols", 0)
     cells = sheet.cells
 
-    events = sheet_run_data_store.lrange(run_uuid, 0, -1)
+    # Process events in batches to avoid memory issues
+    batch_size = 1000
+    start = 0
+    while True:
+        events = sheet_run_data_store.lrange(run_uuid, start, start + batch_size - 1)
+        if not events:
+            break
 
-    for event in events:
-        try:
-            event = json.loads(event)
-        except json.JSONDecodeError:
-            logger.error(f"Error parsing event: {event}")
-            continue
+        for event in events:
+            try:
+                event = json.loads(event)
+            except json.JSONDecodeError:
+                logger.error(f"Error parsing event: {event}")
+                continue
 
-        if event["type"] == "cell.update":
-            cell_id = event["cell"]["id"]
-            (row, col_letter) = SheetCell.cell_id_to_row_and_col(cell_id)
-            cells[cell_id] = SheetCell(
-                row=row,
-                col_letter=col_letter,
-                value=event["cell"]["value"],
-                formula=cells[cell_id].formula if cell_id in cells else None,
-                spread_output=cells[cell_id].spread_output if cell_id in cells else False,
-            )
+            if event["type"] == "cell.update":
+                cell_id = event["cell"]["id"]
+                (row, col_letter) = SheetCell.cell_id_to_row_and_col(cell_id)
+                cells[cell_id] = SheetCell(
+                    row=row,
+                    col_letter=col_letter,
+                    value=event["cell"]["value"],
+                    formula=cells[cell_id].formula if cell_id in cells else None,
+                    spread_output=cells[cell_id].spread_output if cell_id in cells else False,
+                )
 
-        if event["type"] == "sheet.update":
-            total_rows = event["sheet"]["total_rows"]
-            total_cols = event["sheet"]["total_cols"]
+            if event["type"] == "sheet.update":
+                total_rows = max(total_rows, event["sheet"]["total_rows"])
+                total_cols = max(total_cols, event["sheet"]["total_cols"])
+
+        start += batch_size
 
     sheet.data["total_rows"] = total_rows
     sheet.data["total_cols"] = total_cols

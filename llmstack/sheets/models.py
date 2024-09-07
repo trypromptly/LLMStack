@@ -92,7 +92,6 @@ class SheetColumn(BaseModel):
     def column_index_to_letter(index):
         result = ""
         while index > 0:
-            index -= 1
             result = string.ascii_uppercase[index % 26] + result
             index //= 26
         return result or "A"
