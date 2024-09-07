@@ -15,6 +15,7 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
     total_columns = serializers.SerializerMethodField()
     running = serializers.SerializerMethodField()
     run_id = serializers.SerializerMethodField()
+    scheduled_run_config = serializers.SerializerMethodField()
 
     def get_cells(self, obj):
         cells = {}
@@ -42,6 +43,9 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
     def get_run_id(self, obj):
         return obj.extra_data.get("run_id", None)
 
+    def get_scheduled_run_config(self, obj):
+        return obj.extra_data.get("scheduled_run_config", None)
+
     class Meta:
         model = PromptlySheet
         fields = [
@@ -56,4 +60,5 @@ class PromptlySheetSerializer(serializers.ModelSerializer):
             "updated_at",
             "running",
             "run_id",
+            "scheduled_run_config",
         ]

@@ -26,6 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
 import { axios } from "../../data/axios";
 import PreviousRunsModal from "./PreviousRunsModal";
+import ScheduleRunsModal from "./ScheduleRunsModal";
 import SheetDeleteDialog from "./SheetDeleteDialog";
 import { useSetRecoilState } from "recoil";
 import { sheetsListSelector } from "../../data/atoms";
@@ -47,6 +48,7 @@ const SheetHeader = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const [open, setOpen] = useState(false);
   const [isPreviousRunsModalOpen, setIsPreviousRunsModalOpen] = useState(false);
+  const [isScheduleRunsModalOpen, setIsScheduleRunsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const setSheets = useSetRecoilState(sheetsListSelector);
   const [isSaving, setIsSaving] = useState(false);
@@ -286,6 +288,7 @@ const SheetHeader = ({
                       </MenuItem>
                       <MenuItem
                         onClick={() => {
+                          setIsScheduleRunsModalOpen(true);
                           setOpen(false);
                         }}
                       >
@@ -350,6 +353,13 @@ const SheetHeader = ({
         onClose={() => setIsPreviousRunsModalOpen(false)}
         sheetUuid={sheet.uuid}
       />
+      {isScheduleRunsModalOpen && (
+        <ScheduleRunsModal
+          open={isScheduleRunsModalOpen}
+          onClose={() => setIsScheduleRunsModalOpen(false)}
+          sheetUuid={sheet.uuid}
+        />
+      )}
       <SheetDeleteDialog
         open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}

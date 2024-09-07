@@ -133,6 +133,9 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         sheet.name = request.data.get("name", sheet.name)
         sheet.extra_data = request.data.get("extra_data", sheet.extra_data)
 
+        if "scheduled_run_config" in request.data:
+            sheet.extra_data["scheduled_run_config"] = request.data["scheduled_run_config"]
+
         if "total_rows" in request.data:
             sheet.data["total_rows"] = request.data["total_rows"]
 
