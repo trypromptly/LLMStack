@@ -139,6 +139,7 @@ class HTMLTranslationProcessor(
 
     def _translate_with_provider(self, chunk: str) -> str:
         json_input = json.loads(chunk)
+
         llm_client = get_llm_client_from_provider_config(
             str(self._config.provider_config.provider),
             self._config.provider_config.model.value,
@@ -159,7 +160,15 @@ class HTMLTranslationProcessor(
         if self._config.translation_guideline:
             translation_prompt += f"\nIn addition to the above instructions follow the following guidelines for translation {self._config.translation_guideline}"
 
-        translation_prompt += f"\n---\n{chunk}"
+        chunks_json = json.loads(chunk)
+        final_chunks_json = {}
+        for key, value in chunks_json.items():
+            if value.strip() == "":
+                # Skip empty strings
+                continue
+            final_chunks_json[key] = value
+
+        translation_prompt += f"\n---\n{json.dumps(final_chunks_json)}"
 
         messages = [
             {"role": "system", "content": self._config.system_message},

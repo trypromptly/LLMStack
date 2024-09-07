@@ -145,6 +145,7 @@ class StaticWebBrowser(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             interactive=self._config.stream_video,
             capture_screenshot=True,
+            html=True,
             tags_to_extract=self._config.tags_to_extract,
             session_data=(
                 self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
