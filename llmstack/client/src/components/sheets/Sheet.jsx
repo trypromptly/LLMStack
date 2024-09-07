@@ -394,13 +394,16 @@ function Sheet(props) {
 
         img.onload = () => {
           const pixelRatio = window.devicePixelRatio || 1;
+          ctx.save();
+          ctx.scale(pixelRatio, pixelRatio);
           ctx.drawImage(
             img,
-            (menuBounds.x - 10) * pixelRatio,
-            (menuBounds.y + 8) * pixelRatio,
-            (menuBounds.width - 15) * pixelRatio,
-            (menuBounds.height - 15) * pixelRatio,
+            menuBounds.x - 10,
+            menuBounds.y + 8,
+            menuBounds.width - 15,
+            menuBounds.height - 15,
           );
+          ctx.restore();
         };
       }
     },
@@ -529,6 +532,21 @@ function Sheet(props) {
       sheetRef.current?.updateCells([{ cell: newCell }]);
     },
     [updateUserChanges, sheetRef, columns, cells],
+  );
+
+  const onHeaderMenuClick = useCallback(
+    (column, bounds) => {
+      setSelectedColumnId(column);
+      if (editColumnAnchorEl.current) {
+        editColumnAnchorEl.current.style.position = "absolute";
+        editColumnAnchorEl.current.style.left = `${bounds.x}px`;
+        editColumnAnchorEl.current.style.top = `${bounds.y}px`;
+        editColumnAnchorEl.current.style.width = `${bounds.width}px`;
+        editColumnAnchorEl.current.style.height = `${bounds.height}px`;
+      }
+      setShowEditColumnMenu(!showEditColumnMenu);
+    },
+    [showEditColumnMenu],
   );
 
   const onPaste = useCallback(
@@ -1007,17 +1025,7 @@ function Sheet(props) {
             />
           }
           onCellEdited={onCellEdited}
-          onHeaderMenuClick={(column, bounds) => {
-            setSelectedColumnId(column);
-            if (editColumnAnchorEl.current) {
-              editColumnAnchorEl.current.style.position = "absolute";
-              editColumnAnchorEl.current.style.left = `${bounds.x}px`;
-              editColumnAnchorEl.current.style.top = `${bounds.y}px`;
-              editColumnAnchorEl.current.style.width = `${bounds.width}px`;
-              editColumnAnchorEl.current.style.height = `${bounds.height}px`;
-            }
-            setShowEditColumnMenu(!showEditColumnMenu);
-          }}
+          onHeaderMenuClick={onHeaderMenuClick}
           onColumnResize={(column, width) => {
             onColumnChange(
               gridColumns.findIndex((c) => c.col === column.col),
@@ -1036,42 +1044,40 @@ function Sheet(props) {
       </Box>
       <div id="portal" />
       <div id="sheet-column-menu" ref={editColumnAnchorEl} />
-      {showEditColumnMenu && (
-        <MemoizedSheetColumnMenu
-          onClose={() => setShowEditColumnMenu(false)}
-          column={selectedColumnId !== null ? columns[selectedColumnId] : null}
-          open={showEditColumnMenu}
-          setOpen={setShowEditColumnMenu}
-          anchorEl={editColumnAnchorEl.current}
-          columns={columns}
-          updateColumn={(column) => {
-            const newColumns = [...columns];
-            newColumns[selectedColumnId] = column;
-            setColumns(newColumns);
-            updateUserChanges("columns", selectedColumnId, column);
-          }}
-          deleteColumn={(column) => {
-            const colLetter = column.col_letter;
-            setColumns((columns) => {
-              const newColumns = { ...columns };
-              delete newColumns[colLetter];
-              updateUserChanges("columns", colLetter, null); // Mark column as deleted
-              return newColumns;
+      <MemoizedSheetColumnMenu
+        onClose={() => setShowEditColumnMenu(false)}
+        column={selectedColumnId !== null ? columns[selectedColumnId] : null}
+        open={showEditColumnMenu}
+        setOpen={setShowEditColumnMenu}
+        anchorEl={editColumnAnchorEl.current}
+        columns={columns}
+        updateColumn={(column) => {
+          const newColumns = [...columns];
+          newColumns[selectedColumnId] = column;
+          setColumns(newColumns);
+          updateUserChanges("columns", selectedColumnId, column);
+        }}
+        deleteColumn={(column) => {
+          const colLetter = column.col_letter;
+          setColumns((columns) => {
+            const newColumns = { ...columns };
+            delete newColumns[colLetter];
+            updateUserChanges("columns", colLetter, null); // Mark column as deleted
+            return newColumns;
+          });
+          setCells((cells) => {
+            const newCells = { ...cells };
+            Object.keys(newCells).forEach((cellId) => {
+              if (newCells[cellId].col === colLetter) {
+                delete newCells[cellId];
+                updateUserChanges("cells", cellId, null); // Mark cell as deleted
+              }
             });
-            setCells((cells) => {
-              const newCells = { ...cells };
-              Object.keys(newCells).forEach((cellId) => {
-                if (newCells[cellId].col === colLetter) {
-                  delete newCells[cellId];
-                  updateUserChanges("cells", cellId, null); // Mark cell as deleted
-                }
-              });
-              return newCells;
-            });
-            setSelectedColumnId(null);
-          }}
-        />
-      )}
+            return newCells;
+          });
+          setSelectedColumnId(null);
+        }}
+      />
       <MemoizedSheetCellMenu
         anchorEl={cellMenuAnchorEl}
         open={cellMenuOpen}
