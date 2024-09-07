@@ -148,7 +148,7 @@ const ScheduleRunsModal = ({ open, onClose, sheetUuid }) => {
           setExistingSchedule(response.data?.scheduled_run_config);
         });
     }
-  }, [setExistingSchedule]);
+  }, [setExistingSchedule, sheetUuid, open]);
 
   const handleSave = () => {
     let schedule_config = null;
