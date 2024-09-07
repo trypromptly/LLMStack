@@ -1,7 +1,9 @@
 import csv
 import io
+import json
 import logging
 import uuid
+from datetime import datetime
 
 import django_rq
 from django.http import StreamingHttpResponse
@@ -14,6 +16,7 @@ from rq import Callback
 from llmstack.base.models import Profile
 from llmstack.common.utils.sslr._client import LLM
 from llmstack.jobs.adhoc import ProcessingJob
+from llmstack.jobs.models import RepeatableJob
 from llmstack.sheets.models import (
     PromptlySheet,
     PromptlySheetRunEntry,
@@ -121,6 +124,13 @@ class PromptlySheetViewSet(viewsets.ViewSet):
 
         # Delete associated PromptlySheetRunEntry entries
         PromptlySheetRunEntry.objects.filter(sheet_uuid=sheet.uuid).delete()
+        if sheet.extra_data.get("scheduled_run_config"):
+            repeat_job_id = sheet.extra_data["scheduled_run_config"]["job_id"]
+            try:
+                job = RepeatableJob.objects.get(uuid=repeat_job_id)
+                job.delete()
+            except RepeatableJob.DoesNotExist:
+                pass
 
         sheet.delete()
 
@@ -134,7 +144,48 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         sheet.extra_data = request.data.get("extra_data", sheet.extra_data)
 
         if "scheduled_run_config" in request.data:
-            sheet.extra_data["scheduled_run_config"] = request.data["scheduled_run_config"]
+            if request.data["scheduled_run_config"] is None and sheet.extra_data.get("scheduled_run_config"):
+                # We are deleting a scheduled run, delete the job
+                repeat_job_id = sheet.extra_data["scheduled_run_config"]["job_id"]
+                try:
+                    job = RepeatableJob.objects.get(uuid=repeat_job_id)
+                    job.delete()
+                except RepeatableJob.DoesNotExist:
+                    pass
+                sheet.extra_data["scheduled_run_config"] = None
+            elif request.data["scheduled_run_config"]:
+                # Create a new job
+                scheduled_time = datetime.strptime(
+                    request.data["scheduled_run_config"]["start_time"].replace("Z", "+00:00"),
+                    "%Y-%m-%dT%H:%M:%S.%f%z",
+                )
+                job_args = {
+                    "name": f"Sheet_{sheet.name[:4]}_automated_run_{sheet.uuid}",
+                    "callable": "llmstack.sheets.tasks.scheduled_run_sheet",
+                    "callable_args": json.dumps([str(sheet.uuid), request.user.id]),
+                    "callable_kwargs": json.dumps({}),
+                    "enabled": True,
+                    "queue": "sheets",
+                    "result_ttl": 86400,
+                    "owner": request.user,
+                    "scheduled_time": scheduled_time,
+                    "task_category": "data_refresh",
+                }
+                repeat_interval = 7 if request.data["scheduled_run_config"]["type"] == "weekly" else 1
+                job = RepeatableJob(
+                    interval=repeat_interval,
+                    interval_unit="days",
+                    **job_args,
+                )
+                job.save()
+                scheduled_run_config = {}
+                scheduled_run_config["job_id"] = str(job.uuid)
+                scheduled_run_config["start_time"] = request.data["scheduled_run_config"]["start_time"]
+                scheduled_run_config["type"] = request.data["scheduled_run_config"]["type"]
+                scheduled_run_config["time"] = request.data["scheduled_run_config"]["time"]
+                if "day" in request.data["scheduled_run_config"]:
+                    scheduled_run_config["day"] = request.data["scheduled_run_config"]["day"]
+                sheet.extra_data["scheduled_run_config"] = scheduled_run_config
 
         if "total_rows" in request.data:
             sheet.data["total_rows"] = request.data["total_rows"]

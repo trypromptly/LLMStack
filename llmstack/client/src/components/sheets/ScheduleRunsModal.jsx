@@ -29,6 +29,48 @@ const daysOfWeek = [
   "Sunday",
 ];
 
+const calculateStart = ({ time, scheduleType, day }) => {
+  const now = new Date();
+  const [hours, minutes] = time.split(":").map(Number);
+
+  // Set the current time with the selected time
+  const selectedTime = new Date(now);
+  selectedTime.setHours(hours, minutes, 0, 0);
+
+  if (scheduleType === "daily") {
+    // If the selected time is in the future today, use today
+    if (selectedTime > now) {
+      return selectedTime;
+    }
+    // Otherwise, use tomorrow
+    const nextDay = new Date(now);
+    nextDay.setDate(now.getDate() + 1);
+    nextDay.setHours(hours, minutes, 0, 0);
+    return nextDay;
+  }
+
+  if (scheduleType === "weekly") {
+    // Get the index of the selected day (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const targetDay = daysOfWeek.indexOf(day);
+    const todayDay = now.getDay();
+    const daysUntilNext = (targetDay - todayDay + 7) % 7 || 7; // Days until the next target day
+
+    // Set the next occurrence of the target day
+    const nextWeekDay = new Date(now);
+    nextWeekDay.setDate(now.getDate() + daysUntilNext);
+    nextWeekDay.setHours(hours, minutes, 0, 0);
+
+    // If the selected time is in the future today, use today
+    if (daysUntilNext === 0 && selectedTime > now) {
+      return selectedTime;
+    }
+
+    return nextWeekDay;
+  }
+
+  return null;
+};
+
 const ScheduleForm = ({
   scheduleType,
   setScheduleType,
@@ -117,6 +159,7 @@ const ScheduleRunsModal = ({ open, onClose, sheetUuid }) => {
       // Create new schedule
       schedule_config = {
         type: scheduleType,
+        start_time: calculateStart({ time, scheduleType, day }),
         time,
         ...(scheduleType === "weekly" && { day }),
       };

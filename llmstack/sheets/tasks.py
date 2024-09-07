@@ -345,6 +345,17 @@ def run_row(
     return executed_cells
 
 
+def scheduled_run_sheet(sheet_uuid, user_id):
+    sheet = PromptlySheet.objects.get(uuid=sheet_uuid)
+    if sheet.is_locked:
+        return "Sheet is locked"
+
+    run_entry = PromptlySheetRunEntry(sheet_uuid=sheet.uuid, profile_uuid=sheet.profile_uuid)
+    run_entry.save()
+
+    return run_sheet(sheet_uuid, str(run_entry.uuid), user_id)
+
+
 def run_sheet(sheet_uuid, run_entry_uuid, user_id, parallel_rows=4):
     try:
         sheet = PromptlySheet.objects.get(uuid=sheet_uuid)
