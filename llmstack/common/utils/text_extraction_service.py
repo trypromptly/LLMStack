@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from google.cloud import vision
 from pydantic import BaseModel
 from striprtf.striprtf import rtf_to_text
-from unstructured.documents.elements import ElementMetadata, Text
+from unstructured.documents.elements import ElementMetadata, PageBreak, Text
 from unstructured.partition.auto import partition_html
 from unstructured.partition.doc import partition_doc
 from unstructured.partition.docx import partition_docx
@@ -337,25 +337,15 @@ class PromptlyTextExtractionService(TextExtractionService):
         elements = []
         pages = {}
         if mime_type == "application/pdf":
-            elements = partition_pdf(file=data_fp)
+            elements = partition_pdf(file=data_fp, include_page_breaks=True, infer_table_structure=True)
         elif mime_type == "application/rtf" or mime_type == "text/rtf":
             elements = partition_text(text=rtf_to_text(file.decode("utf-8")))
         elif mime_type == "text/plain":
             elements = partition_text(text=file.decode("utf-8"))
         elif mime_type == "application/json":
-            elements = [
-                Text(
-                    text=file.decode("utf-8"),
-                    metadata=ElementMetadata(filename=file_name),
-                ),
-            ]
+            elements = [Text(text=file.decode("utf-8"), metadata=ElementMetadata(filename=file_name))]
         elif mime_type == "text/csv" or mime_type == "application/csv":
-            elements = [
-                Text(
-                    text=file.decode("utf-8"),
-                    metadata=ElementMetadata(filename=file_name),
-                ),
-            ]
+            elements = [Text(text=file.decode("utf-8"), metadata=ElementMetadata(filename=file_name))]
         elif mime_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
             elements = partition_xlsx(file=data_fp)
         elif mime_type == "application/msword":
@@ -364,10 +354,6 @@ class PromptlyTextExtractionService(TextExtractionService):
             elements = partition_docx(file=data_fp)
         elif mime_type == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
             elements = partition_pptx(file=data_fp)
-        elif mime_type == "application/vnd.ms-powerpoint":
-            raise Exception(
-                "Unsupported file type .ppt please convert it to .pptx",
-            )
         elif mime_type == "image/jpeg" or mime_type == "image/png":
             elements = partition_image(file=data_fp)
         elif mime_type == "text/html":
@@ -375,7 +361,7 @@ class PromptlyTextExtractionService(TextExtractionService):
         elif mime_type == "application/epub+zip":
             elements = partition_epub(file=data_fp)
         elif mime_type == "text/markdown":
-            elements = partition_md(text=file.decode("utf-8"))
+            elements = partition_md(text=file.decode("utf-8"), include_page_breaks=True)
         else:
             raise Exception("Unsupported file type")
 
@@ -384,8 +370,12 @@ class PromptlyTextExtractionService(TextExtractionService):
 
         font_height = None
         font_width = None
+        page_number = 1
         for element in elements:
-            page_number = element.metadata.page_number or 1
+            if isinstance(element, PageBreak):
+                page_number += 1
+                continue
+            page_number = element.metadata.page_number or page_number
             if page_number not in pages:
                 pages[page_number] = Page(
                     page_no=page_number,
