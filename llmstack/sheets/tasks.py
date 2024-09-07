@@ -4,7 +4,7 @@ import json
 import logging
 import re
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -44,31 +44,21 @@ def number_to_letters(num):
 
 def _execute_cell(
     cell: SheetCell,
-    column: Optional[SheetColumn],
     input_values: Dict[str, Any],
     sheet: PromptlySheet,
     run_id: str,
     user: User,
 ) -> List[SheetCell]:
-    is_formula_cell = cell.is_formula
-    if (
-        not is_formula_cell
-        and not column.formula
-        and column.formula.type
-        not in [
-            SheetFormulaType.APP_RUN,
-            SheetFormulaType.PROCESSOR_RUN,
-            SheetFormulaType.DATA_TRANSFORMER,
-        ]
-    ):
+    if not cell.formula:
         return [cell]
 
     async_to_sync(channel_layer.group_send)(run_id, {"type": "cell.updating", "cell": {"id": cell.cell_id}})
 
     output = None
     output_cells = []
-    formula_type = column.formula.type if not is_formula_cell else cell.formula.type
-    formula_data = column.formula.data if not is_formula_cell else cell.formula.data
+    formula_type = cell.formula.type
+    formula_data = cell.formula.data
+    spread_output = cell.spread_output
 
     if formula_type == SheetFormulaType.APP_RUN:
         app_slug = formula_data.app_slug
@@ -151,50 +141,46 @@ def _execute_cell(
         else:
             output = ""
 
-    if is_formula_cell:
-        try:
-            processed_output = ast.literal_eval(output)
-            if isinstance(processed_output, list) and cell.spread_output:
-                output_cells = [
-                    SheetCell(
-                        row=cell.row + i,
-                        col_letter=cell.col_letter,
-                        value=str(item),
-                    )
-                    for i, item in enumerate(processed_output)
-                ]
-            elif isinstance(processed_output, str) and cell.spread_output:
-                output_cells = [
-                    SheetCell(
-                        row=cell.row,
-                        col_letter=cell.col_letter,
-                        value=str(processed_output),
-                    )
-                ]
-            elif (
-                isinstance(processed_output, list)
-                and cell.spread_output
-                and all(isinstance(item, list) for item in processed_output)
-            ):
-                output_cells = [
-                    SheetCell(
-                        row=cell.row + i,
-                        col_letter=SheetColumn.column_index_to_letter(
-                            SheetColumn.column_letter_to_index(cell.col_letter) + j
-                        ),
-                        value=str(item),
-                    )
-                    for i, row in enumerate(processed_output)
-                    for j, item in enumerate(row)
-                ]
-            else:
-                cell.value = str(output)
-                output_cells = [cell]
-        except Exception:
+    try:
+        processed_output = ast.literal_eval(output)
+        if isinstance(processed_output, list) and spread_output:
+            output_cells = [
+                SheetCell(
+                    row=cell.row + i,
+                    col_letter=cell.col_letter,
+                    value=str(item),
+                )
+                for i, item in enumerate(processed_output)
+            ]
+        elif isinstance(processed_output, str) and spread_output:
+            output_cells = [
+                SheetCell(
+                    row=cell.row,
+                    col_letter=cell.col_letter,
+                    value=str(processed_output),
+                )
+            ]
+        elif (
+            isinstance(processed_output, list)
+            and cell.spread_output
+            and all(isinstance(item, list) for item in processed_output)
+        ):
+            output_cells = [
+                SheetCell(
+                    row=cell.row + i,
+                    col_letter=SheetColumn.column_index_to_letter(
+                        SheetColumn.column_letter_to_index(cell.col_letter) + j
+                    ),
+                    value=str(item),
+                )
+                for i, row in enumerate(processed_output)
+                for j, item in enumerate(row)
+            ]
+        else:
             cell.value = str(output)
             output_cells = [cell]
-    else:
-        cell.value = output
+    except Exception:
+        cell.value = str(output)
         output_cells = [cell]
 
     total_rows = sheet.data.get("total_rows", 0)
@@ -322,7 +308,6 @@ def run_row(
             executed_cells.extend(
                 _execute_cell(
                     formula_cells_dict[current_cell_id],
-                    None,
                     input_values,
                     sheet,
                     str(run_entry.uuid),
@@ -332,12 +317,7 @@ def run_row(
         elif (
             current_col in columns_dict
             and columns_dict[current_col].formula
-            and columns_dict[current_col].formula.type
-            in [
-                SheetFormulaType.DATA_TRANSFORMER,
-                SheetFormulaType.APP_RUN,
-                SheetFormulaType.PROCESSOR_RUN,
-            ]
+            and columns_dict[current_col].formula.type != SheetFormulaType.NONE
             and valid_cells_in_row
         ):
             input_values = process_cell_references(columns_dict[current_col].formula.data, existing_cells_dict)
@@ -349,11 +329,12 @@ def run_row(
                 row=current_row,
                 col_letter=current_col,
                 value=columns_dict[current_col].formula.data,
+                formula=columns_dict[current_col].formula,
+                spread_output=False,
             )
             executed_cells.extend(
                 _execute_cell(
                     cell_to_execute,
-                    columns_dict[current_col],
                     input_values,
                     sheet,
                     str(run_entry.uuid),
