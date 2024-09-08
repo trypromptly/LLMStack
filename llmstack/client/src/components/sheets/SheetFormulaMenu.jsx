@@ -15,7 +15,12 @@ import {
 import DataTransformerGeneratorWidget from "./DataTransformerGeneratorWidget";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
-import { sheetFormulaTypes } from "./Sheet";
+import {
+  sheetFormulaTypes,
+  SHEET_FORMULA_TYPE_DATA_TRANSFORMER,
+  SHEET_FORMULA_TYPE_APP_RUN,
+  SHEET_FORMULA_TYPE_PROCESSOR_RUN,
+} from "./Sheet";
 
 const SheetFormulaMenu = ({
   anchorEl,
@@ -149,9 +154,9 @@ const SheetFormulaMenu = ({
                   </MenuItem>
                 ))}
               </Select>
-              {(formulaType === 1 ||
-                formulaType === 2 ||
-                formulaType === 3) && (
+              {(formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER ||
+                formulaType === SHEET_FORMULA_TYPE_APP_RUN ||
+                formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN) && (
                 <Typography variant="caption" color="text.secondary">
                   You can access the output from previous cell or a range of
                   cells using the cell ids. For example, <code>{"{{A1}}"}</code>{" "}
@@ -164,7 +169,7 @@ const SheetFormulaMenu = ({
                   &nbsp;
                 </Typography>
               )}
-              {formulaType === 1 && (
+              {formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER && (
                 <>
                   <DataTransformerGeneratorWidget
                     label="Transformation Template"
@@ -179,7 +184,7 @@ const SheetFormulaMenu = ({
                   />
                 </>
               )}
-              {formulaType === 2 && (
+              {formulaType === SHEET_FORMULA_TYPE_APP_RUN && (
                 <AppRunForm
                   setData={(data) => {
                     formulaDataRef.current = {
@@ -191,7 +196,8 @@ const SheetFormulaMenu = ({
                   appInput={formulaDataRef.current?.input}
                 />
               )}
-              {formulaType === 3 && memoizedProcessorRunForm}
+              {formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
+                memoizedProcessorRunForm}
               {formulaType && (
                 <>
                   <FormControlLabel

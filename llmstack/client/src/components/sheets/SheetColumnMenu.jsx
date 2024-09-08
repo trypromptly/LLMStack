@@ -19,7 +19,14 @@ import { DeleteOutlined, AddOutlined } from "@mui/icons-material";
 import DataTransformerGeneratorWidget from "./DataTransformerGeneratorWidget";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
-import { sheetCellTypes, sheetFormulaTypes } from "./Sheet";
+import {
+  sheetCellTypes,
+  sheetFormulaTypes,
+  SHEET_FORMULA_TYPE_DATA_TRANSFORMER,
+  SHEET_FORMULA_TYPE_APP_RUN,
+  SHEET_FORMULA_TYPE_PROCESSOR_RUN,
+  SHEET_CELL_TYPE_TEXT,
+} from "./Sheet";
 import "@glideapps/glide-data-grid/dist/index.css";
 
 const numberToLetters = (num) => {
@@ -102,7 +109,7 @@ export function SheetColumnMenu({
     }
     setOpen(false);
     setColumnName("");
-    setCellType(0);
+    setCellType(SHEET_CELL_TYPE_TEXT);
     formulaDataRef.current = {};
     setFormulaType("");
     setFormulaData({});
@@ -113,7 +120,7 @@ export function SheetColumnMenu({
     deleteColumn(column);
     setOpen(false);
     setColumnName("");
-    setCellType(0);
+    setCellType(SHEET_CELL_TYPE_TEXT);
     setFormulaType("");
     setFormulaData({});
     formulaDataRef.current = {};
@@ -254,44 +261,46 @@ export function SheetColumnMenu({
                   &nbsp;
                 </Typography>
               )}
-              {showFormulaTypeSelect && formulaType === 1 && (
-                <DataTransformerGeneratorWidget
-                  label="Transformation Template"
-                  value={formulaData?.transformation_template}
-                  onChange={(value) => {
-                    setFormulaData({
-                      transformation_template: value,
-                    });
-                    formulaDataRef.current = {
-                      ...formulaDataRef.current,
-                      transformation_template: value,
-                    };
-                  }}
-                  multiline
-                  rows={4}
-                  placeholder="Enter LiquidJS template"
-                  helpText={
-                    "Use LiquidJS syntax to transform data from other columns in this row. Example: {{ A | upcase }}. The 'A' variable contains the value of the A column in this row."
-                  }
-                />
-              )}
-              {showFormulaTypeSelect && formulaType === 2 && (
-                <AppRunForm
-                  setData={(data) => {
-                    setFormulaData({
-                      ...data,
-                    });
-                    formulaDataRef.current = {
-                      ...formulaDataRef.current,
-                      ...data,
-                    };
-                  }}
-                  appSlug={formulaData.current?.app_slug}
-                  appInput={formulaData.current?.input}
-                />
-              )}
               {showFormulaTypeSelect &&
-                formulaType === 3 &&
+                formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER && (
+                  <DataTransformerGeneratorWidget
+                    label="Transformation Template"
+                    value={formulaData?.transformation_template}
+                    onChange={(value) => {
+                      setFormulaData({
+                        transformation_template: value,
+                      });
+                      formulaDataRef.current = {
+                        ...formulaDataRef.current,
+                        transformation_template: value,
+                      };
+                    }}
+                    multiline
+                    rows={4}
+                    placeholder="Enter LiquidJS template"
+                    helpText={
+                      "Use LiquidJS syntax to transform data from other columns in this row. Example: {{ A | upcase }}. The 'A' variable contains the value of the A column in this row."
+                    }
+                  />
+                )}
+              {showFormulaTypeSelect &&
+                formulaType === SHEET_FORMULA_TYPE_APP_RUN && (
+                  <AppRunForm
+                    setData={(data) => {
+                      setFormulaData({
+                        ...data,
+                      });
+                      formulaDataRef.current = {
+                        ...formulaDataRef.current,
+                        ...data,
+                      };
+                    }}
+                    appSlug={formulaData.current?.app_slug}
+                    appInput={formulaData.current?.input}
+                  />
+                )}
+              {showFormulaTypeSelect &&
+                formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
                 memoizedProcessorRunForm}
               <Stack
                 direction="row"

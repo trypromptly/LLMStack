@@ -37,18 +37,36 @@ import {
 } from "./utils";
 import { getProviderIconImage } from "../apps/ProviderIcon";
 
+export const SHEET_FORMULA_TYPE_NONE = 0;
+export const SHEET_FORMULA_TYPE_DATA_TRANSFORMER = 1;
+export const SHEET_FORMULA_TYPE_APP_RUN = 2;
+export const SHEET_FORMULA_TYPE_PROCESSOR_RUN = 3;
+
+export const SHEET_CELL_TYPE_TEXT = 0;
+export const SHEET_CELL_TYPE_NUMBER = 1;
+export const SHEET_CELL_TYPE_URI = 2;
+
+export const SHEET_CELL_STATUS_READY = 0;
+export const SHEET_CELL_STATUS_RUNNING = 1;
+export const SHEET_CELL_STATUS_ERROR = 2;
+
 export const sheetFormulaTypes = {
-  1: {
+  [SHEET_FORMULA_TYPE_NONE]: {
+    value: "none",
+    label: "None",
+    description: "No formula",
+  },
+  [SHEET_FORMULA_TYPE_DATA_TRANSFORMER]: {
     value: "data_transformer",
     label: "Data Transformer",
     description: "Transform data using a LiquidJS template",
   },
-  2: {
+  [SHEET_FORMULA_TYPE_APP_RUN]: {
     value: "app_run",
     label: "App Run",
     description: "Run an app to generate formula output",
   },
-  3: {
+  [SHEET_FORMULA_TYPE_PROCESSOR_RUN]: {
     value: "processor_run",
     label: "Processor Run",
     description: "Run a processor to generate formula output",
@@ -56,7 +74,7 @@ export const sheetFormulaTypes = {
 };
 
 export const sheetCellTypes = {
-  0: {
+  [SHEET_CELL_TYPE_TEXT]: {
     label: "Text",
     value: "text",
     description: "Plain text content",
@@ -86,7 +104,7 @@ export const sheetCellTypes = {
       return cell.data;
     },
   },
-  1: {
+  [SHEET_CELL_TYPE_NUMBER]: {
     label: "Number",
     value: "number",
     description: "Numeric values",
@@ -116,7 +134,7 @@ export const sheetCellTypes = {
       return cell.data;
     },
   },
-  2: {
+  [SHEET_CELL_TYPE_URI]: {
     label: "URI",
     value: "uri",
     description: "Uniform Resource Identifier",
@@ -284,7 +302,7 @@ function Sheet(props) {
         drawContent();
       }
 
-      if (cell?.status === 1) {
+      if (cell?.status === SHEET_CELL_STATUS_RUNNING) {
         // Add a dark yellow background to the cell
         ctx.save();
         ctx.fillStyle = "rgba(255, 255, 0, 0.1)";
@@ -294,7 +312,7 @@ function Sheet(props) {
         return;
       }
 
-      if (cell?.status === 2) {
+      if (cell?.status === SHEET_CELL_STATUS_ERROR) {
         // Visually indicate that the cell has an error with a red background
         ctx.save();
         ctx.fillStyle = "#FF0000CC";
@@ -375,12 +393,15 @@ function Sheet(props) {
         return;
       }
 
-      if (!gridColumn.formula || gridColumn.formula.type === 0) {
+      if (
+        !gridColumn.formula ||
+        gridColumn.formula.type === SHEET_FORMULA_TYPE_NONE
+      ) {
         return;
       }
 
       const headerIconImage =
-        gridColumn.formula.type === 3
+        gridColumn.formula.type === SHEET_FORMULA_TYPE_PROCESSOR_RUN
           ? getProviderIconImage(
               gridColumn.formula.data?.provider_slug || "promptly",
               false,
@@ -453,7 +474,9 @@ function Sheet(props) {
 
       setSelectedCellReadOnly(
         Boolean(
-          columns[col].formula || columns[col].formula?.type === 0 || false,
+          columns[col].formula ||
+            columns[col].formula?.type === SHEET_FORMULA_TYPE_NONE ||
+            false,
         ),
       );
     }
@@ -738,7 +761,7 @@ function Sheet(props) {
             const { id, error } = event.cell;
             const cell = cells[id];
             if (cell) {
-              cell.status = 2;
+              cell.status = SHEET_CELL_STATUS_ERROR;
               cell.error = error;
               setCells((cells) => ({
                 ...cells,
@@ -785,7 +808,7 @@ function Sheet(props) {
               )}`,
         ]);
         setSelectedCellValue(
-          cells[cellId]?.status === 2
+          cells[cellId]?.status === SHEET_CELL_STATUS_ERROR
             ? cells[cellId]?.error || ""
             : cells[cellId]?.value || "",
         );
