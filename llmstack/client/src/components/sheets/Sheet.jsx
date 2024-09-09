@@ -1152,17 +1152,18 @@ function Sheet(props) {
         deleteColumn={(column) => {
           const colLetter = column.col_letter;
           setColumns((columns) => {
-            const newColumns = { ...columns };
-            delete newColumns[colLetter];
-            updateUserChanges("columns", colLetter, null); // Mark column as deleted
+            const newColumns = columns.filter(
+              (c) => c.col_letter !== colLetter,
+            );
+            updateUserChanges("columns", colLetter, null);
             return newColumns;
           });
           setCells((cells) => {
             const newCells = { ...cells };
             Object.keys(newCells).forEach((cellId) => {
-              if (newCells[cellId].col === colLetter) {
+              if (newCells[cellId].col_letter === colLetter) {
                 delete newCells[cellId];
-                updateUserChanges("cells", cellId, null); // Mark cell as deleted
+                updateUserChanges("cells", cellId, null);
               }
             });
             return newCells;
