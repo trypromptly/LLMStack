@@ -73,18 +73,22 @@ class OutputActor(Actor):
 
     def get_output(self):
         while True:
-            if self._error or self._stopped or (self._data_done and self._data_sent):
+            if (
+                self._error
+                or (self._stopped and self._data_sent and not self._data)
+                or (self._data_done and self._data_sent)
+            ):
                 break
             if not self._data or self._data_sent:
                 continue
-            self._data_sent = True
 
+            self._data_sent = True
             yield self._data
 
         if self._error:
             yield {"errors": list(self._error.values())}
 
-        if self._stopped:
+        if self._stopped and not self._data_sent:
             yield {"errors": ["Output interrupted"]}
 
     def get_output_stream(self):
@@ -108,7 +112,6 @@ class OutputActor(Actor):
 
     def on_stop(self) -> None:
         self._data_done = True
-        self._data_sent = True
         self._data_chunk_sent = True
         self._stopped = True
         return super().on_stop()
