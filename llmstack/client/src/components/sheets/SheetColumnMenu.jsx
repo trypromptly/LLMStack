@@ -136,206 +136,212 @@ export function SheetColumnMenu({
   };
 
   return (
-    <Popper
-      open={open}
-      anchorEl={anchorEl}
-      role={undefined}
-      placement="bottom-start"
-      transition
-      sx={{
-        width: "450px",
-        maxHeight: "90vh",
-        overflowY: "auto",
-        padding: "0px 2px 8px 2px",
-      }}
-    >
-      {({ TransitionProps, placement }) => (
-        <Grow
-          {...TransitionProps}
-          style={{
-            transformOrigin:
-              placement === "bottom-start" ? "left top" : "left bottom",
-          }}
-        >
-          <Paper>
-            <Stack gap={2} sx={{ padding: 2 }}>
-              <Stack
-                direction="row"
-                gap={2}
-                sx={{ justifyContent: "flex-end" }}
-              >
-                {column && (
-                  <IconButton
-                    variant="outlined"
-                    onClick={handleColumnDelete}
-                    sx={{
-                      color: "text.secondary",
-                      minWidth: "30px",
-                      padding: 0,
-                    }}
-                  >
-                    <DeleteOutlined />
-                  </IconButton>
-                )}
-              </Stack>
-              <TextField
-                label="Name"
-                value={columnName}
-                placeholder="Column Name"
-                variant="outlined"
-                onChange={(e) => setColumnName(e.target.value)}
-              />
-              <Select
-                value={cellType}
-                id="column-type-select"
-                aria-label="Cell Type"
-                placeholder="Cell Type"
-                onChange={(e) => setCellType(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {Object.keys(sheetCellTypes).map((type) => (
-                  <MenuItem key={type} value={type}>
-                    <Stack spacing={0}>
-                      <Typography variant="body1">
-                        {sheetCellTypes[type].label}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {sheetCellTypes[type].description}
-                      </Typography>
-                    </Stack>
-                  </MenuItem>
-                ))}
-              </Select>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  paddingTop: 2,
-                  paddingBottom: 2,
-                  cursor: "pointer",
-                }}
-                onClick={() => setShowFormulaTypeSelect(!showFormulaTypeSelect)}
-              >
-                <Checkbox
-                  checked={showFormulaTypeSelect}
-                  onChange={(e) => setShowFormulaTypeSelect(e.target.checked)}
-                  inputProps={{ "aria-label": "Add dynamic data" }}
-                  sx={{
-                    paddingLeft: 0,
-                    marginLeft: 0,
-                  }}
-                />
-                <Typography variant="body2">
-                  Populate column with a formula
-                </Typography>
-              </Box>
-              {showFormulaTypeSelect && (
-                <FormControl>
-                  <InputLabel id="formula-type-select-label">
-                    Formula Type
-                  </InputLabel>
-                  <Select
-                    value={formulaType}
-                    id="formula-type-select"
-                    aria-label="Formula Type"
-                    onChange={(e) => {
-                      setFormulaType(parseInt(e.target.value));
-                      formulaDataRef.current = {};
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    variant="filled"
-                    label="Formula Type"
-                  >
-                    {Object.keys(sheetFormulaTypes).map((type) => (
-                      <MenuItem key={type} value={type.toString()}>
-                        <Stack spacing={0}>
-                          <Typography variant="body1">
-                            {sheetFormulaTypes[type].label}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {sheetFormulaTypes[type].description}
-                          </Typography>
-                        </Stack>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
-              {showFormulaTypeSelect && formulaType && (
-                <Typography variant="caption" color="text.secondary">
-                  You can access the value of a cell in the current row using{" "}
-                  <code>{"{{A}}"}</code>, where A is the column letter.
-                  <br />
-                  &nbsp;
-                </Typography>
-              )}
-              {showFormulaTypeSelect &&
-                formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER && (
-                  <DataTransformerGeneratorWidget
-                    label="Transformation Template"
-                    value={formulaData?.transformation_template}
-                    onChange={(value) => {
-                      setFormulaData({
-                        transformation_template: value,
-                      });
-                      formulaDataRef.current = {
-                        ...formulaDataRef.current,
-                        transformation_template: value,
-                      };
-                    }}
-                    multiline
-                    rows={4}
-                    placeholder="Enter LiquidJS template"
-                    helpText={
-                      "Use LiquidJS syntax to transform data from other columns in this row. Example: {{ A | upcase }}. The 'A' variable contains the value of the A column in this row."
-                    }
-                  />
-                )}
-              {showFormulaTypeSelect &&
-                formulaType === SHEET_FORMULA_TYPE_APP_RUN && (
-                  <AppRunForm
-                    setData={(data) => {
-                      setFormulaData({
-                        ...data,
-                      });
-                      formulaDataRef.current = {
-                        ...formulaDataRef.current,
-                        ...data,
-                      };
-                    }}
-                    appSlug={formulaData.current?.app_slug}
-                    appInput={formulaData.current?.input}
-                  />
-                )}
-              {showFormulaTypeSelect &&
-                formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
-                memoizedProcessorRunForm}
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{ width: "100%", justifyContent: "center", mt: 2 }}
-              >
-                <Button
-                  sx={{ textTransform: "none" }}
-                  variant="standard"
-                  onClick={() => {
-                    setOpen(false);
-                    setFormulaData({});
-                    setFormulaType("");
-                  }}
+    open && (
+      <Popper
+        open={open}
+        anchorEl={anchorEl}
+        role={undefined}
+        placement="bottom-start"
+        transition
+        sx={{
+          width: "450px",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          padding: "0px 2px 8px 2px",
+        }}
+      >
+        {({ TransitionProps, placement }) => (
+          <Grow
+            {...TransitionProps}
+            style={{
+              transformOrigin:
+                placement === "bottom-start" ? "left top" : "left bottom",
+            }}
+          >
+            <Paper>
+              <Stack gap={2} sx={{ padding: 2 }}>
+                <Stack
+                  direction="row"
+                  gap={2}
+                  sx={{ justifyContent: "flex-end" }}
                 >
-                  Cancel
-                </Button>
-                <Button variant="contained" onClick={handleAddOrEditColumn}>
-                  {column ? "Update" : "Add"}
-                </Button>
+                  {column && (
+                    <IconButton
+                      variant="outlined"
+                      onClick={handleColumnDelete}
+                      sx={{
+                        color: "text.secondary",
+                        minWidth: "30px",
+                        padding: 0,
+                      }}
+                    >
+                      <DeleteOutlined />
+                    </IconButton>
+                  )}
+                </Stack>
+                <TextField
+                  label="Name"
+                  value={columnName}
+                  placeholder="Column Name"
+                  variant="outlined"
+                  onChange={(e) => setColumnName(e.target.value)}
+                />
+                <Select
+                  value={cellType}
+                  id="column-type-select"
+                  aria-label="Cell Type"
+                  placeholder="Cell Type"
+                  onChange={(e) => setCellType(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {Object.keys(sheetCellTypes).map((type) => (
+                    <MenuItem key={type} value={type}>
+                      <Stack spacing={0}>
+                        <Typography variant="body1">
+                          {sheetCellTypes[type].label}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {sheetCellTypes[type].description}
+                        </Typography>
+                      </Stack>
+                    </MenuItem>
+                  ))}
+                </Select>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    paddingTop: 2,
+                    paddingBottom: 2,
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    setShowFormulaTypeSelect(!showFormulaTypeSelect)
+                  }
+                >
+                  <Checkbox
+                    checked={showFormulaTypeSelect}
+                    onChange={(e) => setShowFormulaTypeSelect(e.target.checked)}
+                    inputProps={{ "aria-label": "Add dynamic data" }}
+                    sx={{
+                      paddingLeft: 0,
+                      marginLeft: 0,
+                    }}
+                  />
+                  <Typography variant="body2">
+                    Populate column with a formula
+                  </Typography>
+                </Box>
+                {showFormulaTypeSelect && (
+                  <FormControl>
+                    <InputLabel id="formula-type-select-label">
+                      Formula Type
+                    </InputLabel>
+                    <Select
+                      value={formulaType}
+                      id="formula-type-select"
+                      aria-label="Formula Type"
+                      onChange={(e) => {
+                        setFormulaType(parseInt(e.target.value));
+                        formulaDataRef.current = {};
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      variant="filled"
+                      label="Formula Type"
+                    >
+                      {Object.keys(sheetFormulaTypes).map((type) => (
+                        <MenuItem key={type} value={type.toString()}>
+                          <Stack spacing={0}>
+                            <Typography variant="body1">
+                              {sheetFormulaTypes[type].label}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {sheetFormulaTypes[type].description}
+                            </Typography>
+                          </Stack>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+                {showFormulaTypeSelect && formulaType && (
+                  <Typography variant="caption" color="text.secondary">
+                    You can access the value of a cell in the current row using{" "}
+                    <code>{"{{A}}"}</code>, where A is the column letter.
+                    <br />
+                    &nbsp;
+                  </Typography>
+                )}
+                {showFormulaTypeSelect &&
+                  formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER && (
+                    <DataTransformerGeneratorWidget
+                      label="Transformation Template"
+                      value={formulaData?.transformation_template}
+                      onChange={(value) => {
+                        setFormulaData({
+                          transformation_template: value,
+                        });
+                        formulaDataRef.current = {
+                          ...formulaDataRef.current,
+                          transformation_template: value,
+                        };
+                      }}
+                      multiline
+                      rows={4}
+                      placeholder="Enter LiquidJS template"
+                      helpText={
+                        "Use LiquidJS syntax to transform data from other columns in this row. Example: {{ A | upcase }}. The 'A' variable contains the value of the A column in this row."
+                      }
+                    />
+                  )}
+                {showFormulaTypeSelect &&
+                  formulaType === SHEET_FORMULA_TYPE_APP_RUN && (
+                    <AppRunForm
+                      setData={(data) => {
+                        setFormulaData({
+                          ...data,
+                        });
+                        formulaDataRef.current = {
+                          ...formulaDataRef.current,
+                          ...data,
+                        };
+                      }}
+                      appSlug={formulaData.current?.app_slug}
+                      appInput={formulaData.current?.input}
+                    />
+                  )}
+                {showFormulaTypeSelect &&
+                  formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
+                  memoizedProcessorRunForm}
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{ width: "100%", justifyContent: "center", mt: 2 }}
+                >
+                  <Button
+                    sx={{ textTransform: "none" }}
+                    variant="standard"
+                    onClick={() => {
+                      anchorEl.style.display = "none";
+                      setOpen(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button variant="contained" onClick={handleAddOrEditColumn}>
+                    {column ? "Update" : "Add"}
+                  </Button>
+                </Stack>
               </Stack>
-            </Stack>
-          </Paper>
-        </Grow>
-      )}
-    </Popper>
+            </Paper>
+          </Grow>
+        )}
+      </Popper>
+    )
   );
 }
 

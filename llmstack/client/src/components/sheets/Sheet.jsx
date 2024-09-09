@@ -616,15 +616,28 @@ function Sheet(props) {
 
   const onHeaderMenuClick = useCallback(
     (column, bounds) => {
-      setSelectedColumnId(column);
-      if (editColumnAnchorEl.current) {
-        editColumnAnchorEl.current.style.position = "absolute";
-        editColumnAnchorEl.current.style.left = `${bounds.x}px`;
-        editColumnAnchorEl.current.style.top = `${bounds.y}px`;
-        editColumnAnchorEl.current.style.width = `${bounds.width}px`;
-        editColumnAnchorEl.current.style.height = `${bounds.height}px`;
-      }
+      setGridSelection({
+        columns: CompactSelection.empty(),
+        rows: CompactSelection.empty(),
+        current: undefined,
+      });
+
       setShowEditColumnMenu(!showEditColumnMenu);
+
+      if (editColumnAnchorEl.current) {
+        if (showEditColumnMenu) {
+          editColumnAnchorEl.current.style.display = "none";
+        } else {
+          editColumnAnchorEl.current.style.display = "inherit";
+          editColumnAnchorEl.current.style.position = "absolute";
+          editColumnAnchorEl.current.style.left = `${bounds.x}px`;
+          editColumnAnchorEl.current.style.top = `${bounds.y}px`;
+          editColumnAnchorEl.current.style.width = `${bounds.width}px`;
+          editColumnAnchorEl.current.style.height = `${bounds.height}px`;
+        }
+      }
+
+      setSelectedColumnId(column);
     },
     [showEditColumnMenu],
   );
