@@ -147,12 +147,8 @@ def _execute_cell(
 
     try:
         processed_output = ast.literal_eval(output)
-        if isinstance(processed_output, list) and spread_output:
-            output_cells = [
-                SheetCell(row=cell.row + i, col_letter=cell.col_letter, value=str(item))
-                for i, item in enumerate(processed_output)
-            ]
-        elif (
+
+        if (
             isinstance(processed_output, list)
             and cell.spread_output
             and all(isinstance(item, list) for item in processed_output)
@@ -168,10 +164,16 @@ def _execute_cell(
                 for i, row in enumerate(processed_output)
                 for j, item in enumerate(row)
             ]
+        elif isinstance(processed_output, list) and spread_output:
+            output_cells = [
+                SheetCell(row=cell.row + i, col_letter=cell.col_letter, value=str(item))
+                for i, item in enumerate(processed_output)
+            ]
         else:
             cell.value = str(processed_output if isinstance(processed_output, str) else output)
             output_cells = [cell]
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error processing cell: {e}")
         cell.value = str(output)
         output_cells = [cell]
 
