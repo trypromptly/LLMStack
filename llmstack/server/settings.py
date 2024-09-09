@@ -374,6 +374,7 @@ DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY = os.getenv(
     "DEFAULT_GOOGLE_SERVICE_ACCOUNT_JSON_KEY",
     "{}",
 )
+DEFAULT_APOLLO_API_KEY = os.getenv("DEFAULT_APOLLO_API_KEY", "")
 DEFAULT_LOCALAI_API_KEY = os.getenv("DEFAULT_LOCALAI_API_KEY", "")
 DEFAULT_LOCALAI_BASE_URL = os.getenv("DEFAULT_LOCALAI_BASE_URL", "")
 DEFAULT_GOOGLE_CUSTOM_SEARCH_API_KEY = os.getenv(
@@ -561,6 +562,7 @@ PROVIDERS = [
         "name": "Apollo",
         "processor_packages": ["llmstack.processors.providers.apollo"],
         "slug": "apollo",
+        "config_schema": "llmstack.processors.providers.apollo.ApolloProviderConfig",
     },
     {
         "name": "HeyGen",
