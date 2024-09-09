@@ -324,15 +324,19 @@ def run_row(
                 formula=columns_dict[current_col].formula,
                 spread_output=False,
             )
-            executed_cells.extend(
-                _execute_cell(
-                    cell_to_execute,
-                    input_values,
-                    sheet,
-                    str(run_entry.uuid),
-                    user,
-                )
+
+            output_cells = _execute_cell(
+                cell_to_execute,
+                input_values,
+                sheet,
+                str(run_entry.uuid),
+                user,
             )
+
+            executed_cells.extend(output_cells)
+
+            # Update valid cells in row
+            valid_cells_in_row.extend(output_cells)
 
     return executed_cells
 
