@@ -968,6 +968,7 @@ function Sheet(props) {
         selectedRows={selectedRows}
         deleteSelectedRows={deleteSelectedRows}
         runId={runId}
+        selectedGrid={selectedGrid}
       />
       <Box
         sx={{

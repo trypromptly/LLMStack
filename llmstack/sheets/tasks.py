@@ -259,6 +259,41 @@ def create_subsheets(formula_cells_dict, total_cols):
     return subsheets
 
 
+def column_in_selected_grid(selected_grid, column):
+    for cell_range in selected_grid:
+        if "-" in cell_range:
+            start, end = cell_range.split("-")
+            start_row, start_col = SheetCell.cell_id_to_row_and_col(start)
+            end_row, end_col = SheetCell.cell_id_to_row_and_col(end)
+            if SheetColumn.column_letter_to_index(start_col) <= column <= SheetColumn.column_letter_to_index(end_col):
+                return True
+        else:
+            row, col = SheetCell.cell_id_to_row_and_col(cell_range)
+            if SheetColumn.column_letter_to_index(col) == column:
+                return True
+    return False
+
+
+def cell_in_selected_grid(selected_grid, cell):
+    for cell_range in selected_grid:
+        if "-" in cell_range:
+            start, end = cell_range.split("-")
+            start_row, start_col = SheetCell.cell_id_to_row_and_col(start)
+            end_row, end_col = SheetCell.cell_id_to_row_and_col(end)
+            if (
+                SheetColumn.column_letter_to_index(start_col)
+                <= SheetColumn.column_letter_to_index(cell.col_letter)
+                <= SheetColumn.column_letter_to_index(end_col)
+                and start_row <= cell.row <= end_row
+            ):
+                return True
+        else:
+            cell_row, cell_col = SheetCell.cell_id_to_row_and_col(cell_range)
+            if cell_col == cell.col_letter and cell_row == cell.row:
+                return True
+    return False
+
+
 def run_row(
     current_row,
     subsheet_start,
@@ -270,6 +305,7 @@ def run_row(
     run_entry,
     user,
     valid_cells_in_row_from_prev_cols,
+    selected_grid,
 ):
     valid_cells_in_row = valid_cells_in_row_from_prev_cols.copy()
     executed_cells = []
@@ -284,6 +320,14 @@ def run_row(
             and existing_cells_dict[previous_cell_id].value != ""
         ):
             valid_cells_in_row.append(existing_cells_dict.get(previous_cell_id))
+
+        # If selected_grid is provided and the cell is not in the selected grid, we don't need to execute it
+        if selected_grid and not cell_in_selected_grid(
+            selected_grid, SheetCell(row=current_row, col_letter=current_col)
+        ):
+            if current_cell_id in existing_cells_dict:
+                valid_cells_in_row.append(existing_cells_dict.get(current_cell_id))
+            continue
 
         if current_cell_id in formula_cells_dict:
             input_values = process_cell_references(
@@ -352,7 +396,13 @@ def scheduled_run_sheet(sheet_uuid, user_id):
     return run_sheet(sheet_uuid, str(run_entry.uuid), user_id)
 
 
-def run_sheet(sheet_uuid, run_entry_uuid, user_id, parallel_rows=4):
+def run_sheet(
+    sheet_uuid,
+    run_entry_uuid,
+    user_id,
+    selected_grid=None,
+    parallel_rows=4,
+):
     try:
         sheet = PromptlySheet.objects.get(uuid=sheet_uuid)
         run_entry = PromptlySheetRunEntry.objects.get(uuid=run_entry_uuid)
@@ -416,6 +466,7 @@ def run_sheet(sheet_uuid, run_entry_uuid, user_id, parallel_rows=4):
                                 run_entry,
                                 user,
                                 valid_cells_in_row_from_prev_cols,
+                                selected_grid,
                             )
                         )
 

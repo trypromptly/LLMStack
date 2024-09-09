@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Stack,
   Typography,
@@ -43,6 +43,7 @@ const SheetHeader = ({
   setSheetRunning,
   selectedRows,
   deleteSelectedRows,
+  selectedGrid = [],
 }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -53,12 +54,38 @@ const SheetHeader = ({
   const setSheets = useSetRecoilState(sheetsListSelector);
   const [isSaving, setIsSaving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [isCommandPressed, setIsCommandPressed] = useState(false);
+
+  // Add event listeners for keydown and keyup
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.metaKey || e.ctrlKey) {
+        setIsCommandPressed(true);
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      if (!e.metaKey && !e.ctrlKey) {
+        setIsCommandPressed(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   const runSheet = useCallback(() => {
     const runSheetAction = () => {
       setIsRunning(true);
       axios()
-        .post(`/api/sheets/${sheet.uuid}/run`)
+        .post(`/api/sheets/${sheet.uuid}/run`, {
+          selected_grid: isCommandPressed ? selectedGrid : null,
+        })
         .then((response) => {
           setRunId(response.data.run_id);
           setSheetRunning(true);
@@ -82,7 +109,15 @@ const SheetHeader = ({
     } else {
       runSheetAction();
     }
-  }, [sheet.uuid, hasChanges, onSave, setRunId, setSheetRunning]);
+  }, [
+    sheet.uuid,
+    hasChanges,
+    onSave,
+    setRunId,
+    setSheetRunning,
+    selectedGrid,
+    isCommandPressed,
+  ]);
 
   const cancelSheetRun = useCallback(() => {
     if (!runId) {
@@ -316,7 +351,11 @@ const SheetHeader = ({
             </ClickAwayListener>
             <Tooltip
               title={
-                sheetRunning ? "Sheet is already running" : "Run the sheet"
+                sheetRunning
+                  ? "Sheet is already running"
+                  : isCommandPressed
+                    ? "Run selected cells"
+                    : "Run the sheet"
               }
             >
               <span>

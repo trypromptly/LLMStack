@@ -211,6 +211,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
 
     def run_async(self, request, sheet_uuid=None):
         profile = Profile.objects.get(user=request.user)
+        selected_grid = request.data.get("selected_grid")
         sheet = PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
         if sheet.is_locked:
             return DRFResponse(
@@ -223,7 +224,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
 
         job = PromptlySheetAppExecuteJob.create(
             func="llmstack.sheets.tasks.run_sheet",
-            args=[str(sheet.uuid), str(run_entry.uuid), request.user.id],
+            args=[str(sheet.uuid), str(run_entry.uuid), request.user.id, selected_grid],
             on_stopped=Callback("llmstack.sheets.tasks.on_sheet_run_stopped"),
             on_success=Callback("llmstack.sheets.tasks.on_sheet_run_success"),
             on_failure=Callback("llmstack.sheets.tasks.on_sheet_run_failed"),
