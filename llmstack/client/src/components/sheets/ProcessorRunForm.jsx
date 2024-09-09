@@ -44,6 +44,12 @@ export default function ProcessorRunForm({
     });
   }, [apiBackendSelected, setData]);
 
+  useEffect(() => {
+    inputDataRef.current = processorInput;
+    configDataRef.current = processorConfig;
+    outputTemplateRef.current = processorOutputTemplate?.markdown;
+  }, [processorInput, processorConfig, processorOutputTemplate]);
+
   return (
     <Stack spacing={2}>
       <ApiBackendSelector
@@ -68,11 +74,20 @@ export default function ProcessorRunForm({
             uiSchema={
               apiBackendSelected ? apiBackendSelected.input_ui_schema : {}
             }
-            formData={inputDataRef.current || {}}
+            formData={processorInput || {}}
             validator={validator}
             onChange={(e) => {
               setData({
                 input: e.formData,
+                config: configDataRef.current || {},
+                output_template: {
+                  markdown:
+                    outputTemplateRef.current ||
+                    apiBackendSelected?.output_template?.markdown ||
+                    "",
+                },
+                processor_slug: apiBackendSelected?.slug,
+                provider_slug: apiBackendSelected?.api_provider?.slug,
               });
               inputDataRef.current = e.formData;
             }}
@@ -85,11 +100,20 @@ export default function ProcessorRunForm({
             uiSchema={
               apiBackendSelected ? apiBackendSelected.config_ui_schema : {}
             }
-            formData={configDataRef.current || {}}
+            formData={processorOutputTemplate || {}}
             validator={validator}
             onChange={(e) => {
               setData({
+                input: inputDataRef.current || {},
                 config: e.formData,
+                output_template: {
+                  markdown:
+                    outputTemplateRef.current ||
+                    apiBackendSelected?.output_template?.markdown ||
+                    "",
+                },
+                processor_slug: apiBackendSelected?.slug,
+                provider_slug: apiBackendSelected?.api_provider?.slug,
               });
               configDataRef.current = e.formData;
             }}
@@ -105,7 +129,11 @@ export default function ProcessorRunForm({
             }
             onChange={(text) => {
               setData({
+                input: inputDataRef.current || {},
+                config: configDataRef.current || {},
                 output_template: { markdown: text },
+                processor_slug: apiBackendSelected?.slug,
+                provider_slug: apiBackendSelected?.api_provider?.slug,
               });
               outputTemplateRef.current = text;
             }}

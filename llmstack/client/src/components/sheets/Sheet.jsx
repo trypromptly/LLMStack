@@ -444,7 +444,8 @@ function Sheet(props) {
 
       const { column, ctx, menuBounds } = args;
 
-      const gridColumn = columns.find((c) => c.col_letter === column.icon);
+      const gridColumn =
+        columns?.find((c) => c.col_letter === column.icon) || null;
 
       if (!gridColumn) {
         return;
@@ -1137,7 +1138,6 @@ function Sheet(props) {
       <div id="portal" />
       <div id="sheet-column-menu" ref={editColumnAnchorEl} />
       <MemoizedSheetColumnMenu
-        onClose={() => setShowEditColumnMenu(false)}
         column={selectedColumnId !== null ? columns[selectedColumnId] : null}
         open={showEditColumnMenu}
         setOpen={setShowEditColumnMenu}
