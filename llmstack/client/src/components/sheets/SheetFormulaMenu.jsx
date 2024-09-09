@@ -213,8 +213,9 @@ const SheetFormulaMenu = ({
                     If the output is a list, it will fill the column. If the
                     output is a list of lists, it will populate the cells in
                     rows and columns starting from the top-left cell. Use{" "}
-                    <code>to_json</code> in the template to output a JSON object
-                    that can be parsed into a list of lists.
+                    <code>to_string</code> in the template to output a string
+                    representation of the object that can be parsed into a list
+                    of lists.
                   </Typography>
                 </>
               )}
