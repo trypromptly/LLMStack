@@ -26,6 +26,7 @@ import {
   SHEET_FORMULA_TYPE_APP_RUN,
   SHEET_FORMULA_TYPE_PROCESSOR_RUN,
   SHEET_CELL_TYPE_TEXT,
+  SHEET_FORMULA_TYPE_NONE,
 } from "./Sheet";
 import "@glideapps/glide-data-grid/dist/index.css";
 
@@ -53,7 +54,9 @@ export function SheetColumnMenu({
   const [formulaType, setFormulaType] = useState(column?.formula?.type || "");
   const [formulaData, setFormulaData] = useState(column?.formula?.data || {});
   const [showFormulaTypeSelect, setShowFormulaTypeSelect] = useState(
-    column?.formula?.type ? true : false,
+    column?.formula?.type && column.formula.type !== SHEET_FORMULA_TYPE_NONE
+      ? true
+      : false,
   );
   const formulaDataRef = useRef(column?.formula?.data || {});
 
@@ -62,6 +65,12 @@ export function SheetColumnMenu({
     setColumnName(column?.title || "");
     setFormulaType(column?.formula?.type || "");
     setFormulaData(column?.formula?.data || {});
+    setShowFormulaTypeSelect(
+      column?.formula?.type && column.formula.type !== SHEET_FORMULA_TYPE_NONE
+        ? true
+        : false,
+    );
+    formulaDataRef.current = column?.formula?.data || {};
   }, [column]);
 
   const setDataHandler = useCallback(
@@ -78,14 +87,14 @@ export function SheetColumnMenu({
     () => (
       <ProcessorRunForm
         setData={setDataHandler}
-        providerSlug={formulaDataRef.current?.provider_slug}
-        processorSlug={formulaDataRef.current?.processor_slug}
-        processorInput={formulaDataRef.current?.input}
-        processorConfig={formulaDataRef.current?.config}
-        processorOutputTemplate={formulaDataRef.current?.output_template}
+        providerSlug={formulaData?.provider_slug}
+        processorSlug={formulaData?.processor_slug}
+        processorInput={formulaData?.input}
+        processorConfig={formulaData?.config}
+        processorOutputTemplate={formulaData?.output_template}
       />
     ),
-    [formulaDataRef, setDataHandler],
+    [formulaData, setDataHandler],
   );
 
   const handleAddOrEditColumn = () => {
