@@ -643,6 +643,31 @@ function Sheet(props) {
     [showEditColumnMenu],
   );
 
+  const onHeaderClicked = useCallback(
+    (column, event) => {
+      // When the user clicks on the right half of the header, set showEditColumnMenu to true
+      const { localEventX, bounds } = event;
+      if (localEventX > (2 * bounds?.width) / 3) {
+        setSelectedColumnId(column);
+        setShowEditColumnMenu(!showEditColumnMenu);
+
+        if (editColumnAnchorEl.current) {
+          if (showEditColumnMenu) {
+            editColumnAnchorEl.current.style.display = "none";
+          } else {
+            editColumnAnchorEl.current.style.display = "inherit";
+            editColumnAnchorEl.current.style.position = "absolute";
+            editColumnAnchorEl.current.style.left = `${bounds.x}px`;
+            editColumnAnchorEl.current.style.top = `${bounds.y}px`;
+            editColumnAnchorEl.current.style.width = `${bounds.width}px`;
+            editColumnAnchorEl.current.style.height = `${bounds.height}px`;
+          }
+        }
+      }
+    },
+    [showEditColumnMenu, setSelectedColumnId],
+  );
+
   const onPaste = useCallback(
     (cell, value) => {
       const [startCol, startRow] = cell;
@@ -1120,6 +1145,7 @@ function Sheet(props) {
           }
           onCellEdited={onCellEdited}
           onHeaderMenuClick={onHeaderMenuClick}
+          onHeaderClicked={onHeaderClicked}
           onColumnResize={(column, width) => {
             onColumnChange(
               gridColumns.findIndex((c) => c.col === column.col),
