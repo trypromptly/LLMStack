@@ -97,6 +97,17 @@ export function SheetColumnMenu({
     [formulaData, setDataHandler],
   );
 
+  const memoizedAppRunForm = useMemo(
+    () => (
+      <AppRunForm
+        setData={setDataHandler}
+        appSlug={formulaData?.app_slug}
+        appInput={formulaData?.input}
+      />
+    ),
+    [formulaData, setDataHandler],
+  );
+
   const handleAddOrEditColumn = () => {
     const newColumn = {
       col_letter: column ? column.col_letter : numberToLetters(columns.length),
@@ -145,7 +156,7 @@ export function SheetColumnMenu({
         transition
         sx={{
           width: "450px",
-          maxHeight: "90vh",
+          maxHeight: "80vh",
           overflowY: "auto",
           padding: "0px 2px 8px 2px",
         }}
@@ -299,21 +310,8 @@ export function SheetColumnMenu({
                     />
                   )}
                 {showFormulaTypeSelect &&
-                  formulaType === SHEET_FORMULA_TYPE_APP_RUN && (
-                    <AppRunForm
-                      setData={(data) => {
-                        setFormulaData({
-                          ...data,
-                        });
-                        formulaDataRef.current = {
-                          ...formulaDataRef.current,
-                          ...data,
-                        };
-                      }}
-                      appSlug={formulaData.current?.app_slug}
-                      appInput={formulaData.current?.input}
-                    />
-                  )}
+                  formulaType === SHEET_FORMULA_TYPE_APP_RUN &&
+                  memoizedAppRunForm}
                 {showFormulaTypeSelect &&
                   formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
                   memoizedProcessorRunForm}

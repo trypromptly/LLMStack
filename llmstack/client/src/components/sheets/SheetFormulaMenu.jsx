@@ -78,6 +78,17 @@ const SheetFormulaMenu = ({
     [setDataHandler, formulaData],
   );
 
+  const memoizedAppRunForm = useMemo(
+    () => (
+      <AppRunForm
+        setData={setDataHandler}
+        appSlug={formulaData?.app_slug}
+        appInput={formulaData?.input}
+      />
+    ),
+    [formulaData, setDataHandler],
+  );
+
   const handleApplyFormula = () => {
     const newFormula = {
       type: formulaType,
@@ -184,18 +195,7 @@ const SheetFormulaMenu = ({
                   />
                 </>
               )}
-              {formulaType === SHEET_FORMULA_TYPE_APP_RUN && (
-                <AppRunForm
-                  setData={(data) => {
-                    formulaDataRef.current = {
-                      ...formulaDataRef.current,
-                      ...data,
-                    };
-                  }}
-                  appSlug={formulaDataRef.current?.app_slug}
-                  appInput={formulaDataRef.current?.input}
-                />
-              )}
+              {formulaType === SHEET_FORMULA_TYPE_APP_RUN && memoizedAppRunForm}
               {formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
                 memoizedProcessorRunForm}
               {formulaType && (
