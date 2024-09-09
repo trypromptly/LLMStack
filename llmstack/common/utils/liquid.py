@@ -17,6 +17,10 @@ def todict(value):
         return {}
 
 
+def to_string(value):
+    return str(value)
+
+
 def escape_unicode(value):
     if isinstance(value, str):
         return value.encode().decode("unicode_escape")
@@ -33,6 +37,8 @@ env.add_filter("to_json", json.dumps)
 env.add_filter("todict", todict)
 env.add_filter("to_dict", todict)
 env.add_filter("escape_unicode", escape_unicode)
+env.add_filter("tostring", to_string)
+env.add_filter("to_string", to_string)
 
 
 def render_template(template, data):
