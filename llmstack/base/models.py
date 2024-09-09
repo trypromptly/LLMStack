@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 @cache
 def get_vendor_env_platform_defaults():
     from llmstack.processors.providers.anthropic import AnthropicProviderConfig
+    from llmstack.processors.providers.apollo import ApolloProviderConfig
     from llmstack.processors.providers.azure import AzureProviderConfig
     from llmstack.processors.providers.cohere import CohereProviderConfig
     from llmstack.processors.providers.config import ProviderConfigSource
@@ -134,6 +135,12 @@ def get_vendor_env_platform_defaults():
                 if settings.WEAVIATE_TEXT2VEC_MODULE_CONFIG
                 else None
             ),
+        ).model_dump()
+    if settings.DEFAULT_APOLLO_API_KEY:
+        provider_configs["apollo/*/*/*"] = ApolloProviderConfig(
+            provider_slug="apollo",
+            api_key=settings.DEFAULT_APOLLO_API_KEY,
+            provider_config_source=ProviderConfigSource.PLATFORM_DEFAULT.value,
         ).model_dump()
 
     provider_configs["promptly/*/*/*"] = promptly_provider_config.model_dump()
