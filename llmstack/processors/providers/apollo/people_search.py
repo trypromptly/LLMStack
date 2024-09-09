@@ -76,8 +76,8 @@ class APIResponse(BaseModel):
 
 class PeopleSearchOutput(ApiProcessorSchema):
     breadcrumbs: Optional[List[Dict[str, str]]] = Field(description="The breadcrumbs for the API call", default=[])
-    people: Optional[List[Dict[str, Any]]] = Field(description="The people for the API call", default=[])
-    contacts: Optional[List[Dict[str, Any]]] = Field(description="The contacts for the API call", default=[])
+    people: Optional[List[Dict[str, Any]]] = Field(description="The list of people from the API call", default=[])
+    contacts: Optional[List[Dict[str, Any]]] = Field(description="The list of contacts for the API call", default=[])
     api_response: APIResponse = Field(description="The  response from the API call", default={})
 
 
