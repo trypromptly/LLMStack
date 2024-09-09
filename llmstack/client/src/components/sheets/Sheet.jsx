@@ -45,6 +45,8 @@ export const SHEET_FORMULA_TYPE_PROCESSOR_RUN = 3;
 export const SHEET_CELL_TYPE_TEXT = 0;
 export const SHEET_CELL_TYPE_NUMBER = 1;
 export const SHEET_CELL_TYPE_URI = 2;
+export const SHEET_CELL_TYPE_TAGS = 3;
+export const SHEET_CELL_TYPE_BOOLEAN = 4;
 
 export const SHEET_CELL_STATUS_READY = 0;
 export const SHEET_CELL_STATUS_RUNNING = 1;
@@ -164,6 +166,61 @@ export const sheetCellTypes = {
     },
     getCellValue: (cell) => {
       return cell.data;
+    },
+  },
+  [SHEET_CELL_TYPE_TAGS]: {
+    label: "Tags",
+    value: "tags",
+    description: "Comma separated list of tags",
+    kind: GridCellKind.Bubble,
+    getDataGridCell: (cell, column) => {
+      if (!cell) {
+        return {
+          kind: GridCellKind.Bubble,
+          data: [],
+          readonly: column?.formula?.type > 0 || false,
+          allowOverlay: true,
+          allowWrapping: true,
+        };
+      }
+
+      return {
+        kind: GridCellKind.Bubble,
+        data: cell.value.split(",").map((tag) => tag.trim()) || [],
+        readonly: cell.formula || column.formula?.type > 0 || false,
+        allowOverlay: true,
+        allowWrapping: true,
+      };
+    },
+    getCellValue: (cell) => {
+      return cell.data.join(", ");
+    },
+  },
+  [SHEET_CELL_TYPE_BOOLEAN]: {
+    label: "Boolean",
+    value: "boolean",
+    description: "True or false",
+    kind: GridCellKind.Boolean,
+    getDataGridCell: (cell, column) => {
+      if (!cell) {
+        return {
+          kind: GridCellKind.Boolean,
+          data: false,
+          readonly: column?.formula?.type > 0 || false,
+          allowOverlay: true,
+          allowWrapping: true,
+        };
+      }
+      return {
+        kind: GridCellKind.Boolean,
+        data: Boolean(cell.value),
+        readonly: cell.formula || column.formula?.type > 0 || false,
+        allowOverlay: true,
+        allowWrapping: true,
+      };
+    },
+    getCellValue: (cell) => {
+      return cell.data.toString();
     },
   },
 };
