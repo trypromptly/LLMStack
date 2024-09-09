@@ -323,7 +323,7 @@ class GoogleVisionTextExtractionService(TextExtractionService):
         from llmstack.common.utils.utils import validate_parse_data_uri
 
         mime_type, filename, data = validate_parse_data_uri(file_uri)
-        return super().extract_from_uri(data)
+        return self.extract_from_bytes(data, mime_type=mime_type, filename=filename)
 
 
 class PromptlyTextExtractionService(TextExtractionService):
@@ -432,4 +432,4 @@ class PromptlyTextExtractionService(TextExtractionService):
 
         # Extract text from URI
         mime_type, filename, data = validate_parse_data_uri(file_uri)
-        return super().extract_from_uri(data, mime_type=mime_type, filename=filename)
+        return self.extract_from_bytes(data, mime_type=mime_type, filename=filename)
