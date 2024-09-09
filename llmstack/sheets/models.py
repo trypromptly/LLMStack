@@ -20,10 +20,9 @@ logger = logging.getLogger(__name__)
 class SheetCellType(int, Enum):
     TEXT = 0
     NUMBER = 1
-    BOOLEAN = 2
-    IMAGE = 3
-    URI = 4
-    BUBBLE = 5
+    URI = 2
+    TAGS = 3
+    BOOLEAN = 4
 
     def __str__(self):
         return self.value
