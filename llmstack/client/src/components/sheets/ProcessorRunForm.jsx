@@ -100,7 +100,7 @@ export default function ProcessorRunForm({
             uiSchema={
               apiBackendSelected ? apiBackendSelected.config_ui_schema : {}
             }
-            formData={processorOutputTemplate || {}}
+            formData={processorConfig || {}}
             validator={validator}
             onChange={(e) => {
               setData({
