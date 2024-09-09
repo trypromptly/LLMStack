@@ -447,7 +447,7 @@ RQ_QUEUES = {
         ),
         "DB": os.getenv(
             "REDIS_DB",
-            9,
+            0,
         ),
         "DEFAULT_TIMEOUT": 1500,
     },
