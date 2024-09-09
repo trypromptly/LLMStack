@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from asgiref.sync import async_to_sync
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.utils import prequests
@@ -10,6 +10,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class PeopleSearchInput(ApiProcessorSchema):
     )
 
 
-class PeopleSearchOutput(ApiProcessorSchema):
+class APIResponse(BaseModel):
     response: str = Field(description="The response from the API call as a string", default="")
     response_json: Optional[Dict[str, Any]] = Field(
         description="The response from the API call as a JSON object", default={}
@@ -73,19 +74,32 @@ class PeopleSearchOutput(ApiProcessorSchema):
     time: float = Field(description="The time it took to get the response from the API call", default=0.0)
 
 
+class PeopleSearchOutput(ApiProcessorSchema):
+    breadcrumbs: Optional[List[Dict[str, str]]] = Field(description="The breadcrumbs for the API call", default=[])
+    people: Optional[List[Dict[str, Any]]] = Field(description="The people for the API call", default=[])
+    contacts: Optional[List[Dict[str, Any]]] = Field(description="The contacts for the API call", default=[])
+    api_response: APIResponse = Field(description="The  response from the API call", default={})
+
+
 class PeopleSearchConfiguration(ApiProcessorSchema):
     connection_id: Optional[str] = Field(
+        default=None,
         description="The connection id to use for the API call",
-        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
+        json_schema_extra={"widget": "hidden"},
+    )
+    max_results: Optional[int] = Field(
+        description="The maximum number of results to return",
+        default=10,
+        le=100,
+        ge=10,
+        multiple_of=10,
+        json_schema_extra={"advanced_parameter": False},
     )
     page: Optional[int] = Field(
         description="The page number to return",
-        default=1,
+        default=None,
     )
-    page_size: Optional[int] = Field(
-        description="The number of results to return per page",
-        default=10,
-    )
+    page_size: Optional[int] = Field(description="The number of results to return per page", default=None, le=20, ge=10)
 
 
 class PeopleSearch(ApiProcessorInterface[PeopleSearchInput, PeopleSearchOutput, PeopleSearchConfiguration]):
@@ -112,33 +126,34 @@ class PeopleSearch(ApiProcessorInterface[PeopleSearchInput, PeopleSearchOutput, 
     @classmethod
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
-            markdown="{{response}}",
+            markdown="{{api_response.response}}",
         )
 
     def process(self) -> dict:
         data = self._input.model_dump()
-        data["page"] = self._config.page
-        data["per_page"] = self._config.page_size
+        data["page"] = self._config.page or 1
+        data["per_page"] = self._config.page_size or self._config.max_results or 10
 
         for key in data:
             if not data[key]:
                 data[key] = None
 
-        connection = (
-            self._env["connections"].get(
-                self._config.connection_id,
-                None,
-            )
-            if self._config.connection_id
-            else None
-        )
-        logger.info(f"Data: {data}")
+        provider_config = self.get_provider_config(provider_slug=self.provider_slug())
+        api_key = provider_config.api_key
+
         response = prequests.post(
             url="https://api.apollo.io/v1/mixed_people/search",
             json=data,
-            _connection=connection,
-            headers={"Cache-Control": "no-cache", "Content-Type": "application/json"},
+            headers={"Cache-Control": "no-cache", "Content-Type": "application/json", "X-Api-Key": api_key},
         )
+        if response.ok:
+            self._usage_data.append(
+                (
+                    "apollo/*/*/*",
+                    MetricType.API_INVOCATION,
+                    (provider_config.provider_config_source, self._config.max_results // 10),
+                )
+            )
 
         objref = None
         response_text = response.text
@@ -153,13 +168,18 @@ class PeopleSearch(ApiProcessorInterface[PeopleSearchInput, PeopleSearchOutput, 
 
         async_to_sync(self._output_stream.write)(
             PeopleSearchOutput(
-                response=response_text,
-                response_json=response_json,
-                response_objref=objref,
-                headers=dict(response.headers),
-                code=response.status_code,
-                size=len(response.text),
-                time=response.elapsed.total_seconds(),
+                api_response=APIResponse(
+                    response=response_text,
+                    response_json=response_json,
+                    response_objref=objref,
+                    headers=dict(response.headers),
+                    code=response.status_code,
+                    size=len(response.text),
+                    time=response.elapsed.total_seconds(),
+                ),
+                breadcrumbs=response_json.get("breadcrumbs", []),
+                people=response_json.get("people", []),
+                contacts=response_json.get("contacts", []),
             )
         )
 

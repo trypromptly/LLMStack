@@ -10,6 +10,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
@@ -107,20 +108,18 @@ class OrganizationSearch(
         data["page"] = self._config.page
         data["per_page"] = self._config.page_size
 
-        connection = (
-            self._env["connections"].get(
-                self._config.connection_id,
-                None,
-            )
-            if self._config.connection_id
-            else None
-        )
+        provider_config = self.get_provider_config(provider_slug=self.provider_slug())
+        api_key = provider_config.api_key
+
         response = prequests.post(
             url="https://api.apollo.io/api/v1/mixed_companies/search",
             json=data,
-            _connection=connection,
-            headers={"Cache-Control": "no-cache", "Content-Type": "application/json"},
+            headers={"Cache-Control": "no-cache", "Content-Type": "application/json", "X-Api-Key": api_key},
         )
+        if response.ok:
+            self._usage_data.append(
+                ("apollo/*/*/*", MetricType.API_INVOCATION, (provider_config.provider_config_source, 1))
+            )
 
         objref = None
         response_text = response.text
