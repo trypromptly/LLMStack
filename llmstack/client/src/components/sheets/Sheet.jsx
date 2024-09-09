@@ -816,15 +816,14 @@ function Sheet(props) {
             wsRef.current = null;
           } else if (event.type === "cell.error") {
             const { id, error } = event.cell;
-            const cell = cells[id];
-            if (cell) {
-              cell.status = SHEET_CELL_STATUS_ERROR;
-              cell.error = error;
-              setCells((cells) => ({
-                ...cells,
-                [id]: cell,
-              }));
-            }
+            setCells((prevCells) => ({
+              ...prevCells,
+              [id]: {
+                ...prevCells[id],
+                status: SHEET_CELL_STATUS_ERROR,
+                error: error,
+              },
+            }));
 
             enqueueSnackbar(
               `Failed to execute cell ${event.cell?.id}: ${error}`,
@@ -845,7 +844,7 @@ function Sheet(props) {
         wsRef.current = null;
       }
     };
-  }, [runId, sheet?.uuid, wsUrlPrefix, columns, cells, numRows]);
+  }, [runId, sheet?.uuid, wsUrlPrefix, columns, numRows]);
 
   const onGridSelectionChange = useCallback(
     (selection) => {
