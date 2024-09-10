@@ -138,9 +138,6 @@ class AssetFileSystem(fsspec.AbstractFileSystem):
         return [file_info["name"] for file_info in files_list]
 
     def exists(self, path):
-        """
-        Check if an Assets instance exists by UUID.
-        """
         category, ref_id, file_path = self._parse_path(path)
         assets = self._get_all_assets(category=category, ref_id=ref_id)
         files_list = []
