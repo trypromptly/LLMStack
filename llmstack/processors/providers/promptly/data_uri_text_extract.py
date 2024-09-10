@@ -1,16 +1,18 @@
 import concurrent.futures
 import logging
-from typing import List, Optional
+from typing import List, Literal, Optional, Union
 
 from asgiref.sync import async_to_sync
-from pydantic import Field, conint
+from pydantic import BaseModel, Field, conint
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.data.store.vectorstore import Document, DocumentQuery
 from llmstack.common.blocks.data.store.vectorstore.chroma import Chroma
 from llmstack.common.utils.splitter import SpacyTextSplitter
-from llmstack.common.utils.text_extract import ExtraParams, extract_text_from_b64_json
-from llmstack.common.utils.utils import validate_parse_data_uri
+from llmstack.common.utils.text_extraction_service import (
+    GoogleVisionTextExtractionService,
+    PromptlyTextExtractionService,
+)
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -19,7 +21,31 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
+class TextExtractorConfig(BaseModel):
+    format_text: bool = Field(default=False)
+
+
+class PromptlyTextExtractorConfig(TextExtractorConfig):
+    provider: Literal["promptly"] = "promptly"
+
+
+class GoogleTextExtractorConfig(TextExtractorConfig):
+    provider: Literal["google"] = "google"
+
+
+TextExtractorProviderConfigType = Union[PromptlyTextExtractorConfig, GoogleTextExtractorConfig]
+
+
+class Page(BaseModel):
+    number: int
+    text: str
+
+
 class DataUriTextExtractorConfiguration(ApiProcessorSchema):
+    text_extractor_provider: TextExtractorProviderConfigType = Field(
+        description="The text extractor provider", default=PromptlyTextExtractorConfig()
+    )
+
     document_limit: Optional[conint(ge=0, le=10)] = Field(
         description="The maximum number of documents to return",
         default=1,
@@ -66,14 +92,14 @@ class DataUriTextExtractorOutput(ApiProcessorSchema):
         description="The extracted text from the file",
         json_schema_extra={"widget": "textarea"},
     )
+    pages: Optional[List[Page]] = Field(
+        default=None,
+        description="The extracted sections from the file",
+    )
 
 
 class DataUriTextExtract(
-    ApiProcessorInterface[
-        DataUriTextExtractorInput,
-        DataUriTextExtractorOutput,
-        DataUriTextExtractorConfiguration,
-    ],
+    ApiProcessorInterface[DataUriTextExtractorInput, DataUriTextExtractorOutput, DataUriTextExtractorConfiguration],
 ):
     """
     DataUri Text Extractor processor
@@ -104,9 +130,7 @@ class DataUriTextExtract(
 
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
-        return OutputTemplate(
-            markdown="""{{text}}""",
-        )
+        return OutputTemplate(markdown="""{{text}}""")
 
     def session_data_to_persist(self) -> dict:
         return {
@@ -118,28 +142,37 @@ class DataUriTextExtract(
         }
 
     def process(self) -> str:
-        openai_provider_config = self.get_provider_config(provider_slug="openai")
         query = self._input.query
-
-        file = self._input.file or None
-        if (file is None or file == "") and self._input.file_data:
-            file = self._input.file_data
+        file = self._input.file or self._input.file_data
 
         if file is None:
             raise Exception("No file found in input")
 
         # Extract from objref if it is one
         file = self._get_session_asset_data_uri(file)
-
-        mime_type, file_name, data = validate_parse_data_uri(file)
+        if self._config.text_extractor_provider.provider == "google":
+            provider_config = self.get_provider_config(provider_slug="google")
+            text_extractor = GoogleVisionTextExtractionService(
+                service_account_json=provider_config.service_account_json
+            )
+        elif self._config.text_extractor_provider.provider == "promptly":
+            text_extractor = PromptlyTextExtractionService()
 
         if not self.extracted_text:
-            self.extracted_text = extract_text_from_b64_json(
-                mime_type=mime_type,
-                base64_encoded_data=data,
-                file_name=file_name,
-                extra_params=ExtraParams(openai_key=openai_provider_config.api_key),
+            result = text_extractor.extract_from_uri(file)
+            self.extracted_text = (
+                result.formatted_text if self._config.text_extractor_provider.format_text else result.text
             )
+            self.pages = list(
+                map(
+                    lambda x: Page(
+                        number=x.page_no,
+                        text=x.formatted_text if self._config.text_extractor_provider.format_text else x.text,
+                    ),
+                    result.pages,
+                )
+            )
+            self.file_name = result.file_name
 
         if query:
             self.temp_store = Chroma(is_persistent=False)
@@ -158,9 +191,7 @@ class DataUriTextExtract(
                         Document(
                             page_content_key="content",
                             page_content=text_chunk,
-                            metadata={
-                                "source": file_name,
-                            },
+                            metadata={"source": self.file_name},
                         ),
                     )
                     for text_chunk in text_chunks
@@ -185,7 +216,7 @@ class DataUriTextExtract(
             return output
 
         async_to_sync(self._output_stream.write)(
-            DataUriTextExtractorOutput(text=self.extracted_text),
+            DataUriTextExtractorOutput(text=self.extracted_text, pages=self.pages),
         )
         output = self._output_stream.finalize()
         return output

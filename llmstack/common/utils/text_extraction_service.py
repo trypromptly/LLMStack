@@ -153,6 +153,7 @@ class Page(BaseModel):
 
 class TextractResponse(BaseModel):
     pages: List[Page] = []
+    file_name: Optional[str] = None
     _full_text: Optional[str] = None
 
     @property
@@ -204,7 +205,7 @@ class GoogleVisionTextExtractionService(TextExtractionService):
         request = vision.AnnotateImageRequest(image=vision.Image(content=file), features=self._features)
         res = self.client.annotate_image(request)
 
-        response = TextractResponse(pages=[])
+        response = TextractResponse(pages=[], file_name=kwargs.get("filename"))
         if res.text_annotations:
             page_width = res.text_annotations[0].bounding_poly.vertices[2].x
             page_height = res.text_annotations[0].bounding_poly.vertices[2].y
@@ -370,7 +371,7 @@ class PromptlyTextExtractionService(TextExtractionService):
             raise Exception("Unsupported file type")
 
         if not elements:
-            return TextractResponse(pages=[])
+            return TextractResponse(pages=[], file_name=file_name)
 
         font_height = None
         font_width = None
@@ -429,7 +430,7 @@ class PromptlyTextExtractionService(TextExtractionService):
             page.font_height = math.ceil(font_height) if font_height else None
             page.font_width = math.ceil(font_width) if font_width else None
 
-        return TextractResponse(pages=list(pages.values()))
+        return TextractResponse(pages=list(pages.values()), file_name=file_name)
 
     def extract_from_uri(self, file_uri: str) -> TextractResponse:
         from llmstack.common.utils.utils import validate_parse_data_uri
