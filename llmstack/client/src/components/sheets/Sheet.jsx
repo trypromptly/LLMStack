@@ -47,6 +47,7 @@ export const SHEET_CELL_TYPE_NUMBER = 1;
 export const SHEET_CELL_TYPE_URI = 2;
 export const SHEET_CELL_TYPE_TAGS = 3;
 export const SHEET_CELL_TYPE_BOOLEAN = 4;
+export const SHEET_CELL_TYPE_IMAGE = 5;
 
 export const SHEET_CELL_STATUS_READY = 0;
 export const SHEET_CELL_STATUS_RUNNING = 1;
@@ -221,6 +222,36 @@ export const sheetCellTypes = {
     },
     getCellValue: (cell) => {
       return cell.data.toString();
+    },
+  },
+  [SHEET_CELL_TYPE_IMAGE]: {
+    label: "Image",
+    value: "image",
+    description: "Image URL",
+    kind: GridCellKind.Image,
+    getDataGridCell: (cell, column) => {
+      if (!cell) {
+        return {
+          kind: GridCellKind.Image,
+          data: [],
+          displayData: [],
+          readonly: column?.formula?.type > 0 || false,
+          allowOverlay: true,
+          allowWrapping: true,
+        };
+      }
+
+      return {
+        kind: GridCellKind.Image,
+        data: cell.value?.trim().split(",") || [],
+        displayData: cell.value?.trim().split(",") || [],
+        readonly: cell.formula || column.formula?.type > 0 || false,
+        allowOverlay: true,
+        allowWrapping: true,
+      };
+    },
+    getCellValue: (cell) => {
+      return cell?.data?.join(", ") || "";
     },
   },
 };

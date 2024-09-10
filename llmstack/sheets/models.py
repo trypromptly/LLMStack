@@ -23,6 +23,7 @@ class SheetCellType(int, Enum):
     URI = 2
     TAGS = 3
     BOOLEAN = 4
+    IMAGE = 5
 
     def __str__(self):
         return self.value
