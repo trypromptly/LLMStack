@@ -8,6 +8,25 @@ import { useRecoilValue } from "recoil";
 import { apiBackendSelectedState } from "../../data/atoms";
 import TextFieldWithVars from "../apps/TextFieldWithVars";
 
+function convertLiquidToJsonPath(inputStr) {
+  if (!inputStr) {
+    return null;
+  }
+  // Regular expression to find Liquid variables
+  const liquidRegex = /{{\s*([\w.]+)\s*}}/g;
+  let found = false;
+
+  // Replace the Liquid variables with JSONPath expressions
+  const result = inputStr.replace(liquidRegex, (match, variablePath) => {
+    found = true;
+    // Convert the variable path to JSONPath by prepending "$."
+    return `$.${variablePath}`;
+  });
+
+  // If no Liquid variables were found, return "none"
+  return found ? result : null;
+}
+
 export default function ProcessorRunForm({
   setData,
   providerSlug,
@@ -38,6 +57,9 @@ export default function ProcessorRunForm({
         markdown:
           outputTemplateRef.current ||
           apiBackendSelected?.output_template?.markdown,
+        jsonpath:
+          convertLiquidToJsonPath(outputTemplateRef.current) ||
+          apiBackendSelected?.output_template?.jsonpath,
       },
       input: inputDataRef.current,
       config: configDataRef.current,
@@ -85,6 +107,10 @@ export default function ProcessorRunForm({
                     outputTemplateRef.current ||
                     apiBackendSelected?.output_template?.markdown ||
                     "",
+                  jsonpath:
+                    convertLiquidToJsonPath(outputTemplateRef.current) ||
+                    apiBackendSelected?.output_template?.jsonpath ||
+                    "",
                 },
                 processor_slug: apiBackendSelected?.slug,
                 provider_slug: apiBackendSelected?.api_provider?.slug,
@@ -111,6 +137,10 @@ export default function ProcessorRunForm({
                     outputTemplateRef.current ||
                     apiBackendSelected?.output_template?.markdown ||
                     "",
+                  jsonpath:
+                    convertLiquidToJsonPath(outputTemplateRef.current) ||
+                    apiBackendSelected?.output_template?.jsonpath ||
+                    "",
                 },
                 processor_slug: apiBackendSelected?.slug,
                 provider_slug: apiBackendSelected?.api_provider?.slug,
@@ -131,7 +161,10 @@ export default function ProcessorRunForm({
               setData({
                 input: inputDataRef.current || {},
                 config: configDataRef.current || {},
-                output_template: { markdown: text },
+                output_template: {
+                  markdown: text,
+                  jsonpath: convertLiquidToJsonPath(text) || "",
+                },
                 processor_slug: apiBackendSelected?.slug,
                 provider_slug: apiBackendSelected?.api_provider?.slug,
               });

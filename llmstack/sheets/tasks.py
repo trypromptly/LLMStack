@@ -12,6 +12,7 @@ from channels.layers import get_channel_layer
 from django.contrib.auth.models import User
 from django.test import RequestFactory
 from django_redis import get_redis_connection
+from jsonpath_ng import parse
 
 from llmstack.apps.apis import AppViewSet
 from llmstack.common.utils.liquid import render_template
@@ -92,6 +93,7 @@ def _execute_cell(
         processor_input = formula_data.input
         processor_config = formula_data.config
         processor_output_template = formula_data.output_template.get("markdown", "")
+        processor_output_jsonpath = formula_data.output_template.get("jsonpath", "")
 
         input = hydrate_input(processor_input, input_values)
         config = hydrate_input(processor_config, input_values)
@@ -120,12 +122,24 @@ def _execute_cell(
         )
 
         # Render the output template using response.output
-        if response.get("output") and processor_output_template:
+        if response.get("output"):
             try:
-                processor_output = ast.literal_eval(response.get("output"))
-                output = hydrate_input(processor_output_template, processor_output)
+                if processor_output_jsonpath:
+                    processor_output = ast.literal_eval(response.get("output"))
+                    jsonpath_expr = parse(processor_output_jsonpath)
+                    jsonpath_output = [match.value for match in jsonpath_expr.find(processor_output)]
+                    if jsonpath_output:
+                        if len(jsonpath_output) > 1:
+                            output = str(jsonpath_output)
+                        else:
+                            output = str(jsonpath_output[0])
+                    else:
+                        output = ""
+                elif processor_output_template:
+                    processor_output = ast.literal_eval(response.get("output"))
+                    output = hydrate_input(processor_output_template, processor_output)
             except Exception as e:
-                logger.error(f"Error rendering output template: {e}")
+                logger.error(f"Error processing processor output: {e}")
                 async_to_sync(channel_layer.group_send)(
                     run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
                 )
