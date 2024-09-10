@@ -1,9 +1,9 @@
+import base64
 import math
 from abc import ABC, abstractmethod
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple
 
-from google.cloud import vision
 from pydantic import BaseModel
 from striprtf.striprtf import rtf_to_text
 from unstructured.documents.elements import ElementMetadata, PageBreak, Text
@@ -185,6 +185,8 @@ class TextExtractionService(ABC):
 
 class GoogleVisionTextExtractionService(TextExtractionService):
     def __init__(self, service_account_json, provider: str = "google") -> None:
+        from google.cloud import vision
+
         super().__init__(provider)
 
         try:
@@ -197,6 +199,8 @@ class GoogleVisionTextExtractionService(TextExtractionService):
         self._features = [text_deteection_feature]
 
     def extract_from_bytes(self, file: bytes, **kwargs) -> TextractResponse:
+        from google.cloud import vision
+
         request = vision.AnnotateImageRequest(image=vision.Image(content=file), features=self._features)
         res = self.client.annotate_image(request)
 
@@ -323,7 +327,7 @@ class GoogleVisionTextExtractionService(TextExtractionService):
         from llmstack.common.utils.utils import validate_parse_data_uri
 
         mime_type, filename, data = validate_parse_data_uri(file_uri)
-        return self.extract_from_bytes(data, mime_type=mime_type, filename=filename)
+        return self.extract_from_bytes(base64.b64decode(data), mime_type=mime_type, filename=filename)
 
 
 class PromptlyTextExtractionService(TextExtractionService):
@@ -337,7 +341,7 @@ class PromptlyTextExtractionService(TextExtractionService):
         elements = []
         pages = {}
         if mime_type == "application/pdf":
-            elements = partition_pdf(file=data_fp, include_page_breaks=True, infer_table_structure=True)
+            elements = partition_pdf(file=data_fp, include_page_breaks=True, infer_table_structure=False)
         elif mime_type == "application/rtf" or mime_type == "text/rtf":
             elements = partition_text(text=rtf_to_text(file.decode("utf-8")))
         elif mime_type == "text/plain":
@@ -427,9 +431,10 @@ class PromptlyTextExtractionService(TextExtractionService):
 
         return TextractResponse(pages=list(pages.values()))
 
-    def extract_from_uri(self, file_uri: bytes) -> TextractResponse:
+    def extract_from_uri(self, file_uri: str) -> TextractResponse:
         from llmstack.common.utils.utils import validate_parse_data_uri
 
         # Extract text from URI
         mime_type, filename, data = validate_parse_data_uri(file_uri)
-        return self.extract_from_bytes(data, mime_type=mime_type, filename=filename)
+
+        return self.extract_from_bytes(base64.b64decode(data), mime_type=mime_type, filename=filename)
