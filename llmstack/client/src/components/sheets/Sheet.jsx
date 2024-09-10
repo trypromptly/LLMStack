@@ -590,17 +590,23 @@ function Sheet(props) {
     }));
   }, []);
 
-  const onColumnChange = useCallback(
-    (columnIndex, newColumn) => {
-      setColumns((prevColumns) => {
-        const colLetter = gridColumns[columnIndex].col;
-        const newColumns = { ...prevColumns };
-        newColumns[colLetter] = newColumn;
-        updateUserChanges("columns", colLetter, newColumn);
+  const onColumnResize = useCallback(
+    (column, width) => {
+      const colIndex = columns.findIndex(
+        (c) => c.col_letter === column.colLetter,
+      );
+
+      setColumns((prev) => {
+        const newColumns = [...prev];
+        newColumns[colIndex].width = width;
+        updateUserChanges("columns", column.colLetter, {
+          ...column,
+          width: width,
+        });
         return newColumns;
       });
     },
-    [updateUserChanges, gridColumns],
+    [updateUserChanges, columns],
   );
 
   const addColumn = useCallback(
@@ -1177,12 +1183,7 @@ function Sheet(props) {
           onCellEdited={onCellEdited}
           onHeaderMenuClick={onHeaderMenuClick}
           onHeaderClicked={onHeaderClicked}
-          onColumnResize={(column, width) => {
-            onColumnChange(
-              gridColumns.findIndex((c) => c.col === column.col),
-              { ...column, width },
-            );
-          }}
+          onColumnResize={onColumnResize}
           rows={numRows}
           headerIcons={headerIcons}
           gridSelection={gridSelection}
