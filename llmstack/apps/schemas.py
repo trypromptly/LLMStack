@@ -34,6 +34,9 @@ class OutputTemplate(BaseModel):
     """
 
     markdown: str = Field(None, description="Markdown template for output")
+    jsonpath: Optional[str] = Field(
+        default=None,
+    )
 
 
 class Provider(BaseModel):

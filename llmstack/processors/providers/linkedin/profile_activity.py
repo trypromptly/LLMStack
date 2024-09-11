@@ -1,8 +1,9 @@
 import logging
 from typing import List, Optional
 
-import orjson as json
 from asgiref.sync import async_to_sync
+from langrocks.client import WebBrowser
+from langrocks.common.models.web_browser import WebBrowserCommand, WebBrowserCommandType
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
@@ -12,6 +13,13 @@ from llmstack.processors.providers.api_processor_interface import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _query_selector_all(page_html, selector):
+    from bs4 import BeautifulSoup
+
+    parser = BeautifulSoup(page_html, "html.parser")
+    return parser.select(selector)
 
 
 class ProfileActivityInput(ApiProcessorSchema):
@@ -70,6 +78,110 @@ class ProfileActivityConfiguration(ApiProcessorSchema):
     )
 
 
+def get_user_recent_posts(profile_url, web_browser):
+    profile_url = profile_url.rstrip("/")
+
+    browser_response = web_browser.run_commands(
+        [
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.GOTO,
+                data=f"{profile_url}/recent-activity/all/",
+            ),
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.WAIT,
+                selector="div.feed-shared-update-v2",
+                data="5000",
+            ),
+        ]
+    )
+    page_html = browser_response.html
+    selectors = _query_selector_all(page_html, "div.feed-shared-update-v2")
+    text = [selector.text.strip().rstrip() for selector in selectors]
+
+    return text
+
+
+def get_user_recent_comments(profile_url, web_browser):
+    profile_url = profile_url.rstrip("/")
+
+    browser_response = web_browser.run_commands(
+        [
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.GOTO,
+                data=f"{profile_url}/recent-activity/comments/",
+            ),
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.WAIT,
+                selector="div.feed-shared-update-v2",
+                data="5000",
+            ),
+        ]
+    )
+    page_html = browser_response.html
+    selectors = _query_selector_all(page_html, "div.feed-shared-update-v2")
+    text = [selector.text.strip().rstrip() for selector in selectors]
+
+    return text
+
+
+def get_user_recent_reactions(profile_url, web_browser):
+    profile_url = profile_url.rstrip("/")
+    browser_response = web_browser.run_commands(
+        [
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.GOTO,
+                data=f"{profile_url}/recent-activity/reactions/",
+            ),
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.WAIT,
+                selector="div.feed-shared-update-v2",
+                data="5000",
+            ),
+        ]
+    )
+    page_html = browser_response.html
+    selectors = _query_selector_all(page_html, "div.feed-shared-update-v2")
+    text = [selector.text.strip().rstrip() for selector in selectors]
+
+    return text
+
+
+def get_user_profile_url(search_term, web_browser):
+    browser_response = web_browser.run_commands(
+        [
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.GOTO,
+                data=f"https://www.linkedin.com/search/results/people/?keywords={search_term}",
+            ),
+            WebBrowserCommand(
+                command_type=WebBrowserCommandType.WAIT,
+                selector="div.search-results-container",
+                data="5000",
+            ),
+        ]
+    )
+    page_html = browser_response.html
+
+    results = _query_selector_all(page_html, "span.entity-result__title-text a")
+    if len(results) > 0 and results[0].has_attr("href"):
+        browser_response = web_browser.run_commands(
+            [
+                WebBrowserCommand(
+                    command_type=WebBrowserCommandType.GOTO,
+                    data=results[0]["href"],
+                ),
+                WebBrowserCommand(
+                    command_type=WebBrowserCommandType.WAIT,
+                    selector="div.body",
+                    data="5000",
+                ),
+            ]
+        )
+        return browser_response.url
+
+    return None
+
+
 class ProfileActivityProcessor(
     ApiProcessorInterface[ProfileActivityInput, ProfileActivityOutput, ProfileActivityConfiguration],
 ):
@@ -118,81 +230,47 @@ class ProfileActivityProcessor(
 {% endif %}""",
         )
 
-    async def _get_profile_activity(self):
-        from django.conf import settings
-        from playwright.async_api import async_playwright
-
-        try:
-            async with async_playwright() as playwright:
-                storage_state = self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
-
-                try:
-                    storage_state = json.loads(storage_state)
-                except BaseException:
-                    pass
-
-                browser = (
-                    await playwright.chromium.connect(ws_endpoint=settings.PLAYWRIGHT_URL)
-                    if hasattr(settings, "PLAYWRIGHT_URL") and settings.PLAYWRIGHT_URL
-                    else await playwright.chromium.launch(args=["--disable-blink-features=AutomationControlled"])
-                )
-                context = await browser.new_context(storage_state=storage_state)
-                page = await context.new_page()
-                if self._input.search_term:
-                    await page.goto(
-                        f"https://www.linkedin.com/search/results/people/?keywords={self._input.search_term}",
-                    )
-                    await page.wait_for_selector("div.search-results-container", timeout=5000)
-                    results = await page.query_selector_all("span.entity-result__title-text")
-
-                    # Click on the first link, wait for the page to load and
-                    # get the URL
-                    if len(results) > 0:
-                        await results[0].click()
-                    else:
-                        raise Exception(
-                            f"No results found for search term {self._input.search_term}",
-                        )
-
-                    await page.wait_for_selector("div.body", timeout=5000)
-                    self._input.profile_url = page.url
-
-                # Get posts
-                await page.goto(f"{self._input.profile_url}/recent-activity/all/")
-                await page.wait_for_selector("div.feed-shared-update-v2", timeout=5000)
-                results = await page.query_selector_all("div.feed-shared-update-v2")
-                posts = [await result.inner_text() for result in results]
-
-                # Get comments
-                await page.goto(f"{self._input.profile_url}/recent-activity/comments/")
-                await page.wait_for_selector("div.feed-shared-update-v2", timeout=5000)
-                results = await page.query_selector_all("div.feed-shared-update-v2")
-                comments = [await result.inner_text() for result in results]
-
-                # Get reactions
-                await page.goto(f"{self._input.profile_url}/recent-activity/reactions/")
-                await page.wait_for_selector("div.feed-shared-update-v2", timeout=5000)
-                results = await page.query_selector_all("div.feed-shared-update-v2")
-                reactions = [await result.inner_text() for result in results]
-
-                await browser.close()
-                return ProfileActivityOutput(
-                    posts=posts[: self._config.n_posts],
-                    comments=comments[: self._config.n_comments],
-                    reactions=reactions[: self._config.n_reactions],
-                    profile_url=self._input.profile_url,
-                )
-        except Exception as e:
-            logger.exception(e)
-            return ProfileActivityOutput(
-                error=f"Error getting profile activity: {e}",
-            )
-
     def process(self) -> dict:
+        user_recent_posts = []
+        user_recent_comments = []
+        user_recent_reactions = []
+        user_profile = self._input.profile_url if self._input.profile_url else None
+
+        from django.conf import settings
+
         output_stream = self._output_stream
+        with WebBrowser(
+            f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
+            interactive=False,
+            capture_screenshot=False,
+            html=True,
+            session_data=(
+                self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
+                if self._config.connection_id
+                else ""
+            ),
+        ) as web_browser:
+            if user_profile is None and self._input.search_term:
+                user_profile = get_user_profile_url(self._input.search_term, web_browser)
+                if not user_profile:
+                    async_to_sync(output_stream.write)(
+                        ProfileActivityOutput(
+                            error=f"No results found for search term {self._input.search_term}",
+                        )
+                    )
 
-        result = async_to_sync(self._get_profile_activity)()
+            if user_profile:
+                user_recent_posts = get_user_recent_posts(self._input.profile_url, web_browser)
+                user_recent_comments = get_user_recent_comments(self._input.profile_url, web_browser)
+                user_recent_reactions = get_user_recent_reactions(self._input.profile_url, web_browser)
 
-        async_to_sync(output_stream.write)(result)
+        async_to_sync(output_stream.write)(
+            ProfileActivityOutput(
+                posts=user_recent_posts[: self._config.n_posts],
+                comments=user_recent_comments[: self._config.n_comments],
+                reactions=user_recent_reactions[: self._config.n_reactions],
+                profile_url=self._input.profile_url,
+            )
+        )
 
         return output_stream.finalize()
