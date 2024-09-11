@@ -129,6 +129,8 @@ class StaticWebBrowser(
             instruction_type = WebBrowserCommandType.TERMINATE
         elif instruction.type == BrowserInstructionType.ENTER.value:
             instruction_type = WebBrowserCommandType.ENTER
+        elif instruction.type == BrowserInstructionType.TYPE.value:
+            instruction_type = WebBrowserCommandType.TYPE
 
         return WebBrowserCommand(
             command_type=instruction_type, data=(instruction.data or ""), selector=(instruction.selector or "")
