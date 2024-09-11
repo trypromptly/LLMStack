@@ -102,6 +102,17 @@ class CustomGenerateJsonSchema(GenerateJsonSchema):
                 return inner_json_schema
             return flattened_anyof
 
+    def default_schema(self, schema):
+        json_schema = self.generate_inner(schema["schema"])
+
+        if "default" not in schema:
+            return json_schema
+
+        if "default" in schema and schema["default"] is None:
+            return json_schema
+
+        return super().default_schema(schema)
+
 
 class BaseSchema(BaseModel):
     @classmethod
