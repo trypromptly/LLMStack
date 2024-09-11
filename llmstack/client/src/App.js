@@ -147,7 +147,7 @@ export default function App({ children }) {
     <div id="app-container">
       <SnackbarProvider
         maxSnack={3}
-        autoHideDuration={3000}
+        autoHideDuration={2000}
         anchorOrigin={{ horizontal: "center", vertical: "top" }}
         action={(key) => (
           <IconButton
