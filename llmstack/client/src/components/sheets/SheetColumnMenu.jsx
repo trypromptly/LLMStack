@@ -324,7 +324,6 @@ export function SheetColumnMenu({
                     sx={{ textTransform: "none" }}
                     variant="standard"
                     onClick={() => {
-                      anchorEl.style.display = "none";
                       setOpen(false);
                     }}
                   >

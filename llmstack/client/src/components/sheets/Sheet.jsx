@@ -321,7 +321,8 @@ function Sheet(props) {
     numRows: null,
     addedColumns: [],
   });
-  const editColumnAnchorEl = useRef(null);
+  const columnMenuAnchorDivEl = useRef(null);
+  const [columnMenuAnchorEl, setColumnMenuAnchorEl] = useState(null);
   const sheetRef = useRef(null);
   const wsRef = useRef(null);
   const formulaMenuAnchorEl = useRef(null);
@@ -510,7 +511,7 @@ function Sheet(props) {
     (args, drawContent) => {
       drawContent();
 
-      const { column, ctx, menuBounds } = args;
+      const { column, ctx, menuBounds, rect, columnIndex } = args;
 
       const gridColumn =
         columns?.find((c) => c.col_letter === column.icon) || null;
@@ -553,8 +554,25 @@ function Sheet(props) {
           ctx.restore();
         };
       }
+
+      if (
+        columnMenuAnchorDivEl.current &&
+        showEditColumnMenu &&
+        selectedColumnId === columnIndex
+      ) {
+        const sheetColumnMenuRect =
+          columnMenuAnchorDivEl.current.getBoundingClientRect();
+        setColumnMenuAnchorEl({
+          getBoundingClientRect: () =>
+            DOMRect.fromRect({
+              ...rect,
+              x: rect.x + 70,
+              y: sheetColumnMenuRect.y,
+            }),
+        });
+      }
     },
-    [columns],
+    [columns, showEditColumnMenu, selectedColumnId],
   );
 
   useEffect(() => {
@@ -699,18 +717,9 @@ function Sheet(props) {
 
       setShowEditColumnMenu(!showEditColumnMenu);
 
-      if (editColumnAnchorEl.current) {
-        if (showEditColumnMenu) {
-          editColumnAnchorEl.current.style.display = "none";
-        } else {
-          editColumnAnchorEl.current.style.display = "inherit";
-          editColumnAnchorEl.current.style.position = "absolute";
-          editColumnAnchorEl.current.style.left = `${bounds.x}px`;
-          editColumnAnchorEl.current.style.top = `${bounds.y}px`;
-          editColumnAnchorEl.current.style.width = `${bounds.width}px`;
-          editColumnAnchorEl.current.style.height = `${bounds.height}px`;
-        }
-      }
+      setColumnMenuAnchorEl({
+        getBoundingClientRect: () => DOMRect.fromRect(bounds),
+      });
 
       setSelectedColumnId(column);
     },
@@ -725,18 +734,9 @@ function Sheet(props) {
         setSelectedColumnId(column);
         setShowEditColumnMenu(!showEditColumnMenu);
 
-        if (editColumnAnchorEl.current) {
-          if (showEditColumnMenu) {
-            editColumnAnchorEl.current.style.display = "none";
-          } else {
-            editColumnAnchorEl.current.style.display = "inherit";
-            editColumnAnchorEl.current.style.position = "absolute";
-            editColumnAnchorEl.current.style.left = `${bounds.x}px`;
-            editColumnAnchorEl.current.style.top = `${bounds.y}px`;
-            editColumnAnchorEl.current.style.width = `${bounds.width}px`;
-            editColumnAnchorEl.current.style.height = `${bounds.height}px`;
-          }
-        }
+        setColumnMenuAnchorEl({
+          getBoundingClientRect: () => DOMRect.fromRect(bounds),
+        });
       }
     },
     [showEditColumnMenu, setSelectedColumnId],
@@ -1198,6 +1198,7 @@ function Sheet(props) {
           </LayoutRenderer>
         </Box>
       </Box>
+      <div id="sheet-column-menu" ref={columnMenuAnchorDivEl} />
       <Box>
         <DataEditor
           ref={sheetRef}
@@ -1237,12 +1238,11 @@ function Sheet(props) {
         />
       </Box>
       <div id="portal" />
-      <div id="sheet-column-menu" ref={editColumnAnchorEl} />
       <MemoizedSheetColumnMenu
         column={selectedColumnId !== null ? columns[selectedColumnId] : null}
         open={showEditColumnMenu}
         setOpen={setShowEditColumnMenu}
-        anchorEl={editColumnAnchorEl.current}
+        anchorEl={columnMenuAnchorEl}
         columns={columns}
         updateColumn={(column) => {
           const newColumns = [...columns];
