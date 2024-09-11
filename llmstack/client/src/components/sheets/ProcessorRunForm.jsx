@@ -14,6 +14,9 @@ function getJsonpathTemplateString(variable, widget) {
 }
 
 function liquidTemplateVariabletoJsonPath(variable) {
+  if (!variable) {
+    return "";
+  }
   return variable.replace(/{{\s*(\S+)\s*}}/g, "$.$1");
 }
 
