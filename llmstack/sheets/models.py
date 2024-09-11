@@ -24,9 +24,10 @@ class SheetCellType(int, Enum):
     TAGS = 3
     BOOLEAN = 4
     IMAGE = 5
+    OBJECT = 6
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
 
 class SheetCellStatus(int, Enum):

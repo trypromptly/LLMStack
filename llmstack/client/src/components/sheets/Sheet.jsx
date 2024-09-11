@@ -48,6 +48,7 @@ export const SHEET_CELL_TYPE_URI = 2;
 export const SHEET_CELL_TYPE_TAGS = 3;
 export const SHEET_CELL_TYPE_BOOLEAN = 4;
 export const SHEET_CELL_TYPE_IMAGE = 5;
+export const SHEET_CELL_TYPE_OBJECT = 6;
 
 export const SHEET_CELL_STATUS_READY = 0;
 export const SHEET_CELL_STATUS_RUNNING = 1;
@@ -252,6 +253,42 @@ export const sheetCellTypes = {
     },
     getCellValue: (cell) => {
       return cell?.data?.join(", ") || "";
+    },
+  },
+  [SHEET_CELL_TYPE_OBJECT]: {
+    label: "Object",
+    value: "object",
+    description: "JSON object",
+    kind: GridCellKind.Object,
+    getDataGridCell: (cell, column) => {
+      if (!cell) {
+        return {
+          kind: GridCellKind.Text,
+          data: "",
+          displayData: "",
+          readonly: column?.formula?.type > 0 || false,
+          allowOverlay: true,
+          allowWrapping: true,
+        };
+      }
+
+      return {
+        kind: GridCellKind.Text,
+        data:
+          Object.keys(cell.value || {}).length > 0
+            ? JSON.stringify(cell.value)
+            : "",
+        displayData:
+          Object.keys(cell.value || {}).length > 0
+            ? JSON.stringify(cell.value).slice(0, 100) || ""
+            : "",
+        readonly: cell.formula || column.formula?.type > 0 || false,
+        allowOverlay: true,
+        allowWrapping: true,
+      };
+    },
+    getCellValue: (cell) => {
+      return cell.data ? JSON.parse(cell.data) : {};
     },
   },
 };
@@ -1153,7 +1190,11 @@ function Sheet(props) {
             }
           }}
         >
-          <LayoutRenderer>{selectedCellValue}</LayoutRenderer>
+          <LayoutRenderer>
+            {typeof selectedCellValue === "object"
+              ? JSON.stringify(selectedCellValue)
+              : selectedCellValue}
+          </LayoutRenderer>
         </Box>
       </Box>
       <Box>
