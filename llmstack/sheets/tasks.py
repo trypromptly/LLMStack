@@ -12,6 +12,7 @@ from channels.layers import get_channel_layer
 from django.contrib.auth.models import User
 from django.test import RequestFactory
 from django_redis import get_redis_connection
+from jsonpath_ng import parse
 
 from llmstack.apps.apis import AppViewSet
 from llmstack.common.utils.liquid import render_template
@@ -20,6 +21,7 @@ from llmstack.sheets.models import (
     PromptlySheet,
     PromptlySheetRunEntry,
     SheetCell,
+    SheetCellType,
     SheetColumn,
     SheetFormulaType,
 )
@@ -48,6 +50,7 @@ def number_to_letters(num):
 
 def _execute_cell(
     cell: SheetCell,
+    cell_type: SheetCellType,
     input_values: Dict[str, Any],
     sheet: PromptlySheet,
     run_id: str,
@@ -91,7 +94,7 @@ def _execute_cell(
         api_backend_slug = formula_data.processor_slug
         processor_input = formula_data.input
         processor_config = formula_data.config
-        processor_output_template = formula_data.output_template.get("markdown", "")
+        processor_output_template = formula_data.output_template.get("jsonpath", "")
 
         input = hydrate_input(processor_input, input_values)
         config = hydrate_input(processor_config, input_values)
@@ -120,12 +123,17 @@ def _execute_cell(
         )
 
         # Render the output template using response.output
-        if response.get("output") and processor_output_template:
+        if response.get("output"):
             try:
                 processor_output = ast.literal_eval(response.get("output"))
-                output = hydrate_input(processor_output_template, processor_output)
+                jsonpath_output = [match.value for match in parse(processor_output_template).find(processor_output)]
+                if len(jsonpath_output) == 1:
+                    jsonpath_output = jsonpath_output[0]
+
+                output = jsonpath_output if cell_type == SheetCellType.OBJECT else str(jsonpath_output)
+
             except Exception as e:
-                logger.error(f"Error rendering output template: {e}")
+                logger.error(f"Error processing processor output: {e}")
                 async_to_sync(channel_layer.group_send)(
                     run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
                 )
@@ -144,9 +152,8 @@ def _execute_cell(
                 )
         else:
             output = ""
-
     try:
-        processed_output = ast.literal_eval(output)
+        processed_output = output if cell_type == SheetCellType.OBJECT else ast.literal_eval(output)
 
         if (
             isinstance(processed_output, list)
@@ -166,7 +173,11 @@ def _execute_cell(
             ]
         elif isinstance(processed_output, list) and spread_output:
             output_cells = [
-                SheetCell(row=cell.row + i, col_letter=cell.col_letter, value=str(item))
+                SheetCell(
+                    row=cell.row + i,
+                    col_letter=cell.col_letter,
+                    value=item if cell_type == SheetCellType.OBJECT else str(item),
+                )
                 for i, item in enumerate(processed_output)
             ]
         else:
@@ -346,6 +357,7 @@ def run_row(
             executed_cells.extend(
                 _execute_cell(
                     formula_cells_dict[current_cell_id],
+                    columns_dict[current_col].cell_type,
                     input_values,
                     sheet,
                     str(run_entry.uuid),
@@ -373,6 +385,7 @@ def run_row(
 
             output_cells = _execute_cell(
                 cell_to_execute,
+                columns_dict[current_col].cell_type,
                 input_values,
                 sheet,
                 str(run_entry.uuid),

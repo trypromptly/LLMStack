@@ -8,6 +8,18 @@ import { useRecoilValue } from "recoil";
 import { apiBackendSelectedState } from "../../data/atoms";
 import TextFieldWithVars from "../apps/TextFieldWithVars";
 
+function getJsonpathTemplateString(variable, widget) {
+  let templateString = `$.${variable}`;
+  return templateString;
+}
+
+function liquidTemplateVariabletoJsonPath(variable) {
+  if (!variable) {
+    return "";
+  }
+  return variable.replace(/{{\s*(\S+)\s*}}/g, "$.$1");
+}
+
 export default function ProcessorRunForm({
   setData,
   providerSlug,
@@ -20,8 +32,10 @@ export default function ProcessorRunForm({
   const inputDataRef = useRef(processorInput || {});
   const configDataRef = useRef(processorConfig || {});
   const outputTemplateRef = useRef(
-    processorOutputTemplate?.markdown ||
-      apiBackendSelected?.output_template?.markdown ||
+    processorOutputTemplate?.jsonpath ||
+      liquidTemplateVariabletoJsonPath(
+        apiBackendSelected?.output_template?.markdown,
+      ) ||
       "",
   );
   const [tabValue, setTabValue] = useState("input");
@@ -35,9 +49,11 @@ export default function ProcessorRunForm({
       processor_slug: apiBackendSelected?.slug,
       provider_slug: apiBackendSelected?.api_provider?.slug,
       output_template: {
-        markdown:
+        jsonpath:
           outputTemplateRef.current ||
-          apiBackendSelected?.output_template?.markdown,
+          liquidTemplateVariabletoJsonPath(
+            apiBackendSelected?.output_template?.markdown,
+          ),
       },
       input: inputDataRef.current,
       config: configDataRef.current,
@@ -47,7 +63,7 @@ export default function ProcessorRunForm({
   useEffect(() => {
     inputDataRef.current = processorInput;
     configDataRef.current = processorConfig;
-    outputTemplateRef.current = processorOutputTemplate?.markdown;
+    outputTemplateRef.current = processorOutputTemplate?.jsonpath;
   }, [processorInput, processorConfig, processorOutputTemplate]);
 
   return (
@@ -81,9 +97,11 @@ export default function ProcessorRunForm({
                 input: e.formData,
                 config: configDataRef.current || {},
                 output_template: {
-                  markdown:
+                  jsonpath:
                     outputTemplateRef.current ||
-                    apiBackendSelected?.output_template?.markdown ||
+                    liquidTemplateVariabletoJsonPath(
+                      apiBackendSelected?.output_template?.markdown,
+                    ) ||
                     "",
                 },
                 processor_slug: apiBackendSelected?.slug,
@@ -107,9 +125,11 @@ export default function ProcessorRunForm({
                 input: inputDataRef.current || {},
                 config: e.formData,
                 output_template: {
-                  markdown:
+                  jsonpath:
                     outputTemplateRef.current ||
-                    apiBackendSelected?.output_template?.markdown ||
+                    liquidTemplateVariabletoJsonPath(
+                      apiBackendSelected?.output_template?.markdown,
+                    ) ||
                     "",
                 },
                 processor_slug: apiBackendSelected?.slug,
@@ -125,13 +145,18 @@ export default function ProcessorRunForm({
             multiline
             value={
               outputTemplateRef.current ||
-              apiBackendSelected?.output_template?.markdown
+              liquidTemplateVariabletoJsonPath(
+                apiBackendSelected?.output_template?.markdown,
+              )
             }
+            templateStringResolver={getJsonpathTemplateString}
             onChange={(text) => {
               setData({
                 input: inputDataRef.current || {},
                 config: configDataRef.current || {},
-                output_template: { markdown: text },
+                output_template: {
+                  jsonpath: text,
+                },
                 processor_slug: apiBackendSelected?.slug,
                 provider_slug: apiBackendSelected?.api_provider?.slug,
               });

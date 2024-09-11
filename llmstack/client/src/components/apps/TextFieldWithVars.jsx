@@ -207,7 +207,20 @@ const generateTreeItemsFromSchema = (
   return [treeItems, currentKeys];
 };
 
-export default function TextFieldWithVars(props) {
+function getLiquidTemplateString(variable, widget) {
+  let templateString = `{{${variable}}}`;
+  if (widget === "output_image") {
+    templateString = `![Image]({{${variable}}})`;
+  } else if (widget === "output_audio") {
+    templateString = `![Audio]({{${variable}}})`;
+  }
+
+  return templateString;
+}
+export default function TextFieldWithVars({
+  templateStringResolver = getLiquidTemplateString,
+  ...props
+}) {
   const { value, onChange } = props;
   const [treeViewVisible, setTreeViewVisible] = useState(false);
   const [textFocus, setTextFocus] = useState(false);
@@ -240,13 +253,7 @@ export default function TextFieldWithVars(props) {
             schema.items,
             schema.id,
             (e, k, widget) => {
-              let templateString = `{{${k}}}`;
-              if (widget === "output_image") {
-                templateString = `![Image]({{${k}}})`;
-              } else if (widget === "output_audio") {
-                templateString = `![Audio]({{${k}}})`;
-              }
-
+              const templateString = templateStringResolver(k, widget);
               editorRef.current.dispatchCommand(
                 INSERT_TEMPLATE_VARIABLE_COMMAND,
                 templateString,
