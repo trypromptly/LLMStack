@@ -280,7 +280,13 @@ export default function TextFieldWithVars({
       setMemoizedSchemaTrees(memoizedSchemaTrees);
       setTemplateVariables(templateVariablesMap);
     }
-  }, [schemas, editorRef, setMemoizedSchemaTrees, setTemplateVariables]);
+  }, [
+    schemas,
+    editorRef,
+    setMemoizedSchemaTrees,
+    setTemplateVariables,
+    templateStringResolver,
+  ]);
 
   const textCopy = value;
 
