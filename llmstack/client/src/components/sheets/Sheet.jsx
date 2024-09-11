@@ -924,6 +924,7 @@ function Sheet(props) {
           } else if (event.type === "sheet.error") {
             enqueueSnackbar(`Error running sheet: ${event.error}`, {
               variant: "error",
+              persist: true,
             });
             wsRef.current.close();
             wsRef.current = null;
