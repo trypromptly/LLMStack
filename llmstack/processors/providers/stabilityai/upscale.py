@@ -1,12 +1,12 @@
 import base64
 import logging
-from enum import Enum
 from typing import Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils.sslr.constants import PROVIDER_STABILITYAI
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
@@ -17,11 +17,8 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class StabilityAIModel(str, Enum):
+class StabilityAIModel(StrEnum):
     ESRGAN_V1 = "esrgan-v1"
-
-    def __str__(self) -> str:
-        return self.value
 
     def model_name(self):
         if self.value == "esrgan-v1":

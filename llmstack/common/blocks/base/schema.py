@@ -1,3 +1,5 @@
+from enum import Enum
+
 from pydantic import BaseModel
 from pydantic.json_schema import GenerateJsonSchema
 
@@ -138,3 +140,11 @@ class BaseSchema(BaseModel):
         The resultant UI Schema only contains the properties
         """
         return get_ui_schema_from_json_schema(cls.get_schema())
+
+
+class StrEnum(str, Enum):
+    def __repr__(self) -> str:
+        return str.__repr__(self.value)
+
+    def __str__(self) -> str:
+        return self.value

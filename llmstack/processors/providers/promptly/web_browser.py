@@ -1,7 +1,6 @@
 import base64
 import logging
 import uuid
-from enum import Enum
 from typing import List, Literal, Optional, Union
 
 import orjson as json
@@ -12,6 +11,7 @@ from langrocks.common.models.web_browser import WebBrowserCommand, WebBrowserCom
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -177,7 +177,7 @@ You need to understand the broser state after each invocations, generate only on
 """  # noqa: E501
 
 
-class Model(str, Enum):
+class Model(StrEnum):
     GPT_3_5_LATEST = "gpt-3.5-turbo-latest"
     GPT_3_5 = "gpt-3.5-turbo"
     GPT_3_5_16K = "gpt-3.5-turbo-16k"
@@ -188,17 +188,11 @@ class Model(str, Enum):
     GPT_4_LATEST = "gpt-4-turbo-latest"
     GPT_4_V_LATEST = "gpt-4-vision-latest"
 
-    def __str__(self):
-        return self.value
 
-
-class GoogleVisionModel(str, Enum):
+class GoogleVisionModel(StrEnum):
     GEMINI_1_5_PRO = "gemini-1.5-pro"
     GEMINI_1_5_FLASH = "gemini-1.5-flash"
     GEMINI_1_0_PRO = "gemini-1.0-pro"
-
-    def __str__(self):
-        return self.value
 
     def model_name(self):
         return self.value
@@ -209,14 +203,11 @@ class GoogleVisionToolModelConfig(BaseModel):
     model: GoogleVisionModel = Field(default=GoogleVisionModel.GEMINI_1_5_PRO, description="The model for the LLM")
 
 
-class OpenAIModel(str, Enum):
+class OpenAIModel(StrEnum):
     GPT_4_TURBO = "gpt-4-turbo"
     GPT_4_TURBO_240409 = "gpt-4-turbo-2024-04-09"
     GPT_4_O = "gpt-4o"
     GPT_4_O_MINI = "gpt-4o-mini"
-
-    def __str__(self):
-        return self.value
 
     def model_name(self):
         return self.value

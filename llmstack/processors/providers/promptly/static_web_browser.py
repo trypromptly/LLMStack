@@ -1,7 +1,6 @@
 import base64
 import logging
 import uuid
-from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
@@ -11,6 +10,7 @@ from langrocks.common.models.web_browser import WebBrowserCommand, WebBrowserCom
 from pydantic import BaseModel, Field, field_validator
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -23,7 +23,7 @@ from llmstack.processors.providers.promptly.web_browser import (
 logger = logging.getLogger(__name__)
 
 
-class BrowserInstructionType(str, Enum):
+class BrowserInstructionType(StrEnum):
     CLICK = "Click"
     TYPE = "Type"
     WAIT = "Wait"
@@ -33,9 +33,6 @@ class BrowserInstructionType(str, Enum):
     ENTER = "Enter"
     SCROLLX = "Scrollx"
     SCROLLY = "Scrolly"
-
-    def __str__(self):
-        return self.value
 
 
 class BrowserInstruction(BaseModel):

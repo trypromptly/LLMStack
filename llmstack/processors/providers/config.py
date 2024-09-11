@@ -1,11 +1,13 @@
-from enum import Enum
-
 from pydantic import ConfigDict, Field
 
-from llmstack.common.blocks.base.schema import BaseSchema, CustomGenerateJsonSchema
+from llmstack.common.blocks.base.schema import (
+    BaseSchema,
+    CustomGenerateJsonSchema,
+    StrEnum,
+)
 
 
-class ProviderConfigSource(str, Enum):
+class ProviderConfigSource(StrEnum):
     """
     Provider configuration source
     """
@@ -13,9 +15,6 @@ class ProviderConfigSource(str, Enum):
     PROFILE = "profile"
     PLATFORM_DEFAULT = "platform_default"
     ORGANIZATION = "organization"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 class ProviderConfig(BaseSchema):

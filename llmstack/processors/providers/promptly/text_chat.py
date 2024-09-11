@@ -1,7 +1,6 @@
 import concurrent.futures
 import logging
 import uuid
-from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
@@ -10,6 +9,7 @@ from openai import AzureOpenAI, OpenAI
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.data.models import DataSource
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -19,7 +19,7 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class TextChatCompletionsModel(str, Enum):
+class TextChatCompletionsModel(StrEnum):
     GPT_4 = "gpt-4"
     GPT_4_O = "gpt-4o"
     GPT_4_O_MINI = "gpt-4o-mini"
@@ -29,9 +29,6 @@ class TextChatCompletionsModel(str, Enum):
     GPT_32_K = "gpt-4-32k"
     GPT_3_5_16K = "gpt-3.5-turbo-16k"
     GPT_4_1106_PREVIEW = "gpt-4-1106-preview"
-
-    def __str__(self):
-        return self.value
 
 
 class TextChatConfiguration(ApiProcessorSchema):

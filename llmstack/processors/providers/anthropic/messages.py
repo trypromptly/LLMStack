@@ -1,12 +1,12 @@
 import copy
 import logging
-from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -17,14 +17,11 @@ from llmstack.processors.providers.promptly import get_llm_client_from_provider_
 logger = logging.getLogger(__name__)
 
 
-class MessagesModel(str, Enum):
+class MessagesModel(StrEnum):
     CLAUDE_3_Opus = "claude-3-opus"
     CLAUDE_3_Sonnet = "claude-3-sonnet"
     CLAUDE_3_Haiku = "claude-3-haiku"
     CLAUDE_3_5_Sonnet = "claude-3-5-sonnet"
-
-    def __str__(self):
-        return self.value
 
     def model_name(self):
         if self.value == "claude-3-opus":
@@ -37,12 +34,9 @@ class MessagesModel(str, Enum):
             return "claude-3-5-sonnet-20240620"
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     USER = "user"
     ASSISTANT = "assistant"
-
-    def __str__(self):
-        return self.value
 
 
 class ChatMessage(ApiProcessorSchema):

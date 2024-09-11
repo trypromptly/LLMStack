@@ -1,11 +1,11 @@
 import logging
-from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -14,7 +14,7 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class MessagesModel(str, Enum):
+class MessagesModel(StrEnum):
     MISTRAL_7B = "open-mistral-7b"
     MIXTRAL_7B = "open-mixtral-8x7b"
     MIXTRAL_22B = "open-mixtral-8x22b"
@@ -22,19 +22,13 @@ class MessagesModel(str, Enum):
     MIXTRAL_MEDIUM = "mistral-medium-latest"
     MIXTRAL_LARGE = "mistral-large-latest"
 
-    def __str__(self):
-        return self.value
-
     def model_name(self):
         return self.value
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     USER = "user"
     SYSTEM = "system"
-
-    def __str__(self):
-        return self.value
 
 
 class ChatMessage(ApiProcessorSchema):

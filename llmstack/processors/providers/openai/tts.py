@@ -1,5 +1,4 @@
 import logging
-from enum import Enum
 from typing import Literal
 
 from asgiref.sync import async_to_sync
@@ -7,6 +6,7 @@ from openai import OpenAI
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -15,24 +15,18 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class TextToSpeechModel(str, Enum):
+class TextToSpeechModel(StrEnum):
     TTS_1 = "tts-1"
     TTS_1_HD = "tts-1-hd"
 
-    def __str__(self) -> str:
-        return self.value
 
-
-class TextToSpeechVoice(str, Enum):
+class TextToSpeechVoice(StrEnum):
     ALLOY = "alloy"
     ECHO = "echo"
     FABLE = "fable"
     ONYX = "onyx"
     NOVA = "nova"
     SHIMMER = "shimmer"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 class TextToSpeechInput(ApiProcessorSchema):

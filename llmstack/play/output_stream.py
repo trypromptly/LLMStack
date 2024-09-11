@@ -5,11 +5,12 @@ This module contains the OutputStream class.
 import asyncio
 import logging
 from collections import defaultdict
-from enum import Enum
 from typing import Any, Dict, Optional, Type
 
 from pydantic import BaseModel
 from pykka import ActorProxy, ActorRegistry
+
+from llmstack.common.blocks.base.schema import StrEnum
 
 __all__ = ["OutputStream"]
 
@@ -79,7 +80,7 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
         return obj2 if obj2 else obj1
 
 
-class MessageType(str, Enum):
+class MessageType(StrEnum):
     """
     MessageType enum.
     """
@@ -100,9 +101,6 @@ class MessageType(str, Enum):
     STREAM_FINALIZED_CLOSED = "stream_finalized_closed"
     STREAM_FINALIZED_CLOSED_ERROR = "stream_finalized_closed_error"
     STREAM_FINALIZED_CLOSED_DATA = "stream_finalized_closed_data"
-
-    def __str__(self):
-        return self.value
 
 
 class Message(BaseModel):

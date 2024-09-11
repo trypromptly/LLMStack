@@ -5,7 +5,6 @@ import shutil
 import tempfile
 import time
 import uuid
-from enum import Enum
 from typing import Optional
 
 from asgiref.sync import async_to_sync
@@ -15,6 +14,7 @@ from langrocks.common.models.files import FileMimeType
 from pydantic import Field, model_validator
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils.utils import create_data_uri, validate_parse_data_uri
 from llmstack.play.actor import BookKeepingData
 from llmstack.processors.providers.api_processor_interface import (
@@ -94,7 +94,7 @@ class FileOperationsInput(ApiProcessorSchema):
         return values
 
 
-class FileOperationOperation(str, Enum):
+class FileOperationOperation(StrEnum):
     CREATE = "create"
     ARCHIVE = "archive"
     CONVERT = "convert"

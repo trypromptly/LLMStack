@@ -1,11 +1,11 @@
 import logging
-from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -15,16 +15,13 @@ from llmstack.processors.providers.metrics import MetricType
 logger = logging.getLogger(__name__)
 
 
-class StabilityAIModel(str, Enum):
+class StabilityAIModel(StrEnum):
     CORE = "core"
     SD_3 = "sd3"
     SD_3_TURBO = "sd3-large-turbo"
     SD_3_LARGE = "sd3-large"
     SD_3_MEDIUM = "sd3-medium"
     ULTRA = "ultra"
-
-    def __str__(self) -> str:
-        return self.value
 
     def model_name(self):
         return self.value

@@ -1,13 +1,13 @@
 import base64
 import json
 import logging
-from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils import prequests
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -28,7 +28,7 @@ class Cookie(BaseModel):
     domain: Optional[str] = None
 
 
-class HTTPMethod(str, Enum):
+class HTTPMethod(StrEnum):
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -36,7 +36,7 @@ class HTTPMethod(str, Enum):
     HEAD = "HEAD"
 
 
-class OutputType(str, Enum):
+class OutputType(StrEnum):
     STRING = "STRING"
     JSON = "JSON"
     OBJECT = "OBJECT"

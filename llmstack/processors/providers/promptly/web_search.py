@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import List, Optional
 
 import requests
@@ -6,17 +5,15 @@ from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
 
 
-class SearchEngine(str, Enum):
+class SearchEngine(StrEnum):
     GOOGLE = "Google"
-
-    def __str__(self):
-        return self.value
 
 
 class WebSearchConfiguration(ApiProcessorSchema):

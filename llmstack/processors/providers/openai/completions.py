@@ -1,5 +1,4 @@
 import logging
-from enum import Enum
 from typing import List, Optional, Union
 
 import openai
@@ -7,6 +6,7 @@ from asgiref.sync import async_to_sync
 from pydantic import Field, confloat, conint
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     TEXT_WIDGET_NAME,
     ApiProcessorInterface,
@@ -16,16 +16,13 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class CompletionsModel(str, Enum):
+class CompletionsModel(StrEnum):
     TEXT_DAVINCI_003 = "text-davinci-003"
     TEXT_DAVINCI_002 = "text-davinci-002"
     TEXT_CURIE_001 = "text-curie-001"
     TEXT_BABBAGE_001 = "text-babbage-001"
     TEXT_ADA_001 = "text-ada-001"
     GPT_3_5_TURBO_INSTRUCT = "gpt-3.5-turbo-instruct"
-
-    def __str__(self):
-        return self.value
 
 
 class CompletionsInput(ApiProcessorSchema):

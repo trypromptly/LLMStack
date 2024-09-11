@@ -1,6 +1,5 @@
 import json
 import logging
-from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 import requests
@@ -10,6 +9,7 @@ from requests.auth import HTTPBasicAuth
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.base.processor import Schema
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     hydrate_input,
@@ -18,35 +18,26 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class HttpMethod(str, Enum):
+class HttpMethod(StrEnum):
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
     DELETE = "DELETE"
 
-    def __str__(self):
-        return self.value
 
-
-class FieldType(str, Enum):
+class FieldType(StrEnum):
     STRING = "string"
     NUMBER = "number"
     INTEGER = "integer"
     BOOLEAN = "boolean"
     ARRAY = "array"
 
-    def __str__(self):
-        return self.value
 
-
-class ParameterLocation(str, Enum):
+class ParameterLocation(StrEnum):
     PATH = "path"
     QUERY = "query"
     HEADER = "header"
     COOKIE = "cookie"
-
-    def __str__(self):
-        return self.value
 
 
 class ParameterType(Schema):
@@ -146,11 +137,8 @@ class RequestBody(Schema):
     )
 
 
-class ContentType(str, Enum):
+class ContentType(StrEnum):
     JSON = "application/json"
-
-    def __str__(self):
-        return self.value
 
 
 class HttpAPIProcessorConfiguration(Schema):

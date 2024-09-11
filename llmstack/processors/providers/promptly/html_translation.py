@@ -3,7 +3,6 @@ import json
 import logging
 import uuid
 from collections import namedtuple
-from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
@@ -12,7 +11,7 @@ from bs4.element import NavigableString
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
-from llmstack.common.blocks.base.schema import BaseSchema
+from llmstack.common.blocks.base.schema import BaseSchema, StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -33,15 +32,12 @@ def has_non_text_nodes(element):
     return any(child for child in element.contents if child.name is not None)
 
 
-class Language(str, Enum):
+class Language(StrEnum):
     ENGLISH = "English"
     GERMAN = "German"
     FRENCH = "French"
     SPANISH = "Spanish"
     PORTUGUESE = "Portuguese"
-
-    def __str__(self):
-        return self.value
 
 
 class HTMLTranslationInput(ApiProcessorSchema):

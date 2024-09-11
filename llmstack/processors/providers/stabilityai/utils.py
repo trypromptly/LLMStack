@@ -1,7 +1,7 @@
-from enum import Enum
+from llmstack.common.blocks.base.schema import StrEnum
 
 
-class Sampler(str, Enum):
+class Sampler(StrEnum):
     ddim = "ddim"
     plms = "plms"
     k_euler = "k_euler"
@@ -11,17 +11,11 @@ class Sampler(str, Enum):
     k_dpm_2_ancestral = "k_dpm_2_ancestral"
     k_dpmpp_2m = "k_dpmpp_2m"
 
-    def __str__(self):
-        return self.value
 
-
-class GuidancePreset(str, Enum):
+class GuidancePreset(StrEnum):
     simple = "simple"
     fast_blue = "fast_blue"
     fast_green = "fast_green"
     slow = "slow"
     slower = "slower"
     slowest = "slowest"
-
-    def __str__(self):
-        return self.value

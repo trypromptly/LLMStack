@@ -1,29 +1,24 @@
 import datetime
 import uuid
-from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
+
+from llmstack.common.blocks.base.schema import StrEnum
 
 """
 We use pydantic models to represent the connection information and save it in the database as encrypted json.
 """
 
 
-class ConnectionStatus(str, Enum):
+class ConnectionStatus(StrEnum):
     CREATED = "Created"
     CONNECTING = "Connecting"
     ACTIVE = "Active"
     FAILED = "Failed"
 
-    def __str__(self):
-        return self.value
 
-    def __repr__(self):
-        return self.value
-
-
-class ConnectionType(str, Enum):
+class ConnectionType(StrEnum):
     BROWSER_LOGIN = "browser_login"
     OAUTH2 = "oauth2"
     CREDENTIALS = "credentials"

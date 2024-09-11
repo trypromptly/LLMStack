@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import List, Optional
 
 import openai
@@ -6,6 +5,7 @@ from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     CHAT_WIDGET_NAME,
     ApiProcessorInterface,
@@ -13,7 +13,7 @@ from llmstack.processors.providers.api_processor_interface import (
 )
 
 
-class ChatCompletionsModel(str, Enum):
+class ChatCompletionsModel(StrEnum):
     GPT_4 = "gpt-4"
     GPT_4_O = "gpt-4o"
     GPT_4_O_MINI = "gpt-4o-mini"
@@ -22,17 +22,11 @@ class ChatCompletionsModel(str, Enum):
     GPT_3_5_16 = "gpt-35-turbo-16k"
     GPT_4_32 = "gpt-4-32k"
 
-    def __str__(self):
-        return self.value
 
-
-class Role(str, Enum):
+class Role(StrEnum):
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
-
-    def __str__(self):
-        return self.value
 
 
 class ChatMessage(ApiProcessorSchema):

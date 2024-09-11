@@ -2,13 +2,13 @@ import base64
 import json
 import logging
 import uuid
-from enum import Enum
 from typing import Optional
 
 from langrocks.client import WebBrowser
 from pydantic import Field
 from unstructured.partition.auto import partition_html
 
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.data.sources.base import BaseSource, DataDocument
 from llmstack.data.sources.utils import create_source_document_asset
 
@@ -50,12 +50,9 @@ def get_page_html(url: str, **kwargs):
     return page_html
 
 
-class URLScraper(str, Enum):
+class URLScraper(StrEnum):
     LOCAL = "local"
     LANGROCKS = "langrocks"
-
-    def __str__(self):
-        return str(self.value)
 
 
 class URLSchema(BaseSource):

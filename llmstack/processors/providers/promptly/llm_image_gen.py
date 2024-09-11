@@ -1,11 +1,11 @@
 import logging
-from enum import Enum
 from typing import Literal, Optional, Union
 
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -20,13 +20,10 @@ from llmstack.processors.providers.stabilityai.text_to_image import StabilityAIM
 logger = logging.getLogger(__name__)
 
 
-class Provider(str, Enum):
+class Provider(StrEnum):
     OPENAI = "openai"
     GOOGLE = "google"
     STABILITYAI = "stabilityai"
-
-    def __str__(self):
-        return self.value
 
 
 class LLMImageGeneratorProcessorInput(ApiProcessorSchema):

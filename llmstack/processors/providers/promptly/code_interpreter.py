@@ -1,7 +1,6 @@
 import base64
 import logging
 import uuid
-from enum import Enum
 from typing import Dict, List, Optional
 
 import grpc
@@ -10,6 +9,7 @@ from django.conf import settings
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -19,11 +19,8 @@ from llmstack.processors.providers.promptly import Content, ContentMimeType
 logger = logging.getLogger(__name__)
 
 
-class CodeInterpreterLanguage(str, Enum):
+class CodeInterpreterLanguage(StrEnum):
     PYTHON = "Python"
-
-    def __str__(self):
-        return self.value
 
 
 class CodeInterpreterInput(ApiProcessorSchema):

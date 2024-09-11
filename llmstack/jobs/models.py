@@ -8,7 +8,6 @@ import logging
 import math
 import uuid
 from datetime import timedelta
-from enum import Enum
 
 import django_rq
 from django.apps import apps
@@ -20,12 +19,14 @@ from django.templatetags.tz import utc
 from django.utils import timezone
 from rq import Queue, get_current_job
 
+from llmstack.common.blocks.base.schema import StrEnum
+
 logger = logging.getLogger(__name__)
 
 SCHEDULER_INTERVAL = 60
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     NOT_STARTED = "not_started"
     STARTED = "started"
     SUCCESS = "success"

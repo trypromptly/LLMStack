@@ -1,7 +1,6 @@
 import importlib
 import json
 import logging
-from enum import Enum
 from typing import Any, Dict, Generic, List, Optional
 
 from pydantic import Field
@@ -17,6 +16,7 @@ from llmstack.common.blocks.base.processor import (
     ProcessorInterface,
     Schema,
 )
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils.utils import retrier
 
 logger = logging.getLogger(__name__)
@@ -35,12 +35,9 @@ class OpenAIEmbeddingOutput(BaseOutput):
     embeddings: List[float]
 
 
-class EmbeddingAPIProvider(str, Enum):
+class EmbeddingAPIProvider(StrEnum):
     OPENAI = "openai"
     AZURE_OPENAI = "azure_openai"
-
-    def __str__(self):
-        return self.value
 
 
 class OpenAIEmbeddingConfiguration(BaseConfiguration):

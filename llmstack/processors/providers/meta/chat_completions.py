@@ -1,11 +1,11 @@
 import logging
-from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -14,7 +14,7 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class MessagesModel(str, Enum):
+class MessagesModel(StrEnum):
     LLAMA_3_8B = "llama-3-8b"
     LLAMA_3_8B_INSTRUCT = "llama-3-8b-instruct"
     LLAMA_3_70B = "llama-3.1-70b"
@@ -26,20 +26,14 @@ class MessagesModel(str, Enum):
     LLAMA_3_1_405B = "llama-3.1-405b"
     LLAMA_3_1_405B_INSTRUCT = "llama-3.1-405b-instruct"
 
-    def __str__(self):
-        return self.value
-
     def model_name(self):
         return self.value
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     USER = "user"
     SYSTEM = "system"
     ASSISTANT = "assistant"
-
-    def __str__(self):
-        return self.value
 
 
 class ChatMessage(ApiProcessorSchema):

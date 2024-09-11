@@ -1,5 +1,4 @@
 import logging
-from enum import Enum
 from typing import List, Optional
 
 import openai
@@ -7,6 +6,7 @@ from asgiref.sync import async_to_sync
 from pydantic import Field, conint
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     IMAGE_WIDGET_NAME,
     ApiProcessorInterface,
@@ -17,42 +17,30 @@ from llmstack.processors.providers.metrics import MetricType
 logger = logging.getLogger(__name__)
 
 
-class ResponseFormat(str, Enum):
+class ResponseFormat(StrEnum):
     url = "url"
     b64_json = "b64_json"
 
-    def __str__(self):
-        return self.value
 
-
-class ImageModel(str, Enum):
+class ImageModel(StrEnum):
     DALL_E_3 = "dall-e-3"
     DALL_E_2 = "dall-e-2"
-
-    def __str__(self):
-        return self.value
 
     def model_name(self):
         return self.value
 
 
-class Size(str, Enum):
+class Size(StrEnum):
     field_256x256 = "256x256"
     field_512x512 = "512x512"
     field_1024x1024 = "1024x1024"
     field_1024x1792 = "1024x1792"
     field_1792x1024 = "1792x1024"
 
-    def __str__(self):
-        return self.value
 
-
-class Quality(str, Enum):
+class Quality(StrEnum):
     standard = "standard"
     hd = "hd"
-
-    def __str__(self):
-        return self.value
 
 
 class ImagesGenerationsInput(ApiProcessorSchema):

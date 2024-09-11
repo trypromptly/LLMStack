@@ -1,13 +1,13 @@
 import copy
 import json
 import logging
-from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field, confloat, conint
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.blocks.llm.openai import (
     OpenAIChatCompletionsAPIProcessorConfiguration,
 )
@@ -22,7 +22,7 @@ from llmstack.processors.providers.promptly import get_llm_client_from_provider_
 logger = logging.getLogger(__name__)
 
 
-class ChatCompletionsModel(str, Enum):
+class ChatCompletionsModel(StrEnum):
     GPT_4 = "gpt-4"
     GPT_4_O = "gpt-4o"
     GPT_4_O_MINI = "gpt-4o-mini"
@@ -33,21 +33,15 @@ class ChatCompletionsModel(str, Enum):
     GPT_4_LATEST = "gpt-4-0125-preview"
     GPT_4_1106_PREVIEW = "gpt-4-1106-preview"
 
-    def __str__(self):
-        return self.value
-
     def model_name(self):
         return self.value
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
     FUNCTION = "function"
-
-    def __str__(self):
-        return self.value
 
 
 class FunctionCallResponse(BaseModel):

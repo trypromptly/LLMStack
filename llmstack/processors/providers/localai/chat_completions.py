@@ -1,11 +1,11 @@
 import json
 import logging
-from enum import Enum
 from typing import Generator, List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field, confloat, conint
 
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.blocks.llm.localai import (
     LocalAIChatCompletionsAPIProcessor,
     LocalAIChatCompletionsAPIProcessorConfiguration,
@@ -23,14 +23,11 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
     FUNCTION = "function"
-
-    def __str__(self):
-        return self.value
 
 
 class FunctionCallResponse(BaseModel):

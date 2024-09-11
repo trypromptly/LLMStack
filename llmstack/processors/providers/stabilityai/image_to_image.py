@@ -1,11 +1,11 @@
 import logging
-from enum import Enum
 from typing import List, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -15,16 +15,13 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class StabilityAIModel(str, Enum):
+class StabilityAIModel(StrEnum):
     STABLE_DIFFUSION_XL = "stable-diffusion-xl"
     STABLE_DIFFUSION = "stable-diffusion"
     ESRGAN_V1 = "esrgan-v1"
     CORE = "core"
     SD_3 = "sd3"
     SD_3_TURBO = "sd3-turbo"
-
-    def __str__(self) -> str:
-        return self.value
 
     def model_name(self):
         if self.value == "stable-diffusion-xl":
@@ -43,7 +40,7 @@ class StabilityAIModel(str, Enum):
             raise ValueError(f"Unknown model {self.value}")
 
 
-class Sampler(str, Enum):
+class Sampler(StrEnum):
     ddim = "ddim"
     plms = "plms"
     k_euler = "k_euler"
@@ -53,11 +50,8 @@ class Sampler(str, Enum):
     k_dpm_2_ancestral = "k_dpm_2_ancestral"
     k_dpmpp_2m = "k_dpmpp_2m"
 
-    def __str__(self):
-        return self.value
 
-
-class GuidancePreset(str, Enum):
+class GuidancePreset(StrEnum):
     simple = "simple"
     fast_blue = "fast_blue"
     fast_green = "fast_green"
@@ -65,11 +59,8 @@ class GuidancePreset(str, Enum):
     slower = "slower"
     slowest = "slowest"
 
-    def __str__(self):
-        return self.value
 
-
-class StylePreset(str, Enum):
+class StylePreset(StrEnum):
     THREE_D = "3d-model"
     ANALOG_FILM = "analog-film"
     ANIME = "anime"

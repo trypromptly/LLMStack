@@ -1,7 +1,6 @@
 import copy
 import json
 import logging
-from enum import Enum
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 import requests
@@ -9,6 +8,7 @@ from asgiref.sync import async_to_sync
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -20,13 +20,10 @@ from llmstack.processors.providers.promptly import get_llm_client_from_provider_
 logger = logging.getLogger(__name__)
 
 
-class GeminiModel(str, Enum):
+class GeminiModel(StrEnum):
     GEMINI_1_5_PRO = "gemini-1.5-pro"
     GEMINI_1_5_FLASH = "gemini-1.5-flash"
     GEMINI_1_0_PRO = "gemini-1.0-pro"
-
-    def __str__(self):
-        return self.value
 
     def model_name(self):
         return self.value

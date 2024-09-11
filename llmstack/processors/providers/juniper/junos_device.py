@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Optional
 
 from asgiref.sync import async_to_sync
@@ -6,18 +5,16 @@ from jnpr.junos import Device
 from jnpr.junos.utils.config import Config
 from pydantic import Field
 
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
 
 
-class JunosCommandType(str, Enum):
+class JunosCommandType(StrEnum):
     OPERATIONAL = "Operational"
     CONFIGURATION = "Configuration"
-
-    def __str__(self):
-        return self.value
 
 
 class JunosDeviceConfiguration(ApiProcessorSchema):

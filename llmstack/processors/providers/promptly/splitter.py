@@ -4,7 +4,6 @@ import json
 import logging
 import re
 import uuid
-from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from asgiref.sync import async_to_sync
@@ -13,6 +12,7 @@ from unstructured.partition.auto import partition
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.base.schema import BaseSchema as Schema
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils.prequests import requests
 from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
@@ -52,13 +52,10 @@ class SplitterProcessorOutput(ApiProcessorSchema):
     outputs_text: str = ""
 
 
-class SplitterMode(str, Enum):
+class SplitterMode(StrEnum):
     TEXT = "text"
     URI = "uri"
     OBJREF = "objref"
-
-    def __str__(self):
-        return self.value
 
 
 class NoStrategy(Schema):

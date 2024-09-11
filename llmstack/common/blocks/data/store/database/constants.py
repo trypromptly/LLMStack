@@ -1,7 +1,7 @@
-from enum import Enum
+from llmstack.common.blocks.base.schema import StrEnum
 
 
-class DatabaseEngineType(str, Enum):
+class DatabaseEngineType(StrEnum):
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
     SQLITE = "sqlite"

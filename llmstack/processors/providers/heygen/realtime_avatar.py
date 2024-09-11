@@ -1,11 +1,11 @@
 import logging
 import time
-from enum import Enum
 from typing import Any, Dict, Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field, model_validator
 
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils.prequests import post
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -16,16 +16,13 @@ from llmstack.processors.providers.api_processor_interface import (
 logger = logging.getLogger(__name__)
 
 
-class TaskType(str, Enum):
+class TaskType(StrEnum):
     CREATE_SESSION = "create_session"
     START_SESSION = "start_session"
     SUBMIT_ICE_CANDIDATE = "submit_ice_candidate"
     CLOSE_SESSION = "close_session"
     REPEAT = "repeat"
     TALK = "talk"
-
-    def __str__(self):
-        return self.value
 
 
 class RealtimeAvatarInput(ApiProcessorSchema):
@@ -71,13 +68,10 @@ class RealtimeAvatarOutput(ApiProcessorSchema):
     task_response_json: Dict = Field(description="The response of the task.")
 
 
-class Quality(str, Enum):
+class Quality(StrEnum):
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
-
-    def __str__(self):
-        return self.value
 
 
 class RealtimeAvatarConfiguration(ApiProcessorSchema):

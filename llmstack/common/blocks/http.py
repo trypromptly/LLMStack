@@ -1,6 +1,5 @@
 import json
 import logging
-from enum import Enum
 from typing import Any, Dict, Generator, List, Optional, Union
 
 import requests
@@ -13,11 +12,12 @@ from llmstack.common.blocks.base.processor import (
     BaseProcessor,
     Schema,
 )
+from llmstack.common.blocks.base.schema import StrEnum
 
 logger = logging.getLogger(__name__)
 
 
-class HttpMethod(str, Enum):
+class HttpMethod(StrEnum):
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -25,9 +25,6 @@ class HttpMethod(str, Enum):
     DELETE = "DELETE"
     OPTIONS = "OPTIONS"
     HEAD = "HEAD"
-
-    def __str__(self):
-        return self.value
 
 
 class NoAuth(Schema):

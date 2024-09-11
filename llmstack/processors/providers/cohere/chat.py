@@ -1,12 +1,12 @@
 import copy
 import logging
-from enum import Enum
 from typing import Optional
 
 from asgiref.sync import async_to_sync
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -17,7 +17,7 @@ from llmstack.processors.providers.promptly import get_llm_client_from_provider_
 logger = logging.getLogger(__name__)
 
 
-class CohereModel(str, Enum):
+class CohereModel(StrEnum):
     COMMAND = "command"
     COMMAND_LIGHT = "command-light"
     COMMAND_LIGHT_NIGHTLY = "command-light-nightly"
@@ -25,20 +25,14 @@ class CohereModel(str, Enum):
     COMMAND_R = "command-r"
     COMMAND_R_PLUS = "command-r-plus"
 
-    def __str__(self):
-        return self.value
-
     def model_name(self):
         return self.value
 
 
-class CoherePromptTruncation(str, Enum):
+class CoherePromptTruncation(StrEnum):
     OFF = "OFF"
     AUTO = "AUTO"
     AUTO_PRESERVE_ORDER = "AUTO_PRESERVE_ORDER"
-
-    def __str__(self):
-        return self.value
 
 
 class CohereChatInput(ApiProcessorSchema):

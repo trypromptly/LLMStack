@@ -1,6 +1,5 @@
 import json
 import logging
-from enum import Enum
 from typing import Any, Dict, Generator, List, Optional, Union
 
 from pydantic import Extra, Field, confloat, conint
@@ -15,6 +14,7 @@ from llmstack.common.blocks.base.processor import (
     BaseOutputType,
     Schema,
 )
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.blocks.http import BearerTokenAuth
 from llmstack.common.blocks.http import HttpAPIError as BaseError
 from llmstack.common.blocks.http import (
@@ -218,14 +218,11 @@ class OpenAIAPIProcessor(
             raise Exception(process_openai_error_response(http_response))
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     system = "system"
     user = "user"
     assistant = "assistant"
     function = "function"
-
-    def __str__(self):
-        return self.value
 
 
 class FunctionCall(Schema):
@@ -289,7 +286,7 @@ class OpenAIChatCompletionsAPIProcessorOutput(OpenAIAPIProcessorOutput):
     )
 
 
-class ChatCompletionsModel(str, Enum):
+class ChatCompletionsModel(StrEnum):
     GPT_4 = "gpt-4"
     GPT_4_O = "gpt-4o"
     GPT_4_O_MINI = "gpt-4o-mini"
@@ -299,9 +296,6 @@ class ChatCompletionsModel(str, Enum):
     GPT_3_5_16K = "gpt-3.5-turbo-16k"
     GPT_4_LATEST = "gpt-4-0125-preview"
     GPT_4_1106_PREVIEW = "gpt-4-1106-preview"
-
-    def __str__(self):
-        return self.value
 
 
 class OpenAIChatCompletionsAPIProcessorConfiguration(
@@ -472,31 +466,22 @@ class OpenAIChatCompletionsAPIProcessor(
         )
 
 
-class Size(str, Enum):
+class Size(StrEnum):
     field_256x256 = "256x256"
     field_512x512 = "512x512"
     field_1024x1024 = "1024x1024"
     field_1024x1792 = "1024x1792"
     field_1792x1024 = "1792x1024"
 
-    def __str__(self):
-        return self.value
 
-
-class ResponseFormat(str, Enum):
+class ResponseFormat(StrEnum):
     url = "url"
     b64_json = "b64_json"
 
-    def __str__(self):
-        return self.value
 
-
-class ImageModel(str, Enum):
+class ImageModel(StrEnum):
     DALL_E_3 = "dall-e-3"
     DALL_E_2 = "dall-e-2"
-
-    def __str__(self):
-        return self.value
 
 
 class OpenAIFile(Schema):

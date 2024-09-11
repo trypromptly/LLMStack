@@ -1,14 +1,14 @@
-from enum import Enum
 from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils.sslr._client import LLM
 from llmstack.processors.providers.config import ProviderConfig
 from llmstack.processors.providers.google import get_google_credentials_from_json_key
 
 
-class ContentMimeType(str, Enum):
+class ContentMimeType(StrEnum):
     TEXT = "text/plain"
     JSON = "application/json"
     HTML = "text/html"
@@ -17,9 +17,6 @@ class ContentMimeType(str, Enum):
     SVG = "image/svg+xml"
     PDF = "application/pdf"
     LATEX = "application/x-latex"
-
-    def __str__(self):
-        return self.value
 
 
 class Content(BaseModel):

@@ -1,8 +1,8 @@
-from enum import Enum
 from typing import Annotated, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.processors.providers.config import ProviderConfig
 
 
@@ -59,12 +59,9 @@ class WeaviateLocalInstance(BaseModel):
     )
 
 
-class EmbeddingsProvider(str, Enum):
+class EmbeddingsProvider(StrEnum):
     OPENAI = "openai"
     AZURE_OPENAI = "azure_openai"
-
-    def __str__(self):
-        return str(self.value)
 
 
 class WeaviateCloudInstance(BaseModel):

@@ -1,10 +1,9 @@
-from enum import Enum
 from typing import List, Optional
 
 from pydantic import ConfigDict
 from typing_extensions import Literal
 
-from llmstack.common.blocks.base.schema import BaseSchema
+from llmstack.common.blocks.base.schema import BaseSchema, StrEnum
 from llmstack.common.blocks.data import DataDocument
 from llmstack.common.blocks.data.store.database.constants import DatabaseEngineType
 
@@ -16,7 +15,7 @@ except ImportError:
     enabled = False
 
 
-class SSLMode(str, Enum):
+class SSLMode(StrEnum):
     disabled = "DISABLED"
     preferred = "PREFERRED"
     required = "REQUIRED"

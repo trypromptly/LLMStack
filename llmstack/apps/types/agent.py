@@ -1,12 +1,12 @@
-from enum import Enum
 from typing import List, Optional
 
 from pydantic import Field
 
 from llmstack.apps.types.app_type_interface import AppTypeInterface, BaseSchema
+from llmstack.common.blocks.base.schema import StrEnum
 
 
-class AgentModel(str, Enum):
+class AgentModel(StrEnum):
     GPT_3_5_LATEST = "gpt-3.5-turbo-latest"
     GPT_3_5 = "gpt-3.5-turbo"
     GPT_3_5_16K = "gpt-3.5-turbo-16k"
@@ -16,9 +16,6 @@ class AgentModel(str, Enum):
     GPT_4_1106_PREVIEW = "gpt-4-1106-preview"
     GPT_4_O = "gpt-4o"
     GPT_4_O_MINI = "gpt-4o-mini"
-
-    def __str__(self):
-        return self.value
 
 
 class AgentConfigSchema(BaseSchema):
