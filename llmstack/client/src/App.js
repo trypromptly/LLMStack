@@ -1,5 +1,6 @@
-import { CircularProgress, Grid, Stack } from "@mui/material";
-import { SnackbarProvider } from "notistack";
+import { CircularProgress, Grid, Stack, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { SnackbarProvider, closeSnackbar } from "notistack";
 import { Suspense, useEffect } from "react";
 import { useCookies } from "react-cookie";
 import ReactGA from "react-ga4";
@@ -148,6 +149,16 @@ export default function App({ children }) {
         maxSnack={3}
         autoHideDuration={3000}
         anchorOrigin={{ horizontal: "center", vertical: "top" }}
+        action={(key) => (
+          <IconButton
+            size="small"
+            aria-label="close"
+            color="inherit"
+            onClick={() => closeSnackbar(key)}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
       />
       <Stack direction={"row"}>
         {!isMobile && <Sidebar menuItems={allMenuItems} />}
