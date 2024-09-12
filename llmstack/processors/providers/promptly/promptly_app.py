@@ -147,7 +147,7 @@ class PromptlyAppProcessor(ApiProcessorInterface[PromptlyAppInput, PromptlyAppOu
 
     @classmethod
     def get_output_template(cls) -> OutputTemplate | None:
-        return OutputTemplate(markdown="{{ text }}")
+        return OutputTemplate(markdown="{{ text }}", jsonpath="$.text")
 
     def disable_history(self) -> bool:
         return True

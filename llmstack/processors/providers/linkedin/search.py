@@ -232,6 +232,7 @@ class SearchProcessor(ApiProcessorInterface[SearchInput, SearchOutput, SearchCon
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
             markdown="""<promptly-web-browser-embed wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>""",
+            jsonpath="$.people",
         )
 
     def process(self) -> dict:

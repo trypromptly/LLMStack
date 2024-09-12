@@ -88,6 +88,7 @@ class AudioTranscription(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""{{text}}""",
+            jsonpath="$.text",
         )
 
     def process(self) -> dict:

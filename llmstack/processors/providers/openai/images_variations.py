@@ -92,6 +92,7 @@ class ImagesVariations(
             markdown="""{% for image in answer %}
             ![Generated Image]({{ image }})
             {% endfor %}""",
+            jsonpath="$.answer[0].image",
         )
 
     def process(self) -> dict:

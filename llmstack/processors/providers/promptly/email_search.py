@@ -130,7 +130,8 @@ class EmailSenderProcessor(ApiProcessorInterface[EmailSearchInput, EmailSearchOu
 {{result.subject}}
 {{result.body}}
 
-{% endfor %}"""
+{% endfor %}""",
+            jsonpath="$.results",
         )
 
     def process(self) -> dict:

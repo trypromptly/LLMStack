@@ -228,6 +228,7 @@ class ProfileActivityProcessor(
 {% if error %}
 {{error}}
 {% endif %}""",
+            jsonpath="$.posts",
         )
 
     def process(self) -> dict:

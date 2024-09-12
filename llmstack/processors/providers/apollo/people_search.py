@@ -127,6 +127,7 @@ class PeopleSearch(ApiProcessorInterface[PeopleSearchInput, PeopleSearchOutput, 
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
             markdown="{{api_response.response}}",
+            jsonpath="$.people",
         )
 
     def process(self) -> dict:

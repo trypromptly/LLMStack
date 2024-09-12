@@ -79,6 +79,7 @@ class HttpUriTextExtract(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""{{text}}""",
+            jsonpath="$.text",
         )
 
     def session_data_to_persist(self) -> dict:

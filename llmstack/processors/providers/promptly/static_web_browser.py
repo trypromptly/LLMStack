@@ -109,6 +109,7 @@ class StaticWebBrowser(
 <pa-asset url="{{content.screenshot}}" type="image/png"></pa-asset>
 {{text}}
 """,
+            jsonpath="$.text",
         )
 
     def _web_browser_instruction_to_command(self, instruction: BrowserInstruction) -> WebBrowserCommand:

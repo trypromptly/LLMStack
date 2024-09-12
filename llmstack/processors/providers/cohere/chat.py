@@ -118,6 +118,7 @@ class CohereChatProcessor(
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
             markdown="""{{output_message}}""",
+            jsonpath="$.output_message",
         )
 
     def process_session_data(self, session_data):

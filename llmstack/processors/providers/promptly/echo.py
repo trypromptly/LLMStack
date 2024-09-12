@@ -54,6 +54,7 @@ class EchoProcessor(
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
             markdown="{{output_str}}",
+            jsonpath="$.output_str",
         )
 
     def process(self) -> dict:

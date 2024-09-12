@@ -113,6 +113,7 @@ class SimpleHTTPProcessor(
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
             markdown="{{response}}",
+            jsonpath="$.response",
         )
 
     def process(self) -> dict:

@@ -74,6 +74,7 @@ class MessagesVisionProcessor(ApiProcessorInterface[MessagesVisionInput, Message
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""{{message}}""",
+            jsonpath="$.message",
         )
 
     def process_session_data(self, session_data):

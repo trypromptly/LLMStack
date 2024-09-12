@@ -100,6 +100,7 @@ class LLMImageGeneratorProcessor(
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
             markdown="""<pa-asset url="{{output_str}}" type="image/png"></pa-asset>""",
+            jsonpath="$.output_str",
         )
 
     def process(self) -> dict:

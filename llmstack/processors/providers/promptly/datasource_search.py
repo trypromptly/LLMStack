@@ -88,7 +88,7 @@ class DataSourceSearchProcessor(
 
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
-        return OutputTemplate(markdown="""{{ answers_text }}""")
+        return OutputTemplate(markdown="""{{ answers_text }}""", jsonpath="$.answers")
 
     def process(self) -> DataSourceSearchOutput:
         input_data = self._input

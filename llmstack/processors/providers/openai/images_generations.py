@@ -117,6 +117,7 @@ class ImagesGenerations(
             markdown="""{% for image in data %}
 <pa-asset url="{{image}}" type="image/png"></pa-asset>
 {% endfor %}""",
+            jsonpath="$.data[0].image",
         )
 
     def process(self) -> dict:

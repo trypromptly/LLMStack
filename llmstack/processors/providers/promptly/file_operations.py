@@ -182,7 +182,7 @@ class FileOperationsProcessor(
 
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
-        return OutputTemplate(markdown="{{objref}}")
+        return OutputTemplate(markdown="{{objref}}", jsonpath="$.objref")
 
     def get_bookkeeping_data(self) -> BookKeepingData:
         return BookKeepingData(

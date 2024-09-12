@@ -335,6 +335,7 @@ class WebBrowser(
         return OutputTemplate(
             markdown="""<promptly-web-browser-embed wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
         {{text}}""",
+            jsonpath="$.text",
         )
 
     def process(self) -> dict:

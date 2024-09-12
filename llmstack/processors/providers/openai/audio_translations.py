@@ -84,6 +84,7 @@ class AudioTranslations(
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
             markdown="""{{text}}""",
+            jsonpath="$.text",
         )
 
     def process(self) -> dict:

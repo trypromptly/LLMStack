@@ -190,6 +190,7 @@ class ImageToImage(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""![Generated Image]({{ image }})""",
+            jsonpath="$.image",
         )
 
     def process(self) -> dict:

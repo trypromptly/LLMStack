@@ -87,6 +87,7 @@ class WebSearch(
 {{result.source}}
 
 {% endfor %}""",
+            jsonpath="$.results",
         )
 
     async def _get_results_with_playwright(self, search_url, k):

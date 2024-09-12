@@ -147,6 +147,7 @@ class ElevenLabsTextToSpeechProcessor(
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
             markdown="""<pa-asset url="{{audio_content}}" controls type="audio/mpeg"></pa-media>""",
+            jsonpath="$.audio_content",
         )
 
     def input_stream(self, message: Any):

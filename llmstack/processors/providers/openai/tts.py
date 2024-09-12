@@ -89,6 +89,7 @@ class TextToSpeechProcessor(
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
             markdown="""<pa-asset url="{{result}}" controls type="audio/mpeg"></pa-media>""",
+            jsonpath="$.result",
         )
 
     def process(self) -> dict:

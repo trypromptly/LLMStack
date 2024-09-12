@@ -217,6 +217,7 @@ class ChatProcessor(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""{{content}}""",
+            jsonpath="$.content",
         )
 
     def get_image_bytes_mime_type(self, image_url: str):

@@ -134,7 +134,7 @@ class EmailSenderProcessor(ApiProcessorInterface[EmailSenderInput, EmailSenderOu
 
     @classmethod
     def get_output_template(cls) -> OutputTemplate | None:
-        return OutputTemplate(markdown="{{code}}")
+        return OutputTemplate(markdown="{{code}}", jsonpath="$.code")
 
     def process(self) -> dict:
         text_content = self._input.text_body

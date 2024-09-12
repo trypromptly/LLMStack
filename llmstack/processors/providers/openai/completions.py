@@ -129,6 +129,7 @@ class Completions(
             markdown="""{% for choice in choices %}
 {{choice}}
 {% endfor %}""",
+            jsonpath="$.choices[0].content",
         )
 
     def process(self) -> dict:

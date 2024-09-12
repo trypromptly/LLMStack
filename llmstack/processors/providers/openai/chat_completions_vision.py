@@ -152,6 +152,7 @@ class ChatCompletionsVision(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""{{result}}""",
+            jsonpath="$.result",
         )
 
     def session_data_to_persist(self) -> dict:

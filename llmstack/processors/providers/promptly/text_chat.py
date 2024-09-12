@@ -161,6 +161,7 @@ Citations:
 {{citation.source}}
 {% endfor %}
 {% endif %}""",
+            jsonpath="$.answer",
         )
 
     def session_data_to_persist(self) -> dict:

@@ -273,6 +273,7 @@ class PromptlyHttpAPIProcessor(
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
             markdown="""{{text}}""",
+            jsonpath="$.text",
         )
 
     def session_data_to_persist(self) -> dict:

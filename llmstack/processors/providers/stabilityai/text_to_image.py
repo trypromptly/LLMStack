@@ -89,6 +89,7 @@ class TextToImage(ApiProcessorInterface[TextToImageInput, TextToImageOutput, Tex
     def get_output_template(cls) -> OutputTemplate:
         return OutputTemplate(
             markdown="""<pa-asset url="{{answer}}" type="image/*"></pa-asset>""",
+            jsonpath="$.answer",
         )
 
     def process(self) -> dict:

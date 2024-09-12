@@ -141,6 +141,7 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""{{result}}""",
+            jsonpath="$.result",
         )
 
     def process_session_data(self, session_data):

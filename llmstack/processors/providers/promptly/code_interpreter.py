@@ -73,7 +73,8 @@ class CodeInterpreterProcessor(
 ![Image](data:image/png;base64,{{line.data}})
 {% endif %}
 
-{% endfor %}"""
+{% endfor %}""",
+            jsonpath="$.stdout",
         )
 
     def convert_stdout_to_content(self, stdout) -> List[Content]:

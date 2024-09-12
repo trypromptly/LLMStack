@@ -166,7 +166,7 @@ class SplitterProcessor(
     @classmethod
     def get_output_template(cls) -> OutputTemplate | None:
         markdown_template = """{{outputs_text}}"""
-        return OutputTemplate(markdown=markdown_template)
+        return OutputTemplate(markdown=markdown_template, jsonpath="$.outputs_text")
 
     def input(self, message: Any) -> Any:
         self._splitter_dict = {}

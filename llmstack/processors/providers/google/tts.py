@@ -100,6 +100,7 @@ class TextToSpeechProcessor(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""{{audio_content}}""",
+            jsonpath="$.audio_content",
         )
 
     def process(self) -> dict:

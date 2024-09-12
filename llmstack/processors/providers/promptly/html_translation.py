@@ -131,6 +131,7 @@ class HTMLTranslationProcessor(
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
             markdown="{{translated_html}}",
+            jsonpath="$.translated_html",
         )
 
     def _translate_with_provider(self, chunk: str) -> str:

@@ -74,6 +74,7 @@ class SpeechToTextProcessor(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""{{text}}""",
+            jsonpath="$.text",
         )
 
     async def _recognize_speech(self, input_asset_stream):

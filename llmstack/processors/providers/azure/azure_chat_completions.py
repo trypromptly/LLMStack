@@ -179,6 +179,7 @@ class AzureChatCompletions(
             markdown="""{% for choice in choices %}
 {{choice.content}}
 {% endfor %}""",
+            jsonpath="$.choices[0].content",
         )
 
     def session_data_to_persist(self) -> dict:
