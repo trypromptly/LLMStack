@@ -152,7 +152,10 @@ def _execute_cell(
                 )
         else:
             output = ""
-    if spread_output and output.startswith("[") and output.endswith("]"):
+    if spread_output and (
+        cell_type == SheetCellType.OBJECT
+        or (isinstance(output, str) and output.startswith("[") and output.endswith("]"))
+    ):
         try:
             processed_output = output if cell_type == SheetCellType.OBJECT else ast.literal_eval(output)
 
