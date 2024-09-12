@@ -147,11 +147,10 @@ class HTMLTranslationProcessor(
             raise ValueError("LLM client not found")
 
         translation_prompt = (
-            "You are provided a JSON object with key-value pairs."
-            + "The key is a unique identifier for the text provided in the value."
-            + "Your task is to tranlate text in the value. You will translate the text"
+            "You are provided a JSON list of strings to translate."
+            + "Your task is to translate the text in the list. You will translate the text"
             + f" from {self._input.input_language} language to {self._input.output_language}"
-            + " language. Always respond with a valid JSON object only."
+            + " language. Always respond with a valid JSON list only. If you are not able to translate the text, return the same text. Make sure the returned JSON list has the same order and length as the input JSON list. Do not use ```json in the response."
         )
 
         if self._config.translation_guideline:
@@ -159,13 +158,18 @@ class HTMLTranslationProcessor(
 
         chunks_json = json.loads(chunk)
         final_chunks_json = {}
+        final_chunks_set = set()
         for key, value in chunks_json.items():
             if value.strip() == "":
                 # Skip empty strings
                 continue
-            final_chunks_json[key] = value
+            if value in self._translation_mapping or value in final_chunks_set:
+                continue
 
-        translation_prompt += f"\n---\n{json.dumps(final_chunks_json)}"
+            final_chunks_json[key] = value
+            final_chunks_set.add(value)
+
+        translation_prompt += f"\n---\n{json.dumps(list(final_chunks_json.values()))}"
 
         messages = [
             {"role": "system", "content": self._config.system_message},
@@ -191,11 +195,18 @@ class HTMLTranslationProcessor(
         except Exception as e:
             logger.error(f"Error: {e}, response: {model_response}")
 
-        for entry in json_input:
-            if entry not in json_result:
-                json_result[entry] = json_input[entry]
+        output_json = {}
+        for index, entry in enumerate(final_chunks_json.keys()):
+            output_json[entry] = json_result[index]
+            self._translation_mapping[final_chunks_json[entry]] = json_result[index]
 
-        return json_result
+        for index, entry in enumerate(json_input.keys()):
+            if json_input[entry] in self._translation_mapping:
+                output_json[entry] = self._translation_mapping[json_input[entry]]
+            elif entry not in output_json:
+                output_json[entry] = json_input[entry]
+
+        return output_json
 
     def _get_elements_with_text(self, html_element: BeautifulSoup) -> List[str]:
         if html_element.name is None:
@@ -211,8 +222,14 @@ class HTMLTranslationProcessor(
         result = []
         current_dict = {}
         current_length = 0
+        seen_values = set()
         for key, value in element_text_dict.items():
-            entry_length = len(value) + len(key)
+            if value not in seen_values:
+                entry_length = len(value)
+                seen_values.add(value)
+            else:
+                entry_length = 0
+
             if current_dict and current_length + entry_length > self._config.chunk_size:
                 result.append(current_dict)
                 current_dict = {}
@@ -231,6 +248,7 @@ class HTMLTranslationProcessor(
         total_translated_strings = 0
         output_stream = self._output_stream
         html_input = self._input.html
+        self._translation_mapping = {}
 
         html_doc = BeautifulSoup(html_input, "html.parser")
 
