@@ -84,6 +84,9 @@ class SimpleHTTPProcessorConfiguration(ApiProcessorSchema):
         description="Use your authenticated connection to make the request",
     )
     output_type: OutputType = Field(description="The type of output to return", default=OutputType.STRING)
+    connect_timeout: float = Field(description="The connect timeout for the request", default=5.0, le=10.0)
+    read_timeout: float = Field(description="The read timeout for the request", default=10.0, le=30.0)
+    user_agent: Optional[str] = Field(description="The user agent to use for the request", default=None)
 
 
 class SimpleHTTPProcessor(
@@ -126,6 +129,8 @@ class SimpleHTTPProcessor(
             else None
         )
         headers = {kv.key: kv.value for kv in self._config.headers}
+        if self._config.user_agent:
+            headers["User-Agent"] = self._config.user_agent
         query_params = {kv.key: kv.value for kv in self._config.query_params}
         body = json.loads(self._config.body) if self._config.body else {}
         cookie_jar = prequests.requests.cookies.RequestsCookieJar()
@@ -144,7 +149,12 @@ class SimpleHTTPProcessor(
 
         if self._config.method == HTTPMethod.GET:
             response = prequests.get(
-                self._input.url, params=query_params, headers=headers, cookies=cookie_jar, _connection=connection
+                self._input.url,
+                params=query_params,
+                headers=headers,
+                cookies=cookie_jar,
+                _connection=connection,
+                timeout=(self._config.connect_timeout, self._config.read_timeout),
             )
         elif self._config.method == HTTPMethod.POST:
             response = prequests.post(
@@ -154,6 +164,7 @@ class SimpleHTTPProcessor(
                 headers=headers,
                 cookies=cookie_jar,
                 _connection=connection,
+                timeout=(self._config.connect_timeout, self._config.read_timeout),
             )
         elif self._config.method == HTTPMethod.PUT:
             response = prequests.put(
@@ -163,14 +174,25 @@ class SimpleHTTPProcessor(
                 headers=headers,
                 cookies=cookie_jar,
                 _connection=connection,
+                timeout=(self._config.connect_timeout, self._config.read_timeout),
             )
         elif self._config.method == HTTPMethod.DELETE:
             response = prequests.delete(
-                self._input.url, params=query_params, headers=headers, cookies=cookie_jar, _connection=connection
+                self._input.url,
+                params=query_params,
+                headers=headers,
+                cookies=cookie_jar,
+                _connection=connection,
+                timeout=(self._config.connect_timeout, self._config.read_timeout),
             )
         elif self._config.method == HTTPMethod.HEAD:
             response = prequests.head(
-                self._input.url, params=query_params, headers=headers, cookies=cookie_jar, _connection=connection
+                self._input.url,
+                params=query_params,
+                headers=headers,
+                cookies=cookie_jar,
+                _connection=connection,
+                timeout=(self._config.connect_timeout, self._config.read_timeout),
             )
         else:
             raise ValueError("Invalid HTTP method")

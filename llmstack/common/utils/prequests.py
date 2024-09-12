@@ -74,8 +74,8 @@ def request(method, url, **kwargs):
 
     # Add Promptly User-Agent to headers
     kwargs["headers"] = {
-        **kwargs.get("headers", {}),
         **{"User-Agent": "Promptly"},
+        **kwargs.get("headers", {}),
     }
     return requests.request(method=method, url=url, **kwargs)
 
