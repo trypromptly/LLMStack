@@ -7,7 +7,11 @@ import orjson as json
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from langrocks.client import WebBrowser as WebBrowserClient
-from langrocks.common.models.web_browser import WebBrowserCommand, WebBrowserCommandType
+from langrocks.common.models.web_browser import (
+    WebBrowserCommand,
+    WebBrowserCommandType,
+    WebBrowserContent,
+)
 from pydantic import BaseModel, Field
 
 from llmstack.apps.schemas import OutputTemplate
@@ -284,7 +288,7 @@ class WebBrowserOutput(ApiProcessorSchema):
         default=None,
         description="Video of the result",
     )
-    content: Optional[dict] = Field(
+    content: Optional[WebBrowserContent] = Field(
         default=None,
         description="Content of the result including text, buttons, links, inputs, textareas and selects",
     )
@@ -318,7 +322,7 @@ class WebBrowser(
 
     @staticmethod
     def name() -> str:
-        return "Web Browser"
+        return "Web Browser Agent"
 
     @staticmethod
     def slug() -> str:

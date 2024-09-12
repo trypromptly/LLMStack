@@ -66,6 +66,14 @@ class StaticWebBrowserConfiguration(ApiProcessorSchema):
         default=[],
         json_schema_extra={"advanced_parameter": True},
     )
+    extract_html: bool = Field(
+        description="Extract HTML",
+        default=False,
+    )
+    capture_screenshot: bool = Field(
+        description="Capture screenshot",
+        default=True,
+    )
 
 
 class StaticWebBrowserInput(ApiProcessorSchema):
@@ -144,8 +152,8 @@ class StaticWebBrowser(
         with WebBrowser(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             interactive=self._config.stream_video,
-            capture_screenshot=True,
-            html=True,
+            capture_screenshot=self._config.capture_screenshot,
+            html=self._config.extract_html,
             tags_to_extract=self._config.tags_to_extract,
             session_data=(
                 self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
@@ -181,15 +189,11 @@ class StaticWebBrowser(
                 mime_type="image/png",
             )
 
-        browser_response = browser_response.model_dump()
-        browser_response["screenshot"] = screenshot_asset.objref if screenshot_asset else None
+        browser_response.screenshot = screenshot_asset.objref if screenshot_asset else None
 
         async_to_sync(output_stream.write)(
             WebBrowserOutput(
-                text=browser_response.get(
-                    "text",
-                    "".join(list(map(lambda x: x.get("output", ""), browser_response.get("command_outputs", [])))),
-                ),
+                text=browser_response.text or "".join(list(map(lambda x: x.output, browser_response.command_outputs))),
                 content=browser_response,
             ),
         )
