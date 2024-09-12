@@ -171,7 +171,7 @@ def extract_text_elements(
             ),
         ]
     elif mime_type == "text/html":
-        elements = partition_html(file=data_fp, headers=headers, chunking_strategy=chunking_strategy)
+        elements = partition_html(file=data_fp, headers=headers, chunking_strategy=chunking_strategy, encoding="utf-8")
     elif mime_type == "application/epub+zip":
         elements = partition_epub(file=data_fp, chunking_strategy=chunking_strategy)
     elif mime_type == "text/markdown":
