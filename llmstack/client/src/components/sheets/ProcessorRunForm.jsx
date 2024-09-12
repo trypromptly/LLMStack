@@ -50,6 +50,7 @@ export default function ProcessorRunForm({
       output_template: {
         jsonpath:
           outputTemplateRef.current ||
+          selectedProcessor?.output_template?.jsonpath ||
           liquidTemplateVariabletoJsonPath(
             selectedProcessor?.output_template?.markdown,
           ),
@@ -73,6 +74,7 @@ export default function ProcessorRunForm({
         defaultProcessorSlug={processorSlug}
         onProcessorChange={(processor) => {
           setSelectedProcessor(processor);
+          outputTemplateRef.current = processor?.output_template?.jsonpath;
         }}
       />
       <TabContext value={tabValue}>
