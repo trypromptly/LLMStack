@@ -80,8 +80,18 @@ export function SheetColumnMenu({
       setFormulaType("");
       setFormulaData({});
       formulaDataRef.current = {};
+      setShowFormulaTypeSelect(false);
+    } else {
+      setShowFormulaTypeSelect(
+        column?.formula?.type && column.formula.type !== SHEET_FORMULA_TYPE_NONE
+          ? true
+          : false,
+      );
+      setFormulaData(column?.formula?.data || {});
+      setFormulaType(column?.formula?.type || "");
+      formulaDataRef.current = column?.formula?.data || {};
     }
-  }, [open]);
+  }, [open, column]);
 
   const setDataHandler = useCallback(
     (data) => {
@@ -126,7 +136,10 @@ export function SheetColumnMenu({
       width: column?.width || 300,
       formula: showFormulaTypeSelect
         ? {
-            type: formulaType,
+            type:
+              typeof formulaType === "string"
+                ? parseInt(formulaType)
+                : formulaType,
             data: formulaDataRef.current,
           }
         : null,
@@ -260,7 +273,7 @@ export function SheetColumnMenu({
                       Formula Type
                     </InputLabel>
                     <Select
-                      value={formulaType}
+                      value={formulaType.toString()}
                       id="formula-type-select"
                       aria-label="Formula Type"
                       onChange={(e) => {
