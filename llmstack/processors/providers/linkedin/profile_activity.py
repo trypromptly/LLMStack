@@ -363,32 +363,16 @@ class ProfileActivityProcessor(
                     user_recent_posts = get_user_recent_posts(self._input.profile_url, web_browser)
                     if user_recent_posts:
                         async_to_sync(output_stream.write)(ProfileActivityOutput(posts=user_recent_posts))
-                    else:
-                        async_to_sync(output_stream.write)(
-                            ProfileActivityOutput(
-                                error=f"Could not find any posts for the profile {self._input.profile_url}",
-                            )
-                        )
+
                 if self._config.get_comments:
                     user_recent_comments = get_user_recent_comments(self._input.profile_url, web_browser)
                     if user_recent_comments:
                         async_to_sync(output_stream.write)(ProfileActivityOutput(comments=user_recent_comments))
-                    else:
-                        async_to_sync(output_stream.write)(
-                            ProfileActivityOutput(
-                                error=f"Could not find any comments for the profile {self._input.profile_url}",
-                            )
-                        )
+
                 if self._config.get_reactions:
                     user_recent_reactions = get_user_recent_reactions(self._input.profile_url, web_browser)
                     if user_recent_reactions:
                         async_to_sync(output_stream.write)(ProfileActivityOutput(reactions=user_recent_reactions))
-                    else:
-                        async_to_sync(output_stream.write)(
-                            ProfileActivityOutput(
-                                error=f"Could not find any reactions for the profile {self._input.profile_url}",
-                            )
-                        )
 
             else:
                 async_to_sync(output_stream.write)(
