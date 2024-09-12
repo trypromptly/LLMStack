@@ -27,7 +27,7 @@ columns:
         provider_slug: promptly
         processor_slug: simple_http
         output_template:
-          markdown: "{{response}}"
+          jsonpath: "$.response"
   - col_letter: C
     title: Translated Content
     cell_type: 0
@@ -73,4 +73,4 @@ columns:
         provider_slug: promptly
         processor_slug: html-translation
         output_template:
-          markdown: "{{translated_html}}"
+          jsonpath: "$.translated_html"

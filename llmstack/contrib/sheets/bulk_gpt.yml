@@ -30,4 +30,4 @@ columns:
         provider_slug: promptly
         processor_slug: llm
         output_template:
-          markdown: "{{text}}"
+          jsonpath: "$.text"
