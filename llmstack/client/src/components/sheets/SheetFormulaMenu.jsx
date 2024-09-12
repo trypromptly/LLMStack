@@ -64,6 +64,14 @@ const SheetFormulaMenu = ({
     setSpreadOutput(selectedCell?.spread_output || false);
   }, [selectedCell]);
 
+  useEffect(() => {
+    if (!open) {
+      setFormulaType("");
+      setFormulaData({});
+      formulaDataRef.current = {};
+    }
+  }, [open]);
+
   const memoizedProcessorRunForm = useMemo(
     () => (
       <ProcessorRunForm

@@ -73,6 +73,16 @@ export function SheetColumnMenu({
     formulaDataRef.current = column?.formula?.data || {};
   }, [column]);
 
+  useEffect(() => {
+    if (!open) {
+      setColumnName("");
+      setCellType(SHEET_CELL_TYPE_TEXT);
+      setFormulaType("");
+      setFormulaData({});
+      formulaDataRef.current = {};
+    }
+  }, [open]);
+
   const setDataHandler = useCallback(
     (data) => {
       formulaDataRef.current = {
