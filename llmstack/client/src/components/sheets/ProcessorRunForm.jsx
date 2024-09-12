@@ -165,7 +165,7 @@ export default function ProcessorRunForm({
               outputTemplateRef.current = text;
             }}
             sx={{ width: "100%" }}
-            introText="Use the {{ }} syntax to reference data from the processor's own output."
+            introText="Use JSON Path to pick data from the processor's output."
             schemas={[
               {
                 label: selectedProcessor?.name,
