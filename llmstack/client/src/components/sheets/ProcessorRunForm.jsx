@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Stack, Box, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import ApiBackendSelector from "../ApiBackendSelector";
+import ProcessorSelector from "../ProcessorSelector";
 import ThemedJsonForm from "../ThemedJsonForm";
 import validator from "@rjsf/validator-ajv8";
-import { useRecoilValue } from "recoil";
-import { apiBackendSelectedState } from "../../data/atoms";
+
 import TextFieldWithVars from "../apps/TextFieldWithVars";
 
 function getJsonpathTemplateString(variable, widget) {
@@ -28,13 +27,13 @@ export default function ProcessorRunForm({
   processorConfig,
   processorOutputTemplate,
 }) {
-  const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
+  const [selectedProcessor, setSelectedProcessor] = useState(null);
   const inputDataRef = useRef(processorInput || {});
   const configDataRef = useRef(processorConfig || {});
   const outputTemplateRef = useRef(
     processorOutputTemplate?.jsonpath ||
       liquidTemplateVariabletoJsonPath(
-        apiBackendSelected?.output_template?.markdown,
+        selectedProcessor?.output_template?.markdown,
       ) ||
       "",
   );
@@ -46,19 +45,19 @@ export default function ProcessorRunForm({
 
   useEffect(() => {
     setData({
-      processor_slug: apiBackendSelected?.slug,
-      provider_slug: apiBackendSelected?.api_provider?.slug,
+      processor_slug: selectedProcessor?.slug,
+      provider_slug: selectedProcessor?.provider?.slug,
       output_template: {
         jsonpath:
           outputTemplateRef.current ||
           liquidTemplateVariabletoJsonPath(
-            apiBackendSelected?.output_template?.markdown,
+            selectedProcessor?.output_template?.markdown,
           ),
       },
       input: inputDataRef.current,
       config: configDataRef.current,
     });
-  }, [apiBackendSelected, setData]);
+  }, [selectedProcessor, setData]);
 
   useEffect(() => {
     inputDataRef.current = processorInput;
@@ -68,10 +67,13 @@ export default function ProcessorRunForm({
 
   return (
     <Stack spacing={2}>
-      <ApiBackendSelector
+      <ProcessorSelector
         hideDescription={true}
-        defaultProvider={providerSlug}
-        defaultProcessor={processorSlug}
+        defaultProviderSlug={providerSlug}
+        defaultProcessorSlug={processorSlug}
+        onProcessorChange={(processor) => {
+          setSelectedProcessor(processor);
+        }}
       />
       <TabContext value={tabValue}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -86,9 +88,9 @@ export default function ProcessorRunForm({
         </Box>
         <TabPanel value="input">
           <ThemedJsonForm
-            schema={apiBackendSelected ? apiBackendSelected.input_schema : {}}
+            schema={selectedProcessor ? selectedProcessor.input_schema : {}}
             uiSchema={
-              apiBackendSelected ? apiBackendSelected.input_ui_schema : {}
+              selectedProcessor ? selectedProcessor.input_ui_schema : {}
             }
             formData={processorInput || {}}
             validator={validator}
@@ -100,12 +102,12 @@ export default function ProcessorRunForm({
                   jsonpath:
                     outputTemplateRef.current ||
                     liquidTemplateVariabletoJsonPath(
-                      apiBackendSelected?.output_template?.markdown,
+                      selectedProcessor?.output_template?.markdown,
                     ) ||
                     "",
                 },
-                processor_slug: apiBackendSelected?.slug,
-                provider_slug: apiBackendSelected?.api_provider?.slug,
+                processor_slug: selectedProcessor?.slug,
+                provider_slug: selectedProcessor?.provider?.slug,
               });
               inputDataRef.current = e.formData;
             }}
@@ -114,9 +116,9 @@ export default function ProcessorRunForm({
         </TabPanel>
         <TabPanel value="config">
           <ThemedJsonForm
-            schema={apiBackendSelected ? apiBackendSelected.config_schema : {}}
+            schema={selectedProcessor ? selectedProcessor.config_schema : {}}
             uiSchema={
-              apiBackendSelected ? apiBackendSelected.config_ui_schema : {}
+              selectedProcessor ? selectedProcessor.config_ui_schema : {}
             }
             formData={processorConfig || {}}
             validator={validator}
@@ -128,12 +130,12 @@ export default function ProcessorRunForm({
                   jsonpath:
                     outputTemplateRef.current ||
                     liquidTemplateVariabletoJsonPath(
-                      apiBackendSelected?.output_template?.markdown,
+                      selectedProcessor?.output_template?.markdown,
                     ) ||
                     "",
                 },
-                processor_slug: apiBackendSelected?.slug,
-                provider_slug: apiBackendSelected?.api_provider?.slug,
+                processor_slug: selectedProcessor?.slug,
+                provider_slug: selectedProcessor?.provider?.slug,
               });
               configDataRef.current = e.formData;
             }}
@@ -146,7 +148,7 @@ export default function ProcessorRunForm({
             value={
               outputTemplateRef.current ||
               liquidTemplateVariabletoJsonPath(
-                apiBackendSelected?.output_template?.markdown,
+                selectedProcessor?.output_template?.markdown,
               )
             }
             templateStringResolver={getJsonpathTemplateString}
@@ -157,8 +159,8 @@ export default function ProcessorRunForm({
                 output_template: {
                   jsonpath: text,
                 },
-                processor_slug: apiBackendSelected?.slug,
-                provider_slug: apiBackendSelected?.api_provider?.slug,
+                processor_slug: selectedProcessor?.slug,
+                provider_slug: selectedProcessor?.provider?.slug,
               });
               outputTemplateRef.current = text;
             }}
@@ -166,9 +168,9 @@ export default function ProcessorRunForm({
             introText="Use the {{ }} syntax to reference data from the processor's own output."
             schemas={[
               {
-                label: apiBackendSelected?.name,
-                pillPrefix: `${apiBackendSelected?.api_provider?.name} / ${apiBackendSelected?.name} / `,
-                items: apiBackendSelected?.output_schema,
+                label: selectedProcessor?.name,
+                pillPrefix: `${selectedProcessor?.provider?.name} / ${selectedProcessor?.name} / `,
+                items: selectedProcessor?.output_schema,
                 id: null,
               },
             ]}

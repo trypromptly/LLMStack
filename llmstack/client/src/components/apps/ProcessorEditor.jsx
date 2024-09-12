@@ -11,7 +11,7 @@ import validator from "@rjsf/validator-ajv8";
 import { lazy, useEffect, useRef, useState, useMemo } from "react";
 import { useRecoilValue } from "recoil";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
-import { appsState } from "../../data/atoms";
+import { appsState, processorsState } from "../../data/atoms";
 import "./AppEditor.css";
 
 const ThemedJsonForm = lazy(() => import("../ThemedJsonForm"));
@@ -23,7 +23,7 @@ const AppInputSchemaEditor = lazy(() => import("./AppInputSchemaEditor"));
 function PromptlyAppStepCard({
   appId,
   processor,
-  apiBackend,
+  processorData,
   index,
   activeStep,
   setActiveStep,
@@ -36,7 +36,7 @@ function PromptlyAppStepCard({
     (app) => app.published_uuid && app.uuid !== appId,
   );
   const selectedApp = apps.find(
-    (app) => app.published_uuid === processor.config.app_id,
+    (app) => app.published_uuid === processorData.config.app_id,
   );
 
   const appInput = { properties: {}, required: [] };
@@ -54,7 +54,7 @@ function PromptlyAppStepCard({
       "ui:label": inputField.name,
     };
   });
-  const appInputDataStr = processor.input;
+  const appInputDataStr = processorData.input;
   let appInputData = {};
   try {
     appInputData = JSON.parse(appInputDataStr["input"]);
@@ -62,9 +62,9 @@ function PromptlyAppStepCard({
 
   return (
     <AppStepCard
-      icon={apiBackend?.icon || apiBackend?.api_provider?.name}
-      title={apiBackend?.name}
-      description={apiBackend?.description}
+      icon={processor?.icon || processor?.name}
+      title={processorData?.name}
+      description={processorData?.description}
       setDescription={(description) => {
         processors[index].description = description;
         setProcessors([...processors]);
@@ -97,12 +97,12 @@ function PromptlyAppStepCard({
           <AccordionDetails>
             <ThemedJsonForm
               schema={{
-                ...apiBackend?.config_schema,
+                ...processor?.config_schema,
                 ...{ title: "", description: "" },
               }}
               validator={validator}
               uiSchema={{
-                ...apiBackend?.config_ui_schema,
+                ...processor?.config_ui_schema,
                 ...{
                   "ui:submitButtonOptions": {
                     norender: true,
@@ -119,7 +119,7 @@ function PromptlyAppStepCard({
                   <AppSelector
                     {...props}
                     apps={apps}
-                    value={processor.config.app_id}
+                    value={processorData.config.app_id}
                     onChange={(appId) => {
                       let oldFormData = processors[index].config;
                       processors[index].config = {
@@ -193,61 +193,66 @@ export function ProcessorEditor({
 }) {
   const [setValidationErrorsForId, clearValidationErrorsForId] =
     useValidationErrorsForAppComponents(index);
-  const processor = processors[index];
-  const apiBackend = processor?.api_backend;
+  const processorList = useRecoilValue(processorsState);
+  const processorData = processors[index];
   const [errors, setErrors] = useState([]);
-  const inputFields = useRef(processor?.input_fields || []);
-  const toolOutputTemplate = useRef(processor?.output_template?.markdown || "");
+  const inputFields = useRef(processorData?.input_fields || []);
+  const toolOutputTemplate = useRef(
+    processorData?.output_template?.markdown || "",
+  );
+
+  const processor = processorList.find(
+    (p) =>
+      p.provider?.slug === processorData?.provider_slug &&
+      p.slug === processorData?.processor_slug,
+  );
+
   useEffect(() => {
     let newErrors = [];
-    if (!isTool && processor?.api_backend?.input_schema?.required) {
-      processor?.api_backend?.input_schema?.required.forEach(
-        (requiredField) => {
-          if (!processor?.input[requiredField]) {
+    if (!isTool && processor?.input_schema?.required) {
+      processor?.input_schema?.required.forEach((requiredField) => {
+        if (!processorData?.input[requiredField]) {
+          newErrors.push({
+            message: `Missing required field: ${requiredField}`,
+          });
+        } else if (Array.isArray(processorData?.input[requiredField])) {
+          if (
+            processorData?.input[requiredField].length === 0 ||
+            processorData?.input[requiredField].includes("")
+          ) {
             newErrors.push({
-              message: `Missing required field: ${requiredField}`,
+              message: `${requiredField} should contain at least one item`,
             });
-          } else if (Array.isArray(processor?.input[requiredField])) {
-            if (
-              processor?.input[requiredField].length === 0 ||
-              processor?.input[requiredField].includes("")
-            ) {
-              newErrors.push({
-                message: `${requiredField} should contain at least one item`,
-              });
-            }
           }
-        },
-      );
+        }
+      });
     }
 
-    if (processor?.api_backend?.config_schema?.required) {
-      processor?.api_backend?.config_schema.required.forEach(
-        (requiredField) => {
-          if (!processor.config[requiredField]) {
+    if (processor?.config_schema?.required) {
+      processor?.config_schema.required.forEach((requiredField) => {
+        if (!processorData.config[requiredField]) {
+          newErrors.push({
+            message: `Missing required field: ${requiredField}`,
+          });
+        } else if (Array.isArray(processorData.config[requiredField])) {
+          if (
+            processorData.config[requiredField].length === 0 ||
+            processorData.config[requiredField].includes("")
+          ) {
             newErrors.push({
-              message: `Missing required field: ${requiredField}`,
+              message: `${requiredField} should contain at least one item`,
             });
-          } else if (Array.isArray(processor.config[requiredField])) {
-            if (
-              processor.config[requiredField].length === 0 ||
-              processor.config[requiredField].includes("")
-            ) {
-              newErrors.push({
-                message: `${requiredField} should contain at least one item`,
-              });
-            }
           }
-        },
-      );
+        }
+      });
     }
 
     setErrors(newErrors);
   }, [
     isTool,
     processor,
-    processor.input,
-    processor.config,
+    processorData.input,
+    processorData.config,
     processor.input_schema,
     processor.config_schema,
   ]);
@@ -283,8 +288,8 @@ export function ProcessorEditor({
     processor?.processor_slug === "app" ? (
     <PromptlyAppStepCard
       appId={appId}
-      apiBackend={apiBackend}
       processor={processor}
+      processorData={processorData}
       index={index}
       activeStep={activeStep}
       setActiveStep={setActiveStep}
@@ -295,11 +300,12 @@ export function ProcessorEditor({
     />
   ) : (
     <AppStepCard
-      icon={apiBackend?.icon || apiBackend?.api_provider?.name}
-      title={processors[index].name || apiBackend?.name}
-      description={processors[index].description || apiBackend?.description}
+      icon={processor?.icon || processor?.provider?.name}
+      title={processor?.name || processor?.provider?.name}
+      description={processor?.description || processor?.provider?.description}
       setDescription={(description) => {
-        processors[index].description = description || apiBackend?.description;
+        processors[index].description =
+          description || processor?.provider?.description;
         setProcessors([...processors]);
       }}
       stepNumber={index + 2}
@@ -359,12 +365,12 @@ export function ProcessorEditor({
           <AccordionDetails>
             <ThemedJsonForm
               schema={{
-                ...apiBackend?.input_schema,
+                ...processor?.input_schema,
                 ...{ title: "", description: "" },
               }}
               validator={validator}
               uiSchema={{
-                ...apiBackend?.input_ui_schema,
+                ...processor?.input_ui_schema,
                 ...{
                   "ui:submitButtonOptions": {
                     norender: true,
@@ -395,12 +401,12 @@ export function ProcessorEditor({
           <AccordionDetails>
             <ThemedJsonForm
               schema={{
-                ...apiBackend?.config_schema,
+                ...processor?.config_schema,
                 ...{ title: "", description: "" },
               }}
               validator={validator}
               uiSchema={{
-                ...apiBackend?.config_ui_schema,
+                ...processor?.config_ui_schema,
                 ...{
                   "ui:submitButtonOptions": {
                     norender: true,

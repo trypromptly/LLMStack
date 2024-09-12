@@ -3,6 +3,8 @@ import yaml from "js-yaml";
 import { useEffect, useRef, useState } from "react";
 import AceEditor from "react-ace";
 import { getJSONSchemaFromInputFields } from "../../data/utils";
+import { useRecoilValue } from "recoil";
+import { processorsState } from "../../data/atoms";
 import { AddProcessorDivider } from "./AddProcessorDivider";
 import { AppConfigEditor } from "./AppConfigEditor";
 import { AppOutputEditor } from "./AppOutputEditor";
@@ -29,6 +31,7 @@ export function AppEditor(props) {
   const [activeStep, setActiveStep] = useState(1);
   const [outputSchemas, setOutputSchemas] = useState([]);
   const [editorType, setEditorType] = useState("ui");
+  const processorList = useRecoilValue(processorsState);
   const yamlContent = useRef("");
 
   useEffect(() => {
@@ -41,17 +44,22 @@ export function AppEditor(props) {
         id: "_inputs0",
       },
       ...processors.map((p, index) => {
+        const processor = processorList.find(
+          (x) =>
+            x.provider?.slug === p.provider_slug && x.slug === p.processor_slug,
+        );
+
         return {
-          label: `${index + 2}. ${p.api_backend?.name}`,
-          pillPrefix: `[${index + 2}] ${p.api_backend?.api_provider?.name} / ${
-            p.api_backend?.name
+          label: `${index + 2}. ${processor?.name}`,
+          pillPrefix: `[${index + 2}] ${processor?.provider?.name} / ${
+            processor?.name
           } / `,
-          items: p.api_backend?.output_schema,
-          id: p.id || `${p.api_backend.slug}${index + 1}`,
+          items: processor?.output_schema,
+          id: p?.id || `${processor?.slug}${index + 1}`,
         };
       }),
     ]);
-  }, [appInputFields, processors]);
+  }, [appInputFields, processors, processorList]);
 
   return (
     <Box>
@@ -137,17 +145,16 @@ export function AppEditor(props) {
           <Stack style={{ justifyContent: "center" }}>
             <AddProcessorDivider
               showProcessorSelector={true}
-              setProcessorBackend={(apiBackend) => {
+              setProcessorBackend={(processor) => {
                 const newProcessors = [...processors];
                 newProcessors.push({
-                  id: `${apiBackend?.slug}${newProcessors.length + 1}`,
-                  api_backend: apiBackend,
-                  processor_slug: apiBackend?.slug,
-                  provider_slug: apiBackend?.api_provider?.slug,
-                  endpoint: null,
+                  id: `${processor?.slug}${newProcessors.length + 1}`,
+                  processor: processor,
+                  processor_slug: processor?.slug,
+                  provider_slug: processor?.provider?.slug,
                   input: null,
                   config: null,
-                  output_template: apiBackend?.output_template,
+                  output_template: processor?.output_template,
                 });
                 setProcessors(newProcessors);
                 setActiveStep(newProcessors.length + 1);

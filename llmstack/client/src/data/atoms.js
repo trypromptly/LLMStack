@@ -1,36 +1,24 @@
 import { atom, atomFamily, selector, selectorFamily } from "recoil";
 import { axios } from "./axios";
 
-const apiProvidersFetchSelector = selector({
-  key: "apiProvidersFetchSelector",
+const providersFetchSelector = selector({
+  key: "providersFetchSelector",
   get: async () => {
     try {
-      const apiProviders = await axios().get("/api/apiproviders");
-      return apiProviders.data;
+      const providers = await axios().get("/api/apiproviders");
+      return providers.data;
     } catch (error) {
       return [];
     }
   },
 });
 
-const apiBackendsFetchSelector = selector({
-  key: "apiBackendsFetchSelector",
+const processorsFetchSelector = selector({
+  key: "processorsFetchSelector",
   get: async () => {
     try {
-      const apiBackends = await axios().get("/api/apibackends");
-      return apiBackends.data;
-    } catch (error) {
-      return [];
-    }
-  },
-});
-
-const endpointsFetchSelector = selector({
-  key: "endpointsFetchSelector",
-  get: async () => {
-    try {
-      const endpoints = await axios().get("/api/endpoints");
-      return endpoints.data;
+      const processors = await axios().get("/api/apibackends");
+      return processors.data;
     } catch (error) {
       return [];
     }
@@ -124,16 +112,16 @@ const pipelineTemplatesFetchSelector = selector({
   },
 });
 
-export const apiProvidersState = atom({
-  key: "apiProviders",
-  default: apiProvidersFetchSelector,
+export const providersState = atom({
+  key: "providers",
+  default: providersFetchSelector,
 });
 
-export const apiProviderDropdownListState = selector({
-  key: "apiProviderDropdownList",
+export const providerDropdownListState = selector({
+  key: "providerDropdownList",
   get: async ({ get }) => {
-    const apiProviders = await get(apiProvidersState);
-    return apiProviders
+    const providers = await get(providersState);
+    return providers
       .filter((x) => x.has_processors)
       .map((x) => {
         return { label: x.name, value: x.name };
@@ -141,124 +129,39 @@ export const apiProviderDropdownListState = selector({
   },
 });
 
-export const apiProviderSelectedState = atom({
-  key: "apiProviderSelected",
-  default: null,
-});
-
 export const providerSchemasSelector = selector({
   key: "providerSchemas",
   get: async ({ get }) => {
-    const providers = await get(apiProvidersState);
+    const providers = await get(providersState);
     return providers.filter((x) => x.config_schema);
   },
 });
 
-export const apiBackendsState = atom({
-  key: "apiBackends",
-  default: apiBackendsFetchSelector,
+export const processorsState = atom({
+  key: "processors",
+  default: processorsFetchSelector,
 });
 
-export const apiBackendDropdownListState = selector({
-  key: "apiBackendDropdownList",
+export const processorDropdownListState = selector({
+  key: "processorDropdownList",
   get: ({ get }) => {
-    const apiBackends = get(apiBackendsState);
+    const processors = get(processorsState);
     const organization = get(organizationState);
-    return apiBackends
+    return processors
       .filter(
-        (apiBackend) =>
-          (organization?.disabled_api_backends || []).indexOf(apiBackend.id) ===
+        (processor) =>
+          (organization?.disabled_api_backends || []).indexOf(processor.id) ===
           -1,
       )
       .map((x) => {
-        return { label: x.name, value: x.id, provider: x.api_provider.name };
+        return { label: x.name, value: x.id, provider: x.provider.name };
       });
   },
 });
 
-export const apiBackendSelectedState = atom({
-  key: "apiBackendSelected",
+export const processorSelectedState = atom({
+  key: "processorSelected",
   default: null,
-});
-
-export const endpointsState = atom({
-  key: "endpoints",
-  default: endpointsFetchSelector,
-});
-
-export const endpointDropdownListState = selector({
-  key: "endpointDropdownList",
-  get: ({ get }) => {
-    const endpoints = get(endpointsState);
-    const parentEndpoints = endpoints
-      .filter((x) => x.version === 0 && !x.draft)
-      .sort((a, b) => (a.created_on < b.created_on ? 1 : -1));
-    return parentEndpoints.map((x) => {
-      return {
-        label: `${x.api_backend.api_provider.name} » ${x.api_backend.name} » ${x.name}`,
-        uuid: x.uuid,
-        options: endpoints
-          .filter((y) => y.parent_uuid === x.uuid)
-          .map((z) => {
-            return {
-              label: `${z.version}: ${z.description}`,
-              value: `${z.parent_uuid}:${z.version}`,
-              version: z.version,
-              backend: x.api_backend.name,
-              provider: x.api_backend.api_provider.name,
-              is_live: z.is_live,
-              uuid: z.uuid,
-            };
-          }),
-      };
-    });
-  },
-});
-
-export const endpointSelectedState = atom({
-  key: "endpointSelected",
-  default: null,
-});
-
-export const endpointTableDataState = selector({
-  key: "endpointTableData",
-  get: ({ get }) => {
-    const endpoints = get(endpointsState)
-      .filter((endpoint) => !endpoint.draft)
-      .sort((a, b) => (a.created_on < b.created_on ? 1 : -1));
-
-    // map of parent endpoints
-    const parentEndpoints = endpoints
-      .filter((x) => x.version === 0)
-      .reduce((acc, entry) => {
-        const entry_map = {
-          [entry.uuid]: { ...entry, versions: [], key: entry.uuid },
-        };
-        return { ...acc, ...entry_map };
-      }, {});
-
-    const childEndpoints = endpoints.filter((x) => x.version !== 0);
-
-    for (let i = 0; i < childEndpoints.length; i++) {
-      if (childEndpoints[i].parent_uuid in parentEndpoints) {
-        parentEndpoints[childEndpoints[i].parent_uuid].versions.push({
-          ...childEndpoints[i],
-          key: childEndpoints[i].uuid,
-        });
-      }
-    }
-    return Object.values(parentEndpoints);
-  },
-});
-
-export const endpointVersionsState = atom({
-  key: "endpointVersions",
-  default: [],
-});
-
-export const endpointConfigValueState = atom({
-  key: "endpointConfigValue",
-  default: {},
 });
 
 export const templateValueState = atom({
@@ -284,11 +187,6 @@ export const saveEndpointVersionModalVisibleState = atom({
 export const shareEndpointModalVisibleState = atom({
   key: "shareEndpointModalVisible",
   default: false,
-});
-
-export const endpointShareCodeValueState = atom({
-  key: "endpointShareCodeValue",
-  default: null,
 });
 
 export const profileState = atom({

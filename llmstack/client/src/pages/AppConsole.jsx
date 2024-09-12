@@ -43,7 +43,7 @@ import { AppVersions } from "../components/apps/AppVersions";
 import { AppDetailsEditor } from "../components/apps/AppDetailsEditor";
 import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
 import { useValidationErrorsForAppConsole } from "../data/appValidation";
-import { apiBackendsState, profileSelector } from "../data/atoms";
+import { profileSelector } from "../data/atoms";
 import { axios } from "../data/axios";
 import StoreListingModal from "../components/store/StoreListingModal";
 import {
@@ -178,7 +178,6 @@ function AppIntegration({ integration, app, saveApp, setApp }) {
 export default function AppConsolePage(props) {
   const { appId } = useParams();
   const { page } = props;
-  const apiBackends = useRecoilValue(apiBackendsState);
   const [appInputFields, setAppInputFields] = useState([]);
   const [app, setApp] = useState(null);
   const [isPublished, setIsPublished] = useState(false);
@@ -236,22 +235,6 @@ export default function AppConsolePage(props) {
   }, [appId, page]);
 
   useEffect(() => {
-    // If processors are coming from app.data, replace provider_slug and processor_slug with api_backend
-    if (app?.data?.processors) {
-      setProcessors(
-        app.data.processors.map((processor) => ({
-          ...processor,
-          api_backend: apiBackends.find(
-            (apiBackend) =>
-              apiBackend.slug === processor.processor_slug &&
-              apiBackend.api_provider.slug === processor.provider_slug,
-          ),
-        })),
-      );
-    }
-  }, [app?.data?.processors, apiBackends]);
-
-  useEffect(() => {
     setApp((app) => ({
       ...app,
       data: { ...app?.data, input_fields: appInputFields },
@@ -299,17 +282,15 @@ export default function AppConsolePage(props) {
         discord_config: app?.discord_config || {},
         twilio_config: app?.twilio_config || {},
         processors: processors.map((processor, index) => ({
-          id: processor.id || `${processor.api_backend.slug}${index + 1}`,
-          name: processor.name || processor.api_backend?.name,
+          id: processor.id || `${processor.processor.slug}${index + 1}`,
+          name: processor.name || processor.processor?.name,
           description:
             app?.data?.processors[index]?.description ||
             processor.description ||
-            processor.api_backend?.description,
+            processor.processor?.description,
           provider_slug:
-            processor.api_backend?.api_provider?.slug ||
-            processor.provider_slug,
-          processor_slug:
-            processor.api_backend?.slug || processor.processor_slug,
+            processor.processor?.api_provider?.slug || processor.provider_slug,
+          processor_slug: processor.processor?.slug || processor.processor_slug,
           config: processor.config,
           input: processor.input,
           input_fields: processor.input_fields || [],

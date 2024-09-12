@@ -13,8 +13,8 @@ import { styled } from "@mui/system";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import {
-  apiBackendsState,
-  apiProvidersState,
+  processorsState,
+  providersState,
   organizationState,
   profileFlagsSelector,
 } from "../../data/atoms";
@@ -40,31 +40,29 @@ export function AddProcessorDivider({
 }) {
   const organization = useRecoilValue(organizationState);
   const profileFlags = useRecoilValue(profileFlagsSelector);
-  const apiBackends = useRecoilValue(apiBackendsState);
-  const apiProviders = useRecoilValue(apiProvidersState);
+  const processors = useRecoilValue(processorsState);
+  const providers = useRecoilValue(providersState);
 
-  const defaultApiProvider =
+  const defaultProvider =
     profileFlags.IS_ORGANIZATION_MEMBER && organization?.default_api_backend
-      ? apiBackends?.find(
+      ? processors?.find(
           (backend) => backend.id === organization?.default_api_backend,
         )?.api_provider.name
-      : "Open AI";
-  const defaultApiBackend =
+      : "Promptly";
+  const defaultProcessor =
     profileFlags.IS_ORGANIZATION_MEMBER && organization?.default_api_backend
       ? organization?.default_api_backend
-      : apiBackends?.find((backend) => backend.id === "openai/chatgpt")?.id;
+      : processors?.find((backend) => backend.id === "promptly/llm")?.id;
 
-  const [apiProvider, setApiProvider] = useState("");
-  const [apiBackend, setApiBackend] = useState("");
+  const [provider, setProvider] = useState("");
+  const [processor, setProcessor] = useState("");
 
   useEffect(() => {
-    setApiProvider(
-      apiProviders.length > 0 && defaultApiProvider ? defaultApiProvider : "",
+    setProvider(providers.length > 0 && defaultProvider ? defaultProvider : "");
+    setProcessor(
+      processors.length > 0 && defaultProcessor ? defaultProcessor : "",
     );
-    setApiBackend(
-      apiBackends.length > 0 && defaultApiBackend ? defaultApiBackend : "",
-    );
-  }, [defaultApiProvider, defaultApiBackend, apiProviders, apiBackends]);
+  }, [defaultProvider, defaultProcessor, providers, processors]);
 
   return (
     <Separator>
@@ -82,10 +80,10 @@ export function AddProcessorDivider({
           >
             <FormControl>
               <Select
-                value={apiProvider}
+                value={provider}
                 onChange={(e) => {
-                  setApiProvider(e.target.value);
-                  setApiBackend("");
+                  setProvider(e.target.value);
+                  setProcessor("");
                 }}
                 id="provider-select"
                 size="small"
@@ -107,7 +105,7 @@ export function AddProcessorDivider({
                     <Typography variant="caption">Provider</Typography>
                   </ListItemText>
                 </MenuItem>
-                {apiProviders.map((provider) => (
+                {providers.map((provider) => (
                   <MenuItem value={provider.name} key={provider.name}>
                     <ListItemIcon>
                       <ProviderIcon
@@ -120,33 +118,31 @@ export function AddProcessorDivider({
                 ))}
               </Select>
             </FormControl>
-            {apiProvider && (
+            {provider && (
               <FormControl>
                 <Select
-                  value={apiBackend}
-                  onChange={(e) => setApiBackend(e.target.value)}
-                  id="backend-select"
-                  placeholder="Backend"
+                  value={processor}
+                  onChange={(e) => setProcessor(e.target.value)}
+                  id="processor-select"
+                  placeholder="Processor"
                   style={{ width: 120 }}
                   size="small"
                   displayEmpty
                 >
                   <MenuItem value="">
-                    <Typography variant="caption">Backend</Typography>
+                    <Typography variant="caption">Processor</Typography>
                   </MenuItem>
-                  {apiBackends
+                  {processors
+                    .filter((processor) => processor.provider.name === provider)
                     .filter(
-                      (backend) => backend.api_provider.name === apiProvider,
-                    )
-                    .filter(
-                      (backend) =>
+                      (processor) =>
                         (organization?.disabled_api_backends || []).indexOf(
-                          backend.id,
+                          processor.id,
                         ) === -1,
                     )
-                    .map((backend) => (
-                      <MenuItem value={backend.id} key={backend.id}>
-                        {backend.name}
+                    .map((processor) => (
+                      <MenuItem value={processor.id} key={processor.id}>
+                        {processor.name}
                       </MenuItem>
                     ))}
                 </Select>
@@ -156,7 +152,7 @@ export function AddProcessorDivider({
               startIcon={<AddCircleOutlineIcon fontSize="small" />}
               style={{ textTransform: "none" }}
               variant="contained"
-              disabled={apiBackend === ""}
+              disabled={processor === ""}
               sx={{
                 "&.Mui-disabled": {
                   backgroundColor: "#8ac48f !important",
@@ -168,11 +164,9 @@ export function AddProcessorDivider({
                 },
               }}
               onClick={() => {
-                setProcessorBackend(
-                  apiBackends.find((b) => b.id === apiBackend),
-                );
-                setApiProvider(defaultApiProvider);
-                setApiBackend("");
+                setProcessorBackend(processors.find((p) => p.id === processor));
+                setProvider(defaultProvider);
+                setProcessor("");
               }}
             >
               Processor

@@ -2,7 +2,6 @@ import { CircularProgress, Grid, Stack, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { SnackbarProvider, closeSnackbar } from "notistack";
 import { Suspense, useEffect } from "react";
-import { useCookies } from "react-cookie";
 import ReactGA from "react-ga4";
 import { useLocation } from "react-router-dom";
 import { useRecoilState, useRecoilValue } from "recoil";
@@ -13,10 +12,9 @@ import {
   isMobileState,
   profileFlagsSelector,
   isLoggedInState,
-  apiProvidersState,
-  apiBackendsState,
+  providersState,
+  processorsState,
   organizationState,
-  apiBackendSelectedState,
 } from "./data/atoms";
 
 const menuItems = [
@@ -50,29 +48,13 @@ const menuItems = [
 export default function App({ children }) {
   const location = useLocation();
   const isLoggedIn = useRecoilValue(isLoggedInState);
-  const [_, setCookie] = useCookies(["irclickid"]); // eslint-disable-line
-  const apiProviders = useRecoilValue(apiProvidersState); // eslint-disable-line
-  const apiBackends = useRecoilValue(apiBackendsState); // eslint-disable-line
+  const providers = useRecoilValue(providersState); // eslint-disable-line
+  const processors = useRecoilValue(processorsState); // eslint-disable-line
   const organization = useRecoilValue(organizationState); // eslint-disable-line
-  const apiBackendSelected = useRecoilValue(apiBackendSelectedState); // eslint-disable-line
 
   let allMenuItems = menuItems;
 
   useEffect(() => {
-    if (location) {
-      // Get irclickid parameter from URL and set it as a cookie for 30 days
-      const urlParams = new URLSearchParams(location.search);
-      const irclickid = urlParams.get("irclickid");
-      if (irclickid) {
-        setCookie("irclickid", irclickid, {
-          path: "/",
-          domain: ".trypromptly.com",
-          secure: true,
-          maxAge: 2592000,
-        });
-      }
-    }
-
     ReactGA.initialize(
       (process.env.REACT_APP_GA_MEASUREMENT_IDS || "G-WV60HC9CHD")
         .split(",")
@@ -88,7 +70,7 @@ export default function App({ children }) {
       page: location.pathname + location.search,
       title: location.pathname,
     });
-  }, [location, setCookie]);
+  }, [location]);
 
   const [isMobile, setIsMobile] = useRecoilState(isMobileState);
   const profileFlags = useRecoilValue(profileFlagsSelector);

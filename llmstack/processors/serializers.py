@@ -15,7 +15,7 @@ class ApiProviderSerializer(serializers.ModelSerializer):
 
 
 class ApiBackendSerializer(serializers.ModelSerializer):
-    api_provider = ApiProviderSerializer()
+    provider = ApiProviderSerializer()
     config_schema = serializers.SerializerMethodField()
     input_schema = serializers.SerializerMethodField()
     output_schema = serializers.SerializerMethodField()

@@ -1,11 +1,10 @@
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import {
-  apiBackendsState,
-  apiProvidersState,
+  processorsState,
+  providersState,
   dataSourceEntriesState,
   dataSourcesState,
   dataSourceTypesState,
-  endpointsState,
   isLoggedInState,
   organizationState,
   orgDataSourceEntriesState,
@@ -16,13 +15,13 @@ import {
 } from "./atoms";
 import { axios } from "./axios";
 
-export function useLoadApiProviders() {
-  const setApiProvider = useSetRecoilState(apiProvidersState);
+export function useLoadProviders() {
+  const setProviders = useSetRecoilState(providersState);
   axios()
     .get("/api/apiproviders")
     .then((response) => {
       // handle success
-      setApiProvider(response.data);
+      setProviders(response.data);
     })
     .catch((error) => {
       // handle error
@@ -32,8 +31,8 @@ export function useLoadApiProviders() {
     });
 }
 
-export function useLoadApiBackends() {
-  const setApiBackends = useSetRecoilState(apiBackendsState);
+export function useLoadProcessors() {
+  const setProcessors = useSetRecoilState(processorsState);
   const organization = useRecoilValue(organizationState);
   const profileFlags = useRecoilValue(profileFlagsState);
 
@@ -41,11 +40,11 @@ export function useLoadApiBackends() {
     .get("/api/apibackends")
     .then((response) => {
       // Disable api backends that are disabled for the organization
-      setApiBackends(
+      setProcessors(
         response.data.filter(
-          (apiBackend) =>
+          (processor) =>
             !profileFlags.IS_ORGANIZATION_MEMBER ||
-            organization.disabled_api_backends.indexOf(apiBackend.id) === -1,
+            organization.disabled_api_backends.indexOf(processor.id) === -1,
         ),
       );
     })
@@ -55,41 +54,6 @@ export function useLoadApiBackends() {
     .then({
       // always executed
     });
-}
-
-export function useLoadEndpoints() {
-  const setEndpoints = useSetRecoilState(endpointsState);
-  axios()
-    .get("/api/endpoints")
-    .then((response) => {
-      // handle success
-      setEndpoints(response.data);
-    })
-    .catch((error) => {
-      // handle error
-    })
-    .then({
-      // always executed
-    });
-}
-
-// Return a function to trigger useLoadEndpoints
-export function useReloadEndpoints() {
-  const setEndpoints = useSetRecoilState(endpointsState);
-  return () => {
-    axios()
-      .get("/api/endpoints")
-      .then((response) => {
-        // handle success
-        setEndpoints(response.data);
-      })
-      .catch((error) => {
-        // handle error
-      })
-      .then({
-        // always executed
-      });
-  };
 }
 
 export function useLoadProfile() {

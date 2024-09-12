@@ -1,71 +1,30 @@
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { Box, Tab } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
-import * as React from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
-import { inputValueState, templateValueState } from "../data/atoms";
+import { useState } from "react";
 import { Empty as EmptyComponent } from "./form/Empty";
 import ThemedJsonForm from "./ThemedJsonForm";
 
-const getTemplateVariables = (input) => {
-  const data = typeof input === "string" ? input : JSON.stringify(input);
-  const regex = /{{(.*?)}}/g;
-  const matches = data.matchAll(regex);
-  const keys = Array.from(matches, (m) => m[1]);
-  return keys;
-};
-// Parses given text and returns list of template keys defined as {{<template_key>}}
-const getPromptValuesSchema = (input) => {
-  const keys = getTemplateVariables(input);
-  const schema = {
-    type: "object",
-    properties: {},
-  };
-  keys.forEach((key) => {
-    schema.properties[key] = {
-      type: "string",
-      title: key,
-    };
-  });
-  return schema;
-};
-
 export function InputThemedForm(props) {
-  const [data, setData] = useRecoilState(inputValueState);
+  const { input, setInput, schema, uiSchema } = props;
 
   return (
     <ThemedJsonForm
-      schema={props.schema}
-      uiSchema={props.uiSchema}
-      formData={data}
+      schema={schema}
+      uiSchema={uiSchema}
+      formData={input}
       validator={validator}
       onChange={({ formData }) => {
-        setData(formData);
+        setInput(formData);
       }}
       disableAdvanced={true}
     />
   );
 }
 
-export function TemplateVariablesThemedForm(props) {
-  const [data, setData] = useRecoilState(templateValueState);
-  const input = useRecoilValue(inputValueState);
-
-  return (
-    <ThemedJsonForm
-      schema={input && input !== "" ? getPromptValuesSchema(input) : {}}
-      uiSchema={props.uiSchema}
-      formData={data}
-      validator={validator}
-      onChange={({ formData }) => {
-        setData(formData);
-      }}
-    />
-  );
-}
-
 export default function InputForm(props) {
-  const [value, setValue] = React.useState("form");
+  const { input, setInput } = props;
+  const [tabValue, setTabValue] = useState("form");
 
   let schema = props.schema ? JSON.parse(JSON.stringify(props.schema)) : {};
   let uiSchema = props.uiSchema
@@ -79,13 +38,14 @@ export default function InputForm(props) {
     schema.title = "";
     schema.description = "";
   }
+
   return (
     <Box sx={{ width: "100%" }}>
-      <TabContext value={value}>
+      <TabContext value={tabValue}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <TabList
             onChange={(event, newValue) => {
-              setValue(newValue);
+              setTabValue(newValue);
             }}
             aria-label="Config form tabs"
           >
@@ -102,6 +62,8 @@ export default function InputForm(props) {
             <InputThemedForm
               schema={schema}
               uiSchema={uiSchema}
+              input={input}
+              setInput={setInput}
               submitBtn={props.submitBtn}
             />
           )}

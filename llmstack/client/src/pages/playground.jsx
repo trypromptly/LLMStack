@@ -2,14 +2,6 @@ import { Box, Button, Grid, Stack, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import ReactGA from "react-ga4";
 import React, { lazy, useEffect, useState, useRef, useCallback } from "react";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import {
-  apiBackendSelectedState,
-  endpointConfigValueState,
-  inputValueState,
-  appRunDataState,
-} from "../data/atoms";
-import { Messages } from "../components/apps/renderer/Messages";
 import { Ws } from "../data/ws";
 
 import AceEditor from "react-ace";
@@ -26,9 +18,7 @@ const defaultPlaygroundLayout = `<pa-layout sx='{"width": "100%", "margin": "10p
   </pa-paper>
 </pa-layout>`;
 
-const ApiBackendSelector = lazy(
-  () => import("../components/ApiBackendSelector"),
-);
+const ProcessorSelector = lazy(() => import("../components/ProcessorSelector"));
 const ConfigForm = lazy(() => import("../components/ConfigForm"));
 const InputForm = lazy(() => import("../components/InputForm"));
 const LoginDialog = lazy(() => import("../components/LoginDialog"));
@@ -53,16 +43,16 @@ export function ThemedJsonEditor({ data }) {
 }
 
 function Output(props) {
-  const [value, setValue] = React.useState("form");
+  const [tabValue, setTabValue] = React.useState("form");
   const jsonOutput = useRef({});
 
   return (
     <Box sx={{ width: "100%" }}>
-      <TabContext value={value}>
+      <TabContext value={tabValue}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <TabList
             onChange={(event, newValue) => {
-              setValue(newValue);
+              setTabValue(newValue);
             }}
             aria-label="Output form tabs"
           >
@@ -91,19 +81,18 @@ function Output(props) {
 }
 
 export default function PlaygroundPage() {
-  const [input] = useRecoilState(inputValueState);
   const appSessionId = useRef(null);
-  const messagesRef = useRef(new Messages());
   const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const setAppRunData = useSetRecoilState(appRunDataState);
-  const apiBackendSelected = useRecoilValue(apiBackendSelectedState);
-  const paramValues = useRecoilValue(endpointConfigValueState);
+  const [selectedProcessor, setSelectedProcessor] = useState(null);
+  const [input, setInput] = useState({});
+  const [config, setConfig] = useState({});
+
   const [app, setApp] = useState({
     name: "Playground",
     uuid: null,
     data: {
       type_slug: "playground",
-      output_template: apiBackendSelected?.output_template || {
+      output_template: selectedProcessor?.output_template || {
         markdown: "{{ processor | json }}",
       },
       config: {
@@ -123,12 +112,12 @@ export default function PlaygroundPage() {
   }/ws`;
 
   useEffect(() => {
-    if (apiBackendSelected) {
+    if (selectedProcessor) {
       setApp((prevState) => ({
         ...prevState,
         data: {
           ...prevState.data,
-          output_template: apiBackendSelected.output_template || {
+          output_template: selectedProcessor.output_template || {
             markdown: "{{ processor | json }}",
           },
         },
@@ -138,7 +127,7 @@ export default function PlaygroundPage() {
         ws.close();
       }
     }
-  }, [apiBackendSelected, ws]);
+  }, [selectedProcessor, ws]);
 
   useEffect(() => {
     if (!ws) {
@@ -149,15 +138,6 @@ export default function PlaygroundPage() {
   const runApp = useCallback(
     (sessionId, input) => {
       const requestId = Math.random().toString(36).substring(2);
-
-      setAppRunData((prevState) => ({
-        ...prevState,
-        isRunning: true,
-        isStreaming: false,
-        errors: null,
-        messages: messagesRef.current.get(),
-        input,
-      }));
 
       ws.send(
         JSON.stringify({
@@ -171,11 +151,11 @@ export default function PlaygroundPage() {
       ReactGA.event({
         category: "Playground",
         action: "Run",
-        label: `${apiBackendSelected?.api_provider?.slug}/${apiBackendSelected?.slug}`,
+        label: `${selectedProcessor?.provider?.slug}/${selectedProcessor?.slug}`,
         transport: "beacon",
       });
     },
-    [ws, setAppRunData, apiBackendSelected],
+    [ws, selectedProcessor],
   );
 
   const Run = () => {
@@ -185,10 +165,10 @@ export default function PlaygroundPage() {
         onClick={(e) => {
           runApp(appSessionId.current, {
             input: input,
-            config: paramValues,
+            config: config,
             bypass_cache: true,
-            api_backend_slug: apiBackendSelected.slug,
-            api_provider_slug: apiBackendSelected.api_provider.slug,
+            api_backend_slug: selectedProcessor.slug,
+            api_provider_slug: selectedProcessor.provider.slug,
           });
         }}
         variant="contained"
@@ -208,34 +188,38 @@ export default function PlaygroundPage() {
         />
       )}
       <Stack>
-        <ApiBackendSelector />
+        <ProcessorSelector
+          onProcessorChange={(processor) => {
+            setSelectedProcessor(processor);
+          }}
+        />
         <Grid container spacing={2}>
           <Grid item xs={12} md={4} sx={{ height: "100%" }}>
             <Stack spacing={2}>
               <div style={{ height: "10%" }}>
                 <InputForm
                   schema={
-                    apiBackendSelected ? apiBackendSelected.input_schema : {}
+                    selectedProcessor ? selectedProcessor.input_schema : {}
                   }
                   uiSchema={
-                    apiBackendSelected ? apiBackendSelected.input_ui_schema : {}
+                    selectedProcessor ? selectedProcessor.input_ui_schema : {}
                   }
                   emptyMessage="Select your API Backend to see the parameters"
+                  input={input}
+                  setInput={setInput}
                 />
               </div>
-              <div>{apiBackendSelected && <Run />}</div>
+              <div>{selectedProcessor && <Run />}</div>
             </Stack>
           </Grid>
           <Grid item xs={12} md={4}>
             <ConfigForm
-              schema={
-                apiBackendSelected ? apiBackendSelected.config_schema : {}
-              }
+              schema={selectedProcessor ? selectedProcessor.config_schema : {}}
               uiSchema={
-                apiBackendSelected ? apiBackendSelected.config_ui_schema : {}
+                selectedProcessor ? selectedProcessor.config_ui_schema : {}
               }
-              formData={paramValues}
-              atomState={endpointConfigValueState}
+              config={config}
+              setConfig={setConfig}
               emptyMessage="Select your API Backend to see the parameters"
             />
           </Grid>

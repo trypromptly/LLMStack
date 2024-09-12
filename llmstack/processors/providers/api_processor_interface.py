@@ -232,7 +232,7 @@ class ApiProcessorInterface(
                 "name": cls.name(),  # Name of the processor
                 "slug": cls.slug(),  # Slug of the processor
                 "description": cls.description(),  # Description of the processor
-                "api_provider_slug": cls.provider_slug(),
+                "provider_slug": cls.provider_slug(),
                 "input_schema": json.loads(cls.get_input_schema()),  # Input schema of the processor
                 "output_schema": json.loads(cls.get_output_schema()),  # Output schema of the processor
                 "config_schema": json.loads(cls.get_configuration_schema()),  # Configuration schema of the processor
