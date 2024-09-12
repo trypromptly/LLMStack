@@ -220,10 +220,7 @@ const SheetFormulaMenu = ({
                   <Typography variant="caption" color="text.secondary">
                     If the output is a list, it will fill the column. If the
                     output is a list of lists, it will populate the cells in
-                    rows and columns starting from the top-left cell. Use{" "}
-                    <code>to_string</code> in the template to output a string
-                    representation of the object that can be parsed into a list
-                    of lists.
+                    rows and columns starting from the top-left cell.
                   </Typography>
                 </>
               )}
