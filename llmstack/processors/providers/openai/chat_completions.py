@@ -32,6 +32,8 @@ class ChatCompletionsModel(StrEnum):
     GPT_3_5_16K = "gpt-3.5-turbo-16k"
     GPT_4_LATEST = "gpt-4-0125-preview"
     GPT_4_1106_PREVIEW = "gpt-4-1106-preview"
+    O1_PREVIEW = "o1-preview"
+    O1_MINI = "o1-mini"
 
     def model_name(self):
         return self.value

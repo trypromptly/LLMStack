@@ -16,6 +16,8 @@ class AgentModel(StrEnum):
     GPT_4_1106_PREVIEW = "gpt-4-1106-preview"
     GPT_4_O = "gpt-4o"
     GPT_4_O_MINI = "gpt-4o-mini"
+    O1_PREVIEW = "o1-preview"
+    O1_MINI = "o1-mini"
 
 
 class AgentConfigSchema(BaseSchema):

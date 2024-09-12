@@ -146,15 +146,19 @@ class AgentActor(Actor):
         if configured_model == "gpt-4o-mini":
             self._base_price_per_message = 20
         elif configured_model == "gpt-4o":
-            self._base_price_per_message = 100
+            self._base_price_per_message = 200
         elif configured_model == "gpt-4-32k":
             self._base_price_per_message = 500
         elif configured_model == "gpt-4":
             self._base_price_per_message = 300
         elif configured_model == "gpt-4-turbo-latest":
-            self._base_price_per_message = 200
+            self._base_price_per_message = 300
         elif configured_model == "gpt-4-turbo":
+            self._base_price_per_message = 300
+        elif configured_model == "o1-mini":
             self._base_price_per_message = 200
+        elif configured_model == "o1-preview":
+            self._base_price_per_message = 1000
         else:
             self._base_price_per_message = 150
 

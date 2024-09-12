@@ -187,6 +187,8 @@ class Model(StrEnum):
     GPT_4_32K = "gpt-4-32k"
     GPT_4_LATEST = "gpt-4-turbo-latest"
     GPT_4_V_LATEST = "gpt-4-vision-latest"
+    O1_PREVIEW = "o1-preview"
+    O1_MINI = "o1-mini"
 
 
 class GoogleVisionModel(StrEnum):

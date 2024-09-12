@@ -21,6 +21,8 @@ class ChatCompletionsModel(StrEnum):
     GPT_3_5 = "gpt-35-turbo"
     GPT_3_5_16 = "gpt-35-turbo-16k"
     GPT_4_32 = "gpt-4-32k"
+    O1_PREVIEW = "o1-preview"
+    O1_MINI = "o1-mini"
 
 
 class Role(StrEnum):
