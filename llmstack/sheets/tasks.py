@@ -347,7 +347,7 @@ def run_row(
 
         if current_cell_id in formula_cells_dict:
             input_values = process_cell_references(
-                formula_cells_dict[current_cell_id].formula.data, existing_cells_dict
+                formula_cells_dict[current_cell_id].formula.data.model_dump_json(), existing_cells_dict
             )
 
             # For formula cells, we pass entire columns data as input values
@@ -373,7 +373,9 @@ def run_row(
             and columns_dict[current_col].formula.type != SheetFormulaType.NONE
             and valid_cells_in_row
         ):
-            input_values = process_cell_references(columns_dict[current_col].formula.data, existing_cells_dict)
+            input_values = process_cell_references(
+                columns_dict[current_col].formula.data.model_dump_json(), existing_cells_dict
+            )
 
             for cell in valid_cells_in_row:
                 input_values[cell.col_letter] = cell.value
