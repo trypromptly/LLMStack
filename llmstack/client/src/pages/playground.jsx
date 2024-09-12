@@ -2,6 +2,9 @@ import { Box, Button, Grid, Stack, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import ReactGA from "react-ga4";
 import React, { lazy, useEffect, useState, useRef, useCallback } from "react";
+import { useSetRecoilState } from "recoil";
+import { appRunDataState } from "../data/atoms";
+import { Messages } from "../components/apps/renderer/Messages";
 import { Ws } from "../data/ws";
 
 import AceEditor from "react-ace";
@@ -86,6 +89,8 @@ export default function PlaygroundPage() {
   const [selectedProcessor, setSelectedProcessor] = useState(null);
   const [input, setInput] = useState({});
   const [config, setConfig] = useState({});
+  const messagesRef = useRef(new Messages());
+  const setAppRunData = useSetRecoilState(appRunDataState);
 
   const [app, setApp] = useState({
     name: "Playground",
@@ -139,6 +144,15 @@ export default function PlaygroundPage() {
     (sessionId, input) => {
       const requestId = Math.random().toString(36).substring(2);
 
+      setAppRunData((prevState) => ({
+        ...prevState,
+        isRunning: true,
+        isStreaming: false,
+        errors: null,
+        messages: messagesRef.current.get(),
+        input,
+      }));
+
       ws.send(
         JSON.stringify({
           event: "run",
@@ -155,7 +169,7 @@ export default function PlaygroundPage() {
         transport: "beacon",
       });
     },
-    [ws, selectedProcessor],
+    [ws, selectedProcessor, setAppRunData],
   );
 
   const Run = () => {
@@ -191,6 +205,17 @@ export default function PlaygroundPage() {
         <ProcessorSelector
           onProcessorChange={(processor) => {
             setSelectedProcessor(processor);
+            setInput({});
+            setConfig({});
+            messagesRef.current = new Messages();
+            setAppRunData((prevState) => ({
+              ...prevState,
+              isRunning: false,
+              isStreaming: false,
+              errors: null,
+              messages: messagesRef.current.get(),
+              input: {},
+            }));
           }}
         />
         <Grid container spacing={2}>
