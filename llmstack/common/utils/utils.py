@@ -5,7 +5,7 @@ import logging
 import re
 import time
 from enum import Enum
-from functools import partial
+from functools import partial, wraps
 from io import BytesIO
 from typing import List, Type
 from urllib.parse import urlparse
@@ -13,6 +13,8 @@ from urllib.parse import urlparse
 import geoip2.database
 import requests
 from django.conf import settings
+from django.db import close_old_connections
+from django.db.utils import OperationalError
 from PIL import Image
 from pydantic import BaseModel, Field, create_model
 
@@ -541,3 +543,23 @@ def hydrate_input(input, values):
         return obj
 
     return traverse(input)
+
+
+def retry_on_db_error(max_retries=3, delay=1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    close_old_connections()
+                    result = func(*args, **kwargs)
+                    close_old_connections()
+                    return result
+                except OperationalError:
+                    if attempt == max_retries - 1:
+                        raise
+                    time.sleep(delay)
+
+        return wrapper
+
+    return decorator
