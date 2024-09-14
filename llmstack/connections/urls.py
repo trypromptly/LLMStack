@@ -15,6 +15,12 @@ from django.urls import path
 from requests import RequestException
 
 from llmstack.base.models import Profile
+from llmstack.connections.handlers.providers.views import (
+    ConnectionGitHubOAuth2Adapter,
+    ConnectionGoogleOAuth2Adapter,
+    ConnectionHubspotAdapter,
+    ConnectionSpotifyOAuth2Adapter,
+)
 from llmstack.connections.models import Connection, ConnectionStatus
 
 from .apis import ConnectionsViewSet
@@ -62,6 +68,9 @@ class CustomOAuth2LoginView(OAuth2LoginView):
 class CustomOAuth2CallbackView(OAuth2CallbackView):
     def dispatch(self, request, *args, **kwargs):
         provider = self.adapter.get_provider()
+        state, resp = self._get_state(request, provider)
+        if resp:
+            return resp
         if "error" in request.GET or "code" not in request.GET:
             # Distinguish cancel from error
             auth_error = request.GET.get("error", None)
@@ -74,8 +83,8 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
                 provider,
                 error=error,
             )
-        app = self.adapter.get_provider().get_app(self.request)
-        client = self.get_client(self.request, app)
+        app = provider.app
+        client = self.adapter.get_client(self.request, app)
         try:
             access_token = self.adapter.get_access_token_data(
                 request,
@@ -83,18 +92,26 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
                 client,
             )
             token = self.adapter.parse_token(access_token)
-            if app.pk:
-                token.app = app
             result = self.adapter.complete_login(
                 request,
                 app,
                 token,
                 response=access_token,
             )
+            if access_token:
+                if "access_token" in access_token:
+                    result.token = access_token["access_token"]
+                if "token_type" in access_token:
+                    result.token_type = access_token["token_type"]
+                if "refresh_token" in access_token:
+                    result.refresh_token = access_token["refresh_token"]
+                if "expires_in" in access_token:
+                    result.expires_in = access_token["expires_in"]
+                if "scope" in access_token:
+                    result.scope = access_token["scope"]
+
             profile = Profile.objects.get(user=request.user)
-            connection_objects = profile.get_connection_by_type(
-                self.adapter.get_connection_type_slug(),
-            )
+            connection_objects = profile.get_connection_by_type(app.connection_type_slug)
 
             # Get the latest connection object for this connection type, work
             # with the assumption
@@ -110,9 +127,7 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
             connection = Connection(**latest_connection)
             connection.status = ConnectionStatus.ACTIVE
             connection.configuration = result.model_dump()
-
             profile.add_connection(connection.model_dump())
-
             return HttpResponseRedirect("/settings")
         except (
             PermissionDenied,
@@ -170,5 +185,40 @@ urlpatterns = [
         "connections/google/login/callback/",
         CustomOAuth2CallbackView.adapter_view(GoogleAdapter),
         name="google_connection_callback",
+    ),
+    path(
+        "connections/github/login/",
+        CustomOAuth2LoginView.adapter_view(ConnectionGitHubOAuth2Adapter),
+        name="connection_github_login",
+    ),
+    path(
+        "connections/github/login/callback/",
+        CustomOAuth2CallbackView.adapter_view(ConnectionGitHubOAuth2Adapter),
+        name="connection_github_callback",
+    ),
+    path(
+        "connections/google/login/",
+        CustomOAuth2LoginView.adapter_view(ConnectionGoogleOAuth2Adapter),
+        name="connection_google_login",
+    ),
+    path(
+        "connections/google/login/callback/",
+        CustomOAuth2CallbackView.adapter_view(ConnectionGoogleOAuth2Adapter),
+        name="connection_google_callback",
+    ),
+    path(
+        "connections/hubspot/login/",
+        CustomOAuth2LoginView.adapter_view(ConnectionHubspotAdapter),
+        name="connection_hubspot_login",
+    ),
+    path(
+        "connections/spotify/login/",
+        CustomOAuth2LoginView.adapter_view(ConnectionSpotifyOAuth2Adapter),
+        name="connection_spotify_login",
+    ),
+    path(
+        "connections/spotify/login/callback/",
+        CustomOAuth2CallbackView.adapter_view(ConnectionSpotifyOAuth2Adapter),
+        name="connection_spotify_callback",
     ),
 ]
