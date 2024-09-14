@@ -9,9 +9,9 @@ class ConnectionsConfig(AppConfig):
     def ready(self) -> None:
         from allauth.socialaccount import providers
 
-        from llmstack.connections.handlers.providers import (
+        from llmstack.connections.handlers.oauth2_providers import (
             ConnectionGitHubOAuth2Provider,
-            ConnectionGoogleOAuth2Adapter,
+            ConnectionGoogleOAuth2Provider,
             ConnectionHubspotProvider,
             ConnectionSpotifyOAuth2Provider,
         )
@@ -19,6 +19,6 @@ class ConnectionsConfig(AppConfig):
         providers.registry.register(ConnectionSpotifyOAuth2Provider)
         providers.registry.register(ConnectionHubspotProvider)
         providers.registry.register(ConnectionGitHubOAuth2Provider)
-        providers.registry.register(ConnectionGoogleOAuth2Adapter)
+        providers.registry.register(ConnectionGoogleOAuth2Provider)
 
         return super().ready()

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from llmstack.common.utils.prequests import post
-from llmstack.connections.handlers.providers.oauth_login_configurations import (
+from llmstack.connections.handlers.oauth2_providers.oauth_login_configurations import (
     GitHubLoginConfiguration,
     GoogleLoginConfiguration,
     HubspotLoginConfiguration,
@@ -148,11 +148,3 @@ class GitHubLogin(ConnectionTypeInterface[GitHubLoginConfiguration], OauthProvid
             "BtnLink": "connections/github/login/",
             "RedirectUrl": "connections/github/callback/",
         }
-
-
-PROVIDER_LOGIN_CLASSES = [
-    SpotifyLogin,
-    GoogleLogin,
-    HubspotLogin,
-    GitHubLogin,
-]

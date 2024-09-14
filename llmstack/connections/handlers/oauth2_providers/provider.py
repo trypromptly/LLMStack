@@ -7,7 +7,7 @@ from allauth.socialaccount.providers.hubspot.provider import HubspotProvider
 from allauth.socialaccount.providers.spotify.provider import SpotifyOAuth2Provider
 from anthropic import BaseModel
 
-from llmstack.connections.handlers.providers.oauth_login_configurations import (
+from llmstack.connections.handlers.oauth2_providers.oauth_login_configurations import (
     GitHubLoginConfiguration,
     GoogleLoginConfiguration,
     HubspotLoginConfiguration,

@@ -9,11 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 class ConnectionGitHubOAuth2Adapter(GitHubOAuth2Adapter):
-    pass
+    provider_id = "connection_github"
 
 
 class ConnectionHubspotAdapter(HubspotOAuth2Adapter):
-    pass
+    provider_id = "connection_hubspot"
 
 
 class ConnectionSpotifyOAuth2Adapter(SpotifyOAuth2Adapter):

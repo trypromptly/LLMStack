@@ -15,7 +15,7 @@ from django.urls import path
 from requests import RequestException
 
 from llmstack.base.models import Profile
-from llmstack.connections.handlers.providers.views import (
+from llmstack.connections.handlers.oauth2_providers.views import (
     ConnectionGitHubOAuth2Adapter,
     ConnectionGoogleOAuth2Adapter,
     ConnectionHubspotAdapter,
@@ -24,8 +24,6 @@ from llmstack.connections.handlers.providers.views import (
 from llmstack.connections.models import Connection, ConnectionStatus
 
 from .apis import ConnectionsViewSet
-from .handlers.google import GoogleAdapter
-from .handlers.hubspot import HubspotAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -167,26 +165,6 @@ urlpatterns = [
         ),
     ),
     path(
-        "connections/hubspot/login/",
-        CustomOAuth2LoginView.adapter_view(HubspotAdapter),
-        name="hubspot_connection_login",
-    ),
-    path(
-        "connections/hubspot/login/callback/",
-        CustomOAuth2CallbackView.adapter_view(HubspotAdapter),
-        name="hubspot_connection_callback",
-    ),
-    path(
-        "connections/google/login/",
-        CustomOAuth2LoginView.adapter_view(GoogleAdapter),
-        name="google_connection_login",
-    ),
-    path(
-        "connections/google/login/callback/",
-        CustomOAuth2CallbackView.adapter_view(GoogleAdapter),
-        name="google_connection_callback",
-    ),
-    path(
         "connections/github/login/",
         CustomOAuth2LoginView.adapter_view(ConnectionGitHubOAuth2Adapter),
         name="connection_github_login",
@@ -210,6 +188,11 @@ urlpatterns = [
         "connections/hubspot/login/",
         CustomOAuth2LoginView.adapter_view(ConnectionHubspotAdapter),
         name="connection_hubspot_login",
+    ),
+    path(
+        "connections/hubspot/login/callback/",
+        CustomOAuth2CallbackView.adapter_view(ConnectionHubspotAdapter),
+        name="connection_hubspot_callback",
     ),
     path(
         "connections/spotify/login/",
