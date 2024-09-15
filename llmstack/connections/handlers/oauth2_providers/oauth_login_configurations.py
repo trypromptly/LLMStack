@@ -11,13 +11,13 @@ class SpotifyLoginConfiguration(Oauth2BaseConfiguration):
 
 class GoogleLoginConfiguration(Oauth2BaseConfiguration):
     provider_id: str = "connection_google"
-    scope: Optional[List[str]] = None
+    scope: Optional[str] = None
     extra_data: Optional[dict] = None
 
 
 class HubspotLoginConfiguration(Oauth2BaseConfiguration):
     provider_id: str = "connection_hubspot"
-    scope: Optional[List[str]] = None
+    scope: Optional[str] = None
     extra_data: Optional[dict] = None
 
 
