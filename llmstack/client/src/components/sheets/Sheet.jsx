@@ -507,6 +507,28 @@ function Sheet(props) {
     [cells, columns],
   );
 
+  const updateColumnMenuPosition = useCallback(
+    (rect) => {
+      if (
+        columnMenuAnchorDivEl.current &&
+        showEditColumnMenu &&
+        selectedColumnId !== null
+      ) {
+        const sheetColumnMenuRect =
+          columnMenuAnchorDivEl.current.getBoundingClientRect();
+        setColumnMenuAnchorEl((prev) => ({
+          ...prev,
+          getBoundingClientRect: () =>
+            DOMRect.fromRect({
+              ...rect,
+              y: sheetColumnMenuRect.y,
+            }),
+        }));
+      }
+    },
+    [showEditColumnMenu, selectedColumnId],
+  );
+
   const drawHeader = useCallback(
     (args, drawContent) => {
       drawContent();
@@ -560,19 +582,16 @@ function Sheet(props) {
         showEditColumnMenu &&
         selectedColumnId === columnIndex
       ) {
-        const sheetColumnMenuRect =
-          columnMenuAnchorDivEl.current.getBoundingClientRect();
-        setColumnMenuAnchorEl({
-          getBoundingClientRect: () =>
-            DOMRect.fromRect({
-              ...rect,
-              x: rect.x + 70,
-              y: sheetColumnMenuRect.y,
-            }),
-        });
+        updateColumnMenuPosition(rect);
       }
     },
-    [columns, showEditColumnMenu, selectedColumnId],
+    [
+      columns,
+      showEditColumnMenu,
+      selectedColumnId,
+      columnMenuAnchorDivEl,
+      updateColumnMenuPosition,
+    ],
   );
 
   useEffect(() => {
@@ -1172,11 +1191,19 @@ function Sheet(props) {
               const resize = (e) => {
                 const newHeight = startHeight + e.clientY - startY;
                 el.style.height = `${newHeight}px`;
+                updateColumnMenuPosition({
+                  x: e.clientX,
+                  y: e.clientY,
+                });
               };
 
-              const stopResize = () => {
+              const stopResize = (e) => {
                 window.removeEventListener("mousemove", resize);
                 window.removeEventListener("mouseup", stopResize);
+                updateColumnMenuPosition({
+                  x: e.clientX,
+                  y: e.clientY,
+                });
               };
 
               resizer.addEventListener("mousedown", (e) => {
