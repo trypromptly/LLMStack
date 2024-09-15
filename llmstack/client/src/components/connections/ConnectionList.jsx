@@ -29,6 +29,10 @@ function ConnectionItem({
   setOpenConnectionModal,
   setDeleteConnectionModal,
 }) {
+  const isOauth2Connection = (connection?.connection_type_slug || "").includes(
+    "oauth2",
+  );
+  console.log("ConnectionItem: connection", connection);
   return (
     <TableRow>
       <TableCell>
@@ -64,6 +68,7 @@ function ConnectionItem({
             setConnection(connection);
             setOpenConnectionModal(true);
           }}
+          disabled={isOauth2Connection}
         >
           <EditOutlined />
         </IconButton>
