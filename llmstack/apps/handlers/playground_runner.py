@@ -4,6 +4,7 @@ from collections import namedtuple
 
 from llmstack.apps.app_session_utils import create_app_session_data
 from llmstack.apps.handlers.app_runnner import AppRunner
+from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.bookkeeping import BookKeepingActor
 from llmstack.play.actors.input import InputActor
@@ -17,6 +18,15 @@ PlaygroundApp = namedtuple(
     ["id", "uuid", "type", "web_integration_config", "is_published"],
 )
 PlaygroundAppType = namedtuple("PlaygroundAppType", ["slug"])
+
+
+def get_connections(profile):
+    from django.test import RequestFactory
+
+    request = RequestFactory().get("/api/connections/")
+    request.user = profile.user
+    response = ConnectionsViewSet().list(request)
+    return dict(map(lambda entry: (entry["id"], entry), response.data))
 
 
 class PlaygroundRunner(AppRunner):
@@ -54,6 +64,7 @@ class PlaygroundRunner(AppRunner):
         processor_actor_configs = []
         processor_configs = {}
         vendor_env = self.app_owner_profile.get_vendor_env()
+        connections = get_connections(self.app_owner_profile)  # noqa
 
         for processor in self.app_data["processors"]:
             if processor["id"] == processor_id:

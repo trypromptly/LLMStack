@@ -42,25 +42,13 @@ class ConnectionsViewSet(viewsets.ViewSet):
         profile = get_object_or_404(Profile, user=request.user)
         if not profile or not profile.connections:
             return Response([])
-
-        raw_connections = profile.connections.values()
         connections = []
-
-        for connection in raw_connections:
+        for connection_id in profile.connections:
             try:
-                connection_type_handler = ConnectionTypeFactory.get_connection_type_handler(
-                    connection["connection_type_slug"],
-                    connection["provider_slug"],
-                )()
-                connection["configuration"] = connection_type_handler.parse_config(
-                    connection["configuration"],
-                ).model_dump()
+                connection = ConnectionsViewSet().get(request=request, uid=connection_id).data
                 connections.append(connection)
-            except BaseException:
-                logger.error(
-                    f'Error parsing connection {connection["id"]}. provider_slug: {connection["provider_slug"]}, connection_type_slug: {connection["connection_type_slug"]}',
-                )
-
+            except Exception:
+                logger.exception(f"Error getting connection {connection_id}")
         return Response(connections)
 
     def get(self, request, uid):
@@ -73,9 +61,20 @@ class ConnectionsViewSet(viewsets.ViewSet):
             connection["connection_type_slug"],
             connection["provider_slug"],
         )()
-        connection["configuration"] = connection_type_handler.parse_config(
+        connection_obj = connection_type_handler.parse_config(
             connection["configuration"],
-        ).model_dump()
+        )
+        if hasattr(connection_obj, "expires_in") and connection_obj.expires_in:
+            if connection_obj.is_expired:
+                refreshed_connection_obj = connection_type_handler.refresh_token(connection_obj)
+                if refreshed_connection_obj:
+                    connection["configuration"] = refreshed_connection_obj.model_dump()
+                    profile.add_connection(connection)
+                    connection = profile.get_connection(uid)
+                else:
+                    connection["status"] = "Failed"
+                    profile.add_connection(connection)
+                    connection = profile.get_connection(uid)
 
         return Response(connection)
 
@@ -133,28 +132,3 @@ class ConnectionsViewSet(viewsets.ViewSet):
         profile.delete_connection(uid)
 
         return Response(status=204)
-
-    def get_access_token(self, request, uid):
-        profile = get_object_or_404(Profile, user=request.user)
-        connection_obj = profile.get_connection(uid)
-        if not connection_obj:
-            return Response(status=404)
-
-        if connection_obj["base_connection_type"] != ConnectionType.OAUTH2.value:
-            return Response(status=400, reason="Connection type is not OAUTH2")
-
-        connection = Connection(**connection_obj)
-        connection_type_handler = ConnectionTypeFactory.get_connection_type_handler(
-            connection.connection_type_slug,
-            connection.provider_slug,
-        )()
-        connection.configuration = connection_type_handler.parse_config(
-            connection.configuration,
-        ).model_dump()
-
-        new_connection = connection_type_handler.get_access_token(connection)
-        profile.add_connection(new_connection.model_dump())
-
-        return Response(
-            {"access_token": new_connection.configuration["token"]},
-        )
