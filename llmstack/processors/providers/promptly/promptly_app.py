@@ -5,7 +5,7 @@ import uuid
 from typing import Dict, List, Optional
 
 from asgiref.sync import async_to_sync
-from pydantic import Field, model_validator
+from pydantic import Field, PrivateAttr, model_validator
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.apps.yaml_loader import get_input_model_from_fields
@@ -64,14 +64,14 @@ class PromptlyApp(Schema):
         description="Promptly App Configuration",
         json_schema_extra={"advanced_parameter": False, "widget": "promptlyapp_select"},
     )
-    _input: Dict = {}
-    _promptly_app_uuid: str = ""
-    _promptly_app_published_uuid: str = ""
-    _promptly_app_version: str = ""
-    _promptl_app_input_fields: List[Dict] = []
-    _proptly_app: Dict = {}
-    _input_schema: Dict = {}
-    _tool_schema: Dict = {}
+    _input: Dict = PrivateAttr(default={})
+    _promptly_app_uuid: str = PrivateAttr(default="")
+    _promptly_app_published_uuid: str = PrivateAttr(default="")
+    _promptly_app_version: str = PrivateAttr(default="")
+    _promptl_app_input_fields: List[Dict] = PrivateAttr(default=[])
+    _proptly_app: Dict = PrivateAttr(default={})
+    _input_schema: Dict = PrivateAttr(default={})
+    _tool_schema: Dict = PrivateAttr(default={})
 
     @model_validator(mode="before")
     def validate_input(cls, values):
@@ -89,7 +89,7 @@ class PromptlyApp(Schema):
         values["_tool_schema"] = get_tool_json_schema_from_input_fields(
             name="PromptlyAppInput", input_fields=values["_promptly_app_input_fields"]
         )
-        values["input"] = promptly_app_json.get("input", {})
+        values["_input"] = promptly_app_json.get("input", {})
         return values
 
 
@@ -101,7 +101,7 @@ class PromptlyAppInput(Schema):
     def validate_input(cls, values):
         parsed_input = json.loads(values.get("input_json", "{}"))
         if parsed_input:
-            values["input"] = {**values["input"], **parsed_input}
+            values["input"] = {**values, **parsed_input}
         return values
 
 
@@ -175,14 +175,15 @@ class PromptlyAppProcessor(ApiProcessorInterface[PromptlyAppInput, PromptlyAppOu
         from llmstack.apps.apis import AppViewSet
         from llmstack.apps.models import AppData
 
+        promptly_app = json.loads(self._config.promptly_app)
         app_data = AppData.objects.filter(
-            app_uuid=self._config._promptly_app_uuid, version=self._config._promptly_app_version
+            app_uuid=promptly_app["promptly_app_uuid"], version=promptly_app["promptly_app_version"]
         ).first()
         output_template = app_data.data.get("output_template").get("markdown")
 
-        self._request.data["input"] = {**self._config.input, **self._input.input}
+        self._request.data["input"] = {**self._config._input, **self._input.input}
         response_stream, _ = AppViewSet().run_app_internal(
-            self._config._promptly_app_uuid,
+            promptly_app["promptly_app_uuid"],
             self._metadata.get("session_id"),
             str(uuid.uuid4()),
             self._request,
