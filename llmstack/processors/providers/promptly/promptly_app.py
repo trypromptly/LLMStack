@@ -95,14 +95,6 @@ class PromptlyApp(Schema):
 
 class PromptlyAppInput(Schema):
     input: Dict = Field(default={}, description="Input", json_schema_extra={"widget": "hidden"})
-    input_json: Optional[str] = Field(default="{}", description="Input JSON", json_schema_extra={"widget": "textarea"})
-
-    @model_validator(mode="before")
-    def validate_input(cls, values):
-        parsed_input = json.loads(values.get("input_json", "{}"))
-        if parsed_input:
-            values["input"] = {**values, **parsed_input}
-        return values
 
 
 class PromptlyAppOutput(Schema):
@@ -181,7 +173,8 @@ class PromptlyAppProcessor(ApiProcessorInterface[PromptlyAppInput, PromptlyAppOu
         ).first()
         output_template = app_data.data.get("output_template").get("markdown")
 
-        self._request.data["input"] = {**self._config._input, **self._input.input}
+        self._request.data["input"] = {**promptly_app["input"], **self._input.input}
+        logger.info(f"Promptly App Input: {self._request.data}")
         response_stream, _ = AppViewSet().run_app_internal(
             promptly_app["promptly_app_uuid"],
             self._metadata.get("session_id"),
