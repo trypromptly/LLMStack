@@ -13,175 +13,13 @@ import validator from "@rjsf/validator-ajv8";
 import { lazy, useEffect, useRef, useState, useMemo } from "react";
 import { useRecoilValue } from "recoil";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
-import { appsState, processorsState } from "../../data/atoms";
+import { processorsState } from "../../data/atoms";
 import "./AppEditor.css";
 
 const ThemedJsonForm = lazy(() => import("../ThemedJsonForm"));
-const AppSelector = lazy(() => import("./AppSelector"));
 const AppStepCard = lazy(() => import("./AppStepCard"));
 const TextFieldWithVars = lazy(() => import("./TextFieldWithVars"));
 const AppInputSchemaEditor = lazy(() => import("./AppInputSchemaEditor"));
-
-function PromptlyAppStepCard({
-  appId,
-  processor,
-  processorData,
-  index,
-  activeStep,
-  setActiveStep,
-  errors,
-  processors,
-  setProcessors,
-  outputSchemas,
-}) {
-  const apps = (useRecoilValue(appsState) || []).filter(
-    (app) => app.published_uuid && app.uuid !== appId,
-  );
-  const selectedApp = apps.find(
-    (app) => app.published_uuid === processorData.config.app_id,
-  );
-
-  const appInput = { properties: {}, required: [] };
-  const appInputUISchema = {};
-  (selectedApp?.data?.input_fields || []).forEach((inputField) => {
-    appInput.properties[inputField.name] = {
-      title: inputField.name,
-      type: inputField.type,
-    };
-    if (inputField.required) {
-      appInput.required.push(inputField.name);
-    }
-    appInputUISchema[inputField.name] = {
-      "ui:description": inputField.description,
-      "ui:label": inputField.name,
-    };
-  });
-  const appInputDataStr = processorData.input;
-  let appInputData = {};
-  try {
-    appInputData = JSON.parse(appInputDataStr["input"]);
-  } catch (e) {}
-
-  return (
-    <AppStepCard
-      icon={processor?.icon || processor?.name}
-      title={processorData?.name}
-      description={processorData?.description}
-      setDescription={(description) => {
-        processors[index].description = description;
-        setProcessors([...processors]);
-      }}
-      stepNumber={index + 2}
-      activeStep={activeStep}
-      setActiveStep={setActiveStep}
-      errors={errors}
-      action={
-        index === processors.length - 1 ? (
-          <DeleteIcon
-            style={{ color: "#888", cursor: "pointer", marginTop: "3px" }}
-            onClick={() => {
-              setProcessors(processors.slice(0, -1));
-            }}
-          />
-        ) : null
-      }
-    >
-      <CardContent style={{ maxHeight: 400, overflow: "auto" }}>
-        <Accordion defaultExpanded={true}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="config-content"
-            id="config-header"
-            style={{ backgroundColor: "#dce8fb" }}
-          >
-            <Typography>Configure Application</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <ThemedJsonForm
-              schema={{
-                ...processor?.config_schema,
-                ...{ title: "", description: "" },
-              }}
-              validator={validator}
-              uiSchema={{
-                ...processor?.config_ui_schema,
-                ...{
-                  "ui:submitButtonOptions": {
-                    norender: true,
-                  },
-                },
-              }}
-              formData={processors[index].config}
-              onChange={({ formData }) => {
-                processors[index].config = formData;
-                setProcessors([...processors]);
-              }}
-              widgets={{
-                appselect: (props) => (
-                  <AppSelector
-                    {...props}
-                    apps={apps}
-                    value={processorData.config.app_id}
-                    onChange={(appId) => {
-                      let oldFormData = processors[index].config;
-                      processors[index].config = {
-                        ...oldFormData,
-                        app_id: appId,
-                      };
-                      setProcessors([...processors]);
-                    }}
-                  />
-                ),
-              }}
-            />
-          </AccordionDetails>
-        </Accordion>
-        <Accordion defaultExpanded={true}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="input-content"
-            id="input-header"
-            style={{ backgroundColor: "#dce8fb" }}
-          >
-            <Typography>Application Input</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <ThemedJsonForm
-              schema={{
-                ...appInput,
-                ...{ title: "", description: "" },
-              }}
-              validator={validator}
-              uiSchema={{
-                ...appInputUISchema,
-                ...{
-                  "ui:submitButtonOptions": {
-                    norender: true,
-                  },
-                },
-              }}
-              formData={appInputData}
-              onChange={({ formData }) => {
-                processors[index].input = { input: JSON.stringify(formData) };
-                setProcessors([...processors]);
-              }}
-              widgets={{
-                TextWidget: (props) => {
-                  return (
-                    <TextFieldWithVars
-                      {...props}
-                      schemas={outputSchemas.slice(0, index + 1)}
-                    />
-                  );
-                },
-              }}
-            />
-          </AccordionDetails>
-        </Accordion>
-      </CardContent>
-    </AppStepCard>
-  );
-}
 
 export function ProcessorEditor({
   appId,
@@ -288,22 +126,8 @@ export function ProcessorEditor({
       />
     );
   }, [outputSchemas, index]);
-
-  return processor?.provider_slug === "promptly" &&
-    processor?.processor_slug === "app" ? (
-    <PromptlyAppStepCard
-      appId={appId}
-      processor={processor}
-      processorData={processorData}
-      index={index}
-      activeStep={activeStep}
-      setActiveStep={setActiveStep}
-      errors={errors}
-      processors={processors}
-      setProcessors={setProcessors}
-      outputSchemas={outputSchemas}
-    />
-  ) : (
+  console.log(processorData);
+  return (
     <AppStepCard
       icon={processor?.icon || processor?.provider?.name}
       title={processor?.name || processor?.provider?.name}
@@ -382,7 +206,14 @@ export function ProcessorEditor({
             </AccordionDetails>
           </Accordion>
         )}
-        <Accordion defaultExpanded={true}>
+        <Accordion
+          defaultExpanded={
+            processorData?.provider_slug === "promptly" &&
+            processorData.processor_slug === "promptly_app"
+              ? false
+              : true
+          }
+        >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             aria-controls="input-content"
