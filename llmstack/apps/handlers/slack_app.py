@@ -166,6 +166,8 @@ class SlackAppRunner(AppRunner):
             ),
         )
         vendor_env = self.app_owner_profile.get_vendor_env()
+        if self.connections:
+            vendor_env["connections"] = self.connections
 
         return ActorConfig(
             name="slack_processor",
@@ -246,6 +248,9 @@ class SlackAppRunner(AppRunner):
                     self.app_session,
                     {},
                 )
+            vendor_env = self.app_owner_profile.get_vendor_env()
+            if self.connections:
+                vendor_env["connections"] = self.connections
             actor_configs = [
                 ActorConfig(
                     name="input",
@@ -266,7 +271,7 @@ class SlackAppRunner(AppRunner):
                             "input",
                             {},
                         ),
-                        "env": self.app_owner_profile.get_vendor_env(),
+                        "env": vendor_env,
                         "config": self.app_data["config"],
                         "agent_app_session_data": agent_app_session_data,
                     },

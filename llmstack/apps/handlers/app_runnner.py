@@ -68,6 +68,7 @@ class AppRunner:
         request_content_type="",
         disable_history=False,
         app_store_uuid="",
+        connections={},
     ):
         self.app = app
         self.app_data = app_data
@@ -76,6 +77,7 @@ class AppRunner:
         self.app_run_request_user = request.user
         self.session_id = session_id
         self.app_session = self._get_or_create_app_session()
+        self.connections = connections
 
         # Pre-process run input to convert files to objrefs
         if "input" in request.data and app_data and "input_fields" in app_data and self.app_session:
@@ -185,6 +187,8 @@ class AppRunner:
         processor_actor_configs = []
         processor_configs = {}
         vendor_env = self.app_owner_profile.get_vendor_env()
+        if self.connections:
+            vendor_env["connections"] = self.connections
 
         if self.app_data and "processors" in self.app_data:
             processors = self.app_data["processors"]
@@ -529,6 +533,9 @@ class AppRunner:
                     self.app_session,
                     {},
                 )
+            vendor_env = self.app_owner_profile.get_vendor_env()
+            if self.connections:
+                vendor_env["connections"] = self.connections
 
             actor_configs.extend(
                 [
@@ -543,7 +550,7 @@ class AppRunner:
                                 "input",
                                 {},
                             ),
-                            "env": self.app_owner_profile.get_vendor_env(),
+                            "env": vendor_env,
                             "config": self.app_data["config"],
                             "agent_app_session_data": agent_app_session_data,
                         },

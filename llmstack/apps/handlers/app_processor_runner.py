@@ -5,22 +5,12 @@ from llmstack.apps.app_session_utils import (
     get_app_session_data,
 )
 from llmstack.apps.handlers.app_runnner import AppRunner
-from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.input import InputActor
 from llmstack.play.actors.output import OutputActor
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
 logger = logging.getLogger(__name__)
-
-
-def get_connections(profile):
-    from django.test import RequestFactory
-
-    request = RequestFactory().get("/api/connections/")
-    request.user = profile.user
-    response = ConnectionsViewSet().list(request)
-    return dict(map(lambda entry: (entry["id"], entry), response.data))
 
 
 class AppProcessorRunner(AppRunner):
@@ -51,7 +41,8 @@ class AppProcessorRunner(AppRunner):
         processor_actor_configs = []
         processor_configs = {}
         vendor_env = self.app_owner_profile.get_vendor_env()
-        connections = get_connections(self.app_owner_profile)  # noqa
+        if self.connections:
+            vendor_env["connections"] = self.connections
 
         for processor in self.app_data["processors"]:
             if processor["id"] == processor_id:

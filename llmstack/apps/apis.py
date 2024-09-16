@@ -35,6 +35,7 @@ from llmstack.apps.yaml_loader import (
 )
 from llmstack.base.models import AnonymousProfile, Profile
 from llmstack.common.utils.utils import get_location
+from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
@@ -70,6 +71,15 @@ class AppRunnerException(Exception):
     status_code = 400
     details = None
     json_details = None
+
+
+def get_connections(profile):
+    from django.test import RequestFactory
+
+    request = RequestFactory().get("/api/connections/")
+    request.user = profile.user
+    response = ConnectionsViewSet().list(request)
+    return dict(map(lambda entry: (entry["id"], entry), response.data))
 
 
 class AppTypeViewSet(viewsets.ViewSet):
@@ -870,6 +880,7 @@ class AppViewSet(viewsets.ViewSet):
         app_owner_profile = (
             Profile.objects.get(user=request.user) if request.user.is_authenticated else AnonymousProfile()
         )
+        owner_connections = get_connections(app_owner_profile) if request.user.is_authenticated else {}
         processor_id = request.data["input"]["api_provider_slug"] + "_" + request.data["input"]["api_backend_slug"]
         processor_cls = ApiProcessorFactory.get_api_processor(
             request.data["input"]["api_backend_slug"],
@@ -907,6 +918,7 @@ class AppViewSet(viewsets.ViewSet):
             request_user_agent=request_user_agent,
             request_content_type=request_content_type,
             disable_history=False,
+            connections=owner_connections,
         )
 
         return app_runner.run_app(processor_id=processor_id)
@@ -936,6 +948,7 @@ class AppViewSet(viewsets.ViewSet):
             )
         )
         app_owner = get_object_or_404(Profile, user=app.owner)
+        owner_connections = get_connections(app_owner)
         stream = request.data.get("stream", False)
         request_ip = request.headers.get(
             "X-Forwarded-For",
@@ -1025,6 +1038,7 @@ class AppViewSet(viewsets.ViewSet):
             request_user_agent=request_user_agent,
             request_content_type=request_content_type,
             app_store_uuid=app_store_uuid,
+            connections=owner_connections,
         )
 
         return app_runner.run_app()
@@ -1096,6 +1110,7 @@ class AppViewSet(viewsets.ViewSet):
                 .first()
             )
 
+        owner_connections = get_connections(app_owner)
         app_runner = AppProcessorRunner(
             app=app,
             app_data=app_data_obj.data if app_data_obj else None,
@@ -1109,6 +1124,7 @@ class AppViewSet(viewsets.ViewSet):
             request_user_agent=request_user_agent,
             request_content_type=request_content_type,
             disable_history=disable_history,
+            connections=owner_connections,
         )
 
         return app_runner.run_app(processor_id=processor_id)

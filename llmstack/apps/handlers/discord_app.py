@@ -85,18 +85,22 @@ class DiscordBotRunner(AppRunner):
 
     def _get_discord_processor_actor_configs(self, input_data):
         output_template = convert_template_vars_from_legacy_format(
-            self.app_data["output_template"].get(
-                "markdown",
-                "",
-            )
-            if self.app_data and "output_template" in self.app_data
-            else self.app.output_template.get(
-                "markdown",
-                "",
+            (
+                self.app_data["output_template"].get(
+                    "markdown",
+                    "",
+                )
+                if self.app_data and "output_template" in self.app_data
+                else self.app.output_template.get(
+                    "markdown",
+                    "",
+                )
             ),
         )
 
         vendor_env = self.app_owner_profile.get_vendor_env()
+        if self.connections:
+            vendor_env["connections"] = self.connections
 
         return ActorConfig(
             name="discord_processor",
@@ -195,14 +199,16 @@ class DiscordBotRunner(AppRunner):
         processor_actor_configs, processor_configs = self._get_processor_actor_configs()
 
         template = convert_template_vars_from_legacy_format(
-            self.app_data["output_template"].get(
-                "markdown",
-                "",
-            )
-            if self.app_data and "output_template" in self.app_data
-            else self.app.output_template.get(
-                "markdown",
-                "",
+            (
+                self.app_data["output_template"].get(
+                    "markdown",
+                    "",
+                )
+                if self.app_data and "output_template" in self.app_data
+                else self.app.output_template.get(
+                    "markdown",
+                    "",
+                )
             ),
         )
 
