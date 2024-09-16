@@ -162,6 +162,31 @@ class ConnectionHubspotProvider(HubspotProvider):
     def sociallogin_from_response(self, request, response):
         return HubspotLoginConfiguration(extra_data=response)
 
+    @classmethod
+    def refresh_token(cls, configuration: HubspotLoginConfiguration):
+        from django.conf import settings
+
+        app_settings = settings.SOCIALACCOUNT_PROVIDERS.get(cls.id, {}).get("APP")
+
+        response = cls.oauth2_adapter_class.refresh_token(
+            client_id=app_settings["client_id"],
+            client_secret=app_settings["secret"],
+            refresh_token=configuration.refresh_token,
+        )
+        if response:
+            new_configuration = configuration.model_copy(
+                update={
+                    "access_token": response["access_token"],
+                    "expires_in": int(response["expires_in"]),
+                    "scope": response["scope"],
+                }
+            )
+            new_configuration.set_expires_at()
+            return new_configuration
+        else:
+            logger.error("Error refreshing token")
+            return None
+
 
 class ConnectionGitHubOAuth2Provider(GitHubProvider):
     uses_apps = False
@@ -187,3 +212,28 @@ class ConnectionGitHubOAuth2Provider(GitHubProvider):
 
     def sociallogin_from_response(self, request, response):
         return GitHubLoginConfiguration(extra_data=response)
+
+    @classmethod
+    def refresh_token(cls, configuration: GitHubLoginConfiguration):
+        from django.conf import settings
+
+        app_settings = settings.SOCIALACCOUNT_PROVIDERS.get(cls.id, {}).get("APP")
+
+        response = cls.oauth2_adapter_class.refresh_token(
+            client_id=app_settings["client_id"],
+            client_secret=app_settings["secret"],
+            refresh_token=configuration.refresh_token,
+        )
+        if response:
+            new_configuration = configuration.model_copy(
+                update={
+                    "access_token": response["access_token"],
+                    "expires_in": int(response["expires_in"]),
+                    "scope": response["scope"],
+                }
+            )
+            new_configuration.set_expires_at()
+            return new_configuration
+        else:
+            logger.error("Error refreshing token")
+            return None

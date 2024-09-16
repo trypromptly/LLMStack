@@ -104,7 +104,9 @@ class CustomOAuth2CallbackView(OAuth2CallbackView):
                 if "refresh_token" in access_token:
                     result.refresh_token = access_token["refresh_token"]
                 if "expires_in" in access_token:
-                    result.expires_in = access_token["expires_in"]
+                    expires_in = access_token["expires_in"]
+                    expires_in = int(expires_in)
+                    result.expires_in = expires_in
                     result.set_expires_at()
                 if "scope" in access_token:
                     result.scope = access_token["scope"]

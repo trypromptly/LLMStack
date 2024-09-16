@@ -139,6 +139,14 @@ class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration], OauthProv
             "RedirectUrl": "connections/hubspot/callback/",
         }
 
+    @classmethod
+    def refresh_token(cls, configuration) -> HubspotLoginConfiguration:
+        from llmstack.connections.handlers.oauth2_providers.provider import (
+            ConnectionHubspotProvider,
+        )
+
+        return ConnectionHubspotProvider.refresh_token(configuration)
+
 
 class GitHubLogin(ConnectionTypeInterface[GitHubLoginConfiguration], OauthProviderLogin):
     @staticmethod
@@ -164,3 +172,11 @@ class GitHubLogin(ConnectionTypeInterface[GitHubLoginConfiguration], OauthProvid
             "BtnLink": "connections/github/login/",
             "RedirectUrl": "connections/github/callback/",
         }
+
+    @classmethod
+    def refresh_token(cls, configuration) -> GitHubLoginConfiguration:
+        from llmstack.connections.handlers.oauth2_providers.provider import (
+            ConnectionGitHubOAuth2Provider,
+        )
+
+        return ConnectionGitHubOAuth2Provider.refresh_token(configuration)
