@@ -2,9 +2,12 @@ import logging
 
 from django.contrib.auth.models import User
 
+from llmstack.common.utils.utils import retry_on_db_error
+
 logger = logging.getLogger(__name__)
 
 
+@retry_on_db_error
 def process_datasource_add_entry_request(
     user_email,
     request_data,
@@ -32,6 +35,7 @@ def process_datasource_add_entry_request(
     }
 
 
+@retry_on_db_error
 def process_datasource_entry_resync_request(user_email, entry_uuid):
     from django.contrib.auth.models import User
     from django.test import RequestFactory
@@ -53,6 +57,7 @@ def process_datasource_entry_resync_request(user_email, entry_uuid):
     }
 
 
+@retry_on_db_error
 def process_datasource_resync_request(user_email, datasource_uuid, **kwargs):
     from django.test import RequestFactory
 

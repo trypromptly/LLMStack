@@ -13,8 +13,7 @@ from urllib.parse import urlparse
 import geoip2.database
 import requests
 from django.conf import settings
-from django.db import close_old_connections
-from django.db.utils import OperationalError
+from django.db import OperationalError, close_old_connections
 from PIL import Image
 from pydantic import BaseModel, Field, create_model
 
@@ -545,14 +544,14 @@ def hydrate_input(input, values):
     return traverse(input)
 
 
-def retry_on_db_error(max_retries=3, delay=1):
-    def decorator(func):
-        @wraps(func)
+def retry_on_db_error(func=None, max_retries=3, delay=1):
+    def decorator(f):
+        @wraps(f)
         def wrapper(*args, **kwargs):
             for attempt in range(max_retries):
                 try:
                     close_old_connections()
-                    result = func(*args, **kwargs)
+                    result = f(*args, **kwargs)
                     close_old_connections()
                     return result
                 except OperationalError:
@@ -562,4 +561,6 @@ def retry_on_db_error(max_retries=3, delay=1):
 
         return wrapper
 
+    if func:
+        return decorator(func)
     return decorator

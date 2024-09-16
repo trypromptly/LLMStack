@@ -49,7 +49,7 @@ def number_to_letters(num):
     return letters
 
 
-@retry_on_db_error()
+@retry_on_db_error
 def _execute_cell(
     cell: SheetCell,
     cell_type: SheetCellType,
@@ -312,7 +312,7 @@ def cell_in_selected_grid(selected_grid, cell):
     return False
 
 
-@retry_on_db_error()
+@retry_on_db_error
 def run_row(
     current_row,
     subsheet_start,
@@ -408,7 +408,7 @@ def run_row(
     return executed_cells
 
 
-@retry_on_db_error()
+@retry_on_db_error
 def scheduled_run_sheet(sheet_uuid, user_id):
     sheet = PromptlySheet.objects.get(uuid=sheet_uuid)
     if sheet.is_locked:
@@ -420,7 +420,7 @@ def scheduled_run_sheet(sheet_uuid, user_id):
     return run_sheet(sheet_uuid, str(run_entry.uuid), user_id)
 
 
-@retry_on_db_error()
+@retry_on_db_error
 def run_sheet(
     sheet_uuid,
     run_entry_uuid,
@@ -607,7 +607,6 @@ def update_sheet_with_post_run_data(sheet_uuid, run_uuid):
         sheet_run_data_store.delete(run_uuid)
 
 
-@retry_on_db_error()
 def on_sheet_run_success(job, connection, result, *args, **kwargs):
     sheet_uuid = job.args[0]
     run_uuid = job.args[1]
@@ -623,7 +622,6 @@ def on_sheet_run_success(job, connection, result, *args, **kwargs):
     update_sheet_with_post_run_data(sheet_uuid, run_uuid)
 
 
-@retry_on_db_error()
 def on_sheet_run_failed(job, connection, type, value, traceback):
     sheet_uuid = job.args[0]
     run_uuid = job.args[1]
@@ -635,7 +633,6 @@ def on_sheet_run_failed(job, connection, type, value, traceback):
     update_sheet_with_post_run_data(sheet_uuid, run_uuid)
 
 
-@retry_on_db_error()
 def on_sheet_run_stopped(job, connection):
     run_uuid = job.args[1]
     sheet_uuid = job.args[0]
