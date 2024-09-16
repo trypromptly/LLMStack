@@ -695,10 +695,15 @@ const storeAppsBriefFetchSelector = selector({
       while (next) {
         const response = await axios().get(next);
         apps = apps.concat(response.data.results);
-        next = response.data.next;
+        if (!response.data.next) {
+          break;
+        }
+        const parsed_url = URL.parse(response.data.next);
+        next = `${parsed_url.pathname}${parsed_url.search}`;
       }
       return apps;
     } catch (error) {
+      console.error(error);
       return [];
     }
   },
