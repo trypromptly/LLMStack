@@ -293,7 +293,7 @@ export default function AppConsolePage(props) {
           processor_slug: processor.processor?.slug || processor.processor_slug,
           config: processor.config,
           input: processor.input,
-          input_fields: processor.input_fields || [],
+          input_fields: processor.input_fields,
           output_template: processor.output_template || {},
         })),
       };

@@ -35,6 +35,11 @@ export default function AppInputSchemaEditor({
 }) {
   React.useEffect(() => {
     let newErrors = [];
+
+    if (!fields) {
+      return;
+    }
+
     if (fields.length === 0) {
       newErrors.push({ message: "At least one field is required" });
     }
@@ -95,7 +100,7 @@ export default function AppInputSchemaEditor({
     setFields([
       ...fields,
       {
-        name: `Field${fields.length + 1}`,
+        name: `field${fields.length + 1}`,
         title: `Field${fields.length + 1}`,
         description: `Description for Field${fields.length + 1}`,
         type: "string",
@@ -125,6 +130,10 @@ export default function AppInputSchemaEditor({
     newFields[newIndex] = temp;
     setFields(newFields);
   };
+
+  if (!fields) {
+    return null;
+  }
 
   return (
     <Container>

@@ -5,6 +5,8 @@ import {
   AccordionDetails,
   AccordionSummary,
   CardContent,
+  FormControlLabel,
+  Checkbox,
   Typography,
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
@@ -206,6 +208,9 @@ export function ProcessorEditor({
       p.provider?.slug === processorData?.provider_slug &&
       p.slug === processorData?.processor_slug,
   );
+  const [inputFieldsEnabled, setInputFieldsEnabled] = useState(
+    processorData?.input_fields?.length > 0,
+  );
 
   useEffect(() => {
     let newErrors = [];
@@ -326,7 +331,7 @@ export function ProcessorEditor({
       }
     >
       <CardContent style={{ maxHeight: 400, overflow: "auto" }}>
-        {false && isTool && (
+        {isTool && (
           <Accordion defaultExpanded={inputFields.length > 0}>
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
@@ -338,18 +343,42 @@ export function ProcessorEditor({
               Input Fields
             </AccordionSummary>
             <AccordionDetails>
-              <AppInputSchemaEditor
-                fields={inputFields.current}
-                setFields={(fields) => {
-                  inputFields.current = fields;
-                  processors[index].input_fields = fields;
-                  setProcessors([...processors]);
-                }}
-                setErrors={setErrors}
-                message={
-                  "Define the input fields you want to expose to the model. You must use these fields as input to the processor with template variables."
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={inputFieldsEnabled}
+                    onChange={(e) => {
+                      setInputFieldsEnabled(e.target.checked);
+                      if (!e.target.checked) {
+                        inputFields.current = null;
+                        processors[index].input_fields = null;
+                        setProcessors([...processors]);
+                      } else {
+                        inputFields.current = processorData?.input_fields || [];
+                        processors[index].input_fields =
+                          processorData?.input_fields || [];
+                        setProcessors([...processors]);
+                      }
+                    }}
+                  />
                 }
+                label="Enable Input Fields for custom tool schema to Agent"
+                sx={{ mb: 2, mt: 2 }}
               />
+              {inputFieldsEnabled && (
+                <AppInputSchemaEditor
+                  fields={inputFields.current}
+                  setFields={(fields) => {
+                    inputFields.current = fields;
+                    processors[index].input_fields = fields;
+                    setProcessors([...processors]);
+                  }}
+                  setErrors={setErrors}
+                  message={
+                    "Define the input fields you want to expose to the agent from this tool. You must use these fields as input to the processor with template variables in order to complete the tool call using {{field_name}}."
+                  }
+                />
+              )}
             </AccordionDetails>
           </Accordion>
         )}
