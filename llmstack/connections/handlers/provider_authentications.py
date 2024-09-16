@@ -71,6 +71,14 @@ class SpotifyLogin(ConnectionTypeInterface[SpotifyLoginConfiguration], OauthProv
             "RedirectUrl": "connections/spotify/callback/",
         }
 
+    @classmethod
+    def refresh_token(cls, configuration) -> SpotifyLoginConfiguration:
+        from llmstack.connections.handlers.oauth2_providers.provider import (
+            ConnectionSpotifyOAuth2Provider,
+        )
+
+        return ConnectionSpotifyOAuth2Provider.refresh_token(configuration)
+
 
 class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration], OauthProviderLogin):
     @staticmethod
@@ -96,6 +104,14 @@ class GoogleLogin(ConnectionTypeInterface[GoogleLoginConfiguration], OauthProvid
             "BtnLink": "connections/google/login/",
             "RedirectUrl": "connections/google/callback/",
         }
+
+    @classmethod
+    def refresh_token(cls, configuration) -> GoogleLoginConfiguration:
+        from llmstack.connections.handlers.oauth2_providers.provider import (
+            ConnectionGoogleOAuth2Provider,
+        )
+
+        return ConnectionGoogleOAuth2Provider.refresh_token(configuration)
 
 
 class HubspotLogin(ConnectionTypeInterface[HubspotLoginConfiguration], OauthProviderLogin):
