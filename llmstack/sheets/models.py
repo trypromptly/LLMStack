@@ -50,7 +50,7 @@ class SheetFormulaType(int, Enum):
 
 
 class SheetFormulaData(BaseModel):
-    pass
+    max_parallel_runs: Optional[int] = None
 
 
 class NoneFormulaData(SheetFormulaData):

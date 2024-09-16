@@ -464,7 +464,21 @@ def run_sheet(
                     row_step = (
                         1
                         if subsheet_start == subsheet_end and subsheet_start in formula_cell_columns
-                        else parallel_rows
+                        else min(
+                            parallel_rows,
+                            abs(
+                                min(
+                                    map(
+                                        lambda x: (
+                                            x.formula.data.max_parallel_runs
+                                            if x and x.formula and x.formula.data and x.formula.data.max_parallel_runs
+                                            else parallel_rows
+                                        ),
+                                        [sheet.columns[i] for i in range(subsheet_start, subsheet_end + 1)],
+                                    )
+                                )
+                            ),
+                        )
                     )
 
                     for current_row in range(1, total_rows + 1, row_step):

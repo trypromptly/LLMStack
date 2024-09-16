@@ -338,6 +338,32 @@ export function SheetColumnMenu({
                 {showFormulaTypeSelect &&
                   formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
                   memoizedProcessorRunForm}
+                {showFormulaTypeSelect && (
+                  <TextField
+                    type="number"
+                    label="Max Parallel Runs"
+                    value={formulaData.max_parallel_runs || 1}
+                    onChange={(e) => {
+                      const value = Math.max(
+                        4,
+                        parseInt(e.target.value, 10) || 4,
+                      );
+                      setFormulaData((prevData) => ({
+                        ...prevData,
+                        max_parallel_runs: value,
+                      }));
+                      formulaDataRef.current = {
+                        ...formulaDataRef.current,
+                        max_parallel_runs: value,
+                      };
+                    }}
+                    InputProps={{ inputProps: { min: 1, max: 4 } }}
+                    fullWidth
+                    helperText="Max number of parallel row runs of this formula"
+                    variant="standard"
+                    margin="normal"
+                  />
+                )}
                 <Stack
                   direction="row"
                   spacing={2}
