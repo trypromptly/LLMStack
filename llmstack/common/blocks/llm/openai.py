@@ -8,9 +8,7 @@ from llmstack.common.blocks.base.processor import (
     BaseConfiguration,
     BaseConfigurationType,
     BaseInput,
-    BaseInputEnvironment,
     BaseInputType,
-    BaseOutput,
     BaseOutputType,
     Schema,
 )
@@ -46,7 +44,7 @@ def process_openai_error_response(response: HttpAPIProcessorOutput) -> str:
         return response.text
 
 
-class OpenAIAPIInputEnvironment(BaseInputEnvironment):
+class OpenAIAPIInputEnvironment(Schema):
     openai_api_key: Optional[str] = Field(..., description="OpenAI API Key")
     user: Optional[str] = Field(default="", description="User")
 
@@ -73,7 +71,7 @@ class OpenAIAPIProcessorConfiguration(BaseConfiguration):
     pass
 
 
-class OpenAIAPIProcessorOutput(BaseOutput):
+class OpenAIAPIProcessorOutput(Schema):
     metadata: Optional[OpenAIAPIProcessorOutputMetadata]
 
 

@@ -8,7 +8,6 @@ from pydantic import Field
 from llmstack.common.blocks.base.processor import (
     BaseConfiguration,
     BaseInput,
-    BaseOutput,
     BaseProcessor,
     Schema,
 )
@@ -125,7 +124,7 @@ class HttpAPIProcessorInput(BaseInput):
     ] = Field(default=EmptyBody())
 
 
-class HttpAPIProcessorOutput(BaseOutput):
+class HttpAPIProcessorOutput(Schema):
     code: int
     headers: Dict[str, str] = {}
     text: Optional[str] = None

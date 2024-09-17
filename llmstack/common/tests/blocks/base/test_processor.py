@@ -5,10 +5,10 @@ from pydantic import BaseModel
 from llmstack.common.blocks.base.processor import (
     BaseConfiguration,
     BaseInput,
-    BaseOutput,
     BaseOutputType,
     BaseProcessor,
     ProcessorInterface,
+    Schema,
 )
 
 
@@ -89,7 +89,7 @@ class TestProcessor1Input(BaseInput):
     name: str
 
 
-class TestProcessor1Output(BaseOutput):
+class TestProcessor1Output(Schema):
     answer: str
 
 

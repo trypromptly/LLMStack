@@ -1,9 +1,9 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Generator, Generic, Optional, TypeVar
+from typing import Generator, Generic, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from llmstack.common.blocks.base.schema import BaseSchema as Schema
 from llmstack.common.blocks.base.schema import CustomGenerateJsonSchema
@@ -11,16 +11,8 @@ from llmstack.common.blocks.base.schema import CustomGenerateJsonSchema
 LOGGER = logging.getLogger(__name__)
 
 
-class BaseInputEnvironment(Schema):
-    pass
-
-
 class BaseInput(Schema):
-    env: Optional[BaseInputEnvironment] = Field(
-        default=None,
-        description="Environment variables (metadata) to be passed with input",
-        alias="_env",
-    )
+    pass
 
 
 class BaseConfiguration(Schema):
@@ -28,10 +20,7 @@ class BaseConfiguration(Schema):
 
 
 class BaseOutput(Schema):
-    metadata: Optional[Schema] = Field(
-        default={},
-        description="Metadata",
-    )
+    pass
 
 
 class CacheManager(ABC):
@@ -50,17 +39,10 @@ class CacheManager(ABC):
 
 BaseInputType = TypeVar("BaseInputType", BaseInput, dict)
 BaseOutputType = TypeVar("BaseOutputType", BaseOutput, dict)
-BaseConfigurationType = TypeVar(
-    "BaseConfigurationType",
-    BaseConfiguration,
-    dict,
-)
+BaseConfigurationType = TypeVar("BaseConfigurationType", BaseConfiguration, dict)
 
 
-class ProcessorInterface(
-    Generic[BaseInputType, BaseOutputType, BaseConfigurationType],
-    ABC,
-):
+class ProcessorInterface(Generic[BaseInputType, BaseOutputType, BaseConfigurationType], ABC):
     @staticmethod
     def name() -> str:
         raise NotImplementedError

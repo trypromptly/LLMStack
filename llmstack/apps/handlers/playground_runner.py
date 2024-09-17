@@ -28,7 +28,6 @@ class PlaygroundRunner(AppRunner):
         self.app_session = self._get_or_create_app_session()
 
     def _get_base_actor_configs(self, output_template, processor_configs):
-        logger.info(f"{self.connections}")
         actor_configs = [
             ActorConfig(
                 name="input",
