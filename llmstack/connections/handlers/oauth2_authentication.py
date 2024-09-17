@@ -22,7 +22,7 @@ class RefreshToken(BaseModel):
     refresh_token: str = Field(json_schema_extra={"widget": "textarea"}, description="Refresh Token", default="")
     headers: Optional[List[HeaderKeyValueType]] = Field(
         default=[HeaderKeyValueType(key="Content-Type", value="application/x-www-form-urlencoded")],
-        description="Headers",
+        description="Provide additional headers to be sent with the refresh token request",
     )
 
     @property

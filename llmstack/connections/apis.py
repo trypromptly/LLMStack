@@ -121,10 +121,16 @@ class ConnectionsViewSet(viewsets.ViewSet):
         if not connection_obj:
             return Response(status=404)
 
+        connection_type_handler = ConnectionTypeFactory.get_connection_type_handler(
+            request.data.get("connection_type_slug"),
+            request.data.get("provider_slug"),
+        )()
+        connection_config = connection_type_handler.parse_config(request.data.get("configuration"))
+
         connection = Connection(**connection_obj)
         connection.name = request.data.get("name")
         connection.description = request.data.get("description", "")
-        connection.configuration = request.data.get("configuration")
+        connection.configuration = connection_config.model_dump()
         connection.base_connection_type = request.data.get(
             "base_connection_type",
             ConnectionType.BROWSER_LOGIN.value,
