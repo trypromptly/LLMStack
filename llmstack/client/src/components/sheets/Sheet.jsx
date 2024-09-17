@@ -13,6 +13,7 @@ import {
   SvgIcon,
   Tooltip,
   Typography,
+  IconButton,
 } from "@mui/material";
 import {
   DataEditor,
@@ -36,6 +37,8 @@ import {
   gridCellToCellId,
 } from "./utils";
 import { getProviderIconImage } from "../apps/ProviderIcon";
+import SheetBuilder from "./SheetBuilder";
+import ChatIcon from "@mui/icons-material/Chat";
 
 export const SHEET_FORMULA_TYPE_NONE = 0;
 export const SHEET_FORMULA_TYPE_DATA_TRANSFORMER = 1;
@@ -345,6 +348,7 @@ function Sheet(props) {
   const [cellMenuOpen, setCellMenuOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState(null);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [showChat, setShowChat] = useState(false);
 
   const headerIcons = useMemo(() => {
     if (!columns || typeof columns !== "object") {
@@ -1075,6 +1079,8 @@ function Sheet(props) {
     return window.innerHeight - 110;
   }, []);
 
+  const toggleChat = () => setShowChat(!showChat);
+
   return sheet ? (
     <Stack>
       <MemoizedSheetHeader
@@ -1224,46 +1230,64 @@ function Sheet(props) {
               : selectedCellValue}
           </LayoutRenderer>
         </Box>
+        {false && (
+          <IconButton onClick={toggleChat} color="primary">
+            <ChatIcon />
+          </IconButton>
+        )}
       </Box>
       <div id="sheet-column-menu" ref={columnMenuAnchorDivEl} />
-      <Box>
-        <DataEditor
-          ref={sheetRef}
-          onPaste={onPaste}
-          getCellContent={getCellContent}
-          columns={gridColumns}
-          keybindings={{ search: true }}
-          smoothScrollX={true}
-          smoothScrollY={true}
-          rowMarkers={"both"}
-          trailingRowOptions={{
-            sticky: true,
-            tint: true,
-            hint: "New row...",
-          }}
-          onRowAppended={onRowAppended}
-          width={"100%"}
-          getCellsForSelection={true}
-          rightElement={
-            <MemoizedSheetColumnMenuButton
-              addColumn={addColumn}
-              columns={gridColumns}
-            />
-          }
-          onCellEdited={onCellEdited}
-          onHeaderMenuClick={onHeaderMenuClick}
-          onHeaderClicked={onHeaderClicked}
-          onColumnResize={onColumnResize}
-          rows={numRows}
-          headerIcons={headerIcons}
-          gridSelection={gridSelection}
-          onGridSelectionChange={onGridSelectionChange}
-          onCellContextMenu={onCellContextMenu}
-          drawCell={drawCell}
-          drawHeader={drawHeader}
-          height={dataEditorContainerHeight}
-        />
-      </Box>
+      <Stack direction="row" spacing={2}>
+        <Box sx={{ flex: showChat ? "70%" : "100%", transition: "flex 0.3s" }}>
+          <DataEditor
+            ref={sheetRef}
+            onPaste={onPaste}
+            getCellContent={getCellContent}
+            columns={gridColumns}
+            keybindings={{ search: true }}
+            smoothScrollX={true}
+            smoothScrollY={true}
+            rowMarkers={"both"}
+            trailingRowOptions={{
+              sticky: true,
+              tint: true,
+              hint: "New row...",
+            }}
+            onRowAppended={onRowAppended}
+            width={"100%"}
+            getCellsForSelection={true}
+            rightElement={
+              <MemoizedSheetColumnMenuButton
+                addColumn={addColumn}
+                columns={gridColumns}
+              />
+            }
+            onCellEdited={onCellEdited}
+            onHeaderMenuClick={onHeaderMenuClick}
+            onHeaderClicked={onHeaderClicked}
+            onColumnResize={onColumnResize}
+            rows={numRows}
+            headerIcons={headerIcons}
+            gridSelection={gridSelection}
+            onGridSelectionChange={onGridSelectionChange}
+            onCellContextMenu={onCellContextMenu}
+            drawCell={drawCell}
+            drawHeader={drawHeader}
+            height={dataEditorContainerHeight}
+          />
+        </Box>
+        {showChat && (
+          <Box
+            sx={{
+              flex: "30%",
+              borderLeft: "1px solid #e0e0e0",
+              height: "100%",
+            }}
+          >
+            <SheetBuilder sheetId={sheet.uuid} />
+          </Box>
+        )}
+      </Stack>
       <div id="portal" />
       <MemoizedSheetColumnMenu
         column={selectedColumnId !== null ? columns[selectedColumnId] : null}

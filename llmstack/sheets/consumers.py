@@ -5,6 +5,8 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django_redis import get_redis_connection
 
+from llmstack.sheets.builder import SheetBuilder
+
 logger = logging.getLogger(__name__)
 
 sheet_run_data_store = get_redis_connection("sheet_run_data_store")
@@ -78,3 +80,33 @@ class SheetAppConsumer(AsyncWebsocketConsumer):
             sheet_run_data_store.rpush(self.run_id, json.dumps(event))
         except Exception as e:
             logger.error(f"Error appending event to Redis: {str(e)}")
+
+
+class SheetBuilderConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.sheet_id = self.scope["url_route"]["kwargs"]["sheet_id"]
+        self._user = self.scope.get("user", None)
+
+        # Get the sheet and create a builder
+        sheet = await _get_sheet(self.sheet_id, self._user)
+        if not sheet:
+            await self.close()
+            return
+
+        self.builder = SheetBuilder(sheet=sheet)
+
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        self.builder.close()
+
+    async def receive(self, text_data):
+        try:
+            event = json.loads(text_data)
+            response = self.builder.process_event(event)
+        except Exception as e:
+            logger.error(f"Error processing event: {str(e)}")
+            return
+
+        if response:
+            await self.send(text_data=json.dumps(response))

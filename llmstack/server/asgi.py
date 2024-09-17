@@ -14,7 +14,7 @@ from llmstack.server.consumers import (
     ConnectionConsumer,
     PlaygroundConsumer,
 )
-from llmstack.sheets.consumers import SheetAppConsumer
+from llmstack.sheets.consumers import SheetAppConsumer, SheetBuilderConsumer
 
 BASE_DIR = dirname(dirname(abspath(__file__)))
 sys.path.append(join(BASE_DIR, "llmstack"))
@@ -40,6 +40,7 @@ application = ProtocolTypeRouter(
                     path("ws/playground", PlaygroundConsumer.as_asgi()),
                     path("ws/store/apps/<str:app_id>", AppStoreAppConsumer.as_asgi()),
                     path("ws/sheets/<str:sheet_id>/run/<str:run_id>", SheetAppConsumer.as_asgi()),
+                    path("ws/sheets/<str:sheet_id>/builder", SheetBuilderConsumer.as_asgi()),
                 ],
             ),
         ),
