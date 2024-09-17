@@ -43,7 +43,14 @@ def request(method, url, **kwargs):
                     **kwargs.get("headers", {}),
                     **{header_key: api_key},
                 }
-
+            elif connection.get("connection_type_slug", None) == "oauth2_authentication":
+                assert "Authorization" not in kwargs["headers"]
+                token = connection.get("configuration", {}).get("token", None)
+                token_prefix = connection.get("configuration", {}).get("token_prefix", "Bearer")
+                kwargs["headers"] = {
+                    **kwargs.get("headers", {}),
+                    **{"Authorization": token_prefix + " " + token},
+                }
         elif connection.get("base_connection_type", None) == "oauth2":
             assert "Authorization" not in kwargs["headers"]
             token = connection.get("configuration", {}).get("token", None)
