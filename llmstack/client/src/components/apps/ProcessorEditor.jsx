@@ -126,7 +126,6 @@ export function ProcessorEditor({
       />
     );
   }, [outputSchemas, index]);
-  console.log(processorData);
   return (
     <AppStepCard
       icon={processor?.icon || processor?.provider?.name}
