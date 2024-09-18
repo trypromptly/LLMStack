@@ -63,7 +63,7 @@ export default function ProcessorSelector({
       <Grid container direction="row" gap={2} alignItems={"center"}>
         <Box
           sx={{
-            minWidth: 150,
+            minWidth: 100,
             "& .MuiSelect-outlined": {
               display: "flex",
             },
@@ -83,6 +83,13 @@ export default function ProcessorSelector({
                 selectedProvider ? selectedProvider.slug : defaultProviderSlug
               }
               label="Provider"
+              sx={{
+                "& .MuiSelect-outlined": {
+                  textAlign: "center",
+                  padding: "6px",
+                  marginLeft: "8px",
+                },
+              }}
             >
               {providers
                 .filter((x) => x.has_processors)
@@ -92,12 +99,12 @@ export default function ProcessorSelector({
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        minWidth: "32px !important",
+                        minWidth: "24px !important",
                       }}
                     >
                       <ProviderIcon
                         providerSlug={option?.slug}
-                        style={{ width: "20px", height: "20px" }}
+                        style={{ width: "16px", height: "16px" }}
                       />
                     </ListItemIcon>
                     <ListItemText>{option.name}</ListItemText>
@@ -116,6 +123,9 @@ export default function ProcessorSelector({
                   lineHeight: "32px",
                   "& .MuiSelect-outlined": {
                     textAlign: "center",
+                    padding: "6px",
+                    marginLeft: "8px",
+                    fontSize: "0.9rem",
                   },
                 }}
                 onChange={(e) => {
