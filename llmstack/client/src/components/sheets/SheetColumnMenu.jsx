@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
+  Alert,
   Box,
   Button,
   Checkbox,
   FormControl,
   Grow,
   IconButton,
-  InputLabel,
   MenuItem,
+  InputLabel,
   Paper,
   Popper,
   Select,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { DeleteOutlined, AddOutlined } from "@mui/icons-material";
@@ -28,7 +30,6 @@ import {
   SHEET_CELL_TYPE_TEXT,
   SHEET_FORMULA_TYPE_NONE,
 } from "./Sheet";
-import "@glideapps/glide-data-grid/dist/index.css";
 
 const numberToLetters = (num) => {
   let letters = "";
@@ -192,123 +193,310 @@ export function SheetColumnMenu({
                 placement === "bottom-start" ? "left top" : "left bottom",
             }}
           >
-            <Paper>
-              <Stack gap={2} sx={{ padding: 2 }}>
-                <Stack
-                  direction="row"
-                  gap={2}
-                  sx={{ justifyContent: "flex-end" }}
-                >
-                  {column && (
-                    <IconButton
-                      variant="outlined"
-                      onClick={handleColumnDelete}
-                      sx={{
-                        color: "text.secondary",
-                        minWidth: "30px",
-                        padding: 0,
-                      }}
-                    >
-                      <DeleteOutlined />
-                    </IconButton>
-                  )}
-                </Stack>
-                <TextField
-                  label="Name"
-                  value={columnName}
-                  placeholder="Column Name"
-                  variant="outlined"
-                  onChange={(e) => setColumnName(e.target.value)}
-                />
-                <Select
-                  value={cellType}
-                  id="column-type-select"
-                  aria-label="Cell Type"
-                  placeholder="Cell Type"
-                  onChange={(e) => setCellType(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {Object.keys(sheetCellTypes).map((type) => (
-                    <MenuItem key={type} value={type}>
-                      <Stack spacing={0}>
-                        <Typography variant="body1">
-                          {sheetCellTypes[type].label}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {sheetCellTypes[type].description}
-                        </Typography>
-                      </Stack>
-                    </MenuItem>
-                  ))}
-                </Select>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    paddingTop: 2,
-                    paddingBottom: 2,
-                    cursor: "pointer",
-                  }}
-                  onClick={() =>
-                    setShowFormulaTypeSelect(!showFormulaTypeSelect)
-                  }
-                >
-                  <Checkbox
-                    checked={showFormulaTypeSelect}
-                    onChange={(e) => setShowFormulaTypeSelect(e.target.checked)}
-                    inputProps={{ "aria-label": "Add dynamic data" }}
+            <Paper
+              sx={{
+                borderRadius: "0 0 8px 8px",
+                border: "1px solid #e8ebee",
+                borderTop: "none",
+              }}
+            >
+              <Stack gap={1} sx={{ padding: 2, paddingTop: 6 }}>
+                <Stack direction="row" gap={2}>
+                  <TextField
+                    label="Column name"
+                    value={columnName}
+                    placeholder="Name of the column"
+                    variant="outlined"
+                    onChange={(e) => setColumnName(e.target.value)}
                     sx={{
-                      paddingLeft: 0,
-                      marginLeft: 0,
+                      width: "70%",
+                      "& .MuiOutlinedInput-root": {
+                        boxShadow: "none",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: "text.secondary",
+                        "& .MuiOutlinedInput-input": {
+                          padding: "12px 14px",
+                        },
+                      },
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderRadius: "8px !important",
+                        boxShadow: "0px 0px 4px #e8ebee",
+                      },
+                      "& .MuiInputLabel-root": {
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: "text.secondary",
+                        marginTop: "4px",
+                      },
                     }}
                   />
-                  <Typography variant="body2">
-                    Populate column with a formula
-                  </Typography>
-                </Box>
-                {showFormulaTypeSelect && (
-                  <FormControl>
-                    <InputLabel id="formula-type-select-label">
-                      Formula Type
+                  <FormControl sx={{ width: "30%" }}>
+                    <InputLabel
+                      id="column-type-select-label"
+                      sx={{
+                        backgroundColor: "white",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: "text.secondary",
+                        padding: "0 4px",
+                      }}
+                    >
+                      Column Type
                     </InputLabel>
                     <Select
-                      value={formulaType.toString()}
-                      id="formula-type-select"
-                      aria-label="Formula Type"
-                      onChange={(e) => {
-                        setFormulaType(parseInt(e.target.value));
-                        formulaDataRef.current = {};
-                      }}
+                      value={cellType}
+                      id="column-type-select"
+                      aria-label="Cell Type"
+                      placeholder="Cell Type"
+                      onChange={(e) => setCellType(e.target.value)}
                       onClick={(e) => e.stopPropagation()}
-                      variant="filled"
-                      label="Formula Type"
+                      renderValue={(value) => {
+                        return sheetCellTypes[value].label;
+                      }}
+                      sx={{
+                        border: "none",
+                        fontWeight: "600",
+                        fontSize: "14px",
+                        boxShadow: "0px 0px 4px #e8ebee",
+                        color: "text.secondary",
+                        "& .MuiInputBase-root": {
+                          boxShadow: "none",
+                          borderRadius: "8px",
+                        },
+                        "& .MuiSelect-select": {
+                          margin: "0px",
+                          padding: "12px 14px",
+                        },
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderRadius: "8px !important",
+                          borderColor: "#e8ebee",
+                        },
+                      }}
                     >
-                      {Object.keys(sheetFormulaTypes).map((type) => (
-                        <MenuItem key={type} value={type.toString()}>
+                      {Object.keys(sheetCellTypes).map((type) => (
+                        <MenuItem key={type} value={type}>
                           <Stack spacing={0}>
                             <Typography variant="body1">
-                              {sheetFormulaTypes[type].label}
+                              {sheetCellTypes[type].label}
                             </Typography>
                             <Typography
                               variant="caption"
                               color="text.secondary"
                             >
-                              {sheetFormulaTypes[type].description}
+                              {sheetCellTypes[type].description}
                             </Typography>
                           </Stack>
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
-                )}
+                </Stack>
+                <Stack
+                  gap={2}
+                  sx={{
+                    paddingTop: 2,
+                    marginBottom: 4,
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                  direction="row"
+                >
+                  <Tooltip title="Use a formula to dynamically generate data for this column. You can access cell values in the current row using {{A}}, where A is the column letter.">
+                    <Alert
+                      icon={false}
+                      severity="info"
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        padding: 2.5,
+                        cursor: "pointer",
+                        maxWidth: "70%",
+                        borderRadius: "8px",
+                        border: "1px solid #e8ebee",
+                        backgroundColor: "#fbfbfb",
+                        transition: "border-color 0.1s ease",
+                        boxShadow: "0px 0px 4px #e8ebee",
+                        "&:hover": {
+                          borderColor: "text.secondary",
+                        },
+                        "& .MuiPaper-root": {
+                          borderRadius: "8px !important",
+                          padding: 0,
+                          margin: 0,
+                        },
+                        "& .MuiAlert-root": {
+                          borderRadius: "8px",
+                          padding: 0,
+                          margin: 0,
+                        },
+                        "& .MuiAlert-message": {
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          padding: 0,
+                          margin: 0,
+                        },
+                      }}
+                      onClick={() =>
+                        setShowFormulaTypeSelect(!showFormulaTypeSelect)
+                      }
+                    >
+                      <Checkbox
+                        checked={showFormulaTypeSelect}
+                        onChange={(e) =>
+                          setShowFormulaTypeSelect(e.target.checked)
+                        }
+                        inputProps={{ "aria-label": "Add dynamic data" }}
+                        sx={{
+                          marginLeft: 0,
+                          paddingRight: 0,
+                          "& .MuiCheckbox-root": {
+                            padding: 0,
+                          },
+                        }}
+                        size="small"
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          fontWeight: "600",
+                          fontSize: "14px",
+                        }}
+                      >
+                        Use formula
+                      </Typography>
+                    </Alert>
+                  </Tooltip>
+                  {showFormulaTypeSelect && (
+                    <FormControl sx={{ minWidth: "30%", flex: 1 }}>
+                      <InputLabel
+                        id="formula-type-select-label"
+                        sx={{
+                          backgroundColor: "white",
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          color: "text.secondary",
+                          padding: "0 4px",
+                        }}
+                      >
+                        Formula Type
+                      </InputLabel>
+                      <Select
+                        value={formulaType.toString() || "0"}
+                        id="formula-type-select"
+                        aria-label="Formula Type"
+                        onChange={(e) => {
+                          setFormulaType(parseInt(e.target.value));
+                          formulaDataRef.current = {};
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        variant="outlined"
+                        disabled={!showFormulaTypeSelect}
+                        renderValue={(value) => {
+                          return sheetFormulaTypes[value].label;
+                        }}
+                        sx={{
+                          border: "none",
+                          fontWeight: "600",
+                          fontSize: "14px",
+                          width: "100%",
+                          minWidth: "100px",
+                          color: "text.secondary",
+                          boxShadow: "0px 0px 4px #e8ebee",
+                          "& .MuiInputBase-root": {
+                            boxShadow: "none",
+                            padding: "0px 12px",
+                            margin: "0px",
+                            color: "text.secondary",
+                          },
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderRadius: "8px !important",
+                            borderColor: "#e8ebee",
+                          },
+                        }}
+                      >
+                        {Object.keys(sheetFormulaTypes).map((type) => (
+                          <MenuItem key={type} value={type.toString()}>
+                            <Stack spacing={0}>
+                              <Typography variant="body1">
+                                {sheetFormulaTypes[type].label}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {sheetFormulaTypes[type].description}
+                              </Typography>
+                            </Stack>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                  {showFormulaTypeSelect && (
+                    <TextField
+                      type="number"
+                      label="Parallel Runs"
+                      value={formulaData.max_parallel_runs || 1}
+                      onChange={(e) => {
+                        const value = Math.max(
+                          4,
+                          parseInt(e.target.value, 10) || 4,
+                        );
+                        setFormulaData((prevData) => ({
+                          ...prevData,
+                          max_parallel_runs: value,
+                        }));
+                        formulaDataRef.current = {
+                          ...formulaDataRef.current,
+                          max_parallel_runs: value,
+                        };
+                      }}
+                      InputProps={{ inputProps: { min: 1, max: 4 } }}
+                      fullWidth
+                      variant="outlined"
+                      margin="normal"
+                      sx={{
+                        maxWidth: "100px",
+                        margin: 0,
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "8px",
+                          boxShadow: "0px 0px 4px #e8ebee",
+                        },
+                        "& .MuiInputLabel-root": {
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          color: "text.secondary",
+                          marginTop: 0,
+                        },
+                      }}
+                    />
+                  )}
+                </Stack>
                 {showFormulaTypeSelect && formulaType && (
-                  <Typography variant="caption" color="text.secondary">
-                    You can access the value of a cell in the current row using{" "}
-                    <code>{"{{A}}"}</code>, where A is the column letter.
-                    <br />
-                    &nbsp;
-                  </Typography>
+                  <Alert
+                    icon={false}
+                    severity="info"
+                    sx={{
+                      borderRadius: "8px",
+                      marginBottom: 4,
+                      padding: "4px 8px",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ marginBottom: 4 }}
+                    >
+                      Access cell values in the current row using{" "}
+                      <code>{"{{A}}"}</code>, where A is the column letter.
+                    </Typography>
+                  </Alert>
                 )}
                 {showFormulaTypeSelect &&
                   formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER && (
@@ -338,49 +526,47 @@ export function SheetColumnMenu({
                 {showFormulaTypeSelect &&
                   formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
                   memoizedProcessorRunForm}
-                {showFormulaTypeSelect && (
-                  <TextField
-                    type="number"
-                    label="Max Parallel Runs"
-                    value={formulaData.max_parallel_runs || 1}
-                    onChange={(e) => {
-                      const value = Math.max(
-                        4,
-                        parseInt(e.target.value, 10) || 4,
-                      );
-                      setFormulaData((prevData) => ({
-                        ...prevData,
-                        max_parallel_runs: value,
-                      }));
-                      formulaDataRef.current = {
-                        ...formulaDataRef.current,
-                        max_parallel_runs: value,
-                      };
-                    }}
-                    InputProps={{ inputProps: { min: 1, max: 4 } }}
-                    fullWidth
-                    helperText="Max number of parallel row runs of this formula"
-                    variant="standard"
-                    margin="normal"
-                  />
-                )}
                 <Stack
                   direction="row"
                   spacing={2}
-                  sx={{ width: "100%", justifyContent: "center", mt: 2 }}
+                  sx={{
+                    width: "100%",
+                    justifyContent: "space-between",
+                    mt: 4,
+                  }}
                 >
-                  <Button
-                    sx={{ textTransform: "none" }}
-                    variant="standard"
-                    onClick={() => {
-                      setOpen(false);
-                    }}
+                  <Box sx={{ flex: 1 }}>
+                    {column && (
+                      <IconButton
+                        variant="outlined"
+                        onClick={handleColumnDelete}
+                        sx={{
+                          color: "text.secondary",
+                          minWidth: "30px",
+                          padding: 0,
+                        }}
+                      >
+                        <DeleteOutlined />
+                      </IconButton>
+                    )}
+                  </Box>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", flex: 2 }}
                   >
-                    Cancel
-                  </Button>
-                  <Button variant="contained" onClick={handleAddOrEditColumn}>
-                    {column ? "Update" : "Add"}
-                  </Button>
+                    <Button
+                      sx={{ textTransform: "none", mr: 2 }}
+                      variant="standard"
+                      onClick={() => {
+                        setOpen(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button variant="contained" onClick={handleAddOrEditColumn}>
+                      {column ? "Update" : "Add"}
+                    </Button>
+                  </Box>
+                  <Box sx={{ flex: 1 }} />
                 </Stack>
               </Stack>
             </Paper>
