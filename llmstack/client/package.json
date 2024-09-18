@@ -95,6 +95,7 @@
     "@craco/craco": "^7.1.0",
     "http-proxy-middleware": "^2.0.6",
     "million": "^2.6.4",
-    "source-map-explorer": "^2.5.3"
+    "source-map-explorer": "^2.5.3",
+    "tailwindcss": "^3.4.12"
   }
 }

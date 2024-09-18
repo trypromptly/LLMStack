@@ -8,6 +8,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RecoilRoot } from "recoil";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
+import tailwindColors from "tailwindcss/colors";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 import {
@@ -53,55 +54,58 @@ const defaultTheme = createTheme({
   },
   palette: {
     primary: {
-      main: "#183A58",
-      light: "#0a398d",
-      dark: "#1b4ca3",
+      main: tailwindColors.sky[900],
+      light: tailwindColors.sky[900],
+      dark: tailwindColors.sky[900],
       contrastText: "#fff",
     },
     secondary: {
-      main: "#1e88e5",
-      light: "#1e88e5",
-      dark: "#1e88e5",
+      main: tailwindColors.blue[500],
+      light: tailwindColors.blue[500],
+      dark: tailwindColors.blue[500],
       contrastText: "#fff",
     },
     error: {
-      main: "#d0625a",
-      light: "#d0625a",
-      dark: "#e74c41",
+      main: tailwindColors.red[500],
+      light: tailwindColors.red[500],
+      dark: tailwindColors.red[500],
       contrastText: "#fff",
     },
     warning: {
-      main: "#e86a1f",
-      light: "#e86a1f",
-      dark: "#ff9800",
+      main: tailwindColors.orange[500],
+      light: tailwindColors.orange[500],
+      dark: tailwindColors.orange[500],
       contrastText: "#fff",
     },
     info: {
-      main: "#2196f3",
-      light: "#2196f3",
-      dark: "#2196f3",
+      main: tailwindColors.blue[500],
+      light: tailwindColors.blue[500],
+      dark: tailwindColors.blue[500],
       contrastText: "#fff",
     },
     success: {
-      main: "#3a923e",
-      light: "#3a923e",
-      dark: "#58b65c",
+      main: tailwindColors.green[700],
+      light: tailwindColors.green[700],
+      dark: tailwindColors.green[700],
       contrastText: "#fff",
     },
     corral: {
-      main: "#EE625A",
-      light: "#EE625A",
-      dark: "#EE625A",
+      main: tailwindColors.red[500],
+      light: tailwindColors.red[500],
+      dark: tailwindColors.red[500],
       contrastText: "#FFFFFF",
     },
     blue: {
-      main: "#1e88e5",
-      light: "#1e88e5",
-      dark: "#1e88e5",
+      main: tailwindColors.blue[500],
+      light: tailwindColors.blue[500],
+      dark: tailwindColors.blue[500],
       contrastText: "#fff",
     },
     gray: {
-      main: "#E8EBEE",
+      main: tailwindColors.gray[200],
+      light: tailwindColors.gray[200],
+      dark: tailwindColors.gray[200],
+      contrastText: "#fff",
     },
   },
   components: {
