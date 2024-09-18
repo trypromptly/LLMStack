@@ -8,13 +8,7 @@ from asgiref.sync import async_to_sync
 from bs4 import BeautifulSoup, NavigableString
 from pydantic import Field
 
-from llmstack.common.blocks.http import (
-    BearerTokenAuth,
-    HttpAPIProcessor,
-    HttpAPIProcessorInput,
-    HttpMethod,
-    JsonBody,
-)
+from llmstack.common.utils.prequests import post
 from llmstack.play.actor import BookKeepingData
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -193,23 +187,21 @@ class SlackPostMessageProcessor(
         token: str,
     ) -> None:
         url = "https://slack.com/api/chat.postMessage"
-        http_processor = HttpAPIProcessor(configuration={"timeout": 60})
-        response = http_processor.process(
-            HttpAPIProcessorInput(
-                url=url,
-                method=HttpMethod.POST,
-                headers={},
-                authorization=BearerTokenAuth(token=self._input.token),
-                body=JsonBody(
-                    json_body={
-                        "channel": channel,
-                        "thread_ts": thread_ts,
-                        "text": message,
-                        "blocks": rich_text,
-                    },
-                ),
-            ).model_dump(),
+        response = post(
+            url,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "channel": channel,
+                "thread_ts": thread_ts,
+                "text": message,
+                "blocks": rich_text,
+            },
+            timeout=60,
         )
+
         return response
 
     def process(self) -> dict:

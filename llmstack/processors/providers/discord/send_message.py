@@ -4,13 +4,7 @@ from typing import Any, List, Optional
 
 from asgiref.sync import async_to_sync
 
-from llmstack.common.blocks.http import (
-    BearerTokenAuth,
-    HttpAPIProcessor,
-    HttpAPIProcessorInput,
-    HttpMethod,
-    JsonBody,
-)
+from llmstack.common.utils.prequests import post
 from llmstack.play.actor import BookKeepingData
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
@@ -75,19 +69,12 @@ class DiscordSendMessageProcessor(
 
     def _send_message(self, app_id: str, message: str, token: str) -> None:
         url = f"https://discord.com/api/v10/webhooks/{app_id}/{token}"
-        http_processor = HttpAPIProcessor(configuration={"timeout": 60})
-        response = http_processor.process(
-            HttpAPIProcessorInput(
-                url=url,
-                method=HttpMethod.POST,
-                headers={"Content-Type": "application/json"},
-                authorization=BearerTokenAuth(token=token),
-                body=JsonBody(
-                    json_body={
-                        "content": message,
-                    },
-                ),
-            ).model_dump(),
+        response = post(
+            url=url,
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
+            json={
+                "content": message,
+            },
         )
         return response
 
