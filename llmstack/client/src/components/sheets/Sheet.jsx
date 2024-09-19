@@ -472,6 +472,15 @@ function Sheet(props) {
         ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
         ctx.restore();
 
+        // Draw a spinner in the center of the cell
+        ctx.save();
+        ctx.fillStyle = "#000000";
+        ctx.font = "12px Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Running...", rect.x + 10, rect.y + rect.height / 2);
+        ctx.restore();
+
         return;
       }
 
