@@ -210,6 +210,14 @@ export function SheetColumnMenu({
                     onChange={(e) => setColumnName(e.target.value)}
                     sx={{
                       width: "70%",
+                      "& .MuiInputBase-root": {
+                        "& fieldset": {
+                          border: "solid 1px #ccc",
+                          borderRadius: "8px",
+                          boxShadow:
+                            "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
+                        },
+                      },
                       "& .MuiOutlinedInput-root": {
                         boxShadow: "none",
                         borderRadius: "8px",
@@ -268,10 +276,14 @@ export function SheetColumnMenu({
                         "& .MuiSelect-select": {
                           margin: "0px",
                           padding: "10px",
+                          border: "solid 1px #ccc",
+                          borderRadius: "8px",
+                          boxShadow:
+                            "0px 1px 2px 0px #1018280F, 0px 1px 2px 0px #1018281A",
                         },
                         "& .MuiOutlinedInput-notchedOutline": {
                           borderRadius: "8px !important",
-                          borderColor: "#e8ebee",
+                          border: "none",
                         },
                       }}
                     >
@@ -315,10 +327,11 @@ export function SheetColumnMenu({
                         cursor: "pointer",
                         maxWidth: "70%",
                         borderRadius: "8px",
-                        border: "1px solid #e8ebee",
+                        border: "1px solid #ccc",
                         backgroundColor: "#fbfbfb",
                         transition: "border-color 0.1s ease",
-                        boxShadow: "0px 0px 4px #e8ebee",
+                        boxShadow:
+                          "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
                         "&:hover": {
                           borderColor: "text.secondary",
                         },
@@ -415,8 +428,10 @@ export function SheetColumnMenu({
                             color: "text.secondary",
                           },
                           "& .MuiOutlinedInput-notchedOutline": {
-                            borderRadius: "8px !important",
-                            borderColor: "#e8ebee",
+                            border: "solid 1px #ccc",
+                            borderRadius: "8px",
+                            boxShadow:
+                              "0px 1px 2px 0px #1018280F, 0px 1px 2px 0px #1018281A",
                           },
                         }}
                       >
@@ -473,6 +488,12 @@ export function SheetColumnMenu({
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "8px",
                           boxShadow: "0px 0px 4px #e8ebee",
+                          "& fieldset": {
+                            border: "solid 1px #ccc",
+                            borderRadius: "8px",
+                            boxShadow:
+                              "0px 1px 2px 0px #1018280F, 0px 1px 2px 0px #1018281A",
+                          },
                         },
                         "& .MuiInputLabel-root": {
                           fontSize: "14px",
