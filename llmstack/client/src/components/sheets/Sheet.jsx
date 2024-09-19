@@ -44,6 +44,7 @@ export const SHEET_FORMULA_TYPE_NONE = 0;
 export const SHEET_FORMULA_TYPE_DATA_TRANSFORMER = 1;
 export const SHEET_FORMULA_TYPE_APP_RUN = 2;
 export const SHEET_FORMULA_TYPE_PROCESSOR_RUN = 3;
+export const SHEET_FORMULA_TYPE_AI_AGENT = 4;
 
 export const SHEET_CELL_TYPE_TEXT = 0;
 export const SHEET_CELL_TYPE_NUMBER = 1;
@@ -62,21 +63,31 @@ export const sheetFormulaTypes = {
     value: "none",
     label: "None",
     description: "No formula",
+    order: 0,
+  },
+  [SHEET_FORMULA_TYPE_AI_AGENT]: {
+    value: "ai_agent",
+    label: "AI Agent",
+    description: "Use AI Agent to fill column",
+    order: 1,
   },
   [SHEET_FORMULA_TYPE_DATA_TRANSFORMER]: {
     value: "data_transformer",
     label: "Data Transformer",
     description: "Transform data using a LiquidJS template",
+    order: 2,
   },
   [SHEET_FORMULA_TYPE_APP_RUN]: {
     value: "app_run",
     label: "App Run",
-    description: "Run an app to generate formula output",
+    description: "Fill cell with output from an app",
+    order: 3,
   },
   [SHEET_FORMULA_TYPE_PROCESSOR_RUN]: {
     value: "processor_run",
     label: "Processor Run",
-    description: "Run a processor to generate formula output",
+    description: "Run a processor to fill cell",
+    order: 4,
   },
 };
 

@@ -420,21 +420,27 @@ export function SheetColumnMenu({
                           },
                         }}
                       >
-                        {Object.keys(sheetFormulaTypes).map((type) => (
-                          <MenuItem key={type} value={type.toString()}>
-                            <Stack spacing={0}>
-                              <Typography variant="body1">
-                                {sheetFormulaTypes[type].label}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {sheetFormulaTypes[type].description}
-                              </Typography>
-                            </Stack>
-                          </MenuItem>
-                        ))}
+                        {Object.keys(sheetFormulaTypes)
+                          .sort(
+                            (a, b) =>
+                              sheetFormulaTypes[a].order -
+                              sheetFormulaTypes[b].order,
+                          )
+                          .map((type) => (
+                            <MenuItem key={type} value={type.toString()}>
+                              <Stack spacing={0}>
+                                <Typography variant="body1">
+                                  {sheetFormulaTypes[type].label}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {sheetFormulaTypes[type].description}
+                                </Typography>
+                              </Stack>
+                            </MenuItem>
+                          ))}
                       </Select>
                     </FormControl>
                   )}

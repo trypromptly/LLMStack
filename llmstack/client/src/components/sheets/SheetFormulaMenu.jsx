@@ -160,18 +160,23 @@ const SheetFormulaMenu = ({
                   formulaDataRef.current = {};
                 }}
               >
-                {Object.keys(sheetFormulaTypes).map((type) => (
-                  <MenuItem key={type} value={type.toString()}>
-                    <Stack spacing={0}>
-                      <Typography variant="body1">
-                        {sheetFormulaTypes[type].label}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {sheetFormulaTypes[type].description}
-                      </Typography>
-                    </Stack>
-                  </MenuItem>
-                ))}
+                {Object.keys(sheetFormulaTypes)
+                  .sort(
+                    (a, b) =>
+                      sheetFormulaTypes[a].order - sheetFormulaTypes[b].order,
+                  )
+                  .map((type) => (
+                    <MenuItem key={type} value={type.toString()}>
+                      <Stack spacing={0}>
+                        <Typography variant="body1">
+                          {sheetFormulaTypes[type].label}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {sheetFormulaTypes[type].description}
+                        </Typography>
+                      </Stack>
+                    </MenuItem>
+                  ))}
               </Select>
               {(formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER ||
                 formulaType === SHEET_FORMULA_TYPE_APP_RUN ||
