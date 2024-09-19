@@ -238,7 +238,7 @@ export default function PlaygroundPage() {
               <div>{selectedProcessor && <Run />}</div>
             </Stack>
           </Grid>
-          <Grid item xs={12} md={4} sx={{ mt: 3 }}>
+          <Grid item xs={12} md={4} sx={{ mt: 1 }}>
             <ConfigForm
               schema={selectedProcessor ? selectedProcessor.config_schema : {}}
               uiSchema={
@@ -249,7 +249,7 @@ export default function PlaygroundPage() {
               emptyMessage="Select your API Backend to see the parameters"
             />
           </Grid>
-          <Grid item xs={12} md={4} sx={{ mt: 3 }}>
+          <Grid item xs={12} md={4} sx={{ mt: 1 }}>
             <Output ws={ws} app={app} />
           </Grid>
         </Grid>
