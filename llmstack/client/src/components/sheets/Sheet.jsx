@@ -493,7 +493,7 @@ function Sheet(props) {
         // Draw error message from cell.error
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "12px Arial";
-        ctx.textAlign = "center";
+        ctx.textAlign = "left";
         ctx.textBaseline = "middle";
 
         const padding = 10;
@@ -502,7 +502,7 @@ function Sheet(props) {
 
         ctx.fillText(
           errorText,
-          rect.x + rect.width / 2,
+          rect.x + 10,
           rect.y + rect.height / 2,
           maxWidth,
         );
