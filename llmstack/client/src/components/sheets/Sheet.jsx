@@ -1291,6 +1291,7 @@ function Sheet(props) {
             smoothScrollX={true}
             smoothScrollY={true}
             rowMarkers={"both"}
+            rowHeight={40}
             trailingRowOptions={{
               sticky: true,
               tint: true,
