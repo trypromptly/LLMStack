@@ -26,6 +26,7 @@ import {
 import { forwardRef, useEffect, useLayoutEffect } from "react";
 import "./LexicalEditor.css";
 import ToolbarPlugin from "./plugins/ToolbarPlugin";
+import { styled } from "@mui/material/styles";
 
 const theme = {
   ltr: "ltr",
@@ -361,6 +362,48 @@ function onError(error) {
   console.error(error);
 }
 
+const ResizableContentEditable = styled(ContentEditable)(
+  ({ theme, multiline, rows }) => ({
+    resize: "vertical",
+    overflow: "auto",
+    minHeight: multiline ? (rows || 4) * 10 + "px" : "300px",
+    height: multiline ? (rows || 4) * 30 + "px" : "300px",
+    border: "solid 1px #e8ebed",
+    padding: "20px 15px",
+    borderRadius: "8px",
+    fontSize: "0.9rem",
+    boxShadow: "0px 0px 5px 0px rgba(0,0,0,0.1)",
+    backgroundColor: "#FBFBFB",
+    "&:hover": {
+      borderColor: theme.palette.text.primary,
+    },
+    "&:focus": {
+      borderColor: theme.palette.text.primary,
+    },
+    "&:focus-visible": {
+      outline: "none",
+    },
+  }),
+);
+
+const FixedContentEditable = styled(ContentEditable)(({ theme }) => ({
+  border: "solid 1px #e8ebed",
+  padding: "20px 15px",
+  borderRadius: "8px",
+  fontSize: "0.9rem",
+  boxShadow: "0px 0px 5px 0px rgba(0,0,0,0.1)",
+  backgroundColor: "#FBFBFB",
+  "&:hover": {
+    borderColor: theme.palette.text.primary,
+  },
+  "&:focus": {
+    borderColor: theme.palette.text.primary,
+  },
+  "&:focus-visible": {
+    outline: "none",
+  },
+}));
+
 export const LexicalEditor = forwardRef(function LexicalEditor(props, ref) {
   const initialConfig = {
     namespace: "MyEditor",
@@ -389,13 +432,14 @@ export const LexicalEditor = forwardRef(function LexicalEditor(props, ref) {
         {props.richText && (
           <RichTextPlugin
             contentEditable={
-              <ContentEditable
-                style={{
-                  border: "solid 1px rgb(204, 204, 204)",
-                  padding: "20px 15px",
-                  borderRadius: 5,
-                }}
-              />
+              props.multiline ? (
+                <ResizableContentEditable
+                  multiline={props.multiline}
+                  rows={props.rows}
+                />
+              ) : (
+                <FixedContentEditable />
+              )
             }
             placeholder={
               !props.richText && (
@@ -408,13 +452,14 @@ export const LexicalEditor = forwardRef(function LexicalEditor(props, ref) {
         {!props.richText && (
           <PlainTextPlugin
             contentEditable={
-              <ContentEditable
-                style={{
-                  border: "solid 1px rgb(204, 204, 204)",
-                  padding: "20px 15px",
-                  borderRadius: 5,
-                }}
-              />
+              props.multiline ? (
+                <ResizableContentEditable
+                  multiline={props.multiline}
+                  rows={props.rows}
+                />
+              ) : (
+                <FixedContentEditable />
+              )
             }
             placeholder={
               !props.richText && (

@@ -277,27 +277,9 @@ export function SheetColumnMenu({
                         return sheetCellTypes[value].label;
                       }}
                       sx={{
-                        border: "none",
                         fontWeight: "600",
                         fontSize: "14px",
-                        boxShadow: "0px 0px 4px #e8ebee",
                         color: "text.secondary",
-                        "& .MuiInputBase-root": {
-                          boxShadow: "none",
-                          borderRadius: "8px",
-                        },
-                        "& .MuiSelect-select": {
-                          margin: "0px",
-                          padding: "10px",
-                          border: "solid 1px #ccc",
-                          borderRadius: "8px",
-                          boxShadow:
-                            "0px 1px 2px 0px #1018280F, 0px 1px 2px 0px #1018281A",
-                        },
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderRadius: "8px !important",
-                          border: "none",
-                        },
                       }}
                     >
                       {Object.keys(sheetCellTypes).map((type) => (
@@ -339,7 +321,7 @@ export function SheetColumnMenu({
                         display: "flex",
                         alignItems: "center",
                         gap: 1,
-                        padding: 2.5,
+                        padding: 2,
                         cursor: "pointer",
                         maxWidth: "70%",
                         borderRadius: "8px",
@@ -430,25 +412,11 @@ export function SheetColumnMenu({
                           return sheetFormulaTypes[value].label;
                         }}
                         sx={{
-                          border: "none",
                           fontWeight: "600",
                           fontSize: "14px",
                           width: "100%",
                           minWidth: "100px",
                           color: "text.secondary",
-                          boxShadow: "0px 0px 4px #e8ebee",
-                          "& .MuiInputBase-root": {
-                            boxShadow: "none",
-                            padding: "0px 12px",
-                            margin: "0px",
-                            color: "text.secondary",
-                          },
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            border: "solid 1px #ccc",
-                            borderRadius: "8px",
-                            boxShadow:
-                              "0px 1px 2px 0px #1018280F, 0px 1px 2px 0px #1018281A",
-                          },
                         }}
                       >
                         {Object.keys(sheetFormulaTypes)
@@ -506,12 +474,11 @@ export function SheetColumnMenu({
                         margin: 0,
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "8px",
-                          boxShadow: "0px 0px 4px #e8ebee",
+                          boxShadow:
+                            "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
                           "& fieldset": {
                             border: "solid 1px #ccc",
                             borderRadius: "8px",
-                            boxShadow:
-                              "0px 1px 2px 0px #1018280F, 0px 1px 2px 0px #1018281A",
                           },
                         },
                         "& .MuiInputLabel-root": {

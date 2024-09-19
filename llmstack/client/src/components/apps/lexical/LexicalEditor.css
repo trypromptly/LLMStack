@@ -759,8 +759,12 @@ i.outdent {
   overflow: hidden;
   position: absolute;
   padding: 0 5px;
-  top: -8px;
+  top: -10px;
   left: 10px;
+  font-size: 12px;
+  font-weight: 550;
+  font-family: "Lato", sans-serif;
+  color: #666;
   user-select: none;
   pointer-events: none;
   background-color: #fff;

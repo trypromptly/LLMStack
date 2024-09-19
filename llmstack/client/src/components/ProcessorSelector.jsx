@@ -89,7 +89,7 @@ export default function ProcessorSelector({
               sx={{
                 "& .MuiSelect-outlined": {
                   textAlign: "center",
-                  padding: "6px",
+                  padding: "4px",
                   marginLeft: "8px",
                 },
               }}
@@ -141,7 +141,7 @@ export default function ProcessorSelector({
                     sx={{
                       "& .MuiInputBase-root": {
                         textAlign: "center",
-                        padding: "12px 10px !important",
+                        padding: "8px 10px !important",
                         marginLeft: "8px",
                         fontSize: "0.7rem",
                         color: "text.secondary",

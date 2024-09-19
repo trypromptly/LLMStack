@@ -175,7 +175,6 @@ const defaultTheme = createTheme({
       styleOverrides: {
         select: {
           textAlign: "left",
-          margin: "0.1rem",
           fontSize: "0.9rem",
         },
       },
@@ -206,8 +205,8 @@ const defaultTheme = createTheme({
           },
 
           "& .MuiInputBase-root": {
-            padding: "0.1rem",
             borderRadius: "8px",
+            minHeight: "40px",
           },
 
           "& .MuiTypography-body1": {

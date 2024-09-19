@@ -126,6 +126,18 @@ export function ProcessorEditor({
       />
     );
   }, [outputSchemas, index]);
+
+  const memoizedTextareaWithVars = useMemo(() => {
+    return (props) => (
+      <TextFieldWithVars
+        {...props}
+        schemas={outputSchemas.slice(0, index + 1)}
+        multiline
+        rows={4}
+      />
+    );
+  }, [outputSchemas, index]);
+
   return (
     <AppStepCard
       icon={processor?.icon || processor?.provider?.name}
@@ -247,6 +259,7 @@ export function ProcessorEditor({
               }}
               widgets={{
                 TextWidget: memoizedTextFieldWithVars,
+                TextareaWidget: memoizedTextareaWithVars,
               }}
               disableAdvanced={true}
             />
@@ -280,6 +293,10 @@ export function ProcessorEditor({
               onChange={({ formData }) => {
                 processors[index].config = formData;
                 setProcessors([...processors]);
+              }}
+              widgets={{
+                TextWidget: memoizedTextFieldWithVars,
+                TextareaWidget: memoizedTextareaWithVars,
               }}
             />
           </AccordionDetails>

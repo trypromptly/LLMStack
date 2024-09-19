@@ -114,6 +114,9 @@ export default function AppStepCard({
               }}
               sx={{
                 width: "100%",
+                "& .MuiInputBase-root": {
+                  minHeight: "20px",
+                },
                 ".MuiInputBase-input": {
                   fontSize: "14px",
                   paddingLeft: "2px",

@@ -318,6 +318,8 @@ export default function TextFieldWithVars({
           placeholder={props?.placeholder || props?.schema?.description}
           label={props?.label}
           richText={props?.richText}
+          multiline={props?.multiline}
+          rows={props?.rows}
         />
       </Box>
       <div
