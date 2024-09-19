@@ -1,4 +1,4 @@
-import { Box, Button, Grid, Stack, Tab } from "@mui/material";
+import { Box, Button, Grid, Stack, Tab, Divider } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import ReactGA from "react-ga4";
 import React, { lazy, useEffect, useState, useRef, useCallback } from "react";
@@ -202,25 +202,26 @@ export default function PlaygroundPage() {
         />
       )}
       <Stack>
-        <ProcessorSelector
-          onProcessorChange={(processor) => {
-            setSelectedProcessor(processor);
-            setInput({});
-            setConfig({});
-            messagesRef.current = new Messages();
-            setAppRunData((prevState) => ({
-              ...prevState,
-              isRunning: false,
-              isStreaming: false,
-              errors: null,
-              messages: messagesRef.current.get(),
-              input: {},
-            }));
-          }}
-        />
         <Grid container spacing={2}>
           <Grid item xs={12} md={4} sx={{ height: "100%" }}>
             <Stack spacing={2}>
+              <ProcessorSelector
+                onProcessorChange={(processor) => {
+                  setSelectedProcessor(processor);
+                  setInput({});
+                  setConfig({});
+                  messagesRef.current = new Messages();
+                  setAppRunData((prevState) => ({
+                    ...prevState,
+                    isRunning: false,
+                    isStreaming: false,
+                    errors: null,
+                    messages: messagesRef.current.get(),
+                    input: {},
+                  }));
+                }}
+              />
+              <Divider />
               <div style={{ height: "10%" }}>
                 <InputForm
                   schema={
@@ -237,7 +238,7 @@ export default function PlaygroundPage() {
               <div>{selectedProcessor && <Run />}</div>
             </Stack>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={4} sx={{ mt: 3 }}>
             <ConfigForm
               schema={selectedProcessor ? selectedProcessor.config_schema : {}}
               uiSchema={
@@ -248,7 +249,7 @@ export default function PlaygroundPage() {
               emptyMessage="Select your API Backend to see the parameters"
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={4} sx={{ mt: 3 }}>
             <Output ws={ws} app={app} />
           </Grid>
         </Grid>

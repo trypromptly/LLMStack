@@ -67,7 +67,7 @@ export default function ConfigForm(props) {
             }}
             aria-label="Config form tabs"
           >
-            <Tab label="Config Form" value="form" />
+            <Tab label="Configuration" value="form" />
             <Tab label="JSON" value="json" />
           </TabList>
         </Box>
