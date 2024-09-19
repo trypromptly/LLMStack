@@ -134,7 +134,16 @@ export function SheetFromTemplateDialog({
           />
           {!sheetId && sheetTemplates && (
             <FormControl fullWidth>
-              <InputLabel id="template-select-label">
+              <InputLabel
+                id="template-select-label"
+                sx={{
+                  backgroundColor: "white",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "text.secondary",
+                  padding: "0 4px",
+                }}
+              >
                 Use an existing template (optional)
               </InputLabel>
               <Select
@@ -142,12 +151,16 @@ export function SheetFromTemplateDialog({
                 id="template-select"
                 value={sheetTemplate}
                 onChange={(e) => handleTemplateChange(e.target.value)}
-                variant="filled"
-                sx={{ lineHeight: "0.5em" }}
+                sx={{
+                  padding: "0.5rem",
+                }}
+                renderValue={(value) => {
+                  return sheetTemplates[value].name;
+                }}
               >
                 {Object.values(sheetTemplates).map((template) => (
                   <MenuItem key={template.slug} value={template.slug}>
-                    <Stack direction={"column"}>
+                    <Stack direction={"column"} spacing={0}>
                       <Typography variant="body1">{template.name}</Typography>
                       <Typography variant="caption">
                         {template.description}
