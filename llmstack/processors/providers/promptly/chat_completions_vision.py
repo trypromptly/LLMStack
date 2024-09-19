@@ -144,7 +144,7 @@ class LLMVisionProcessor(
 
     @staticmethod
     def name() -> str:
-        return "Chat Completions Vision"
+        return "GPT Vision"
 
     @staticmethod
     def slug() -> str:

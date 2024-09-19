@@ -133,7 +133,7 @@ class LLMProcessor(ApiProcessorInterface[LLMProcessorInput, LLMProcessorOutput, 
 
     @staticmethod
     def name() -> str:
-        return "Chat Completions"
+        return "GPT"
 
     @staticmethod
     def slug() -> str:
