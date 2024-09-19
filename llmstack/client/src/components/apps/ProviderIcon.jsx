@@ -82,6 +82,7 @@ export const getProviderIconImage = (icon, isActive) => {
 export function ProviderIcon({ providerSlug, isActive = false, style = null }) {
   return (
     <img
+      className="max-w-8 max-h-8"
       src={getProviderIconImage(providerSlug, isActive)}
       alt={providerSlug}
       style={style || { width: 40, height: 40, marginRight: 10 }}
