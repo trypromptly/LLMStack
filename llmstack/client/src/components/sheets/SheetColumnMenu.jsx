@@ -217,7 +217,7 @@ export function SheetColumnMenu({
                         fontWeight: "600",
                         color: "text.secondary",
                         "& .MuiOutlinedInput-input": {
-                          padding: "12px 14px",
+                          padding: "10px",
                         },
                       },
                       "& .MuiOutlinedInput-notchedOutline": {
@@ -228,7 +228,7 @@ export function SheetColumnMenu({
                         fontSize: "14px",
                         fontWeight: "600",
                         color: "text.secondary",
-                        marginTop: "4px",
+                        marginTop: "0px",
                       },
                     }}
                   />
@@ -267,7 +267,7 @@ export function SheetColumnMenu({
                         },
                         "& .MuiSelect-select": {
                           margin: "0px",
-                          padding: "12px 14px",
+                          padding: "10px",
                         },
                         "& .MuiOutlinedInput-notchedOutline": {
                           borderRadius: "8px !important",
