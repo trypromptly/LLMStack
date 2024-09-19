@@ -20,13 +20,14 @@ import {
   GridCellKind,
   CompactSelection,
 } from "@glideapps/glide-data-grid";
+import { allCells } from "@glideapps/glide-data-grid-cells";
+import randomColor from "randomcolor";
 import { SheetColumnMenu, SheetColumnMenuButton } from "./SheetColumnMenu";
 import { axios } from "../../data/axios";
 import { Ws } from "../../data/ws";
 import { enqueueSnackbar } from "notistack";
 import SheetHeader from "./SheetHeader";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
-import "@glideapps/glide-data-grid/dist/index.css";
 import SheetCellMenu from "./SheetCellMenu";
 import SheetFormulaMenu from "./SheetFormulaMenu";
 import { ReactComponent as FormulaIcon } from "../../assets/images/icons/formula.svg";
@@ -39,6 +40,8 @@ import {
 import { getProviderIconImage } from "../apps/ProviderIcon";
 import SheetBuilder from "./SheetBuilder";
 import ChatIcon from "@mui/icons-material/Chat";
+
+import "@glideapps/glide-data-grid/dist/index.css";
 
 export const SHEET_FORMULA_TYPE_NONE = 0;
 export const SHEET_FORMULA_TYPE_DATA_TRANSFORMER = 1;
@@ -188,28 +191,47 @@ export const sheetCellTypes = {
     label: "Tags",
     value: "tags",
     description: "Comma separated list of tags",
-    kind: GridCellKind.Bubble,
+    kind: GridCellKind.Custom,
     getDataGridCell: (cell, column) => {
       if (!cell) {
         return {
-          kind: GridCellKind.Bubble,
-          data: [],
+          kind: GridCellKind.Custom,
+          data: {
+            kind: "tags-cell",
+            possibleTags: [],
+            tags: [],
+          },
           readonly: column?.formula?.type > 0 || false,
           allowOverlay: true,
           allowWrapping: true,
+          allowEditing: true,
         };
       }
 
       return {
-        kind: GridCellKind.Bubble,
-        data: cell.value.split(",").map((tag) => tag.trim()) || [],
+        kind: GridCellKind.Custom,
+        data: {
+          kind: "tags-cell",
+          possibleTags:
+            cell.value.split(",").map((tag) => {
+              return {
+                tag: tag.trim(),
+                color: randomColor({
+                  seed: tag.trim(),
+                  luminosity: "light",
+                }),
+              };
+            }) || [],
+          tags: cell.value.split(",").map((tag) => tag.trim()) || [],
+        },
         readonly: cell.formula || column.formula?.type > 0 || false,
         allowOverlay: true,
         allowWrapping: true,
+        allowEditing: true,
       };
     },
     getCellValue: (cell) => {
-      return cell.data.join(", ");
+      return cell.data.tags.join(", ");
     },
   },
   [SHEET_CELL_TYPE_BOOLEAN]: {
@@ -1253,6 +1275,7 @@ function Sheet(props) {
           <DataEditor
             ref={sheetRef}
             onPaste={onPaste}
+            customRenderers={allCells}
             getCellContent={getCellContent}
             columns={gridColumns}
             keybindings={{ search: true }}
