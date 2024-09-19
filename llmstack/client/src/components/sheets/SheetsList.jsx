@@ -17,12 +17,14 @@ import { enqueueSnackbar } from "notistack";
 import {
   DeleteOutlineOutlined,
   EditOutlined,
+  DownloadOutlined,
   ContentCopyOutlined,
 } from "@mui/icons-material";
 import { axios } from "../../data/axios";
 import SheetDeleteDialog from "./SheetDeleteDialog";
 import { useEffect } from "react";
 import { SheetDuplicateDialog } from "./SheetDuplicateDialog";
+import SheetFromYamlDialog from "./SheetFromYamlDialog";
 
 function SheetListItem({ sheet, onDelete, onEdit, onDuplicate }) {
   const navigate = useNavigate();
@@ -108,6 +110,7 @@ function SheetListItem({ sheet, onDelete, onEdit, onDuplicate }) {
 
 function SheetsList() {
   const [newSheetDialogOpen, setNewSheetDialogOpen] = useState(false);
+  const [importSheetDialogOpen, setImportSheetDialogOpen] = useState(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
   const [sheetToDuplicate, setSheetToDuplicate] = useState(null);
   const sheets = useRecoilValue(sheetsListSelector);
@@ -152,6 +155,11 @@ function SheetsList() {
     enqueueSnackbar("Sheet duplicated successfully", { variant: "success" });
   };
 
+  const handleImportComplete = (newSheet) => {
+    setSheets((prevSheets) => [...prevSheets, newSheet]);
+    enqueueSnackbar("Sheet imported successfully", { variant: "success" });
+  };
+
   return (
     <Stack>
       <Typography variant="h5" className="section-header">
@@ -164,14 +172,24 @@ function SheetsList() {
               running AI agents on your data with a click.
             </Typography>
           </Stack>
-          <Button
-            variant="contained"
-            startIcon={<AddOutlined />}
-            size="medium"
-            onClick={() => setNewSheetDialogOpen(true)}
-          >
-            New Sheet
-          </Button>
+          <Stack direction={"row"} spacing={2}>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadOutlined />}
+              size="medium"
+              onClick={() => setImportSheetDialogOpen(true)}
+            >
+              Import
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddOutlined />}
+              size="medium"
+              onClick={() => setNewSheetDialogOpen(true)}
+            >
+              New Sheet
+            </Button>
+          </Stack>
         </Stack>
       </Typography>
       <Table>
@@ -217,6 +235,11 @@ function SheetsList() {
         setOpen={setDuplicateDialogOpen}
         sheet={sheetToDuplicate}
         onDuplicate={handleDuplicateComplete}
+      />
+      <SheetFromYamlDialog
+        open={importSheetDialogOpen}
+        onClose={() => setImportSheetDialogOpen(false)}
+        onImport={handleImportComplete}
       />
     </Stack>
   );
