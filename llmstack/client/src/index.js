@@ -157,7 +157,7 @@ const defaultTheme = createTheme({
           boxShadow: "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
           "& textarea": {
             whiteSpace: "pre-wrap",
-            padding: "0.6rem",
+            padding: "0.5rem 0.1rem",
           },
         },
       },
