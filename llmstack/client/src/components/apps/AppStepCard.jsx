@@ -123,10 +123,13 @@ export default function AppStepCard({
                   borderRadius: "6px",
                 },
               }}
-              onBlur={() => setShowDescriptionEditor(false)}
+              onBlur={() => {
+                setShowDescriptionEditor(false);
+                setDescription(descriptionInput);
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  setDescription(e.target.value);
+                  setDescription(descriptionInput);
                   setShowDescriptionEditor(false);
                 }
               }}

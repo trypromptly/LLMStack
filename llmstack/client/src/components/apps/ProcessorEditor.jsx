@@ -130,7 +130,11 @@ export function ProcessorEditor({
     <AppStepCard
       icon={processor?.icon || processor?.provider?.name}
       title={processor?.name || processor?.provider?.name}
-      description={processor?.description || processor?.provider?.description}
+      description={
+        processorData?.description ||
+        processor?.description ||
+        processor?.provider?.description
+      }
       setDescription={(description) => {
         processors[index].description =
           description || processor?.provider?.description;
