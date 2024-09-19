@@ -2,7 +2,9 @@ import { EditOutlined } from "@mui/icons-material";
 import {
   Card,
   CardHeader,
+  Chip,
   Popover,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
@@ -10,6 +12,7 @@ import { useState } from "react";
 import { ProviderIcon } from "./ProviderIcon";
 
 export default function AppStepCard({
+  id,
   icon,
   title,
   description,
@@ -55,6 +58,25 @@ export default function AppStepCard({
             }}
           >
             {stepNumber}. {title}
+            {id && (
+              <Chip
+                label={id}
+                size="small"
+                sx={{
+                  marginLeft: 1,
+                  padding: "0px",
+                  fontSize: "10px",
+                  borderRadius: "4px",
+                  color: "text.secondary",
+                  maxHeight: "14px",
+                  backgroundColor: "#ccc",
+                  border: isActive ? "solid 1px #e8ebed" : "solid 1px #ccc",
+                  "& .MuiChip-label": {
+                    padding: "4px",
+                  },
+                }}
+              />
+            )}
             {errors.length > 0 && (
               <span
                 style={{
@@ -104,57 +126,59 @@ export default function AppStepCard({
           </Typography>
         }
         subheader={
-          showDescriptionEditor && isDescriptionEditable ? (
-            <TextField
-              id="standard-basic"
-              variant="standard"
-              value={descriptionInput}
-              onChange={(e) => {
-                setDescriptionInput(e.target.value);
-              }}
-              sx={{
-                width: "100%",
-                "& .MuiInputBase-root": {
-                  minHeight: "20px",
-                },
-                ".MuiInputBase-input": {
-                  fontSize: "14px",
-                  paddingLeft: "2px",
-                  fontFamily: "Lato, sans-serif",
-                  color: "#fff",
-                  backgroundColor: "#2e4658",
-                  borderRadius: "6px",
-                },
-              }}
-              onBlur={() => {
-                setShowDescriptionEditor(false);
-                setDescription(descriptionInput);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setDescription(descriptionInput);
+          <Stack direction="row" alignItems="center" spacing={1}>
+            {showDescriptionEditor && isDescriptionEditable ? (
+              <TextField
+                id="standard-basic"
+                variant="standard"
+                value={descriptionInput}
+                onChange={(e) => {
+                  setDescriptionInput(e.target.value);
+                }}
+                sx={{
+                  width: "100%",
+                  "& .MuiInputBase-root": {
+                    minHeight: "20px",
+                  },
+                  ".MuiInputBase-input": {
+                    fontSize: "14px",
+                    paddingLeft: "2px",
+                    fontFamily: "Lato, sans-serif",
+                    color: "#fff",
+                    backgroundColor: "#2e4658",
+                    borderRadius: "6px",
+                  },
+                }}
+                onBlur={() => {
                   setShowDescriptionEditor(false);
-                }
-              }}
-              inputRef={(input) => input && input.focus()}
-              focused={showDescriptionEditor}
-            />
-          ) : (
-            <Typography
-              variant="subtitle2"
-              style={{
-                fontSize: "14px",
-                fontFamily: "Lato, sans-serif",
-                color: isActive ? "#ccc" : "#6b6b6b",
-              }}
-              onClick={() => setShowDescriptionEditor(true)}
-            >
-              {descriptionInput}{" "}
-              {isDescriptionEditable && (
-                <EditOutlined style={{ fontSize: "14px" }} />
-              )}
-            </Typography>
-          )
+                  setDescription(descriptionInput);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setDescription(descriptionInput);
+                    setShowDescriptionEditor(false);
+                  }
+                }}
+                inputRef={(input) => input && input.focus()}
+                focused={showDescriptionEditor}
+              />
+            ) : (
+              <Typography
+                variant="subtitle2"
+                style={{
+                  fontSize: "14px",
+                  fontFamily: "Lato, sans-serif",
+                  color: isActive ? "#ccc" : "#6b6b6b",
+                }}
+                onClick={() => setShowDescriptionEditor(true)}
+              >
+                {descriptionInput}{" "}
+                {isDescriptionEditable && (
+                  <EditOutlined style={{ fontSize: "14px" }} />
+                )}
+              </Typography>
+            )}
+          </Stack>
         }
         avatar={
           typeof icon === "string" ? (

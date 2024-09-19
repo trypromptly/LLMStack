@@ -54,6 +54,7 @@ export function AppConfigEditor({
 
   return (
     <AppStepCard
+      id="_inputs0"
       icon={
         appType?.name?.toLowerCase().includes("chat") ? (
           <ForumTwoToneIcon

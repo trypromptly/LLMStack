@@ -140,6 +140,7 @@ export function ProcessorEditor({
 
   return (
     <AppStepCard
+      id={processorData?.id}
       icon={processor?.icon || processor?.provider?.name}
       title={processor?.name || processor?.provider?.name}
       description={
