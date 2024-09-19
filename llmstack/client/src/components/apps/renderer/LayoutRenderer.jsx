@@ -49,8 +49,10 @@ import { PDFViewer } from "../DocViewer";
 import { RemoteBrowserEmbed } from "../../connections/RemoteBrowser";
 import { appRunDataState, profileSelector } from "../../../data/atoms";
 import loadingImage from "../../../assets/images/loading.gif";
-import { isEqual, get } from "lodash";
+import { isEqual } from "lodash";
 import { axios } from "../../../data/axios";
+import DOMPurify from "dompurify";
+import { get as lodashGet } from "lodash/fp";
 
 import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/mode-javascript";
@@ -1003,9 +1005,9 @@ const parseAndRebuildDataProps = () => {
     visit(tree, (node) => {
       if (node && isElement(node) && node.tagName === "pa-data") {
         if (node.children && node.children.length > 0) {
-          node.properties["content"] = node.children
-            .map((child) => toHtml(child))
-            .join("");
+          node.properties["content"] = DOMPurify.sanitize(
+            node.children.map((child) => toHtml(child)).join(""),
+          );
         }
       }
     });
@@ -1223,18 +1225,26 @@ export default function LayoutRenderer({
             let currentTemplateValues = {};
 
             templateVariables.forEach((variable) => {
-              prevTemplateValues[variable] = get(
-                prevMemoizedRef.current?.appRunData,
+              prevTemplateValues[variable] = lodashGet(
                 variable,
+                prevMemoizedRef.current?.appRunData,
                 "",
               );
-              currentTemplateValues[variable] = get(appRunData, variable, "");
+              currentTemplateValues[variable] = lodashGet(
+                variable,
+                appRunData,
+                "",
+              );
             });
 
             if (isEqual(prevTemplateValues, currentTemplateValues)) {
               return prevMemoizedRef.current?.layout || "";
             }
-            return liquidEngine.parseAndRenderSync(props.content, appRunData);
+
+            // Sanitize the rendered content
+            return DOMPurify.sanitize(
+              liquidEngine.parseAndRenderSync(props.content, appRunData),
+            );
           }, [props.content, appRunData]);
 
           useEffect(() => {
