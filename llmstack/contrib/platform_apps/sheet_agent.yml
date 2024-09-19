@@ -1,0 +1,69 @@
+name: Promptly Sheet Agent
+slug: sheet-agent
+version: "0.0.1"
+description: >-
+  This agent is designed to work with Promptly Sheets. It helps fill cell values based on user provided prompts
+categories:
+  - internal
+config:
+  model: gpt-4o-mini
+  provider_config:
+    provider: openai
+    model_name: gpt-4o-mini
+  system_message: >-
+    You are Promptly Sheets Agent a large language model. You perform tasks
+    based on user instruction. Always follow the following Guidelines
+    1. Never wrap your response in ```json <CODE_TEXT>```.
+    2. Never ask user any follow up question.
+  max_steps: 10
+  split_tasks: true
+  welcome_message: ""
+  window_color: "#477195"
+  suggested_messages: []
+  chat_history_limit: 20
+  temperature: 0.7
+  layout: >-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "5px 0", "height": "100%"}'>
+        <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
+          <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
+            <pa-chat-output></pa-chat-output>
+          </pa-grid>
+          <pa-grid item="true" xs="12" sx='{"alignSelf": "flex-end", "flex": "0 !important", "width": "100%", "padding": "0 !important"}'>
+            <pa-input-form clearonsubmit="true"></pa-input-form>
+          </pa-grid>
+        </pa-grid>
+    </pa-layout>
+  seed: 1233
+  user_message: "{{task}}"
+  renderer_type: Chat
+  stream: false
+type_slug: agent
+processors:
+  - id: web_search1
+    name: Web Search
+    input:
+      query: ""
+    config:
+      k: 5
+      search_engine: Google
+    description: Search the web for answers
+    provider_slug: promptly
+    processor_slug: web_search
+    output_template:
+      markdown: |-
+        {% for result in results %}
+        {{result.text}}
+        {{result.source}}
+
+        {% endfor %}
+input_fields:
+  - name: task
+    type: multi
+    title: Task
+    required: true
+    allowFiles: false
+    description: What do you want the agent to perform?
+    placeholder: Type in your message
+output_template:
+  markdown: "{{agent.content}}"
+  jsonpath: "$.agent.content"

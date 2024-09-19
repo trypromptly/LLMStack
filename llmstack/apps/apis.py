@@ -1,7 +1,10 @@
 import logging
+import os
 import uuid
 
+import yaml
 from channels.db import database_sync_to_async
+from django.conf import settings
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import ValidationError
@@ -923,6 +926,88 @@ class AppViewSet(viewsets.ViewSet):
 
         return app_runner.run_app(processor_id=processor_id)
 
+    async def run_platform_app_internal_async(self, session_id, request_uuid, request, preview=False):
+        return await database_sync_to_async(self.run_platform_app_internal)(
+            session_id,
+            request_uuid,
+            request,
+            platform="platform-app",
+            preview=False,
+            disable_history=False,
+        )
+
+    def run_platform_app_internal(
+        self, session_id, request_uuid, request, platform="platform-app", preview=False, disable_history=False
+    ):
+        from llmstack.apps.handlers.platform_app_runner import (
+            PlatformApp,
+            PlatformAppRunner,
+            PlatformAppType,
+        )
+
+        stream = request.data.get("stream", False)
+        request_ip = request.headers.get("X-Forwarded-For", request.META.get("REMOTE_ADDR", "")).split(",")[
+            0
+        ].strip() or request.META.get("HTTP_X_REAL_IP", "")
+
+        request_location = request.headers.get("X-Client-Geo-Location", "")
+        if not request_location:
+            location = get_location(request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
+
+        request_user_agent = request.META.get("HTTP_USER_AGENT", "")
+        request_content_type = request.META.get("CONTENT_TYPE", "")
+
+        if flag_enabled(
+            "HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA",
+            request=request,
+            user=request.user,
+        ):
+            raise Exception(
+                "You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.",
+            )
+
+        app_owner_profile = (
+            Profile.objects.get(user=request.user) if request.user.is_authenticated else AnonymousProfile()
+        )
+
+        owner_connections = get_connections(app_owner_profile) if request.user.is_authenticated else {}
+        app_data = request.data["app_data"]
+        app_slug = app_data["slug"]
+        app_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, app_slug)
+        app = PlatformApp(
+            id="",
+            uuid=str(app_uuid),
+            type=PlatformAppType(slug=str(app_data["type_slug"])),
+            web_integration_config={},
+            is_published=True,
+        )
+        processors = app_data["processors"]
+        output_template = app_data["output_template"]
+        app_data_config = app_data["config"]
+
+        app_runner = PlatformAppRunner(
+            app=app,
+            app_data={
+                "config": app_data_config,
+                "processors": processors,
+                "output_template": output_template,
+                "type_slug": app_data["type_slug"],
+            },
+            request_uuid=request_uuid,
+            request=request,
+            session_id=session_id,
+            app_owner=app_owner_profile,
+            stream=stream,
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=request_user_agent,
+            request_content_type=request_content_type,
+            connections=owner_connections,
+        )
+
+        return app_runner.run_app()
+
     def run_app_internal(
         self,
         uid,
@@ -1275,3 +1360,48 @@ class AppTestSetViewSet(viewsets.ModelViewSet):
             ).data,
             status=201,
         )
+
+
+class PlatformAppsViewSet(viewsets.ViewSet):
+    def list(self, request):
+        result = []
+        if settings.PLATFORM_APPS_DIR:
+            apps_dir = settings.PLATFORM_APPS_DIR
+            for entry in apps_dir:
+                yml_files = [
+                    f for f in os.listdir(entry) if os.path.isfile(os.path.join(entry, f)) and f.endswith(".yml")
+                ]
+                for yml_file in yml_files:
+                    with open(os.path.join(entry, yml_file), "r") as stream:
+                        app_data = yaml.safe_load(stream)
+                        result.append(app_data)
+        return DRFResponse(result)
+
+    def get(self, request, slug):
+        apps = self.list(request)
+        for app in apps.data:
+            if app["slug"] == slug:
+                return DRFResponse(app)
+
+        return DRFResponse(status=404)
+
+    def run(self, request, slug):
+        app_data = self.get(request, slug).data
+        app_data = {**app_data, **request.data.get("app_data", {})}
+
+        request.data["app_data"] = app_data
+        response = AppViewSet().run_platform_app_internal(
+            session_id=None, request_uuid=str(uuid.uuid4()), request=request
+        )
+
+        return DRFResponse(data=response, status=200)
+
+    def run_with_app_data(self, request):
+        app_data = request.data.get("app_data", {})
+        app_data["slug"] = "platform-app"
+        request.data["app_data"] = app_data
+        response = AppViewSet().run_platform_app_internal(
+            session_id=None, request_uuid=str(uuid.uuid4()), request=request
+        )
+
+        return DRFResponse(data=response, status=200)
