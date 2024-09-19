@@ -176,6 +176,14 @@ const defaultTheme = createTheme({
         select: {
           textAlign: "left",
           margin: "0.1rem",
+          fontSize: "0.9rem",
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          fontSize: "0.9rem",
         },
       },
     },

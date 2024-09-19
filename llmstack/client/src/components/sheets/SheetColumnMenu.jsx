@@ -290,7 +290,10 @@ export function SheetColumnMenu({
                       {Object.keys(sheetCellTypes).map((type) => (
                         <MenuItem key={type} value={type}>
                           <Stack spacing={0}>
-                            <Typography variant="body1">
+                            <Typography
+                              variant="body1"
+                              sx={{ fontSize: "0.9rem" }}
+                            >
                               {sheetCellTypes[type].label}
                             </Typography>
                             <Typography
@@ -444,7 +447,10 @@ export function SheetColumnMenu({
                           .map((type) => (
                             <MenuItem key={type} value={type.toString()}>
                               <Stack spacing={0}>
-                                <Typography variant="body1">
+                                <Typography
+                                  variant="body1"
+                                  sx={{ fontSize: "0.9rem" }}
+                                >
                                   {sheetFormulaTypes[type].label}
                                 </Typography>
                                 <Typography
@@ -505,26 +511,27 @@ export function SheetColumnMenu({
                     />
                   )}
                 </Stack>
-                {showFormulaTypeSelect && formulaType && (
-                  <Alert
-                    icon={false}
-                    severity="info"
-                    sx={{
-                      borderRadius: "8px",
-                      marginBottom: 4,
-                      padding: "4px 8px",
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ marginBottom: 4 }}
+                {showFormulaTypeSelect &&
+                  formulaType !== SHEET_FORMULA_TYPE_NONE && (
+                    <Alert
+                      icon={false}
+                      severity="info"
+                      sx={{
+                        borderRadius: "8px",
+                        marginBottom: 4,
+                        padding: "4px 8px",
+                      }}
                     >
-                      Access cell values in the current row using{" "}
-                      <code>{"{{A}}"}</code>, where A is the column letter.
-                    </Typography>
-                  </Alert>
-                )}
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ marginBottom: 4 }}
+                      >
+                        Access cell values in the current row using{" "}
+                        <code>{"{{A}}"}</code>, where A is the column letter.
+                      </Typography>
+                    </Alert>
+                  )}
                 {showFormulaTypeSelect &&
                   formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER && (
                     <DataTransformerGeneratorWidget
