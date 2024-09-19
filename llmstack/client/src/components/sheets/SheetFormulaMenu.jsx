@@ -15,11 +15,13 @@ import {
 import DataTransformerGeneratorWidget from "./DataTransformerGeneratorWidget";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
+import AgentRunForm from "./AgentRunForm";
 import {
   sheetFormulaTypes,
   SHEET_FORMULA_TYPE_DATA_TRANSFORMER,
   SHEET_FORMULA_TYPE_APP_RUN,
   SHEET_FORMULA_TYPE_PROCESSOR_RUN,
+  SHEET_FORMULA_TYPE_AI_AGENT,
 } from "./Sheet";
 
 const SheetFormulaMenu = ({
@@ -92,6 +94,17 @@ const SheetFormulaMenu = ({
         setData={setDataHandler}
         appSlug={formulaData?.app_slug}
         appInput={formulaData?.input}
+      />
+    ),
+    [formulaData, setDataHandler],
+  );
+
+  const memoizedAgentRunForm = useMemo(
+    () => (
+      <AgentRunForm
+        setData={setDataHandler}
+        agentSlug={formulaData?.agent_slug}
+        agentInput={formulaData?.input}
       />
     ),
     [formulaData, setDataHandler],
@@ -180,7 +193,8 @@ const SheetFormulaMenu = ({
               </Select>
               {(formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER ||
                 formulaType === SHEET_FORMULA_TYPE_APP_RUN ||
-                formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN) && (
+                formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN ||
+                formulaType === SHEET_FORMULA_TYPE_AI_AGENT) && (
                 <Typography variant="caption" color="text.secondary">
                   You can access the output from previous cell or a range of
                   cells using the cell ids. For example, <code>{"{{A1}}"}</code>{" "}
@@ -211,6 +225,8 @@ const SheetFormulaMenu = ({
               {formulaType === SHEET_FORMULA_TYPE_APP_RUN && memoizedAppRunForm}
               {formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
                 memoizedProcessorRunForm}
+              {formulaType === SHEET_FORMULA_TYPE_AI_AGENT &&
+                memoizedAgentRunForm}
               {formulaType && (
                 <>
                   <FormControlLabel

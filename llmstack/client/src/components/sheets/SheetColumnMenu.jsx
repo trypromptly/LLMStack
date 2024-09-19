@@ -21,6 +21,7 @@ import { DeleteOutlined, AddOutlined } from "@mui/icons-material";
 import DataTransformerGeneratorWidget from "./DataTransformerGeneratorWidget";
 import AppRunForm from "./AppRunForm";
 import ProcessorRunForm from "./ProcessorRunForm";
+import AgentRunForm from "./AgentRunForm";
 import {
   sheetCellTypes,
   sheetFormulaTypes,
@@ -29,6 +30,7 @@ import {
   SHEET_FORMULA_TYPE_PROCESSOR_RUN,
   SHEET_CELL_TYPE_TEXT,
   SHEET_FORMULA_TYPE_NONE,
+  SHEET_FORMULA_TYPE_AI_AGENT,
 } from "./Sheet";
 
 const numberToLetters = (num) => {
@@ -124,6 +126,17 @@ export function SheetColumnMenu({
         setData={setDataHandler}
         appSlug={formulaData?.app_slug}
         appInput={formulaData?.input}
+      />
+    ),
+    [formulaData, setDataHandler],
+  );
+
+  const memoizedAgentRunForm = useMemo(
+    () => (
+      <AgentRunForm
+        setData={setDataHandler}
+        agentInstructions={formulaData?.agent_instructions}
+        selectedTools={formulaData?.selected_tools}
       />
     ),
     [formulaData, setDataHandler],
@@ -560,6 +573,9 @@ export function SheetColumnMenu({
                 {showFormulaTypeSelect &&
                   formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN &&
                   memoizedProcessorRunForm}
+                {showFormulaTypeSelect &&
+                  formulaType === SHEET_FORMULA_TYPE_AI_AGENT &&
+                  memoizedAgentRunForm}
                 <Stack
                   direction="row"
                   spacing={2}
