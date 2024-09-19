@@ -22,16 +22,19 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
+import UploadIcon from "@mui/icons-material/Upload";
 import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
 import { axios } from "../../data/axios";
 import PreviousRunsModal from "./PreviousRunsModal";
 import ScheduleRunsModal from "./ScheduleRunsModal";
 import SheetDeleteDialog from "./SheetDeleteDialog";
+import SchemaModal from "./SchemaModal";
 import { useSetRecoilState } from "recoil";
 import { sheetsListSelector } from "../../data/atoms";
 import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
+import yaml from "js-yaml";
 
 const SheetHeader = ({
   sheet,
@@ -55,6 +58,40 @@ const SheetHeader = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isCommandPressed, setIsCommandPressed] = useState(false);
+  const [isExportSchemaModalOpen, setIsExportSchemaModalOpen] = useState(false);
+
+  const getYamlSchemaFromSheet = useCallback(() => {
+    let schema = {};
+
+    schema["name"] = sheet.name;
+    schema["description"] = sheet.description;
+    schema["total_rows"] = sheet.total_rows;
+    schema["total_columns"] = sheet.total_columns;
+    schema["columns"] = sheet.columns;
+
+    // Include cells that only have a formula
+    const cellsWithFormula = Object.values(sheet?.cells).filter(
+      (cell) => cell.formula,
+    );
+    schema["cells"] = {};
+    cellsWithFormula.forEach((cell) => {
+      let filteredCell = { ...cell };
+      delete filteredCell.value;
+      delete filteredCell.status;
+      delete filteredCell.error;
+
+      schema["cells"][`${cell.col_letter}${cell.row}`] = filteredCell;
+    });
+
+    return yaml.dump(schema);
+  }, [
+    sheet?.cells,
+    sheet?.name,
+    sheet?.description,
+    sheet?.total_rows,
+    sheet?.total_columns,
+    sheet?.columns,
+  ]);
 
   // Add event listeners for keydown and keyup
   useEffect(() => {
@@ -332,6 +369,17 @@ const SheetHeader = ({
                         </ListItemIcon>
                         <ListItemText>Automated Runs</ListItemText>
                       </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          setIsExportSchemaModalOpen(true);
+                          setOpen(false);
+                        }}
+                      >
+                        <ListItemIcon>
+                          <UploadIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Export Schema</ListItemText>
+                      </MenuItem>
                       <Divider />
                       <MenuItem
                         onClick={() => {
@@ -404,6 +452,12 @@ const SheetHeader = ({
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDeleteSheet}
         sheetName={sheet.name}
+      />
+      <SchemaModal
+        open={isExportSchemaModalOpen}
+        onClose={() => setIsExportSchemaModalOpen(false)}
+        sheetUuid={sheet.uuid}
+        schema={getYamlSchemaFromSheet()}
       />
     </Stack>
   );
