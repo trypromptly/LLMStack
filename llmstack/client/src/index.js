@@ -294,9 +294,17 @@ const defaultTheme = createTheme({
     MuiButtonBase: {
       styleOverrides: {
         root: {
+          textTransform: "none !important",
           "&.MuiButton-contained": {
             textTransform: "none",
             borderRadius: "8px",
+          },
+          "&.MuiButton-outlined": {
+            textTransform: "none",
+            borderRadius: "8px",
+          },
+          "&.MuiButton-text": {
+            textTransform: "none",
           },
         },
       },
