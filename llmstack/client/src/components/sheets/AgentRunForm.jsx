@@ -99,7 +99,7 @@ const AgentRunForm = ({ setData, agentInstructions, selectedTools }) => {
             borderRadius: "8px",
             fontSize: "14px",
             "& .MuiOutlinedInput-input": {
-              padding: "10px",
+              padding: "0px",
             },
           },
           "& .MuiOutlinedInput-notchedOutline": {
