@@ -1352,9 +1352,11 @@ function Sheet(props) {
               : selectedCellValue}
           </LayoutRenderer>
         </Box>
-        <IconButton onClick={toggleChat} color="primary">
-          <ChatIcon />
-        </IconButton>
+        {false && (
+          <IconButton onClick={toggleChat} color="primary">
+            <ChatIcon />
+          </IconButton>
+        )}
       </Box>
       <div id="sheet-column-menu" ref={columnMenuAnchorDivEl} />
       <Stack direction="row" spacing={2}>
