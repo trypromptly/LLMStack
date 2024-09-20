@@ -266,7 +266,7 @@ class AgentActor(Actor):
                 model=model,
                 messages=self._system_message + self._agent_messages,
                 stream=self._stream,
-                tools=[{"type": "function", "function": x} for x in self._functions],
+                tools=[{"type": "function", "function": x} for x in self._functions] if self._functions else None,
                 seed=self._config.get("seed", None),
                 temperature=self._config.get("temperature", 0.7),
                 stream_options={"include_usage": True} if self._stream else None,
