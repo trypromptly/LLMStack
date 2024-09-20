@@ -8,6 +8,7 @@
     "@fontsource/lato": "^5.0.20",
     "@glideapps/glide-data-grid": "^6.0.3",
     "@glideapps/glide-data-grid-cells": "^6.0.3",
+    "@heroicons/react": "^2.1.5",
     "@jsonforms/material-renderers": "^3.1.0",
     "@jsonforms/react": "^3.0.0",
     "@lexical/react": "^0.9.2",
