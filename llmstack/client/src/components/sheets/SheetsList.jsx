@@ -23,6 +23,7 @@ import {
 import { axios } from "../../data/axios";
 import SheetDeleteDialog from "./SheetDeleteDialog";
 import { useEffect } from "react";
+import moment from "moment";
 import { SheetDuplicateDialog } from "./SheetDuplicateDialog";
 import SheetFromYamlDialog from "./SheetFromYamlDialog";
 
@@ -70,6 +71,11 @@ function SheetListItem({ sheet, onDelete, onEdit, onDuplicate }) {
         <TableCell>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {sheet.description || "No description available"}
+          </Typography>
+        </TableCell>
+        <TableCell align="center">
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {moment(sheet.updated_at).format("MM/DD/YYYY hh:mm A")}
           </Typography>
         </TableCell>
         <TableCell align="center">
@@ -197,6 +203,9 @@ function SheetsList() {
           <TableRow>
             <TableCell sx={{ fontWeight: "bold" }}>Name</TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Description</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }} align="center">
+              Last Run
+            </TableCell>
             <TableCell sx={{ fontWeight: "bold" }} align="center">
               Actions
             </TableCell>

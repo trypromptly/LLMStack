@@ -351,6 +351,7 @@ function Sheet(props) {
   const [selectedCellId, setSelectedCellId] = useState(null);
   const [numRows, setNumRows] = useState(0);
   const [numColumns, setNumColumns] = useState(26);
+  const [lastRunAt, setLastRunAt] = useState(null);
   const [userChanges, setUserChanges] = useState({
     columns: {},
     cells: {},
@@ -735,6 +736,7 @@ function Sheet(props) {
             numRows: null,
             addedColumns: [],
           });
+          setLastRunAt(data?.updated_at || null);
         })
         .catch((error) => {
           console.error(error);
@@ -1044,6 +1046,7 @@ function Sheet(props) {
               enqueueSnackbar("Sheet has finished running", {
                 variant: "success",
               });
+              setLastRunAt(new Date());
             }
 
             // If running is false, we can disconnect
@@ -1211,6 +1214,7 @@ function Sheet(props) {
         selectedRows={selectedRows}
         deleteSelectedRows={deleteSelectedRows}
         runId={runId}
+        lastRunAt={lastRunAt}
         selectedGrid={selectedGrid}
       />
       <Box

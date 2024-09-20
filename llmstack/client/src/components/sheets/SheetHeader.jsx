@@ -25,6 +25,7 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import UploadIcon from "@mui/icons-material/Upload";
 import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
+import moment from "moment";
 import { axios } from "../../data/axios";
 import PreviousRunsModal from "./PreviousRunsModal";
 import ScheduleRunsModal from "./ScheduleRunsModal";
@@ -46,6 +47,7 @@ const SheetHeader = ({
   setSheetRunning,
   selectedRows,
   deleteSelectedRows,
+  lastRunAt = null,
   selectedGrid = [],
 }) => {
   const navigate = useNavigate();
@@ -231,7 +233,36 @@ const SheetHeader = ({
               </Typography>
             </Stack>
           </Stack>
-          <Stack direction={"row"} gap={1} sx={{ marginRight: "-8px" }}>
+          <Stack
+            direction={"row"}
+            gap={1}
+            sx={{ marginRight: "-8px", marginTop: "-4px" }}
+          >
+            {lastRunAt && (
+              <Stack
+                direction={"row"}
+                gap={1}
+                alignItems={"flex-end"}
+                sx={{ paddingTop: "4px", marginRight: "8px" }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.primary",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Last Run:
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary", fontSize: "12px" }}
+                >
+                  {moment(lastRunAt).format("MM/DD/YYYY hh:mm A")}
+                </Typography>
+              </Stack>
+            )}
             {selectedRows.length > 0 && (
               <Tooltip
                 title={`Delete ${selectedRows.length} selected row${
@@ -254,7 +285,7 @@ const SheetHeader = ({
                     }}
                   >
                     <DeleteIcon
-                      color="error"
+                      className="text-red-600"
                       sx={{ "&:hover": { color: "white" } }}
                     />
                   </Button>
