@@ -143,9 +143,10 @@ export function SheetColumnMenu({
             ? columns.findIndex((c) => c.col_letter === column.col_letter)
             : 0
         }
+        cellType={cellType}
       />
     ),
-    [formulaData, setDataHandler, columns, column],
+    [formulaData, cellType, setDataHandler, columns, column],
   );
 
   const handleAddOrEditColumn = () => {

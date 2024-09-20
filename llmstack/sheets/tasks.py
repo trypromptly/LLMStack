@@ -154,6 +154,35 @@ def _execute_cell(
                 )
         else:
             output = ""
+    elif formula_type == SheetFormulaType.AGENT_RUN:
+        request = RequestFactory().post("/api/platform_apps/run", format="json")
+        request.data = {
+            "stream": False,
+            "app_data": formula_data.model_dump(),
+            "input": hydrate_input(formula_data.input, input_values),
+        }
+        request.user = user
+        # Run the agent
+        response = async_to_sync(AppViewSet().run_platform_app_internal_async)(
+            session_id=None,
+            request_uuid=str(uuid.uuid4()),
+            request=request,
+            preview=False,
+        )
+        # Render the output template using response.output
+        if response.get("output"):
+            try:
+                agent_output = response.get("output")
+                output = json.loads(agent_output) if cell_type == SheetCellType.OBJECT else str(agent_output)
+            except Exception as e:
+                logger.error(f"Error processing processor output: {e}")
+                # async_to_sync(channel_layer.group_send)(
+                #     run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
+                # )
+                output = agent_output
+        else:
+            output = response.get("output", "")
+
     if spread_output and (
         cell_type == SheetCellType.OBJECT
         or (isinstance(output, str) and output.startswith("[") and output.endswith("]"))

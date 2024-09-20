@@ -12,6 +12,7 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import SimpleTextFieldWithVars from "../SimpleTextFieldWithVars";
+import { SHEET_CELL_TYPE_OBJECT, SHEET_CELL_TYPE_TAGS } from "./Sheet";
 
 const TOOLS = {
   "Web Search": {
@@ -20,7 +21,7 @@ const TOOLS = {
     input: {},
     config: { k: 10 },
     provider_slug: "promptly",
-    processor_slug: "web-search",
+    processor_slug: "web_search",
     description: "Search the web for information",
     llm_instructions: "",
   },
@@ -46,15 +47,36 @@ const TOOLS = {
   },
 };
 
+// Multiline system message field for agent
+const SYSTEM_MESSAGE =
+  "You are Promptly Sheets Agent a large language model. You perform tasks based on user instruction. Always follow the following Guidelines\n1.Never wrap your response in ```json <CODE_TEXT>```.\n2.Never ask user any follow up question.\n";
+
 const AgentRunForm = ({
   setData,
   agentInstructions,
   selectedTools,
   columns,
   columnIndex,
+  cellType,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [tools, setTools] = useState(selectedTools || []);
+
+  useEffect(() => {
+    if (cellType === SHEET_CELL_TYPE_OBJECT) {
+      setData({
+        agent_system_message:
+          SYSTEM_MESSAGE + "Always respond to the user with valid JSON Object",
+      });
+    } else if (cellType === SHEET_CELL_TYPE_TAGS) {
+      setData({
+        agent_system_message:
+          SYSTEM_MESSAGE +
+          "Always respond to the user with comma separated string of text",
+      });
+    }
+    setData({ agent_system_message: SYSTEM_MESSAGE });
+  }, [cellType, setData]);
 
   const handleInstructionsChange = (newValue) => {
     setData({

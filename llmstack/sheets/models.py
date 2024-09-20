@@ -5,12 +5,12 @@ import string
 import uuid
 from enum import Enum
 from functools import cache
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from llmstack.assets.models import Assets
 
@@ -79,12 +79,12 @@ class DataTransformerFormulaData(SheetFormulaData):
 
 class AgentRunFormulaDataConfig(BaseModel):
     system_message: Optional[str] = None
-    max_steps: Optional[int] = None
+    max_steps: Optional[int] = 20
     split_tasks: Optional[bool] = True
     chat_history_limit: Optional[int] = 20
     temperature: Optional[float] = 0.7
     seed: Optional[int] = 222
-    user_message: Optional[str] = "{{task}}"
+    user_message: Optional[str] = "{{agent_instructions}}"
 
 
 class AgentRunFormulaDataProcessors(BaseModel):
@@ -98,9 +98,25 @@ class AgentRunFormulaDataProcessors(BaseModel):
 
 
 class AgentRunFormulaData(SheetFormulaData):
+    config: AgentRunFormulaDataConfig = AgentRunFormulaDataConfig()
     processors: List[AgentRunFormulaDataProcessors] = []
     agent_instructions: str = ""
+    agent_system_message: str = ""
     selected_tools: List[str] = []
+    type_slug: Literal["agent"] = "agent"
+    output_template: Dict[str, Any] = {"markdown": "{{agent.content}}", "jsonpath": "$.agent.content"}
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate(cls, value: Any):
+        if value.get("agent_system_message"):
+            value["config"]["system_message"] = value["agent_system_message"]
+        value["config"]["user_message"] = "{{agent_instructions}}"
+        return value
+
+    @property
+    def input(self):
+        return {"agent_instructions": self.agent_instructions}
 
 
 class SheetFormula(BaseModel):
