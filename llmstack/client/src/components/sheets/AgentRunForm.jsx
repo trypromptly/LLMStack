@@ -33,26 +33,6 @@ const TOOLS = {
       jsonpath: "$.results[*]",
     },
   },
-  "Document Reader": {
-    provider_slug: "promptly",
-    processor_slug: "document_reader",
-    id: "document_reader",
-    name: "document_reader",
-    input: {},
-    config: {},
-    description: "Get text from a file or URL",
-    llm_instructions: "",
-  },
-  "People Search": {
-    provider_slug: "apollo",
-    processor_slug: "people_search",
-    id: "people_search",
-    name: "people_search",
-    input: {},
-    config: {},
-    description: "Search for people",
-    llm_instructions: "",
-  },
 };
 
 // Multiline system message field for agent
