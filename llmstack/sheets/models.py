@@ -95,6 +95,7 @@ class AgentRunFormulaDataProcessors(BaseModel):
     description: str = ""
     provider_slug: str = ""
     processor_slug: str = ""
+    output_template: Dict[str, Any] = {}
 
 
 class AgentRunFormulaData(SheetFormulaData):
