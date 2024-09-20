@@ -419,6 +419,19 @@ function Sheet(props) {
     [cells, columns],
   );
 
+  const getPrefixFromFormulaType = useCallback((formulaType) => {
+    if (formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN) {
+      return "PR";
+    }
+    if (formulaType === SHEET_FORMULA_TYPE_DATA_TRANSFORMER) {
+      return "DT";
+    }
+    if (formulaType === SHEET_FORMULA_TYPE_AI_AGENT) {
+      return "AI";
+    }
+    return "AR";
+  }, []);
+
   const parseSheetColumnsIntoGridColumns = useCallback((columns) => {
     if (!columns) {
       return [];
@@ -549,8 +562,58 @@ function Sheet(props) {
       ctx.fillText("fx", iconX, iconY);
 
       ctx.restore();
+
+      // Draw icon at the left of the cell
+      const formulaType = cells[cellId]?.formula?.type;
+      const formulaIconImage =
+        formulaType === SHEET_FORMULA_TYPE_PROCESSOR_RUN
+          ? getProviderIconImage(
+              cells[cellId]?.formula?.data?.provider_slug || "promptly",
+              false,
+            )
+          : getProviderIconImage("promptly", false);
+
+      if (formulaIconImage) {
+        // Draw this image on the canvas
+        const img = new Image();
+        img.src = formulaIconImage;
+
+        img.onload = () => {
+          const pixelRatio = window.devicePixelRatio || 1;
+          ctx.save();
+          ctx.scale(pixelRatio, pixelRatio);
+          // Draw a background behind the icon
+          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.fillRect(
+            iconX - rect.width + iconSize + margin + 5,
+            iconY - 5,
+            iconSize + 30,
+            iconSize + 5,
+          );
+
+          // Add a text next to the icon indicating the formula type
+          ctx.fillStyle = "#107C41";
+          ctx.font = "bold 10px Lato";
+          ctx.textAlign = "left";
+          ctx.textBaseline = "middle";
+          ctx.fillText(
+            getPrefixFromFormulaType(formulaType),
+            iconX - rect.width + iconSize + margin + 10,
+            iconY + iconSize / 2,
+          );
+
+          ctx.drawImage(
+            img,
+            iconX - rect.width + iconSize + margin + 25,
+            iconY,
+            iconSize,
+            iconSize,
+          );
+          ctx.restore();
+        };
+      }
     },
-    [cells, columns],
+    [cells, columns, getPrefixFromFormulaType],
   );
 
   const updateColumnMenuPosition = useCallback(
@@ -595,6 +658,18 @@ function Sheet(props) {
         return;
       }
 
+      // Add text indicating the formula type
+      ctx.fillStyle = "#107C41";
+      ctx.font = "bold 12px Lato";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(
+        getPrefixFromFormulaType(gridColumn.formula.type),
+        menuBounds.x - 30,
+        menuBounds.y + menuBounds.height / 2 + 1,
+        100,
+      );
+
       const headerIconImage =
         gridColumn.formula.type === SHEET_FORMULA_TYPE_PROCESSOR_RUN
           ? getProviderIconImage(
@@ -637,6 +712,7 @@ function Sheet(props) {
       selectedColumnId,
       columnMenuAnchorDivEl,
       updateColumnMenuPosition,
+      getPrefixFromFormulaType,
     ],
   );
 
