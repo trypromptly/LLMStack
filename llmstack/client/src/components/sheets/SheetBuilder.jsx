@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Box, TextField, Button, Typography, Paper } from "@mui/material";
 import { Ws } from "../../data/ws";
 
-function SheetBuilder({ sheetId }) {
+function SheetBuilder({ sheetId, open }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
@@ -16,7 +16,7 @@ function SheetBuilder({ sheetId }) {
   }/ws`;
 
   useEffect(() => {
-    if (!wsRef.current) {
+    if (open && !wsRef.current) {
       wsRef.current = new Ws(`${wsUrlPrefix}/sheets/${sheetId}/builder`);
       wsRef.current.setOnMessage((event) => {
         const data = JSON.parse(event.data);
@@ -41,12 +41,10 @@ function SheetBuilder({ sheetId }) {
       );
     }
 
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, [sheetId, wsUrlPrefix]);
+    if (!open) {
+      wsRef.current.close();
+    }
+  }, [sheetId, wsUrlPrefix, open]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

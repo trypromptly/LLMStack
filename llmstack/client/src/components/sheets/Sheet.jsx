@@ -1352,11 +1352,9 @@ function Sheet(props) {
               : selectedCellValue}
           </LayoutRenderer>
         </Box>
-        {false && (
-          <IconButton onClick={toggleChat} color="primary">
-            <ChatIcon />
-          </IconButton>
-        )}
+        <IconButton onClick={toggleChat} color="primary">
+          <ChatIcon />
+        </IconButton>
       </Box>
       <div id="sheet-column-menu" ref={columnMenuAnchorDivEl} />
       <Stack direction="row" spacing={2}>
@@ -1400,17 +1398,16 @@ function Sheet(props) {
             height={dataEditorContainerHeight}
           />
         </Box>
-        {showChat && (
-          <Box
-            sx={{
-              flex: "30%",
-              borderLeft: "1px solid #e0e0e0",
-              height: "100%",
-            }}
-          >
-            <SheetBuilder sheetId={sheet.uuid} />
-          </Box>
-        )}
+        <Box
+          sx={{
+            flex: "30%",
+            borderLeft: "1px solid #e0e0e0",
+            height: "100%",
+            display: showChat ? "block" : "none",
+          }}
+        >
+          <SheetBuilder sheetId={sheet.uuid} open={showChat} />
+        </Box>
       </Stack>
       <div id="portal" />
       <MemoizedSheetColumnMenu
