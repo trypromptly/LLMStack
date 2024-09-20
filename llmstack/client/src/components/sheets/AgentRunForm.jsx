@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Select,
@@ -43,8 +43,7 @@ const AgentRunForm = ({
   setData,
   agentInstructions,
   selectedTools,
-  columns,
-  columnIndex,
+  formulaTemplateVariables,
   cellType,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -88,19 +87,12 @@ const AgentRunForm = ({
 
   const availableTools = Object.keys(TOOLS);
 
-  const variables = useMemo(() => {
-    return columns.slice(0, columnIndex).reduce((acc, column) => {
-      acc[column.col_letter] = column.title || `{{${column.col_letter}}}`;
-      return acc;
-    }, {});
-  }, [columns, columnIndex]);
-
   return (
     <Box sx={{ width: "100%" }}>
       <SimpleTextFieldWithVars
         value={agentInstructions}
         onChange={handleInstructionsChange}
-        variables={variables}
+        variables={formulaTemplateVariables}
         label="Agent Instructions"
         placeholder="Provide instructions to the LLM agent"
       />

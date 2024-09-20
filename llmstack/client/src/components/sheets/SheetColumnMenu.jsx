@@ -54,7 +54,9 @@ export function SheetColumnMenu({
 }) {
   const [columnName, setColumnName] = useState(column?.title || "");
   const [cellType, setCellType] = useState(0);
-  const [formulaType, setFormulaType] = useState(column?.formula?.type || "");
+  const [formulaType, setFormulaType] = useState(
+    column?.formula?.type || SHEET_FORMULA_TYPE_AI_AGENT,
+  );
   const [formulaData, setFormulaData] = useState(column?.formula?.data || {});
   const [showFormulaTypeSelect, setShowFormulaTypeSelect] = useState(
     column?.formula?.type && column.formula.type !== SHEET_FORMULA_TYPE_NONE
@@ -91,7 +93,7 @@ export function SheetColumnMenu({
           : false,
       );
       setFormulaData(column?.formula?.data || {});
-      setFormulaType(column?.formula?.type || "");
+      setFormulaType(column?.formula?.type || SHEET_FORMULA_TYPE_AI_AGENT);
       formulaDataRef.current = column?.formula?.data || {};
     }
   }, [open, column]);
@@ -105,6 +107,17 @@ export function SheetColumnMenu({
     },
     [formulaDataRef],
   );
+
+  const formulaTemplateVariables = useMemo(() => {
+    const columnIndex = columns.findIndex(
+      (c) => c.col_letter === column?.col_letter,
+    );
+
+    return columns.slice(0, columnIndex).reduce((acc, column) => {
+      acc[column.col_letter] = column.title || `{{${column.col_letter}}}`;
+      return acc;
+    }, {});
+  }, [columns, column]);
 
   const memoizedProcessorRunForm = useMemo(
     () => (
@@ -137,16 +150,11 @@ export function SheetColumnMenu({
         setData={setDataHandler}
         agentInstructions={formulaData?.agent_instructions}
         selectedTools={formulaData?.selected_tools}
-        columns={columns}
-        columnIndex={
-          column
-            ? columns.findIndex((c) => c.col_letter === column.col_letter)
-            : 0
-        }
+        formulaTemplateVariables={formulaTemplateVariables}
         cellType={cellType}
       />
     ),
-    [formulaData, cellType, setDataHandler, columns, column],
+    [formulaData, cellType, setDataHandler, formulaTemplateVariables],
   );
 
   const handleAddOrEditColumn = () => {
@@ -405,7 +413,7 @@ export function SheetColumnMenu({
                         Formula Type
                       </InputLabel>
                       <Select
-                        value={formulaType.toString() || "0"}
+                        value={formulaType.toString() || "4"}
                         id="formula-type-select"
                         aria-label="Formula Type"
                         onChange={(e) => {

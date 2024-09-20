@@ -33,7 +33,7 @@ const SheetFormulaMenu = ({
   setFormula,
 }) => {
   const [formulaType, setFormulaType] = useState(
-    selectedCell?.formula?.type || "",
+    selectedCell?.formula?.type || SHEET_FORMULA_TYPE_AI_AGENT,
   );
   const [transformationTemplate, setTransformationTemplate] = useState(
     selectedCell?.formula?.data?.transformation_template || "",
@@ -58,7 +58,7 @@ const SheetFormulaMenu = ({
 
   useEffect(() => {
     formulaDataRef.current = selectedCell?.formula?.data || {};
-    setFormulaType(selectedCell?.formula?.type || "");
+    setFormulaType(selectedCell?.formula?.type || SHEET_FORMULA_TYPE_AI_AGENT);
     setTransformationTemplate(
       selectedCell?.formula?.data?.transformation_template || "",
     );
@@ -103,11 +103,13 @@ const SheetFormulaMenu = ({
     () => (
       <AgentRunForm
         setData={setDataHandler}
-        agentSlug={formulaData?.agent_slug}
-        agentInput={formulaData?.input}
+        agentInstructions={formulaData?.agent_instructions}
+        selectedTools={formulaData?.selected_tools}
+        formulaTemplateVariables={{}}
+        cellType={selectedCell?.cell_type}
       />
     ),
-    [formulaData, setDataHandler],
+    [formulaData, setDataHandler, selectedCell?.cell_type],
   );
 
   const handleApplyFormula = () => {
