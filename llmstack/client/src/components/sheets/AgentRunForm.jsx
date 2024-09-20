@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
-  TextField,
   Select,
   MenuItem,
   Chip,
@@ -12,6 +11,7 @@ import {
   Switch,
   FormControlLabel,
 } from "@mui/material";
+import SimpleTextFieldWithVars from "../SimpleTextFieldWithVars";
 
 const TOOLS = {
   "Web Search": {
@@ -46,16 +46,20 @@ const TOOLS = {
   },
 };
 
-const AgentRunForm = ({ setData, agentInstructions, selectedTools }) => {
+const AgentRunForm = ({
+  setData,
+  agentInstructions,
+  selectedTools,
+  columns,
+  columnIndex,
+}) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [instructions, setInstructions] = useState(agentInstructions || "");
   const [tools, setTools] = useState(selectedTools || []);
 
-  const handleInstructionsChange = (event) => {
-    setInstructions(event.target.value);
+  const handleInstructionsChange = (newValue) => {
     setData({
-      agent_instructions: event.target.value,
-      input: { task: event.target.value },
+      agent_instructions: newValue,
+      input: { task: newValue },
     });
   };
 
@@ -74,45 +78,21 @@ const AgentRunForm = ({ setData, agentInstructions, selectedTools }) => {
 
   const availableTools = Object.keys(TOOLS);
 
+  const variables = useMemo(() => {
+    return columns.slice(0, columnIndex).reduce((acc, column) => {
+      acc[column.col_letter] = column.title || `{{${column.col_letter}}}`;
+      return acc;
+    }, {});
+  }, [columns, columnIndex]);
+
   return (
     <Box sx={{ width: "100%" }}>
-      <TextField
+      <SimpleTextFieldWithVars
+        value={agentInstructions}
+        onChange={handleInstructionsChange}
+        variables={variables}
         label="Agent Instructions"
         placeholder="Provide instructions to the LLM agent"
-        multiline
-        rows={4}
-        value={instructions}
-        onChange={handleInstructionsChange}
-        variant="outlined"
-        fullWidth
-        sx={{
-          marginBottom: 2,
-          "& .MuiInputBase-root": {
-            "& fieldset": {
-              border: "solid 1px #ccc",
-              borderRadius: "8px",
-              boxShadow: "0px 1px 2px 0px #1018280F, 0px 1px 3px 0px #1018281A",
-            },
-          },
-          "& .MuiOutlinedInput-root": {
-            boxShadow: "none",
-            borderRadius: "8px",
-            fontSize: "14px",
-            "& .MuiOutlinedInput-input": {
-              padding: "0px",
-            },
-          },
-          "& .MuiOutlinedInput-notchedOutline": {
-            borderRadius: "8px !important",
-            boxShadow: "0px 0px 4px #e8ebee",
-          },
-          "& .MuiInputLabel-root": {
-            fontSize: "14px",
-            fontWeight: "600",
-            color: "text.secondary",
-            marginTop: "0px",
-          },
-        }}
       />
       <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
         <InputLabel

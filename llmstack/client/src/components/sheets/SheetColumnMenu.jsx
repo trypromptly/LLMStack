@@ -137,9 +137,15 @@ export function SheetColumnMenu({
         setData={setDataHandler}
         agentInstructions={formulaData?.agent_instructions}
         selectedTools={formulaData?.selected_tools}
+        columns={columns}
+        columnIndex={
+          column
+            ? columns.findIndex((c) => c.col_letter === column.col_letter)
+            : 0
+        }
       />
     ),
-    [formulaData, setDataHandler],
+    [formulaData, setDataHandler, columns, column],
   );
 
   const handleAddOrEditColumn = () => {
