@@ -110,10 +110,16 @@ const SimpleTextFieldWithVars = ({
   }, [inputValue]);
 
   const renderDisplayValue = () => {
-    const parts = inputValue.split(/(\{\{.*?\}\})/);
+    const parts = inputValue.split(/(\{\{.*?\}\}|\n)/);
+    let currentIndex = 0;
     return parts.map((part, index) => {
+      if (part === "\n") {
+        currentIndex += 1;
+        return <br key={`br-${index}`} />;
+      }
       if (part.startsWith("{{") && part.endsWith("}}")) {
         const varName = part.slice(2, -2);
+        currentIndex += part.length;
         return (
           <Chip
             key={index}
@@ -123,7 +129,30 @@ const SimpleTextFieldWithVars = ({
           />
         );
       }
-      return <span key={index}>{part}</span>;
+      const beforeCursor = part.slice(
+        0,
+        Math.max(0, cursorPosition - currentIndex),
+      );
+      const afterCursor = part.slice(
+        Math.max(0, cursorPosition - currentIndex),
+      );
+      currentIndex += part.length;
+      return (
+        <React.Fragment key={index}>
+          {beforeCursor}
+          {cursorPosition >= currentIndex - part.length &&
+            cursorPosition <= currentIndex && (
+              <span
+                style={{
+                  borderLeft: "1px solid black",
+                  marginLeft: "-1px",
+                  animation: "blink 1s step-end infinite",
+                }}
+              />
+            )}
+          {afterCursor}
+        </React.Fragment>
+      );
     });
   };
 
@@ -169,6 +198,15 @@ const SimpleTextFieldWithVars = ({
             pointerEvents: "none",
             whiteSpace: "pre-wrap",
             wordBreak: "break-word",
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              left: 0,
+              top: 0,
+              right: 0,
+              bottom: 0,
+              pointerEvents: "none",
+            },
           }}
         >
           {renderDisplayValue()}
