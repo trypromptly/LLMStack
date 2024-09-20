@@ -51,16 +51,12 @@ from .models import (
     AppTemplate,
     AppType,
     AppVisibility,
-    TestCase,
-    TestSet,
 )
 from .serializers import (
     AppDataSerializer,
     AppHubSerializer,
     AppSerializer,
     AppTypeSerializer,
-    TestCaseSerializer,
-    TestSetSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -1244,29 +1240,6 @@ class AppViewSet(viewsets.ViewSet):
     def run_twiliovoice(self, request, uid):
         raise NotImplementedError()
 
-    def testsets(self, request, uid):
-        app = get_object_or_404(App, uuid=uuid.UUID(uid))
-        if app.owner != request.user:
-            return DRFResponse(status=404)
-        test_set = AppTestSetViewSet()
-
-        if request.method == "GET":
-            testsets = TestSet.objects.filter(app=app)
-            return DRFResponse(
-                list(
-                    map(
-                        lambda x: test_set.get(
-                            request,
-                            str(x.uuid),
-                        ).data,
-                        testsets,
-                    ),
-                ),
-            )
-        elif request.method == "POST":
-            return test_set.post(request, app)
-        return DRFResponse(status=405)
-
 
 class AppHubViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
@@ -1280,85 +1253,6 @@ class AppHubViewSet(viewsets.ViewSet):
                 instance=apphub_objs,
                 many=True,
             ).data,
-        )
-
-
-class AppTestCasesViewSet(viewsets.ViewSet):
-    def get(self, request, uid=None):
-        if uid:
-            testcase = get_object_or_404(TestCase, uuid=uuid.UUID(uid))
-            if testcase.testset.app.owner != request.user:
-                return DRFResponse(status=403)
-
-            return DRFResponse(TestCaseSerializer(instance=testcase).data)
-
-        return DRFResponse(status=405)
-
-    def delete(self, request, uid):
-        testcase = get_object_or_404(TestCase, uuid=uuid.UUID(uid))
-        if testcase.testset.app.owner != request.user:
-            return DRFResponse(status=403)
-
-        testcase.delete()
-        return DRFResponse(status=204)
-
-
-class AppTestSetViewSet(viewsets.ModelViewSet):
-    def get(self, request, uid=None):
-        testset = get_object_or_404(TestSet, uuid=uuid.UUID(uid))
-        testcases = self.getTestCases(request, uid)
-        response = TestSetSerializer(instance=testset).data
-        response["testcases"] = testcases.data
-        return DRFResponse(response)
-
-    def getTestCases(self, request, uid):
-        testset = get_object_or_404(TestSet, uuid=uuid.UUID(uid))
-        if testset.app.owner != request.user:
-            return DRFResponse(status=403)
-
-        testcases = TestCase.objects.filter(testset=testset)
-        return DRFResponse(
-            TestCaseSerializer(
-                instance=testcases,
-                many=True,
-            ).data,
-        )
-
-    def post(self, request, app):
-        testset_name = request.data["name"]
-
-        testset = TestSet.objects.create(name=testset_name, app=app)
-
-        return DRFResponse(
-            TestSetSerializer(
-                instance=testset,
-            ).data,
-            status=201,
-        )
-
-    def delete(self, request, uid):
-        testset = get_object_or_404(TestSet, uuid=uuid.UUID(uid))
-        if request.user != testset.app.owner:
-            return DRFResponse(status=403)
-        testset.delete()
-        return DRFResponse(status=204)
-
-    def add_entry(self, request, uid):
-        testset = get_object_or_404(TestSet, uuid=uuid.UUID(uid))
-        if request.user != testset.app.owner:
-            return DRFResponse(status=403)
-
-        testcase = TestCase.objects.create(
-            testset=testset,
-            input_data=request.data["input_data"],
-            expected_output=request.data["expected_output"] if "expected_output" in request.data else "",
-        )
-
-        return DRFResponse(
-            TestCaseSerializer(
-                instance=testcase,
-            ).data,
-            status=201,
         )
 
 

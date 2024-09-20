@@ -74,22 +74,4 @@ urlpatterns = [
     ),
     # App Hub
     path("api/appHub", apis.AppHubViewSet.as_view({"get": "list"})),
-    # App Tests
-    path(
-        "api/apptestsets/<str:uid>",
-        apis.AppTestSetViewSet.as_view({"get": "get", "delete": "delete"}),
-    ),
-    path(
-        "api/apptestsets/<str:uid>/testcases",
-        apis.AppTestSetViewSet.as_view({"get": "getTestCases"}),
-    ),
-    path(
-        "api/apptestsets/<str:uid>/add_entry",
-        apis.AppTestSetViewSet.as_view({"post": "add_entry"}),
-    ),
-    # App Test Entry
-    path(
-        "api/apptestcases/<str:uid>",
-        apis.AppTestCasesViewSet.as_view({"get": "get", "delete": "delete"}),
-    ),
 ]
