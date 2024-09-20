@@ -24,6 +24,14 @@ const TOOLS = {
     processor_slug: "web_search",
     description: "Search the web for information",
     llm_instructions: "",
+    output_template: {
+      markdown:
+        "{% for result in results %}\n" +
+        "{{result.text}}\n" +
+        "{{result.source}}\n" +
+        "{% endfor %}",
+      jsonpath: "$.results[*]",
+    },
   },
   "Document Reader": {
     provider_slug: "promptly",
