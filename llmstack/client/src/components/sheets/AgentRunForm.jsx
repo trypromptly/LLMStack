@@ -134,8 +134,7 @@ const AgentRunForm = ({
               },
             },
             "& .MuiSelect-select": {
-              padding: "0px",
-              paddingTop: "1px",
+              padding: "2px",
               minHeight: "36px",
             },
             "& .MuiOutlinedInput-root": {
@@ -153,8 +152,21 @@ const AgentRunForm = ({
         >
           {availableTools.map((tool) => (
             <MenuItem key={tool} value={tool}>
-              <Typography variant="body1" color="text.secondary">
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ fontSize: "12px", fontWeight: "600" }}
+              >
                 {tool}
+                {" - "}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: "12px" }}
+              >
+                {" - "}
+                {TOOLS[tool].description}
               </Typography>
             </MenuItem>
           ))}
