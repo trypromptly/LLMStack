@@ -35,31 +35,34 @@ const SimpleTextFieldWithVars = ({
       const inputRect = event.target.getBoundingClientRect();
       const atIndex = event.target.selectionStart - 1;
       const textBeforeAt = newValue.slice(0, atIndex);
-      const dummySpan = document.createElement("span");
-      dummySpan.style.font = window.getComputedStyle(event.target).font;
-      dummySpan.style.visibility = "hidden";
-      dummySpan.textContent = textBeforeAt;
-      document.body.appendChild(dummySpan);
+      const dummyTextArea = document.createElement("textarea");
+      dummyTextArea.style.font = window.getComputedStyle(event.target).font;
+      dummyTextArea.style.position = "absolute";
+      dummyTextArea.style.left = "-9999px";
+      dummyTextArea.style.width = `${inputRect.width}px`;
+      dummyTextArea.value = textBeforeAt;
+      document.body.appendChild(dummyTextArea);
 
-      const atOffset = dummySpan.offsetWidth;
-      document.body.removeChild(dummySpan);
-
-      // Calculate line height
+      const { scrollHeight } = dummyTextArea;
       const lineHeight = parseInt(
         window.getComputedStyle(event.target).lineHeight,
       );
+      const lines = Math.floor(scrollHeight / lineHeight);
+      const lastLineOffset = scrollHeight % lineHeight;
+
+      document.body.removeChild(dummyTextArea);
 
       popperAnchorEl.current = {
         clientWidth: 0,
         clientHeight: 0,
         getBoundingClientRect() {
           return {
-            top: inputRect.top + lineHeight,
-            left: inputRect.left + (atOffset % inputRect.width),
-            right: inputRect.left + (atOffset % inputRect.width),
-            bottom:
-              inputRect.top +
-              Math.floor(atOffset / inputRect.width) * lineHeight,
+            top: inputRect.top + lines * lineHeight + lastLineOffset,
+            left:
+              inputRect.left + (dummyTextArea.scrollWidth % inputRect.width),
+            right:
+              inputRect.left + (dummyTextArea.scrollWidth % inputRect.width),
+            bottom: inputRect.top + lines * lineHeight + lastLineOffset,
             width: 0,
             height: 0,
           };
