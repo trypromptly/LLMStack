@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Box, TextField, Button, Typography, Paper } from "@mui/material";
 import { Ws } from "../../data/ws";
+import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
 
 function SheetBuilder({ sheetId, open }) {
   const [messages, setMessages] = useState([]);
@@ -42,7 +42,7 @@ function SheetBuilder({ sheetId, open }) {
     }
 
     if (!open) {
-      wsRef.current.close();
+      wsRef.current?.close();
     }
   }, [sheetId, wsUrlPrefix, open]);
 
@@ -66,64 +66,58 @@ function SheetBuilder({ sheetId, open }) {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "90vh",
-        maxHeight: "100vh",
-      }}
-    >
-      <Box
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflowY: "auto",
-            p: 2,
-          }}
-        >
+    <div className="flex flex-col h-[90vh] max-h-screen bg-gray-100">
+      <div className="flex-grow flex flex-col overflow-hidden">
+        <div className="flex-grow overflow-y-auto p-4 space-y-4">
           {messages.map((message, index) => (
-            <Paper
+            <div
               key={index}
-              sx={{
-                p: 1,
-                mb: 1,
-                textAlign: message.role === "user" ? "right" : "left",
-                bgcolor: message.role === "user" ? "#e3f2fd" : "#f5f5f5",
-              }}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
             >
-              <Typography variant="body1">{message.content}</Typography>
-            </Paper>
+              <div
+                className={`max-w-[70%] rounded-lg p-3 ${
+                  message.role === "user"
+                    ? "bg-blue-900 text-white"
+                    : "bg-white text-gray-800"
+                }`}
+              >
+                <pre className="text-sm whitespace-pre-wrap font-sans">
+                  {message.content}
+                </pre>
+              </div>
+            </div>
           ))}
           <div ref={messagesEndRef} />
-        </Box>
-      </Box>
-      <Box sx={{ p: 2, borderTop: "1px solid #e0e0e0" }}>
-        <TextField
-          fullWidth
-          variant="outlined"
+        </div>
+      </div>
+      <div className="relative flex items-center justify-center m-2">
+        <textarea
           value={input}
-          onChange={(e) => {
-            setInput(e.target.value);
-            if (e.key === "Enter") {
-              sendMessage();
-            }
-          }}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="w-full px-4 py-3 pr-12 border border-blue-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800 resize-none overflow-hidden"
           placeholder="Type your message..."
+          rows={1}
+          style={{ minHeight: "44px", maxHeight: "120px" }}
         />
-        <Button variant="contained" onClick={sendMessage} sx={{ mt: 1 }}>
-          Send
-        </Button>
-      </Box>
-    </Box>
+        <button
+          onClick={sendMessage}
+          className="absolute right-3 bottom-1/2 transform translate-y-1/2 text-blue-500 hover:text-blue-600 transition duration-200 ease-in-out"
+        >
+          <PaperAirplaneIcon className="h-6 w-6" />
+        </button>
+      </div>
+    </div>
   );
 }
 
