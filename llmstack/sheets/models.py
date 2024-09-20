@@ -44,6 +44,7 @@ class SheetFormulaType(int, Enum):
     DATA_TRANSFORMER = 1
     APP_RUN = 2
     PROCESSOR_RUN = 3
+    AGENT_RUN = 4
 
     def __str__(self):
         return self.value
@@ -76,9 +77,37 @@ class DataTransformerFormulaData(SheetFormulaData):
     transformation_template: str
 
 
+class AgentRunFormulaDataConfig(BaseModel):
+    system_message: Optional[str] = None
+    max_steps: Optional[int] = None
+    split_tasks: Optional[bool] = True
+    chat_history_limit: Optional[int] = 20
+    temperature: Optional[float] = 0.7
+    seed: Optional[int] = 222
+    user_message: Optional[str] = "{{task}}"
+
+
+class AgentRunFormulaDataProcessors(BaseModel):
+    id: str
+    name: str
+    input: Optional[dict] = {}
+    config: dict = {}
+    description: str = ""
+    provider_slug: str = ""
+    processor_slug: str = ""
+
+
+class AgentRunFormulaData(SheetFormulaData):
+    processors: List[AgentRunFormulaDataProcessors] = []
+    agent_instructions: str = ""
+    selected_tools: List[str] = []
+
+
 class SheetFormula(BaseModel):
     type: SheetFormulaType = SheetFormulaType.NONE
-    data: Union[NoneFormulaData, AppRunFormulaData, ProcessorRunFormulaData, DataTransformerFormulaData]
+    data: Union[
+        NoneFormulaData, AppRunFormulaData, ProcessorRunFormulaData, DataTransformerFormulaData, AgentRunFormulaData
+    ]
 
 
 class SheetColumn(BaseModel):
@@ -112,6 +141,8 @@ class SheetColumn(BaseModel):
                 data["formula"] = SheetFormula(type=formula_type, data=AppRunFormulaData(**formula_data))
             elif formula_type == SheetFormulaType.DATA_TRANSFORMER:
                 data["formula"] = SheetFormula(type=formula_type, data=DataTransformerFormulaData(**formula_data))
+            elif formula_type == SheetFormulaType.AGENT_RUN:
+                data["formula"] = SheetFormula(type=formula_type, data=AgentRunFormulaData(**formula_data))
             else:
                 data["formula"] = SheetFormula(type=SheetFormulaType.NONE, data=NoneFormulaData())
 
