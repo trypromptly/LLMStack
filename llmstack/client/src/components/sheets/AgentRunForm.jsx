@@ -104,7 +104,7 @@ const AgentRunForm = ({
         label="Agent Instructions"
         placeholder="Provide instructions to the LLM agent"
       />
-      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+      <FormControl fullWidth sx={{ mt: 4, mb: 2 }}>
         <InputLabel
           id="tools-select-label"
           sx={{ lineHeight: "14px", minHeight: "14px" }}
