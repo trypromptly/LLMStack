@@ -973,7 +973,7 @@ class AppViewSet(viewsets.ViewSet):
 
         owner_connections = get_connections(app_owner_profile) if request.user.is_authenticated else {}
         app_data = request.data["app_data"]
-        app_slug = app_data["slug"]
+        app_slug = app_data.get("slug", "platform-app")
         app_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, app_slug)
         app = PlatformApp(
             id="",
