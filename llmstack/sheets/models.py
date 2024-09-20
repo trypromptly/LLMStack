@@ -87,7 +87,7 @@ class AgentRunFormulaDataConfig(BaseModel):
     user_message: Optional[str] = "{{agent_instructions}}"
 
 
-class AgentRunFormulaDataProcessors(BaseModel):
+class AgentRunFormulaDataProcessor(BaseModel):
     id: str
     name: str
     input: Optional[dict] = {}
@@ -100,7 +100,7 @@ class AgentRunFormulaDataProcessors(BaseModel):
 
 class AgentRunFormulaData(SheetFormulaData):
     config: AgentRunFormulaDataConfig = AgentRunFormulaDataConfig()
-    processors: List[AgentRunFormulaDataProcessors] = []
+    processors: List[AgentRunFormulaDataProcessor] = []
     agent_instructions: str = ""
     agent_system_message: str = ""
     selected_tools: List[str] = []
@@ -110,6 +110,8 @@ class AgentRunFormulaData(SheetFormulaData):
     @model_validator(mode="before")
     @classmethod
     def validate(cls, value: Any):
+        value["config"] = {} if not value.get("config") else value["config"]
+
         if value.get("agent_system_message"):
             value["config"]["system_message"] = value["agent_system_message"]
         value["config"]["user_message"] = "{{agent_instructions}}"
