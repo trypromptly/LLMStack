@@ -10,6 +10,8 @@ export const columnIndexToLetter = (index) => {
 };
 
 export const columnLetterToIndex = (letter) => {
+  if (!letter) return 0;
+
   return (
     letter.split("").reduce((acc, char, index) => {
       return (
