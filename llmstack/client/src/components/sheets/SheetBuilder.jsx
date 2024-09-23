@@ -40,8 +40,8 @@ function SheetBuilder({ sheetId, open, addOrUpdateColumns }) {
     [addOrUpdateColumns],
   );
 
-  useEffect(() => {
-    if (open && !wsRef.current) {
+  const createWebSocketConnection = useCallback(() => {
+    if (!wsRef.current) {
       wsRef.current = new Ws(`${wsUrlPrefix}/sheets/${sheetId}/builder`);
       wsRef.current.setOnMessage((event) => {
         const data = JSON.parse(event.data);
@@ -70,11 +70,27 @@ function SheetBuilder({ sheetId, open, addOrUpdateColumns }) {
         }),
       );
     }
+  }, [sheetId, wsUrlPrefix, handleBuilderUpdates]);
 
+  useEffect(() => {
+    return () => {
+      // Close the connection when the component unmounts
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!open) {
-      wsRef.current?.close();
+      // Close the connection when open becomes false
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     }
-  }, [sheetId, wsUrlPrefix, open, handleBuilderUpdates]);
+  }, [open]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -87,19 +103,22 @@ function SheetBuilder({ sheetId, open, addOrUpdateColumns }) {
   };
 
   const sendMessage = (messageToSend = input) => {
-    if (messageToSend.trim() && wsRef.current) {
-      const message = {
-        type: "message",
-        message: messageToSend,
-        sheet_id: sheetId,
-      };
-      wsRef.current.send(JSON.stringify(message));
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { role: "user", content: messageToSend },
-      ]);
-      setInput("");
-      setIsTyping(true);
+    if (messageToSend.trim()) {
+      createWebSocketConnection(); // Create connection if it doesn't exist
+      if (wsRef.current) {
+        const message = {
+          type: "message",
+          message: messageToSend,
+          sheet_id: sheetId,
+        };
+        wsRef.current.send(JSON.stringify(message));
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { role: "user", content: messageToSend },
+        ]);
+        setInput("");
+        setIsTyping(true);
+      }
     }
   };
 
