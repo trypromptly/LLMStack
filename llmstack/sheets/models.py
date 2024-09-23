@@ -334,9 +334,12 @@ class PromptlySheet(models.Model):
         page_size = self.extra_data.get("page_size", 1000)
         page = row // page_size
         pages = self.data.get("cells", [])
-        page_objref = pages[page]
-        cells = self.get_sheet_cells(page_objref)
-        return cells.get(f"{col}{row}", {})
+        page_objref = pages[page] if len(pages) > page else None
+        if page_objref:
+            cells = self.get_sheet_cells(page_objref)
+            return cells.get(f"{col}{row}", {})
+        else:
+            return {}
 
     @property
     def cells(self):
