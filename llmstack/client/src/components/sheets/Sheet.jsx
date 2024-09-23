@@ -115,7 +115,7 @@ export const sheetCellTypes = {
         kind: GridCellKind.Text,
         data: cell.value,
         displayData: cell.value ? cell.value.slice(0, 100) : "",
-        readonly: cell.formula || column.formula?.type > 0 || false,
+        readonly: cell?.formula || column?.formula?.type > 0 || false,
         allowOverlay: true,
         allowWrapping: true,
       };
@@ -143,9 +143,9 @@ export const sheetCellTypes = {
 
       return {
         kind: GridCellKind.Number,
-        data: parseFloat(cell.value),
-        displayData: cell.value?.toString() || "",
-        readonly: cell.formula || column.formula?.type > 0 || false,
+        data: parseFloat(cell.value || "0"),
+        displayData: cell.value?.toString() || "0",
+        readonly: cell?.formula || column?.formula?.type > 0 || false,
         allowOverlay: true,
         allowWrapping: true,
       };
@@ -212,7 +212,7 @@ export const sheetCellTypes = {
         data: {
           kind: "tags-cell",
           possibleTags:
-            cell.value.split(",").map((tag) => {
+            cell.value?.split(",").map((tag) => {
               return {
                 tag: tag.trim(),
                 color: randomColor({
@@ -221,16 +221,16 @@ export const sheetCellTypes = {
                 }),
               };
             }) || [],
-          tags: cell.value.split(",").map((tag) => tag.trim()) || [],
+          tags: cell.value?.split(",").map((tag) => tag.trim()) || [],
         },
-        readonly: cell.formula || column.formula?.type > 0 || false,
+        readonly: cell.formula || column?.formula?.type > 0 || false,
         allowOverlay: true,
         allowWrapping: true,
         allowEditing: true,
       };
     },
     getCellValue: (cell) => {
-      return cell.data.tags.join(", ");
+      return cell?.data?.tags?.join(", ") || "";
     },
   },
   [SHEET_CELL_TYPE_BOOLEAN]: {
@@ -251,13 +251,13 @@ export const sheetCellTypes = {
       return {
         kind: GridCellKind.Boolean,
         data: Boolean(cell.value),
-        readonly: cell.formula || column.formula?.type > 0 || false,
+        readonly: cell.formula || column?.formula?.type > 0 || false,
         allowOverlay: true,
         allowWrapping: true,
       };
     },
     getCellValue: (cell) => {
-      return cell.data.toString();
+      return cell?.data?.toString() || "";
     },
   },
   [SHEET_CELL_TYPE_IMAGE]: {
@@ -281,7 +281,7 @@ export const sheetCellTypes = {
         kind: GridCellKind.Image,
         data: cell.value?.trim().split(",") || [],
         displayData: cell.value?.trim().split(",") || [],
-        readonly: cell.formula || column.formula?.type > 0 || false,
+        readonly: cell.formula || column?.formula?.type > 0 || false,
         allowOverlay: true,
         allowWrapping: true,
       };
@@ -317,7 +317,7 @@ export const sheetCellTypes = {
           Object.keys(cell.value || {}).length > 0
             ? JSON.stringify(cell.value).slice(0, 100) || ""
             : "",
-        readonly: cell.formula || column.formula?.type > 0 || false,
+        readonly: cell.formula || column?.formula?.type > 0 || false,
         allowOverlay: true,
         allowWrapping: true,
       };
@@ -1444,6 +1444,30 @@ function Sheet(props) {
                   ...columns,
                 },
               }));
+            }}
+            addOrUpdateCells={(cells) => {
+              const cellsMap = cells.reduce((acc, cell) => {
+                acc[`${cell.col_letter}${cell.row}`] = cell;
+                return acc;
+              }, {});
+              setCells((prev) => ({
+                ...prev,
+                ...cellsMap,
+              }));
+
+              setUserChanges((prev) => ({
+                ...prev,
+                cells: {
+                  ...prev.cells,
+                  ...cellsMap,
+                },
+              }));
+
+              sheetRef.current?.updateCells(
+                Object.keys(cellsMap).map((cellId) => ({
+                  cell: cellIdToGridCell(cellId, columns),
+                })),
+              );
             }}
           />
         </Box>

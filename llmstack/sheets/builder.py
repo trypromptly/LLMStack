@@ -204,7 +204,14 @@ APP_DATA = {
                     "title": "columns",
                     "description": "JSON schema for the columns",
                     "items": {
-                        "type": "string",
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string"},
+                            "col_letter": {"type": "string"},
+                            "cell_type": {"type": "string"},
+                            "width": {"type": "number"},
+                            "formula": {"type": "object"},
+                        },
                     },
                 },
             ],
@@ -213,17 +220,17 @@ APP_DATA = {
             "output_template": {"markdown": "Column created"},
         },
         {
-            "id": "update_cells",
-            "name": "Update Cells",
+            "id": "add_or_update_cells",
+            "name": "Add or Update Cells",
             "input": {"stream": False, "input_str": "{{cells}}"},
             "config": {},
-            "description": "Update the cells with the new values",
+            "description": "Add or update the cells with the new values",
             "input_fields": [
                 {
                     "name": "cells",
                     "type": "array",
                     "title": "cells",
-                    "description": "Cells to update. Each cell is an object with the following properties: row, col_letter, value, formula, spread_output",
+                    "description": "Cells to add or update. Each cell is an object with the following properties: row, col_letter, value, formula, spread_output",
                     "items": {
                         "type": "object",
                         "properties": {

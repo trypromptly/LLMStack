@@ -2,7 +2,7 @@ import React, { useCallback, useState, useEffect, useRef } from "react";
 import { Ws } from "../../data/ws";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
 
-function SheetBuilder({ sheetId, open, addOrUpdateColumns }) {
+function SheetBuilder({ sheetId, open, addOrUpdateColumns, addOrUpdateCells }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -34,10 +34,17 @@ function SheetBuilder({ sheetId, open, addOrUpdateColumns }) {
           } catch (e) {
             console.error("Error setting suggested messages", e, update);
           }
+        } else if (update.name === "add_or_update_cells") {
+          try {
+            const args = JSON.parse(update.arguments);
+            addOrUpdateCells(args.cells);
+          } catch (e) {
+            console.error("Error adding or updating cells", e, update);
+          }
         }
       }
     },
-    [addOrUpdateColumns],
+    [addOrUpdateColumns, addOrUpdateCells],
   );
 
   const createWebSocketConnection = useCallback(() => {
