@@ -193,10 +193,10 @@ function SheetBuilder({ sheetId, open, addOrUpdateColumns, addOrUpdateCells }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full px-4 py-3 pr-12 border border-blue-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800 resize-none overflow-hidden"
+            className="w-full px-4 py-3 pr-12 border border-blue-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 resize-none overflow-hidden"
             placeholder="Type your message..."
             rows={1}
-            style={{ minHeight: "44px", maxHeight: "120px" }}
+            style={{ minHeight: "44px", maxHeight: "150px" }}
           />
           <button
             onClick={() => sendMessage()}
