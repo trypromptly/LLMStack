@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import { Ws } from "../../data/ws";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
 
-function SheetBuilder({ sheetId, open }) {
+function SheetBuilder({ sheetId, open, addOrUpdateColumns }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
   const wsUrlPrefix = `${
@@ -14,6 +15,30 @@ function SheetBuilder({ sheetId, open }) {
       ? process.env.REACT_APP_API_SERVER || "localhost:9000"
       : window.location.host
   }/ws`;
+  const [suggestedMessages, setSuggestedMessages] = useState([]);
+
+  const handleBuilderUpdates = useCallback(
+    (updates) => {
+      for (const update of updates) {
+        if (update.name === "create_or_update_columns") {
+          try {
+            const args = JSON.parse(update.arguments);
+            addOrUpdateColumns(args.columns);
+          } catch (e) {
+            console.error("Error adding or updating column", e, update);
+          }
+        } else if (update.name === "send_suggested_messages") {
+          try {
+            const args = JSON.parse(update.arguments);
+            setSuggestedMessages(args.messages || []);
+          } catch (e) {
+            console.error("Error setting suggested messages", e, update);
+          }
+        }
+      }
+    },
+    [addOrUpdateColumns],
+  );
 
   useEffect(() => {
     if (open && !wsRef.current) {
@@ -25,6 +50,11 @@ function SheetBuilder({ sheetId, open }) {
             ...prevMessages,
             { role: "assistant", content: data.message },
           ]);
+          setIsTyping(false);
+
+          if (data.updates) {
+            handleBuilderUpdates(data.updates);
+          }
         }
       });
 
@@ -44,25 +74,32 @@ function SheetBuilder({ sheetId, open }) {
     if (!open) {
       wsRef.current?.close();
     }
-  }, [sheetId, wsUrlPrefix, open]);
+  }, [sheetId, wsUrlPrefix, open, handleBuilderUpdates]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = () => {
-    if (input.trim() && wsRef.current) {
+  const handleSuggestedMessageClick = (message) => {
+    setSuggestedMessages([]);
+    setInput(message);
+    sendMessage(message);
+  };
+
+  const sendMessage = (messageToSend = input) => {
+    if (messageToSend.trim() && wsRef.current) {
       const message = {
         type: "message",
-        message: input,
+        message: messageToSend,
         sheet_id: sheetId,
       };
       wsRef.current.send(JSON.stringify(message));
       setMessages((prevMessages) => [
         ...prevMessages,
-        { role: "user", content: input },
+        { role: "user", content: messageToSend },
       ]);
       setInput("");
+      setIsTyping(true);
     }
   };
 
@@ -91,31 +128,57 @@ function SheetBuilder({ sheetId, open }) {
                     : "bg-white text-gray-800"
                 }`}
               >
-                <pre className="text-sm whitespace-pre-wrap font-sans">
+                <pre className="text-sm whitespace-pre-wrap font-sans text-left">
                   {message.content}
                 </pre>
               </div>
             </div>
           ))}
+          {isTyping && (
+            <div className="flex items-center justify-start">
+              <div className="bg-gray-200 rounded-lg px-3 py-0">
+                <div className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
       </div>
-      <div className="relative flex items-center justify-center m-2">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="w-full px-4 py-3 pr-12 border border-blue-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800 resize-none overflow-hidden"
-          placeholder="Type your message..."
-          rows={1}
-          style={{ minHeight: "44px", maxHeight: "120px" }}
-        />
-        <button
-          onClick={sendMessage}
-          className="absolute right-3 bottom-1/2 transform translate-y-1/2 text-blue-500 hover:text-blue-600 transition duration-200 ease-in-out"
-        >
-          <PaperAirplaneIcon className="h-6 w-6" />
-        </button>
+      <div className="relative flex flex-col items-center justify-center m-2">
+        {suggestedMessages.length > 0 && (
+          <div className="flex flex-wrap justify-center mb-2 space-x-2">
+            {suggestedMessages.map((message, index) => (
+              <button
+                key={index}
+                onClick={() => handleSuggestedMessageClick(message)}
+                className="px-3 py-2 mb-2 text-sm bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition duration-200 ease-in-out"
+              >
+                {message}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="relative w-full">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full px-4 py-3 pr-12 border border-blue-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800 resize-none overflow-hidden"
+            placeholder="Type your message..."
+            rows={1}
+            style={{ minHeight: "44px", maxHeight: "120px" }}
+          />
+          <button
+            onClick={() => sendMessage()}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-600 transition duration-200 ease-in-out"
+          >
+            <PaperAirplaneIcon className="h-6 w-6" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -93,7 +93,7 @@ class SheetBuilderConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        self.builder = SheetBuilder(sheet=sheet)
+        self.builder = SheetBuilder(sheet=sheet, user=self._user)
 
         await self.accept()
 
@@ -103,7 +103,7 @@ class SheetBuilderConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             event = json.loads(text_data)
-            response = self.builder.process_event(event)
+            response = await self.builder.process_event(event)
         except Exception as e:
             logger.error(f"Error processing event: {str(e)}")
             return

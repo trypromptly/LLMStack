@@ -96,7 +96,7 @@ class AppRunner:
             )
 
         self.stream = stream
-        self.detailed_response = request.data.get("detailed_response", "False") == "True"
+        self.detailed_response = request.data.get("detailed_response", False)
         self.disable_history = disable_history
 
         self.web_config = (

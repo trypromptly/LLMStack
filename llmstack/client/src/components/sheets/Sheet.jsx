@@ -13,7 +13,6 @@ import {
   SvgIcon,
   Tooltip,
   Typography,
-  IconButton,
 } from "@mui/material";
 import {
   DataEditor,
@@ -39,7 +38,7 @@ import {
 } from "./utils";
 import { getProviderIconImage } from "../apps/ProviderIcon";
 import SheetBuilder from "./SheetBuilder";
-import ChatIcon from "@mui/icons-material/Chat";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 
@@ -1352,11 +1351,21 @@ function Sheet(props) {
               : selectedCellValue}
           </LayoutRenderer>
         </Box>
-        {false && (
-          <IconButton onClick={toggleChat} color="primary">
-            <ChatIcon />
-          </IconButton>
-        )}
+        <Button
+          onClick={toggleChat}
+          color="primary"
+          variant="outlined"
+          sx={{
+            m: 2,
+            mr: 0,
+            minWidth: "120px",
+            borderRadius: "4px !important",
+            backgroundColor: showChat ? "#f0f0f0" : "inherit",
+          }}
+          startIcon={<AutoFixHighIcon />}
+        >
+          AI Builder
+        </Button>
       </Box>
       <div id="sheet-column-menu" ref={columnMenuAnchorDivEl} />
       <Stack direction="row" spacing={2}>
@@ -1408,7 +1417,35 @@ function Sheet(props) {
             display: showChat ? "block" : "none",
           }}
         >
-          <SheetBuilder sheetId={sheet.uuid} open={showChat} />
+          <SheetBuilder
+            sheetId={sheet.uuid}
+            open={showChat}
+            addOrUpdateColumns={(columns) => {
+              setColumns((prevColumns) => {
+                const newColumns = [...prevColumns];
+                columns.forEach((column) => {
+                  const index = newColumns.findIndex(
+                    (c) => c.col_letter === column.col_letter,
+                  );
+
+                  if (index !== -1) {
+                    newColumns[index] = column;
+                  } else {
+                    newColumns.push(column);
+                  }
+                });
+
+                return newColumns;
+              });
+              setUserChanges((prev) => ({
+                ...prev,
+                columns: {
+                  ...prev.columns,
+                  ...columns,
+                },
+              }));
+            }}
+          />
         </Box>
       </Stack>
       <div id="portal" />
