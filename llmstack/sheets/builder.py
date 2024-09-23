@@ -309,13 +309,12 @@ class SheetBuilder:
             "app_data": app_data,
             "input": {"task": message},
             "detailed_response": True,
-            "session_id": self.session_id,
         }
         request.user = self.user
 
         # Run the agent
         response = await AppViewSet().run_platform_app_internal_async(
-            session_id=None,
+            session_id=self.session_id,
             request_uuid=str(uuid.uuid4()),
             request=request,
             preview=False,
