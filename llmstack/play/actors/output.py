@@ -83,7 +83,7 @@ class OutputActor(Actor):
                 continue
 
             self._data_sent = True
-            yield self._data
+            yield {"output": self._data, "chunks": self._data_chunks}
 
         if self._error:
             yield {"errors": list(self._error.values())}

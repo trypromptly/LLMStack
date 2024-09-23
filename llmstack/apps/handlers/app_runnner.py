@@ -96,6 +96,7 @@ class AppRunner:
             )
 
         self.stream = stream
+        self.detailed_response = request.data.get("detailed_response", "False") == "True"
         self.disable_history = disable_history
 
         self.web_config = (
@@ -412,11 +413,16 @@ class AppRunner:
             logger.exception(e)
             raise Exception(f"Error starting coordinator: {e}")
 
-        return {
+        response = {
             "session": {"id": self.app_session["uuid"]},
-            "output": output,
+            "output": output.get("output", ""),
             "csp": csp,
         }
+
+        if self.detailed_response:
+            response["chunks"] = output.get("chunks", [])
+
+        return response
 
     def _start_agent(
         self,
@@ -491,11 +497,16 @@ class AppRunner:
             logger.exception(e)
             raise Exception(f"Error starting coordinator: {e}")
 
-        return {
+        response = {
             "session": {"id": self.app_session["uuid"]},
-            "output": output,
+            "output": output.get("output", ""),
             "csp": csp,
         }
+
+        if self.detailed_response:
+            response["chunks"] = output.get("chunks", [])
+
+        return response
 
     def _get_csp(self):
         csp = "frame-ancestors self"
