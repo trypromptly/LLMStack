@@ -60,7 +60,7 @@ export default function LoginPage() {
             src={logo}
             alt="logo"
             sx={{
-              mt: 6,
+              m: "30px auto",
             }}
           />
           <Box component="form" noValidate sx={{ margin: 3 }}>
