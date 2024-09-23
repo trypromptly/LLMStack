@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useEffect, useRef } from "react";
 import { Ws } from "../../data/ws";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
-
+import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 function SheetBuilder({ sheetId, open, addOrUpdateColumns, addOrUpdateCells }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -155,7 +155,7 @@ function SheetBuilder({ sheetId, open, addOrUpdateColumns, addOrUpdateCells }) {
                 }`}
               >
                 <pre className="text-sm whitespace-pre-wrap font-sans text-left">
-                  {message.content}
+                  <LayoutRenderer>{message.content}</LayoutRenderer>
                 </pre>
               </div>
             </div>
