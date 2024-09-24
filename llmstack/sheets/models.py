@@ -105,7 +105,7 @@ class AgentRunFormulaData(SheetFormulaData):
     agent_system_message: str = ""
     selected_tools: List[str] = []
     type_slug: Literal["agent"] = "agent"
-    output_template: Dict[str, Any] = {"markdown": "{{agent.content}}", "jsonpath": "$.agent.content"}
+    output_template: Dict[str, Any] = {"markdown": "{{agent.content}}"}
 
     @model_validator(mode="before")
     @classmethod
