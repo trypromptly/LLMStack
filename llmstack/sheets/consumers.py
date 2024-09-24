@@ -78,6 +78,9 @@ class SheetAppConsumer(AsyncWebsocketConsumer):
     async def _append_event_to_redis(self, event):
         try:
             sheet_run_data_store.rpush(self.run_id, json.dumps(event))
+
+            # Expire the stream after 1 day
+            sheet_run_data_store.expire(self.run_id, 86400)
         except Exception as e:
             logger.error(f"Error appending event to Redis: {str(e)}")
 

@@ -35,6 +35,9 @@ class AssetStream:
         )
         self._id += 1
 
+        # Expire the stream after 20 minutes
+        objref_stream_client.expire(self.objref, 1200)
+
     def finalize(self):
         # Read the stream and finalize the asset
         file_bytes = b""
@@ -55,6 +58,9 @@ class AssetStream:
             self.objref,
             {"chunk": b"", "id": -1},
         )
+
+        # Expire the stream after 20 minutes
+        objref_stream_client.expire(self.objref, 1200)
 
         return self._asset.finalize_streaming_asset(file_bytes)
 
