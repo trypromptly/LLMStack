@@ -17,6 +17,18 @@ function SheetBuilder({ sheetId, open, addOrUpdateColumns, addOrUpdateCells }) {
   }/ws`;
   const [suggestedMessages, setSuggestedMessages] = useState([]);
 
+  const welcomeMessage = {
+    role: "assistant",
+    content:
+      "👋 Welcome to the Sheet Builder! I'm here to help you create and modify your sheet. 🚀\n\nYou can ask me to create new columns, update existing ones, or add data to your sheet. For example, you could say:\n\n- 📊 Create a new column for employee names\n- 💰 Add a column for calculating total sales\n- 🔄 Update the 'Status' column to use a formula\n\nHow can I assist you with your sheet today? 😊",
+  };
+
+  useEffect(() => {
+    if (open && messages.length === 0) {
+      setMessages([welcomeMessage]);
+    }
+  }, [open, messages.length]);
+
   const handleBuilderUpdates = useCallback(
     (updates) => {
       for (const update of updates) {
