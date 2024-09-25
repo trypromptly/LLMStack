@@ -416,6 +416,7 @@ class AppRunner:
         response = {
             "session": {"id": self.app_session["uuid"]},
             "output": output.get("output", ""),
+            "errors": output.get("errors", []),
             "csp": csp,
         }
 
@@ -500,6 +501,7 @@ class AppRunner:
         response = {
             "session": {"id": self.app_session["uuid"]},
             "output": output.get("output", ""),
+            "errors": output.get("errors", []),
             "csp": csp,
         }
 
