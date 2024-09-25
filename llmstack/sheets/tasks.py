@@ -140,6 +140,11 @@ def _execute_cell(
                     run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
                 )
                 output = ""
+        elif response.get("errors"):
+            async_to_sync(channel_layer.group_send)(
+                run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(response.get("errors"))}}
+            )
+            output = ""
         else:
             output = response.get("output", "")
     elif formula_type == SheetFormulaType.DATA_TRANSFORMER:
@@ -176,10 +181,15 @@ def _execute_cell(
                 output = json.loads(agent_output) if cell_type == SheetCellType.OBJECT else str(agent_output)
             except Exception as e:
                 logger.error(f"Error processing processor output: {e}")
-                # async_to_sync(channel_layer.group_send)(
-                #     run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
-                # )
+                async_to_sync(channel_layer.group_send)(
+                    run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(e)}}
+                )
                 output = agent_output
+        elif response.get("errors"):
+            async_to_sync(channel_layer.group_send)(
+                run_id, {"type": "cell.error", "cell": {"id": cell.cell_id, "error": str(response.get("errors"))}}
+            )
+            output = ""
         else:
             output = response.get("output", "")
 
