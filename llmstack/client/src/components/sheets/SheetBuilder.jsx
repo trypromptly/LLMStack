@@ -1,4 +1,10 @@
-import React, { useCallback, useState, useEffect, useRef } from "react";
+import React, {
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 import { Ws } from "../../data/ws";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
@@ -17,17 +23,19 @@ function SheetBuilder({ sheetId, open, addOrUpdateColumns, addOrUpdateCells }) {
   }/ws`;
   const [suggestedMessages, setSuggestedMessages] = useState([]);
 
-  const welcomeMessage = {
-    role: "assistant",
-    content:
-      "👋 Welcome to the Sheet Builder! I'm here to help you create and modify your sheet. 🚀\n\nYou can ask me to create new columns, update existing ones, or add data to your sheet. For example, you could say:\n\n- 📊 Create a new column for employee names\n- 💰 Add a column for calculating total sales\n- 🔄 Update the 'Status' column to use a formula\n\nHow can I assist you with your sheet today? 😊",
-  };
+  const welcomeMessage = useMemo(() => {
+    return {
+      role: "assistant",
+      content:
+        "👋 Welcome to the Sheet Builder! I'm here to help you create and modify your sheet. 🚀\n\nYou can ask me to create new columns, update existing ones, or add data to your sheet. For example, you could say:\n\n- 📊 Create a new column for employee names\n- 💰 Add a column for calculating total sales\n- 🔄 Update the 'Status' column to use a formula\n\nHow can I assist you with your sheet today? 😊",
+    };
+  }, []);
 
   useEffect(() => {
     if (open && messages.length === 0) {
       setMessages([welcomeMessage]);
     }
-  }, [open, messages.length]);
+  }, [open, messages.length, welcomeMessage]);
 
   const handleBuilderUpdates = useCallback(
     (updates) => {
