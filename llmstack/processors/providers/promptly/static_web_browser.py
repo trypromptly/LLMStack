@@ -6,7 +6,11 @@ from typing import List, Optional
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from langrocks.client import WebBrowser
-from langrocks.common.models.web_browser import WebBrowserCommand, WebBrowserCommandType
+from langrocks.common.models.web_browser import (
+    WebBrowserCommand,
+    WebBrowserCommandType,
+    WebBrowserContent,
+)
 from pydantic import BaseModel, Field, field_validator
 
 from llmstack.apps.schemas import OutputTemplate
@@ -15,10 +19,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.processors.providers.promptly.web_browser import (
-    BrowserRemoteSessionData,
-    WebBrowserOutput,
-)
+from llmstack.processors.providers.promptly.web_browser import BrowserRemoteSessionData
 
 logger = logging.getLogger(__name__)
 
@@ -86,8 +87,35 @@ class StaticWebBrowserInput(ApiProcessorSchema):
     )
 
 
+class StaticWebBrowserContent(WebBrowserContent):
+    screenshot: Optional[str] = Field(
+        default=None,
+        description="Screenshot of the result",
+    )
+
+
+class StaticWebBrowserOutput(ApiProcessorSchema):
+    text: str = Field(default="", description="Text of the result")
+    video: Optional[str] = Field(
+        default=None,
+        description="Video of the result",
+    )
+    content: Optional[StaticWebBrowserContent] = Field(
+        default=None,
+        description="Content of the result including text, buttons, links, inputs, textareas and selects",
+    )
+    session: Optional[BrowserRemoteSessionData] = Field(
+        default=None,
+        description="Session data from the browser",
+    )
+    steps: List[str] = Field(
+        default=[],
+        description="Steps taken to complete the task",
+    )
+
+
 class StaticWebBrowser(
-    ApiProcessorInterface[StaticWebBrowserInput, WebBrowserOutput, StaticWebBrowserConfiguration],
+    ApiProcessorInterface[StaticWebBrowserInput, StaticWebBrowserOutput, StaticWebBrowserConfiguration],
 ):
     """
     Browse a given URL
@@ -165,7 +193,7 @@ class StaticWebBrowser(
                 async_to_sync(
                     output_stream.write,
                 )(
-                    WebBrowserOutput(
+                    StaticWebBrowserOutput(
                         session=BrowserRemoteSessionData(
                             ws_url=web_browser.get_wss_url(),
                         ),
@@ -181,22 +209,20 @@ class StaticWebBrowser(
                 ]
                 + list(map(self._web_browser_instruction_to_command, self._input.instructions))
             )
-
-        screenshot_asset = None
-        if browser_response and browser_response.screenshot:
-            screenshot_asset = self._upload_asset_from_url(
-                f"data:image/png;name={str(uuid.uuid4())};base64,{base64.b64encode(browser_response.screenshot).decode('utf-8')}",
-                mime_type="image/png",
+        if browser_response:
+            output_text = browser_response.text or "\n".join(
+                list(map(lambda entry: entry.output, browser_response.command_outputs))
             )
+            browser_content = browser_response.model_dump(exclude=("screenshot",))
+            screenshot_asset = None
+            if browser_response.screenshot:
+                screenshot_asset = self._upload_asset_from_url(
+                    f"data:image/png;name={str(uuid.uuid4())};base64,{base64.b64encode(browser_response.screenshot).decode('utf-8')}",
+                    mime_type="image/png",
+                )
+            browser_content["screenshot"] = screenshot_asset.objref if screenshot_asset else None
+            async_to_sync(self._output_stream.write)(StaticWebBrowserOutput(text=output_text, content=browser_content))
 
-        browser_response.screenshot = screenshot_asset.objref if screenshot_asset else None
-
-        async_to_sync(output_stream.write)(
-            WebBrowserOutput(
-                text=browser_response.text or "".join(list(map(lambda x: x.output, browser_response.command_outputs))),
-                content=browser_response,
-            ),
-        )
         output = output_stream.finalize()
 
         return output

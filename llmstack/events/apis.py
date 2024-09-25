@@ -22,6 +22,8 @@ class JSONEncoder(json.JSONEncoder):
             return o.isoformat()
         elif isinstance(o, User):
             return o.username
+        elif isinstance(o, bytes):
+            return o.decode("utf-8")
 
         return super().default(o)
 
