@@ -174,8 +174,8 @@ export const sheetCellTypes = {
 
       return {
         kind: GridCellKind.Uri,
-        data: cell.value,
-        displayData: cell.value,
+        data: cell.value || "",
+        displayData: cell.value || "",
         readonly: cell.formula || column.formula?.type > 0 || false,
         allowOverlay: true,
         allowWrapping: true,
