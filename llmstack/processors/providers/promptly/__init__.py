@@ -118,6 +118,7 @@ class PromptlyProviderConfig(ProviderConfig):
 
 
 def get_llm_client_from_provider_config(provider, model_slug, get_provider_config_fn):
+    base_url = None
     try:
         google_provider_config = get_provider_config_fn(
             provider_slug="google",
@@ -165,6 +166,9 @@ def get_llm_client_from_provider_config(provider, model_slug, get_provider_confi
         elif google_provider_config.api_key:
             google_api_key = google_provider_config.api_key
 
+    if openai_provider_config and openai_provider_config.base_url:
+        base_url = openai_provider_config.base_url
+
     return LLM(
         provider=provider,
         openai_api_key=openai_provider_config.api_key if openai_provider_config else "",
@@ -172,4 +176,5 @@ def get_llm_client_from_provider_config(provider, model_slug, get_provider_confi
         google_api_key=google_api_key if google_api_key else "",
         anthropic_api_key=anthropic_provider_config.api_key if anthropic_provider_config else "",
         cohere_api_key=cohere_provider_config.api_key if cohere_provider_config else "",
+        base_url=base_url,
     )
