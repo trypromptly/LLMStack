@@ -103,6 +103,7 @@ COPY --from=builder /code/llmstack/organizations /code/llmstack/organizations
 COPY --from=builder /code/llmstack/play /code/llmstack/play
 COPY --from=builder /code/llmstack/processors /code/llmstack/processors
 COPY --from=builder /code/llmstack/server /code/llmstack/server
+COPY --from=builder /code/llmstack/sheets /code/llmstack/sheets
 COPY --from=builder /code/manage.py /code/manage.py
 COPY --from=builder /code/docker/api/docker-entrypoint.sh /code/docker-entrypoint.sh
 
