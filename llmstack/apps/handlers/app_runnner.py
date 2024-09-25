@@ -622,7 +622,16 @@ class AppRunner:
 
     def _get_input_data(self):
         input = self.request.data.get("input", {})
-        return {"input": {**input, "_request": {"request_ip": self.input_actor_request.request_ip}}}
+        return {
+            "input": {
+                **input,
+                "_request": {
+                    "ip": self.input_actor_request.request_ip,
+                    "user_agent": self.input_actor_request.request_user_agent,
+                    "location": self.input_actor_request.request_location,
+                },
+            }
+        }
 
     def _get_actor_configs(
         self,
