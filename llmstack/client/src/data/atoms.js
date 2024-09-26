@@ -299,38 +299,18 @@ export const dataSourceEntriesTableDataState = selector({
   key: "dataSourceEntriesTableData",
   get: ({ get }) => {
     let dataSourceEntries = get(dataSourceEntriesState);
-    let profileFlags = get(profileFlagsState);
 
     dataSourceEntries = dataSourceEntries.map((x) => {
-      return { isUserOwned: true, ...x };
-    });
-    let orgDataSourceEntries = profileFlags.IS_ORGANIZATION_MEMBER
-      ? get(orgDataSourceEntriesState)
-      : [];
-    orgDataSourceEntries = orgDataSourceEntries.map((x) => {
-      return { isUserOwned: false, ...x };
+      return { isUserOwned: x.is_user_owned, ...x };
     });
 
     let privateDataSources = get(dataSourcesState);
     privateDataSources = privateDataSources.map((x) => {
-      return { isUserOwned: true, ...x };
+      return { isUserOwned: x.is_user_owned, ...x };
     });
-    const privateDataSourcesUUIDs = privateDataSources.map((x) => x.uuid);
-
-    let orgDataSources = profileFlags.IS_ORGANIZATION_MEMBER
-      ? get(orgDataSourcesState)
-      : [];
-    orgDataSources = orgDataSources.map((x) => {
-      return { isUserOwned: false, ...x };
-    });
-
-    orgDataSources = orgDataSources.filter(
-      (x) => !privateDataSourcesUUIDs.includes(x.uuid),
-    );
 
     let result = [];
     const datasource_entries_map = {};
-    const org_datasource_entries_map = {};
 
     for (let i = 0; i < dataSourceEntries.length; i++) {
       if (dataSourceEntries[i].datasource.uuid in datasource_entries_map) {
@@ -344,36 +324,12 @@ export const dataSourceEntriesTableDataState = selector({
       }
     }
 
-    for (let i = 0; i < orgDataSourceEntries.length; i++) {
-      if (
-        orgDataSourceEntries[i].datasource.uuid in org_datasource_entries_map
-      ) {
-        org_datasource_entries_map[
-          orgDataSourceEntries[i].datasource.uuid
-        ].push(orgDataSourceEntries[i]);
-      } else {
-        org_datasource_entries_map[orgDataSourceEntries[i].datasource.uuid] = [
-          orgDataSourceEntries[i],
-        ];
-      }
-    }
-
     for (let i = 0; i < privateDataSources.length; i++) {
       result.push({
         ...privateDataSources[i],
         ...{
           data_source_entries:
             datasource_entries_map[privateDataSources[i].uuid] || [],
-        },
-      });
-    }
-
-    for (let i = 0; i < orgDataSources.length; i++) {
-      result.push({
-        ...orgDataSources[i],
-        ...{
-          data_source_entries:
-            org_datasource_entries_map[orgDataSources[i].uuid] || [],
         },
       });
     }

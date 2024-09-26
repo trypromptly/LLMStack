@@ -43,15 +43,7 @@ from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
-from .models import (
-    App,
-    AppAccessPermission,
-    AppData,
-    AppHub,
-    AppTemplate,
-    AppType,
-    AppVisibility,
-)
+from .models import App, AppData, AppHub, AppTemplate, AppType, AppVisibility
 from .serializers import (
     AppDataSerializer,
     AppHubSerializer,
@@ -112,25 +104,10 @@ class AppViewSet(viewsets.ViewSet):
         if uid:
             app = get_object_or_404(
                 App,
-                Q(
-                    uuid=uuid.UUID(uid),
-                    owner=request.user,
-                )
-                | Q(
-                    uuid=uuid.UUID(uid),
-                    read_accessible_by__contains=[
-                        request.user.email,
-                    ],
-                    is_published=True,
-                )
-                | Q(
-                    uuid=uuid.UUID(uid),
-                    write_accessible_by__contains=[
-                        request.user.email,
-                    ],
-                    is_published=True,
-                ),
+                uuid=uuid.UUID(uid),
             )
+            if not app.has_read_permission(request.user):
+                return DRFResponse(status=403)
             serializer = AppSerializer(
                 instance=app,
                 fields=fields,
@@ -152,22 +129,31 @@ class AppViewSet(viewsets.ViewSet):
         if fields:
             fields = fields.split(",")
 
-        queryset = (
-            App.objects.all()
-            .filter(
-                Q(read_accessible_by__contains=[request.user.email])
-                | Q(write_accessible_by__contains=[request.user.email]),
+        apps_queryset = App.objects.filter(
+            Q(read_accessible_by__contains=[request.user.email])
+            | Q(write_accessible_by__contains=[request.user.email]),
+            is_published=True,
+        ).order_by("-last_updated_at")
+
+        organization = get_object_or_404(Profile, user=request.user).organization
+        combined_queryset = apps_queryset
+
+        if organization:
+            org_apps_queryset = App.objects.filter(
+                owner__in=Profile.objects.filter(organization=organization).values("user").exclude(user=request.user),
+                visibility__gte=AppVisibility.ORGANIZATION,
                 is_published=True,
-            )
-            .order_by("-last_updated_at")
-        )
-        serializer = AppSerializer(
-            queryset,
+            ).order_by("-last_updated_at")
+            combined_queryset = list(apps_queryset) + list(org_apps_queryset)
+
+        combined_serializer = AppSerializer(
+            combined_queryset,
             many=True,
             fields=fields,
             request_user=request.user,
         )
-        return DRFResponse(serializer.data)
+
+        return DRFResponse(combined_serializer.data)
 
     def versions(self, request, uid=None, version=None):
         draft = request.query_params.get("draft", False)
@@ -177,15 +163,11 @@ class AppViewSet(viewsets.ViewSet):
 
         app = get_object_or_404(
             App,
-            Q(uuid=uuid.UUID(uid), owner=request.user)
-            | Q(
-                uuid=uuid.UUID(uid),
-                write_accessible_by__contains=[
-                    request.user.email,
-                ],
-                is_published=True,
-            ),
+            uuid=uuid.UUID(uid),
         )
+
+        if not app.has_read_permission(request.user):
+            return DRFResponse(status=403)
 
         if version:
             versioned_app_data = AppData.objects.filter(
@@ -341,7 +323,7 @@ class AppViewSet(viewsets.ViewSet):
 
     def publish(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
-        if app.owner != request.user:
+        if not app.has_write_permission(request.user):
             return DRFResponse(status=403)
 
         if "visibility" in request.data:
@@ -412,7 +394,7 @@ class AppViewSet(viewsets.ViewSet):
                     app_name=app.name,
                     owner_first_name=app.owner.first_name,
                     owner_email=app.owner.email,
-                    can_edit=app.access_permission == AppAccessPermission.WRITE,
+                    can_edit=app.has_write_permission(request.user),
                     share_to=new_email,
                 )
                 share_email_sender = EmailSender(share_email)
@@ -471,7 +453,7 @@ class AppViewSet(viewsets.ViewSet):
     def patch(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_owner_profile = get_object_or_404(Profile, user=app.owner)
-        if app.owner != request.user and not (app.is_published and request.user.email in app.write_accessible_by):
+        if not app.has_write_permission(request.user):
             return DRFResponse(status=403)
 
         app.name = request.data["name"] if "name" in request.data else app.name

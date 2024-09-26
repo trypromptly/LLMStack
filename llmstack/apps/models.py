@@ -215,50 +215,10 @@ class App(models.Model):
         on_delete=models.DO_NOTHING,
         help_text="Type of the app",
     )
-    config = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Config for this app based on the app type",
-    )
-    input_schema = models.JSONField(
-        blank=True,
-        help_text="Input fields for this app in JSON schema format",
-        default=dict,
-        null=True,
-    )
-    input_ui_schema = models.JSONField(
-        blank=True,
-        help_text="UI schema for input_schema",
-        default=dict,
-        null=True,
-    )
-    output_template = models.JSONField(
-        blank=True,
-        help_text="Output template for this app in JSON format. We support markdown, JSON etc., as keys",
-        default=dict,
-        null=True,
-    )
     description = models.TextField(
         default="",
         blank=True,
         help_text="Description of the app. Support markdown.",
-    )
-    run_graph = models.ManyToManyField(
-        AppRunGraphEntry,
-        help_text="Run graph of the app",
-    )
-    data_transformer = models.TextField(
-        default="",
-        blank=True,
-        help_text="Data transformer to be applied before calling the first node of the run graph",
-    )
-    template = models.ForeignKey(
-        AppTemplate,
-        on_delete=models.DO_NOTHING,
-        help_text="Template used for this app",
-        default=None,
-        null=True,
-        blank=True,
     )
     template_slug = models.CharField(
         max_length=100,
@@ -276,11 +236,6 @@ class App(models.Model):
         help_text="Whether the app is published or not",
         blank=True,
     )
-    is_cloneable = models.BooleanField(
-        default=False,
-        help_text="Whether the app is cloneable or not",
-        blank=False,
-    )
     domain = models.CharField(
         default=None,
         max_length=2000,
@@ -292,22 +247,6 @@ class App(models.Model):
         default=AppVisibility.PUBLIC,
         choices=AppVisibility.choices,
         help_text="Visibility of the app",
-    )
-    accessible_by = (
-        PGArrayField(
-            models.CharField(
-                max_length=320,
-            ),
-            default=list,
-            help_text="List of user emails or domains who can access the app",
-            blank=True,
-        )
-        if connection.vendor == "postgresql"
-        else ArrayField(
-            null=True,
-            help_text="List of user emails or domains who can access the app",
-            blank=True,
-        )
     )
     read_accessible_by = (
         PGArrayField(
@@ -340,11 +279,6 @@ class App(models.Model):
             help_text="List of user emails or domains who can modify the app",
             blank=True,
         )
-    )
-    access_permission = models.PositiveSmallIntegerField(
-        default=AppAccessPermission.READ,
-        choices=AppAccessPermission.choices,
-        help_text="Permission for users who can access the app",
     )
     last_modified_by = models.ForeignKey(
         User,
@@ -388,12 +322,15 @@ class App(models.Model):
     )
 
     @property
+    def owner_profile(self):
+        return Profile.objects.get(user=self.owner)
+
+    @property
     def web_config(self):
-        profile = Profile.objects.get(user=self.owner)
         return (
             WebIntegrationConfig().from_dict(
                 self.web_integration_config,
-                profile.decrypt_value,
+                self.owner_profile.decrypt_value,
             )
             if self.web_integration_config
             else None
@@ -401,11 +338,10 @@ class App(models.Model):
 
     @property
     def slack_config(self):
-        profile = Profile.objects.get(user=self.owner)
         return (
             SlackIntegrationConfig().from_dict(
                 self.slack_integration_config,
-                profile.decrypt_value,
+                self.owner_profile.decrypt_value,
             )
             if self.slack_integration_config
             else None
@@ -413,11 +349,10 @@ class App(models.Model):
 
     @property
     def discord_config(self):
-        profile = Profile.objects.get(user=self.owner)
         return (
             DiscordIntegrationConfig().from_dict(
                 self.discord_integration_config,
-                profile.decrypt_value,
+                self.owner_profile.decrypt_value,
             )
             if self.discord_integration_config
             else None
@@ -425,11 +360,10 @@ class App(models.Model):
 
     @property
     def twilio_config(self):
-        profile = Profile.objects.get(user=self.owner)
         return (
             TwilioIntegrationConfig().from_dict(
                 self.twilio_integration_config,
-                profile.decrypt_value,
+                self.owner_profile.decrypt_value,
             )
             if self.twilio_integration_config
             else None
@@ -437,11 +371,10 @@ class App(models.Model):
 
     @discord_config.setter
     def discord_config(self, value):
-        profile = Profile.objects.get(user=self.owner)
         self.discord_integration_config = (
             DiscordIntegrationConfig(
                 **value,
-            ).to_dict(profile.encrypt_value)
+            ).to_dict(self.owner_profile.encrypt_value)
             if value
             else {}
         )
@@ -450,13 +383,29 @@ class App(models.Model):
         if not user or not user.is_authenticated:
             return False
 
-        return self.owner == user or (self.is_published and user.email in self.write_accessible_by)
+        return (
+            self.owner == user
+            or user.email in self.write_accessible_by
+            or (
+                self.owner_profile.all_emails_in_same_org([user.email])
+                and self.visibility >= AppVisibility.ORGANIZATION
+                and self.owner_profile.organization.settings.default_app_access_permission == AppAccessPermission.WRITE
+            )
+        )
 
     def has_read_permission(self, user):
         if not user or not user.is_authenticated:
             return False
 
-        return self.owner == user or (self.is_published and user.email in self.read_accessible_by)
+        return (
+            self.owner == user
+            or self.has_write_permission(user)
+            or user.email in self.read_accessible_by
+            or (
+                self.owner_profile.all_emails_in_same_org([user.email])
+                and self.visibility >= AppVisibility.ORGANIZATION
+            )
+        )
 
     def __str__(self) -> str:
         return self.name + " - " + self.owner.username

@@ -103,12 +103,19 @@ class PromptlyProviderConfig(ProviderConfig):
     embeddings_generator: Optional[EmbeddingsGeneratorConfig] = Field(
         title="Embeddings Generator",
         description="Embeddings Generator Configuration",
-        default=None,
+        default=EmbeddingsGeneratorConfig(
+            provider_slug="openai",
+            embedding_model_slug="text-embedding-ada-002",
+        ),
     )
     data_destination_configuration: Optional[DataDestinationConfig] = Field(
         title="Default Data Destination Configuration",
         description="Default Data Destination Configuration",
-        default=None,
+        default=DataDestinationConfig(
+            provider_slug="weaviate",
+            processor_slug="vector-store",
+            additional_kwargs={"index_name": "text"},
+        ),
     )
     email_sender: Optional[EmailSenderConfig] = Field(
         title="Email Sender Configuration",

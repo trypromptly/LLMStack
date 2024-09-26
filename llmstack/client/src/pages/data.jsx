@@ -43,7 +43,6 @@ import { FileSize, LocaleDate } from "../components/Utils";
 import {
   dataSourceEntriesState,
   dataSourceEntriesTableDataState,
-  orgDataSourceEntriesState,
   profileFlagsSelector,
 } from "../data/atoms";
 import { axios } from "../data/axios";
@@ -265,9 +264,6 @@ export default function DataPage() {
   const [dataSourceEntries, setDataSourceEntries] = useRecoilState(
     dataSourceEntriesState,
   );
-  const [orgDataSourceEntries, setOrgDataSourceEntries] = useRecoilState(
-    orgDataSourceEntriesState,
-  );
   const [dataSourceEntriesLoading, setDataSourceEntriesLoading] =
     useState(null);
   const [tableData, setTableData] = useState([]);
@@ -377,7 +373,7 @@ export default function DataPage() {
 
             {row?.has_source && (
               <IconButton
-                disabled={!row.isUserOwned}
+                disabled={row.access_permission === 0}
                 onClick={(e) => {
                   setModalTitle("Add New Data Entry");
                   setSelectedDataSource(row);
@@ -421,7 +417,7 @@ export default function DataPage() {
               </Tooltip>
             )}
             <IconButton
-              disabled={!row.isUserOwned}
+              disabled={row.access_permission === 0}
               onClick={() => {
                 setDeleteId(row);
                 setDeleteModalTitle("Delete Data Source");
@@ -472,28 +468,16 @@ export default function DataPage() {
     setDataSourceBeingLoaded(row.uuid);
 
     let url = `/api/datasources/${row.uuid}/entries`;
-    if (!row.isUserOwned) {
-      url = `/api/org/datasources/${row.uuid}/entries`;
-    }
 
     axios()
       .get(url)
       .then((response) => {
-        if (row.isUserOwned) {
-          setDataSourceEntries([
-            ...dataSourceEntries.filter(
-              (dataSourceEntry) => dataSourceEntry.datasource.uuid !== row.uuid,
-            ),
-            ...response.data,
-          ]);
-        } else {
-          setOrgDataSourceEntries([
-            ...orgDataSourceEntries.filter(
-              (dataSourceEntry) => dataSourceEntry.datasource.uuid !== row.uuid,
-            ),
-            ...response.data,
-          ]);
-        }
+        setDataSourceEntries([
+          ...dataSourceEntries.filter(
+            (dataSourceEntry) => dataSourceEntry.datasource.uuid !== row.uuid,
+          ),
+          ...response.data,
+        ]);
       })
       .finally(() => {
         setDataSourceEntriesLoading(null);

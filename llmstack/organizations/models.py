@@ -11,8 +11,9 @@ from django.db import connection, models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from llmstack.apps.models import AppVisibility
+from llmstack.apps.models import AppAccessPermission, AppVisibility
 from llmstack.common.utils.db_models import ArrayField
+from llmstack.data.models import DataSourceAccessPermission, DataSourceVisibility
 
 
 class Organization(models.Model):
@@ -82,6 +83,21 @@ class OrganizationSettings(models.Model):
         default=AppVisibility.PUBLIC,
         choices=AppVisibility.choices,
         help_text="Default app visibility for the organization",
+    )
+    default_datasource_visibility = models.PositiveSmallIntegerField(
+        default=DataSourceVisibility.ORGANIZATION,
+        choices=DataSourceVisibility.choices,
+        help_text="Default datasource visibility for the organization",
+    )
+    default_app_access_permission = models.PositiveSmallIntegerField(
+        default=AppAccessPermission.READ,
+        choices=AppAccessPermission.choices,
+        help_text="Default app access permission for the organization",
+    )
+    default_datasource_access_permission = models.PositiveSmallIntegerField(
+        default=DataSourceAccessPermission.READ,
+        choices=DataSourceAccessPermission.choices,
+        help_text="Default datasource access permission for the organization",
     )
     max_app_visibility = models.PositiveSmallIntegerField(
         default=AppVisibility.PUBLIC,

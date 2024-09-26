@@ -12,7 +12,7 @@ from langrocks.client import WebBrowser
 from rest_framework import viewsets
 from rest_framework.response import Response as DRFResponse
 
-from llmstack.base.models import VectorstoreEmbeddingEndpoint
+from llmstack.base.models import Profile, VectorstoreEmbeddingEndpoint
 from llmstack.data.sources.base import DataDocument
 from llmstack.data.yaml_loader import (
     get_data_pipeline_template_by_slug,
@@ -21,7 +21,13 @@ from llmstack.data.yaml_loader import (
 from llmstack.jobs.adhoc import AddDataSourceEntryJob
 from llmstack.jobs.models import RepeatableJob
 
-from .models import DataSource, DataSourceEntry, DataSourceEntryStatus, DataSourceType
+from .models import (
+    DataSource,
+    DataSourceEntry,
+    DataSourceEntryStatus,
+    DataSourceType,
+    DataSourceVisibility,
+)
 from .serializers import DataSourceEntrySerializer, DataSourceSerializer
 
 logger = logging.getLogger(__name__)
@@ -194,26 +200,32 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
                 return DRFResponse(status=404)
 
             return DRFResponse(
-                DataSourceEntrySerializer(instance=datasource_entry_object).data,
+                DataSourceEntrySerializer(
+                    instance=datasource_entry_object, context={"request_user": request.user}
+                ).data,
             )
         datasources = DataSource.objects.filter(owner=request.user)
         datasource_entries = DataSourceEntry.objects.filter(datasource__in=datasources)
         return DRFResponse(
-            DataSourceEntrySerializer(instance=datasource_entries, many=True).data,
+            DataSourceEntrySerializer(
+                instance=datasource_entries, many=True, context={"request_user": request.user}
+            ).data,
         )
 
     def multiGet(self, request, uids):
         datasource_entries = DataSourceEntry.objects.filter(uuid__in=uids)
         return DRFResponse(
-            DataSourceEntrySerializer(instance=datasource_entries, many=True).data,
+            DataSourceEntrySerializer(
+                instance=datasource_entries, many=True, context={"request_user": request.user}
+            ).data,
         )
 
     def delete(self, request, uid):
         datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
         datasource = datasource_entry_object.datasource
 
-        if datasource_entry_object.datasource.owner != request.user:
-            return DRFResponse(status=404)
+        if not datasource.has_write_permission(request.user):
+            return DRFResponse(status=403)
 
         node_ids = datasource_entry_object.config.get(
             "document_ids",
@@ -245,7 +257,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         metadata, content = pipeline.get_entry_text(document=document)
         return DRFResponse({"content": content, "metadata": metadata})
 
-    def create_entry(self, document: DataDocument):
+    def create_entry(self, user, document: DataDocument):
         datasource = get_object_or_404(DataSource, uuid=document.datasource_uuid)
 
         entry = DataSourceEntry.objects.create(
@@ -271,7 +283,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
             },
             size=0,
         )
-        return DRFResponse(DataSourceEntrySerializer(instance=entry).data)
+        return DRFResponse(DataSourceEntrySerializer(instance=entry, context={"request_user": user}).data)
 
     def process_entry(self, request, uid):
         entry = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
@@ -339,28 +351,51 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
 
 
 class DataSourceViewSet(viewsets.ModelViewSet):
-    queryset = DataSource.objects.all()
     serializer_class = DataSourceSerializer
 
     def get(self, request, uid=None):
         if uid:
-            # TODO: return data source entries along with the data source
+            datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid))
+            if not datasource.has_read_permission(request.user):
+                return DRFResponse(status=404)
+
             return DRFResponse(
                 DataSourceSerializer(
-                    instance=get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user),
+                    instance=datasource,
+                    context={"request_user": request.user},
                 ).data,
             )
+
+        datasources = DataSource.objects.filter(owner=request.user).order_by("-updated_at")
+        organization = get_object_or_404(Profile, user=request.user).organization
+
+        combined_queryset = datasources
+
+        if organization:
+            org_datasources = DataSource.objects.filter(
+                owner__in=Profile.objects.filter(organization=organization).values("user"),
+                visibility__gte=DataSourceVisibility.ORGANIZATION,
+            ).order_by("-updated_at")
+            combined_queryset = list(datasources) + list(org_datasources)
+
         return DRFResponse(
             DataSourceSerializer(
-                instance=self.queryset.filter(owner=request.user).order_by("-updated_at"), many=True
+                instance=combined_queryset,
+                context={"request_user": request.user},
+                many=True,
             ).data,
         )
 
     def getEntries(self, request, uid):
-        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid))
+        if not datasource.has_read_permission(request.user):
+            return DRFResponse(status=404)
+
         datasource_entries = DataSourceEntry.objects.filter(datasource=datasource)
         return DRFResponse(
-            DataSourceEntrySerializer(instance=datasource_entries, many=True).data,
+            DataSourceEntrySerializer(
+                instance=datasource_entries, many=True, context={"request_user": request.user}
+            ).data,
         )
 
     def post(self, request):
@@ -368,6 +403,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         pipeline_data = request.data.get("pipeline", None)
         name = request.data.get("name", None)
         type_slug = request.data.get("type_slug", None)
+
         # Validation for slug
         datasource_type = get_object_or_404(DataSourceType, slug="text")
 
@@ -423,11 +459,13 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource.config = config
 
         datasource.save()
-        json_data = DataSourceSerializer(instance=datasource).data
+        json_data = DataSourceSerializer(instance=datasource, context={"request_user": request.user}).data
         return DRFResponse(json_data, status=201)
 
     def patch(self, request, uid):
-        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid))
+        if not datasource.has_write_permission(request.user):
+            return DRFResponse(status=403)
 
         patch_data = request.data
         if "refresh_interval" in patch_data:
@@ -471,7 +509,9 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         return DRFResponse(status=204)
 
     def delete(self, request, uid):
-        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid))
+        if not datasource.has_write_permission(request.user):
+            return DRFResponse(status=403)
 
         # Delete all datasource entries associated with the datasource
         datasource_entries = DataSourceEntry.objects.filter(datasource=datasource)
@@ -514,7 +554,9 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         return source.get_data_documents(datasource_uuid=str(datasource.uuid))
 
     def add_entry(self, request, uid):
-        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid))
+        if not datasource.has_write_permission(request.user):
+            return DRFResponse(status=403)
 
         if datasource and datasource.type.is_external_datasource:
             return DRFResponse({"errors": ["Cannot add entry to external data source"]}, status=400)
@@ -526,13 +568,15 @@ class DataSourceViewSet(viewsets.ModelViewSet):
 
         documents = self.process_add_entry_request(datasource, source_data)
         for document in documents:
-            create_result = DataSourceEntryViewSet().create_entry(document=document)
+            create_result = DataSourceEntryViewSet().create_entry(user=request.user, document=document)
             process_result = DataSourceEntryViewSet().process_entry(request=None, uid=str(create_result.data["uuid"]))
             datasource.size += process_result.data["size"]
 
         datasource.save()
 
-        return DRFResponse(DataSourceSerializer(instance=datasource).data, status=200)
+        return DRFResponse(
+            DataSourceSerializer(instance=datasource, context={"request_user": request.user}).data, status=200
+        )
 
     def add_entry_async(self, request, uid):
         # Check if flag_enabled("has_exceeded_storage_quota") is True and deny the request
@@ -547,13 +591,17 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         return DRFResponse({"job_id": job.id}, status=202)
 
     def resync(self, request, uid):
-        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid), owner=request.user)
+        datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid))
+        if not datasource.has_write_permission(request.user):
+            return DRFResponse(status=403)
 
         entries = DataSourceEntry.objects.filter(datasource=datasource)
         for entry in entries:
             DataSourceEntryViewSet().resync(request, str(entry.uuid))
 
-        return DRFResponse(DataSourceSerializer(instance=datasource).data, status=200)
+        return DRFResponse(
+            DataSourceSerializer(instance=datasource, context={"request_user": request.user}).data, status=200
+        )
 
     def resync_async(self, request, uid):
         job = AddDataSourceEntryJob.create(

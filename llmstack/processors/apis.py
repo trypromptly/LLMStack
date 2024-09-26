@@ -210,8 +210,11 @@ class HistoryViewSet(viewsets.ModelViewSet):
 
     def list_sessions(self, request):
         app_uuid = request.GET.get("app_uuid", None)
+        app = App.objects.filter(uuid=app_uuid).first()
+        if not app or not app.has_write_permission(request.user):
+            return DRFResponse(status=403)
+
         filters = {
-            "owner": request.user,
             "session_key__isnull": False,
         }
 

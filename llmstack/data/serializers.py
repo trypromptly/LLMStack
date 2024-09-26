@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DataSource, DataSourceEntry
+from .models import DataSource, DataSourceAccessPermission, DataSourceEntry
 
 
 class DataSourceSerializer(serializers.ModelSerializer):
@@ -10,6 +10,10 @@ class DataSourceSerializer(serializers.ModelSerializer):
     refresh_interval = serializers.SerializerMethodField()
     has_source = serializers.SerializerMethodField()
     is_destination_only = serializers.SerializerMethodField()
+    has_read_permission = serializers.SerializerMethodField()
+    has_write_permission = serializers.SerializerMethodField()
+    is_user_owned = serializers.SerializerMethodField()
+    access_permission = serializers.SerializerMethodField()
 
     def get_owner_email(self, obj):
         return obj.owner.email
@@ -44,6 +48,20 @@ class DataSourceSerializer(serializers.ModelSerializer):
         destination = config.get("pipeline", {}).get("destination", {}) or {}
         return destination.get("slug", None) is not None and self.get_has_source(obj) is False
 
+    def get_has_read_permission(self, obj):
+        return obj.has_read_permission(self.context.get("request_user"))
+
+    def get_has_write_permission(self, obj):
+        return obj.has_write_permission(self.context.get("request_user"))
+
+    def get_is_user_owned(self, obj):
+        return obj.owner == self.context.get("request_user")
+
+    def get_access_permission(self, obj):
+        return (
+            DataSourceAccessPermission.WRITE if self.get_has_write_permission(obj) else DataSourceAccessPermission.READ
+        )
+
     class Meta:
         model = DataSource
         fields = [
@@ -59,11 +77,21 @@ class DataSourceSerializer(serializers.ModelSerializer):
             "refresh_interval",
             "has_source",
             "is_destination_only",
+            "has_read_permission",
+            "has_write_permission",
+            "is_user_owned",
+            "access_permission",
         ]
 
 
 class DataSourceEntrySerializer(serializers.ModelSerializer):
     datasource = DataSourceSerializer()
+    config = serializers.SerializerMethodField()
+
+    def get_config(self, obj):
+        config = obj.config or {}
+        config.pop("input", None)
+        return config
 
     class Meta:
         model = DataSourceEntry

@@ -416,7 +416,6 @@ class Feedback(models.Model):
     )
     response_quality = models.SmallIntegerField(
         null=False,
-        max_length=10,
         help_text="Quality rating for the response",
     )
     response_feedback = models.TextField(

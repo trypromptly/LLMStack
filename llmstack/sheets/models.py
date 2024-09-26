@@ -379,11 +379,15 @@ class PromptlySheet(models.Model):
         super().save(*args, **kwargs)
 
 
+def default_sheet_data():
+    return {"cells": []}
+
+
 class PromptlySheetRunEntry(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     profile_uuid = models.UUIDField(blank=False, null=False, help_text="The UUID of the owner of the sheet")
     sheet_uuid = models.UUIDField(blank=False, null=False, help_text="The UUID of the sheet")
-    data = models.JSONField(blank=True, null=True, help_text="The data of the sheet", default={"cells": []})
+    data = models.JSONField(blank=True, null=True, help_text="The data of the sheet", default=default_sheet_data)
     created_at = models.DateTimeField(auto_now_add=True, help_text="The date and time the run was created")
 
     class Meta:

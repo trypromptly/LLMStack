@@ -2,6 +2,7 @@ import logging
 import uuid
 
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -29,6 +30,11 @@ class DataSourceEntryStatus(models.TextChoices):
     READY = "READY", "Ready"
     FAILED = "FAILED", "Failed"
     MARKED_FOR_DELETION = "MARKED_FOR_DELETION", "Marked for deletion"
+
+
+class DataSourceAccessPermission(models.IntegerChoices):
+    READ = 0, "Read"
+    WRITE = 1, "Write"
 
 
 class DataSourceVisibility(models.IntegerChoices):
@@ -110,6 +116,22 @@ class DataSource(models.Model):
         auto_now=True,
         help_text="Time when the data source was updated",
     )
+    read_accessible_by = ArrayField(
+        models.CharField(
+            max_length=320,
+        ),
+        default=list,
+        help_text="List of user emails or domains who can access the app",
+        blank=True,
+    )
+    write_accessible_by = ArrayField(
+        models.CharField(
+            max_length=320,
+        ),
+        default=list,
+        help_text="List of user emails or domains who can modify the app",
+        blank=True,
+    )
 
     def __str__(self):
         return self.name + " (" + self.type.name + ")" + " - " + str(self.owner)
@@ -145,6 +167,28 @@ class DataSource(models.Model):
     @property
     def pipeline(self):
         return self.config.get("pipeline", {})
+
+    def has_read_permission(self, user):
+        return (
+            self.owner == user
+            or user.email in self.read_accessible_by
+            or (
+                self.profile.all_emails_in_same_org([user.email])
+                and self.visibility == DataSourceVisibility.ORGANIZATION
+            )
+        )
+
+    def has_write_permission(self, user):
+        return (
+            self.owner == user
+            or user.email in self.write_accessible_by
+            or (
+                self.profile.all_emails_in_same_org([user.email])
+                and self.visibility == DataSourceVisibility.ORGANIZATION
+                and self.profile.organization.settings.default_datasource_access_permission
+                == DataSourceAccessPermission.WRITE
+            )
+        )
 
     def create_data_ingestion_pipeline(self):
         return DataIngestionPipeline(self)

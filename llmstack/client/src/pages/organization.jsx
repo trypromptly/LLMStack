@@ -76,14 +76,6 @@ const settingsSchema = {
       description: "Logo URL for the organization",
       title: "Logo",
     },
-    disabled_api_backends: {
-      type: "array",
-      items: {
-        type: "string",
-      },
-      description: "List of disabled API backends",
-      title: "Disabled API Backends",
-    },
     default_app_visibility: {
       type: "integer",
       description: "Default visibility level for apps in the organization",
@@ -109,6 +101,24 @@ const settingsSchema = {
         "Only members of your organization can access this app",
         "Only you and the selected users can access this app",
       ],
+    },
+    default_app_access_permission: {
+      type: "integer",
+      description:
+        "Default access permission for apps shared with organization",
+      title: "Default App Access Permission",
+      default: 0,
+      enum: [0, 1],
+      enumNames: ["Read", "Write"],
+    },
+    default_datasource_access_permission: {
+      type: "integer",
+      default: 0,
+      description:
+        "Default access permission for datasources shared with organization",
+      title: "Default Datasource Access Permission",
+      enum: [0, 1],
+      enumNames: ["Read", "Write"],
     },
     allow_user_keys: {
       type: "boolean",

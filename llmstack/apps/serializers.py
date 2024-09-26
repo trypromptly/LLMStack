@@ -6,7 +6,6 @@ from llmstack.apps.app_types import AppTypeFactory
 from llmstack.apps.yaml_loader import get_app_template_by_slug
 from llmstack.assets.apis import AssetViewSet
 from llmstack.base.models import Profile
-from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.processors.models import ApiBackend, Endpoint
 from llmstack.processors.serializers import ApiProviderSerializer
 
@@ -102,7 +101,6 @@ class AppSerializer(DynamicFieldsModelSerializer):
     has_footer = serializers.SerializerMethodField()
     last_modified_by_email = serializers.SerializerMethodField()
     owner_email = serializers.SerializerMethodField()
-    output_template = serializers.SerializerMethodField()
     app_type_name = serializers.SerializerMethodField()
     app_type_slug = serializers.SerializerMethodField()
     discord_config = serializers.SerializerMethodField()
@@ -110,7 +108,6 @@ class AppSerializer(DynamicFieldsModelSerializer):
     twilio_config = serializers.SerializerMethodField()
     web_config = serializers.SerializerMethodField()
     access_permission = serializers.SerializerMethodField()
-    accessible_by = serializers.SerializerMethodField()
     read_accessible_by = serializers.SerializerMethodField()
     write_accessible_by = serializers.SerializerMethodField()
     last_modified_by_email = serializers.SerializerMethodField()
@@ -146,15 +143,6 @@ class AppSerializer(DynamicFieldsModelSerializer):
             if obj.has_write_permission(
                 self._request_user,
             )
-            else None
-        )
-
-    def get_output_template(self, obj):
-        return (
-            convert_template_vars_from_legacy_format(
-                obj.output_template,
-            )
-            if obj.output_template
             else None
         )
 
@@ -237,24 +225,6 @@ class AppSerializer(DynamicFieldsModelSerializer):
             else None
         )
 
-    def get_access_permission(self, obj):
-        return (
-            AppAccessPermission.WRITE
-            if obj.has_write_permission(
-                self._request_user,
-            )
-            else AppAccessPermission.READ
-        )
-
-    def get_accessible_by(self, obj):
-        return (
-            obj.accessible_by
-            if obj.has_write_permission(
-                self._request_user,
-            )
-            else None
-        )
-
     def get_read_accessible_by(self, obj):
         return (
             obj.read_accessible_by
@@ -317,13 +287,14 @@ class AppSerializer(DynamicFieldsModelSerializer):
         app_data = self.get_data(obj)
         return app_data.get("description", obj.description)
 
+    def get_access_permission(self, obj):
+        return AppAccessPermission.WRITE if obj.has_write_permission(self._request_user) else AppAccessPermission.READ
+
     class Meta:
         model = App
         fields = [
             "name",
             "description",
-            "config",
-            "input_schema",
             "data",
             "type",
             "uuid",
@@ -331,8 +302,6 @@ class AppSerializer(DynamicFieldsModelSerializer):
             "store_uuid",
             "is_published",
             "unique_processors",
-            "input_ui_schema",
-            "output_template",
             "created_at",
             "last_updated_at",
             "logo",
@@ -341,8 +310,6 @@ class AppSerializer(DynamicFieldsModelSerializer):
             "has_footer",
             "domain",
             "visibility",
-            "accessible_by",
-            "access_permission",
             "last_modified_by_email",
             "owner_email",
             "web_config",
@@ -356,6 +323,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
             "read_accessible_by",
             "write_accessible_by",
             "has_live_version",
+            "access_permission",
         ]
 
 

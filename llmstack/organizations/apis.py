@@ -8,11 +8,16 @@ from rest_framework import viewsets
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response as DRFResponse
 
-from llmstack.apps.models import App, AppVisibility
+from llmstack.apps.models import App, AppAccessPermission, AppVisibility
 from llmstack.apps.serializers import AppSerializer
 from llmstack.base.models import Profile
 from llmstack.common.utils.provider_config import validate_provider_configs
-from llmstack.data.models import DataSource, DataSourceEntry, DataSourceVisibility
+from llmstack.data.models import (
+    DataSource,
+    DataSourceAccessPermission,
+    DataSourceEntry,
+    DataSourceVisibility,
+)
 from llmstack.data.serializers import DataSourceEntrySerializer, DataSourceSerializer
 from llmstack.organizations.models import Organization, OrganizationSettings
 from llmstack.organizations.serializers import (
@@ -106,9 +111,21 @@ class OrganizationSettingsViewSet(viewsets.ModelViewSet):
             "default_app_visibility",
             AppVisibility.PUBLIC,
         )
+        organization_settings.default_datasource_visibility = request.data.get(
+            "default_datasource_visibility",
+            DataSourceVisibility.ORGANIZATION,
+        )
         organization_settings.max_app_visibility = request.data.get(
             "max_app_visibility",
             AppVisibility.PUBLIC,
+        )
+        organization_settings.default_app_access_permission = request.data.get(
+            "default_app_access_permission",
+            AppAccessPermission.READ,
+        )
+        organization_settings.default_datasource_access_permission = request.data.get(
+            "default_datasource_access_permission",
+            DataSourceAccessPermission.READ,
         )
         organization_settings.allow_user_keys = request.data.get(
             "allow_user_keys",
@@ -316,6 +333,7 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
             return DRFResponse(
                 DataSourceSerializer(
                     instance=datasource_object,
+                    context={"request_user": request.user},
                 ).data,
             )
 
@@ -323,6 +341,7 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
             DataSourceSerializer(
                 instance=self.get_queryset(),
                 many=True,
+                context={"request_user": request.user},
             ).data,
         )
 
@@ -335,6 +354,7 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
             DataSourceEntrySerializer(
                 instance=datasource_entries,
                 many=True,
+                context={"request_user": request.user},
             ).data,
         )
 
@@ -349,6 +369,7 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
         return DRFResponse(
             DataSourceSerializer(
                 instance=datasource_object,
+                context={"request_user": request.user},
             ).data,
         )
 
@@ -362,6 +383,7 @@ class OrganizationDataSourceViewSet(viewsets.ModelViewSet):
         return DRFResponse(
             DataSourceSerializer(
                 instance=datasource_object,
+                context={"request_user": request.user},
             ).data,
         )
 
@@ -411,6 +433,7 @@ class OrganizationDataSourceEntryViewSet(viewsets.ModelViewSet):
             return DRFResponse(
                 DataSourceEntrySerializer(
                     instance=datasource_entry_object,
+                    context={"request_user": request.user},
                 ).data,
             )
 
@@ -423,7 +446,11 @@ class OrganizationDataSourceEntryViewSet(viewsets.ModelViewSet):
             datasource__in=datasources,
         )
         return DRFResponse(
-            DataSourceEntrySerializer(instance=datasource_entries, many=True).data,
+            DataSourceEntrySerializer(
+                instance=datasource_entries,
+                many=True,
+                context={"request_user": request.user},
+            ).data,
         )
 
     def text_content(self, request, uid):
