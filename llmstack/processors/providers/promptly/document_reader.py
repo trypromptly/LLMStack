@@ -220,18 +220,17 @@ class DocumentReader(ApiProcessorInterface[DocumentReaderInput, DocumentReaderOu
 
         if input_uri.startswith("http"):
             content_name, content, mime_type = self._get_url_bytes_mime_type(input_uri)
-            file_checksum = generate_checksum(content)
             content = base64.b64decode(content)
         elif input_uri.startswith("data"):
             content_name, content, mime_type = self._get_data_url_bytes_mime_type(input_uri)
-            file_checksum = generate_checksum(content)
             content = base64.b64decode(content)
         elif input_uri.startswith("objref"):
             content_name, content, mime_type = self._get_objref_bytes_mime_type(input_uri)
-            file_checksum = generate_checksum(content)
             content = base64.b64decode(content)
         else:
             raise Exception("Invalid input")
+
+        file_checksum = generate_checksum(content)
 
         if file_checksum in self._document_pages:
             document_pages = [DataPage(**page) for page in self._document_pages[file_checksum]]
