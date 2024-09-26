@@ -79,9 +79,22 @@ def html_xpath_filter(html_string, xpath_expr):
         return ""
 
     if len(filtered_elements) == 1:
-        return html.tostring(filtered_elements[0], encoding="unicode")
+        return _serialize_xpath_result(filtered_elements[0])
 
-    return [html.tostring(elem, encoding="unicode") for elem in filtered_elements]
+    return [_serialize_xpath_result(elem) for elem in filtered_elements]
+
+
+def _serialize_xpath_result(result):
+    if isinstance(result, str):
+        return result
+    elif isinstance(result, (int, float, bool)):
+        return str(result)
+    elif isinstance(result, ET._Element):
+        return html.tostring(result, encoding="unicode")
+    elif isinstance(result, ET._ElementUnicodeResult):
+        return str(result)
+    else:
+        return repr(result)
 
 
 env.add_filter("urlencode", quote_plus)
