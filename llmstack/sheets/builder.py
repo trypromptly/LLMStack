@@ -170,6 +170,7 @@ This will result in column A for names, column B for web search results using a 
 - If we need to generate new text (e.g. a new name, a new sentence, etc.) we can use the GPT processor.
 - If we need to search the web for information, we can use the web search processor.
 - If we need to read a document, we can use the document reader processor.
+- When using GPT processor, you can use the following system messages to control the tone and format of the response. For example, if the column holds price, then the system message can include "make sure the we only output the price in the text"
 
 
 ## Instructions for handling the user request
