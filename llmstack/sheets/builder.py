@@ -142,7 +142,7 @@ Input: {
   "input": "string (URL, data-uri, or Promptly objref)"
 }
 Config: {
-  "use_browser": "boolean (default: false)"
+  "use_browser": "true"
 }
 Output: {
   "name": "string",
