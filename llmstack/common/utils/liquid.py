@@ -50,11 +50,13 @@ def xpath_filter(xml_string, xpath_expr):
         logger.exception(e)
         return xml_string
 
-    # Serialize the filtered elements to a string
-    result = ""
-    for element in filtered_elements:
-        result += ET.tostring(element)
-    return result
+    if len(filtered_elements) == 0:
+        return ""
+
+    if len(filtered_elements) == 1:
+        return ET.tostring(filtered_elements[0]).decode("ascii")
+
+    return list(map(lambda x: ET.tostring(x).decode("ascii"), filtered_elements))
 
 
 env.add_filter("urlencode", quote_plus)
