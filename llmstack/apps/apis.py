@@ -43,7 +43,7 @@ from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
 from llmstack.processors.providers.api_processors import ApiProcessorFactory
 
-from .models import App, AppData, AppHub, AppTemplate, AppType, AppVisibility
+from .models import App, AppData, AppHub, AppType, AppVisibility
 from .serializers import (
     AppDataSerializer,
     AppHubSerializer,
@@ -667,20 +667,12 @@ class AppViewSet(viewsets.ViewSet):
         comment = request.data["comment"] if "comment" in request.data else "First version"
 
         template_slug = request.data["template_slug"] if "template_slug" in request.data else None
-        template = (
-            AppTemplate.objects.filter(
-                slug=template_slug,
-            ).first()
-            if template_slug
-            else None
-        )
 
         app = App.objects.create(
             name=app_name,
             owner=owner,
             description=app_description,
             type=app_type,
-            template=template,
             template_slug=template_slug,
             web_integration_config=web_integration_config,
             slack_integration_config=slack_integration_config,
