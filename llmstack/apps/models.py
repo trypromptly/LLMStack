@@ -387,7 +387,7 @@ class App(models.Model):
             self.owner == user
             or user.email in self.write_accessible_by
             or (
-                self.owner_profile.all_emails_in_same_org([user.email])
+                Profile.email_in_org_cached(self.owner_profile.organization, user.email)
                 and self.visibility >= AppVisibility.ORGANIZATION
                 and self.owner_profile.organization.settings.default_app_access_permission == AppAccessPermission.WRITE
             )
@@ -402,7 +402,7 @@ class App(models.Model):
             or self.has_write_permission(user)
             or user.email in self.read_accessible_by
             or (
-                self.owner_profile.all_emails_in_same_org([user.email])
+                Profile.email_in_org_cached(self.owner_profile.organization, user.email)
                 and self.visibility >= AppVisibility.ORGANIZATION
             )
         )

@@ -730,13 +730,14 @@ class AbstractProfile(models.Model):
         uuid = cipher.decrypt(encrypted_uuid.encode()).decode()
         return cls.objects.get(uuid=uuid)
 
-    def all_emails_in_same_org(self, emails):
-        profiles = Profile.objects.filter(user__email__in=emails)
+    @staticmethod
+    @cache
+    def email_in_org_cached(organization, email):
+        profiles = Profile.objects.filter(user__email=email)
         return (
-            self.organization
-            and profiles.exists()
+            profiles.exists()
             and profiles.values("organization").distinct().count() == 1
-            and profiles.first().organization == self.organization
+            and profiles.first().organization == organization
         )
 
 
