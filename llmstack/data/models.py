@@ -173,7 +173,7 @@ class DataSource(models.Model):
             self.owner == user
             or user.email in self.read_accessible_by
             or (
-                Profile.email_in_org_cached(self.profile.organization, user.email)
+                Profile.user_in_org_cached(self.profile.organization, user)
                 and self.visibility == DataSourceVisibility.ORGANIZATION
             )
         )
@@ -183,7 +183,7 @@ class DataSource(models.Model):
             self.owner == user
             or user.email in self.write_accessible_by
             or (
-                Profile.email_in_org_cached(self.profile.organization, user.email)
+                Profile.user_in_org_cached(self.profile.organization, user)
                 and self.visibility == DataSourceVisibility.ORGANIZATION
                 and self.profile.organization.settings.default_datasource_access_permission
                 == DataSourceAccessPermission.WRITE

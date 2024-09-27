@@ -732,13 +732,13 @@ class AbstractProfile(models.Model):
 
     @staticmethod
     @cache
-    def email_in_org_cached(organization, email):
-        profiles = Profile.objects.filter(user__email=email)
-        return (
-            profiles.exists()
-            and profiles.values("organization").distinct().count() == 1
-            and profiles.first().organization == organization
-        )
+    def user_in_org_cached(organization, user):
+        profile = Profile.objects.get(user=user)
+
+        if not profile:
+            return False
+
+        return profile.organization == organization
 
 
 class DefaultProfile(AbstractProfile):
