@@ -1,6 +1,5 @@
 import DoneIcon from "@mui/icons-material/Done";
 import {
-  Chip,
   Paper,
   Table,
   TableBody,
@@ -24,7 +23,7 @@ export function SharedAppList() {
   useEffect(() => {
     axios()
       .get(
-        "/api/apps/shared?fields=uuid,name,visibility,is_published,app_type_name,owner_email,published_uuid,access_permission,unique_processors",
+        "/api/apps/shared?fields=uuid,name,visibility,is_published,app_type_name,owner_email,published_uuid,access_permission",
       )
       .then((response) => {
         setApps(response.data);
@@ -51,7 +50,6 @@ export function SharedAppList() {
               <TableCell>App Name</TableCell>
               <TableCell sx={{ textAlign: "center" }}>App Type</TableCell>
               <TableCell sx={{ textAlign: "center" }}>Owner</TableCell>
-              <TableCell>Processors</TableCell>
               <TableCell sx={{ textAlign: "center" }}>Can Edit?</TableCell>
             </TableRow>
           </TableHead>
@@ -79,11 +77,6 @@ export function SharedAppList() {
                   </TableCell>
                   <TableCell sx={{ textAlign: "center" }}>
                     {row.owner_email}
-                  </TableCell>
-                  <TableCell style={{ maxWidth: "100px" }}>
-                    {row.unique_processors?.map((x) => (
-                      <Chip key={x} label={x} size="small" />
-                    ))}
                   </TableCell>
                   <TableCell sx={{ textAlign: "center" }}>
                     {row?.access_permission > 0 && <DoneIcon color="success" />}
