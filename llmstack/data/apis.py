@@ -317,7 +317,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         entry.status = DataSourceEntryStatus.READY if not document.processing_errors else DataSourceEntryStatus.FAILED
         entry.save(update_fields=["config", "size", "status", "updated_at"])
 
-        return DRFResponse(DataSourceEntrySerializer(instance=entry).data)
+        return DRFResponse(DataSourceEntrySerializer(instance=entry, context={"request_user": request.user}).data)
 
     def resync(self, request, uid):
         datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
