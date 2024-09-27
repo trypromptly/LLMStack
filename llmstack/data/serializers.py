@@ -33,7 +33,7 @@ class DataSourceSerializer(serializers.ModelSerializer):
     def get_pipeline(self, obj):
         config = obj.config or {}
         pipeline = config.get("pipeline", None)
-        if pipeline and "source" in pipeline and "data" in pipeline["source"]:
+        if pipeline and "source" in pipeline and pipeline["source"] and "data" in pipeline["source"]:
             pipeline["source"]["data"] = {}
 
         return pipeline
