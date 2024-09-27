@@ -32,7 +32,11 @@ class DataSourceSerializer(serializers.ModelSerializer):
 
     def get_pipeline(self, obj):
         config = obj.config or {}
-        return config.get("pipeline", None)
+        pipeline = config.get("pipeline", None)
+        if pipeline and "source" in pipeline and "data" in pipeline["source"]:
+            pipeline["source"]["data"] = {}
+
+        return pipeline
 
     def get_refresh_interval(self, obj):
         config = obj.config or {}
@@ -91,6 +95,7 @@ class DataSourceEntrySerializer(serializers.ModelSerializer):
     def get_config(self, obj):
         config = obj.config or {}
         config.pop("input", None)
+
         return config
 
     class Meta:
