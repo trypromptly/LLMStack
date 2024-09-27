@@ -669,7 +669,7 @@ export function AddDataSourceModal({
                 pipelineData.source = {
                   slug: source.slug,
                   provider_slug: source.provider_slug,
-                  data: sourceData,
+                  data: {},
                 };
               }
               if (embedding.slug && embedding.provider_slug) {
