@@ -181,6 +181,9 @@ class HistorySerializer(serializers.ModelSerializer):
         return {"name": "Deleted App", "path": "/"}
 
     def get_processor_runs(self, obj):
+        if self.context.get("hide_details"):
+            return []
+
         if obj.processor_runs_objref:
             try:
                 return obj.get_processor_runs_from_objref()
