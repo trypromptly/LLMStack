@@ -390,7 +390,10 @@ class RunEntry(models.Model):
         if not self.processor_runs_objref:
             return []
         file_asset = get_asset_by_objref_internal(self.processor_runs_objref)
-        content = file_asset.file.read().decode("utf-8")
+        if not file_asset:
+            return []
+        with open(file_asset.file.path, "r") as f:
+            content = f.read()
         return json.loads(content).get("processor_runs", [])
 
     @classmethod
