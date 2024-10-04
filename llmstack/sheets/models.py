@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, field_serializer, model_validator
 
 from llmstack.assets.models import Assets
 
@@ -172,10 +172,9 @@ class SheetColumn(BaseModel):
         if isinstance(self.col_letter, int):
             self.col_letter = self.column_index_to_letter(self.col_letter)
 
-    class Config:
-        json_encoders = {
-            SheetCellType: lambda v: v.value,
-        }
+    @field_serializer("cell_type")
+    def serialize_cell_type(self, cell_type: SheetCellType, _info):
+        return cell_type.value
 
 
 class SheetCell(BaseModel):
