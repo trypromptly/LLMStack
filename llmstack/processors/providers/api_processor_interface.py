@@ -1,7 +1,7 @@
 import logging
 import time
 from functools import cache
-from typing import Any, Dict, Optional, TypeVar
+from typing import Any, Dict, Optional
 
 import ujson as json
 from django import db
@@ -27,9 +27,6 @@ from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
-ConfigurationSchemaType = TypeVar("ConfigurationSchemaType")
-InputSchemaType = TypeVar("InputSchemaType")
-OutputSchemaType = TypeVar("OutputSchemaType")
 
 TEXT_WIDGET_NAME = "output_text"
 IMAGE_WIDGET_NAME = "output_image"
