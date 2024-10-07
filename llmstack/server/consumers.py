@@ -138,13 +138,34 @@ class AppConsumer(AsyncWebsocketConsumer):
         )
 
     async def _respond_to_event(self, text_data):
-        logger.info(f"Received event {text_data}")
+        json_data = json.loads(text_data)
+        client_request_id = json_data.get("id", None)
         app_runner_request = AppRunnerRequest(
             id=str(uuid.uuid4()),
             session_id=self._session_id,
-            request=json.loads(text_data).get("input", {}),
+            request=json_data.get("input", {}),
         )
         await self._app_runner.run(app_runner_request)
+
+        response_id = str(uuid.uuid4())
+
+        output_stream = await self._app_runner.output_stream()
+        for output in output_stream:
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "output": output,
+                        "reply_to": client_request_id,
+                        "id": response_id,
+                        "request_id": app_runner_request.id,
+                    }
+                )
+            )
+        await self.send(
+            text_data=json.dumps(
+                {"event": "done", "reply_to": client_request_id, "id": response_id, "request_id": app_runner_request.id}
+            )
+        )
 
     async def _respond_to_event_old(self, text_data):
         from llmstack.apps.apis import AppViewSet

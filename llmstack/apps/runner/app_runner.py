@@ -108,21 +108,24 @@ class AppRunner:
         actor_configs = self._get_actor_configs_from_processors(
             app_data.get("processors", []), self._is_agent, vendor_env
         )
-        output_template = app_data.get("output_template", "") if self._is_agent else ""
+        output_template = app_data.get("output_template", {}).get("markdown", "")
         self._coordinator = (
             AgentCoordinator.start(
                 actor_configs=actor_configs,
                 output_template=output_template,
-            )
+            ).proxy()
             if self._is_agent
-            else WorkflowCoordinator.start(actor_configs=actor_configs, output_template=output_template)
+            else WorkflowCoordinator.start(actor_configs=actor_configs, output_template=output_template).proxy()
         )
 
     async def run(self, request: AppRunnerRequest):
-        return await self._coordinator.input(request.request)
+        return self._coordinator.input(request.request)
 
     async def output(self):
-        return await self._coordinator.output()
+        return self._coordinator.output().get()
+
+    async def output_stream(self):
+        return self._coordinator.output_stream().get()
 
     async def stop(self):
         await self._coordinator.stop()

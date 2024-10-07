@@ -83,6 +83,9 @@ class AppCoordinator(ThreadingActor):
             message_to="input",
         )
 
+        # Reset output actor before sending input
+        self.actors["output"].proxy().reset().get()
+
         self.tell_actor("input", message)
 
     def output(self):
