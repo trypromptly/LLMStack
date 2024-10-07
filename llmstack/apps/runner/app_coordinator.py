@@ -83,8 +83,8 @@ class AppCoordinator(ThreadingActor):
             message_to="input",
         )
 
-        # Reset output actor before sending input
-        self.actors["output"].proxy().reset().get()
+        # Reset actors before handling new input
+        self.reset_actors()
 
         self.tell_actor("input", message)
 
@@ -103,3 +103,7 @@ class AppCoordinator(ThreadingActor):
         logger.info("Stopping actors")
         for actor in self.actors.values():
             actor.stop()
+
+    def reset_actors(self):
+        for actor in self.actors.values():
+            actor.proxy().reset().get()
