@@ -110,8 +110,7 @@ class OutputActor(Actor):
         self._error = None
         self._stopped = False
 
-        # Reset the received messages state
-        self._messages = {}
+        super().reset()
 
     def get_dependencies(self):
         if not self._template:

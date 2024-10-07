@@ -166,6 +166,8 @@ class ApiProcessorInterface(
 
         self._config = self._get_configuration_class()(**config)
         self._input = self._get_input_class()(**input)
+        self._config_template = self._get_configuration_class()(**config)
+        self._input_template = self._get_input_class()(**input)
         self._env = env
         self._is_tool = is_tool
         self._request = request
@@ -331,19 +333,19 @@ class ApiProcessorInterface(
         try:
             self._input = (
                 hydrate_input(
-                    self._input,
+                    self._input_template,
                     message,
                 )
                 if message
-                else self._input
+                else self._input_template
             )
             self._config = (
                 hydrate_input(
-                    self._config,
+                    self._config_template,
                     message,
                 )
                 if self._config and message
-                else self._config
+                else self._config_template
             )
             output = self.process()
         except Exception as e:
@@ -388,23 +390,22 @@ class ApiProcessorInterface(
         )
 
     def invoke(self, message: ToolInvokeInput) -> Any:
-        self._base_input = self._input
         try:
             self._input = (
                 hydrate_input(
-                    self._input,
+                    self._input_template,
                     {**message.input, **message.tool_args},
                 )
                 if message
-                else self._input
+                else self._input_template
             )
             self._config = (
                 hydrate_input(
-                    self._config,
+                    self._config_template,
                     {**message.input, **message.tool_args},
                 )
-                if self._config
-                else self._config
+                if self._config_template
+                else self._config_template
             )
 
             # Merge tool args with input
@@ -442,8 +443,6 @@ class ApiProcessorInterface(
             bookkeeping_data.usage_data = self.usage_data()
 
         self._output_stream.bookkeep(bookkeeping_data)
-
-        self._input = self._base_input
 
     def input_stream(self, message: Any) -> Any:
         # We do not support input stream for this processor

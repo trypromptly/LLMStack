@@ -111,6 +111,10 @@ class Actor(ThreadingActor):
         # TODO: This should be persisted in the endpoint or app config
         return []
 
+    def reset(self):
+        # Resets the current state so we can reuse this actor with new input
+        self._messages = {}
+
     @property
     def dependencies(self):
         return list(
