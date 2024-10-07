@@ -39,7 +39,7 @@ class WorkflowCoordinator(AppCoordinator):
                 self.stop_actors()
             return
 
-        logger.info(f"Relaying message {message} to {self._actor_dependents.get(message.message_from)}")
+        logger.debug(f"Relaying message {message} to {self._actor_dependents.get(message.message_from)}")
 
         # Relay message to all dependents
         for dependent in self._actor_dependents.get(message.message_from, set()):
