@@ -7,6 +7,7 @@ import ujson as json
 from django import db
 from pydantic import BaseModel
 
+from llmstack.apps.app_session_utils import get_app_session_data, save_app_session_data
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.assets.utils import get_asset_by_objref
 from llmstack.common.blocks.base.processor import (
@@ -147,10 +148,10 @@ class ApiProcessorInterface(
         input,
         config,
         env,
+        session_id="",
         coordinator_urn=None,
         dependencies=[],
         metadata={},
-        session_data=None,
         request=None,
         id=None,
         is_tool=False,
@@ -169,13 +170,16 @@ class ApiProcessorInterface(
         self._config_template = self._get_configuration_class()(**config)
         self._input_template = self._get_input_class()(**input)
         self._env = env
+        self._session_id = session_id
         self._is_tool = is_tool
         self._request = request
         self._metadata = metadata
         self._session_enabled = session_enabled
         self._usage_data = [("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1))]
 
-        self.process_session_data(session_data if session_enabled and session_data else {})
+        session_data = get_app_session_data(self._session_id, self._id)
+        if self._session_enabled:
+            self.process_session_data(session_data or {})
 
     @classmethod
     def get_output_schema(cls) -> dict:
@@ -381,6 +385,9 @@ class ApiProcessorInterface(
             )
         if bookkeeping_data:
             bookkeeping_data.usage_data = self.usage_data()
+
+            # Persist session_data
+            save_app_session_data(self._session_id, self._id, bookkeeping_data.session_data)
 
         self._output_stream.bookkeep(bookkeeping_data)
 
