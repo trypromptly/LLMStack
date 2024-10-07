@@ -1,9 +1,8 @@
 import logging
-import time
 from typing import Any, NamedTuple
 
 from llmstack.common.utils.liquid import render_template
-from llmstack.play.actor import Actor, BookKeepingData
+from llmstack.play.actor import Actor
 from llmstack.play.utils import extract_jinja2_variables
 
 logger = logging.getLogger(__name__)
@@ -28,16 +27,8 @@ class OutputActor(Actor):
         template=None,
     ):
         super().__init__(id="output", coordinator_urn=coordinator_urn, dependencies=dependencies)
-        self._data = None
-        self._data_chunk = None
-        self._data_chunks = []
-        self._data_sent = False
-        self._data_chunk_sent = False
-        self._data_chunks_sent = 0
-        self._data_done = False
         self._template = template
-        self._error = None
-        self._stopped = False
+        self.reset()
 
     def input(self, message: Any) -> Any:
         if self._template:
@@ -51,20 +42,6 @@ class OutputActor(Actor):
             self._data = message
         self._data_done = True
         self._output_stream.finalize()
-
-        output_response = OutputResponse(
-            response_content_type="application/json" if not self._template else "text/markdown",
-            response_status=200 if not self._error else 400,
-            response_body=self._data if not self._error else self._error,
-            response_headers={},
-        )
-
-        self._output_stream.bookkeep(
-            BookKeepingData(
-                run_data={**output_response._asdict()},
-                timestamp=time.time(),
-            ),
-        )
 
     def input_stream(self, message: Any) -> Any:
         self._data_chunks.append(message)
@@ -109,6 +86,7 @@ class OutputActor(Actor):
             yield {"errors": list(self._error.values())}
 
     def on_stop(self) -> None:
+        logger.info("Stopping output actor")
         self._data_done = True
         self._data_chunk_sent = True
         self._stopped = True
@@ -120,19 +98,20 @@ class OutputActor(Actor):
         self._data_done = True
         self._output_stream.finalize()
 
-        output_response = OutputResponse(
-            response_content_type="application/json",
-            response_status=400,
-            response_body=self._error,
-            response_headers={},
-        )
+    def reset(self) -> None:
+        logger.info("Resetting output actor")
+        self._data = None
+        self._data_chunks = []
+        self._data_done = False
+        self._data_sent = False
+        self._data_chunks_sent = 0
+        self._data_chunk = None
+        self._data_chunk_sent = False
+        self._error = None
+        self._stopped = False
 
-        self._output_stream.bookkeep(
-            BookKeepingData(
-                run_data={**output_response._asdict()},
-                timestamp=time.time(),
-            ),
-        )
+        # Reset the received messages state
+        self._messages = {}
 
     def get_dependencies(self):
         if not self._template:
