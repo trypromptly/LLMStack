@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 import orjson as json
 from django.conf import settings
@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 
 def create_app_session(app_session_id=None):
     app_session_store = caches["app_session"]
-    if not app_session_id:
-        app_session_id = str(uuid.uuid4())
+    app_session_id = app_session_id or str(uuid.uuid4())
 
+    current_time = datetime.now(timezone.utc).isoformat()
     app_session = {
         "id": app_session_id,
         "data": {},
-        "created_at": str(datetime.now()),
-        "last_updated_at": str(datetime.now()),
+        "created_at": current_time,
+        "last_updated_at": current_time,
     }
 
     app_session_store.set(
@@ -53,7 +53,7 @@ def save_app_session_data(app_session_id, key, value):
     app_session = get_or_create_app_session(app_session_id)
 
     app_session["data"][key] = value
-    app_session["last_updated_at"] = str(datetime.now())
+    app_session["last_updated_at"] = datetime.now(timezone.utc).isoformat()
 
     caches["app_session"].set(
         f"app_session_{app_session['id']}",
