@@ -23,13 +23,11 @@ class OutputResponse(NamedTuple):
 class OutputActor(Actor):
     def __init__(
         self,
-        output_stream,
-        dependencies=[],
+        coordinator_urn,
+        dependencies,
         template=None,
-        all_dependencies=[],
     ):
-        super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
-        self._output_stream = output_stream
+        super().__init__(id="output", coordinator_urn=coordinator_urn, dependencies=dependencies)
         self._data = None
         self._data_chunk = None
         self._data_chunks = []

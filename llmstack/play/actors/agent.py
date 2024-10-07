@@ -8,7 +8,6 @@ from asgiref.sync import async_to_sync
 from openai import OpenAI
 from pydantic import BaseModel
 
-from llmstack.apps.app_session_utils import save_agent_app_session_data
 from llmstack.apps.types.agent import AgentModel
 from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.provider_config import get_matched_provider_config
@@ -501,7 +500,7 @@ class AgentActor(Actor):
                     + self._agent_messages
                     + [{"role": "assistant", "content": full_content}],
                 }
-                save_agent_app_session_data(self._agent_app_session_data)
+                # save_agent_app_session_data(self._agent_app_session_data)
 
                 self._output_stream.bookkeep(bookkeeping_data)
                 self._output_stream.finalize()

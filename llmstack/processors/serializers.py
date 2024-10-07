@@ -3,9 +3,9 @@ from functools import cache
 
 from rest_framework import serializers
 
-from llmstack.processors.providers.api_processors import ApiProcessorFactory
+from llmstack.processors.providers.processors import ProcessorFactory
 
-from .models import ApiBackend, ApiProvider, Endpoint, Feedback, RunEntry
+from .models import ApiBackend, ApiProvider, Feedback, RunEntry
 
 
 class ApiProviderSerializer(serializers.ModelSerializer):
@@ -25,7 +25,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
     output_template = serializers.SerializerMethodField()
 
     def get_config_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(
+        processor_cls = ProcessorFactory.get_processor(
             obj.slug,
             obj.api_provider.slug,
         )
@@ -34,7 +34,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
         return json.loads(processor_cls.get_configuration_schema())
 
     def get_input_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(
+        processor_cls = ProcessorFactory.get_processor(
             obj.slug,
             obj.api_provider.slug,
         )
@@ -43,7 +43,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
         return json.loads(processor_cls.get_input_schema())
 
     def get_output_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(
+        processor_cls = ProcessorFactory.get_processor(
             obj.slug,
             obj.api_provider.slug,
         )
@@ -52,7 +52,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
         return json.loads(processor_cls.get_output_schema())
 
     def get_config_ui_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(
+        processor_cls = ProcessorFactory.get_processor(
             obj.slug,
             obj.api_provider.slug,
         )
@@ -61,7 +61,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
         return processor_cls.get_configuration_ui_schema()
 
     def get_input_ui_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(
+        processor_cls = ProcessorFactory.get_processor(
             obj.slug,
             obj.api_provider.slug,
         )
@@ -70,7 +70,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
         return processor_cls.get_input_ui_schema()
 
     def get_output_ui_schema(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(
+        processor_cls = ProcessorFactory.get_processor(
             obj.slug,
             obj.api_provider.slug,
         )
@@ -79,7 +79,7 @@ class ApiBackendSerializer(serializers.ModelSerializer):
         return processor_cls.get_output_ui_schema()
 
     def get_output_template(self, obj):
-        processor_cls = ApiProcessorFactory.get_api_processor(
+        processor_cls = ProcessorFactory.get_processor(
             obj.slug,
             obj.api_provider.slug,
         )
@@ -104,30 +104,6 @@ class ApiBackendSerializer(serializers.ModelSerializer):
             "input_ui_schema",
             "output_ui_schema",
             "output_template",
-        ]
-
-
-class EndpointSerializer(serializers.ModelSerializer):
-    api_backend = ApiBackendSerializer()
-
-    class Meta:
-        model = Endpoint
-        fields = [
-            "name",
-            "uuid",
-            "api_backend",
-            "param_values",
-            "post_processor",
-            "prompt",
-            "draft",
-            "is_live",
-            "parent_uuid",
-            "description",
-            "version",
-            "created_on",
-            "is_app",
-            "config",
-            "input",
         ]
 
 

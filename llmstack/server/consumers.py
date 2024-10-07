@@ -13,7 +13,9 @@ from django.http import HttpRequest, QueryDict
 from django_ratelimit.exceptions import Ratelimited
 from flags.state import flag_enabled
 
+from llmstack.apps.runner.app_runner import AppRunnerRequest, WebAppRunnerSource
 from llmstack.assets.utils import get_asset_by_objref
+from llmstack.common.utils.utils import get_location
 from llmstack.connections.actors import ConnectionActivationActor
 from llmstack.connections.models import (
     Connection,
@@ -86,15 +88,43 @@ def _build_request_from_input(post_data, scope):
 
 class AppConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.app_id = self.scope["url_route"]["kwargs"]["app_id"]
-        self.preview = True if "preview" in self.scope["url_route"]["kwargs"] else False
-        self._session_id = None
-        self._coordinator_ref = None
+        from llmstack.apps.apis import AppViewSet
+
+        self._app_uuid = self.scope["url_route"]["kwargs"]["app_uuid"]
+        self._preview = True if "preview" in self.scope["url_route"]["kwargs"] else False
+        self._session_id = str(uuid.uuid4())
+
+        headers = dict(self.scope["headers"])
+        request_ip = headers.get(
+            "X-Forwarded-For",
+            self.scope.get("client", [""])[0] or "",
+        ).split(",")[
+            0
+        ].strip() or headers.get("X-Real-IP", "")
+        request_location = headers.get("X-Client-Geo-Location", "")
+        if not request_location:
+            location = get_location(request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
+
+        self._source = WebAppRunnerSource(
+            id=self._session_id,
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=headers.get("User-Agent", ""),
+            request_content_type=headers.get("Content-Type", ""),
+        )
+        self._app_runner = await AppViewSet().get_app_runner_async(
+            self._session_id,
+            self._app_uuid,
+            self._source,
+            self.scope.get("user", None),
+            self._preview,
+        )
         await self.accept()
 
     async def disconnect(self, close_code):
-        # TODO: Close the stream
-        pass
+        if self._app_runner:
+            await self._app_runner.stop()
 
     async def _run_app(self, request_uuid, request, **kwargs):
         from llmstack.apps.apis import AppViewSet
@@ -108,6 +138,15 @@ class AppConsumer(AsyncWebsocketConsumer):
         )
 
     async def _respond_to_event(self, text_data):
+        logger.info(f"Received event {text_data}")
+        app_runner_request = AppRunnerRequest(
+            id=str(uuid.uuid4()),
+            session_id=self._session_id,
+            request=json.loads(text_data).get("input", {}),
+        )
+        await self._app_runner.run(app_runner_request)
+
+    async def _respond_to_event_old(self, text_data):
         from llmstack.apps.apis import AppViewSet
         from llmstack.apps.models import AppSessionFiles
 

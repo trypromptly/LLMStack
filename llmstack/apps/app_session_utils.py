@@ -1,122 +1,72 @@
 import logging
+import uuid
 from datetime import datetime
 
 import orjson as json
 from django.conf import settings
 from django.core.cache import caches
 
-APP_SESSION_TIMEOUT = settings.APP_SESSION_TIMEOUT
-
 logger = logging.getLogger(__name__)
 
-app_session_store = caches["app_session"]
-app_session_data_store = caches["app_session_data"]
 
+def create_app_session(app_session_id=None):
+    app_session_store = caches["app_session"]
+    if not app_session_id:
+        app_session_id = str(uuid.uuid4())
 
-def create_app_session(app, app_session_uuid):
     app_session = {
-        "uuid": app_session_uuid,
-        "app": app.id if app else -1,
+        "id": app_session_id,
+        "data": {},
         "created_at": str(datetime.now()),
         "last_updated_at": str(datetime.now()),
     }
+
     app_session_store.set(
-        f"app_session_{app_session_uuid}",
+        f"app_session_{app_session['id']}",
         json.dumps(app_session),
+        settings.APP_SESSION_TIMEOUT,
     )
+
     return app_session
 
 
-def get_app_session(app_session_uuid):
-    app_session = app_session_store.get(f"app_session_{app_session_uuid}")
+def get_app_session(app_session_id):
+    if not app_session_id:
+        return None
+
+    app_session = caches["app_session"].get(f"app_session_{app_session_id}")
     if app_session is None:
         return None
 
     return json.loads(app_session)
 
 
-def create_app_session_data(app_session, endpoint, data):
-    if not app_session:
-        return None
+def get_or_create_app_session(app_session_id=None):
+    app_session = get_app_session(app_session_id)
 
-    endpoint_id = endpoint["id"] if isinstance(endpoint, dict) else endpoint.id
+    if app_session is None:
+        app_session = create_app_session(app_session_id)
+    return app_session
 
-    app_session_data = {
-        "app_session": app_session,
-        "endpoint": endpoint_id,
-        "data": data,
-        "created_at": str(datetime.now()),
-        "last_updated_at": str(datetime.now()),
-    }
-    app_session_data_store.set(
-        f'app_session_data_{app_session["uuid"]}_{endpoint_id}',
-        json.dumps(
-            app_session_data,
-        ),
-        APP_SESSION_TIMEOUT,
+
+def save_app_session_data(app_session_id, key, value):
+    app_session = get_or_create_app_session(app_session_id)
+
+    app_session["data"][key] = value
+    app_session["last_updated_at"] = str(datetime.now())
+
+    caches["app_session"].set(
+        f"app_session_{app_session['id']}",
+        json.dumps(app_session),
+        settings.APP_SESSION_TIMEOUT,
     )
-    return app_session_data
 
 
-def save_app_session_data(app_session_data):
-    app_session_data_store.set(
-        f'app_session_data_{app_session_data["app_session"]["uuid"]}_{app_session_data["endpoint"]}',
-        json.dumps(app_session_data),
-        APP_SESSION_TIMEOUT,
-    )
-    return app_session_data
+def get_app_session_data(app_session_id, key):
+    app_session = get_app_session(app_session_id)
+
+    return app_session["data"].get(key, None) if app_session else None
 
 
-def get_app_session_data(app_session, endpoint):
-    if not app_session:
-        return None
-
-    endpoint_id = endpoint["id"] if isinstance(endpoint, dict) else endpoint.id
-
-    app_session_data = app_session_data_store.get(
-        f'app_session_data_{app_session["uuid"]}_{endpoint_id}',
-    )
-    if app_session_data is None:
-        return None
-    return json.loads(app_session_data)
-
-
-def create_agent_app_session_data(app_session, data):
-    if not app_session:
-        return None
-
-    app_session_data = {
-        "app_session": app_session,
-        "data": data,
-        "created_at": str(datetime.now()),
-        "last_updated_at": str(datetime.now()),
-    }
-    app_session_data_store.set(
-        f'app_session_data_{app_session["uuid"]}_agent',
-        json.dumps(
-            app_session_data,
-        ),
-        APP_SESSION_TIMEOUT,
-    )
-    return app_session_data
-
-
-def save_agent_app_session_data(app_session_data):
-    app_session_data_store.set(
-        f'app_session_data_{app_session_data["app_session"]["uuid"]}_agent',
-        json.dumps(app_session_data),
-        APP_SESSION_TIMEOUT,
-    )
-    return app_session_data
-
-
-def get_agent_app_session_data(app_session):
-    if not app_session:
-        return None
-
-    app_session_data = app_session_data_store.get(
-        f'app_session_data_{app_session["uuid"]}_agent',
-    )
-    if app_session_data is None:
-        return None
-    return json.loads(app_session_data)
+def delete_app_session(app_session_id):
+    caches["app_session"].delete(f"app_session_{app_session_id}")

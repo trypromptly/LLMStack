@@ -30,8 +30,8 @@ application = ProtocolTypeRouter(
         "websocket": AuthMiddlewareStack(
             URLRouter(
                 [
-                    path("ws/apps/<str:app_id>", AppConsumer.as_asgi()),
-                    path("ws/apps/<str:app_id>/<str:preview>", AppConsumer.as_asgi()),
+                    path("ws/apps/<str:app_uuid>", AppConsumer.as_asgi()),
+                    path("ws/apps/<str:app_uuid>/<str:preview>", AppConsumer.as_asgi()),
                     path("ws/assets/<str:category>/<str:uuid>", AssetStreamConsumer.as_asgi()),
                     path(
                         "ws/connections/<str:conn_id>/activate",

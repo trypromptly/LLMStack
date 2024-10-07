@@ -6,6 +6,7 @@ from urllib.parse import quote_plus
 import lxml.etree as ET
 from liquid import Environment
 from lxml import html
+from pydantic import BaseModel
 
 # Add custom filters
 env = Environment()
@@ -111,3 +112,28 @@ env.add_filter("html_xpath", html_xpath_filter)
 
 def render_template(template, data):
     return env.from_string(template).render(**data)
+
+
+def hydrate_input(input, values):
+    def render(value):
+        if isinstance(value, str):
+            try:
+                return render_template(value, values)
+            except Exception:
+                logger.exception("Error rendering template when hydrating input")
+
+        return value
+
+    def traverse(obj):
+        if isinstance(obj, dict):
+            return {key: traverse(render(value)) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [traverse(render(item)) for item in obj]
+        elif isinstance(obj, BaseModel):
+            cls = obj.__class__
+            return cls.model_validate(traverse(obj.model_dump()))
+        elif isinstance(obj, str):
+            return render(obj)
+        return obj
+
+    return traverse(input)

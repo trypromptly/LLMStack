@@ -2,12 +2,12 @@ import logging
 import time
 import uuid
 from types import TracebackType
-from typing import Any, Type
+from typing import Any, Optional, Type
 
 from pydantic import BaseModel, model_validator
 from pykka import ThreadingActor
 
-from llmstack.play.output_stream import Message, MessageType
+from llmstack.play.output_stream import Message, MessageType, OutputStream
 
 logger = logging.getLogger(__name__)
 
@@ -42,35 +42,37 @@ class ActorConfig(BaseModel):
     Configuration for the actor
     """
 
-    class Config:
-        arbitrary_types_allowed = True
-
     name: str
-    template_key: str = ""  # This is used to find other actors dependent on this actor
     actor: Type
     kwargs: dict = {}
-    dependencies: list = []
-    output_cls: Type = None
+    dependencies: list = []  # List of actor ids that this actor depends on
+    output_template: Optional[str] = None  # Output template for the actor
 
 
 class Actor(ThreadingActor):
-    def __init__(self, dependencies: list = [], all_dependencies: list = []):
+    def __init__(
+        self, id, coordinator_urn: str, output_cls: Type = None, dependencies: list = [], all_dependencies: list = []
+    ):
         super().__init__()
+        self._id = id
         self._dependencies = dependencies
         self._all_dependencies = all_dependencies
+        self._coordinator_urn = coordinator_urn
+
         self._messages = {}  # Holds messages while waiting for dependencies
+        self._output_stream = OutputStream(
+            stream_id=self._id,
+            coordinator_urn=self._coordinator_urn,
+            output_cls=output_cls,
+        )
 
     def on_receive(self, message: Message) -> Any:
         if message.message_type == MessageType.BEGIN:
             self.input(message.message)
 
-        message_and_key = (
-            {
-                message.template_key: message.message,
-            }
-            if message.template_key
-            else message.message
-        )
+        message_and_key = {
+            message.message_from: message.message,
+        }
 
         if message.message_type == MessageType.STREAM_ERROR:
             self.on_error(message_and_key)
@@ -84,7 +86,7 @@ class Actor(ThreadingActor):
 
         # Call input only when all the dependencies are met
         if message.message_type == MessageType.STREAM_CLOSED and set(
-            self.dependencies,
+            self._dependencies,
         ) == set(self._messages.keys()):
             self.input(self._messages)
 

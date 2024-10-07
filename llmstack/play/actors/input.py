@@ -1,7 +1,6 @@
 import logging
 import time
-from types import TracebackType
-from typing import Any, NamedTuple, Type
+from typing import Any, NamedTuple
 
 from asgiref.sync import async_to_sync
 
@@ -33,55 +32,17 @@ class InputRequest(NamedTuple):
 class InputActor(Actor):
     def __init__(
         self,
-        output_stream,
-        input_request,
-        dependencies=[],
-        all_dependencies=[],
+        coordinator_urn,
     ):
-        super().__init__(dependencies=dependencies, all_dependencies=all_dependencies)
-        self.input_request = input_request
-        self.data = None
-        self.output_stream = output_stream
-        self.stream_started = False
-        self.stream_closed = False
-        self.sent_data = False
+        super().__init__(id="input", coordinator_urn=coordinator_urn, dependencies=["coordinator"])
 
-    def write(self, message: Any) -> Any:
-        async_to_sync(self.output_stream.write)(message)
-        self.output_stream.finalize()
-        self.output_stream.bookkeep(
+    def input(self, message: Any) -> Any:
+        async_to_sync(self._output_stream.write)(message["coordinator"])
+        self._output_stream.finalize()
+        self._output_stream.bookkeep(
             BookKeepingData(
-                input=message,
-                run_data={
-                    **self.input_request._asdict(),
-                },
+                input=message["coordinator"],
+                run_data=message["coordinator"],
                 timestamp=time.time(),
-                disable_history=self.input_request.disable_history,
             ),
-        )
-
-    def get_output(self):
-        # Return an iter that yield whenever we get a new message
-        while True:
-            if not self.stream_started or self.sent_data and not self.stream_closed:
-                continue
-
-            self.sent_data = True
-
-            if self.stream_closed:
-                break
-
-            yield self.data.__dict__
-
-    def on_stop(self) -> None:
-        pass
-
-    def on_failure(
-        self,
-        exception_type: Type[BaseException],
-        exception_value: BaseException,
-        traceback: TracebackType,
-    ) -> None:
-        logger.error(
-            f"IOActor failed: {exception_type} {exception_value} {traceback}",
         )

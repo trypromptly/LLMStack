@@ -23,7 +23,7 @@ from llmstack.play.actors.output import OutputActor
 from llmstack.play.coordinator import Coordinator
 from llmstack.play.utils import convert_template_vars_from_legacy_format
 from llmstack.processors.providers.api_processor_interface import ApiProcessorInterface
-from llmstack.processors.providers.api_processors import ApiProcessorFactory
+from llmstack.processors.providers.processors import ProcessorFactory
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +207,7 @@ class AppRunner:
                         "processor_slug and provider_slug are required for each processor",
                     )
 
-                processor_cls = ApiProcessorFactory.get_api_processor(
+                processor_cls = ProcessorFactory.api_processor(
                     processor["processor_slug"],
                     processor["provider_slug"],
                 )
@@ -280,7 +280,7 @@ class AppRunner:
                     len(processors) + 1,
                 ),
             ):
-                processor_cls = ApiProcessorFactory.get_api_processor(
+                processor_cls = ProcessorFactory.api_processor(
                     processor.api_backend.slug,
                     processor.api_backend.api_provider.slug,
                 )
