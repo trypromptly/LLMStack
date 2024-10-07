@@ -7,7 +7,6 @@ import {
   CardContent,
   FormControlLabel,
   Checkbox,
-  Typography,
 } from "@mui/material";
 import validator from "@rjsf/validator-ajv8";
 import { lazy, useEffect, useRef, useState, useMemo } from "react";
@@ -15,6 +14,7 @@ import { useRecoilValue } from "recoil";
 import { useValidationErrorsForAppComponents } from "../../data/appValidation";
 import { processorsState } from "../../data/atoms";
 import "./AppEditor.css";
+import { getTemplateKeysFromObject } from "../../data/utils";
 
 const ThemedJsonForm = lazy(() => import("../ThemedJsonForm"));
 const AppStepCard = lazy(() => import("./AppStepCard"));
@@ -256,6 +256,12 @@ export function ProcessorEditor({
               formData={processors[index].input}
               onChange={({ formData }) => {
                 processors[index].input = formData;
+                processors[index].dependencies = isTool
+                  ? []
+                  : getTemplateKeysFromObject({
+                      input: processors[index]?.input,
+                      config: processors[index]?.config,
+                    });
                 setProcessors([...processors]);
               }}
               widgets={{
@@ -293,6 +299,12 @@ export function ProcessorEditor({
               formData={processors[index].config}
               onChange={({ formData }) => {
                 processors[index].config = formData;
+                processors[index].dependencies = isTool
+                  ? []
+                  : getTemplateKeysFromObject({
+                      input: processors[index]?.input,
+                      config: processors[index]?.config,
+                    });
                 setProcessors([...processors]);
               }}
               widgets={{
@@ -337,17 +349,6 @@ export function ProcessorEditor({
             </AccordionDetails>
           </Accordion>
         )}
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="transformer-content"
-            id="transformer-header"
-            style={{ backgroundColor: "#dce8fb", display: "none" }}
-          >
-            <Typography>Data Transformer</Typography>
-          </AccordionSummary>
-          <AccordionDetails></AccordionDetails>
-        </Accordion>
       </CardContent>
     </AppStepCard>
   );
