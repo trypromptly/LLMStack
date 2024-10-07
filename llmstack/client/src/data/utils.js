@@ -201,3 +201,57 @@ export function getJSONSchemaFromInputFields(inputFields) {
 
   return { schema, uiSchema };
 }
+
+/**
+ * Takes an object, recursively iterates through all the leaf elements of type string,
+ * and extracts the unique liquid template keys.
+ *
+ * For example, if some of the string leaf values contain:
+ * - "{{_inputs0.test}}"
+ * - "{% for output in proc1.outputs %}{{output}}{% endfor %}"
+ * - "{% assign test = proc2.output %}{{test}}"
+ *
+ * This function will return ["inputs0", "proc1", "proc2"].
+ */
+export function getTemplateKeysFromObject(obj) {
+  let templateKeys = new Set();
+
+  function extractKeys(value) {
+    if (typeof value === "string") {
+      // Match Liquid variables: {{ variable }}
+      const variableMatches = value.match(/\{\{\s*([^}]+)\s*\}\}/g) || [];
+
+      // Match Liquid tags: {% tag %}
+      const tagMatches = value.match(/\{%\s*([^}]+)\s*%\}/g) || [];
+
+      // Combine all matches
+      const allMatches = [...variableMatches, ...tagMatches];
+
+      allMatches.forEach((match) => {
+        // Extract the key (first part before a dot or space)
+        const key = match.replace(/[{%}]/g, "").trim().split(/[\s.]/)[0];
+        if (
+          key &&
+          ![
+            "if",
+            "else",
+            "endif",
+            "for",
+            "endfor",
+            "assign",
+            "capture",
+            "endcapture",
+          ].includes(key)
+        ) {
+          templateKeys.add(key);
+        }
+      });
+    } else if (typeof value === "object" && value !== null) {
+      Object.values(value).forEach(extractKeys);
+    }
+  }
+
+  extractKeys(obj);
+  console.log(obj, templateKeys);
+  return Array.from(templateKeys);
+}
