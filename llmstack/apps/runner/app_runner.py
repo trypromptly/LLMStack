@@ -69,7 +69,9 @@ class AppRunnerRequest(BaseModel):
 
 
 class AppRunner:
-    def _get_actor_configs_from_processors(self, processors: List[Dict], is_agent: bool, vendor_env: Dict = {}):
+    def _get_actor_configs_from_processors(
+        self, processors: List[Dict], session_id: str, is_agent: bool, vendor_env: Dict = {}
+    ):
         actor_configs = []
         for processor in processors:
             if "processor_slug" not in processor or "provider_slug" not in processor:
@@ -90,6 +92,7 @@ class AppRunner:
                         "input": processor.get("input", {}),
                         "config": processor.get("config", {}),
                         "env": vendor_env,
+                        "session_id": session_id,
                     },
                     dependencies=processor.get("dependencies", []),
                     output_template=processor.get("output_template", None) if is_agent else None,
@@ -106,7 +109,7 @@ class AppRunner:
         self._is_agent = app_data.get("type_slug") == "agent"
 
         actor_configs = self._get_actor_configs_from_processors(
-            app_data.get("processors", []), self._is_agent, vendor_env
+            app_data.get("processors", []), self._session_id, self._is_agent, vendor_env
         )
         output_template = app_data.get("output_template", {}).get("markdown", "")
         self._coordinator = (

@@ -50,13 +50,10 @@ class ActorConfig(BaseModel):
 
 
 class Actor(ThreadingActor):
-    def __init__(
-        self, id, coordinator_urn: str, output_cls: Type = None, dependencies: list = [], all_dependencies: list = []
-    ):
+    def __init__(self, id: str, coordinator_urn: str, output_cls: Type = None, dependencies: list = []):
         super().__init__()
         self._id = id
         self._dependencies = dependencies
-        self._all_dependencies = all_dependencies
         self._coordinator_urn = coordinator_urn
 
         self._messages = {}  # Holds messages while waiting for dependencies
@@ -117,12 +114,7 @@ class Actor(ThreadingActor):
 
     @property
     def dependencies(self):
-        return list(
-            filter(
-                lambda x: x in self._all_dependencies,
-                list(set(self._dependencies + self.get_dependencies())),
-            ),
-        )
+        return []
 
     def on_error(self, error: Any) -> None:
         # Co-ordinator calls this when any actor in the dependency chain has
