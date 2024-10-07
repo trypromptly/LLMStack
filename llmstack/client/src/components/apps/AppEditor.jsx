@@ -41,7 +41,7 @@ export function AppEditor(props) {
         label: "1. Input",
         items: schema,
         pillPrefix: "[1] Input / ",
-        id: "_inputs0",
+        id: "input",
       },
       ...processors.map((p, index) => {
         const processor = processorList.find(
@@ -155,6 +155,7 @@ export function AppEditor(props) {
                   input: null,
                   config: null,
                   output_template: processor?.output_template,
+                  dependencies: [],
                 });
                 setProcessors(newProcessors);
                 setActiveStep(newProcessors.length + 1);
