@@ -110,7 +110,6 @@ class Message(BaseModel):
     message_to: Optional[str] = None
     response_to: Optional[str] = None  # This is used to send a response to a message
     message: Optional[Any] = None
-    template_key: Optional[str] = None
 
 
 class StreamClosedException(Exception):
@@ -155,7 +154,7 @@ class OutputStream:
                     self._coordinator_urn,
                 ).proxy()
             except Exception as e:
-                logger.error(f"Failed to get coordinator proxy: {e}")
+                logger.error(f"Failed to get coordinator proxy for {self._coordinator_urn}: {e}")
 
         return self._coordinator_proxy
 

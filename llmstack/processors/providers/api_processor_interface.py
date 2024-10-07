@@ -16,8 +16,8 @@ from llmstack.common.blocks.base.processor import (
     ProcessorInterface,
 )
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
+from llmstack.common.utils.liquid import hydrate_input
 from llmstack.common.utils.provider_config import get_matched_provider_config
-from llmstack.common.utils.utils import hydrate_input
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
 from llmstack.play.utils import extract_jinja2_variables
@@ -147,9 +147,8 @@ class ApiProcessorInterface(
         input,
         config,
         env,
-        output_stream=None,
+        coordinator_urn=None,
         dependencies=[],
-        all_dependencies=[],
         metadata={},
         session_data=None,
         request=None,
@@ -159,22 +158,22 @@ class ApiProcessorInterface(
     ):
         Actor.__init__(
             self,
+            id=id,
+            coordinator_urn=coordinator_urn,
+            output_cls=self._get_output_class(),
             dependencies=dependencies,
-            all_dependencies=all_dependencies,
         )
 
         self._config = self._get_configuration_class()(**config)
         self._input = self._get_input_class()(**input)
         self._env = env
-        self._id = id
-        self._output_stream = output_stream
         self._is_tool = is_tool
         self._request = request
         self._metadata = metadata
         self._session_enabled = session_enabled
         self._usage_data = [("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1))]
 
-        self.process_session_data(session_data if session_enabled else {})
+        self.process_session_data(session_data if session_enabled and session_data else {})
 
     @classmethod
     def get_output_schema(cls) -> dict:

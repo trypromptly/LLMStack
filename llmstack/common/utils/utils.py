@@ -22,33 +22,32 @@ from llmstack.common.utils.crawlers import (
     run_sitemap_spider_in_process,
     run_url_spider_in_process,
 )
-from llmstack.common.utils.liquid import render_template
 
 logger = logging.getLogger(__name__)
 
-city_loc_reader = (
-    geoip2.database.Reader(
-        settings.GEOIP_CITY_DB_PATH,
-    )
-    if hasattr(
-        settings,
-        "GEOIP_CITY_DB_PATH",
-    )
-    else None
-)
-country_loc_reader = (
-    geoip2.database.Reader(
-        settings.GEOIP_COUNTRY_DB_PATH,
-    )
-    if hasattr(
-        settings,
-        "GEOIP_COUNTRY_DB_PATH",
-    )
-    else None
-)
-
 
 def get_location(ip):
+    city_loc_reader = (
+        geoip2.database.Reader(
+            settings.GEOIP_CITY_DB_PATH,
+        )
+        if hasattr(
+            settings,
+            "GEOIP_CITY_DB_PATH",
+        )
+        else None
+    )
+    country_loc_reader = (
+        geoip2.database.Reader(
+            settings.GEOIP_COUNTRY_DB_PATH,
+        )
+        if hasattr(
+            settings,
+            "GEOIP_COUNTRY_DB_PATH",
+        )
+        else None
+    )
+
     if not ip or not city_loc_reader or not country_loc_reader:
         return {}
 
@@ -517,31 +516,6 @@ def vectorize_text(text):
 
     vectors = embedding_functions.DefaultEmbeddingFunction()([text])
     return vectors[0]
-
-
-def hydrate_input(input, values):
-    def render(value):
-        if isinstance(value, str):
-            try:
-                return render_template(value, values)
-            except Exception:
-                logger.exception("Error rendering template when hydrating input")
-
-        return value
-
-    def traverse(obj):
-        if isinstance(obj, dict):
-            return {key: traverse(render(value)) for key, value in obj.items()}
-        elif isinstance(obj, list):
-            return [traverse(render(item)) for item in obj]
-        elif isinstance(obj, BaseModel):
-            cls = obj.__class__
-            return cls.model_validate(traverse(obj.model_dump()))
-        elif isinstance(obj, str):
-            return render(obj)
-        return obj
-
-    return traverse(input)
 
 
 def retry_on_db_error(func=None, max_retries=3, delay=1):

@@ -8,7 +8,7 @@ from llmstack.apps.handlers.app_runnner import AppRunner
 from llmstack.play.actor import ActorConfig
 from llmstack.play.actors.input import InputActor
 from llmstack.play.actors.output import OutputActor
-from llmstack.processors.providers.api_processors import ApiProcessorFactory
+from llmstack.processors.providers.processors import ProcessorFactory
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class AppProcessorRunner(AppRunner):
                 "processor_slug and provider_slug are required for each processor",
             )
 
-        processor_cls = ApiProcessorFactory.get_api_processor(
+        processor_cls = ProcessorFactory.api_processor(
             app_processor["processor_slug"],
             app_processor["provider_slug"],
         )
