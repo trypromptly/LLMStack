@@ -21,6 +21,7 @@ junos-eznc = {version="^2.6.8", optional=true}
 python-on-whales = "^0.71.0"
 channels-redis = "^4.2.0"
 jsonpath-ng = "^1.6.1"
+cryptography = "^43.0.1"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
