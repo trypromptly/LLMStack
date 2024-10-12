@@ -2,7 +2,70 @@ import asyncio
 import re
 import threading
 
+from liquid.ast import ChildNode, ParseTree
+from liquid.expression import (
+    AssignmentExpression,
+    Blank,
+    BooleanExpression,
+    Continue,
+    Empty,
+    FilteredExpression,
+    Identifier,
+    InfixExpression,
+    LoopExpression,
+    Nil,
+)
 from pydantic import BaseModel
+
+
+def extract_nodes(node):
+    nodes = []
+    if isinstance(node, ParseTree):
+        for stmt in node.statements:
+            nodes.extend(extract_nodes(stmt) or [])
+    elif isinstance(node, ChildNode):
+        nodes.append(node)
+        if node.node:
+            nodes.extend(extract_nodes(node.node) or [])
+    elif hasattr(node, "children"):
+        for child in node.children():
+            nodes.extend(extract_nodes(child) or [])
+    return nodes
+
+
+def extract_variables(expression):
+    variables = []
+    if expression is None:
+        return []
+    if isinstance(expression, Identifier):
+        result = []
+        for element in expression.path:
+            if isinstance(element, Identifier):
+                result.extend(extract_variables(element))
+            else:
+                result.append(element.value)
+        return result
+    if (
+        isinstance(expression, Nil)
+        or isinstance(expression, Empty)
+        or isinstance(expression, Blank)
+        or isinstance(expression, Continue)
+    ):
+        return []
+    elif isinstance(expression, FilteredExpression):
+        variables.extend(extract_variables(expression.expression))
+    elif isinstance(expression, AssignmentExpression):
+        variables.extend(extract_variables(expression.expression))
+    elif isinstance(expression, LoopExpression):
+        variables.extend(extract_variables(expression.iterable))
+    elif isinstance(expression, BooleanExpression):
+        variables.extend(extract_variables(expression.expression))
+    elif isinstance(expression, InfixExpression):
+        variables.extend([extract_variables(expression.left)])
+        variables.extend([extract_variables(expression.right)])
+    else:
+        raise NotImplementedError(f"Unsupported expression: {expression} {type(expression)}")
+    return variables
 
 
 def run_coro_in_new_loop(coro):
@@ -100,6 +163,21 @@ def extract_jinja2_variables(input_data):
             variables.update(extract_jinja2_variables(item))
     elif isinstance(input_data, BaseModel):
         variables.update(extract_jinja2_variables(input_data.__dict__))
+
+    return variables
+
+
+def extract_variables_from_liquid_template(liquid_template):
+    variables = []
+
+    nodes = extract_nodes(liquid_template.tree)
+    for node in nodes:
+        extracted_variables = extract_variables(node.expression)
+        if extracted_variables:
+            if isinstance(extracted_variables[0], list):
+                variables.extend(extracted_variables)
+            else:
+                variables.append(extracted_variables)
 
     return variables
 
