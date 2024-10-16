@@ -102,7 +102,7 @@ export default function App({ children }) {
 
   if (profileFlags.IS_ORGANIZATION_OWNER) {
     allMenuItems.push({
-      key: "8",
+      key: "10",
       label: "Organization",
       link: "/organization",
     });
