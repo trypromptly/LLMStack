@@ -733,8 +733,8 @@ SOCIALACCOUNT_PROVIDERS = {
 EVENT_TOPIC_MAPPING = {
     "app.run.finished": [
         {
-            "event_processor": "llmstack.events.consumers.app_run_finished.persist_app_run_history",
-            "event_data_cls": "llmstack.events.consumers.app_run_finished.AppRunFinishedEventData",
+            "event_processor": "llmstack.apps.jobs.app_run_finished.persist_app_run_history",
+            "event_data_cls": "llmstack.apps.jobs.app_run_finished.AppRunFinishedEventData",
         }
     ],
 }
@@ -750,3 +750,5 @@ CONNECTION_TYPE_INTERFACE_EXCLUDED_PACKAGES = os.getenv("CONNECTION_TYPE_INTERFA
 DEFAULT_DATA_DESTINATION_CONFIG = {"provider_slug": "weaviate", "processor_slug": "vector-store"}
 
 DEFAULT_EMBEDDINGS_GENERATOR_CONFIG = {"provider_slug": "openai", "embedding_model_slug": "text-embedding-ada-002"}
+
+UPDATE_BILLING_FUNC = "llmstack.apps.events.app_run_finished.update_billing"

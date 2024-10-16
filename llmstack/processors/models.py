@@ -358,8 +358,9 @@ class RunEntry(models.Model):
     def save(self, *args, **kwargs):
         # Clean the processor_runs field
         processor_runs = kwargs.pop("processor_runs", [])
-        processor_runs_objref = self.create_processor_runs_objref(processor_runs)
-        self.processor_runs_objref = processor_runs_objref
+        if processor_runs:
+            processor_runs_objref = self.create_processor_runs_objref(processor_runs)
+            self.processor_runs_objref = processor_runs_objref
         super(RunEntry, self).save(*args, **kwargs)
 
     @property

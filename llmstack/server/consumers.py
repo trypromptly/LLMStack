@@ -111,12 +111,16 @@ class AppConsumer(AsyncWebsocketConsumer):
             location = get_location(request_ip)
             request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
 
+        request_user_email = self.scope.get("user", None).email if self.scope.get("user", None) else None
+
         self._source = WebAppRunnerSource(
             id=self._session_id,
             request_ip=request_ip,
             request_location=request_location,
             request_user_agent=headers.get("User-Agent", ""),
             request_content_type=headers.get("Content-Type", ""),
+            app_uuid=self._app_uuid,
+            request_user_email=request_user_email,
         )
         self._app_runner = await AppViewSet().get_app_runner_async(
             self._session_id,

@@ -33,7 +33,11 @@ class AppRunnerSourceType(str, Enum):
 
 class AppRunnerSource(BaseModel):
     type: AppRunnerSourceType
-    id: str
+    request_user_email: Optional[str] = None
+
+    @property
+    def id(self):
+        raise NotImplementedError
 
 
 class WebAppRunnerSource(AppRunnerSource):
@@ -42,26 +46,56 @@ class WebAppRunnerSource(AppRunnerSource):
     request_location: str
     request_user_agent: str
     request_content_type: str
+    app_uuid: str
+
+    @property
+    def id(self):
+        return self.app_uuid
 
 
 class PlatformAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.PLATFORM
+    slug: str
+
+    @property
+    def id(self):
+        return self.slug
 
 
 class AppStoreAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.APP_STORE
+    slug: str
+
+    @property
+    def id(self):
+        return self.slug
 
 
 class SlackAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.SLACK
+    app_uuid: str
+
+    @property
+    def id(self):
+        return self.app_uuid
 
 
 class TwilioAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.TWILIO
+    app_uuid: str
+
+    @property
+    def id(self):
+        return self.app_uuid
 
 
 class DiscordAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.DISCORD
+    app_uuid: str
+
+    @property
+    def id(self):
+        return self.app_uuid
 
 
 class AppRunnerStreamingResponseType(StrEnum):
@@ -211,6 +245,13 @@ class AppRunner:
             EventsViewSet().create(
                 "app.run.finished",
                 {
+                    "output": output.get("output"),
                     "bookkeeping_data_map": bookkeeping_data,
+                    "request_data": {
+                        **(self._source.model_dump() if self._source else {}),
+                        "id": self._source.id,
+                        "request_id": request_id,
+                        "session_id": self._session_id,
+                    },
                 },
             )
