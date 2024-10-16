@@ -9,7 +9,6 @@ import React, {
 } from "react";
 import ReactGA from "react-ga4";
 import { useLocation } from "react-router-dom";
-import { stitchObjects } from "../../../data/utils";
 import { diff_match_patch } from "diff-match-patch";
 import {
   AppMessage,
@@ -330,46 +329,6 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
         }));
         chunkedOutput.current = {};
       }
-
-      // Merge the new output with the existing output
-      // if (message.output) {
-      //   let newChunkedOutput = {};
-
-      //   if (message.output.agent) {
-      //     newChunkedOutput = stitchObjects(chunkedOutput.current, {
-      //       [message.output.agent.id]: message.output.agent.content,
-      //     });
-      //   } else {
-      //     newChunkedOutput = stitchObjects(
-      //       chunkedOutput.current,
-      //       message.output,
-      //     );
-      //   }
-
-      //   chunkedOutput.current = newChunkedOutput;
-      // }
-
-      // if (message.id && message.output) {
-      //   parseIncomingMessage(
-      //     message,
-      //     chunkedOutput.current,
-      //     outputTemplate,
-      //     outputTemplates.current,
-      //     app?.data?.type_slug,
-      //   )
-      //     .then((newMessage) => {
-      //       messagesRef.current.add(newMessage);
-
-      //       setAppRunData((prevState) => ({
-      //         ...prevState,
-      //         messages: messagesRef.current.get(),
-      //         isStreaming: newMessage.content !== null,
-      //       }));
-      //     })
-      //     .catch((error) => {
-      //       console.error("Failed to create message object from output", error);
-      //     });
-      // }
     });
   }
 

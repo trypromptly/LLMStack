@@ -168,11 +168,7 @@ class AppRunner:
         await self._coordinator.stop()
 
     async def run(self, request: AppRunnerRequest):
-        # TODO: Add bookkeeping to history on output
-
         request_id = str(uuid.uuid4())
-
-        # Build a Message with request.input and send it to the coordinator
 
         self._coordinator.input(request.input)
 
@@ -187,6 +183,7 @@ class AppRunner:
                 break
 
             await asyncio.sleep(0.0001)
+
             yield AppRunnerStreamingResponse(
                 id=request_id,
                 client_request_id=request.client_request_id,

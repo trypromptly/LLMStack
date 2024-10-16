@@ -164,24 +164,6 @@ class AppConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.exception(f"EXCEPTION IN RUNNER: {e}")
 
-        # output_stream = await self._app_runner.output_stream()
-        # for output in output_stream:
-        #     await self.send(
-        #         text_data=json.dumps(
-        #             {
-        #                 "output": output,
-        #                 "reply_to": client_request_id,
-        #                 "id": response_id,
-        #                 "request_id": app_runner_request.id,
-        #             }
-        #         )
-        #     )
-        # await self.send(
-        #     text_data=json.dumps(
-        #         {"event": "done", "reply_to": client_request_id, "id": response_id, "request_id": app_runner_request.id}
-        #     )
-        # )
-
     async def _respond_to_event_old(self, text_data):
         from llmstack.apps.apis import AppViewSet
         from llmstack.apps.models import AppSessionFiles

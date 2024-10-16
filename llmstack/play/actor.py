@@ -78,7 +78,6 @@ class Actor(ThreadingActor):
             self.input_stream({message.sender: message.data.chunk})
 
         if message.type == MessageType.CONTENT:
-            logger.info(f"GOT CONTENT: {message}")
             self._messages = {
                 **self._messages,
                 **{
@@ -93,12 +92,6 @@ class Actor(ThreadingActor):
             # Call input only when all the dependencies are met
             if set(self._dependencies) == set(self._messages.keys()):
                 self.input(self._messages)
-
-        # If the message is for a tool, call the tool
-        # if message.type == MessageType.TOOL_INVOKE:
-        #     self._output_stream.set_message_id(str(uuid.uuid4()))
-        #     self._output_stream.set_response_to(message.message_id)
-        #     self.invoke(message.data)
 
     def input(self, message: Any) -> Any:
         # Co-ordinator calls this when all the dependencies are met. This
@@ -136,5 +129,4 @@ class Actor(ThreadingActor):
             f"Encountered {exception_type} in {type(self)}({self.actor_urn}): {exception_value}",
         )
 
-        # Send error to output stream
-        # self._output_stream.error(exception_value)
+        # TODO: Send error to output stream
