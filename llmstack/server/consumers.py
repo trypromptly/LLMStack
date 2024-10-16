@@ -153,23 +153,16 @@ class AppConsumer(AsyncWebsocketConsumer):
         try:
             response_iterator = self._app_runner.run(app_runner_request)
             async for response in response_iterator:
-                if response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_BEGIN:
-                    logger.info(f"Output stream begin: {response}")
-                elif response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK:
+                if response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK:
                     await self.send(text_data=json.dumps(response.model_dump()))
-                elif response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_END:
-                    logger.info(f"Output stream end: {response}")
-                elif response.type == AppRunnerStreamingResponseType.OUTPUT:
-                    logger.info(f"FINAL RESPONSE: {response}")
         except Exception as e:
-            logger.exception(f"EXCEPTION IN RUNNER: {e}")
+            logger.exception(f"Failed to run app: {e}")
 
     async def _respond_to_event_old(self, text_data):
         from llmstack.apps.apis import AppViewSet
         from llmstack.apps.models import AppSessionFiles
 
         json_data = json.loads(text_data)
-        # input = json_data.get("input", {})
         id = json_data.get("id", None)
         event = json_data.get("event", None)
         request_uuid = str(uuid.uuid4())
