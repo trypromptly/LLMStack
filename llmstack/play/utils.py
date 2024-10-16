@@ -15,7 +15,6 @@ from liquid.expression import (
     LoopExpression,
     Nil,
 )
-from pydantic import BaseModel
 
 
 def extract_nodes(node):
@@ -112,59 +111,6 @@ class ResettableTimer(threading.Thread):
         with self.condition:
             self.stop_flag = True
             self.condition.notify_all()
-
-
-def extract_jinja2_variables(input_data):
-    def extract_from_string(s):
-        # Define regular expression patterns to match Jinja2 elements, including
-        # - variables: {{ variable_name }} or {{ variable_name | filter }}
-        # - tags: {% tag_name %}
-        variable_pattern = r"{{ *(.*?) *}}"
-        tag_pattern = r"{% *(.*?) *%}"
-
-        variables = set()
-
-        # Find all variable matches
-        variable_matches = re.findall(variable_pattern, s)
-        for match in variable_matches:
-            variables.add(match.strip().split("|")[0].strip())
-
-        # Find all tag matches
-        tag_matches = re.findall(tag_pattern, s)
-        for match in tag_matches:
-            # Split the tag content by space to determine its structure,
-            # and add the variable depending on the tag
-            split_tag = match.strip().split()
-            if split_tag[0] in {"if", "elif"}:
-                # In {% if x > y %}, {% if x == y %} or {% if x != y %},
-                # extract both 'x' and 'y' as variables
-                variables.update(re.findall(r"\b\w+\b", split_tag[1]))
-            elif split_tag[0] == "for":
-                # In {% for item in items %}, extract 'items' as a variable
-                if len(split_tag) == 4 and split_tag[2] == "in":
-                    variables.add(split_tag[3])
-
-        return variables
-
-    variables = set()
-
-    if isinstance(input_data, str):
-        variables.update(extract_from_string(input_data))
-    elif isinstance(input_data, dict):
-        for key, value in input_data.items():
-            if isinstance(value, str):
-                variables.update(extract_from_string(value))
-            elif isinstance(value, dict):
-                variables.update(extract_jinja2_variables(value))
-            elif isinstance(value, list):
-                variables.update(extract_jinja2_variables(value))
-    elif isinstance(input_data, list):
-        for item in input_data:
-            variables.update(extract_jinja2_variables(item))
-    elif isinstance(input_data, BaseModel):
-        variables.update(extract_jinja2_variables(input_data.__dict__))
-
-    return variables
 
 
 def extract_variables_from_liquid_template(liquid_template):

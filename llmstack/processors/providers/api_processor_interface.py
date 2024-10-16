@@ -21,7 +21,6 @@ from llmstack.common.utils.liquid import hydrate_input
 from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
-from llmstack.play.utils import extract_jinja2_variables
 from llmstack.processors.providers.config import ProviderConfig, ProviderConfigSource
 from llmstack.processors.providers.metrics import MetricType
 
@@ -313,18 +312,7 @@ class ApiProcessorInterface(
             raise Exception("Invalid result type")
 
     def get_bookkeeping_data(self) -> BookKeepingData:
-        None
-
-    def get_dependencies(self):
-        # Iterate over string templates in values of input and config and
-        # extract dependencies
-        dependencies = []
-        dependencies.extend(extract_jinja2_variables(self._input))
-        dependencies.extend(extract_jinja2_variables(self._config))
-
-        # In case of _inputs0.xyz, extract _inputs0 as dependency
-        dependencies = [x.split(".")[0] for x in dependencies]
-        return list(set(dependencies))
+        return None
 
     def input(self, message: Any) -> Any:
         # Hydrate the input and config before processing

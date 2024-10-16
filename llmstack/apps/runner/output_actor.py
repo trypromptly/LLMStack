@@ -10,7 +10,6 @@ from llmstack.common.utils.liquid import render_template
 from llmstack.play.actor import Actor
 from llmstack.play.messages import Message, MessageType
 from llmstack.play.output_stream import stitch_model_objects
-from llmstack.play.utils import extract_jinja2_variables
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +26,6 @@ class OutputResponse(NamedTuple):
 
 
 class OutputActor(Actor):
-    """
-    This will write to a channel by topic name session_id/request_id. app_runner will listen on this so the consumer can receive response for this specific message
-    """
-
     def __init__(
         self,
         coordinator_urn,
@@ -182,11 +177,3 @@ class OutputActor(Actor):
 
     def get_bookkeeping_data(self):
         return self._bookkeeping_data_future
-
-    def get_dependencies(self):
-        if not self._template:
-            return []
-
-        dependencies = [x.split(".")[0] for x in extract_jinja2_variables(self._template)]
-
-        return list(set(dependencies))
