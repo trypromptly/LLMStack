@@ -1,13 +1,13 @@
 import logging
 import time
-import uuid
 from types import TracebackType
 from typing import Any, Optional, Type
 
 from pydantic import BaseModel, model_validator
 from pykka import ThreadingActor
 
-from llmstack.play.output_stream import Message, MessageType, OutputStream
+from llmstack.play.messages import Message, MessageType
+from llmstack.play.output_stream import OutputStream
 
 logger = logging.getLogger(__name__)
 
@@ -64,34 +64,41 @@ class Actor(ThreadingActor):
         )
 
     def on_receive(self, message: Message) -> Any:
-        if message.message_type == MessageType.BEGIN:
-            self.input(message.message)
-
-        message_and_key = {
-            message.message_from: message.message,
-        }
-
-        if message.message_type == MessageType.STREAM_ERROR:
-            self.on_error(message_and_key)
+        if message.type == MessageType.ERRORS:
+            self.on_error(message.data.errors)
             return
 
-        if message.message_type == MessageType.STREAM_DATA:
-            self.input_stream(message_and_key)
+        if message.type == MessageType.CONTENT_STREAM_BEGIN:
+            pass
 
-        if message.message_type == MessageType.STREAM_CLOSED:
-            self._messages = {**self._messages, **message_and_key}
+        if message.type == MessageType.CONTENT_STREAM_END:
+            pass
 
-        # Call input only when all the dependencies are met
-        if message.message_type == MessageType.STREAM_CLOSED and set(
-            self._dependencies,
-        ) == set(self._messages.keys()):
-            self.input(self._messages)
+        if message.type == MessageType.CONTENT_STREAM_CHUNK:
+            self.input_stream({message.sender: message.data.chunk})
+
+        if message.type == MessageType.CONTENT:
+            logger.info(f"GOT CONTENT: {message}")
+            self._messages = {
+                **self._messages,
+                **{
+                    message.sender: (
+                        message.data.content.model_dump()
+                        if isinstance(message.data.content, BaseModel)
+                        else message.data.content
+                    )
+                },
+            }
+
+            # Call input only when all the dependencies are met
+            if set(self._dependencies) == set(self._messages.keys()):
+                self.input(self._messages)
 
         # If the message is for a tool, call the tool
-        if message.message_type == MessageType.TOOL_INVOKE:
-            self._output_stream.set_message_id(str(uuid.uuid4()))
-            self._output_stream.set_response_to(message.message_id)
-            self.invoke(message.message)
+        # if message.type == MessageType.TOOL_INVOKE:
+        #     self._output_stream.set_message_id(str(uuid.uuid4()))
+        #     self._output_stream.set_response_to(message.message_id)
+        #     self.invoke(message.data)
 
     def input(self, message: Any) -> Any:
         # Co-ordinator calls this when all the dependencies are met. This
@@ -135,4 +142,4 @@ class Actor(ThreadingActor):
         )
 
         # Send error to output stream
-        self._output_stream.error(exception_value)
+        # self._output_stream.error(exception_value)

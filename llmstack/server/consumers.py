@@ -10,10 +10,15 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, QueryDict
-from django_ratelimit.exceptions import Ratelimited
+
+# from django_ratelimit.exceptions import Ratelimited
 from flags.state import flag_enabled
 
-from llmstack.apps.runner.app_runner import AppRunnerRequest, WebAppRunnerSource
+from llmstack.apps.runner.app_runner import (
+    AppRunnerRequest,
+    AppRunnerStreamingResponseType,
+    WebAppRunnerSource,
+)
 from llmstack.assets.utils import get_asset_by_objref
 from llmstack.common.utils.utils import get_location
 from llmstack.connections.actors import ConnectionActivationActor
@@ -141,38 +146,48 @@ class AppConsumer(AsyncWebsocketConsumer):
         json_data = json.loads(text_data)
         client_request_id = json_data.get("id", None)
         app_runner_request = AppRunnerRequest(
-            id=str(uuid.uuid4()),
+            client_request_id=client_request_id,
             session_id=self._session_id,
-            request=json_data.get("input", {}),
+            input=json_data.get("input", {}),
         )
-        await self._app_runner.run(app_runner_request)
+        try:
+            response_iterator = self._app_runner.run(app_runner_request)
+            async for response in response_iterator:
+                if response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_BEGIN:
+                    logger.info(f"Output stream begin: {response}")
+                elif response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK:
+                    await self.send(text_data=json.dumps(response.model_dump()))
+                elif response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_END:
+                    logger.info(f"Output stream end: {response}")
+                elif response.type == AppRunnerStreamingResponseType.OUTPUT:
+                    logger.info(f"FINAL RESPONSE: {response}")
+        except Exception as e:
+            logger.exception(f"EXCEPTION IN RUNNER: {e}")
 
-        response_id = str(uuid.uuid4())
-
-        output_stream = await self._app_runner.output_stream()
-        for output in output_stream:
-            await self.send(
-                text_data=json.dumps(
-                    {
-                        "output": output,
-                        "reply_to": client_request_id,
-                        "id": response_id,
-                        "request_id": app_runner_request.id,
-                    }
-                )
-            )
-        await self.send(
-            text_data=json.dumps(
-                {"event": "done", "reply_to": client_request_id, "id": response_id, "request_id": app_runner_request.id}
-            )
-        )
+        # output_stream = await self._app_runner.output_stream()
+        # for output in output_stream:
+        #     await self.send(
+        #         text_data=json.dumps(
+        #             {
+        #                 "output": output,
+        #                 "reply_to": client_request_id,
+        #                 "id": response_id,
+        #                 "request_id": app_runner_request.id,
+        #             }
+        #         )
+        #     )
+        # await self.send(
+        #     text_data=json.dumps(
+        #         {"event": "done", "reply_to": client_request_id, "id": response_id, "request_id": app_runner_request.id}
+        #     )
+        # )
 
     async def _respond_to_event_old(self, text_data):
         from llmstack.apps.apis import AppViewSet
         from llmstack.apps.models import AppSessionFiles
 
         json_data = json.loads(text_data)
-        input = json_data.get("input", {})
+        # input = json_data.get("input", {})
         id = json_data.get("id", None)
         event = json_data.get("event", None)
         request_uuid = str(uuid.uuid4())
@@ -183,44 +198,44 @@ class AppConsumer(AsyncWebsocketConsumer):
         self._user = self.scope.get("user", None)
         self._session = self.scope.get("session", None)
 
-        if event == "run":
-            try:
-                request = await _build_request_from_input({"input": input, "stream": True}, self.scope)
-                if is_ratelimited_fn(request, self._respond_to_event):
-                    raise Ratelimited("Rate limit reached.")
+        # if event == "run":
+        #     try:
+        #         request = await _build_request_from_input({"input": input, "stream": True}, self.scope)
+        #         if is_ratelimited_fn(request, self._respond_to_event):
+        #             raise Ratelimited("Rate limit reached.")
 
-                output_stream, self._coordinator_ref = await self._run_app(request_uuid=request_uuid, request=request)
-                # Generate a uuid for the response
-                response_id = str(uuid.uuid4())
+        #         output_stream, self._coordinator_ref = await self._run_app(request_uuid=request_uuid, request=request)
+        #         # Generate a uuid for the response
+        #         response_id = str(uuid.uuid4())
 
-                async for output in output_stream:
-                    if "errors" in output or "session" in output:
-                        if "session" in output:
-                            self._session_id = output["session"]["id"]
-                        await self.send(text_data=json.dumps({**output, **{"reply_to": id}}))
-                    else:
-                        await self.send(
-                            text_data=json.dumps(
-                                {"output": output, "reply_to": id, "id": response_id, "request_id": request_uuid}
-                            )
-                        )
+        #         async for output in output_stream:
+        #             if "errors" in output or "session" in output:
+        #                 if "session" in output:
+        #                     self._session_id = output["session"]["id"]
+        #                 await self.send(text_data=json.dumps({**output, **{"reply_to": id}}))
+        #             else:
+        #                 await self.send(
+        #                     text_data=json.dumps(
+        #                         {"output": output, "reply_to": id, "id": response_id, "request_id": request_uuid}
+        #                     )
+        #                 )
 
-                await self.send(
-                    text_data=json.dumps(
-                        {"event": "done", "reply_to": id, "id": response_id, "request_id": request_uuid}
-                    )
-                )
-            except Ratelimited:
-                await self.send(
-                    text_data=json.dumps({"event": "ratelimited", "reply_to": id, "request_id": request_uuid})
-                )
-            except UsageLimitReached:
-                await self.send(
-                    text_data=json.dumps({"event": "usagelimited", "reply_to": id, "request_id": request_uuid})
-                )
-            except Exception as e:
-                logger.exception(e)
-                await self.send(text_data=json.dumps({"errors": [str(e)], "reply_to": id, "request_id": request_uuid}))
+        #         await self.send(
+        #             text_data=json.dumps(
+        #                 {"event": "done", "reply_to": id, "id": response_id, "request_id": request_uuid}
+        #             )
+        #         )
+        #     except Ratelimited:
+        #         await self.send(
+        #             text_data=json.dumps({"event": "ratelimited", "reply_to": id, "request_id": request_uuid})
+        #         )
+        #     except UsageLimitReached:
+        #         await self.send(
+        #             text_data=json.dumps({"event": "usagelimited", "reply_to": id, "request_id": request_uuid})
+        #         )
+        #     except Exception as e:
+        #         logger.exception(e)
+        #         await self.send(text_data=json.dumps({"errors": [str(e)], "reply_to": id, "request_id": request_uuid}))
 
         if event == "init":
             # Create a new session and return the session id

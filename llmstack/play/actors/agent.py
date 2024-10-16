@@ -8,11 +8,11 @@ from asgiref.sync import async_to_sync
 from openai import OpenAI
 from pydantic import BaseModel
 
+from llmstack.apps.runner.output_actor import OutputResponse
 from llmstack.apps.types.agent import AgentModel
 from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import Actor, BookKeepingData
-from llmstack.play.actors.output import OutputResponse
 from llmstack.play.output_stream import Message, MessageType
 from llmstack.processors.providers.config import ProviderConfigSource
 from llmstack.processors.providers.metrics import MetricType

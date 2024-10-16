@@ -42,7 +42,6 @@ class InputActor(Actor):
         self._output_stream.bookkeep(
             BookKeepingData(
                 input=message["coordinator"],
-                run_data=message["coordinator"],
                 timestamp=time.time(),
             ),
         )

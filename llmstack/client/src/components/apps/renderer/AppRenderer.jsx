@@ -10,6 +10,7 @@ import React, {
 import ReactGA from "react-ga4";
 import { useLocation } from "react-router-dom";
 import { stitchObjects } from "../../../data/utils";
+import { diff_match_patch } from "diff-match-patch";
 import {
   AppMessage,
   AppErrorMessage,
@@ -77,6 +78,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
   const messagesRef = useRef(new Messages());
   const isLoggedIn = useRecoilValue(isLoggedInState);
   const setAppRunData = useSetRecoilState(appRunDataState);
+  const dmp = new diff_match_patch();
 
   if (ws && ws.messageRef) {
     messagesRef.current = ws.messageRef;
@@ -286,6 +288,32 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
         }
       }
 
+      if (message.type && message.type === "output_stream_chunk") {
+        const existingMessageContent =
+          messagesRef.current.getContent(message.id) || "";
+
+        const deltas = message.data.deltas;
+        const diffs = dmp.diff_fromDelta(
+          existingMessageContent,
+          deltas["output"],
+        );
+        const newMessageContent = dmp.diff_text2(diffs);
+
+        messagesRef.current.add(
+          new AppMessage(
+            message.id,
+            message.client_request_id,
+            newMessageContent,
+          ),
+        );
+
+        setAppRunData((prevState) => ({
+          ...prevState,
+          messages: messagesRef.current.get(),
+          isStreaming: newMessageContent !== existingMessageContent,
+        }));
+      }
+
       if (message.errors && message.errors.length > 0) {
         message.errors.forEach((error) => {
           messagesRef.current.add(
@@ -304,44 +332,44 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
       }
 
       // Merge the new output with the existing output
-      if (message.output) {
-        let newChunkedOutput = {};
+      // if (message.output) {
+      //   let newChunkedOutput = {};
 
-        if (message.output.agent) {
-          newChunkedOutput = stitchObjects(chunkedOutput.current, {
-            [message.output.agent.id]: message.output.agent.content,
-          });
-        } else {
-          newChunkedOutput = stitchObjects(
-            chunkedOutput.current,
-            message.output,
-          );
-        }
+      //   if (message.output.agent) {
+      //     newChunkedOutput = stitchObjects(chunkedOutput.current, {
+      //       [message.output.agent.id]: message.output.agent.content,
+      //     });
+      //   } else {
+      //     newChunkedOutput = stitchObjects(
+      //       chunkedOutput.current,
+      //       message.output,
+      //     );
+      //   }
 
-        chunkedOutput.current = newChunkedOutput;
-      }
+      //   chunkedOutput.current = newChunkedOutput;
+      // }
 
-      if (message.id && message.output) {
-        parseIncomingMessage(
-          message,
-          chunkedOutput.current,
-          outputTemplate,
-          outputTemplates.current,
-          app?.data?.type_slug,
-        )
-          .then((newMessage) => {
-            messagesRef.current.add(newMessage);
+      // if (message.id && message.output) {
+      //   parseIncomingMessage(
+      //     message,
+      //     chunkedOutput.current,
+      //     outputTemplate,
+      //     outputTemplates.current,
+      //     app?.data?.type_slug,
+      //   )
+      //     .then((newMessage) => {
+      //       messagesRef.current.add(newMessage);
 
-            setAppRunData((prevState) => ({
-              ...prevState,
-              messages: messagesRef.current.get(),
-              isStreaming: newMessage.content !== null,
-            }));
-          })
-          .catch((error) => {
-            console.error("Failed to create message object from output", error);
-          });
-      }
+      //       setAppRunData((prevState) => ({
+      //         ...prevState,
+      //         messages: messagesRef.current.get(),
+      //         isStreaming: newMessage.content !== null,
+      //       }));
+      //     })
+      //     .catch((error) => {
+      //       console.error("Failed to create message object from output", error);
+      //     });
+      // }
     });
   }
 

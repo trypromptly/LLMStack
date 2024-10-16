@@ -4,9 +4,10 @@ from typing import Dict, List
 
 from pykka import ThreadingActor
 
+from llmstack.apps.runner.input_actor import InputActor
+from llmstack.apps.runner.output_actor import OutputActor
 from llmstack.play.actor import ActorConfig
-from llmstack.play.actors.input import InputActor
-from llmstack.play.actors.output import OutputActor
+from llmstack.play.messages import ContentData
 from llmstack.play.output_stream import Message, MessageType
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class AppCoordinator(ThreadingActor):
             "output": OutputActor.start(
                 coordinator_urn=self.actor_urn,
                 dependencies=["input"] + list(self._actor_configs_map.keys()),
-                template=output_template,
+                templates={"output": output_template},
             ),
         }
 
@@ -54,8 +55,17 @@ class AppCoordinator(ThreadingActor):
                 if dep in self._actor_dependents:
                     self._actor_dependents[dep].add(actor)
 
-        # Bookkeeping
-        self.bookkeeping_data_map = {}
+        # Start actors that have no dependencies and send a BEGIN message
+        for actor_config in actor_configs:
+            if not self._actor_dependencies[actor_config.name]:
+                actor_id = actor_config.name
+                self.actors[actor_id] = actor_config.actor.start(
+                    id=actor_id,
+                    coordinator_urn=self.actor_urn,
+                    dependencies=actor_config.dependencies,
+                    **actor_config.kwargs,
+                )
+                self.tell_actor(actor_id, Message(type=MessageType.BEGIN))
 
     def tell_actor(self, actor_id: str, message: Message):
         if actor_id not in self.actors:
@@ -74,13 +84,26 @@ class AppCoordinator(ThreadingActor):
 
         self.actors[actor_id].tell(message)
 
-    def input(self, data: Dict, message_id: str = None):
+    def relay(self, message: Message):
+        logger.debug(f"Relaying message {message} to {self._actor_dependents.get(message.sender)}")
+
+        # Relay message to all dependents
+        for dependent in self._actor_dependents.get(message.sender, set()):
+            self.tell_actor(dependent, message)
+
+        # Send to message.receiver if we have not already sent to it
+        if message.receiver != "coordinator" and message.receiver not in self._actor_dependents.get(
+            message.sender, set()
+        ):
+            self.tell_actor(message.receiver, message)
+
+    def input(self, data: Dict):
         message = Message(
-            message_id=message_id or str(uuid.uuid4()),
-            message_type=MessageType.STREAM_CLOSED,
-            message=data,
-            message_from="coordinator",
-            message_to="input",
+            id=str(uuid.uuid4()),
+            type=MessageType.CONTENT,
+            sender="coordinator",
+            receiver="input",
+            data=ContentData(content=data),
         )
 
         # Reset actors before handling new input
@@ -88,11 +111,11 @@ class AppCoordinator(ThreadingActor):
 
         self.tell_actor("input", message)
 
-    def output(self):
-        return self.actors["output"].proxy().get_output().get()
+    async def output_stream(self):
+        return await self.actors["output"].proxy().get_output_stream()
 
-    def output_stream(self):
-        return self.actors["output"].proxy().get_output_stream().get()
+    def bookkeeping_data(self):
+        return self.actors["output"].proxy().get_bookkeeping_data().get()
 
     def on_stop(self):
         logger.info("Coordinator is stopping")
