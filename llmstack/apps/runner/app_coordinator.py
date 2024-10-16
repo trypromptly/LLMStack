@@ -111,8 +111,8 @@ class AppCoordinator(ThreadingActor):
 
         self.tell_actor("input", message)
 
-    async def output_stream(self):
-        return await self.actors["output"].proxy().get_output_stream()
+    async def output(self):
+        return await self.actors["output"].proxy().get_output()
 
     def bookkeeping_data(self):
         return self.actors["output"].proxy().get_bookkeeping_data().get()

@@ -13,6 +13,8 @@ from llmstack.play.output_stream import stitch_model_objects
 
 logger = logging.getLogger(__name__)
 
+SENTINEL = object()
+
 
 class OutputResponse(NamedTuple):
     """
@@ -34,7 +36,7 @@ class OutputActor(Actor):
     ):
         super().__init__(id="output", coordinator_urn=coordinator_urn, dependencies=dependencies)
         self._templates = templates
-        self.reset()  # Initialize internal state
+        self.reset()
         self._diff_match_patch = diff_match_patch()
 
     def on_receive(self, message: Message) -> Any:
@@ -42,14 +44,7 @@ class OutputActor(Actor):
             self.on_error(message.sender, message.data.errors)
             return
 
-        if message.type == MessageType.CONTENT_STREAM_BEGIN:
-            pass
-
-        if message.type == MessageType.CONTENT_STREAM_END:
-            pass
-
         if message.type == MessageType.CONTENT_STREAM_CHUNK:
-            # We will try to stitch whatever data is available, render the template and return the diff
             try:
                 self._stitched_data = stitch_model_objects(self._stitched_data, {message.sender: message.data.chunk})
                 new_int_output = render_template(self._templates["output"], self._stitched_data)
@@ -57,40 +52,31 @@ class OutputActor(Actor):
                     self._diff_match_patch.diff_main(self._int_output.get("output", ""), new_int_output)
                 )
                 self._int_output["output"] = new_int_output
-                # logger.info(f"DELTA: {delta} --- {new_int_output}")
 
-                self._delta_chunks.append({"output": delta})
-                self._data_chunk = {message.sender: message.data.chunk}
-                self._data_chunks.append({message.sender: message.data.chunk})
+                self._content_queue.put_nowait(
+                    {
+                        "deltas": {"output": delta},
+                        "chunk": {message.sender: message.data.chunk},
+                    }
+                )
             except Exception as e:
-                logger.error(e)
+                logger.error(f"Error processing content stream chunk: {e}")
 
         if message.type == MessageType.CONTENT:
-            logger.info(f"GOT CONTENT: {message}")
-            self._messages = {
-                **self._messages,
-                **{
-                    message.sender: (
-                        message.data.content.model_dump()
-                        if isinstance(message.data.content, BaseModel)
-                        else message.data.content
-                    )
-                },
-            }
+            self._messages[message.sender] = (
+                message.data.content.model_dump()
+                if isinstance(message.data.content, BaseModel)
+                else message.data.content
+            )
 
             if set(self._dependencies) == set(self._messages.keys()):
-                if self._templates and "output" in self._templates:
-                    try:
-                        self._data = render_template(self._templates["output"], self._messages)
-                    except Exception as e:
-                        logger.error(
-                            f"Error rendering template {self._templates['output']} with data {self._data}: {e}",
-                        )
-                else:
-                    self._data = self._messages
-                self._data_done = True
+                self._content_queue.put_nowait(
+                    {
+                        "output": self._int_output,
+                        "chunks": self._messages,
+                    }
+                )
 
-        # Handle bookkeeping
         if message.type == MessageType.BOOKKEEPING:
             self._bookkeeping_data_map[message.sender] = message.data
 
@@ -98,81 +84,44 @@ class OutputActor(Actor):
                 self._bookkeeping_data_future.set(self._bookkeeping_data_map)
 
     async def get_output(self):
-        while True:
-            if (
-                self._error
-                or (self._stopped and self._data_sent and not self._data)
-                or (self._data_done and self._data_sent)
-            ):
-                break
-            if not self._data or self._data_sent:
-                await asyncio.sleep(0.001)
-                continue
+        try:
+            while True:
+                if not self._content_queue.empty():
+                    output = self._content_queue.get_nowait()
+                    yield output
+                    self._content_queue.task_done()
+                else:
+                    if self._error or self._stopped:
+                        break
+                    await asyncio.sleep(0.01)
 
-            self._data_sent = True
-            return {"output": self._data, "chunks": self._data_chunks}
+        except asyncio.CancelledError:
+            logger.info("Output stream cancelled")
+        finally:
+            if self._error:
+                yield {"errors": list(self._error.values())}
+            elif self._stopped and not self._data_sent:
+                yield {"errors": ["Output interrupted"]}
 
-        if self._error:
-            return {"errors": list(self._error.values())}
-
-        if self._stopped and not self._data_sent:
-            return {"errors": ["Output interrupted"]}
-
-    async def get_output_stream(self):
-        while True:
-            if self._error or self._stopped:
-                break
-
-            if self._data_chunks_sent_index < len(self._data_chunks):
-                self._data_chunk = self._data_chunks[self._data_chunks_sent_index]
-                self._data_chunks_sent_index += 1
-                self._data_chunk_sent = False
-
-                yield {"deltas": self._delta_chunks[self._data_chunks_sent_index - 1], "chunk": self._data_chunk}
-                self._data_chunk_sent = True
-            elif self._data_done:
-                yield {
-                    "chunks": self._messages,
-                    "output": self._int_output,
-                }
-                break
-            else:
-                await asyncio.sleep(0.0001)
-
-        if self._error:
-            yield {"errors": list(self._error.values())}
+        logger.info("Output stream completed")
 
     def on_stop(self) -> None:
-        logger.info("Stopping output actor")
-        self._data_done = True
-        self._data_chunk_sent = True
         self._stopped = True
         return super().on_stop()
 
     def on_error(self, sender, error) -> None:
-        logger.info(f"Error in output actor: {error}")
+        logger.error(f"Error in output actor: {error}")
         self._error = error
-        self._data_done = True
-        self._output_stream.finalize()
 
     def reset(self) -> None:
-        logger.info("Resetting output actor")
-        self._data = None
         self._stitched_data = {}
         self._int_output = {}
-        self._data_done = False
-        self._data_sent = False
-        self._data_chunks_sent_index = 0
-        self._data_chunk = None
-        self._data_chunks = []
-        self._data_chunk_sent = False
-        self._delta_chunks = []
-        self._delta_chunk_sent = False
         self._error = None
         self._stopped = False
         self._bookkeeping_data_map = {}
         self._bookkeeping_data_future = pykka.ThreadingFuture()
-
+        self._content_queue = asyncio.Queue()
+        self._messages = {}
         super().reset()
 
     def get_bookkeeping_data(self):

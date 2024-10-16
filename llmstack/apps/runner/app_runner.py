@@ -176,14 +176,12 @@ class AppRunner:
 
         self._coordinator.input(request.input)
 
-        logger.info("RETURNING 1")
         yield AppRunnerStreamingResponse(
             id=request_id,
             client_request_id=request.client_request_id,
             type=AppRunnerStreamingResponseType.OUTPUT_STREAM_BEGIN,
         )
-        logger.info("RETURNING 2")
-        async for output in await self._coordinator.output_stream().get():
+        async for output in await self._coordinator.output().get():
             if "chunks" in output:
                 # Received all chunks
                 break

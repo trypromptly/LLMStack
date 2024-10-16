@@ -248,7 +248,6 @@ class OutputStream:
         """
         Closes the output stream and returns stitched data.
         """
-        logger.info(f"FINALIZING: {self._data}")
         output = self._data if not self._output_cls else self._output_cls(**self._data)
         self._data = None
 
