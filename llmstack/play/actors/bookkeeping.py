@@ -109,8 +109,3 @@ class BookKeepingActor(Actor):
         except Exception as e:
             logger.error(f"Error adding history persistence job: {e}")
         return super().on_stop()
-
-    def get_dependencies(self):
-        return list(
-            set([x["template_key"] for x in self._processor_configs.values()]),
-        )

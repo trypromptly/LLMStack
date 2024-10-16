@@ -1,12 +1,13 @@
 import logging
 import time
 from functools import cache
-from typing import Any, Dict, Optional, TypeVar
+from typing import Any, Dict, Optional
 
 import ujson as json
 from django import db
 from pydantic import BaseModel
 
+from llmstack.apps.app_session_utils import get_app_session_data, save_app_session_data
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.assets.utils import get_asset_by_objref
 from llmstack.common.blocks.base.processor import (
@@ -16,19 +17,15 @@ from llmstack.common.blocks.base.processor import (
     ProcessorInterface,
 )
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
+from llmstack.common.utils.liquid import hydrate_input
 from llmstack.common.utils.provider_config import get_matched_provider_config
-from llmstack.common.utils.utils import hydrate_input
 from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.actors.agent import ToolInvokeInput
-from llmstack.play.utils import extract_jinja2_variables
 from llmstack.processors.providers.config import ProviderConfig, ProviderConfigSource
 from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
-ConfigurationSchemaType = TypeVar("ConfigurationSchemaType")
-InputSchemaType = TypeVar("InputSchemaType")
-OutputSchemaType = TypeVar("OutputSchemaType")
 
 TEXT_WIDGET_NAME = "output_text"
 IMAGE_WIDGET_NAME = "output_image"
@@ -147,11 +144,10 @@ class ApiProcessorInterface(
         input,
         config,
         env,
-        output_stream=None,
+        session_id="",
+        coordinator_urn=None,
         dependencies=[],
-        all_dependencies=[],
         metadata={},
-        session_data=None,
         request=None,
         id=None,
         is_tool=False,
@@ -159,22 +155,27 @@ class ApiProcessorInterface(
     ):
         Actor.__init__(
             self,
+            id=id,
+            coordinator_urn=coordinator_urn,
+            output_cls=self._get_output_class(),
             dependencies=dependencies,
-            all_dependencies=all_dependencies,
         )
 
         self._config = self._get_configuration_class()(**config)
         self._input = self._get_input_class()(**input)
+        self._config_template = self._get_configuration_class()(**config)
+        self._input_template = self._get_input_class()(**input)
         self._env = env
-        self._id = id
-        self._output_stream = output_stream
+        self._session_id = session_id
         self._is_tool = is_tool
         self._request = request
         self._metadata = metadata
         self._session_enabled = session_enabled
         self._usage_data = [("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1))]
 
-        self.process_session_data(session_data if session_enabled else {})
+        session_data = get_app_session_data(self._session_id, self._id)
+        if self._session_enabled:
+            self.process_session_data(session_data or {})
 
     @classmethod
     def get_output_schema(cls) -> dict:
@@ -311,18 +312,7 @@ class ApiProcessorInterface(
             raise Exception("Invalid result type")
 
     def get_bookkeeping_data(self) -> BookKeepingData:
-        None
-
-    def get_dependencies(self):
-        # Iterate over string templates in values of input and config and
-        # extract dependencies
-        dependencies = []
-        dependencies.extend(extract_jinja2_variables(self._input))
-        dependencies.extend(extract_jinja2_variables(self._config))
-
-        # In case of _inputs0.xyz, extract _inputs0 as dependency
-        dependencies = [x.split(".")[0] for x in dependencies]
-        return list(set(dependencies))
+        return None
 
     def input(self, message: Any) -> Any:
         # Hydrate the input and config before processing
@@ -332,19 +322,19 @@ class ApiProcessorInterface(
         try:
             self._input = (
                 hydrate_input(
-                    self._input,
+                    self._input_template,
                     message,
                 )
                 if message
-                else self._input
+                else self._input_template
             )
             self._config = (
                 hydrate_input(
-                    self._config,
+                    self._config_template,
                     message,
                 )
                 if self._config and message
-                else self._config
+                else self._config_template
             )
             output = self.process()
         except Exception as e:
@@ -381,6 +371,9 @@ class ApiProcessorInterface(
         if bookkeeping_data:
             bookkeeping_data.usage_data = self.usage_data()
 
+            # Persist session_data
+            save_app_session_data(self._session_id, self._id, bookkeeping_data.session_data)
+
         self._output_stream.bookkeep(bookkeeping_data)
 
     def tool_invoke_input(self, tool_args: dict) -> ToolInvokeInput:
@@ -389,23 +382,22 @@ class ApiProcessorInterface(
         )
 
     def invoke(self, message: ToolInvokeInput) -> Any:
-        self._base_input = self._input
         try:
             self._input = (
                 hydrate_input(
-                    self._input,
+                    self._input_template,
                     {**message.input, **message.tool_args},
                 )
                 if message
-                else self._input
+                else self._input_template
             )
             self._config = (
                 hydrate_input(
-                    self._config,
+                    self._config_template,
                     {**message.input, **message.tool_args},
                 )
-                if self._config
-                else self._config
+                if self._config_template
+                else self._config_template
             )
 
             # Merge tool args with input
@@ -443,8 +435,6 @@ class ApiProcessorInterface(
             bookkeeping_data.usage_data = self.usage_data()
 
         self._output_stream.bookkeep(bookkeeping_data)
-
-        self._input = self._base_input
 
     def input_stream(self, message: Any) -> Any:
         # We do not support input stream for this processor

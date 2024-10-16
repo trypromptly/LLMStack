@@ -8,12 +8,11 @@ from asgiref.sync import async_to_sync
 from openai import OpenAI
 from pydantic import BaseModel
 
-from llmstack.apps.app_session_utils import save_agent_app_session_data
+from llmstack.apps.runner.output_actor import OutputResponse
 from llmstack.apps.types.agent import AgentModel
 from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import Actor, BookKeepingData
-from llmstack.play.actors.output import OutputResponse
 from llmstack.play.output_stream import Message, MessageType
 from llmstack.processors.providers.config import ProviderConfigSource
 from llmstack.processors.providers.metrics import MetricType
@@ -501,7 +500,7 @@ class AgentActor(Actor):
                     + self._agent_messages
                     + [{"role": "assistant", "content": full_content}],
                 }
-                save_agent_app_session_data(self._agent_app_session_data)
+                # save_agent_app_session_data(self._agent_app_session_data)
 
                 self._output_stream.bookkeep(bookkeeping_data)
                 self._output_stream.finalize()
@@ -574,8 +573,3 @@ class AgentActor(Actor):
 
     def on_stop(self) -> None:
         super().on_stop()
-
-    def get_dependencies(self):
-        return list(
-            set([x["template_key"] for x in self._processor_configs.values()]),
-        )

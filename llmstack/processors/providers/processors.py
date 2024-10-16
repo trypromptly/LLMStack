@@ -5,13 +5,13 @@ from .api_processor_interface import ApiProcessorInterface
 logger = logging.getLogger(__name__)
 
 
-class ApiProcessorFactory:
+class ProcessorFactory:
     """
-    Factory class for API processors
+    Factory class for processors
     """
 
     @staticmethod
-    def get_api_processor(
+    def get_processor(
         processor_slug,
         provider_slug=None,
     ) -> ApiProcessorInterface:

@@ -1,13 +1,13 @@
 import logging
 import time
-import uuid
 from types import TracebackType
-from typing import Any, Type
+from typing import Any, Optional, Type
 
 from pydantic import BaseModel, model_validator
 from pykka import ThreadingActor
 
-from llmstack.play.output_stream import Message, MessageType
+from llmstack.play.messages import Message, MessageType
+from llmstack.play.output_stream import OutputStream
 
 logger = logging.getLogger(__name__)
 
@@ -42,57 +42,56 @@ class ActorConfig(BaseModel):
     Configuration for the actor
     """
 
-    class Config:
-        arbitrary_types_allowed = True
-
     name: str
-    template_key: str = ""  # This is used to find other actors dependent on this actor
     actor: Type
     kwargs: dict = {}
-    dependencies: list = []
-    output_cls: Type = None
+    dependencies: list = []  # List of actor ids that this actor depends on
+    output_template: Optional[str] = None  # Output template for the actor
 
 
 class Actor(ThreadingActor):
-    def __init__(self, dependencies: list = [], all_dependencies: list = []):
+    def __init__(self, id: str, coordinator_urn: str, output_cls: Type = None, dependencies: list = []):
         super().__init__()
+        self._id = id
         self._dependencies = dependencies
-        self._all_dependencies = all_dependencies
+        self._coordinator_urn = coordinator_urn
+
         self._messages = {}  # Holds messages while waiting for dependencies
-
-    def on_receive(self, message: Message) -> Any:
-        if message.message_type == MessageType.BEGIN:
-            self.input(message.message)
-
-        message_and_key = (
-            {
-                message.template_key: message.message,
-            }
-            if message.template_key
-            else message.message
+        self._output_stream = OutputStream(
+            stream_id=self._id,
+            coordinator_urn=self._coordinator_urn,
+            output_cls=output_cls,
         )
 
-        if message.message_type == MessageType.STREAM_ERROR:
-            self.on_error(message_and_key)
+    def on_receive(self, message: Message) -> Any:
+        if message.type == MessageType.ERRORS:
+            self.on_error(message.data.errors)
             return
 
-        if message.message_type == MessageType.STREAM_DATA:
-            self.input_stream(message_and_key)
+        if message.type == MessageType.CONTENT_STREAM_BEGIN:
+            pass
 
-        if message.message_type == MessageType.STREAM_CLOSED:
-            self._messages = {**self._messages, **message_and_key}
+        if message.type == MessageType.CONTENT_STREAM_END:
+            pass
 
-        # Call input only when all the dependencies are met
-        if message.message_type == MessageType.STREAM_CLOSED and set(
-            self.dependencies,
-        ) == set(self._messages.keys()):
-            self.input(self._messages)
+        if message.type == MessageType.CONTENT_STREAM_CHUNK:
+            self.input_stream({message.sender: message.data.chunk})
 
-        # If the message is for a tool, call the tool
-        if message.message_type == MessageType.TOOL_INVOKE:
-            self._output_stream.set_message_id(str(uuid.uuid4()))
-            self._output_stream.set_response_to(message.message_id)
-            self.invoke(message.message)
+        if message.type == MessageType.CONTENT:
+            self._messages = {
+                **self._messages,
+                **{
+                    message.sender: (
+                        message.data.content.model_dump()
+                        if isinstance(message.data.content, BaseModel)
+                        else message.data.content
+                    )
+                },
+            }
+
+            # Call input only when all the dependencies are met
+            if set(self._dependencies) == set(self._messages.keys()):
+                self.input(self._messages)
 
     def input(self, message: Any) -> Any:
         # Co-ordinator calls this when all the dependencies are met. This
@@ -104,19 +103,13 @@ class Actor(ThreadingActor):
         # data
         raise NotImplementedError
 
-    def get_dependencies(self):
-        # Return a list of template_keys that this actor depends on
-        # TODO: This should be persisted in the endpoint or app config
-        return []
+    def reset(self):
+        # Resets the current state so we can reuse this actor with new input
+        self._messages = {}
 
     @property
     def dependencies(self):
-        return list(
-            filter(
-                lambda x: x in self._all_dependencies,
-                list(set(self._dependencies + self.get_dependencies())),
-            ),
-        )
+        return []
 
     def on_error(self, error: Any) -> None:
         # Co-ordinator calls this when any actor in the dependency chain has
@@ -136,5 +129,4 @@ class Actor(ThreadingActor):
             f"Encountered {exception_type} in {type(self)}({self.actor_urn}): {exception_value}",
         )
 
-        # Send error to output stream
-        self._output_stream.error(exception_value)
+        # TODO: Send error to output stream

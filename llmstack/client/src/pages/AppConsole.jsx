@@ -295,6 +295,7 @@ export default function AppConsolePage(props) {
           input: processor.input,
           input_fields: processor.input_fields,
           output_template: processor.output_template || {},
+          dependencies: processor.dependencies || [],
         })),
       };
 

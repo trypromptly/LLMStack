@@ -129,4 +129,8 @@ export class Messages {
   clear() {
     this.messages = {};
   }
+
+  getContent(id) {
+    return this.messages[id]?.content;
+  }
 }

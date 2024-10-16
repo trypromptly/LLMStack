@@ -4,7 +4,7 @@ from typing import List
 from pykka import ActorDeadError, ThreadingActor
 
 from llmstack.play.actor import ActorConfig
-from llmstack.play.output_stream import Message, MessageType, OutputStream
+from llmstack.play.output_stream import Message, MessageType
 from llmstack.play.utils import ResettableTimer
 
 logger = logging.getLogger(__name__)
@@ -13,9 +13,8 @@ TIMEOUT = 120
 
 
 class Coordinator(ThreadingActor):
-    def __init__(self, session_id, actor_configs: List[ActorConfig]):
+    def __init__(self, actor_configs: List[ActorConfig]):
         super().__init__()
-        self._session_id = session_id
         self._stream_errors = {}
 
         # Make sure there are not duplicate names or template_keys in
@@ -24,28 +23,16 @@ class Coordinator(ThreadingActor):
             actor_configs,
         )
 
-        assert len(set([actor_config.template_key for actor_config in actor_configs])) == len(
-            actor_configs,
-        )
-
         self._actor_configs = {actor_config.name: actor_config for actor_config in actor_configs}
 
-        # Create output_streams
-        self._output_streams = []
+        all_dependencies = [actor_config.name for actor_config in actor_configs]
 
-        all_dependencies = [actor_config.template_key for actor_config in actor_configs]
         # Spawn actors
         self.actors = {}
         for actor_config in actor_configs:
-            self._output_streams.append(
-                OutputStream(
-                    stream_id=actor_config.name,
-                    coordinator_urn=self.actor_urn,
-                    output_cls=actor_config.output_cls,
-                ),
-            )
             actor = actor_config.actor.start(
-                output_stream=self._output_streams[-1],
+                id=actor_config.name,
+                coordinator_urn=self.actor_urn,
                 dependencies=actor_config.dependencies,
                 all_dependencies=all_dependencies,
                 **actor_config.kwargs,
