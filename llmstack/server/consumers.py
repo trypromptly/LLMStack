@@ -17,6 +17,7 @@ from flags.state import flag_enabled
 from llmstack.apps.runner.app_runner import (
     AppRunnerRequest,
     AppRunnerStreamingResponseType,
+    PlaygroundAppRunnerSource,
     WebAppRunnerSource,
 )
 from llmstack.assets.utils import get_asset_by_objref
@@ -427,31 +428,99 @@ class ConnectionConsumer(AsyncWebsocketConsumer):
                 self.disconnect(1000)
 
 
-class PlaygroundConsumer(AppConsumer):
+# class PlaygroundConsumer(AppConsumer):
+#     async def connect(self):
+#         self.app_id = None
+#         self.preview = False
+#         self._session_id = None
+#         self._coordinator_ref = None
+#         await self.accept()
+
+#     async def _run_app(self, request_uuid, request, **kwargs):
+#         from llmstack.apps.apis import AppViewSet
+
+#         if is_usage_limited_fn(request, self._run_app):
+#             raise UsageLimitReached("Usage limit reached. Please login to continue.")
+
+#         if await _usage_limit_exceeded(request, request.user):
+#             raise OutOfCredits(
+#                 "You have exceeded your usage credits. Please add credits to your account from settings to continue using the platform.",
+#             )
+
+#         return await AppViewSet().run_playground_internal_async(
+#             session_id=self._session_id,
+#             request_uuid=request_uuid,
+#             request=request,
+#             preview=self.preview,
+#         )
+
+
+class PlaygroundConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.app_id = None
-        self.preview = False
-        self._session_id = None
-        self._coordinator_ref = None
+        headers = dict(self.scope["headers"])
+        request_ip = headers.get("X-Forwarded-For", self.scope.get("client", [""])[0] or "").split(",")[
+            0
+        ].strip() or headers.get("X-Real-IP", "")
+        request_location = headers.get("X-Client-Geo-Location", "")
+        if not request_location:
+            location = get_location(request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
+
+        request_user_email = self.scope.get("user", None).email if self.scope.get("user", None) else None
+
+        self._source = PlaygroundAppRunnerSource(
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=headers.get("User-Agent", ""),
+            request_content_type=headers.get("Content-Type", ""),
+            request_user_email=request_user_email,
+            processor_slug="",
+            provider_slug="",
+        )
         await self.accept()
 
-    async def _run_app(self, request_uuid, request, **kwargs):
-        from llmstack.apps.apis import AppViewSet
+    async def disconnect(self, close_code):
+        pass
 
-        if is_usage_limited_fn(request, self._run_app):
-            raise UsageLimitReached("Usage limit reached. Please login to continue.")
+    async def _respond_to_event(self, text_data):
+        from llmstack.apps.apis import PlaygroundViewSet
 
-        if await _usage_limit_exceeded(request, request.user):
-            raise OutOfCredits(
-                "You have exceeded your usage credits. Please add credits to your account from settings to continue using the platform.",
-            )
+        json_data = json.loads(text_data)
+        event_input = json_data.get("input", {})
 
-        return await AppViewSet().run_playground_internal_async(
-            session_id=self._session_id,
-            request_uuid=request_uuid,
-            request=request,
-            preview=self.preview,
+        processor_slug = event_input.get("api_backend_slug")
+        provider_slug = event_input.get("api_provider_slug")
+        input_data = event_input.get("input", {})
+        config_data = event_input.get("config", {})
+
+        session_id = str(uuid.uuid4())
+        source = self._source.model_copy(
+            update={
+                "session_id": session_id,
+                "processor_slug": processor_slug,
+                "provider_slug": provider_slug,
+            }
         )
+
+        client_request_id = json_data.get("id", None)
+        app_runner_request = AppRunnerRequest(
+            client_request_id=client_request_id, session_id=session_id, input=input_data
+        )
+
+        app_runner = await PlaygroundViewSet().get_app_runner_async(
+            session_id, source, self.scope.get("user", None), input_data, config_data
+        )
+        try:
+            response_iterator = app_runner.run(app_runner_request)
+            async for response in response_iterator:
+                if response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK:
+                    await self.send(text_data=json.dumps(response.model_dump()))
+        except Exception as e:
+            logger.exception(f"Failed to run app: {e}")
+        await app_runner.stop()
+
+    async def receive(self, text_data):
+        run_coro_in_new_loop(self._respond_to_event(text_data))
 
 
 class AppStoreAppConsumer(AppConsumer):

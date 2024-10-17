@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import uuid
@@ -1240,3 +1241,52 @@ class PlatformAppsViewSet(viewsets.ViewSet):
         )
 
         return DRFResponse(data=response, status=200)
+
+
+class PlaygroundViewSet(viewsets.ViewSet):
+    async def get_app_runner_async(self, session_id, source, request_user, input_data, config_data):
+        runner_user = request_user
+        processor_slug = source.processor_slug
+        provider_slug = source.provider_slug
+        app_run_user_profile = await Profile.objects.aget(user=runner_user)
+
+        vendor_env = {
+            "provider_configs": await database_sync_to_async(app_run_user_profile.get_merged_provider_configs)(),
+        }
+
+        processor_cls = ProcessorFactory.get_processor(processor_slug=processor_slug, provider_slug=provider_slug)
+        input_schema = json.loads(processor_cls.get_input_schema())
+        input_fields = []
+        for property in input_schema["properties"]:
+            input_fields.append({"name": property, "type": input_schema["properties"][property]["type"]})
+
+        app_data = {
+            "name": f"Processor {provider_slug}_{processor_slug}",
+            "config": {},
+            "type_slug": "",
+            "processors": [
+                {
+                    "id": "processor",
+                    "name": processor_cls.name(),
+                    "input": input_data,
+                    "config": config_data,
+                    "description": processor_cls.description(),
+                    "dependencies": ["input"],
+                    "provider_slug": provider_slug,
+                    "processor_slug": processor_slug,
+                    "output_template": processor_cls.get_output_template().model_dump(),
+                }
+            ],
+            "description": "",
+            "input_fields": input_fields,
+            "output_template": {"markdown": "{{processor}}"},
+        }
+        return AppRunner(
+            session_id=session_id,
+            app_data=app_data,
+            source=source,
+            vendor_env=vendor_env,
+        )
+
+    def get_app_runner(self, session_id, source, request_user, input_data, config_data):
+        return async_to_sync(self.get_app_runner_async)(session_id, source, request_user, input_data, config_data)

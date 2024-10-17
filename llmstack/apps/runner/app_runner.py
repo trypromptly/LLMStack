@@ -53,6 +53,16 @@ class WebAppRunnerSource(AppRunnerSource):
         return self.app_uuid
 
 
+class PlaygroundAppRunnerSource(AppRunnerSource):
+    type: AppRunnerSourceType = AppRunnerSourceType.PLAYGROUND
+    provider_slug: str
+    processor_slug: str
+
+    @property
+    def id(self):
+        return f"{self.provider_slug}-{self.processor_slug}"
+
+
 class PlatformAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.PLATFORM
     slug: str
