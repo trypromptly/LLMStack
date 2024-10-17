@@ -80,7 +80,7 @@ class OutputActor(Actor):
         if message.type == MessageType.BOOKKEEPING:
             self._bookkeeping_data_map[message.sender] = message.data
 
-            if set(self._dependencies) == set(self._bookkeeping_data_map.keys()):
+            if set(self._dependencies).issubset(self._bookkeeping_data_map.keys()):
                 self._bookkeeping_data_future.set(self._bookkeeping_data_map)
 
     async def get_output(self):

@@ -13,7 +13,7 @@ from llmstack.apps.runner.agent_controller import (
     AgentControllerDataType,
 )
 from llmstack.common.utils.liquid import render_template
-from llmstack.play.actor import Actor
+from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.messages import Message, MessageType, ToolCallData
 from llmstack.play.utils import run_coro_in_new_loop
 
@@ -87,6 +87,9 @@ class AgentActor(Actor):
                     )
                 elif controller_output.type == AgentControllerDataType.END:
                     self._output_stream.finalize()
+
+                    # Send bookkeeping data
+                    self._output_stream.bookkeep(BookKeepingData(config=self._controller_config.model_dump()))
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0.1)
             except Exception as e:

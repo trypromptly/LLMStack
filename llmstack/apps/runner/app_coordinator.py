@@ -45,7 +45,7 @@ class AppCoordinator(ThreadingActor):
             ),
             "output": OutputActor.start(
                 coordinator_urn=self.actor_urn,
-                dependencies=["input"] + list(self._actor_configs_map.keys()) + ["agent"] if is_agent else [],
+                dependencies=["input"] + (["agent"] if is_agent else list(self._actor_configs_map.keys())),
                 templates={"output": output_template},
             ),
         }
