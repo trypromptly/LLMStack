@@ -1,17 +1,23 @@
+import hashlib
+import hmac
 import json
 import logging
 import os
+import re
 import uuid
+from time import time
 
 import yaml
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser, User
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import ValidationError
 from django.http import StreamingHttpResponse
 from django.shortcuts import aget_object_or_404, get_object_or_404
+from django.test import RequestFactory
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -31,16 +37,24 @@ from llmstack.apps.integration_configs import (
     TwilioIntegrationConfig,
     WebIntegrationConfig,
 )
-from llmstack.apps.runner.app_runner import AppRunner
+from llmstack.apps.runner.app_runner import (
+    AppRunner,
+    AppRunnerRequest,
+    SlackAppRunnerSource,
+    TwilioSMSAppRunnerSource,
+    WebAppRunnerSource,
+)
 from llmstack.apps.yaml_loader import (
     get_app_template_by_slug,
     get_app_templates_from_contrib,
 )
 from llmstack.base.models import AnonymousProfile, Profile
+from llmstack.common.utils import prequests
 from llmstack.common.utils.utils import get_location
 from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
+from llmstack.jobs.adhoc import ProcessingJob
 from llmstack.processors.providers.processors import ProcessorFactory
 
 from .models import App, AppData, AppHub, AppType, AppVisibility
@@ -802,50 +816,6 @@ class AppViewSet(viewsets.ViewSet):
             preview=preview,
         )
 
-    async def run_playground_internal_async(self, session_id, request_uuid, request, preview=False):
-        return await database_sync_to_async(self.run_playground_internal)(
-            session_id,
-            request_uuid,
-            request,
-            platform="playground",
-            preview=False,
-            disable_history=False,
-        )
-
-    def run_playground_internal(
-        self,
-        session_id,
-        request_uuid,
-        request,
-        platform="playground",
-        preview=False,
-        disable_history=False,
-    ):
-        request_ip = request.headers.get("X-Forwarded-For", request.META.get("REMOTE_ADDR", "")).split(",")[
-            0
-        ].strip() or request.META.get("HTTP_X_REAL_IP", "")
-
-        request_location = request.headers.get("X-Client-Geo-Location", "")
-
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
-
-        if flag_enabled(
-            "HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA",
-            request=request,
-            user=request.user,
-        ):
-            raise Exception(
-                "You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.",
-            )
-
-        processor_id = request.data["input"]["api_provider_slug"] + "_" + request.data["input"]["api_backend_slug"]
-
-        app_runner = None
-
-        return app_runner.run_app(processor_id=processor_id)
-
     async def run_platform_app_internal_async(self, session_id, request_uuid, request, preview=False):
         return await database_sync_to_async(self.run_platform_app_internal)(
             session_id,
@@ -952,8 +922,9 @@ class AppViewSet(viewsets.ViewSet):
                 raise Exception("App data not found")
             app_data = app_data_obj.data
 
-            if not runner_user:
-                runner_user = app.owner
+        if runner_user is None or runner_user.is_anonymous:
+            app = await App.objects.select_related("owner").aget(uuid=uuid.UUID(app_uuid))
+            runner_user = app.owner
 
         app_run_user_profile = await Profile.objects.aget(user=runner_user)
         vendor_env = {
@@ -1290,3 +1261,413 @@ class PlaygroundViewSet(viewsets.ViewSet):
 
     def get_app_runner(self, session_id, source, request_user, input_data, config_data):
         return async_to_sync(self.get_app_runner_async)(session_id, source, request_user, input_data, config_data)
+
+
+class APIViewSet(viewsets.ViewSet):
+    def _run_sync(self, app_runner, request: AppRunnerRequest):
+        import asyncio
+
+        """
+        Synchronous generator wrapper around the async 'run' method.
+        It runs the 'run' method in an event loop and yields results synchronously.
+        """
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        async_gen = app_runner.run(request)
+
+        # Synchronous generator to wrap the async generator
+        while True:
+            try:
+                # Run until the next item is available from the async generator
+                result = loop.run_until_complete(async_gen.__anext__())
+                yield result
+            except StopAsyncIteration:
+                # End of the async generator
+                break
+
+    def run_internal(self, request, app_uuid, input_data, source, app_data, session_id, stream):
+        app_runner = AppViewSet().get_app_runner(
+            session_id=session_id,
+            app_uuid=app_uuid,
+            source=source,
+            request_user=request.user if request.user.is_authenticated else None,
+            preview=False,
+            app_data=app_data,
+        )
+        response_iterator = self._run_sync(
+            app_runner,
+            AppRunnerRequest(
+                client_request_id=str(uuid.uuid4()),
+                session_id=session_id,
+                input=input_data,
+            ),
+        )
+
+        response_iterator_json = map(lambda x: x.model_dump(), response_iterator)
+
+        if stream:
+            return StreamingHttpResponse(response_iterator_json, content_type="application/json")
+
+        for response in response_iterator_json:
+            pass
+
+        return DRFResponse(data=response, status=200)
+
+    def run(self, request, uid):
+        if request.user.is_anonymous:
+            return DRFResponse(status=403)
+
+        app = get_object_or_404(App, uuid=uuid.UUID(uid))
+        if app.owner != request.user:
+            return DRFResponse(status=403)
+
+        preview = request.data.get("preview", False)
+        app_data_obj = AppData.objects.filter(app_uuid=app.uuid, is_draft=preview).order_by("-created_at").first()
+        if not app_data_obj:
+            return DRFResponse(status=404)
+
+        session_id = request.data.get("session_id", str(uuid.uuid4()))
+        stream = request.data.get("stream", False)
+        input_data = request.data.get("input", {})
+        request_ip = request.headers.get("X-Forwarded-For", request.META.get("REMOTE_ADDR", "")).split(",")[
+            0
+        ].strip() or request.META.get("HTTP_X_REAL_IP", "")
+
+        request_location = request.headers.get("X-Client-Geo-Location", "")
+
+        if not request_location:
+            location = get_location(request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
+
+        return self.run_internal(
+            request,
+            uid,
+            input_data,
+            WebAppRunnerSource(
+                request_ip=request_ip,
+                request_location=request_location,
+                request_user_agent=request.headers.get("User-Agent", ""),
+                request_content_type=request.headers.get("Content-Type", ""),
+                app_uuid=uid,
+                request_user_email=request.user.email,
+            ),
+            app_data_obj.data,
+            session_id,
+            stream,
+        )
+
+
+class RunAppAsyncJob(ProcessingJob):
+    @classmethod
+    def generate_job_id(cls):
+        return "{}".format(str(uuid.uuid4()))
+
+
+def run_slack_app(request, uid, input_data, source, app_data, session_id, stream=False):
+    SlackViewSet._run(request, uid, input_data, source, app_data, session_id, stream)
+
+
+class SlackViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
+    @classmethod
+    def verify_request_signature(
+        cls,
+        signing_secret: str,
+        headers: dict,
+        raw_body: bytes,
+    ):
+        signature = headers.get("X-Slack-Signature")
+        timestamp = headers.get("X-Slack-Request-Timestamp")
+        if signature and timestamp and raw_body:
+            if signing_secret:
+                if abs(time() - int(timestamp)) > 60 * 5:
+                    return False
+                format_req = str.encode(
+                    f"v0:{timestamp}:{raw_body.decode('utf-8')}",
+                )
+                encoded_secret = str.encode(signing_secret)
+                request_hash = hmac.new(
+                    encoded_secret,
+                    format_req,
+                    hashlib.sha256,
+                ).hexdigest()
+                if f"v0={request_hash}" == signature:
+                    return True
+        return False
+
+    def _get_slack_app_session_id(self, slack_request_event_data, app_uuid):
+        thread_ts = slack_request_event_data.get("thread_ts") or slack_request_event_data.get("ts")
+        identifier_prefix = slack_request_event_data.get("channel") or slack_request_event_data.get("user")
+        session_identifier = f"{identifier_prefix}_{thread_ts}"
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, f"{str(app_uuid)}-{session_identifier}"))
+
+    def _get_request_user(self, slack_user_id, slack_bot_token):
+        http_request = prequests.get(
+            "https://slack.com/api/users.info",
+            params={"user": slack_user_id},
+            headers={"Authorization": f"Bearer {slack_bot_token}"},
+        )
+
+        slack_user = None
+        if http_request.status_code == 200:
+            http_response = http_request.json()
+            slack_user = http_response["user"]["profile"]
+
+        if slack_user and slack_user.get("email"):
+            return User.objects.filter(email=slack_user["email"]).first()
+
+        return AnonymousUser()
+
+    @staticmethod
+    def _run(request, uid, input_data, source, app_data, session_id, stream=False):
+        app = App.objects.filter(uuid=uid).first()
+        if app and app.slack_config:
+            response = APIViewSet().run_internal(
+                request=request,
+                app_uuid=uid,
+                input_data=input_data,
+                source=source,
+                session_id=session_id,
+                stream=stream,
+                app_data=app_data,
+            )
+            response_text = (
+                response.data.get("data", {}).get("output", {}).get("output")
+                or (" ".join(response.data.get("data", {}).get("output", {}).get("errors", [])) or "An error occurred.")
+                if response.status_code == 200
+                else "An error occurred."
+            )
+            response_channel = input_data.get("_request", {}).get("channel")
+            response_thread_ts = input_data.get("_request", {}).get("thread_ts") or input_data.get("_request", {}).get(
+                "ts"
+            )
+            token = app.slack_config.get("bot_token")
+
+            prequests.post(
+                "https://slack.com/api/chat.postMessage",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "channel": response_channel,
+                    "thread_ts": response_thread_ts,
+                    "text": response_text,
+                    "blocks": [],
+                },
+                timeout=60,
+            )
+
+    def run_async(self, request, uid):
+        if request.data.get("type") == "url_verification":
+            return DRFResponse(
+                status=200,
+                data={
+                    "challenge": request.data["challenge"],
+                },
+            )
+
+        if request.headers.get("X-Slack-Request-Timestamp") is None or request.headers.get("X-Slack-Signature") is None:
+            return DRFResponse(status=403, data={"error": "Invalid request"})
+
+        slack_request_body = request.body
+        request_type = request.data.get("type")
+
+        if request_type == "event_callback":
+            event_data = self.request.data.get("event", {})
+
+            event_type = event_data.get("type")
+            channel_type = event_data.get("channel_type")
+            # Respond to app mentions and direct messages from users
+            if (event_type == "app_mention") or (
+                event_type == "message"
+                and channel_type == "im"
+                and "subtype" not in event_data
+                and "bot_id" not in event_data
+            ):
+                app = get_object_or_404(App, uuid=uuid.UUID(uid))
+                app_data_obj = AppData.objects.filter(app_uuid=app.uuid, is_draft=False).order_by("-created_at").first()
+
+                if (
+                    app_data_obj
+                    and app.slack_config
+                    and request.data.get("token") == app.slack_config.get("verification_token")
+                    and request.data.get("api_app_id") == app.slack_config.get("app_id")
+                    and SlackViewSet.verify_request_signature(
+                        app.slack_config.get("signing_secret"), request.headers, slack_request_body
+                    )
+                ):
+                    request_user = self._get_request_user(
+                        request.data["event"]["user"], app.slack_config.get("bot_token")
+                    )
+                    # Improve this check later
+                    if app.visibility == AppVisibility.PUBLIC or (
+                        (app.visibility == AppVisibility.PRIVATE or app.visibility == AppVisibility.ORGANIZATION)
+                        and request_user
+                        and request_user.is_authenticated
+                    ):
+                        session_id = self._get_slack_app_session_id(request.data, uid)
+                        slack_message_text = re.sub(r"<@.*>(\|)?", "", request.data["event"]["text"]).strip()
+                        request_user_email = request_user.email if request_user else None
+                        input_data = {
+                            **dict(
+                                zip(
+                                    list(map(lambda x: x["name"], app_data_obj.data["input_fields"])),
+                                    [slack_message_text] * len(app_data_obj.data["input_fields"]),
+                                ),
+                            ),
+                            "_request": {
+                                "text": event_data.get("text"),
+                                "user": event_data.get("user"),
+                                "slack_user_email": request_user_email,
+                                "token": request.data["token"],
+                                "team_id": request.data["team_id"],
+                                "api_app_id": request.data["api_app_id"],
+                                "team": event_data.get("team"),
+                                "channel": event_data.get("channel"),
+                                "text-type": event_data.get("type"),
+                                "ts": event_data.get("ts"),
+                                "thread_ts": event_data.get("thread_ts"),
+                            },
+                        }
+
+                        new_request = RequestFactory().post("/api/apps/{}/run".format(uid))
+                        new_request.user = request_user or AnonymousUser()
+                        new_request.data = {"input": input_data, "session_id": session_id}
+
+                        source = SlackAppRunnerSource(request_user_email=request_user_email, app_uuid=uid)
+                        RunAppAsyncJob.create(
+                            func="llmstack.apps.apis.run_slack_app",
+                            args=[new_request, uid, input_data, source, app_data_obj.data, session_id, False],
+                        ).add_to_queue()
+
+        return DRFResponse(status=200)
+
+
+def run_twilio_sms_app(request, uid, input_data, source, app_data, session_id, stream=False):
+    TwilioSMSViewSet._run(request, uid, input_data, source, app_data, session_id, stream)
+
+
+class TwilioSMSViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
+    @staticmethod
+    def _run(request, uid, input_data, source, app_data, session_id, stream=False):
+        twilio_config = None
+        app = App.objects.filter(uuid=uid).first()
+        if app:
+            app_owner = app.owner
+            if app_owner:
+                app_owner_profile = Profile.objects.filter(user=app_owner).first()
+                if app_owner_profile:
+                    twilio_config = (
+                        TwilioIntegrationConfig().from_dict(
+                            app.twilio_integration_config,
+                            app_owner_profile.decrypt_value,
+                        )
+                        if app.twilio_integration_config
+                        else None
+                    )
+        if twilio_config:
+            response = APIViewSet().run_internal(
+                request=request,
+                app_uuid=uid,
+                input_data=input_data,
+                source=source,
+                session_id=session_id,
+                stream=stream,
+                app_data=app_data,
+            )
+
+            reply_to = input_data.get("_request", {}).get("From")
+            reply_from = input_data.get("_request", {}).get("To")
+            response_text = (
+                response.data.get("data", {}).get("output", {}).get("output")
+                or (" ".join(response.data.get("data", {}).get("output", {}).get("errors", [])) or "An error occurred.")
+                if response.status_code == 200
+                else "An error occurred."
+            )
+            response_payload = {
+                "To": reply_to,
+                "From": reply_from,
+                "Body": response_text,
+            }
+            account_sid = twilio_config.get("account_sid")
+            url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
+
+            prequests.post(
+                url,
+                data=response_payload,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                auth=(account_sid, twilio_config.get("auth_token")),
+            )
+
+    def run_async(self, request, uid):
+        app = get_object_or_404(App, uuid=uuid.UUID(uid))
+        app_data_obj = AppData.objects.filter(app_uuid=app.uuid, is_draft=False).order_by("-created_at").first()
+        if not app_data_obj:
+            return DRFResponse(status=404, data={"error": "App data not found"})
+
+        app_owner_profile = get_object_or_404(Profile, user=app.owner)
+
+        twilio_config = (
+            TwilioIntegrationConfig().from_dict(
+                app.twilio_integration_config,
+                app_owner_profile.decrypt_value,
+            )
+            if app.twilio_integration_config
+            else None
+        )
+        if twilio_config:
+            session_id = (
+                str(uuid.uuid5(uuid.NAMESPACE_URL, f'{str(uid)}-{request.data.get("From")}'))
+                if request.data.get("From")
+                else str(uuid.uuid4())
+            )
+
+            twilio_sms_text = request.data.get("Body", "").strip()
+            input_data = {
+                **dict(
+                    zip(
+                        list(
+                            map(lambda x: x["name"], app_data_obj.data["input_fields"]),
+                        ),
+                        [twilio_sms_text] * len(app_data_obj.data["input_fields"]),
+                    ),
+                ),
+                "_request": {
+                    "ToCountry": request.data.get("ToCountry", ""),
+                    "ToState": request.data.get("ToState", ""),
+                    "SmsMessageSid": request.data.get("SmsMessageSid", ""),
+                    "NumMedia": request.data.get("NumMedia", ""),
+                    "ToCity": request.data.get("ToCity", ""),
+                    "FromZip": request.data.get("FromZip", ""),
+                    "SmsSid": request.data.get("SmsSid", ""),
+                    "FromState": request.data.get("FromState", ""),
+                    "SmsStatus": request.data.get("SmsStatus", ""),
+                    "FromCity": request.data.get("FromCity", ""),
+                    "Body": request.data.get("Body", ""),
+                    "FromCountry": request.data.get("FromCountry", ""),
+                    "To": request.data.get("To", ""),
+                    "ToZip": request.data.get("ToZip", ""),
+                    "NumSegments": request.data.get("NumSegments", ""),
+                    "MessageSid": request.data.get("MessageSid", ""),
+                    "AccountSid": request.data.get("AccountSid", ""),
+                    "From": request.data.get("From", ""),
+                    "ApiVersion": request.data.get("ApiVersion", ""),
+                },
+            }
+            new_request = RequestFactory().post("/api/apps/{}/run".format(uid))
+            new_request.user = AnonymousUser()
+            new_request.data = {"input": input_data, "session_id": session_id}
+
+            source = TwilioSMSAppRunnerSource(app_uuid=uid)
+
+            RunAppAsyncJob.create(
+                func="llmstack.apps.apis.run_twilio_sms_app",
+                args=[new_request, uid, input_data, source, app_data_obj.data, session_id, False],
+            ).add_to_queue()
+
+        return DRFResponse(status=204, headers={"Content-Type": "text/xml"})

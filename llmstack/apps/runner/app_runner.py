@@ -90,7 +90,7 @@ class SlackAppRunnerSource(AppRunnerSource):
         return self.app_uuid
 
 
-class TwilioAppRunnerSource(AppRunnerSource):
+class TwilioSMSAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.TWILIO
     app_uuid: str
 
