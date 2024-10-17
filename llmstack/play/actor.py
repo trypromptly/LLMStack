@@ -1,7 +1,7 @@
 import logging
 import time
 from types import TracebackType
-from typing import Any, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 from pydantic import BaseModel, model_validator
 from pykka import ThreadingActor
@@ -46,7 +46,7 @@ class ActorConfig(BaseModel):
     actor: Type
     kwargs: dict = {}
     dependencies: list = []  # List of actor ids that this actor depends on
-    output_template: Optional[str] = None  # Output template for the actor
+    tool_schema: Optional[Dict] = None  # Tool schema for the actor
 
 
 class Actor(ThreadingActor):
@@ -92,6 +92,9 @@ class Actor(ThreadingActor):
             # Call input only when all the dependencies are met
             if set(self._dependencies) == set(self._messages.keys()):
                 self.input(self._messages)
+
+        if message.type == MessageType.TOOL_CALL:
+            self.invoke(message.id, message.data)
 
     def input(self, message: Any) -> Any:
         # Co-ordinator calls this when all the dependencies are met. This

@@ -17,10 +17,10 @@ from llmstack.common.blocks.base.processor import (
     ProcessorInterface,
 )
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
-from llmstack.common.utils.liquid import hydrate_input
+from llmstack.common.utils.liquid import hydrate_input, render_template
 from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import Actor, BookKeepingData
-from llmstack.play.actors.agent import ToolInvokeInput
+from llmstack.play.messages import ToolCallData, ToolCallResponseData
 from llmstack.processors.providers.config import ProviderConfig, ProviderConfigSource
 from llmstack.processors.providers.metrics import MetricType
 
@@ -147,6 +147,7 @@ class ApiProcessorInterface(
         session_id="",
         coordinator_urn=None,
         dependencies=[],
+        output_template={},
         metadata={},
         request=None,
         id=None,
@@ -171,6 +172,7 @@ class ApiProcessorInterface(
         self._request = request
         self._metadata = metadata
         self._session_enabled = session_enabled
+        self._output_template = output_template
         self._usage_data = [("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1))]
 
         session_data = get_app_session_data(self._session_id, self._id)
@@ -376,17 +378,12 @@ class ApiProcessorInterface(
 
         self._output_stream.bookkeep(bookkeeping_data)
 
-    def tool_invoke_input(self, tool_args: dict) -> ToolInvokeInput:
-        return self._get_input_class()(
-            **{**self._input.model_dump(), **tool_args},
-        )
-
-    def invoke(self, message: ToolInvokeInput) -> Any:
+    def invoke(self, message_id: str, message: ToolCallData) -> Any:
         try:
             self._input = (
                 hydrate_input(
                     self._input_template,
-                    {**message.input, **message.tool_args},
+                    {**message.input, **message.arguments},
                 )
                 if message
                 else self._input_template
@@ -394,19 +391,22 @@ class ApiProcessorInterface(
             self._config = (
                 hydrate_input(
                     self._config_template,
-                    {**message.input, **message.tool_args},
+                    {**message.input, **message.arguments},
                 )
                 if self._config_template
                 else self._config_template
             )
 
-            # Merge tool args with input
-            self._input = self.tool_invoke_input(message.tool_args)
-
             logger.info(
-                f"Invoking tool {message.tool_name} with args {message.tool_args}",
+                f"Invoking tool {message.name} with args {message.arguments}",
             )
             output = self.process()
+            output = output.model_dump() if isinstance(output, BaseModel) else output
+
+            if self._output_template and "markdown" in self._output_template:
+                rendered_output = render_template(self._output_template["markdown"], output)
+            else:
+                rendered_output = json.dumps(output)
         except Exception as e:
             logger.exception("Error invoking tool")
             output = {
@@ -435,6 +435,19 @@ class ApiProcessorInterface(
             bookkeeping_data.usage_data = self.usage_data()
 
         self._output_stream.bookkeep(bookkeeping_data)
+
+        # Send tool_call response
+        self._output_stream.send_tool_call_response(
+            reply_to=message_id,
+            data=ToolCallResponseData(
+                tool_call_id=message.tool_call_id,
+                output=rendered_output,
+                chunks=output,
+            ),
+        )
+
+        # Terminate the actor
+        self.on_stop()
 
     def input_stream(self, message: Any) -> Any:
         # We do not support input stream for this processor

@@ -187,9 +187,21 @@ class AppRunner:
                         "config": processor.get("config", {}),
                         "env": vendor_env,
                         "session_id": session_id,
+                        "output_template": processor.get("output_template", {"markdown": ""}) if is_agent else None,
                     },
                     dependencies=processor.get("dependencies", []),
-                    output_template=processor.get("output_template", None) if is_agent else None,
+                    tool_schema=(
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": processor["id"],
+                                "description": processor["description"],
+                                "parameters": processor_cls.get_tool_input_schema(processor),
+                            },
+                        }
+                        if is_agent
+                        else None
+                    ),
                 ),
             )
         return actor_configs
@@ -206,7 +218,13 @@ class AppRunner:
             app_data.get("processors", []), self._session_id, self._is_agent, vendor_env
         )
         output_template = app_data.get("output_template", {}).get("markdown", "")
-        self._coordinator = AppCoordinator.start(actor_configs=actor_configs, output_template=output_template).proxy()
+        self._coordinator = AppCoordinator.start(
+            actor_configs=actor_configs,
+            output_template=output_template,
+            is_agent=self._is_agent,
+            env=vendor_env,
+            config=app_data.get("config", {}),
+        ).proxy()
 
     async def stop(self):
         await self._coordinator.stop()
@@ -214,7 +232,7 @@ class AppRunner:
     async def run(self, request: AppRunnerRequest):
         request_id = str(uuid.uuid4())
 
-        self._coordinator.input(request.input)
+        self._coordinator.input(request_id, request.input)
 
         yield AppRunnerStreamingResponse(
             id=request_id,
@@ -232,7 +250,7 @@ class AppRunner:
                 id=request_id,
                 client_request_id=request.client_request_id,
                 type=AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK,
-                data=AppRunnerResponseOutputChunkData(deltas=output["deltas"], chunk=output["chunk"]),
+                data=AppRunnerResponseOutputChunkData(deltas=output.get("deltas", {}), chunk=output.get("chunk", {})),
             )
 
         yield AppRunnerStreamingResponse(
@@ -247,7 +265,7 @@ class AppRunner:
                 id=request_id,
                 client_request_id=request.client_request_id,
                 type=AppRunnerStreamingResponseType.OUTPUT,
-                data=AppRunnerResponseOutputData(output=output["output"], chunks=output["chunks"]),
+                data=AppRunnerResponseOutputData(output=output.get("output", {}), chunks=output.get("chunks", {})),
             )
 
             # Persist bookkeeping data

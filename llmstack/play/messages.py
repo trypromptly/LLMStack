@@ -6,13 +6,15 @@ from llmstack.common.blocks.base.schema import StrEnum
 
 
 class MessageType(StrEnum):
-    BEGIN = "begin"
-    BOOKKEEPING = "bookkeeping"
-    CONTENT = "content"
-    CONTENT_STREAM_CHUNK = "content_stream_chunk"
-    CONTENT_STREAM_BEGIN = "content_stream_begin"
-    CONTENT_STREAM_END = "content_stream_end"
-    ERRORS = "errors"
+    BEGIN = "BEGIN"
+    BOOKKEEPING = "BOOKKEEPING"
+    CONTENT = "CONTENT"
+    CONTENT_STREAM_CHUNK = "CONTENT_STREAM_CHUNK"
+    CONTENT_STREAM_BEGIN = "CONTENT_STREAM_BEGIN"
+    CONTENT_STREAM_END = "CONTENT_STREAM_END"
+    ERRORS = "ERRORS"
+    TOOL_CALL = "TOOL_CALL"
+    TOOL_CALL_RESPONSE = "TOOL_CALL_RESPONSE"
 
 
 class MessageData(BaseModel):
@@ -40,6 +42,19 @@ class ContentStreamErrorsData(MessageData):
     errors: List[Error]
 
 
+class ToolCallData(MessageData):
+    tool_call_id: str
+    input: Dict
+    name: str
+    arguments: Dict
+
+
+class ToolCallResponseData(MessageData):
+    tool_call_id: str
+    output: str = ""
+    chunks: Dict = {}
+
+
 class Message(BaseModel):
     id: str
     type: MessageType
@@ -52,6 +67,8 @@ class Message(BaseModel):
             ContentStreamChunkData,
             ContentStreamErrorsData,
             ErrorsData,
+            ToolCallData,
+            ToolCallResponseData,
             Dict,
         ]
     ] = None

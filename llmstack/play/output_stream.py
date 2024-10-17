@@ -18,6 +18,7 @@ from llmstack.play.messages import (
     Error,
     Message,
     MessageType,
+    ToolCallResponseData,
 )
 
 __all__ = ["OutputStream"]
@@ -35,26 +36,6 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
     Returns:
       The stitched object.
     """
-    # from llmstack.play.actors.agent import AgentOutput
-
-    # if isinstance(obj1, dict) and isinstance(obj2, AgentOutput):
-    #     return {
-    #         **obj1,
-    #         **obj2.model_dump(),
-    #         **{
-    #             "content": stitch_model_objects(
-    #                 obj1.get(
-    #                     "content",
-    #                     {},
-    #                 ),
-    #                 obj2.model_dump().get(
-    #                     "content",
-    #                     {},
-    #                 ),
-    #             ),
-    #         },
-    #     }
-
     if isinstance(obj1, BaseModel):
         obj1 = obj1.model_dump()
     if isinstance(obj2, BaseModel):
@@ -88,50 +69,10 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
         return obj2 if obj2 else obj1
 
 
-# class MessageType(StrEnum):
-#     """
-#     MessageType enum.
-#     """
-
-#     BEGIN = "begin"
-#     BOOKKEEPING = ("bookkeeping",)
-#     BOOKKEEPING_DONE = "bookkeeping_done"
-#     INPUT = "input"
-#     TOOL_INVOKE = "tool_invoke"
-#     AGENT_DONE = "agent_done"
-#     STREAM = "stream"
-#     STREAM_CLOSED = "stream_closed"
-#     STREAM_ERROR = "stream_error"
-#     STREAM_DATA = "stream_data"
-#     STREAM_FINALIZED = "stream_finalized"
-#     STREAM_FINALIZED_ERROR = "stream_finalized_error"
-#     STREAM_FINALIZED_DATA = "stream_finalized_data"
-#     STREAM_FINALIZED_CLOSED = "stream_finalized_closed"
-#     STREAM_FINALIZED_CLOSED_ERROR = "stream_finalized_closed_error"
-#     STREAM_FINALIZED_CLOSED_DATA = "stream_finalized_closed_data"
-
-
-# class Message(BaseModel):
-#     message_id: Optional[str] = None
-#     message_type: MessageType = MessageType.BEGIN
-#     message_from: Optional[str] = None
-#     message_to: Optional[str] = None
-#     response_to: Optional[str] = None  # This is used to send a response to a message
-#     message: Optional[Any] = None
-
-
-# class StreamClosedException(Exception):
-#     pass
-
-
 class OutputStream:
     """
     OutputStream class.
     """
-
-    # class Status:
-    #     OPEN = "open"
-    #     CLOSED = "closed"
 
     def __init__(
         self,
@@ -163,18 +104,6 @@ class OutputStream:
                 logger.error(f"Failed to get coordinator proxy for {self._coordinator_urn}: {e}")
 
         return self._coordinator_proxy
-
-    # def set_message_id(self, message_id: str) -> None:
-    #     """
-    #     Sets the current message id.
-    #     """
-    #     self._message_id = message_id
-
-    # def set_response_to(self, response_to: str) -> None:
-    #     """
-    #     Sets the response to.
-    #     """
-    #     self._response_to = response_to
 
     async def write(self, data: Any) -> None:
         """
@@ -213,34 +142,19 @@ class OutputStream:
             self._data = stitch_model_objects(self._data, data)
         await asyncio.sleep(0.0001)
 
-    # async def write_raw(self, message: Message) -> None:
-    #     """
-    #     Writes raw message to the output stream.
-    #     """
-    #     if self._status == OutputStream.Status.CLOSED:
-    #         raise StreamClosedException("Output stream is closed.")
+    async def write_raw(self, message: Message) -> None:
+        """
+        Writes raw message to the output stream.
+        """
+        self._coordinator.relay(message)
 
-    #     self._coordinator.relay(message)
-
-    #     await asyncio.sleep(0.0001)
-
-    # def close(self) -> None:
-    #     """
-    #     Closes the output stream.
-    #     """
-    #     self._status = OutputStream.Status.CLOSED
+        await asyncio.sleep(0.0001)
 
     def get_data(self) -> BaseModel:
         """
         Returns the data.
         """
         return self._data
-
-    # def get_status(self) -> Status:
-    #     """
-    #     Returns the status.
-    #     """
-    #     return self._status
 
     def finalize(
         self,
@@ -309,4 +223,19 @@ class OutputStream:
                 receiver="coordinator",
                 data=ContentStreamErrorsData(errors=[Error(message=str(error))]),
             ),
+        )
+
+    def send_tool_call_response(self, reply_to: str, data: ToolCallResponseData) -> None:
+        """
+        Sends the tool call response.
+        """
+        self._coordinator.relay(
+            Message(
+                id=self._message_id,
+                type=MessageType.TOOL_CALL_RESPONSE,
+                sender=self._stream_id,
+                receiver="agent",
+                reply_to=reply_to,
+                data=data,
+            )
         )
