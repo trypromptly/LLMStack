@@ -751,4 +751,4 @@ DEFAULT_DATA_DESTINATION_CONFIG = {"provider_slug": "weaviate", "processor_slug"
 
 DEFAULT_EMBEDDINGS_GENERATOR_CONFIG = {"provider_slug": "openai", "embedding_model_slug": "text-embedding-ada-002"}
 
-UPDATE_BILLING_FUNC = "llmstack.apps.events.app_run_finished.update_billing"
+UPDATE_BILLING_FUNC = "llmstack.apps.jobs.app_run_finished.update_billing"
