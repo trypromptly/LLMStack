@@ -39,6 +39,24 @@ class AppRunnerSource(BaseModel):
     def id(self):
         raise NotImplementedError
 
+    def effects(self, request_id, session_id, output, bookkeeping_data):
+        """
+        Source specific effects from the app run
+        """
+        EventsViewSet().create(
+            "app.run.finished",
+            {
+                "output": output.get("output"),
+                "bookkeeping_data_map": bookkeeping_data,
+                "request_data": {
+                    **(self.model_dump()),
+                    "id": self.id,
+                    "request_id": request_id,
+                    "session_id": session_id,
+                },
+            },
+        )
+
 
 class WebAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.WEB
@@ -270,16 +288,4 @@ class AppRunner:
 
             # Persist bookkeeping data
             bookkeeping_data = self._coordinator.bookkeeping_data().get().get()
-            EventsViewSet().create(
-                "app.run.finished",
-                {
-                    "output": output.get("output"),
-                    "bookkeeping_data_map": bookkeeping_data,
-                    "request_data": {
-                        **(self._source.model_dump() if self._source else {}),
-                        "id": self._source.id,
-                        "request_id": request_id,
-                        "session_id": self._session_id,
-                    },
-                },
-            )
+            self._source.effects(request_id, self._session_id, output, bookkeeping_data)
