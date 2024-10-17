@@ -47,7 +47,7 @@ class ImagesGenerationsInput(ApiProcessorSchema):
     prompt: str = Field(
         ...,
         description="A text description of the desired image(s). The maximum length is 1000 characters.",
-        example="A cute baby sea otter",
+        examples=["A cute baby sea otter"],
     )
 
 
@@ -68,19 +68,19 @@ class ImagesGenerationsConfiguration(ApiProcessorSchema):
     size: Optional[Size] = Field(
         "1024x1024",
         description="The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.",
-        example="1024x1024",
+        examples=["1024x1024"],
         json_schema_extra={"advanced_parameter": False},
     )
     n: Optional[conint(ge=1, le=4)] = Field(
         1,
         description="The number of images to generate. Must be between 1 and 10.",
-        example=1,
+        examples=[1],
         json_schema_extra={"advanced_parameter": False},
     )
     response_format: Optional[ResponseFormat] = Field(
         "url",
         description="The format in which the generated images are returned. Must be one of `url` or `b64_json`.",
-        example="url",
+        examples=["url"],
     )
     quality: Optional[Quality] = Field(
         default=Quality.standard,

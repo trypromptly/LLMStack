@@ -103,14 +103,12 @@ class ChatCompletionsVisionConfiguration(
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(
         1024,
         description="The maximum number of tokens allowed for the generated answer. By default, the number of tokens the model can return will be (4096 - prompt tokens).\n",
-        example=1024,
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "example": 1024},
     )
     temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
         default=0.7,
         description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
-        example=1,
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={"advanced_parameter": False, "example": 1},
     )
     retain_history: Optional[bool] = Field(
         default=False,

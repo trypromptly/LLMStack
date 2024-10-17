@@ -56,13 +56,13 @@ class ImagesEditConfiguration(
     size: Optional[Size] = Field(
         "1024x1024",
         description="The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.",
-        example="1024x1024",
+        examples=["1024x1024"],
         json_schema_extra={"advanced_parameter": False},
     )
     n: Optional[conint(ge=1, le=4)] = Field(
         1,
         description="The number of images to generate. Must be between 1 and 10.",
-        example=1,
+        examples=[1],
         json_schema_extra={"advanced_parameter": False},
     )
 

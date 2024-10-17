@@ -41,9 +41,6 @@ class Connection(BaseModel):
     updated_at: Optional[datetime.datetime] = None
     last_checked_at: Optional[datetime.datetime] = None
 
-    class Config:
-        from_attributes = True
-
     def __str__(self):
         return f"{self.name} ({self.id})"
 

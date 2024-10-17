@@ -112,9 +112,6 @@ class ChatCompletionsInput(ApiProcessorSchema):
         description="A list of functions the model may generate JSON inputs for .",
     )
 
-    class Config:
-        title = "Chat Completions Input"
-
 
 class ChatCompletionsOutput(ApiProcessorSchema):
     choices: List[ChatMessage] = Field(
@@ -140,13 +137,13 @@ class ChatCompletionsConfiguration(
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(
         1024,
         description="The maximum number of tokens allowed for the generated answer. By default, the number of tokens the model can return will be (4096 - prompt tokens).\n",
-        example=1024,
+        examples=[1024],
         json_schema_extra={"advanced_parameter": False},
     )
     temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
         default=0.7,
         description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
-        example=1,
+        examples=[1],
         json_schema_extra={"advanced_parameter": False},
     )
     seed: Optional[conint(ge=0)] = Field(
@@ -157,7 +154,7 @@ class ChatCompletionsConfiguration(
     n: Optional[conint(ge=1, le=128)] = Field(
         1,
         description="How many completions to generate for each prompt.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n",
-        example=1,
+        examples=[1],
         json_schema_extra={"widget": "hidden"},
     )
     retain_history: Optional[bool] = Field(

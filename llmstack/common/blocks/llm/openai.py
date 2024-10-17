@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Any, Dict, Generator, List, Optional, Union
 
-from pydantic import Extra, Field, confloat, conint
+from pydantic import Field, confloat, conint
 
 from llmstack.common.blocks.base.processor import (
     BaseConfiguration,
@@ -280,7 +280,7 @@ class OpenAIChatCompletionsAPIProcessorOutput(OpenAIAPIProcessorOutput):
     choices: List[ChatMessage] = Field(
         ...,
         description="Chat completions, in the [chat format](/docs/guides/chat/introduction).",
-        min_items=1,
+        min_length=1,
     )
 
 
@@ -306,23 +306,23 @@ class OpenAIChatCompletionsAPIProcessorConfiguration(
     max_tokens: Optional[conint(ge=1, le=32000)] = Field(
         1024,
         description="The maximum number of tokens allowed for the generated answer. By default, the number of tokens the model can return will be (4096 - prompt tokens).\n",
-        example=1024,
+        examples=[1024],
     )
     temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
         default=0.7,
         description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
-        example=1,
+        examples=[1],
     )
     top_p: Optional[confloat(ge=0.0, le=1.0, multiple_of=0.1)] = Field(
         1,
         description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. "
         + "So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
-        example=1,
+        examples=[1],
     )
     n: Optional[conint(ge=1, le=128)] = Field(
         1,
         description="How many chat completion choices to generate for each input message.",
-        example=1,
+        examples=[1],
     )
     stop: Optional[Union[str, List[str]]] = Field(
         None,
@@ -500,7 +500,7 @@ class OpenAIImageEditsProcessorInput(OpenAIAPIProcessorInput):
     prompt: str = Field(
         ...,
         description="A text description of the desired image(s). The maximum length is 1000 characters.",
-        example="A cute baby sea otter wearing a beret",
+        examples=["A cute baby sea otter wearing a beret"],
     )
 
 
@@ -512,17 +512,17 @@ class OpenAIImageEditsProcessorConfiguration(OpenAIAPIProcessorConfiguration):
     n: Optional[conint(ge=1, le=10)] = Field(
         1,
         description="The number of images to generate. Must be between 1 and 10.",
-        example=1,
+        examples=[1],
     )
     size: Optional[Size] = Field(
         "1024x1024",
         description="The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.",
-        example="1024x1024",
+        examples=["1024x1024"],
     )
     response_format: Optional[ResponseFormat] = Field(
         "url",
         description="The format in which the generated images are returned. Must be one of `url` or `b64_json`.",
-        example="url",
+        examples=["url"],
     )
 
 
@@ -655,17 +655,17 @@ class OpenAIImageVariationsProcessorConfiguration(
     n: Optional[conint(ge=1, le=10)] = Field(
         1,
         description="The number of images to generate. Must be between 1 and 10.",
-        example=1,
+        examples=[1],
     )
     size: Optional[Size] = Field(
         "1024x1024",
         description="The size of the generated images. Must be one of `256x256`, `512x512`, or `1024x1024`.",
-        example="1024x1024",
+        examples=["1024x1024"],
     )
     response_format: Optional[ResponseFormat] = Field(
         "url",
         description="The format in which the generated images are returned. Must be one of `url` or `b64_json`.",
-        example="url",
+        examples=["url"],
     )
 
 
@@ -777,9 +777,6 @@ class OpenAIImageVariationsProcessor(
 
 
 class OpenAIEmbeddingsProcessorInput(OpenAIAPIProcessorInput):
-    class Config:
-        extra = Extra.forbid
-
     input: Union[
         str,
         List[str],
@@ -788,7 +785,7 @@ class OpenAIEmbeddingsProcessorInput(OpenAIAPIProcessorInput):
     ] = Field(
         ...,
         description="Input text to get embeddings for, encoded as a string or array of tokens. To get embeddings for multiple inputs in a single request, pass an array of strings or array of token arrays. Each input must not exceed 8192 tokens in length.\n",
-        example="The quick brown fox jumped over the lazy dog",
+        examples=["The quick brown fox jumped over the lazy dog"],
     )
 
 

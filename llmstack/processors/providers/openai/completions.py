@@ -51,28 +51,28 @@ class CompletionsConfiguration(ApiProcessorSchema):
     suffix: Optional[str] = Field(
         None,
         description="The suffix that comes after a completion of inserted text.",
-        example="test.",
+        examples=["test."],
     )
     max_tokens: Optional[conint(ge=1, le=4096)] = Field(
         1024,
         description="The maximum number of [tokens](/tokenizer) to generate in the completion.\n\nThe token count of your prompt plus `max_tokens` cannot exceed the model's context length. Most models have a context length of 2048 tokens (except for the newest models, which support 4096).\n",
-        example=1024,
+        examples=[1024],
     )
     temperature: Optional[confloat(ge=0.0, le=2.0, multiple_of=0.1)] = Field(
         default=0.7,
         description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n",
-        example=1,
+        examples=[1],
     )
     top_p: Optional[confloat(ge=0.0, le=1.0, multiple_of=0.1)] = Field(
         default=1,
         description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. "
         + "So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n",
-        example=1,
+        examples=[1],
     )
     n: Optional[conint(ge=1, le=128)] = Field(
         1,
         description="How many completions to generate for each prompt.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n",
-        example=1,
+        examples=[1],
     )
     logprobs: Optional[conint(ge=0, le=5)] = Field(
         None,
