@@ -40,6 +40,7 @@ from llmstack.apps.integration_configs import (
 from llmstack.apps.runner.app_runner import (
     AppRunner,
     AppRunnerRequest,
+    DiscordAppRunnerSource,
     SlackAppRunnerSource,
     TwilioSMSAppRunnerSource,
     WebAppRunnerSource,
@@ -1362,6 +1363,85 @@ class RunAppAsyncJob(ProcessingJob):
     @classmethod
     def generate_job_id(cls):
         return "{}".format(str(uuid.uuid4()))
+
+
+def run_discord_app(request, uid, input_data, source, app_data, session_id, stream=False):
+    DiscordViewSet()._run(request, uid, input_data, source, app_data, session_id, stream)
+
+
+class DiscordViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
+    def _run(self, request, uid, input_data, source, app_data, session_id, stream=False):
+        app = get_object_or_404(App, uuid=uuid.UUID(uid))
+        if app.discord_config:
+            response = APIViewSet().run_internal(
+                request=request,
+                app_uuid=uid,
+                input_data=input_data,
+                source=source,
+                app_data=app_data,
+                session_id=session_id,
+                stream=stream,
+            )
+            response_text = (
+                response.data.get("data", {}).get("output", {}).get("output")
+                or (" ".join(response.data.get("data", {}).get("output", {}).get("errors", [])) or "An error occurred.")
+                if response.status_code == 200
+                else "An error occurred."
+            )
+            token = input_data.get("_request", {}).get("token")
+            app_id = app.discord_config.get("app_id")
+
+            prequests.post(
+                url=f"https://discord.com/api/v10/webhooks/{app_id}/{token}",
+                headers={
+                    "Authorization": f"Bot {token}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "content": response_text,
+                },
+            )
+
+    def run_async(self, request, uid):
+        if request.data.get("type") == 1:
+            return DRFResponse(status=200, data={"type": 1})
+
+        if request.data.get("type") == 2:
+            app = get_object_or_404(App, uuid=uuid.UUID(uid))
+            if app.visibility == AppVisibility.PUBLIC:
+                app_data_obj = AppData.objects.filter(app_uuid=app.uuid, is_draft=False).order_by("-created_at").first()
+                if app_data_obj:
+                    if app.discord_config and request.data["data"]["name"] == app.discord_config["slash_command_name"]:
+                        session_id = str(uuid.uuid5(uuid.NAMESPACE_URL, request.data["id"]))
+                        request_user = AnonymousUser()
+                        discord_input = {}
+                        for option in request.data["data"]["options"]:
+                            discord_input[option["name"]] = option["value"]
+
+                        input_data = {
+                            **discord_input,
+                            "_request": {
+                                "user": request.data["member"]["user"]["id"],
+                                "username": request.data["member"]["user"]["username"],
+                                "global_name": request.data["member"]["user"]["global_name"],
+                                "channel": request.data["channel_id"],
+                                "guild_id": request.data["guild_id"],
+                                "token": request.data["token"],
+                            },
+                        }
+                        new_request = RequestFactory().post("/api/apps/{}/run".format(uid))
+                        new_request.user = request_user
+                        new_request.data = {"input": input_data, "session_id": session_id}
+                        source = DiscordAppRunnerSource(request_user_email=None, app_uuid=uid)
+
+                        RunAppAsyncJob.create(
+                            func="llmstack.apps.apis.run_discord_app",
+                            args=[new_request, uid, input_data, source, app_data_obj.data, session_id, False],
+                        ).add_to_queue()
+
+        return DRFResponse(status=200, data={"type": 5})
 
 
 def run_slack_app(request, uid, input_data, source, app_data, session_id, stream=False):

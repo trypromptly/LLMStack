@@ -38,15 +38,15 @@ urlpatterns = [
     ),
     path(
         "api/apps/<str:uid>/discord/run",
-        apis.AppViewSet.as_view({"post": "run_discord"}),
+        apis.DiscordViewSet.as_view({"post": "run_async"}),
     ),
     path(
         "api/apps/<str:uid>/slack/run",
-        apis.AppViewSet.as_view({"post": "run_slack"}),
+        apis.SlackViewSet.as_view({"post": "run_async"}),
     ),
     path(
         "api/apps/<str:uid>/twiliosms/run",
-        apis.AppViewSet.as_view({"post": "run_twiliosms"}),
+        apis.TwilioSMSViewSet.as_view({"post": "run_async"}),
     ),
     path(
         "api/apps/<str:uid>/twiliovoice/run",
