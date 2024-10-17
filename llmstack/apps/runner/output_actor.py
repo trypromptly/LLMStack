@@ -100,7 +100,7 @@ class OutputActor(Actor):
         finally:
             if self._error:
                 yield {"errors": list(self._error.values())}
-            elif self._stopped and not self._data_sent:
+            elif self._stopped:
                 yield {"errors": ["Output interrupted"]}
 
         logger.info("Output stream completed")
