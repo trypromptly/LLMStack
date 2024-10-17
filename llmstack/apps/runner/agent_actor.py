@@ -52,7 +52,7 @@ class AgentActor(Actor):
             model_slug=self._config.get("model", "gpt-4o-mini"),
             system_message=self._config.get("system_message", "You are a helpful assistant."),
             tools=tools,
-            stream=self._config.get("stream", True),
+            stream=self._config.get("stream", True) or True,
             realtime=self._config.get("realtime", False),
         )
 
