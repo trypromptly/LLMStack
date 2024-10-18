@@ -3,9 +3,6 @@ from django.urls import path
 from . import apis
 
 urlpatterns = [
-    # App types
-    path("api/app_types", apis.AppTypeViewSet.as_view({"get": "get"})),
-    path("api/app_types", apis.AppTypeViewSet.as_view({"get": "get"})),
     # Apps
     path(
         "api/apps/templates",
@@ -47,10 +44,6 @@ urlpatterns = [
     path(
         "api/apps/<str:uid>/twiliosms/run",
         apis.TwilioSMSViewSet.as_view({"post": "run_async"}),
-    ),
-    path(
-        "api/apps/<str:uid>/twiliovoice/run",
-        apis.AppViewSet.as_view({"post": "run_twiliovoice"}),
     ),
     path(
         "api/apps/<str:uid>/run/<str:session_id>",

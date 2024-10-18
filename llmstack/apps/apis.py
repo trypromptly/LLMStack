@@ -18,8 +18,6 @@ from django.forms import ValidationError
 from django.http import StreamingHttpResponse
 from django.shortcuts import aget_object_or_404, get_object_or_404
 from django.test import RequestFactory
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_exempt
 from drf_yaml.parsers import YAMLParser
 from flags.state import flag_enabled
@@ -59,12 +57,7 @@ from llmstack.jobs.adhoc import ProcessingJob
 from llmstack.processors.providers.processors import ProcessorFactory
 
 from .models import App, AppData, AppHub, AppType, AppVisibility
-from .serializers import (
-    AppDataSerializer,
-    AppHubSerializer,
-    AppSerializer,
-    AppTypeSerializer,
-)
+from .serializers import AppDataSerializer, AppHubSerializer, AppSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -88,26 +81,11 @@ def get_connections(profile):
     return dict(map(lambda entry: (entry["id"], entry), response.data))
 
 
-class AppTypeViewSet(viewsets.ViewSet):
-    @method_decorator(cache_page(60 * 60 * 24))
-    def get(self, request):
-        queryset = AppType.objects.all()
-        serializer = AppTypeSerializer(queryset, many=True)
-        return DRFResponse(serializer.data)
-
-
 class AppViewSet(viewsets.ViewSet):
     parser_classes = (JSONParser, FormParser, MultiPartParser, YAMLParser)
 
     def get_permissions(self):
-        if (
-            self.action == "getByPublishedUUID"
-            or self.action == "run"
-            or self.action == "run_slack"
-            or self.action == "run_discord"
-            or self.action == "run_twiliosms"
-            or self.action == "run_twiliovoice"
-        ):
+        if self.action == "getByPublishedUUID" or self.action == "run":
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -1123,36 +1101,6 @@ class AppViewSet(viewsets.ViewSet):
         app_runner = None
 
         return app_runner.run_app(processor_id=processor_id)
-
-    @action(detail=True, methods=["post"])
-    def run_discord(self, request, uid):
-        # If the request is a url verification request, return the challenge
-        if request.data.get("type") == 1:
-            return DRFResponse(status=200, data={"type": 1})
-
-        return self.run(request, uid, platform="discord")
-
-    @action(detail=True, methods=["post"])
-    def run_slack(self, request, uid):
-        # If the request is a url verification request, return the challenge
-        if request.data.get("type") == "url_verification":
-            return DRFResponse(
-                status=200,
-                data={
-                    "challenge": request.data["challenge"],
-                },
-            )
-
-        return self.run(request, uid, platform="slack")
-
-    @action(detail=True, methods=["post"])
-    def run_twiliosms(self, request, uid):
-        self.run(request, uid, platform="twilio-sms")
-        return DRFResponse(status=204, headers={"Content-Type": "text/xml"})
-
-    @action(detail=True, methods=["post"])
-    def run_twiliovoice(self, request, uid):
-        raise NotImplementedError()
 
 
 class AppHubViewSet(viewsets.ViewSet):
