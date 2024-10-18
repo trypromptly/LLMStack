@@ -78,7 +78,7 @@ class PlaygroundAppRunnerSource(AppRunnerSource):
 
     @property
     def id(self):
-        return f"{self.provider_slug}-{self.processor_slug}"
+        return f"{self.provider_slug}/{self.processor_slug}"
 
 
 class PlatformAppRunnerSource(AppRunnerSource):
