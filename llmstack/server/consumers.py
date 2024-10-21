@@ -18,6 +18,7 @@ from llmstack.apps.runner.app_runner import (
     AppRunnerRequest,
     AppRunnerStreamingResponseType,
     PlaygroundAppRunnerSource,
+    StoreAppRunnerSource,
     WebAppRunnerSource,
 )
 from llmstack.assets.utils import get_asset_by_objref
@@ -428,33 +429,6 @@ class ConnectionConsumer(AsyncWebsocketConsumer):
                 self.disconnect(1000)
 
 
-# class PlaygroundConsumer(AppConsumer):
-#     async def connect(self):
-#         self.app_id = None
-#         self.preview = False
-#         self._session_id = None
-#         self._coordinator_ref = None
-#         await self.accept()
-
-#     async def _run_app(self, request_uuid, request, **kwargs):
-#         from llmstack.apps.apis import AppViewSet
-
-#         if is_usage_limited_fn(request, self._run_app):
-#             raise UsageLimitReached("Usage limit reached. Please login to continue.")
-
-#         if await _usage_limit_exceeded(request, request.user):
-#             raise OutOfCredits(
-#                 "You have exceeded your usage credits. Please add credits to your account from settings to continue using the platform.",
-#             )
-
-#         return await AppViewSet().run_playground_internal_async(
-#             session_id=self._session_id,
-#             request_uuid=request_uuid,
-#             request=request,
-#             preview=self.preview,
-#         )
-
-
 class PlaygroundConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         headers = dict(self.scope["headers"])
@@ -523,13 +497,33 @@ class PlaygroundConsumer(AsyncWebsocketConsumer):
         run_coro_in_new_loop(self._respond_to_event(text_data))
 
 
-class AppStoreAppConsumer(AppConsumer):
-    async def _run_app(self, request_uuid, request, **kwargs):
+class StoreAppConsumer(AppConsumer):
+    async def connect(self):
         from llmstack.app_store.apis import AppStoreAppViewSet
 
-        return await AppStoreAppViewSet().run_app_internal_async(
-            slug=self.app_id,
-            session_id=self._session_id,
-            request_uuid=request_uuid,
-            request=request,
+        self._app_slug = self.scope["url_route"]["kwargs"]["app_id"]
+        self._session_id = str(uuid.uuid4())
+
+        headers = dict(self.scope["headers"])
+        request_ip = headers.get("X-Forwarded-For", self.scope.get("client", [""])[0] or "").split(",")[
+            0
+        ].strip() or headers.get("X-Real-IP", "")
+        request_location = headers.get("X-Client-Geo-Location", "")
+        if not request_location:
+            location = get_location(request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
+
+        request_user_email = self.scope.get("user", None).email if self.scope.get("user", None) else None
+
+        self._source = StoreAppRunnerSource(
+            slug=self._app_slug,
+            request_ip=request_ip,
+            request_location=request_location,
+            request_user_agent=headers.get("User-Agent", ""),
+            request_user_email=request_user_email,
         )
+
+        self._app_runner = await AppStoreAppViewSet().get_app_runner_async(
+            self._session_id, self._app_slug, self._source, self.scope.get("user", None)
+        )
+        await self.accept()

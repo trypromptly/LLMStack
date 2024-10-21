@@ -221,6 +221,44 @@ class AppStoreAppViewSet(viewsets.ModelViewSet):
             app_store_app_data=app_data,
         )
 
+    async def get_app_runner_async(self, session_id, app_slug, source, request_user):
+        from llmstack.apps.runner.app_runner import AppRunner
+        from llmstack.base.models import Profile
+
+        runner_user = request_user
+        app_store_app = AppStoreApp.objects.filter(slug=app_slug).first()
+        if app_store_app is None:
+            return DRFResponse(status=404)
+
+        app_data = app_store_app.app_data
+
+        if not app_data:
+            raise Exception("App not found for platform app")
+
+        if runner_user is None or runner_user.is_anonymous:
+            raise Exception("User not found")
+
+        app_run_user_profile = await Profile.objects.aget(user=runner_user)
+        vendor_env = {
+            "provider_configs": await database_sync_to_async(app_run_user_profile.get_merged_provider_configs)(),
+        }
+        return AppRunner(
+            session_id=session_id,
+            app_data=app_data,
+            source=source,
+            vendor_env=vendor_env,
+        )
+
+    def get_app_runner(self, session_id, app_slug, source, request_user):
+        from asgiref.sync import async_to_sync
+
+        return async_to_sync(self.get_app_runner_async)(
+            session_id,
+            app_slug,
+            source,
+            request_user,
+        )
+
 
 class ListAppStoreCategories(APIView):
     permission_classes = [IsAuthenticated]

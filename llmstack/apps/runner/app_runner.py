@@ -90,9 +90,12 @@ class PlatformAppRunnerSource(AppRunnerSource):
         return self.slug
 
 
-class AppStoreAppRunnerSource(AppRunnerSource):
+class StoreAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.APP_STORE
     slug: str
+    request_ip: Optional[str] = None
+    request_location: Optional[str] = None
+    request_user_agent: Optional[str] = None
 
     @property
     def id(self):

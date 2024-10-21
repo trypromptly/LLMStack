@@ -15,6 +15,7 @@ from django.test import RequestFactory
 from django_redis import get_redis_connection
 from jsonpath_ng import parse
 
+from llmstack.app_store.apis import AppStoreAppViewSet
 from llmstack.apps.apis import AppViewSet
 from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.utils import hydrate_input, retry_on_db_error
@@ -26,12 +27,6 @@ from llmstack.sheets.models import (
     SheetColumn,
     SheetFormulaType,
 )
-
-try:
-    from promptly_app_store.apis import AppStoreAppViewSet
-except ImportError:
-    from llmstack.app_store.apis import AppStoreAppViewSet
-
 
 logger = logging.getLogger(__name__)
 channel_layer = get_channel_layer()

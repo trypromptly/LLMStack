@@ -9,10 +9,10 @@ from django.urls import path
 
 from llmstack.server.consumers import (
     AppConsumer,
-    AppStoreAppConsumer,
     AssetStreamConsumer,
     ConnectionConsumer,
     PlaygroundConsumer,
+    StoreAppConsumer,
 )
 from llmstack.sheets.consumers import SheetAppConsumer, SheetBuilderConsumer
 
@@ -38,7 +38,7 @@ application = ProtocolTypeRouter(
                         ConnectionConsumer.as_asgi(),
                     ),
                     path("ws/playground", PlaygroundConsumer.as_asgi()),
-                    path("ws/store/apps/<str:app_id>", AppStoreAppConsumer.as_asgi()),
+                    path("ws/store/apps/<str:app_id>", StoreAppConsumer.as_asgi()),
                     path("ws/sheets/<str:sheet_id>/run/<str:run_id>", SheetAppConsumer.as_asgi()),
                     path("ws/sheets/<str:sheet_id>/builder", SheetBuilderConsumer.as_asgi()),
                 ],

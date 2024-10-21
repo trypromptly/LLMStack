@@ -131,10 +131,8 @@ class HistorySerializer(serializers.ModelSerializer):
         from llmstack.apps.models import App
 
         def get_app_store_app(uuid):
-            try:
-                from promptly_app_store.models import AppStoreApp
-            except ImportError:
-                from llmstack.app_store.models import AppStoreApp
+            from llmstack.app_store.models import AppStoreApp
+
             return AppStoreApp.objects.filter(uuid=uuid).first()
 
         if obj.app_store_uuid:
