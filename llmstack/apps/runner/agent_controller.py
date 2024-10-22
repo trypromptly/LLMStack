@@ -225,18 +225,38 @@ class AgentController:
 
         # For streaming responses, add the tool calls chunks to the output queue
         if isinstance(response, ChatCompletionChunk) and response.choices[0].delta.tool_calls:
+            tool_calls = []
+            if len(response.choices[0].delta.tool_calls) == 1 and response.choices[0].delta.tool_calls[0].index > 0:
+                tool_call_index = response.choices[0].delta.tool_calls[0].index
+                tool_calls = [
+                    AgentToolCall(
+                        id="",
+                        name="",
+                        arguments="",
+                    )
+                    for _ in range(0, tool_call_index)
+                ] + [
+                    AgentToolCall(
+                        id=tool_call.id or "",
+                        name=tool_call.function.name or "",
+                        arguments=tool_call.function.arguments or "",
+                    )
+                    for tool_call in response.choices[0].delta.tool_calls
+                ]
+            else:
+                tool_calls = [
+                    AgentToolCall(
+                        id=tool_call.id or "",
+                        name=tool_call.function.name or "",
+                        arguments=tool_call.function.arguments or "",
+                    )
+                    for tool_call in response.choices[0].delta.tool_calls
+                ]
             self._output_queue.put_nowait(
                 AgentControllerData(
                     type=AgentControllerDataType.TOOL_CALLS,
                     data=AgentToolCallsMessage(
-                        tool_calls=[
-                            AgentToolCall(
-                                id=tool_call.id or "",
-                                name=tool_call.function.name or "",
-                                arguments=tool_call.function.arguments or "",
-                            )
-                            for tool_call in response.choices[0].delta.tool_calls
-                        ],
+                        tool_calls=tool_calls,
                     ),
                 )
             )
