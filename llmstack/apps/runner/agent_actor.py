@@ -287,8 +287,6 @@ class AgentActor(OutputActor):
                     f"agent_tool_call_errors__{output_index}__{tool_name}__{tool_call_id}"
                 ] = message.data.errors[0].message
 
-                logger.info(f"ERRORS: {self._agent_outputs}")
-
                 if len(self._stitched_data["agent"][output_index].data.tool_calls) == len(
                     self._stitched_data["agent"][output_index].data.responses.keys()
                 ):
