@@ -31,7 +31,7 @@ class AppCoordinator(ThreadingActor):
 
         # Make sure none of the actor_config names are in ["input", "output", "agent"]
         for actor_config in actor_configs:
-            if actor_config.name in ["input", "output", "agent", "coordinator"]:
+            if actor_config.name in ["_inputs0", "input", "output", "agent", "coordinator"]:
                 raise ValueError(f"Actor config name {actor_config.name} is reserved")
 
         self._actor_configs_map = {actor_config.name: actor_config for actor_config in actor_configs}
@@ -40,7 +40,7 @@ class AppCoordinator(ThreadingActor):
 
         # Map of actor id to actor
         self.actors = {
-            "input": InputActor.start(
+            "_inputs0": InputActor.start(
                 coordinator_urn=self.actor_urn,
             )
         }
@@ -49,7 +49,7 @@ class AppCoordinator(ThreadingActor):
         if self._is_agent:
             self.actors["output"] = AgentActor.start(
                 coordinator_urn=self.actor_urn,
-                dependencies=["input"] + list(self._actor_configs_map.keys()),
+                dependencies=["_inputs0"] + list(self._actor_configs_map.keys()),
                 templates={
                     **{ac.name: ac.kwargs.get("output_template", {}).get("markdown", "") for ac in actor_configs},
                 },
@@ -60,16 +60,16 @@ class AppCoordinator(ThreadingActor):
         else:
             self.actors["output"] = OutputActor.start(
                 coordinator_urn=self.actor_urn,
-                dependencies=["input"] + list(self._actor_configs_map.keys()),
+                dependencies=["_inputs0"] + list(self._actor_configs_map.keys()),
                 templates={"output": output_template},
             )
 
         self._actor_dependencies = {ac.name: set(ac.dependencies) for ac in actor_configs}
-        self._actor_dependencies["output"] = set(["input"] + list(self._actor_configs_map.keys()))
-        self._actor_dependencies["input"] = set()
+        self._actor_dependencies["output"] = set(["_inputs0"] + list(self._actor_configs_map.keys()))
+        self._actor_dependencies["_inputs0"] = set()
 
         self._actor_dependents = {ac.name: set() for ac in actor_configs}
-        self._actor_dependents["input"] = set(["output"])
+        self._actor_dependents["_inputs0"] = set(["output"])
         self._actor_dependents["output"] = set()
 
         # Update dependents based on dependencies
@@ -112,14 +112,14 @@ class AppCoordinator(ThreadingActor):
             id=request_id,
             type=MessageType.CONTENT,
             sender="coordinator",
-            receiver="input",
+            receiver="_inputs0",
             data=ContentData(content=data),
         )
 
         # Reset actors before handling new input
         self.reset_actors()
 
-        self.tell_actor("input", message)
+        self.tell_actor("_inputs0", message)
 
         # Also start actors that have no dependencies and send a BEGIN message when not an agent
         if not self._is_agent:

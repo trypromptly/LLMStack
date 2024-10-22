@@ -41,7 +41,7 @@ export function AppEditor(props) {
         label: "1. Input",
         items: schema,
         pillPrefix: "[1] Input / ",
-        id: "input",
+        id: "_inputs0",
       },
       ...processors.map((p, index) => {
         const processor = processorList.find(

@@ -162,7 +162,7 @@ class AgentActor(OutputActor):
 
     def on_receive(self, message: Message) -> None:
         if message.type == MessageType.CONTENT:
-            if message.sender == "input":
+            if message.sender == "_inputs0":
                 # Get and hydrate user_message_template with message.data
                 user_message_template = self._config.get("user_message")
 
@@ -224,7 +224,7 @@ class AgentActor(OutputActor):
                         )
                     )
         elif message.type == MessageType.CONTENT_STREAM_CHUNK:
-            if message.sender != "input":
+            if message.sender != "_inputs0":
                 tool_name = message.sender.split("/")[0]
                 output_index = int(message.sender.split("/")[1])
                 tool_call_id = message.sender.split("/")[2]

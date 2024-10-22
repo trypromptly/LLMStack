@@ -34,7 +34,7 @@ class InputActor(Actor):
         self,
         coordinator_urn,
     ):
-        super().__init__(id="input", coordinator_urn=coordinator_urn, dependencies=["coordinator"])
+        super().__init__(id="_inputs0", coordinator_urn=coordinator_urn, dependencies=["coordinator"])
 
     def input(self, message: Any) -> Any:
         async_to_sync(self._output_stream.write)(message["coordinator"])
