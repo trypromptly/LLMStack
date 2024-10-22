@@ -1191,7 +1191,7 @@ class PlaygroundViewSet(viewsets.ViewSet):
                     "input": input_data,
                     "config": config_data,
                     "description": processor_cls.description(),
-                    "dependencies": ["input"],
+                    "dependencies": ["_inputs0"],
                     "provider_slug": provider_slug,
                     "processor_slug": processor_slug,
                     "output_template": processor_cls.get_output_template().model_dump(),
