@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
@@ -36,12 +37,8 @@ class ContentStreamChunkData(MessageData):
     chunk: Any
 
 
-class ContentStreamErrorsData(MessageData):
-    errors: List[Error]
-
-
 class Message(BaseModel):
-    id: str
+    id: str = str(uuid.uuid4())
     type: MessageType
     sender: str
     receiver: Optional[str] = None
@@ -50,7 +47,6 @@ class Message(BaseModel):
         Union[
             ContentData,
             ContentStreamChunkData,
-            ContentStreamErrorsData,
             ErrorsData,
             Dict,
         ]

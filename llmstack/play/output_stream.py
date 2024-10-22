@@ -15,8 +15,8 @@ from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.play.messages import (
     ContentData,
     ContentStreamChunkData,
-    ContentStreamErrorsData,
     Error,
+    ErrorsData,
     Message,
     MessageType,
 )
@@ -245,6 +245,6 @@ class OutputStream:
                 type=MessageType.ERRORS,
                 sender=self._stream_id,
                 receiver="coordinator",
-                data=ContentStreamErrorsData(errors=[Error(message=str(error))]),
+                data=ErrorsData(errors=[Error(message=str(error))]),
             ),
         )
