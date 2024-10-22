@@ -77,7 +77,7 @@ class ApiProcessorInterface(
         response = AssetViewSet().get_by_ref_id(
             self._request,
             "sessionfiles",
-            self._metadata.get("session_id", ""),
+            self._session_id,
             include_data=include_data,
             include_name=include_name,
             include_objref=include_objref,
@@ -105,17 +105,11 @@ class ApiProcessorInterface(
 
             if not asset:
                 # Defaults to streaming asset if no asset is provided
-                asset = AppSessionFiles.create_streaming_asset(
-                    metadata=asset_metadata, ref_id=self._metadata.get("session_id", "")
-                )
+                asset = AppSessionFiles.create_streaming_asset(metadata=asset_metadata, ref_id=self._session_id)
             elif asset.startswith("data:"):
-                asset = AppSessionFiles.create_from_data_uri(
-                    asset, metadata=asset_metadata, ref_id=self._metadata.get("session_id", "")
-                )
+                asset = AppSessionFiles.create_from_data_uri(asset, metadata=asset_metadata, ref_id=self._session_id)
             else:
-                asset = AppSessionFiles.create_from_url(
-                    asset, metadata=asset_metadata, ref_id=self._metadata.get("session_id", "")
-                )
+                asset = AppSessionFiles.create_from_url(asset, metadata=asset_metadata, ref_id=self._session_id)
         except Exception as e:
             logger.exception(e)
             db.connection.close()
