@@ -10,6 +10,7 @@ from llmstack.apps.runner.app_coordinator import AppCoordinator
 from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.events.apis import EventsViewSet
 from llmstack.play.actor import ActorConfig
+from llmstack.play.utils import extract_variables_from_liquid_template
 from llmstack.processors.providers.processors import ProcessorFactory
 
 logger = logging.getLogger(__name__)
@@ -184,10 +185,32 @@ class AppRunnerStreamingResponse(BaseModel):
 
 
 class AppRunner:
+    def _compute_dependencies_from_processor(self, processor: Dict, allowed_variables: List[str] = []):
+        dependencies = []
+
+        def process_dict(d):
+            for value in d.values():
+                if isinstance(value, str):
+                    dependencies.extend(extract_variables_from_liquid_template(value))
+                elif isinstance(value, dict):
+                    process_dict(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict):
+                            process_dict(item)
+                        elif isinstance(item, str):
+                            dependencies.extend(extract_variables_from_liquid_template(item))
+
+        process_dict(processor.get("config", {}))
+        process_dict(processor.get("input", {}))
+
+        return list(set(dep[0] for dep in dependencies if dep[0] in allowed_variables))
+
     def _get_actor_configs_from_processors(
         self, processors: List[Dict], session_id: str, is_agent: bool, vendor_env: Dict = {}
     ):
         actor_configs = []
+        allowed_processor_variables = [p["id"] for p in processors] + ["_inputs0"]
         for processor in processors:
             if "processor_slug" not in processor or "provider_slug" not in processor:
                 logger.warning(
@@ -210,7 +233,10 @@ class AppRunner:
                         "session_id": session_id,
                         "output_template": processor.get("output_template", {"markdown": ""}) if is_agent else None,
                     },
-                    dependencies=processor.get("dependencies", []),
+                    dependencies=processor.get(
+                        "dependencies",
+                        self._compute_dependencies_from_processor(processor, allowed_processor_variables),
+                    ),
                     tool_schema=(
                         {
                             "type": "function",
