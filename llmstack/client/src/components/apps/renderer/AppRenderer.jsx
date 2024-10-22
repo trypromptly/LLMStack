@@ -15,7 +15,6 @@ import {
   AppErrorMessage,
   AgentMessage,
   AgentStepMessage,
-  AgentStepErrorMessage,
   Messages,
   UserMessage,
 } from "./Messages";
@@ -69,9 +68,6 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const templateEngine = useMemo(() => new Liquid(), []);
 
-  const outputTemplate = templateEngine.parse(
-    app?.data?.output_template?.markdown || "",
-  );
   const outputTemplates = useRef([]);
   const chunkedOutput = useRef({});
   const messagesRef = useRef(new Messages());
@@ -84,97 +80,6 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
   } else if (ws) {
     ws.messageRef = messagesRef.current;
   }
-
-  // A Promise that resolves with Message when the template is rendered with incoming data
-  const parseIncomingMessage = (
-    message,
-    chunkedOutput,
-    outputTemplate,
-    outputTemplates,
-    appTypeSlug,
-  ) => {
-    return new Promise((resolve, reject) => {
-      if (message.output.agent) {
-        // If it is an agent app, we deal with the step output
-        const agentMessage = message.output.agent;
-        const template = outputTemplates[agentMessage.from_id];
-        let newMessage;
-
-        if (agentMessage.type === "step_error") {
-          resolve(
-            new AgentStepErrorMessage(
-              `${message.id}/${agentMessage.id}`,
-              message.request_id,
-              agentMessage.content,
-              message.reply_to,
-            ),
-          );
-
-          return;
-        }
-
-        templateEngine
-          .render(
-            template,
-            agentMessage.from_id === "agent"
-              ? {
-                  agent: {
-                    content: chunkedOutput[agentMessage.id],
-                  },
-                }
-              : chunkedOutput[agentMessage.id]?.output ||
-                  chunkedOutput[agentMessage.id],
-          )
-          .then((response) => {
-            if (agentMessage.type === "step") {
-              newMessage = new AgentStepMessage(
-                `${message.id}/${agentMessage.id}`,
-                message.request_id,
-                {
-                  ...chunkedOutput[agentMessage.id],
-                  output: response,
-                },
-                message.reply_to,
-                !agentMessage.done,
-              );
-            } else {
-              newMessage = new AgentMessage(
-                `${message.id}/${agentMessage.id}`,
-                message.request_id,
-                response,
-                message.reply_to,
-              );
-            }
-
-            resolve(newMessage);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      } else {
-        templateEngine
-          .render(
-            outputTemplate,
-            appTypeSlug === "playground"
-              ? chunkedOutput["processor"]
-              : chunkedOutput,
-          )
-          .then((response) => {
-            resolve(
-              new AppMessage(
-                message.id,
-                message.request_id,
-                response,
-                message.reply_to,
-              ),
-            );
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      }
-    });
-  };
 
   if (ws) {
     ws.setOnMessage((evt) => {
@@ -288,28 +193,108 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
       }
 
       if (message.type && message.type === "output_stream_chunk") {
-        const existingMessageContent =
-          messagesRef.current.getContent(message.id) || "";
+        // Iterate through keys in message.data.deltas
+        Object.keys(message.data.deltas).forEach((key) => {
+          const delta = message.data.deltas[key];
 
-        const deltas = message.data.deltas;
-        const diffs = dmp.diff_fromDelta(
-          existingMessageContent,
-          deltas["output"],
-        );
-        const newMessageContent = dmp.diff_text2(diffs);
+          if (key === "output") {
+            const messageId = message.id;
+            const existingMessageContent =
+              messagesRef.current.getContent(messageId) || "";
 
-        messagesRef.current.add(
-          new AppMessage(
-            message.id,
-            message.client_request_id,
-            newMessageContent,
-          ),
-        );
+            const diffs = dmp.diff_fromDelta(existingMessageContent, delta);
+            const newMessageContent = dmp.diff_text2(diffs);
+
+            messagesRef.current.add(
+              new AppMessage(
+                messageId,
+                message.client_request_id,
+                newMessageContent,
+              ),
+            );
+          } else if (key.startsWith("agent_output__")) {
+            const messageId = `${message.id}/${key}`;
+            const existingMessageContent =
+              messagesRef.current.getContent(messageId) || "";
+
+            const diffs = dmp.diff_fromDelta(existingMessageContent, delta);
+            const newMessageContent = dmp.diff_text2(diffs);
+
+            messagesRef.current.add(
+              new AgentMessage(
+                messageId,
+                message.client_request_id,
+                newMessageContent,
+              ),
+            );
+          } else if (key.startsWith("agent_tool_calls__")) {
+            const messageId = `${message.id}/${key}`;
+            const existingMessageContent =
+              messagesRef.current.getContent(messageId)?.arguments || "";
+
+            const diffs = dmp.diff_fromDelta(existingMessageContent, delta);
+            const newMessageContent = dmp.diff_text2(diffs);
+
+            messagesRef.current.add(
+              new AgentStepMessage(
+                messageId,
+                message.client_request_id,
+                {
+                  name: key.split("__")[2],
+                  id: key.split("__")[3],
+                  arguments: newMessageContent,
+                },
+                message.reply_to,
+                false,
+              ),
+            );
+          } else if (key.startsWith("agent_tool_call_output__")) {
+            const messageId = `${message.id}/${key.replace(
+              "agent_tool_call_output__",
+              "agent_tool_calls__",
+            )}`;
+            const existingMessageContent =
+              messagesRef.current.getContent(messageId) || "";
+
+            const diffs = dmp.diff_fromDelta(
+              existingMessageContent?.output || "",
+              delta,
+            );
+            const newMessageOutput = dmp.diff_text2(diffs);
+
+            messagesRef.current.add(
+              new AgentStepMessage(
+                messageId,
+                message.client_request_id,
+                {
+                  ...existingMessageContent,
+                  output: newMessageOutput,
+                },
+                message.reply_to,
+              ),
+            );
+          } else if (key.startsWith("agent_tool_call_done__")) {
+            const messageId = `${message.id}/${key.replace(
+              "agent_tool_call_done__",
+              "agent_tool_calls__",
+            )}`;
+            const existingMessageContent =
+              messagesRef.current.getContent(messageId) || "";
+
+            messagesRef.current.add(
+              new AgentStepMessage(
+                messageId,
+                message.client_request_id,
+                existingMessageContent,
+                false,
+              ),
+            );
+          }
+        });
 
         setAppRunData((prevState) => ({
           ...prevState,
           messages: messagesRef.current.get(),
-          isStreaming: newMessageContent !== existingMessageContent,
         }));
       }
 

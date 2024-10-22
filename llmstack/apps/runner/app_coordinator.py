@@ -42,36 +42,34 @@ class AppCoordinator(ThreadingActor):
         self.actors = {
             "input": InputActor.start(
                 coordinator_urn=self.actor_urn,
-            ),
-            "output": OutputActor.start(
-                coordinator_urn=self.actor_urn,
-                dependencies=["input"] + (["agent"] if is_agent else list(self._actor_configs_map.keys())),
-                templates={"output": output_template},
-            ),
+            )
         }
 
-        # Add agent actor if it's an agent
+        # Add agent actor for output if it's an agent
         if self._is_agent:
-            self.actors["agent"] = AgentActor.start(
+            self.actors["output"] = AgentActor.start(
                 coordinator_urn=self.actor_urn,
-                dependencies=["input"],
-                config=config,
+                dependencies=["input"] + list(self._actor_configs_map.keys()),
+                templates={
+                    **{ac.name: ac.kwargs.get("output_template", {}).get("markdown", "") for ac in actor_configs},
+                },
+                agent_config=config,
                 provider_configs=env.get("provider_configs", {}),
                 tools=list(map(lambda x: x.tool_schema, actor_configs)),
+            )
+        else:
+            self.actors["output"] = OutputActor.start(
+                coordinator_urn=self.actor_urn,
+                dependencies=["input"] + list(self._actor_configs_map.keys()),
+                templates={"output": output_template},
             )
 
         self._actor_dependencies = {ac.name: set(ac.dependencies) for ac in actor_configs}
         self._actor_dependencies["output"] = set(["input"] + list(self._actor_configs_map.keys()))
-        if self._is_agent:
-            self._actor_dependencies["output"].add("agent")
         self._actor_dependencies["input"] = set()
 
         self._actor_dependents = {ac.name: set() for ac in actor_configs}
         self._actor_dependents["input"] = set(["output"])
-        if self._is_agent:
-            self._actor_dependents["input"].add("agent")
-        else:
-            self._actor_dependents["input"].update(list(self._actor_configs_map.keys()))
         self._actor_dependents["output"] = set()
 
         # Update dependents based on dependencies
@@ -79,11 +77,6 @@ class AppCoordinator(ThreadingActor):
             for dep in deps:
                 if dep in self._actor_dependents:
                     self._actor_dependents[dep].add(actor)
-
-        # Add agent dependencies and dependents if it's an agent
-        if self._is_agent:
-            self._actor_dependencies["agent"] = set(["input"])
-            self._actor_dependents["agent"] = set(["output"])
 
     def tell_actor(self, actor_id: str, message: Message):
         if actor_id not in self.actors:
@@ -103,16 +96,15 @@ class AppCoordinator(ThreadingActor):
         self.actors[actor_id].tell(message)
 
     def relay(self, message: Message):
-        logger.debug(f"Relaying message {message} to {self._actor_dependents.get(message.sender)}")
+        actor_id = message.sender.split("/")[0]
+        logger.debug(f"Relaying message {message} to {self._actor_dependents.get(actor_id)}")
 
         # Relay message to all dependents
-        for dependent in self._actor_dependents.get(message.sender, set()):
+        for dependent in self._actor_dependents.get(actor_id, set()):
             self.tell_actor(dependent, message)
 
         # Send to message.receiver if we have not already sent to it
-        if message.receiver != "coordinator" and message.receiver not in self._actor_dependents.get(
-            message.sender, set()
-        ):
+        if message.receiver != "coordinator" and message.receiver not in self._actor_dependents.get(actor_id, set()):
             self.tell_actor(message.receiver, message)
 
     def input(self, request_id: str, data: Dict):

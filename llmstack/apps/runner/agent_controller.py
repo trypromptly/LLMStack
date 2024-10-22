@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 
@@ -30,62 +30,62 @@ class AgentControllerConfig(BaseModel):
 
 
 class AgentControllerDataType(StrEnum):
-    BEGIN = "BEGIN"
-    INPUT = "INPUT"
-    TOOL_CALL = "TOOL_CALL"
-    TOOL_CALL_RESPONSE = "TOOL_CALL_RESPONSE"
-    OUTPUT = "OUTPUT"
-    ERROR = "ERROR"
-    END = "END"
+    INPUT = "input"
+    TOOL_CALLS = "tool_calls"
+    TOOL_CALLS_END = "tool_calls_end"
+    AGENT_OUTPUT = "agent_output"
+    AGENT_OUTPUT_END = "agent_output_end"
+    ERROR = "error"
 
 
-class AgentControllerData(BaseModel):
-    type: AgentControllerDataType
-    data: Any = None
+class AgentMessageRole(StrEnum):
+    SYSTEM = "system"
+    ASSISTANT = "assistant"
+    USER = "user"
+    TOOL = "tool"
+
+
+class AgentMessageContentType(StrEnum):
+    TEXT = "text"
 
 
 class AgentMessageContent(BaseModel):
-    type: str = "text"
+    type: AgentMessageContentType = AgentMessageContentType.TEXT
     data: Any = None
 
 
 class AgentMessage(BaseModel):
-    type: str = "message"
-    role: Literal["system", "assistant", "user", "tool"]
+    role: AgentMessageRole
+    name: str = ""
     content: List[AgentMessageContent]
 
 
 class AgentSystemMessage(AgentMessage):
-    role: Literal["system"] = "system"
+    role: AgentMessageRole = AgentMessageRole.SYSTEM
 
 
 class AgentAssistantMessage(AgentMessage):
-    role: Literal["assistant"] = "assistant"
+    role: AgentMessageRole = AgentMessageRole.ASSISTANT
 
 
 class AgentUserMessage(AgentMessage):
-    role: Literal["user"] = "user"
-
-
-class AgentToolCallFunction(BaseModel):
-    name: str
-    arguments: str  # JSON string
+    role: AgentMessageRole = AgentMessageRole.USER
 
 
 class AgentToolCall(BaseModel):
     id: str
-    type: Literal["function"] = "function"
-    function: AgentToolCallFunction
+    name: str
+    arguments: str  # JSON string
 
 
-class AgentToolCallMessage(BaseModel):
-    role: Literal["assistant"] = "assistant"
-    tool_calls: List[AgentToolCall]
+class AgentToolCallsMessage(BaseModel):
+    tool_calls: List[AgentToolCall] = []
+    responses: Dict[str, Any] = {}  # Map of tool call id to output
 
 
-class AgentToolCallResponseMessage(BaseModel):
-    tool_call_id: str
-    output: str
+class AgentControllerData(BaseModel):
+    type: AgentControllerDataType
+    data: Optional[Union[AgentUserMessage, AgentAssistantMessage, AgentToolCallsMessage]] = None
 
 
 class AgentController:
@@ -94,10 +94,10 @@ class AgentController:
         self._config = config
         self._messages: List[AgentMessage] = [
             AgentSystemMessage(
-                role="system",
+                role=AgentMessageRole.SYSTEM,
                 content=[
                     AgentMessageContent(
-                        type="text",
+                        type=AgentMessageContentType.TEXT,
                         data=render_template(self._config.system_message, {}),
                     )
                 ],
@@ -135,7 +135,7 @@ class AgentController:
                 if isinstance(content, dict):
                     content = json.dumps(content)
                 client_messages.append({"role": "user", "content": content})
-            elif isinstance(message, AgentToolCallMessage):
+            elif isinstance(message, AgentToolCallsMessage):
                 tool_calls = []
                 for tool_call in message.tool_calls:
                     tool_calls.append(
@@ -143,35 +143,25 @@ class AgentController:
                             "type": "function",
                             "id": tool_call.id,
                             "function": {
-                                "name": tool_call.function.name,
-                                "arguments": tool_call.function.arguments,
+                                "name": tool_call.name,
+                                "arguments": tool_call.arguments,
                             },
                         }
                     )
                 client_messages.append({"role": "assistant", "tool_calls": tool_calls})
-            elif isinstance(message, AgentToolCallResponseMessage):
-                client_messages.append(
-                    {
-                        "role": "tool",
-                        "content": message.output,
-                        "tool_call_id": message.tool_call_id,
-                    }
-                )
+
+                # Add the tool call responses to the client messages
+                for tool_call_id, output in message.responses.items():
+                    client_messages.append({"role": "tool", "content": output, "tool_call_id": tool_call_id})
+
         return client_messages
 
-    def process(self, input: AgentControllerData):
-        if input.type == AgentControllerDataType.INPUT:
-            self._messages.append(AgentUserMessage(content=[AgentMessageContent(data=input.data)]))
-        elif input.type == AgentControllerDataType.TOOL_CALL_RESPONSE:
-            self._messages.append(
-                AgentToolCallResponseMessage(
-                    output=input.data.get("output"),
-                    tool_call_id=input.data.get("tool_call_id"),
-                )
-            )
+    def process(self, data: AgentControllerData):
+        self._messages.append(data.data)
 
         try:
-            self.process_messages()
+            if data.type != AgentControllerDataType.AGENT_OUTPUT:
+                self.process_messages()
         except Exception as e:
             logger.exception("Error processing messages")
             self._output_queue.put_nowait(
@@ -195,14 +185,12 @@ class AgentController:
         )
 
         if self._config.stream:
-            prev_chunks = []
             for chunk in response:
-                self.add_response_to_output_queue(chunk, prev_chunks)
-                prev_chunks.append(chunk)
+                self.add_response_to_output_queue(chunk)
         else:
             self.add_response_to_output_queue(response)
 
-    def add_response_to_output_queue(self, response: Any, prev_responses: List[Any] = []):
+    def add_response_to_output_queue(self, response: Any):
         """
         Add the response to the output queue as well as update _messages
         """
@@ -210,103 +198,46 @@ class AgentController:
         if isinstance(response, ChatCompletionChunk) and response.choices[0].delta.content:
             self._output_queue.put_nowait(
                 AgentControllerData(
-                    type=AgentControllerDataType.OUTPUT,
-                    data={"content": response.choices[0].delta.content},
-                )
-            )
-            self._messages.append(
-                AgentAssistantMessage(
-                    content=[AgentMessageContent(data=response.choices[0].delta.content)],
-                )
-            )
-
-        # For streaming responses, add the tool calls chunks to the output queue
-        if isinstance(response, ChatCompletionChunk) and response.choices[0].delta.tool_calls:
-            output_tool_calls = []
-            for tool_call in response.choices[0].delta.tool_calls:
-                output_tool_calls.append(
-                    {
-                        "id": tool_call.id or "",
-                        "name": tool_call.function.name or "",
-                        "arguments": tool_call.function.arguments or "",
-                    }
-                )
-            self._output_queue.put_nowait(
-                AgentControllerData(
-                    type=AgentControllerDataType.OUTPUT,
-                    data={"tool_calls": output_tool_calls},
-                )
-            )
-
-        # Once the tool calls are done in streaming mode, stitch the chunks together to get the full tool calls output
-        if isinstance(response, ChatCompletionChunk) and response.choices[0].finish_reason == "tool_calls":
-            tool_calls = []
-            for chunk in prev_responses:
-                if chunk.choices[0].delta.tool_calls:
-                    total_tool_calls = len(chunk.choices[0].delta.tool_calls)
-                    for i in range(total_tool_calls):
-                        tool_call = chunk.choices[0].delta.tool_calls[i]
-                        if len(tool_calls) == i:
-                            tool_calls.append(
-                                {
-                                    "id": "",
-                                    "name": "",
-                                    "arguments": "",
-                                }
-                            )
-
-                        tool_calls[i]["id"] += tool_call.id or ""
-                        tool_calls[i]["name"] += tool_call.function.name or ""
-                        tool_calls[i]["arguments"] += tool_call.function.arguments or ""
-
-            tool_call_objects = []
-            for tool_call in tool_calls:
-                tool_call_object = AgentToolCall(
-                    id=tool_call["id"],
-                    function=AgentToolCallFunction(
-                        name=tool_call["name"],
-                        arguments=tool_call["arguments"],
+                    type=AgentControllerDataType.AGENT_OUTPUT,
+                    data=AgentAssistantMessage(
+                        content=[AgentMessageContent(data=response.choices[0].delta.content)],
                     ),
-                )
-                tool_call_objects.append(tool_call_object)
-
-                # Send tool call to agent actor
-                self._output_queue.put_nowait(
-                    AgentControllerData(
-                        type=AgentControllerDataType.TOOL_CALL,
-                        data=tool_call_object,
-                    )
-                )
-
-            # Add tool calls to messages
-            self._messages.append(
-                AgentToolCallMessage(
-                    tool_calls=tool_call_objects,
                 )
             )
 
         # For non-streaming responses, add the tool calls to the output queue and messages
         if isinstance(response, ChatCompletion) and response.choices[0].message.tool_calls:
-            tool_calls = []
-            for tool_call in response.choices[0].message.tool_calls:
-                tool_calls.append(
-                    AgentToolCall(
-                        id=tool_call.id,
-                        function=AgentToolCallFunction(
-                            name=tool_call.function.name,
-                            arguments=tool_call.function.arguments,
-                        ),
-                    )
+            self._output_queue.put_nowait(
+                AgentControllerData(
+                    type=AgentControllerDataType.TOOL_CALLS,
+                    data=AgentToolCallsMessage(
+                        tool_calls=[
+                            AgentToolCall(
+                                id=tool_call.id,
+                                name=tool_call.function.name,
+                                arguments=tool_call.function.arguments,
+                            )
+                            for tool_call in response.choices[0].message.tool_calls
+                        ]
+                    ),
                 )
-                self._output_queue.put_nowait(
-                    AgentControllerData(
-                        type=AgentControllerDataType.TOOL_CALL,
-                        data=tool_call,
-                    )
-                )
-            self._messages.append(
-                AgentToolCallMessage(
-                    tool_calls=tool_calls,
+            )
+
+        # For streaming responses, add the tool calls chunks to the output queue
+        if isinstance(response, ChatCompletionChunk) and response.choices[0].delta.tool_calls:
+            self._output_queue.put_nowait(
+                AgentControllerData(
+                    type=AgentControllerDataType.TOOL_CALLS,
+                    data=AgentToolCallsMessage(
+                        tool_calls=[
+                            AgentToolCall(
+                                id=tool_call.id or "",
+                                name=tool_call.function.name or "",
+                                arguments=tool_call.function.arguments or "",
+                            )
+                            for tool_call in response.choices[0].delta.tool_calls
+                        ],
+                    ),
                 )
             )
 
@@ -314,22 +245,25 @@ class AgentController:
         if isinstance(response, ChatCompletion) and response.choices[0].message.content:
             self._output_queue.put_nowait(
                 AgentControllerData(
-                    type=AgentControllerDataType.OUTPUT,
-                    data={"content": response.choices[0].message.content},
-                )
-            )
-            self._messages.append(
-                AgentAssistantMessage(
-                    content=[AgentMessageContent(data=response.choices[0].message.content)],
+                    type=AgentControllerDataType.AGENT_OUTPUT,
+                    data=AgentAssistantMessage(
+                        content=[AgentMessageContent(data=choice.message.content) for choice in response.choices],
+                    ),
                 )
             )
 
         # Handle the end of the response
-        if (isinstance(response, ChatCompletion) or isinstance(response, ChatCompletionChunk)) and response.choices[
-            0
-        ].finish_reason == "stop":
-            self._output_queue.put_nowait(
-                AgentControllerData(
-                    type=AgentControllerDataType.END,
+        if isinstance(response, ChatCompletion) or isinstance(response, ChatCompletionChunk):
+            if response.choices[0].finish_reason == "stop":
+                self._output_queue.put_nowait(
+                    AgentControllerData(
+                        type=AgentControllerDataType.AGENT_OUTPUT_END,
+                    )
                 )
-            )
+
+            if response.choices[0].finish_reason == "tool_calls":
+                self._output_queue.put_nowait(
+                    AgentControllerData(
+                        type=AgentControllerDataType.TOOL_CALLS_END,
+                    )
+                )

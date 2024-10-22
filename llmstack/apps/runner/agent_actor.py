@@ -1,49 +1,40 @@
 import asyncio
 import json
 import logging
-from types import TracebackType
+import time
 from typing import Any, Dict, List
-
-from pydantic import BaseModel
 
 from llmstack.apps.runner.agent_controller import (
     AgentController,
     AgentControllerConfig,
     AgentControllerData,
     AgentControllerDataType,
+    AgentMessageContent,
+    AgentMessageContentType,
+    AgentToolCallsMessage,
+    AgentUserMessage,
 )
+from llmstack.apps.runner.output_actor import OutputActor
 from llmstack.common.utils.liquid import render_template
-from llmstack.play.actor import Actor, BookKeepingData
-from llmstack.play.messages import Message, MessageType, ToolCallData
+from llmstack.play.messages import ContentData, Message, MessageType
+from llmstack.play.output_stream import stitch_model_objects
 from llmstack.play.utils import run_coro_in_new_loop
 
 logger = logging.getLogger(__name__)
 
 
-class AgentToolCall(BaseModel):
-    id: str
-    name: str
-    arguments: str
-
-
-class AgentOutput(BaseModel):
-    content: str
-    tool_calls: List[AgentToolCall] = []
-
-
-class AgentActor(Actor):
+class AgentActor(OutputActor):
     def __init__(
         self,
         coordinator_urn,
-        dependencies=["input"],
-        config: Dict[str, Any] = {},
+        dependencies,
+        templates: Dict[str, str] = {},
+        agent_config: Dict[str, Any] = {},
         provider_configs: Dict[str, Any] = {},
         tools: List[Dict] = [],
     ):
-        super().__init__(id="agent", coordinator_urn=coordinator_urn, dependencies=dependencies, output_cls=AgentOutput)
-
         self._process_output_task = None
-        self._config = config
+        self._config = agent_config
         self._provider_configs = provider_configs
 
         self._controller_config = AgentControllerConfig(
@@ -52,44 +43,118 @@ class AgentActor(Actor):
             model_slug=self._config.get("model", "gpt-4o-mini"),
             system_message=self._config.get("system_message", "You are a helpful assistant."),
             tools=tools,
-            stream=self._config.get("stream", True) or True,
+            stream=True if self._config.get("stream") is None else self._config.get("stream"),
             realtime=self._config.get("realtime", False),
         )
 
+        super().__init__(
+            coordinator_urn=coordinator_urn,
+            dependencies=dependencies,
+            templates=templates,
+        )
+
     async def _process_output(self):
+        message_index = 0
+
         while True:
             try:
                 controller_output = self._agent_output_queue.get_nowait()
-                if controller_output.type == AgentControllerDataType.TOOL_CALL:
-                    try:
-                        await self._output_stream.write_raw(
-                            Message(
-                                id=controller_output.data.id,
-                                type=MessageType.TOOL_CALL,
-                                sender="agent",
-                                receiver=f"{controller_output.data.function.name}/{controller_output.data.id}",
-                                data=ToolCallData(
-                                    tool_call_id=controller_output.data.id,
-                                    input={},  # TODO: Add input from processor
-                                    name=controller_output.data.function.name,
-                                    arguments=json.loads(controller_output.data.function.arguments),
-                                ),
-                            )
-                        )
-                    except Exception as e:
-                        logger.exception(f"Error sending tool call: {e}")
-                elif controller_output.type == AgentControllerDataType.OUTPUT:
-                    await self._output_stream.write(
-                        AgentOutput(
-                            content=controller_output.data.get("content", ""),
-                            tool_calls=controller_output.data.get("tool_calls", []),
+
+                if controller_output.type == AgentControllerDataType.AGENT_OUTPUT:
+                    self._stitched_data["agent"][message_index] = stitch_model_objects(
+                        self._stitched_data["agent"].get(message_index, None),
+                        controller_output,
+                    )
+
+                    old_agent_output = self._agent_outputs.get(f"agent_output__{message_index}", "")
+                    self._agent_outputs[f"agent_output__{message_index}"] = (
+                        self._stitched_data["agent"][message_index].data.content[0].data
+                    )
+                    delta = self._diff_match_patch.diff_toDelta(
+                        self._diff_match_patch.diff_main(
+                            old_agent_output, self._agent_outputs[f"agent_output__{message_index}"]
                         )
                     )
-                elif controller_output.type == AgentControllerDataType.END:
-                    self._output_stream.finalize()
 
-                    # Send bookkeeping data
-                    self._output_stream.bookkeep(BookKeepingData(config=self._controller_config.model_dump()))
+                    self._content_queue.put_nowait(
+                        {
+                            "deltas": {f"agent_output__{message_index}": delta},
+                            "chunk": {"agent": {message_index: controller_output}},
+                        }
+                    )
+
+                elif controller_output.type == AgentControllerDataType.AGENT_OUTPUT_END:
+                    self._content_queue.put_nowait(
+                        {
+                            "output": {
+                                **self._agent_outputs,
+                                "output": self._stitched_data["agent"][message_index].data.content[0].data,
+                            },
+                            "chunks": self._stitched_data,
+                        }
+                    )
+                    self._bookkeeping_data_map["agent"] = self._stitched_data["agent"]
+                    self._bookkeeping_data_map["agent"]["timestamp"] = time.time()
+                    self._bookkeeping_data_future.set(self._bookkeeping_data_map)
+                elif controller_output.type == AgentControllerDataType.TOOL_CALLS:
+                    self._stitched_data["agent"][message_index] = stitch_model_objects(
+                        self._stitched_data["agent"].get(message_index, None),
+                        controller_output,
+                    )
+                    deltas = {}
+
+                    for tool_call_index, tool_call in enumerate(controller_output.data.tool_calls):
+                        stitched_tool_call = self._stitched_data["agent"][message_index].data.tool_calls[
+                            tool_call_index
+                        ]
+
+                        old_tool_call_data = self._agent_outputs.get(
+                            f"agent_tool_calls__{message_index}__{stitched_tool_call.name}__{stitched_tool_call.id}",
+                            "",
+                        )
+                        self._agent_outputs[
+                            f"agent_tool_calls__{message_index}__{stitched_tool_call.name}__{stitched_tool_call.id}"
+                        ] = stitched_tool_call.arguments
+
+                        delta = self._diff_match_patch.diff_toDelta(
+                            self._diff_match_patch.diff_main(old_tool_call_data, stitched_tool_call.arguments)
+                        )
+                        deltas[
+                            f"agent_tool_calls__{message_index}__{stitched_tool_call.name}__{stitched_tool_call.id}"
+                        ] = delta
+
+                    self._content_queue.put_nowait(
+                        {
+                            "deltas": deltas,
+                            "chunk": {"agent": {message_index: controller_output}},
+                        }
+                    )
+
+                elif controller_output.type == AgentControllerDataType.TOOL_CALLS_END:
+                    tool_calls = self._stitched_data["agent"][message_index].data.tool_calls
+
+                    for tool_call in tool_calls:
+                        tool_call_args = tool_call.arguments
+                        try:
+                            tool_call_args = json.loads(tool_call_args)
+                        except Exception:
+                            pass
+
+                        await self._output_stream.write_raw(
+                            Message(
+                                id=f"{message_index}/{tool_call.id}",
+                                type=MessageType.CONTENT,
+                                sender=f"{tool_call.name}/{message_index}/{tool_call.id}",
+                                receiver=f"{tool_call.name}/{message_index}/{tool_call.id}",
+                                data=ContentData(content=tool_call_args),
+                            )
+                        )
+
+                if controller_output.type in [
+                    AgentControllerDataType.AGENT_OUTPUT_END,
+                    AgentControllerDataType.TOOL_CALLS_END,
+                ]:
+                    message_index += 1
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0.1)
             except Exception as e:
@@ -113,29 +178,92 @@ class AgentActor(Actor):
 
                 # Begin processing input
                 self._agent_controller.process(
-                    AgentControllerData(type=AgentControllerDataType.INPUT, data=user_message)
+                    AgentControllerData(
+                        type=AgentControllerDataType.INPUT,
+                        data=AgentUserMessage(
+                            content=[AgentMessageContent(type=AgentMessageContentType.TEXT, data=user_message)]
+                        ),
+                    )
                 )
-        elif message.type == MessageType.TOOL_CALL_RESPONSE:
-            # Relay message to agent controller
-            self._agent_controller.process(
-                AgentControllerData(
-                    type=AgentControllerDataType.TOOL_CALL_RESPONSE,
-                    data={
-                        "tool_call_id": message.data.tool_call_id,
-                        "output": message.data.output,
+            elif message.sender != message.receiver:
+                tool_name = message.sender.split("/")[0]
+                output_index = int(message.sender.split("/")[1])
+                tool_call_id = message.sender.split("/")[2]
+
+                template = self._templates.get(tool_name, None)
+                tool_call_output = render_template(template, message.data.content)
+
+                self._stitched_data = stitch_model_objects(
+                    self._stitched_data,
+                    {
+                        "agent": {
+                            output_index: AgentControllerData(
+                                type=AgentControllerDataType.TOOL_CALLS,
+                                data=AgentToolCallsMessage(responses={tool_call_id: tool_call_output}),
+                            )
+                        },
                     },
                 )
-            )
 
-    def on_failure(
-        self, exception_type: type[BaseException], exception_value: BaseException, traceback: TracebackType
-    ) -> None:
-        return super().on_failure(exception_type, exception_value, traceback)
+                self._content_queue.put_nowait(
+                    {
+                        "deltas": {f"agent_tool_call_done__{output_index}__{tool_name}__{tool_call_id}": "True"},
+                    }
+                )
 
-    def on_stop(self):
-        pass
+                if len(self._stitched_data["agent"][output_index].data.tool_calls) == len(
+                    self._stitched_data["agent"][output_index].data.responses.keys()
+                ):
+                    self._agent_controller.process(
+                        AgentControllerData(
+                            type=AgentControllerDataType.TOOL_CALLS,
+                            data=AgentToolCallsMessage(
+                                tool_calls=self._stitched_data["agent"][output_index].data.tool_calls,
+                                responses=self._stitched_data["agent"][output_index].data.responses,
+                            ),
+                        )
+                    )
+        elif message.type == MessageType.CONTENT_STREAM_CHUNK:
+            if message.sender != "input":
+                tool_name = message.sender.split("/")[0]
+                output_index = int(message.sender.split("/")[1])
+                tool_call_id = message.sender.split("/")[2]
+
+                self._stitched_data = stitch_model_objects(
+                    self._stitched_data,
+                    {message.sender: message.data.chunk},
+                )
+
+                # Render the tool call output
+                template = self._templates.get(tool_name, None)
+                tool_call_output = render_template(template, self._stitched_data[message.sender])
+
+                prev_tool_call_output = self._agent_outputs.get(
+                    f"agent_tool_call_output__{output_index}__{tool_name}__{tool_call_id}",
+                    "",
+                )
+                self._agent_outputs[
+                    f"agent_tool_call_output__{output_index}__{tool_name}__{tool_call_id}"
+                ] = tool_call_output
+
+                delta = self._diff_match_patch.diff_toDelta(
+                    self._diff_match_patch.diff_main(prev_tool_call_output, tool_call_output)
+                )
+
+                self._content_queue.put_nowait(
+                    {
+                        "deltas": {f"agent_tool_call_output__{output_index}__{tool_name}__{tool_call_id}": delta},
+                        "chunk": {message.sender: message.data.chunk},
+                    }
+                )
+        elif message.type == MessageType.BOOKKEEPING:
+            self._bookkeeping_data_map[message.sender] = message.data
 
     def reset(self):
+        super().reset()
+        self._stitched_data = {"agent": {}}
+        self._agent_outputs = {}
+
         if self._process_output_task:
             self._process_output_task.cancel()
             self._process_output_task = None
