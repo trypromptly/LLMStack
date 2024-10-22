@@ -15,6 +15,7 @@ import {
   AppErrorMessage,
   AgentMessage,
   AgentStepMessage,
+  AgentStepErrorMessage,
   Messages,
   UserMessage,
 } from "./Messages";
@@ -288,6 +289,18 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
                 existingMessageContent,
                 message.reply_to,
                 false,
+              ),
+            );
+          } else if (key.startsWith("agent_tool_call_errors__")) {
+            const messageId = `${message.id}/${key}`;
+            const diffs = dmp.diff_fromDelta("", delta);
+
+            messagesRef.current.add(
+              new AgentStepErrorMessage(
+                messageId,
+                message.client_request_id,
+                dmp.diff_text2(diffs),
+                message.reply_to,
               ),
             );
           }
