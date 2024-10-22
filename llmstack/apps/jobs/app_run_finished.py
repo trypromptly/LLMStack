@@ -83,7 +83,10 @@ class AppRunFinishedEventData(BaseModel):
     def response_time(self):
         timestamps = list(map(lambda entry: entry.get("timestamp"), self.bookkeeping_data_map.values()))
         # Sort timestamps in ascending order and return the difference between the first and last timestamps
+        timestamps = [t for t in timestamps if t is not None]
         timestamps = sorted(timestamps)
+        if len(timestamps) < 2:
+            return 0  # Return 0 if there are not enough valid timestamps
         return timestamps[-1] - timestamps[0]
 
     @property
