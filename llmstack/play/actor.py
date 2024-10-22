@@ -68,6 +68,10 @@ class Actor(ThreadingActor):
             self.on_error(message.data.errors)
             return
 
+        if message.type == MessageType.BEGIN:
+            self.input(self._messages)
+            return
+
         if message.type == MessageType.CONTENT_STREAM_BEGIN:
             pass
 
