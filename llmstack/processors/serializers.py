@@ -130,6 +130,10 @@ class HistorySerializer(serializers.ModelSerializer):
     def get_app_detail(self, obj):
         from llmstack.apps.models import App
 
+        if obj.platform_data.get("type", None) == "app_store":
+            app_slug = obj.platform_data.get("slug", "Unknown App")
+            return {"name": app_slug, "path": f"/a/{app_slug}"}
+
         def get_app_store_app(uuid):
             from llmstack.app_store.models import AppStoreApp
 
