@@ -338,6 +338,7 @@ class RunEntry(models.Model):
             models.Index(fields=["app_uuid"]),
             models.Index(fields=["app_store_uuid"]),
             models.Index(fields=["session_key"]),
+            models.Index(fields=["request_user_email"]),
         ]
 
     def __str__(self):

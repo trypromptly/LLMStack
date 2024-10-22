@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.http import Http404, HttpResponseForbidden, StreamingHttpResponse
 from django.views.decorators.cache import cache_page
 from flags.state import flag_enabled
@@ -108,10 +108,14 @@ class HistoryViewSet(viewsets.ModelViewSet):
         if endpoint_uuid and endpoint_uuid != "null":
             filters["endpoint_uuid"] = endpoint_uuid
 
-        if not filters:
-            filters["owner"] = request.user
-
-        queryset = RunEntry.objects.all().filter(**filters).order_by("-created_at")
+        if filters:
+            queryset = RunEntry.objects.all().filter(**filters).order_by("-created_at")
+        else:
+            queryset = (
+                RunEntry.objects.all()
+                .filter(Q(owner=request.user) | Q(request_user_email=request.user.email))
+                .order_by("-created_at")
+            )
         page = self.paginate_queryset(queryset)
         if page is not None:
             response = self.get_paginated_response(
