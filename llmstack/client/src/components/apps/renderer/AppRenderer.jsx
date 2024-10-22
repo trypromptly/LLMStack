@@ -1,12 +1,4 @@
-import { Liquid } from "liquidjs";
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import ReactGA from "react-ga4";
 import { useLocation } from "react-router-dom";
 import { diff_match_patch } from "diff-match-patch";
@@ -67,9 +59,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
   const location = useLocation();
   const [layout, setLayout] = useState("");
   const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const templateEngine = useMemo(() => new Liquid(), []);
 
-  const outputTemplates = useRef([]);
   const chunkedOutput = useRef({});
   const messagesRef = useRef(new Messages());
   const isLoggedIn = useRecoilValue(isLoggedInState);
@@ -113,20 +103,6 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
         }));
       }
 
-      // If we get a templates message, parse it and save the templates
-      if (message.templates) {
-        let newTemplates = {};
-        Object.keys(message.templates).forEach((id) => {
-          newTemplates[id] = templateEngine.parse(
-            message.templates[id].markdown,
-          );
-        });
-        outputTemplates.current = {
-          ...outputTemplates.current,
-          ...newTemplates,
-        };
-      }
-
       if (message.event && message.event === "done") {
         setAppRunData((prevState) => ({
           ...prevState,
@@ -135,7 +111,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
         }));
 
         if (onEventDone) {
-          onEventDone(chunkedOutput.current);
+          onEventDone(message.data);
         }
 
         chunkedOutput.current = {};

@@ -505,6 +505,12 @@ class PlaygroundConsumer(AsyncWebsocketConsumer):
             async for response in response_iterator:
                 if response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK:
                     await self.send(text_data=json.dumps(response.model_dump()))
+                elif response.type == AppRunnerStreamingResponseType.OUTPUT:
+                    await self.send(
+                        text_data=json.dumps(
+                            {"event": "done", "request_id": client_request_id, "data": response.data.chunks}
+                        )
+                    )
         except Exception as e:
             logger.exception(f"Failed to run app: {e}")
         await app_runner.stop()
