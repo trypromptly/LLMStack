@@ -10,8 +10,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, QueryDict
-
-# from django_ratelimit.exceptions import Ratelimited
 from flags.state import flag_enabled
 
 from llmstack.apps.runner.app_runner import (
@@ -100,6 +98,7 @@ class AppConsumer(AsyncWebsocketConsumer):
         self._app_uuid = self.scope["url_route"]["kwargs"]["app_uuid"]
         self._preview = True if "preview" in self.scope["url_route"]["kwargs"] else False
         self._session_id = str(uuid.uuid4())
+        self._user = self.scope.get("user", None)
 
         headers = dict(self.scope["headers"])
         request_ip = headers.get(
@@ -137,17 +136,6 @@ class AppConsumer(AsyncWebsocketConsumer):
         if self._app_runner:
             await self._app_runner.stop()
 
-    async def _run_app(self, request_uuid, request, **kwargs):
-        from llmstack.apps.apis import AppViewSet
-
-        return await AppViewSet().run_app_internal_async(
-            uid=self.app_id,
-            session_id=self._session_id,
-            request_uuid=request_uuid,
-            request=request,
-            preview=self.preview,
-        )
-
     async def _respond_to_event(self, text_data):
         json_data = json.loads(text_data)
         client_request_id = json_data.get("id", None)
@@ -177,6 +165,66 @@ class AppConsumer(AsyncWebsocketConsumer):
                         await self.send(text_data=json.dumps({"event": "done", "request_id": client_request_id}))
             except Exception as e:
                 logger.exception(f"Failed to run app: {e}")
+        elif event == "create_asset":
+            from llmstack.apps.models import AppSessionFiles
+
+            try:
+                asset_data = json_data.get("data", {})
+                asset_metadata = {
+                    "file_name": asset_data.get("file_name", str(uuid.uuid4())),
+                    "mime_type": asset_data.get("mime_type", "application/octet-stream"),
+                    "app_uuid": self.app_id,
+                    "username": (
+                        self._user.username
+                        if self._user and not self._user.is_anonymous
+                        else self._session.get("_prid", "")
+                    ),
+                }
+
+                asset = await sync_to_async(AppSessionFiles.create_asset)(
+                    asset_metadata, self._session_id, streaming=asset_data.get("streaming", False)
+                )
+
+                if not asset:
+                    await self.send(
+                        text_data=json.dumps(
+                            {
+                                "errors": ["Failed to create asset"],
+                                "reply_to": client_request_id,
+                                "request_id": client_request_id,
+                                "asset_request_id": client_request_id,
+                            }
+                        )
+                    )
+                    return
+
+                output = {
+                    "asset": asset.objref,
+                    "reply_to": client_request_id,
+                    "request_id": client_request_id,
+                    "asset_request_id": client_request_id,
+                }
+
+                await self.send(text_data=json.dumps(output))
+            except Exception as e:
+                logger.exception(e)
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "errors": [str(e)],
+                            "reply_to": client_request_id,
+                            "request_id": client_request_id,
+                            "asset_request_id": client_request_id,
+                        }
+                    )
+                )
+
+        if event == "delete_asset":
+            # Delete an asset in the session
+            if not self._session_id:
+                return
+
+            # TODO: Implement delete asset
         elif event == "stop":
             self.disconnect()
 
