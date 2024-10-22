@@ -78,23 +78,20 @@ class Actor(ThreadingActor):
             self.input_stream({message.sender: message.data.chunk})
 
         if message.type == MessageType.CONTENT:
+            message_data = (
+                message.data.content.model_dump()
+                if isinstance(message.data.content, BaseModel)
+                else message.data.content
+            )
             self._messages = {
                 **self._messages,
-                **{
-                    message.sender: (
-                        message.data.content.model_dump()
-                        if isinstance(message.data.content, BaseModel)
-                        else message.data.content
-                    )
-                },
+                **({message.sender: message_data} if message.sender != self._id else {}),
+                **(message_data if message.sender == self._id else {}),
             }
 
-            # Call input only when all the dependencies are met
-            if set(self._dependencies) == set(self._messages.keys()):
+            # Call input only when the dependencies met are subset of messages
+            if set(self._dependencies) <= set(self._messages.keys()):
                 self.input(self._messages)
-
-        if message.type == MessageType.TOOL_CALL:
-            self.invoke(message.id, message.data)
 
     def input(self, message: Any) -> Any:
         # Co-ordinator calls this when all the dependencies are met. This
