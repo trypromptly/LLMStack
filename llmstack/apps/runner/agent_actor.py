@@ -53,6 +53,43 @@ class AgentActor(OutputActor):
             templates=templates,
         )
 
+    def _add_error_from_tool_call(self, output_index, tool_name, tool_call_id, errors):
+        error_message = "\n".join([error for error in errors])
+        self._stitched_data = stitch_model_objects(
+            self._stitched_data,
+            {
+                "agent": {
+                    output_index: AgentControllerData(
+                        type=AgentControllerDataType.TOOL_CALLS,
+                        data=AgentToolCallsMessage(responses={tool_call_id: f"Error: {error_message}"}),
+                    )
+                },
+            },
+        )
+
+        delta = self._diff_match_patch.diff_toDelta(self._diff_match_patch.diff_main("", error_message))
+
+        self._content_queue.put_nowait(
+            {
+                "deltas": {f"agent_tool_call_errors__{output_index}__{tool_name}__{tool_call_id}": delta},
+                "chunk": {f"{tool_name}/{output_index}/{tool_call_id}": errors},
+            }
+        )
+        self._agent_outputs[f"agent_tool_call_errors__{output_index}__{tool_name}__{tool_call_id}"] = error_message
+
+        if len(self._stitched_data["agent"][output_index].data.tool_calls) == len(
+            self._stitched_data["agent"][output_index].data.responses.keys()
+        ):
+            self._agent_controller.process(
+                AgentControllerData(
+                    type=AgentControllerDataType.TOOL_CALLS,
+                    data=AgentToolCallsMessage(
+                        tool_calls=self._stitched_data["agent"][output_index].data.tool_calls,
+                        responses=self._stitched_data["agent"][output_index].data.responses,
+                    ),
+                )
+            )
+
     async def _process_output(self):
         message_index = 0
 
@@ -140,21 +177,25 @@ class AgentActor(OutputActor):
                         except Exception:
                             pass
 
-                        await self._output_stream.write_raw(
-                            Message(
-                                id=f"{message_index}/{tool_call.id}",
-                                type=MessageType.CONTENT,
-                                sender=f"{tool_call.name}/{message_index}/{tool_call.id}",
-                                receiver=f"{tool_call.name}/{message_index}/{tool_call.id}",
-                                data=ContentData(content=tool_call_args),
-                            )
-                        )
+                        try:
+                            (
+                                await self._output_stream.write_raw(
+                                    Message(
+                                        id=f"{message_index}/{tool_call.id}",
+                                        type=MessageType.CONTENT,
+                                        sender=f"{tool_call.name}/{message_index}/{tool_call.id}",
+                                        receiver=f"{tool_call.name}/{message_index}/{tool_call.id}",
+                                        data=ContentData(content=tool_call_args),
+                                    )
+                                )
+                            ).get()
+                        except Exception as e:
+                            self._add_error_from_tool_call(message_index, tool_call.name, tool_call.id, [str(e)])
 
-                if controller_output.type in [
-                    AgentControllerDataType.AGENT_OUTPUT_END,
-                    AgentControllerDataType.TOOL_CALLS_END,
-                ]:
+                if controller_output.type == AgentControllerDataType.TOOL_CALLS_END:
                     message_index += 1
+                elif controller_output.type == AgentControllerDataType.AGENT_OUTPUT_END:
+                    message_index = 0
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0.1)
             except Exception as e:
@@ -259,47 +300,9 @@ class AgentActor(OutputActor):
                     }
                 )
             else:
-                self._stitched_data = stitch_model_objects(
-                    self._stitched_data,
-                    {
-                        "agent": {
-                            output_index: AgentControllerData(
-                                type=AgentControllerDataType.TOOL_CALLS,
-                                data=AgentToolCallsMessage(
-                                    responses={tool_call_id: f"Error: {message.data.errors[0].message}"}
-                                ),
-                            )
-                        },
-                    },
+                self._add_error_from_tool_call(
+                    output_index, tool_name, tool_call_id, [error.message for error in message.data.errors]
                 )
-
-                delta = self._diff_match_patch.diff_toDelta(
-                    self._diff_match_patch.diff_main("", message.data.errors[0].message)
-                )
-
-                self._content_queue.put_nowait(
-                    {
-                        "deltas": {f"agent_tool_call_errors__{output_index}__{tool_name}__{tool_call_id}": delta},
-                        "chunk": {message.sender: message.data.errors},
-                    }
-                )
-                self._agent_outputs[
-                    f"agent_tool_call_errors__{output_index}__{tool_name}__{tool_call_id}"
-                ] = message.data.errors[0].message
-
-                if len(self._stitched_data["agent"][output_index].data.tool_calls) == len(
-                    self._stitched_data["agent"][output_index].data.responses.keys()
-                ):
-                    self._agent_controller.process(
-                        AgentControllerData(
-                            type=AgentControllerDataType.TOOL_CALLS,
-                            data=AgentToolCallsMessage(
-                                tool_calls=self._stitched_data["agent"][output_index].data.tool_calls,
-                                responses=self._stitched_data["agent"][output_index].data.responses,
-                            ),
-                        )
-                    )
-
         elif message.type == MessageType.BOOKKEEPING:
             self._bookkeeping_data_map[message.sender] = message.data
 
