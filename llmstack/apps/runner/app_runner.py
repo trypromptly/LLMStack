@@ -293,12 +293,24 @@ class AppRunner:
 
             await asyncio.sleep(0.0001)
 
-            yield AppRunnerStreamingResponse(
-                id=request_id,
-                client_request_id=request.client_request_id,
-                type=AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK,
-                data=AppRunnerResponseOutputChunkData(deltas=output.get("deltas", {}), chunk=output.get("chunk", {})),
-            )
+            if "errors" in output:
+                yield AppRunnerStreamingResponse(
+                    id=request_id,
+                    client_request_id=request.client_request_id,
+                    type=AppRunnerStreamingResponseType.ERRORS,
+                    data=AppRunnerResponseErrorsData(
+                        errors=[AppRunnerResponseError(message=error) for error in output.get("errors", [])]
+                    ),
+                )
+            else:
+                yield AppRunnerStreamingResponse(
+                    id=request_id,
+                    client_request_id=request.client_request_id,
+                    type=AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK,
+                    data=AppRunnerResponseOutputChunkData(
+                        deltas=output.get("deltas", {}), chunk=output.get("chunk", {})
+                    ),
+                )
 
         yield AppRunnerStreamingResponse(
             id=request_id,

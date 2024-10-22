@@ -164,6 +164,15 @@ class AppConsumer(AsyncWebsocketConsumer):
                 async for response in response_iterator:
                     if response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK:
                         await self.send(text_data=json.dumps(response.model_dump()))
+                    elif response.type == AppRunnerStreamingResponseType.ERRORS:
+                        await self.send(
+                            text_data=json.dumps(
+                                {
+                                    "errors": [error.message for error in response.data.errors],
+                                    "request_id": client_request_id,
+                                }
+                            )
+                        )
                     elif response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_END:
                         await self.send(text_data=json.dumps({"event": "done", "request_id": client_request_id}))
             except Exception as e:

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Dict, NamedTuple
+from typing import Any, Dict, List, NamedTuple
 
 import pykka
 from diff_match_patch import diff_match_patch
@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from llmstack.common.utils.liquid import render_template
 from llmstack.play.actor import Actor
-from llmstack.play.messages import Message, MessageType
+from llmstack.play.messages import Error, Message, MessageType
 from llmstack.play.output_stream import stitch_model_objects
 
 logger = logging.getLogger(__name__)
@@ -91,32 +91,30 @@ class OutputActor(Actor):
                     yield output
                     self._content_queue.task_done()
                 else:
-                    if self._error or self._stopped:
+                    if self._errors or self._stopped:
                         break
                     await asyncio.sleep(0.01)
 
         except asyncio.CancelledError:
             logger.info("Output stream cancelled")
         finally:
-            if self._error:
-                yield {"errors": list(self._error.values())}
+            if self._errors:
+                yield {"errors": [error.message for error in self._errors]}
             elif self._stopped:
                 yield {"errors": ["Output interrupted"]}
-
-        logger.info("Output stream completed")
 
     def on_stop(self) -> None:
         self._stopped = True
         return super().on_stop()
 
-    def on_error(self, sender, error) -> None:
-        logger.error(f"Error in output actor: {error}")
-        self._error = error
+    def on_error(self, sender, errors: List[Error]) -> None:
+        logger.error(f"Error in output actor: {errors}")
+        self._errors = errors
 
     def reset(self) -> None:
         self._stitched_data = {}
         self._int_output = {}
-        self._error = None
+        self._errors = None
         self._stopped = False
         self._bookkeeping_data_map = {}
         self._bookkeeping_data_future = pykka.ThreadingFuture()

@@ -223,12 +223,14 @@ class AgentActor(OutputActor):
                             ),
                         )
                     )
-        elif message.type == MessageType.CONTENT_STREAM_CHUNK:
-            if message.sender != "_inputs0":
-                tool_name = message.sender.split("/")[0]
-                output_index = int(message.sender.split("/")[1])
-                tool_call_id = message.sender.split("/")[2]
+        elif (
+            message.type == MessageType.CONTENT_STREAM_CHUNK or message.type == MessageType.ERRORS
+        ) and message.sender != "_inputs0":
+            tool_name = message.sender.split("/")[0]
+            output_index = int(message.sender.split("/")[1])
+            tool_call_id = message.sender.split("/")[2]
 
+            if message.type == MessageType.CONTENT_STREAM_CHUNK:
                 self._stitched_data = stitch_model_objects(
                     self._stitched_data,
                     {message.sender: message.data.chunk},
@@ -256,6 +258,48 @@ class AgentActor(OutputActor):
                         "chunk": {message.sender: message.data.chunk},
                     }
                 )
+            else:
+                self._stitched_data = stitch_model_objects(
+                    self._stitched_data,
+                    {
+                        "agent": {
+                            output_index: AgentControllerData(
+                                type=AgentControllerDataType.TOOL_CALLS,
+                                data=AgentToolCallsMessage(
+                                    responses={tool_call_id: f"Error: {message.data.errors[0].message}"}
+                                ),
+                            )
+                        },
+                    },
+                )
+
+                delta = self._diff_match_patch.diff_toDelta(
+                    self._diff_match_patch.diff_main(message.data.errors[0].message, "")
+                )
+
+                self._content_queue.put_nowait(
+                    {
+                        "deltas": {f"agent_tool_call_errors__{output_index}__{tool_name}__{tool_call_id}": delta},
+                        "chunk": {message.sender: message.data.errors},
+                    }
+                )
+                self._agent_outputs[
+                    f"agent_tool_call_errors__{output_index}__{tool_name}__{tool_call_id}"
+                ] = message.data.errors[0].message
+
+                if len(self._stitched_data["agent"][output_index].data.tool_calls) == len(
+                    self._stitched_data["agent"][output_index].data.responses.keys()
+                ):
+                    self._agent_controller.process(
+                        AgentControllerData(
+                            type=AgentControllerDataType.TOOL_CALLS,
+                            data=AgentToolCallsMessage(
+                                tool_calls=self._stitched_data["agent"][output_index].data.tool_calls,
+                                responses=self._stitched_data["agent"][output_index].data.responses,
+                            ),
+                        )
+                    )
+
         elif message.type == MessageType.BOOKKEEPING:
             self._bookkeeping_data_map[message.sender] = message.data
 
