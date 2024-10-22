@@ -11,6 +11,7 @@ from typing import Any, Dict, Type
 from pydantic import BaseModel
 from pykka import ActorProxy, ActorRegistry
 
+from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.play.messages import (
     ContentData,
     ContentStreamChunkData,
@@ -18,7 +19,6 @@ from llmstack.play.messages import (
     Error,
     Message,
     MessageType,
-    ToolCallResponseData,
 )
 
 __all__ = ["OutputStream"]
@@ -36,6 +36,22 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
     Returns:
       The stitched object.
     """
+    if obj1 is None:
+        return obj2
+    if obj2 is None:
+        return obj1
+
+    # If both objects are BaseModels and the same type, stitch the fields
+    if isinstance(obj1, BaseModel) and isinstance(obj2, BaseModel) and type(obj1) == type(obj2):  # noqa: E721
+        stitched_obj = obj1.model_copy()
+        for field in obj1.model_fields:
+            setattr(
+                stitched_obj,
+                field,
+                stitch_model_objects(getattr(obj1, field), getattr(obj2, field)),
+            )
+        return stitched_obj
+
     if isinstance(obj1, BaseModel):
         obj1 = obj1.model_dump()
     if isinstance(obj2, BaseModel):
@@ -57,10 +73,18 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
         return stitch_fields(obj1, obj2)
 
     elif isinstance(obj1, list) and isinstance(obj2, list):
+        if not obj1:
+            return obj2
+        if not obj2:
+            return obj1
+
         stitched_obj = []
         for item1, item2 in zip(obj1, obj2):
             stitched_obj.append(stitch_model_objects(item1, item2))
         return stitched_obj
+
+    elif isinstance(obj1, StrEnum) and isinstance(obj2, StrEnum):
+        return obj1 if obj1.value == obj2.value else obj2
 
     elif isinstance(obj1, str) and isinstance(obj2, str):
         return obj1 + obj2
@@ -223,19 +247,4 @@ class OutputStream:
                 receiver="coordinator",
                 data=ContentStreamErrorsData(errors=[Error(message=str(error))]),
             ),
-        )
-
-    def send_tool_call_response(self, reply_to: str, data: ToolCallResponseData) -> None:
-        """
-        Sends the tool call response.
-        """
-        self._coordinator.relay(
-            Message(
-                id=self._message_id,
-                type=MessageType.TOOL_CALL_RESPONSE,
-                sender=self._stream_id,
-                receiver="agent",
-                reply_to=reply_to,
-                data=data,
-            )
         )
