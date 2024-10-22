@@ -226,7 +226,7 @@ class AppStoreAppViewSet(viewsets.ModelViewSet):
         from llmstack.base.models import Profile
 
         runner_user = request_user
-        app_store_app = AppStoreApp.objects.filter(slug=app_slug).first()
+        app_store_app = await AppStoreApp.objects.filter(slug=app_slug).afirst()
         if app_store_app is None:
             return DRFResponse(status=404)
 
