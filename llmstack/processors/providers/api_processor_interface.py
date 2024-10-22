@@ -17,10 +17,9 @@ from llmstack.common.blocks.base.processor import (
     ProcessorInterface,
 )
 from llmstack.common.blocks.base.schema import BaseSchema as _Schema
-from llmstack.common.utils.liquid import hydrate_input, render_template
+from llmstack.common.utils.liquid import hydrate_input
 from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import Actor, BookKeepingData
-from llmstack.play.messages import ToolCallData, ToolCallResponseData
 from llmstack.processors.providers.config import ProviderConfig, ProviderConfigSource
 from llmstack.processors.providers.metrics import MetricType
 
@@ -378,76 +377,9 @@ class ApiProcessorInterface(
 
         self._output_stream.bookkeep(bookkeeping_data)
 
-    def invoke(self, message_id: str, message: ToolCallData) -> Any:
-        try:
-            self._input = (
-                hydrate_input(
-                    self._input_template,
-                    {**message.input, **message.arguments},
-                )
-                if message
-                else self._input_template
-            )
-            self._config = (
-                hydrate_input(
-                    self._config_template,
-                    {**message.input, **message.arguments},
-                )
-                if self._config_template
-                else self._config_template
-            )
-
-            logger.info(
-                f"Invoking tool {message.name} with args {message.arguments}",
-            )
-            output = self.process()
-            output = output.model_dump() if isinstance(output, BaseModel) else output
-
-            if self._output_template and "markdown" in self._output_template:
-                rendered_output = render_template(self._output_template["markdown"], output)
-            else:
-                rendered_output = json.dumps(output)
-        except Exception as e:
-            logger.exception("Error invoking tool")
-            output = {
-                "errors": [str(e)],
-                "raw_response": {
-                    "text": str(e),
-                    "status_code": 400,
-                },
-            }
-
-            # Send error to output stream
-            self._output_stream.error(e)
-
-        bookkeeping_data = self.get_bookkeeping_data()
-        if not bookkeeping_data:
-            bookkeeping_data = BookKeepingData(
-                input=self._input,
-                config=self._config,
-                output=output or {},
-                session_data=self.session_data_to_persist() if self._session_enabled else {},
-                timestamp=time.time(),
-                disable_history=self.disable_history(),
-            )
-
-        if bookkeeping_data:
-            bookkeeping_data.usage_data = self.usage_data()
-
-        self._output_stream.bookkeep(bookkeeping_data)
-
-        # Send tool_call response
-        self._output_stream.send_tool_call_response(
-            reply_to=message_id,
-            data=ToolCallResponseData(
-                tool_call_id=message.tool_call_id,
-                output=rendered_output,
-                chunks=output,
-            ),
-        )
-
-        # Terminate the actor
-        self.on_stop()
+        if self._is_tool:
+            # Signal the end of the tool call
+            self.on_stop()
 
     def input_stream(self, message: Any) -> Any:
         # We do not support input stream for this processor
