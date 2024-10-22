@@ -254,8 +254,7 @@ class HistoryViewSet(viewsets.ModelViewSet):
         object = (
             RunEntry.objects.all()
             .filter(
-                request_uuid=request_uuid,
-                owner=request.user,
+                Q(request_uuid=request_uuid) & (Q(owner=request.user) | Q(request_user_email=request.user.email)),
             )
             .first()
         )
