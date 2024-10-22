@@ -79,7 +79,10 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
             return obj1
 
         stitched_obj = []
-        for item1, item2 in zip(obj1, obj2):
+        max_length = max(len(obj1), len(obj2))
+        for i in range(max_length):
+            item1 = obj1[i] if i < len(obj1) else None
+            item2 = obj2[i] if i < len(obj2) else None
             stitched_obj.append(stitch_model_objects(item1, item2))
         return stitched_obj
 
@@ -170,9 +173,11 @@ class OutputStream:
         """
         Writes raw message to the output stream.
         """
-        self._coordinator.relay(message)
+        response = self._coordinator.relay(message)
 
         await asyncio.sleep(0.0001)
+
+        return response
 
     def get_data(self) -> BaseModel:
         """
