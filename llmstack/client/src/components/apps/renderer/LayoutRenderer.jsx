@@ -810,7 +810,12 @@ export const PromptlyAppChatOutput = memo(
                 />
               );
             } else {
-              return (
+              return message.content.trim() === "" ? (
+                <AppTypingIndicator
+                  assistantImage={assistantImage}
+                  key={message.id}
+                />
+              ) : (
                 <AppMessage
                   message={message}
                   key={message.id}
