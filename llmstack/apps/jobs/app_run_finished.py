@@ -68,7 +68,7 @@ class AppRunFinishedEventData(BaseModel):
     #     return self.request_data.get("id", "")
     @property
     def request_body(self):
-        return self.bookkeeping_data_map.get("input", {}).get("input", {})
+        return self.bookkeeping_data_map.get("_inputs0", {}).get("input", {})
 
     @property
     def response_body(self):
