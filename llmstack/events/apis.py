@@ -5,6 +5,7 @@ import logging
 import uuid
 
 from django.conf import settings
+from pydantic import BaseModel
 from rest_framework import viewsets
 
 from llmstack.jobs.adhoc import ProcessingJob
@@ -24,6 +25,8 @@ class JSONEncoder(json.JSONEncoder):
             return o.username
         elif isinstance(o, bytes):
             return o.decode("utf-8")
+        elif isinstance(o, BaseModel):
+            return o.model_dump()
 
         return super().default(o)
 
