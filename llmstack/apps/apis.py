@@ -49,10 +49,21 @@ from llmstack.emails.templates.factory import EmailTemplateFactory
 from llmstack.jobs.adhoc import ProcessingJob
 from llmstack.processors.providers.processors import ProcessorFactory
 
-from .models import App, AppData, AppType, AppVisibility
+from .models import App, AppData, AppSessionFiles, AppType, AppVisibility
 from .serializers import AppDataSerializer, AppSerializer
 
 logger = logging.getLogger(__name__)
+
+
+def upload_file_fn(file, session_id, app_uuid, user):
+    if not file:
+        return None
+
+    file_obj = AppSessionFiles.create_from_data_uri(
+        file, ref_id=session_id, metadata={"username": user, "app_uuid": app_uuid}
+    )
+
+    return f"objref://sessionfiles/{file_obj.uuid}" if file_obj else None
 
 
 class AppViewSet(viewsets.ViewSet):
@@ -711,6 +722,7 @@ class AppViewSet(viewsets.ViewSet):
             app_data=app_data,
             source=source,
             vendor_env=vendor_env,
+            file_uploader=upload_file_fn,
         )
 
     def get_app_runner(self, session_id, app_uuid, source, request_user, preview=False, app_data=None):

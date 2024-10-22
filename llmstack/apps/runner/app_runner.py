@@ -2,8 +2,9 @@ import asyncio
 import logging
 import uuid
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
+from asgiref.sync import sync_to_async
 from pydantic import BaseModel
 
 from llmstack.apps.runner.app_coordinator import AppCoordinator
@@ -35,6 +36,7 @@ class AppRunnerSourceType(str, Enum):
 class AppRunnerSource(BaseModel):
     type: AppRunnerSourceType
     request_user_email: Optional[str] = None
+    request_user: Optional[Any] = None
 
     @property
     def id(self):
@@ -206,6 +208,22 @@ class AppRunner:
 
         return list(set(dep[0] for dep in dependencies if dep[0] in allowed_variables))
 
+    async def _preprocess_input_files(self, input_data, input_fields, session_id, app_uuid, user, upload_file_fn):
+        for field in input_fields:
+            if field["name"] in input_data and input_data[field["name"]]:
+                if field["type"] == "file":
+                    input_data[field["name"]] = await sync_to_async(upload_file_fn)(
+                        input_data[field["name"]], session_id, app_uuid, user
+                    )
+                elif field["type"] == "multi" and "files" in input_data[field["name"]]:
+                    # multi has a list of files to upload
+                    files = input_data[field["name"]]["files"]
+                    for file in files[:5]:
+                        file["data"] = await sync_to_async(upload_file_fn)(file["data"], session_id, app_uuid, user)
+                    input_data[field["name"]]["files"] = files
+
+        return input_data
+
     def _get_actor_configs_from_processors(
         self, processors: List[Dict], session_id: str, is_agent: bool, vendor_env: Dict = {}
     ):
@@ -231,6 +249,8 @@ class AppRunner:
                         "config": processor.get("config", {}),
                         "env": vendor_env,
                         "session_id": session_id,
+                        "request_user": self._source.request_user,
+                        "app_uuid": self._source.id,
                         "output_template": processor.get("output_template", {"markdown": ""}) if is_agent else None,
                     },
                     dependencies=processor.get(
@@ -254,13 +274,18 @@ class AppRunner:
         return actor_configs
 
     def __init__(
-        self, session_id: str = None, app_data: Dict = {}, source: AppRunnerSource = None, vendor_env: Dict = {}
+        self,
+        session_id: str = None,
+        app_data: Dict = {},
+        source: AppRunnerSource = None,
+        vendor_env: Dict = {},
+        file_uploader: Optional[Callable] = None,
     ):
         self._session_id = session_id or str(uuid.uuid4())
         self._app_data = app_data
         self._source = source
         self._is_agent = app_data.get("type_slug") == "agent"
-
+        self._file_uploader = file_uploader
         actor_configs = self._get_actor_configs_from_processors(
             app_data.get("processors", []), self._session_id, self._is_agent, vendor_env
         )
@@ -278,6 +303,17 @@ class AppRunner:
 
     async def run(self, request: AppRunnerRequest):
         request_id = str(uuid.uuid4())
+
+        # Pre-process run input to convert files to objrefs
+        if request.input and self._file_uploader:
+            request.input = await self._preprocess_input_files(
+                request.input,
+                self._app_data.get("input_fields", []),
+                self._session_id,
+                self._source.id,
+                self._source.request_user_email,
+                self._file_uploader,
+            )
 
         self._coordinator.input(request_id, request.input)
 

@@ -112,7 +112,7 @@ class AppConsumer(AsyncWebsocketConsumer):
             location = get_location(request_ip)
             request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
 
-        request_user_email = self.scope.get("user", None).email if self.scope.get("user", None) else None
+        request_user_email = self._user.email if self._user else None
 
         self._source = WebAppRunnerSource(
             id=self._session_id,
@@ -122,6 +122,7 @@ class AppConsumer(AsyncWebsocketConsumer):
             request_content_type=headers.get("Content-Type", ""),
             app_uuid=self._app_uuid,
             request_user_email=request_user_email,
+            request_user=self._user,
         )
         self._app_runner = await AppViewSet().get_app_runner_async(
             self._session_id,
@@ -512,6 +513,7 @@ class PlaygroundConsumer(AsyncWebsocketConsumer):
             request_user_agent=headers.get("User-Agent", ""),
             request_content_type=headers.get("Content-Type", ""),
             request_user_email=request_user_email,
+            request_user=self.scope.get("user", None),
             processor_slug="",
             provider_slug="",
         )
@@ -591,6 +593,7 @@ class StoreAppConsumer(AppConsumer):
             request_location=request_location,
             request_user_agent=headers.get("User-Agent", ""),
             request_user_email=request_user_email,
+            request_user=self.scope.get("user", None),
         )
 
         self._app_runner = await AppStoreAppViewSet().get_app_runner_async(

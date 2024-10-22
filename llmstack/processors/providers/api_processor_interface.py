@@ -48,17 +48,18 @@ class ApiProcessorInterface(
     def _get_session_asset(self, objref, include_data=True, include_name=True):
         from llmstack.assets.apis import AssetViewSet
 
-        response = AssetViewSet().get_by_objref(
-            self._request, objref, include_data=include_data, include_name=include_name
+        response = AssetViewSet().get_asset_data(
+            objref,
+            self._request_user,
+            self._session_id,
+            include_data=include_data,
+            include_name=include_name,
         )
 
-        if response.status_code == 200:
-            return response.data
-
-        return None
+        return response
 
     def _get_session_asset_instance(self, objref):
-        return get_asset_by_objref(objref, self._request.user, self._request.session)
+        return get_asset_by_objref(objref, self._request_user, {})
 
     # Convert objref to data URI if it exists
     def _get_session_asset_data_uri(self, objref, include_name=True):
@@ -93,8 +94,8 @@ class ApiProcessorInterface(
 
         try:
             asset_metadata = {
-                "app_uuid": self._metadata.get("app_uuid", ""),
-                "username": self._metadata.get("username", ""),
+                "app_uuid": self._app_uuid,
+                "username": self._request_user.email,
             }
 
             if file_name:
@@ -138,11 +139,11 @@ class ApiProcessorInterface(
         config,
         env,
         session_id="",
+        request_user=None,
+        app_uuid=None,
         coordinator_urn=None,
         dependencies=[],
         output_template={},
-        metadata={},
-        request=None,
         id=None,
         is_tool=False,
         session_enabled=True,
@@ -161,9 +162,9 @@ class ApiProcessorInterface(
         self._input_template = self._get_input_class()(**input)
         self._env = env
         self._session_id = session_id
+        self._request_user = request_user
+        self._app_uuid = app_uuid
         self._is_tool = is_tool
-        self._request = request
-        self._metadata = metadata
         self._session_enabled = session_enabled
         self._output_template = output_template
         self._usage_data = [("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1))]
