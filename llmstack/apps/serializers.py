@@ -13,13 +13,9 @@ from .models import (
     App,
     AppAccessPermission,
     AppData,
-    AppHub,
-    AppSession,
     AppTemplate,
     AppTemplateCategory,
     AppType,
-    TestCase,
-    TestSet,
 )
 
 
@@ -353,58 +349,6 @@ class AppDataSerializer(serializers.ModelSerializer):
             "last_updated_at",
             "is_draft",
             "comment",
-        ]
-
-
-class AppHubSerializer(serializers.ModelSerializer):
-    published_uuid = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    description = serializers.SerializerMethodField()
-    categories = AppTemplateCategorySerializer(many=True)
-
-    def get_published_uuid(self, obj):
-        return obj.app.published_uuid
-
-    def get_name(self, obj):
-        return obj.app.name
-
-    def get_description(self, obj):
-        return obj.app.description
-
-    class Meta:
-        model = AppHub
-        fields = ["published_uuid", "categories", "name", "description"]
-
-
-class AppSessionSerializer(serializers.ModelSerializer):
-    app = AppSerializer()
-
-    class Meta:
-        model = AppSession
-        fields = ["uuid", "app"]
-
-
-class TestSetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TestSet
-        fields = ["uuid", "name", "created_at", "last_updated_at"]
-
-
-class TestCaseSerializer(serializers.ModelSerializer):
-    testset_uuid = serializers.SerializerMethodField()
-
-    def get_testset_uuid(self, obj):
-        return str(obj.testset.uuid)
-
-    class Meta:
-        model = TestCase
-        fields = [
-            "uuid",
-            "input_data",
-            "expected_output",
-            "testset_uuid",
-            "created_at",
-            "last_updated_at",
         ]
 
 

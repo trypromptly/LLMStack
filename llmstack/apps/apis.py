@@ -2,15 +2,12 @@ import hashlib
 import hmac
 import json
 import logging
-import os
 import re
 import uuid
 from time import time
 
-import yaml
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
-from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.validators import validate_email
 from django.db.models import Q
@@ -21,14 +18,11 @@ from django.test import RequestFactory
 from django.views.decorators.clickjacking import xframe_options_exempt
 from drf_yaml.parsers import YAMLParser
 from flags.state import flag_enabled
-from pydantic import BaseModel
 from rest_framework import viewsets
-from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 
-from llmstack.apps.app_session_utils import create_app_session
 from llmstack.apps.integration_configs import (
     DiscordIntegrationConfig,
     SlackIntegrationConfig,
@@ -47,38 +41,18 @@ from llmstack.apps.yaml_loader import (
     get_app_template_by_slug,
     get_app_templates_from_contrib,
 )
-from llmstack.base.models import AnonymousProfile, Profile
+from llmstack.base.models import Profile
 from llmstack.common.utils import prequests
 from llmstack.common.utils.utils import get_location
-from llmstack.connections.apis import ConnectionsViewSet
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
 from llmstack.jobs.adhoc import ProcessingJob
 from llmstack.processors.providers.processors import ProcessorFactory
 
-from .models import App, AppData, AppHub, AppType, AppVisibility
-from .serializers import AppDataSerializer, AppHubSerializer, AppSerializer
+from .models import App, AppData, AppType, AppVisibility
+from .serializers import AppDataSerializer, AppSerializer
 
 logger = logging.getLogger(__name__)
-
-
-class AppOutputModel(BaseModel):
-    output: dict
-
-
-class AppRunnerException(Exception):
-    status_code = 400
-    details = None
-    json_details = None
-
-
-def get_connections(profile):
-    from django.test import RequestFactory
-
-    request = RequestFactory().get("/api/connections/")
-    request.user = profile.user
-    response = ConnectionsViewSet().list(request)
-    return dict(map(lambda entry: (entry["id"], entry), response.data))
 
 
 class AppViewSet(viewsets.ViewSet):
@@ -699,184 +673,6 @@ class AppViewSet(viewsets.ViewSet):
 
         return DRFResponse(AppSerializer(instance=app).data, status=201)
 
-    @action(detail=True, methods=["post"])
-    @xframe_options_exempt
-    def run(self, request, app_uuid, session_id=None, platform=None):
-        stream = request.data.get("stream", False)
-        request_uuid = str(uuid.uuid4())
-        try:
-            result = self.run_app_internal(
-                app_uuid,
-                session_id,
-                request_uuid,
-                request,
-                platform,
-            )
-            if stream:
-                response = StreamingHttpResponse(
-                    streaming_content=result,
-                    content_type="application/json",
-                )
-                response.is_async = True
-                return response
-            response_body = {k: v for k, v in result.items() if k != "csp"}
-            response_body["_id"] = request_uuid
-            return DRFResponse(
-                response_body,
-                status=200,
-                headers={
-                    "Content-Security-Policy": result["csp"] if "csp" in result else "frame-ancestors self",
-                },
-            )
-        except AppRunnerException as e:
-            logger.exception("Error while running app")
-            return DRFResponse({"errors": [str(e)]}, status=e.status_code)
-        except Exception as e:
-            logger.exception("Error while running app")
-            return DRFResponse({"errors": [str(e)]}, status=400)
-
-    async def init_app_async(self, uid):
-        return await database_sync_to_async(self.init_app)(uid)
-
-    def init_app(self, uid):
-        session_id = str(uuid.uuid4())
-
-        create_app_session(session_id)
-
-        return session_id
-
-    def processor_run(self, request, uid, id):
-        stream = False
-        request_uuid = str(uuid.uuid4())
-        preview = request.data.get("preview", False)
-        session_id = request.data.get("session_id", None)
-        disable_history = request.data.get("disable_history", False)
-
-        try:
-            result = self.run_processor_internal(
-                uid,
-                id,
-                session_id,
-                request_uuid,
-                request,
-                None,
-                preview,
-                disable_history,
-            )
-            if stream:
-                response = StreamingHttpResponse(
-                    streaming_content=result,
-                    content_type="application/json",
-                )
-                response.is_async = True
-                return response
-            response_body = {k: v for k, v in result.items() if k != "csp"}
-            response_body["_id"] = request_uuid
-            return DRFResponse(
-                response_body,
-                status=200,
-                headers={
-                    "Content-Security-Policy": result["csp"] if "csp" in result else "frame-ancestors self",
-                },
-            )
-        except AppRunnerException as e:
-            logger.exception("Error while running app")
-            return DRFResponse({"errors": [str(e)]}, status=e.status_code)
-        except Exception as e:
-            logger.exception("Error while running app")
-            return DRFResponse({"errors": [str(e)]}, status=400)
-
-    async def run_app_internal_async(self, uid, session_id, request_uuid, request, preview=False):
-        return await database_sync_to_async(self.run_app_internal)(
-            uid,
-            session_id,
-            request_uuid,
-            request,
-            preview=preview,
-        )
-
-    async def run_platform_app_internal_async(self, session_id, request_uuid, request, preview=False):
-        return await database_sync_to_async(self.run_platform_app_internal)(
-            session_id,
-            request_uuid,
-            request,
-            platform="platform-app",
-            preview=False,
-            disable_history=False,
-        )
-
-    def run_platform_app_internal(
-        self, session_id, request_uuid, request, platform="platform-app", preview=False, disable_history=False
-    ):
-        from llmstack.apps.handlers.platform_app_runner import (
-            PlatformApp,
-            PlatformAppRunner,
-            PlatformAppType,
-        )
-
-        stream = request.data.get("stream", False)
-        request_ip = request.headers.get("X-Forwarded-For", request.META.get("REMOTE_ADDR", "")).split(",")[
-            0
-        ].strip() or request.META.get("HTTP_X_REAL_IP", "")
-
-        request_location = request.headers.get("X-Client-Geo-Location", "")
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
-
-        request_user_agent = request.META.get("HTTP_USER_AGENT", "")
-        request_content_type = request.META.get("CONTENT_TYPE", "")
-
-        if flag_enabled(
-            "HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA",
-            request=request,
-            user=request.user,
-        ):
-            raise Exception(
-                "You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.",
-            )
-
-        app_owner_profile = (
-            Profile.objects.get(user=request.user) if request.user.is_authenticated else AnonymousProfile()
-        )
-
-        owner_connections = get_connections(app_owner_profile) if request.user.is_authenticated else {}
-        app_data = request.data["app_data"]
-        app_slug = app_data.get("slug", "platform-app")
-        app_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, app_slug)
-        app = PlatformApp(
-            id="",
-            uuid=str(app_uuid),
-            type=PlatformAppType(slug=str(app_data["type_slug"])),
-            web_integration_config={},
-            is_published=True,
-        )
-        processors = app_data["processors"]
-        output_template = app_data["output_template"]
-        app_data_config = app_data["config"]
-
-        app_runner = PlatformAppRunner(
-            app=app,
-            app_data={
-                "config": app_data_config,
-                "processors": processors,
-                "output_template": output_template,
-                "type_slug": app_data["type_slug"],
-            },
-            request_uuid=request_uuid,
-            request=request,
-            session_id=session_id,
-            app_owner=app_owner_profile,
-            stream=stream,
-            request_ip=request_ip,
-            request_location=request_location,
-            request_user_agent=request_user_agent,
-            request_content_type=request_content_type,
-            connections=owner_connections,
-        )
-
-        return app_runner.run_app()
-
     async def get_app_runner_async(
         self,
         session_id,
@@ -927,220 +723,8 @@ class AppViewSet(viewsets.ViewSet):
             app_data,
         )
 
-    def run_app_internal(
-        self,
-        app_uuid,
-        session_id,
-        request_uuid,
-        request,
-        platform=None,
-        preview=False,
-        version=None,
-        app_store_uuid=None,
-        app_store_app_data=None,
-    ):
-        app = (
-            get_object_or_404(App, uuid=uuid.UUID(app_uuid))
-            if not app_store_app_data
-            else App(
-                name=app_store_app_data.get("name", ""),
-                store_uuid=app_store_uuid,
-                uuid=app_uuid if app_uuid else app_store_uuid,
-                owner=request.user,
-                type=AppType(slug=app_store_app_data.get("type_slug", "agent")),
-                is_published=True,
-            )
-        )
-        app_owner = get_object_or_404(Profile, user=app.owner)
-        owner_connections = get_connections(app_owner)
-        stream = request.data.get("stream", False)
-        request_ip = request.headers.get(
-            "X-Forwarded-For",
-            request.META.get(
-                "REMOTE_ADDR",
-                "",
-            ),
-        ).split(
-            ",",
-        )[0].strip() or request.META.get(
-            "HTTP_X_REAL_IP",
-            "",
-        )
-        request_location = request.headers.get("X-Client-Geo-Location", "")
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
-
-        request_user_agent = request.META.get("HTTP_USER_AGENT", "")
-        request_content_type = request.META.get("CONTENT_TYPE", "")
-
-        if flag_enabled(
-            "HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA",
-            request=request,
-            user=app.owner,
-        ):
-            raise Exception(
-                "You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.",
-            )
-
-        app_data_obj = (
-            (
-                AppData.objects.filter(
-                    app_uuid=app.uuid,
-                    is_draft=preview,
-                )
-                .order_by("-created_at")
-                .first()
-                if version is None
-                else AppData.objects.filter(
-                    app_uuid=app.uuid,
-                    version=version,
-                    is_draft=False,
-                ).first()
-            )
-            if not app_store_app_data
-            else AppData(
-                app_uuid=app.uuid,
-                data=app_store_app_data,
-                is_draft=False,
-            )
-        )
-
-        # If we are running a published app, use the published app data
-        if not app_data_obj and preview:
-            app_data_obj = (
-                AppData.objects.filter(
-                    app_uuid=app.uuid,
-                    is_draft=False,
-                )
-                .order_by("-created_at")
-                .first()
-            )
-
-        app_runner_class = None
-
-        app_runner = app_runner_class(
-            app=app,
-            app_data=app_data_obj.data if app_data_obj else None,
-            request_uuid=request_uuid,
-            request=request,
-            session_id=session_id,
-            app_owner=app_owner,
-            stream=stream,
-            request_ip=request_ip,
-            request_location=request_location,
-            request_user_agent=request_user_agent,
-            request_content_type=request_content_type,
-            app_store_uuid=app_store_uuid,
-            connections=owner_connections,
-        )
-
-        return app_runner.run_app()
-
-    def run_processor_internal(
-        self,
-        uid,
-        processor_id,
-        session_id,
-        request_uuid,
-        request,
-        platform=None,
-        preview=False,
-        disable_history=False,
-    ):
-        app = get_object_or_404(App, uuid=uuid.UUID(uid))
-
-        request_ip = request.headers.get(
-            "X-Forwarded-For",
-            request.META.get(
-                "REMOTE_ADDR",
-                "",
-            ),
-        ).split(
-            ",",
-        )[0].strip() or request.META.get(
-            "HTTP_X_REAL_IP",
-            "",
-        )
-
-        request_location = request.headers.get("X-Client-Geo-Location", "")
-
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
-
-        if flag_enabled(
-            "HAS_EXCEEDED_MONTHLY_PROCESSOR_RUN_QUOTA",
-            request=request,
-            user=app.owner,
-        ):
-            raise Exception(
-                "You have exceeded your monthly processor run quota. Please upgrade your plan to continue using the platform.",
-            )
-
-        app_data_obj = (
-            AppData.objects.filter(
-                app_uuid=app.uuid,
-                is_draft=preview,
-            )
-            .order_by("-created_at")
-            .first()
-        )
-
-        # If we are running a published app, use the published app data
-        if not app_data_obj and preview:
-            app_data_obj = (
-                AppData.objects.filter(
-                    app_uuid=app.uuid,
-                    is_draft=False,
-                )
-                .order_by("-created_at")
-                .first()
-            )
-
-        app_runner = None
-
-        return app_runner.run_app(processor_id=processor_id)
-
-
-class AppHubViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]
-
-    # @method_decorator(cache_page(60*60*24))
-    def list(self, request):
-        apphub_objs = AppHub.objects.all().order_by("rank")
-
-        return DRFResponse(
-            AppHubSerializer(
-                instance=apphub_objs,
-                many=True,
-            ).data,
-        )
-
 
 class PlatformAppsViewSet(viewsets.ViewSet):
-    def list(self, request):
-        result = []
-        if settings.PLATFORM_APPS_DIR:
-            apps_dir = settings.PLATFORM_APPS_DIR
-            for entry in apps_dir:
-                yml_files = [
-                    f for f in os.listdir(entry) if os.path.isfile(os.path.join(entry, f)) and f.endswith(".yml")
-                ]
-                for yml_file in yml_files:
-                    with open(os.path.join(entry, yml_file), "r") as stream:
-                        app_data = yaml.safe_load(stream)
-                        result.append(app_data)
-        return DRFResponse(result)
-
-    def get(self, request, slug):
-        apps = self.list(request)
-        for app in apps.data:
-            if app["slug"] == slug:
-                return DRFResponse(app)
-
-        return DRFResponse(status=404)
-
     def run(self, request, slug):
         app_data = self.get(request, slug).data
         app_data = {**app_data, **request.data.get("app_data", {})}
