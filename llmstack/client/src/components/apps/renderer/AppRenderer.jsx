@@ -286,6 +286,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
                 messageId,
                 message.client_request_id,
                 existingMessageContent,
+                message.reply_to,
                 false,
               ),
             );
@@ -295,6 +296,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
         setAppRunData((prevState) => ({
           ...prevState,
           messages: messagesRef.current.get(),
+          isStreaming: true,
         }));
       }
 
