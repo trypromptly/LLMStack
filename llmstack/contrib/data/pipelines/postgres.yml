@@ -1,0 +1,7 @@
+name: Postgres
+slug: postgres
+description: Read data from Postgres Database
+pipeline:
+  destination:
+    slug: postgres
+    provider_slug: postgres
