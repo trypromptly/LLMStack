@@ -16,6 +16,8 @@ from liquid.expression import (
     Nil,
 )
 
+from llmstack.common.utils.liquid import env as liquid_env
+
 
 def extract_nodes(node):
     nodes = []
@@ -116,7 +118,9 @@ class ResettableTimer(threading.Thread):
 def extract_variables_from_liquid_template(liquid_template):
     variables = []
 
-    nodes = extract_nodes(liquid_template.tree)
+    template = liquid_env.from_string(liquid_template)
+
+    nodes = extract_nodes(template.tree)
     for node in nodes:
         extracted_variables = extract_variables(node.expression)
         if extracted_variables:

@@ -1,5 +1,3 @@
-import liquid
-
 from llmstack.play.utils import extract_variables_from_liquid_template
 
 # Define the Liquid template
@@ -20,9 +18,4 @@ liquid_template = """
 {{ processor7.key1[0].foo | default: "default" }}
 """
 
-
-# Create a Liquid environment and parse the template
-env = liquid.Environment()
-template = env.from_string(liquid_template)
-
-print(extract_variables_from_liquid_template(template))
+print(extract_variables_from_liquid_template(liquid_template))
