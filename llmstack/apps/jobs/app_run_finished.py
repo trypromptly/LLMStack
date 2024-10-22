@@ -98,7 +98,7 @@ class AppRunFinishedEventData(BaseModel):
 
 
 def persist_app_run_history(event_data: AppRunFinishedEventData):
-    owner = App.objects.get(uuid=event_data.request_app_uuid).owner
+    owner = App.objects.get(uuid=event_data.request_app_uuid).owner if event_data.request_app_uuid else None
 
     run_entry = RunEntry(
         request_uuid=event_data.request_uuid,
@@ -135,5 +135,5 @@ def persist_app_run_history(event_data: AppRunFinishedEventData):
     update_billing_func(
         usage_metrics=event_data.usage_metrics,
         usage_data=MetadataSerializer(run_entry).data,
-        user_email=owner.email,
+        user_email=owner.email if owner else event_data.request_user_email,
     )
