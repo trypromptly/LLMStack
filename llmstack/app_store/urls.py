@@ -22,5 +22,13 @@ urlpatterns = [
         "api/store/categories/my-apps/apps",
         apis.AppStoreSpecialCategoryAppsViewSet.as_view({"get": "my_apps"}),
     ),
+    path(
+        "api/store/categories/shared-apps/apps",
+        apis.AppStoreSpecialCategoryAppsViewSet.as_view({"get": "shared_apps"}),
+    ),
+    path(
+        "api/store/categories/org-apps/apps",
+        apis.AppStoreSpecialCategoryAppsViewSet.as_view({"get": "org_apps"}),
+    ),
     path("api/store/categories/<str:slug>/apps", apis.AppStoreCategoryAppsViewSet.as_view({"get": "list"})),
 ]

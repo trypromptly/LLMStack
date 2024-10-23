@@ -13,8 +13,9 @@ from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
 
 from llmstack.apps.apis import AppViewSet
-from llmstack.apps.models import App
+from llmstack.apps.models import App, AppVisibility
 from llmstack.apps.serializers import AppAsStoreAppSerializer
+from llmstack.base.models import Profile
 from llmstack.common.utils.utils import generate_checksum, vectorize_text
 
 from .models import AppStoreApp, AppStoreAppAssets, filter_queryset_by_query
@@ -264,7 +265,6 @@ class ListAppStoreCategories(APIView):
     permission_classes = [IsAuthenticated]
     method = ["GET"]
 
-    @cache_page(60 * 60 * 12)
     def get(self, request, format=None):
         categories = []
         store_apps = AppStoreApp.objects.all()
@@ -279,6 +279,8 @@ class ListAppStoreCategories(APIView):
         special.append({"name": "Recommended", "slug": "recommended"})
         special.append({"name": "New", "slug": "new"})
         special.append({"name": "My Apps", "slug": "my-apps"})
+        special.append({"name": "Shared Apps", "slug": "shared-apps"})
+        special.append({"name": "Org Apps", "slug": "org-apps"})
         return DRFResponse(
             {
                 "fixed": fixed,
@@ -379,7 +381,6 @@ class AppStoreSpecialCategoryAppsViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return DRFResponse(serializer.data)
 
-    @method_decorator(cache_page(60 * 60 * 0.5))
     def my_apps(self, request):
         queryset = App.objects.filter(
             Q(owner=request.user) | Q(read_accessible_by__contains=[request.user.email])
@@ -390,4 +391,28 @@ class AppStoreSpecialCategoryAppsViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = AppAsStoreAppSerializer(queryset, many=True)
+        return DRFResponse(serializer.data)
+
+    def org_apps(self, request):
+        request_user_profile = Profile.objects.filter(user=request.user).first()
+        if request_user_profile and request_user_profile.organization:
+            organization = request_user_profile.organization
+            org_apps_queryset = App.objects.filter(
+                owner__in=Profile.objects.filter(organization=organization).values("user").exclude(user=request.user),
+                visibility__gte=AppVisibility.ORGANIZATION,
+                is_published=True,
+            ).order_by("-last_updated_at")
+            serializer = AppAsStoreAppSerializer(org_apps_queryset, many=True)
+            return DRFResponse(serializer.data)
+
+        return DRFResponse([])
+
+    def shared_apps(self, request):
+        apps_queryset = App.objects.filter(
+            Q(read_accessible_by__contains=[request.user.email])
+            | Q(write_accessible_by__contains=[request.user.email]),
+            is_published=True,
+        ).order_by("-last_updated_at")
+
+        serializer = AppAsStoreAppSerializer(apps_queryset, many=True)
         return DRFResponse(serializer.data)

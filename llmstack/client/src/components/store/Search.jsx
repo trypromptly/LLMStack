@@ -16,6 +16,7 @@ import {
   isMobileState,
   storeCategoriesListState,
   fetchAppsFromStore,
+  profileFlagsSelector,
 } from "../../data/atoms";
 import promptlyIcon from "../../assets/promptly-icon.png";
 import llmstackIcon from "../../assets/llmstack-icon.png";
@@ -201,6 +202,7 @@ export default function Search({ appSlug }) {
       ? `categories/recommended/${appSlug}/apps`
       : "categories/recommended/super-agent/apps",
   );
+  const profileFlags = useRecoilValue(profileFlagsSelector);
   const categoriesList = useRecoilValue(storeCategoriesListState);
   const [appCategories, setAppCategories] = useState(categoriesList);
   const [searchTerm, setSearchTerm] = useState("");
@@ -219,6 +221,12 @@ export default function Search({ appSlug }) {
       );
     }
 
+    if (!profileFlags.IS_ORGANIZATION_MEMBER) {
+      listCategories = listCategories.filter(
+        (category) => !(category.slug === "org-apps"),
+      );
+    }
+
     setAppCategories(listCategories);
 
     if (categoryFilter && searchTerm === "") {
@@ -228,7 +236,7 @@ export default function Search({ appSlug }) {
           : `categories/${categoryFilter.toLowerCase()}/apps`,
       );
     }
-  }, [categoriesList, searchTerm, categoryFilter, appSlug]);
+  }, [categoriesList, searchTerm, categoryFilter, profileFlags, appSlug]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", maxHeight: "100vh" }}>
