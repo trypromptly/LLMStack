@@ -704,6 +704,9 @@ class AppViewSet(viewsets.ViewSet):
                 .order_by("-created_at")
                 .afirst()
             )
+            if not app_data_obj and preview:
+                app_data_obj = await AppData.objects.filter(app_uuid=app.uuid).order_by("-created_at").afirst()
+
             if not app_data_obj:
                 raise Exception("App data not found")
             app_data = app_data_obj.data
