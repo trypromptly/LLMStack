@@ -65,6 +65,7 @@ function CreateAppButton({ onClick }) {
         height: "100%",
         marginTop: "12px",
         marginRight: "10px",
+        display: "none",
       }}
     >
       <ButtonGroup
