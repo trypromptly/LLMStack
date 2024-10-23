@@ -255,10 +255,7 @@ class AppRunner:
                         "is_tool": is_agent,
                         "output_template": processor.get("output_template", {"markdown": ""}) if is_agent else None,
                     },
-                    dependencies=processor.get(
-                        "dependencies",
-                        self._compute_dependencies_from_processor(processor, allowed_processor_variables),
-                    ),
+                    dependencies=self._compute_dependencies_from_processor(processor, allowed_processor_variables),
                     tool_schema=(
                         {
                             "type": "function",
