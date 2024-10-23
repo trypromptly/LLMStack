@@ -81,6 +81,8 @@ def run_coro_in_new_loop(coro):
 
     coro_future.add_done_callback(lambda f: loop.stop())
 
+    return coro_future
+
 
 class ResettableTimer(threading.Thread):
     def __init__(self, interval, function, *args, **kwargs):
