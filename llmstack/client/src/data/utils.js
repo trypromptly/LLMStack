@@ -252,6 +252,5 @@ export function getTemplateKeysFromObject(obj) {
   }
 
   extractKeys(obj);
-  console.log(obj, templateKeys);
   return Array.from(templateKeys);
 }
