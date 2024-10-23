@@ -6,6 +6,10 @@
   width: stretch;
 }
 
+.layout-workflow-output p {
+  padding: 8px 0;
+}
+
 .layout-chat_message_from_app {
   font-family: "Lato", sans-serif;
   font-size: 16px;
