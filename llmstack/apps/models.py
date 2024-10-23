@@ -644,6 +644,10 @@ class AppSessionFiles(Assets):
         if metadata.get("username", "") and metadata.get("username", "") == username:
             return True
 
+        # If the user is authenticated, check if metadata["username"] matches their email
+        if request_user.is_authenticated and metadata.get("username", "") == request_user.email:
+            return True
+
         # If the asset is associated with an app, check if the user has access to the app
         app_uuid = metadata.get("app_uuid", "")
         if app_uuid:
