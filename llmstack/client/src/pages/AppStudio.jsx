@@ -1,22 +1,134 @@
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  Tooltip,
+  Typography,
+  Button,
+  ButtonGroup,
+  Grow,
+  Paper,
+  Popper,
+  MenuItem,
+  MenuList,
+} from "@mui/material";
 import { useTour } from "@reactour/tour";
 import { useEffect, useState, useRef } from "react";
 import { useCookies } from "react-cookie";
 import { AppList } from "../components/apps/AppList";
 import AppTemplatesContainer from "../components/apps/AppTemplatesContainer";
+import { AppFromTemplateDialog } from "../components/apps/AppFromTemplateDialog";
+
 import { SharedAppList } from "../components/apps/SharedAppList";
 import "../index.css";
 import GetAppOutlinedIcon from "@mui/icons-material/GetAppOutlined";
 import { AppImportModal } from "../components/apps/AppImporter";
 import { useRecoilValue } from "recoil";
 import { isLoggedInState } from "../data/atoms";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
 
+function CreateAppButton({ onClick }) {
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const options = ["Create Agent", "Create Workflow", "Create Chatbot"];
+  const slugs = ["_blank_agent", "_blank_web", "_blank_text-chat"];
+  const descriptions = [
+    "Create an AI agent.",
+    "Create a workflow.",
+    "Create a chatbot.",
+  ];
+
+  const handleMenuItemClick = (event, index) => {
+    setSelectedIndex(index);
+    setOpen(false);
+  };
+
+  const handleToggle = () => {
+    setOpen((prevOpen) => !prevOpen);
+  };
+
+  const handleClose = (event) => {
+    if (anchorRef.current && anchorRef.current.contains(event.target)) {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  return (
+    <Box style={{ float: "right", margin: "0.5em" }}>
+      <ButtonGroup
+        variant="contained"
+        ref={anchorRef}
+        aria-label="split button"
+      >
+        <Tooltip title={descriptions[selectedIndex]}>
+          <Button
+            onClick={() => {
+              onClick(slugs[selectedIndex]);
+            }}
+          >
+            {options[selectedIndex]}
+          </Button>
+        </Tooltip>
+        <Button
+          size="small"
+          aria-controls={open ? "split-button-menu" : undefined}
+          aria-expanded={open ? "true" : undefined}
+          aria-label="select merge strategy"
+          aria-haspopup="menu"
+          onClick={handleToggle}
+        >
+          <ArrowDropDownIcon />
+        </Button>
+      </ButtonGroup>
+      <Popper
+        open={open}
+        anchorEl={anchorRef.current}
+        role={undefined}
+        transition
+        disablePortal
+      >
+        {({ TransitionProps, placement }) => (
+          <Grow
+            {...TransitionProps}
+            style={{
+              transformOrigin:
+                placement === "bottom" ? "center top" : "center bottom",
+            }}
+          >
+            <Paper>
+              <ClickAwayListener onClickAway={handleClose}>
+                <MenuList id="split-button-menu">
+                  {options.map((option, index) => (
+                    <MenuItem
+                      key={option}
+                      selected={index === selectedIndex}
+                      onClick={(event) => handleMenuItemClick(event, index)}
+                    >
+                      {option}
+                    </MenuItem>
+                  ))}
+                </MenuList>
+              </ClickAwayListener>
+            </Paper>
+          </Grow>
+        )}
+      </Popper>
+    </Box>
+  );
+}
 const AppStudioPage = () => {
   const { steps, setSteps, setIsOpen } = useTour();
   const [cookies, setCookie] = useCookies(["app-studio-tour"]);
   const containerRef = useRef(null);
   const [appImportModalOpen, setAppImportModalOpen] = useState(false);
   const isLoggedIn = useRecoilValue(isLoggedInState);
+  const [openAppFromTemplateDialog, setOpenAppFromTemplateDialog] =
+    useState(false);
+  const [selectedAppTemplateSlug, setSelectedAppTemplateSlug] = useState(null);
 
   if (!process.env.REACT_APP_ENABLE_APP_STORE && !isLoggedIn) {
     window.location.href = "/login";
@@ -86,7 +198,18 @@ const AppStudioPage = () => {
         isOpen={appImportModalOpen}
         setIsOpen={setAppImportModalOpen}
       />
+      <AppFromTemplateDialog
+        open={openAppFromTemplateDialog}
+        setOpen={setOpenAppFromTemplateDialog}
+        appTemplateSlug={selectedAppTemplateSlug}
+      />
       <Box style={{ marginBottom: "20px" }} className="your-apps">
+        <CreateAppButton
+          onClick={(slug) => {
+            setOpenAppFromTemplateDialog(true);
+            setSelectedAppTemplateSlug(slug);
+          }}
+        />
         <Tooltip arrow={true} title={"Import an app from YAML configuration."}>
           <IconButton
             style={{ float: "right", margin: "0.5em", color: "#1c3c5a" }}
