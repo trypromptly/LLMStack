@@ -1,7 +1,10 @@
 import asyncio
+import logging
 import re
 import threading
+from urllib.parse import quote
 
+from diff_match_patch import diff_match_patch
 from liquid.ast import ChildNode, ParseTree
 from liquid.expression import (
     AssignmentExpression,
@@ -17,6 +20,8 @@ from liquid.expression import (
 )
 
 from llmstack.common.utils.liquid import env as liquid_env
+
+logger = logging.getLogger(__name__)
 
 
 def extract_nodes(node):
@@ -153,3 +158,43 @@ def convert_template_vars_from_legacy_format(d):
     elif isinstance(d, str):
         d = re.sub(r"_inputs\[(\d+)\]", r"_inputs\1", d)
     return d
+
+
+class DiffMatchPatch:
+    """
+    A wrapper around diff_match_patch with fixes for handling unicode characters
+    """
+
+    def __init__(self):
+        self._diff_match_patch = diff_match_patch()
+
+    def diff_toDelta(self, diffs):
+        """Crush the diff into an encoded string which describes the operations
+        required to transform text1 into text2.
+        E.g. =3\t-2\t+ing  -> Keep 3 chars, delete 2 chars, insert 'ing'.
+        Operations are tab-separated.  Inserted text is escaped using %xx notation.
+        Args:
+        diffs: Array of diff tuples.
+        Returns:
+        Delta text.
+
+        https://github.com/google/diff-match-patch/pull/80
+        """
+        text = []
+        for op, data in diffs:
+            if 0 == len(data):
+                continue
+
+            if op == self._diff_match_patch.DIFF_INSERT:
+                # High ascii will raise UnicodeDecodeError.  Use Unicode instead.
+                data = data.encode("utf-8")
+                text.append("+" + quote(data, "!~*'();/?:@&=+$,# "))
+            elif op == self._diff_match_patch.DIFF_DELETE:
+                text.append("-%d" % (len(data.encode("utf-16-be")) // 2))
+            elif op == self._diff_match_patch.DIFF_EQUAL:
+                text.append("=%d" % (len(data.encode("utf-16-be")) // 2))
+        return "\t".join(text)
+
+    def to_delta(self, text1, text2):
+        diffs = self._diff_match_patch.diff_main(text1, text2)
+        return self.diff_toDelta(diffs)

@@ -68,7 +68,7 @@ class AgentActor(OutputActor):
             },
         )
 
-        delta = self._diff_match_patch.diff_toDelta(self._diff_match_patch.diff_main("", error_message))
+        delta = self._dmp.to_delta("", error_message)
 
         self._content_queue.put_nowait(
             {
@@ -108,11 +108,7 @@ class AgentActor(OutputActor):
                     self._agent_outputs[f"agent_output__{message_index}"] = (
                         self._stitched_data["agent"][message_index].data.content[0].data
                     )
-                    delta = self._diff_match_patch.diff_toDelta(
-                        self._diff_match_patch.diff_main(
-                            old_agent_output, self._agent_outputs[f"agent_output__{message_index}"]
-                        )
-                    )
+                    delta = self._dmp.to_delta(old_agent_output, self._agent_outputs[f"agent_output__{message_index}"])
 
                     self._content_queue.put_nowait(
                         {
@@ -154,9 +150,7 @@ class AgentActor(OutputActor):
                             f"agent_tool_calls__{message_index}__{stitched_tool_call.name}__{stitched_tool_call.id}"
                         ] = stitched_tool_call.arguments
 
-                        delta = self._diff_match_patch.diff_toDelta(
-                            self._diff_match_patch.diff_main(old_tool_call_data, stitched_tool_call.arguments)
-                        )
+                        delta = self._dmp.to_delta(old_tool_call_data, stitched_tool_call.arguments)
                         deltas[
                             f"agent_tool_calls__{message_index}__{stitched_tool_call.name}__{stitched_tool_call.id}"
                         ] = delta
@@ -294,9 +288,7 @@ class AgentActor(OutputActor):
                     f"agent_tool_call_output__{output_index}__{tool_name}__{tool_call_id}"
                 ] = tool_call_output
 
-                delta = self._diff_match_patch.diff_toDelta(
-                    self._diff_match_patch.diff_main(prev_tool_call_output, tool_call_output)
-                )
+                delta = self._dmp.to_delta(prev_tool_call_output, tool_call_output)
 
                 self._content_queue.put_nowait(
                     {

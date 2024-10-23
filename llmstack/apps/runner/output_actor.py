@@ -3,13 +3,13 @@ import logging
 from typing import Any, Dict, List, NamedTuple, Set
 
 import pykka
-from diff_match_patch import diff_match_patch
 from pydantic import BaseModel
 
 from llmstack.common.utils.liquid import render_template
 from llmstack.play.actor import Actor
 from llmstack.play.messages import Error, Message, MessageType
 from llmstack.play.output_stream import stitch_model_objects
+from llmstack.play.utils import DiffMatchPatch
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class OutputActor(Actor):
         super().__init__(id="output", coordinator_urn=coordinator_urn, dependencies=dependencies)
         self._templates = templates
         self.reset()
-        self._diff_match_patch = diff_match_patch()
+        self._dmp = DiffMatchPatch()
         self._spread_output_for_keys = spread_output_for_keys
 
     def on_receive(self, message: Message) -> Any:
@@ -57,9 +57,7 @@ class OutputActor(Actor):
                     ),
                 )
                 new_int_output = render_template(self._templates["output"], self._stitched_data)
-                delta = self._diff_match_patch.diff_toDelta(
-                    self._diff_match_patch.diff_main(self._int_output.get("output", ""), new_int_output)
-                )
+                delta = self._dmp.to_delta(self._int_output.get("output", ""), new_int_output)
                 self._int_output["output"] = new_int_output
 
                 self._content_queue.put_nowait(
