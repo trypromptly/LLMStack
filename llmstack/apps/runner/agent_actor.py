@@ -16,9 +16,12 @@ from llmstack.apps.runner.agent_controller import (
 )
 from llmstack.apps.runner.output_actor import OutputActor
 from llmstack.common.utils.liquid import render_template
+from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.messages import ContentData, Error, Message, MessageType
 from llmstack.play.output_stream import stitch_model_objects
 from llmstack.play.utils import run_coro_in_new_loop
+from llmstack.processors.providers.config import ProviderConfigSource
+from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +39,18 @@ class AgentActor(OutputActor):
         self._process_output_task = None
         self._config = agent_config
         self._provider_configs = provider_configs
+        self._provider_slug = self._config.get("provider_slug", "openai")
+        self._model_slug = self._config.get("model", "gpt-4o-mini")
+        self._provider_config = get_matched_provider_config(
+            provider_configs=self._provider_configs,
+            provider_slug=self._provider_slug,
+            model_slug=self._model_slug,
+        )
 
         self._controller_config = AgentControllerConfig(
             provider_configs=self._provider_configs,
-            provider_slug=self._config.get("provider_slug", "openai"),
-            model_slug=self._config.get("model", "gpt-4o-mini"),
+            provider_slug=self._provider_slug,
+            model_slug=self._model_slug,
             system_message=self._config.get("system_message", "You are a helpful assistant."),
             tools=tools,
             stream=True if self._config.get("stream") is None else self._config.get("stream"),
@@ -127,7 +137,9 @@ class AgentActor(OutputActor):
                             "chunks": self._stitched_data,
                         }
                     )
-                    self._bookkeeping_data_map["agent"] = self._stitched_data["agent"]
+
+                    self._bookkeeping_data_map["agent"]["config"] = self._config
+                    self._bookkeeping_data_map["agent"]["output"] = self._stitched_data["agent"]
                     self._bookkeeping_data_map["agent"]["timestamp"] = time.time()
                     self._bookkeeping_data_future.set(self._bookkeeping_data_map)
                 elif controller_output.type == AgentControllerDataType.TOOL_CALLS:
@@ -195,6 +207,30 @@ class AgentActor(OutputActor):
                     message_index += 1
                 elif controller_output.type == AgentControllerDataType.AGENT_OUTPUT_END:
                     message_index = 0
+                elif controller_output.type == AgentControllerDataType.USAGE_DATA:
+                    self._bookkeeping_data_map["agent"]["usage_data"] = {
+                        "usage_metrics": [
+                            [
+                                ("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1)),
+                                (
+                                    f"{self._provider_slug}/*/{self._model_slug}/*",
+                                    MetricType.INPUT_TOKENS,
+                                    (
+                                        self._provider_config.provider_config_source,
+                                        controller_output.data.prompt_tokens,
+                                    ),
+                                ),
+                                (
+                                    f"{self._provider_slug}/*/{self._model_slug}/*",
+                                    MetricType.OUTPUT_TOKENS,
+                                    (
+                                        self._provider_config.provider_config_source,
+                                        controller_output.data.completion_tokens,
+                                    ),
+                                ),
+                            ]
+                        ]
+                    }
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0.1)
             except Exception as e:
@@ -307,6 +343,7 @@ class AgentActor(OutputActor):
         super().reset()
         self._stitched_data = {"agent": {}}
         self._agent_outputs = {}
+        self._bookkeeping_data_map = {"agent": {}}
 
         if self._process_output_task:
             self._process_output_task.cancel()

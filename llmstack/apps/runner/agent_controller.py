@@ -37,6 +37,13 @@ class AgentControllerDataType(StrEnum):
     AGENT_OUTPUT = "agent_output"
     AGENT_OUTPUT_END = "agent_output_end"
     ERROR = "error"
+    USAGE_DATA = "usage_data"
+
+
+class AgentUsageData(BaseModel):
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
 
 
 class AgentMessageRole(StrEnum):
@@ -86,7 +93,7 @@ class AgentToolCallsMessage(BaseModel):
 
 class AgentControllerData(BaseModel):
     type: AgentControllerDataType
-    data: Optional[Union[AgentUserMessage, AgentAssistantMessage, AgentToolCallsMessage]] = None
+    data: Optional[Union[AgentUserMessage, AgentAssistantMessage, AgentToolCallsMessage, AgentUsageData]] = None
 
 
 class AgentController:
@@ -200,6 +207,18 @@ class AgentController:
         """
         Add the response to the output queue as well as update _messages
         """
+        if response.usage:
+            self._output_queue.put_nowait(
+                AgentControllerData(
+                    type=AgentControllerDataType.USAGE_DATA,
+                    data=AgentUsageData(
+                        prompt_tokens=response.usage.input_tokens,
+                        completion_tokens=response.usage.output_tokens,
+                        total_tokens=response.usage.total_tokens,
+                    ),
+                )
+            )
+
         # For streaming responses, add the content to the output queue and messages
         if isinstance(response, ChatCompletionChunk) and response.choices[0].delta.content:
             self._output_queue.put_nowait(
