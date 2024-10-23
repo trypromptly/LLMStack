@@ -2,13 +2,9 @@ import uuid
 
 from llmstack.apps.models import App, AppType
 
+from .types.agent import Agent  # noqa: F401
 from .types.app_type_interface import AppTypeInterface
-
-# Import all app types here
 from .types.chat import ChatApp  # noqa: F401
-from .types.discord import DiscordApp  # noqa: F401
-from .types.slack import SlackApp  # noqa: F401
-from .types.twilio_sms import TwilioSmsApp  # noqa: F401
 from .types.web import WebApp  # noqa: F401
 
 
