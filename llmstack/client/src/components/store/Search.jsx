@@ -1,5 +1,4 @@
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
 import {
   Box,
   Chip,
@@ -195,19 +194,12 @@ const AppList = ({ queryTerm }) => {
 };
 
 export default function Search({ appSlug }) {
-  const location = useLocation();
   const isMobile = useRecoilValue(isMobileState);
-  const [categoryFilter, setCategoryFilter] = useState(
-    appSlug && location.pathname !== "/"
-      ? "recommended"
-      : process.env.REACT_APP_ENABLE_SUBSCRIPTION_MANAGEMENT
-        ? "featured"
-        : "recommended",
-  );
+  const [categoryFilter, setCategoryFilter] = useState("recommended");
   const [queryTerm, setQueryTerm] = useState(
     appSlug
       ? `categories/recommended/${appSlug}/apps`
-      : "categories/featured/apps",
+      : "categories/recommended/super-agent/apps",
   );
   const categoriesList = useRecoilValue(storeCategoriesListState);
   const [appCategories, setAppCategories] = useState(categoriesList);
