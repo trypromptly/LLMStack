@@ -325,10 +325,15 @@ class AgentActor(OutputActor):
 
         # If there is no running event loop, create one and run the task
         try:
-            asyncio.get_running_loop()
+            loop = asyncio.get_running_loop()
+            logger.info("Running process output task in existing event loop")
+            self._process_output_task = loop.create_task(self._process_output())
         except RuntimeError:
             logger.info("No running event loop, creating one and running process output task")
-            run_coro_in_new_loop(self._process_output())
-        else:
-            logger.info("Running process output task")
-            self._process_output_task = asyncio.create_task(self._process_output())
+            self._process_output_task = run_coro_in_new_loop(self._process_output())
+
+    def on_stop(self):
+        super().on_stop()
+        if self._process_output_task:
+            self._process_output_task.cancel()
+            self._process_output_task = None
