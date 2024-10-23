@@ -13,7 +13,7 @@ from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
 
 from llmstack.apps.apis import AppViewSet, upload_file_fn
-from llmstack.apps.models import App, AppVisibility
+from llmstack.apps.models import App, AppData, AppVisibility
 from llmstack.apps.serializers import AppAsStoreAppSerializer
 from llmstack.base.models import Profile
 from llmstack.common.utils.utils import generate_checksum, vectorize_text
@@ -191,7 +191,8 @@ class AppStoreAppViewSet(viewsets.ModelViewSet):
             instance = App.objects.filter(
                 uuid=slug,
             ).first()
-            if instance and request.user == instance.owner or request.user.email in instance.read_accessible_by:
+
+            if instance.has_read_permission(request.user):
                 serializer = AppAsStoreAppSerializer(instance)
                 return DRFResponse(serializer.data)
 
@@ -227,14 +228,24 @@ class AppStoreAppViewSet(viewsets.ModelViewSet):
         from llmstack.base.models import Profile
 
         runner_user = request_user
-        app_store_app = await AppStoreApp.objects.filter(slug=app_slug).afirst()
-        if app_store_app is None:
-            return DRFResponse(status=404)
+        app_data = None
+        try:
+            app_uuid = uuid.UUID(app_slug)
+            app_obj = await App.objects.select_related("owner").aget(uuid=app_uuid)
 
-        app_data = app_store_app.app_data
+            if await sync_to_async(app_obj.has_read_permission)(runner_user):
+                app_data_obj = await AppData.objects.filter(app_uuid=app_uuid).afirst()
+                app_data = app_data_obj.data if app_data_obj else None
+            else:
+                app_data = None
+        except ValueError:
+            app_store_app = await AppStoreApp.objects.filter(slug=app_slug).afirst()
+            app_data = app_store_app.app_data if app_store_app else None
+        except Exception as e:
+            logger.error(f"Error fetching app store app: {e}")
 
         if not app_data:
-            raise Exception("App not found for platform app")
+            raise Exception("App not found for store app")
 
         if runner_user is None or runner_user.is_anonymous:
             raise Exception("User not found")
