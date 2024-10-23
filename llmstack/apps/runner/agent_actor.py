@@ -175,6 +175,7 @@ class AgentActor(OutputActor):
                         tool_call_args = tool_call.arguments
                         try:
                             tool_call_args = json.loads(tool_call_args)
+                            tool_call_args["_inputs0"] = self._messages["_inputs0"]
                         except Exception:
                             pass
 

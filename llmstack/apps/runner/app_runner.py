@@ -251,6 +251,8 @@ class AppRunner:
                         "session_id": session_id,
                         "request_user": self._source.request_user,
                         "app_uuid": self._source.id,
+                        "input_fields": processor.get("input_fields", []),
+                        "is_tool": is_agent,
                         "output_template": processor.get("output_template", {"markdown": ""}) if is_agent else None,
                     },
                     dependencies=processor.get(

@@ -142,6 +142,7 @@ class ApiProcessorInterface(
         request_user=None,
         app_uuid=None,
         coordinator_urn=None,
+        input_fields=[],
         dependencies=[],
         output_template={},
         id=None,
@@ -164,6 +165,7 @@ class ApiProcessorInterface(
         self._session_id = session_id
         self._request_user = request_user
         self._app_uuid = app_uuid
+        self._input_fields = input_fields
         self._is_tool = is_tool
         self._session_enabled = session_enabled
         self._output_template = output_template
@@ -311,27 +313,33 @@ class ApiProcessorInterface(
         return None
 
     def input(self, message: Any) -> Any:
-        # Hydrate the input and config before processing
-        if self._is_tool:
-            # NO-OP when the processor is a tool
-            return
         try:
-            self._input = (
-                hydrate_input(
-                    self._input_template,
-                    message,
+            if self._is_tool and len(self._input_fields) == 0:
+                self._input = self._get_input_class()(**message)
+                self._config = hydrate_input(self._config_template, message)
+            elif self._is_tool:
+                hydrated_input = hydrate_input(self._input_template, message)
+                self._input = self._get_input_class()(
+                    **(hydrated_input.model_dump() if isinstance(hydrated_input, BaseModel) else hydrated_input)
                 )
-                if message
-                else self._input_template
-            )
-            self._config = (
-                hydrate_input(
-                    self._config_template,
-                    message,
+                self._config = hydrate_input(self._config_template, message)
+            else:
+                self._input = (
+                    hydrate_input(
+                        self._input_template,
+                        message,
+                    )
+                    if message
+                    else self._input_template
                 )
-                if self._config and message
-                else self._config_template
-            )
+                self._config = (
+                    hydrate_input(
+                        self._config_template,
+                        message,
+                    )
+                    if self._config and message
+                    else self._config_template
+                )
             output = self.process()
         except Exception as e:
             logger.exception("Error processing input")

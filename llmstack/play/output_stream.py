@@ -52,11 +52,6 @@ def stitch_model_objects(obj1: Any, obj2: Any) -> Any:
             )
         return stitched_obj
 
-    if isinstance(obj1, BaseModel):
-        obj1 = obj1.model_dump()
-    if isinstance(obj2, BaseModel):
-        obj2 = obj2.model_dump()
-
     def stitch_fields(
         obj1_fields: Dict[str, Any],
         obj2_fields: Dict[str, Any],
@@ -191,7 +186,9 @@ class OutputStream:
         """
         Closes the output stream and returns stitched data.
         """
-        output = self._data if not self._output_cls else self._output_cls(**self._data)
+        output = (
+            self._data if not self._output_cls or isinstance(self._data, BaseModel) else self._output_cls(**self._data)
+        )
         self._data = None
 
         # Send the end message
