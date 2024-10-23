@@ -16,7 +16,7 @@ from llmstack.apps.runner.agent_controller import (
 )
 from llmstack.apps.runner.output_actor import OutputActor
 from llmstack.common.utils.liquid import render_template
-from llmstack.play.messages import ContentData, Message, MessageType
+from llmstack.play.messages import ContentData, Error, Message, MessageType
 from llmstack.play.output_stream import stitch_model_objects
 from llmstack.play.utils import run_coro_in_new_loop
 
@@ -45,6 +45,7 @@ class AgentActor(OutputActor):
             tools=tools,
             stream=True if self._config.get("stream") is None else self._config.get("stream"),
             realtime=self._config.get("realtime", False),
+            max_steps=min(self._config.get("max_steps", 30), 100),
         )
 
         super().__init__(
@@ -191,6 +192,9 @@ class AgentActor(OutputActor):
                             ).get()
                         except Exception as e:
                             self._add_error_from_tool_call(message_index, tool_call.name, tool_call.id, [str(e)])
+                elif controller_output.type == AgentControllerDataType.ERROR:
+                    # Treat this as an agent output end
+                    self._errors = [Error(message=controller_output.data.content[0].data)]
 
                 if controller_output.type == AgentControllerDataType.TOOL_CALLS_END:
                     message_index += 1

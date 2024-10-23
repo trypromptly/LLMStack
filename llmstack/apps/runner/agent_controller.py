@@ -25,6 +25,7 @@ class AgentControllerConfig(BaseModel):
     tools: List[Dict]
     stream: bool = False
     realtime: bool = False
+    max_steps: int = 30
 
     model_config = ConfigDict(protected_namespaces=())
 
@@ -160,6 +161,9 @@ class AgentController:
         self._messages.append(data.data)
 
         try:
+            if len(self._messages) > self._config.max_steps:
+                raise Exception(f"Max steps ({self._config.max_steps}) exceeded: {len(self._messages)}")
+
             if data.type != AgentControllerDataType.AGENT_OUTPUT:
                 self.process_messages()
         except Exception as e:
@@ -167,7 +171,9 @@ class AgentController:
             self._output_queue.put_nowait(
                 AgentControllerData(
                     type=AgentControllerDataType.ERROR,
-                    data=str(e),
+                    data=AgentAssistantMessage(
+                        content=[AgentMessageContent(data=str(e))],
+                    ),
                 )
             )
 
