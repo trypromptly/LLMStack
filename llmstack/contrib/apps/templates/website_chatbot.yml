@@ -80,7 +80,7 @@ app:
       config:
         {
           "k": 8,
-          "model": "gpt-3.5-turbo",
+          "model": "gpt-4o-mini",
           "datasource": [],
           "temperature": 0.7,
           "instructions": "You are a chatbot that uses the provided context to answer the user's question.\nIf you cannot answer the question based on the provided context, say you don't know the answer.\nNo answer should go out of the provided input. If the provided input is empty, return saying you don't know the answer.\nKeep the answers terse.",
