@@ -137,6 +137,9 @@ class AppConsumer(AsyncWebsocketConsumer):
         if self._app_runner:
             await self._app_runner.stop()
 
+    async def stop(self):
+        await self.close()
+
     async def _respond_to_event(self, text_data):
         json_data = json.loads(text_data)
         client_request_id = json_data.get("id", None)
@@ -227,7 +230,7 @@ class AppConsumer(AsyncWebsocketConsumer):
 
             # TODO: Implement delete asset
         elif event == "stop":
-            self.disconnect()
+            await self.stop()
 
     async def _respond_to_event_old(self, text_data):
         from llmstack.apps.apis import AppViewSet
