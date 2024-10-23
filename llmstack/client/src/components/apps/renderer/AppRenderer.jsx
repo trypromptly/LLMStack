@@ -1,4 +1,11 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import ReactGA from "react-ga4";
 import { useLocation } from "react-router-dom";
 import { diff_match_patch } from "diff-match-patch";
@@ -64,13 +71,78 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
   const messagesRef = useRef(new Messages());
   const isLoggedIn = useRecoilValue(isLoggedInState);
   const setAppRunData = useSetRecoilState(appRunDataState);
-  const dmp = new diff_match_patch();
+  const dmp = useMemo(() => new diff_match_patch(), []);
 
   if (ws && ws.messageRef) {
     messagesRef.current = ws.messageRef;
   } else if (ws) {
     ws.messageRef = messagesRef.current;
   }
+
+  const processStreamChunk = useCallback(
+    (key, messageId, delta, clientRequestId, replyTo) => {
+      const existingMessageContent =
+        messagesRef.current.getContent(messageId) || "";
+      let content = existingMessageContent;
+
+      if (typeof content === "object" && content !== null) {
+        content =
+          (key.startsWith("agent_tool_call_output__")
+            ? content.response
+            : content.arguments) ||
+          content.output ||
+          "";
+      }
+
+      try {
+        const diffs = dmp.diff_fromDelta(content, delta);
+        const newContent = dmp.diff_text2(diffs);
+
+        let message;
+        if (key === "output") {
+          message = new AppMessage(messageId, clientRequestId, newContent);
+        } else if (key.startsWith("agent_output__")) {
+          message = new AgentMessage(messageId, clientRequestId, newContent);
+        } else if (key.startsWith("agent_tool_calls__")) {
+          message = new AgentStepMessage(
+            messageId,
+            clientRequestId,
+            {
+              name: key.split("__")[2],
+              id: key.split("__")[3],
+              arguments: newContent,
+            },
+            replyTo,
+            false,
+          );
+        } else if (key.startsWith("agent_tool_call_output__")) {
+          message = new AgentStepMessage(
+            messageId,
+            clientRequestId,
+            {
+              ...existingMessageContent,
+              output: newContent,
+            },
+            replyTo,
+          );
+        } else if (key.startsWith("agent_tool_call_errors__")) {
+          message = new AgentStepErrorMessage(
+            messageId,
+            clientRequestId,
+            newContent,
+            replyTo,
+          );
+        }
+
+        if (message) {
+          messagesRef.current.add(message);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [dmp],
+  );
 
   if (ws) {
     ws.setOnMessage((evt) => {
@@ -170,94 +242,32 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
       }
 
       if (message.type && message.type === "output_stream_chunk") {
-        // Iterate through keys in message.data.deltas
         Object.keys(message.data.deltas).forEach((key) => {
           const delta = message.data.deltas[key];
+          let messageId = message.id;
 
-          if (key === "output") {
-            const messageId = message.id;
-            const existingMessageContent =
-              messagesRef.current.getContent(messageId) || "";
+          if (key.startsWith("agent_")) {
+            messageId = `${message.id}/${key}`;
+          }
 
-            const diffs = dmp.diff_fromDelta(existingMessageContent, delta);
-            const newMessageContent = dmp.diff_text2(diffs);
-
-            messagesRef.current.add(
-              new AppMessage(
-                messageId,
-                message.client_request_id,
-                newMessageContent,
-              ),
-            );
-          } else if (key.startsWith("agent_output__")) {
-            const messageId = `${message.id}/${key}`;
-            const existingMessageContent =
-              messagesRef.current.getContent(messageId) || "";
-
-            const diffs = dmp.diff_fromDelta(existingMessageContent, delta);
-            const newMessageContent = dmp.diff_text2(diffs);
-
-            messagesRef.current.add(
-              new AgentMessage(
-                messageId,
-                message.client_request_id,
-                newMessageContent,
-              ),
-            );
-          } else if (key.startsWith("agent_tool_calls__")) {
-            const messageId = `${message.id}/${key}`;
-            const existingMessageContent =
-              messagesRef.current.getContent(messageId)?.arguments || "";
-
-            const diffs = dmp.diff_fromDelta(existingMessageContent, delta);
-            const newMessageContent = dmp.diff_text2(diffs);
-
-            messagesRef.current.add(
-              new AgentStepMessage(
-                messageId,
-                message.client_request_id,
-                {
-                  name: key.split("__")[2],
-                  id: key.split("__")[3],
-                  arguments: newMessageContent,
-                },
-                message.reply_to,
-                false,
-              ),
-            );
-          } else if (key.startsWith("agent_tool_call_output__")) {
-            const messageId = `${message.id}/${key.replace(
+          if (key.startsWith("agent_tool_call_output__")) {
+            messageId = messageId.replace(
               "agent_tool_call_output__",
               "agent_tool_calls__",
-            )}`;
-            const existingMessageContent =
-              messagesRef.current.getContent(messageId) || "";
+            );
+          }
 
-            const diffs = dmp.diff_fromDelta(
-              existingMessageContent?.output || "",
+          if (!key.startsWith("agent_tool_call_done__")) {
+            processStreamChunk(
+              key,
+              messageId,
               delta,
+              message.client_request_id,
+              message.reply_to,
             );
-            const newMessageOutput = dmp.diff_text2(diffs);
-
-            messagesRef.current.add(
-              new AgentStepMessage(
-                messageId,
-                message.client_request_id,
-                {
-                  ...existingMessageContent,
-                  output: newMessageOutput,
-                },
-                message.reply_to,
-              ),
-            );
-          } else if (key.startsWith("agent_tool_call_done__")) {
-            const messageId = `${message.id}/${key.replace(
-              "agent_tool_call_done__",
-              "agent_tool_calls__",
-            )}`;
+          } else {
             const existingMessageContent =
               messagesRef.current.getContent(messageId) || "";
-
             messagesRef.current.add(
               new AgentStepMessage(
                 messageId,
@@ -265,18 +275,6 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
                 existingMessageContent,
                 message.reply_to,
                 false,
-              ),
-            );
-          } else if (key.startsWith("agent_tool_call_errors__")) {
-            const messageId = `${message.id}/${key}`;
-            const diffs = dmp.diff_fromDelta("", delta);
-
-            messagesRef.current.add(
-              new AgentStepErrorMessage(
-                messageId,
-                message.client_request_id,
-                dmp.diff_text2(diffs),
-                message.reply_to,
               ),
             );
           }
