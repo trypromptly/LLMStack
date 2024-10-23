@@ -26,13 +26,14 @@ import { useRecoilValue } from "recoil";
 import { isLoggedInState } from "../data/atoms";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
+import { AddOutlined } from "@mui/icons-material";
 
 function CreateAppButton({ onClick }) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const options = ["Create Agent", "Create Workflow", "Create Chatbot"];
+  const options = ["Agent", "Workflow", "Chatbot"];
   const slugs = ["_blank_agent", "_blank_web", "_blank_text-chat"];
   const descriptions = [
     "Create an AI agent.",
@@ -58,17 +59,29 @@ function CreateAppButton({ onClick }) {
   };
 
   return (
-    <Box style={{ float: "right", margin: "0.5em" }}>
+    <Box
+      sx={{
+        float: "right",
+        height: "100%",
+        marginTop: "12px",
+        marginRight: "10px",
+      }}
+    >
       <ButtonGroup
         variant="contained"
         ref={anchorRef}
         aria-label="split button"
+        sx={{
+          borderRadius: "10px",
+        }}
       >
         <Tooltip title={descriptions[selectedIndex]}>
           <Button
+            startIcon={<AddOutlined />}
             onClick={() => {
               onClick(slugs[selectedIndex]);
             }}
+            sx={{ paddingRight: "0px" }}
           >
             {options[selectedIndex]}
           </Button>
@@ -80,6 +93,7 @@ function CreateAppButton({ onClick }) {
           aria-label="select merge strategy"
           aria-haspopup="menu"
           onClick={handleToggle}
+          sx={{ paddingLeft: "0px" }}
         >
           <ArrowDropDownIcon />
         </Button>
