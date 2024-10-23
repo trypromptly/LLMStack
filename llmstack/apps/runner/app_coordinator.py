@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 from pykka import ThreadingActor
 
@@ -21,6 +21,7 @@ class AppCoordinator(ThreadingActor):
         is_agent: bool = False,
         env: Dict[str, Any] = {},
         config: Dict[str, Any] = {},
+        spread_output_for_keys: Set[str] = set(),
     ):
         super().__init__()
 
@@ -62,6 +63,7 @@ class AppCoordinator(ThreadingActor):
                 coordinator_urn=self.actor_urn,
                 dependencies=["_inputs0"] + list(self._actor_configs_map.keys()),
                 templates={"output": output_template},
+                spread_output_for_keys=spread_output_for_keys,
             )
 
         self._actor_dependencies = {ac.name: set(ac.dependencies) for ac in actor_configs}

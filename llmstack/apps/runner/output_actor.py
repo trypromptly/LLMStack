@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Dict, List, NamedTuple
+from typing import Any, Dict, List, NamedTuple, Set
 
 import pykka
 from diff_match_patch import diff_match_patch
@@ -33,11 +33,13 @@ class OutputActor(Actor):
         coordinator_urn,
         dependencies,
         templates: Dict[str, str] = {},
+        spread_output_for_keys: Set[str] = set(),
     ):
         super().__init__(id="output", coordinator_urn=coordinator_urn, dependencies=dependencies)
         self._templates = templates
         self.reset()
         self._diff_match_patch = diff_match_patch()
+        self._spread_output_for_keys = spread_output_for_keys
 
     def on_receive(self, message: Message) -> Any:
         if message.type == MessageType.ERRORS:
@@ -46,7 +48,14 @@ class OutputActor(Actor):
 
         if message.type == MessageType.CONTENT_STREAM_CHUNK:
             try:
-                self._stitched_data = stitch_model_objects(self._stitched_data, {message.sender: message.data.chunk})
+                self._stitched_data = stitch_model_objects(
+                    self._stitched_data,
+                    (
+                        {message.sender: message.data.chunk}
+                        if message.sender not in self._spread_output_for_keys
+                        else message.data.chunk
+                    ),
+                )
                 new_int_output = render_template(self._templates["output"], self._stitched_data)
                 delta = self._diff_match_patch.diff_toDelta(
                     self._diff_match_patch.diff_main(self._int_output.get("output", ""), new_int_output)

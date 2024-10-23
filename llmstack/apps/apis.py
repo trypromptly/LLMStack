@@ -783,6 +783,7 @@ class PlaygroundViewSet(viewsets.ViewSet):
             "name": f"Processor {provider_slug}_{processor_slug}",
             "config": {},
             "type_slug": "",
+            "spread_output_for_keys": ["processor"],
             "processors": [
                 {
                     "id": "processor",
@@ -798,7 +799,7 @@ class PlaygroundViewSet(viewsets.ViewSet):
             ],
             "description": "",
             "input_fields": input_fields,
-            "output_template": {"markdown": "{{processor}}"},
+            "output_template": processor_cls.get_output_template().model_dump(),
         }
         return AppRunner(
             session_id=session_id,

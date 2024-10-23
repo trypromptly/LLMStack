@@ -295,6 +295,7 @@ class AppRunner:
             is_agent=self._is_agent,
             env=vendor_env,
             config=app_data.get("config", {}),
+            spread_output_for_keys=app_data.get("spread_output_for_keys", set()),
         ).proxy()
 
     async def stop(self):
