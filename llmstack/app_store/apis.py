@@ -403,6 +403,11 @@ class AppStoreSpecialCategoryAppsViewSet(viewsets.ModelViewSet):
                 visibility__gte=AppVisibility.ORGANIZATION,
                 is_published=True,
             ).order_by("-last_updated_at")
+            page = self.paginate_queryset(org_apps_queryset)
+            if page is not None:
+                serializer = AppAsStoreAppSerializer(org_apps_queryset, many=True)
+                return self.get_paginated_response(serializer.data)
+
             serializer = AppAsStoreAppSerializer(org_apps_queryset, many=True)
             return DRFResponse(serializer.data)
 
@@ -414,6 +419,10 @@ class AppStoreSpecialCategoryAppsViewSet(viewsets.ModelViewSet):
             | Q(write_accessible_by__contains=[request.user.email]),
             is_published=True,
         ).order_by("-last_updated_at")
+        page = self.paginate_queryset(apps_queryset)
+        if page is not None:
+            serializer = AppAsStoreAppSerializer(apps_queryset, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = AppAsStoreAppSerializer(apps_queryset, many=True)
         return DRFResponse(serializer.data)
