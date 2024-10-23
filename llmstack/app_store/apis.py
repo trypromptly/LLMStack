@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
 
-from llmstack.apps.apis import AppViewSet
+from llmstack.apps.apis import AppViewSet, upload_file_fn
 from llmstack.apps.models import App, AppVisibility
 from llmstack.apps.serializers import AppAsStoreAppSerializer
 from llmstack.base.models import Profile
@@ -248,6 +248,7 @@ class AppStoreAppViewSet(viewsets.ModelViewSet):
             app_data=app_data,
             source=source,
             vendor_env=vendor_env,
+            file_uploader=upload_file_fn,
         )
 
     def get_app_runner(self, session_id, app_slug, source, request_user):
