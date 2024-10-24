@@ -14,6 +14,18 @@ import { axios } from "../../data/axios";
 import AddAppRunScheduleConfigForm from "./AddAppRunScheduleConfigForm";
 import InputDataTable from "./InputDataTable";
 
+function checkIfColumnFieldsAreSame(prevColumns, newColumns) {
+  if (prevColumns && newColumns && prevColumns.length === newColumns.length) {
+    for (let i = 0; i < prevColumns.length; i++) {
+      if (prevColumns[i].field !== newColumns[i].field) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 export default function AddAppRunScheduleModal(props) {
   const [columns, setColumns] = useState([]);
   const [configuration, setConfiguration] = useState({});
@@ -34,10 +46,18 @@ export default function AddAppRunScheduleModal(props) {
           };
         },
       );
-      setColumns(columnFields);
-      setAppRunData([]);
+
+      const hasSameColumnFields = checkIfColumnFieldsAreSame(
+        columns,
+        columnFields,
+      );
+
+      if (!hasSameColumnFields) {
+        setColumns(columnFields);
+        setAppRunData([]);
+      }
     }
-  }, [configuration]);
+  }, [configuration?.appDetail, columns]);
 
   return (
     <Dialog open={true} maxWidth="lg" fullWidth onClose={props.onClose}>
