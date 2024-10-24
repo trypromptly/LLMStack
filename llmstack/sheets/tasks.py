@@ -128,11 +128,11 @@ def _execute_cell(
             elif processor_run_response.get("errors"):
                 cell_error = str(app_run_response.get("errors"))
         elif formula_type == SheetFormulaType.AGENT_RUN:
-            agent_run_response = PromptlySheetViewSet()._execute_app_run_cell(
+            agent_run_response = PromptlySheetViewSet()._execute_agent_run_cell(
                 request=request,
-                app_slug="sheet-agent",
                 sheet_id=str(sheet.uuid),
                 input_data=hydrate_input(formula_data.input, input_values),
+                config_data=hydrate_input(formula_data.config.model_dump(), input_values),
             )
             if agent_run_response.get("output"):
                 cell_output = agent_run_response.get("output", "")

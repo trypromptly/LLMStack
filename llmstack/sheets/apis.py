@@ -14,7 +14,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from rq import Callback
 
-from llmstack.apps.runner.app_runner import AppRunnerRequest, SheetStoreAppRunnerSource
+from llmstack.app_store.apis import AppStoreAppViewSet
+from llmstack.apps.runner.app_runner import (
+    AppRunner,
+    AppRunnerRequest,
+    SheetStoreAppRunnerSource,
+)
 from llmstack.base.models import Profile
 from llmstack.common.utils.sslr._client import LLM
 from llmstack.jobs.adhoc import ProcessingJob
@@ -29,6 +34,54 @@ from llmstack.sheets.serializers import PromptlySheetSerializer
 from llmstack.sheets.yaml_loader import load_sheet_templates
 
 logger = logging.getLogger(__name__)
+
+SHEET_AGENT_CONFIG = {
+    "name": "Promptly Sheet Agent",
+    "slug": "sheet-agent",
+    "version": "0.0.1",
+    "description": "This agent is designed to work with Promptly Sheets. It helps fill cell values based on user provided prompts",
+    "categories": ["internal"],
+    "config": {
+        "model": "gpt-4o-mini",
+        "provider_config": {"provider": "openai", "model_name": "gpt-4o-mini"},
+        "system_message": "You are Promptly Sheets Agent a large language model. You perform tasks based on user instruction. Always follow the following Guidelines 1. Never wrap your response in ```json <CODE_TEXT>```. 2. Never ask user any follow up question.",
+        "max_steps": 10,
+        "split_tasks": True,
+        "chat_history_limit": 20,
+        "temperature": 0.7,
+        "seed": 1233,
+        "user_message": "{{agent_instructions}}",
+        "renderer_type": "Chat",
+        "stream": True,
+    },
+    "type_slug": "agent",
+    "processors": [
+        {
+            "id": "web_search1",
+            "name": "Web Search",
+            "input": {"query": ""},
+            "config": {"k": 5, "search_engine": "Google"},
+            "description": "Search the web for answers",
+            "provider_slug": "promptly",
+            "processor_slug": "web_search",
+            "output_template": {
+                "markdown": "{% for result in results %}\n{{result.text}}\n{{result.source}}\n\n{% endfor %}"
+            },
+        }
+    ],
+    "input_fields": [
+        {
+            "name": "agent_instructions",
+            "type": "multi",
+            "title": "Task",
+            "required": True,
+            "allowFiles": False,
+            "description": "What do you want the agent to perform?",
+            "placeholder": "Type in your message",
+        }
+    ],
+    "output_template": {"markdown": "{{agent.content}}", "jsonpath": "$.agent.content"},
+}
 
 
 def _get_sheet_csv(columns, cells, total_rows):
@@ -305,6 +358,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         response = app_runner.run_until_complete(
             AppRunnerRequest(client_request_id=str(uuid.uuid4()), session_id=session_id, input=input_data), loop
         )
+        loop.close()
         return response.data.model_dump()
 
     def _execute_processor_run_cell(self, request, provider_slug, processor_slug, sheet_id, input_data, config_data):
@@ -333,8 +387,6 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         return {"errors": "Processor run failed."}
 
     def _execute_app_run_cell(self, request, app_slug, input_data, sheet_id):
-        from llmstack.app_store.apis import AppStoreAppViewSet
-
         session_id = str(uuid.uuid4())
         app_runner = AppStoreAppViewSet().get_app_runner(
             session_id=session_id,
@@ -349,6 +401,32 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         )
 
         run_response = self._run_until_complete(app_runner, input_data, session_id)
+        if "output" in run_response and "output" in run_response["output"]:
+            return {"output": run_response.get("output").get("output")}
+        elif "errors" in run_response:
+            return {"errors": run_response.get("errors")}
+        return {"errors": "App run failed."}
+
+    def _execute_agent_run_cell(self, request, input_data, config_data, sheet_id):
+        session_id = str(uuid.uuid4())
+        app_run_user_profile = Profile.objects.get(user=request.user)
+        vendor_env = {
+            "provider_configs": app_run_user_profile.get_merged_provider_configs(),
+        }
+
+        app_runner = AppRunner(
+            session_id=session_id,
+            app_data=SHEET_AGENT_CONFIG,
+            source=SheetStoreAppRunnerSource(
+                request_user_email=request.user.email,
+                request_user=request.user,
+                sheet_id=sheet_id,
+                slug="sheet_agent",
+            ),
+            vendor_env=vendor_env,
+        )
+        run_response = self._run_until_complete(app_runner, input_data, session_id)
+
         if "output" in run_response and "output" in run_response["output"]:
             return {"output": run_response.get("output").get("output")}
         elif "errors" in run_response:

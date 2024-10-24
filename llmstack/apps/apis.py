@@ -800,29 +800,6 @@ class AppViewSet(viewsets.ViewSet):
         return DRFResponse(data=app_run_response.data.model_dump(), status=200)
 
 
-class PlatformAppsViewSet(viewsets.ViewSet):
-    def run(self, request, slug):
-        app_data = self.get(request, slug).data
-        app_data = {**app_data, **request.data.get("app_data", {})}
-
-        request.data["app_data"] = app_data
-        response = AppViewSet().run_platform_app_internal(
-            session_id=None, request_uuid=str(uuid.uuid4()), request=request
-        )
-
-        return DRFResponse(data=response, status=200)
-
-    def run_with_app_data(self, request):
-        app_data = request.data.get("app_data", {})
-        app_data["slug"] = "platform-app"
-        request.data["app_data"] = app_data
-        response = AppViewSet().run_platform_app_internal(
-            session_id=None, request_uuid=str(uuid.uuid4()), request=request
-        )
-
-        return DRFResponse(data=response, status=200)
-
-
 class PlaygroundViewSet(viewsets.ViewSet):
     async def get_app_runner_async(self, session_id, source, request_user, input_data, config_data):
         runner_user = request_user
