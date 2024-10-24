@@ -155,6 +155,24 @@ class DiscordAppRunnerSource(AppRunnerSource):
         return self.app_uuid
 
 
+class SheetProcessorRunnerSource(PlaygroundAppRunnerSource):
+    type: AppRunnerSourceType = AppRunnerSourceType.SHEET
+    sheet_id: str
+
+    @property
+    def id(self):
+        return f"{self.provider_slug}/{self.processor_slug}"
+
+
+class SheetStoreAppRunnerSource(StoreAppRunnerSource):
+    type: AppRunnerSourceType = AppRunnerSourceType.SHEET
+    sheet_id: str
+
+    @property
+    def id(self):
+        return self.slug
+
+
 class AppRunnerStreamingResponseType(StrEnum):
     ERRORS = "errors"
     OUTPUT = "output"

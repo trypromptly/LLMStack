@@ -1,3 +1,4 @@
+import asyncio
 import csv
 import io
 import json
@@ -13,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from rq import Callback
 
+from llmstack.apps.runner.app_runner import AppRunnerRequest, SheetStoreAppRunnerSource
 from llmstack.base.models import Profile
 from llmstack.common.utils.sslr._client import LLM
 from llmstack.jobs.adhoc import ProcessingJob
@@ -296,6 +298,62 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         )
         response["Content-Disposition"] = f'attachment; filename="sheet_{sheet_uuid}_{run_id}.csv"'
         return response
+
+    def _run_until_complete(self, app_runner, input_data, session_id):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        response = app_runner.run_until_complete(
+            AppRunnerRequest(client_request_id=str(uuid.uuid4()), session_id=session_id, input=input_data), loop
+        )
+        return response.data.model_dump()
+
+    def _execute_processor_run_cell(self, request, provider_slug, processor_slug, sheet_id, input_data, config_data):
+        from llmstack.apps.apis import PlaygroundViewSet
+        from llmstack.apps.runner.app_runner import SheetProcessorRunnerSource
+
+        session_id = str(uuid.uuid4())
+        app_runner = PlaygroundViewSet().get_app_runner(
+            session_id,
+            source=SheetProcessorRunnerSource(
+                request_user_email=request.user.email,
+                request_user=request.user,
+                provider_slug=provider_slug,
+                processor_slug=processor_slug,
+                sheet_id=sheet_id,
+            ),
+            request_user=request.user,
+            input_data=input_data,
+            config_data=config_data,
+        )
+        run_response = self._run_until_complete(app_runner, input_data, session_id)
+        if "output" in run_response and run_response.get("chunks", {}).get("processor"):
+            return {"output": run_response.get("chunks", {}).get("processor")}
+        elif "errors" in run_response:
+            return {"errors": run_response.get("errors")}
+        return {"errors": "Processor run failed."}
+
+    def _execute_app_run_cell(self, request, app_slug, input_data, sheet_id):
+        from llmstack.app_store.apis import AppStoreAppViewSet
+
+        session_id = str(uuid.uuid4())
+        app_runner = AppStoreAppViewSet().get_app_runner(
+            session_id=session_id,
+            app_slug=app_slug,
+            source=SheetStoreAppRunnerSource(
+                request_user_email=request.user.email,
+                request_user=request.user,
+                sheet_id=sheet_id,
+                slug=app_slug,
+            ),
+            request_user=request.user,
+        )
+
+        run_response = self._run_until_complete(app_runner, input_data, session_id)
+        if "output" in run_response and "output" in run_response["output"]:
+            return {"output": run_response.get("output").get("output")}
+        elif "errors" in run_response:
+            return {"errors": run_response.get("errors")}
+        return {"errors": "App run failed."}
 
     @action(detail=True, methods=["get"])
     def list_runs(self, request, sheet_uuid=None):
