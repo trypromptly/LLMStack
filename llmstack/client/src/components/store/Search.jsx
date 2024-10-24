@@ -204,7 +204,7 @@ export default function Search({ appSlug }) {
   const isMobile = useRecoilValue(isMobileState);
   const [categoryFilter, setCategoryFilter] = useState("recommended");
   const [queryTerm, setQueryTerm] = useState(
-    appSlug
+    appSlug && !isUUID(appSlug)
       ? `categories/recommended/${appSlug}/apps`
       : "categories/recommended/super-agent/apps",
   );
@@ -222,12 +222,6 @@ export default function Search({ appSlug }) {
     let listCategories = categoriesList;
 
     if (!appSlug) {
-      listCategories = categoriesList.filter(
-        (category) => !(category.slug === "recommended"),
-      );
-    }
-
-    if (appSlug && isUUID(appSlug)) {
       listCategories = categoriesList.filter(
         (category) => !(category.slug === "recommended"),
       );
