@@ -1361,6 +1361,7 @@ function Sheet(props) {
             minWidth: "120px",
             borderRadius: "4px !important",
             backgroundColor: showChat ? "#f0f0f0" : "inherit",
+            display: "none",
           }}
           startIcon={<AutoFixHighIcon />}
         >
