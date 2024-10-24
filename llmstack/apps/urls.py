@@ -29,7 +29,7 @@ urlpatterns = [
         "api/apps/<str:uid>/processors/<str:id>/run",
         AppViewSet.as_view({"post": "processor_run"}),
     ),
-    path("api/apps/<str:app_uuid>/run", AppViewSet.as_view({"post": "run"})),
+    path("api/apps/<str:uid>/run", AppViewSet.as_view({"post": "run"})),
     path(
         "api/apps/<str:uid>/versions",
         AppViewSet.as_view({"get": "versions"}),
@@ -61,10 +61,6 @@ urlpatterns = [
     path(
         "api/apps/<str:uid>/unpublish",
         AppViewSet.as_view({"post": "unpublish"}),
-    ),
-    path(
-        "api/apps/<str:uid>/testsets",
-        AppViewSet.as_view({"post": "testsets", "get": "testsets"}),
     ),
     path(
         "api/app/<str:published_uuid>",

@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import hmac
 import json
@@ -30,6 +31,7 @@ from llmstack.apps.integration_configs import (
     WebIntegrationConfig,
 )
 from llmstack.apps.runner.app_runner import (
+    APIAppRunnerSource,
     AppRunner,
     AppRunnerRequest,
     DiscordAppRunnerSource,
@@ -737,6 +739,65 @@ class AppViewSet(viewsets.ViewSet):
             preview,
             app_data,
         )
+
+    def _run_internal(self, request, app_uuid, input_data, source, app_data, session_id, stream):
+        app_runner = AppViewSet().get_app_runner(
+            session_id=session_id,
+            app_uuid=app_uuid,
+            source=source,
+            request_user=request.user if request.user.is_authenticated else None,
+            preview=False,
+            app_data=app_data,
+        )
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        response = app_runner.run_until_complete(
+            AppRunnerRequest(client_request_id=str(uuid.uuid4()), session_id=session_id, input=input_data), loop
+        )
+        return response
+
+    def run(self, request, uid):
+        if request.user.is_anonymous:
+            return DRFResponse(status=403)
+        app = get_object_or_404(App, uuid=uuid.UUID(uid))
+
+        if not app.has_read_permission(request.user):
+            return DRFResponse(status=403)
+
+        app_data_obj = AppData.objects.filter(app_uuid=app.uuid).order_by("-created_at").first()
+        if not app_data_obj:
+            return DRFResponse(status=404)
+
+        session_id = request.data.get("session_id", str(uuid.uuid4()))
+        input_data = request.data.get("input", {})
+
+        request_ip = request.headers.get("X-Forwarded-For", request.META.get("REMOTE_ADDR", "")).split(",")[
+            0
+        ].strip() or request.META.get("HTTP_X_REAL_IP", "")
+
+        request_location = request.headers.get("X-Client-Geo-Location", "")
+
+        if not request_location:
+            location = get_location(request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
+
+        app_run_response = self._run_internal(
+            request,
+            uid,
+            input_data,
+            APIAppRunnerSource(
+                request_ip=request_ip,
+                request_location=request_location,
+                request_user_agent=request.headers.get("User-Agent", ""),
+                request_content_type=request.headers.get("Content-Type", ""),
+                app_uuid=uid,
+                request_user_email=request.user.email,
+            ),
+            app_data_obj.data,
+            session_id,
+            False,
+        )
+        return DRFResponse(data=app_run_response.data.model_dump(), status=200)
 
 
 class PlatformAppsViewSet(viewsets.ViewSet):
