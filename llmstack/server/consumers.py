@@ -112,7 +112,7 @@ class AppConsumer(AsyncWebsocketConsumer):
             location = get_location(request_ip)
             request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
 
-        request_user_email = self._user.email if self._user else None
+        request_user_email = self._user.email if self._user and not self._user.is_anonymous else None
 
         self._source = WebAppRunnerSource(
             id=self._session_id,

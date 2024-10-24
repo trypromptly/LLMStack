@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
-        from django.contrib.auth.models import User
+        from django.contrib.auth.models import AnonymousUser, User
 
         if isinstance(o, uuid.UUID):
             return str(o)
@@ -27,6 +27,8 @@ class JSONEncoder(json.JSONEncoder):
             return o.decode("utf-8")
         elif isinstance(o, BaseModel):
             return o.model_dump()
+        elif isinstance(o, AnonymousUser):
+            return "AnonymousUser"
 
         return super().default(o)
 
