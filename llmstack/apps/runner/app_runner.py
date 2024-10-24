@@ -166,6 +166,9 @@ class SheetProcessorRunnerSource(PlaygroundAppRunnerSource):
 
 class SheetStoreAppRunnerSource(StoreAppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.SHEET
+    request_ip: str = ""
+    request_location: str = ""
+    request_user_agent: str = "Promptly"
     sheet_id: str
 
     @property
@@ -397,16 +400,17 @@ class AppRunner:
 
         # Send the final output
         if "chunks" in output:
+            # Persist bookkeeping data
+            bookkeeping_data = self._coordinator.bookkeeping_data().get().get()
+            self._source.effects(request_id, self._session_id, output, bookkeeping_data)
+
+            # Send the final output
             yield AppRunnerStreamingResponse(
                 id=request_id,
                 client_request_id=request.client_request_id,
                 type=AppRunnerStreamingResponseType.OUTPUT,
                 data=AppRunnerResponseOutputData(output=output.get("output", {}), chunks=output.get("chunks", {})),
             )
-
-            # Persist bookkeeping data
-            bookkeeping_data = self._coordinator.bookkeeping_data().get().get()
-            self._source.effects(request_id, self._session_id, output, bookkeeping_data)
 
     def run_until_complete(self, request: AppRunnerRequest, event_loop):
         for response in iter_over_async(self.run(request), event_loop):
