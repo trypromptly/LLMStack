@@ -172,6 +172,9 @@ class WeaviateVectorStore:
         self._client = self._weaviate_client.collections.get(self._index_name)
         return self._client
 
+    def close_client(self):
+        self._weaviate_client.close()
+
     def get_nodes(self, node_ids: Optional[List[str]] = None, filters: Optional[MetadataFilters] = None):
         result = []
         for node_id in node_ids:
@@ -352,6 +355,9 @@ class Weaviate(BaseDestination):
         # Create collection if it doesn't exist
         if kwargs.get("create_collection", True):
             self.create_collection()
+
+    def close_client(self):
+        self._client.close_client()
 
     def add(self, document: DataDocument) -> DataDocument:
         return self._client.add(document.nodes, datasource_uuid=document.datasource_uuid, source=document.name)

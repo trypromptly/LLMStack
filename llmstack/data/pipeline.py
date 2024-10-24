@@ -43,6 +43,10 @@ class DataIngestionPipeline:
             self._destination = self._destination_cls(**self.datasource.pipeline_obj.destination_data)
             self._destination.initialize_client(datasource=self.datasource, create_collection=True)
 
+    def __del__(self):
+        if self._destination:
+            self._destination.close_client()
+
     def process(self, document: DataDocument) -> DataDocument:
         document = self._source_cls.process_document(document)
         ingestion_pipeline = IngestionPipeline(transformations=self._transformations)
@@ -86,6 +90,10 @@ class DataQueryPipeline:
                 **{"datasource": self.datasource},
             }
             self._embedding_generator = self.datasource.pipeline_obj.embedding_cls(**embedding_data)
+
+    def __del__(self):
+        if self._destination:
+            self._destination.close_client()
 
     def search(self, query: str, use_hybrid_search=True, **kwargs) -> List[dict]:
         content_key = self.datasource.destination_text_content_key

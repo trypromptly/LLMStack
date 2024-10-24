@@ -26,6 +26,12 @@ class BaseDestination(BaseModel):
     def get_ui_schema(cls):
         return get_ui_schema_from_json_schema(cls.get_schema())
 
+    def initialize_client(self, *args, **kwargs):
+        pass
+
+    def close_client(self):
+        pass
+
     def add(self, document: DataDocument) -> DataDocument:
         raise NotImplementedError
 

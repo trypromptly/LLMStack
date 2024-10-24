@@ -32,6 +32,9 @@ class PromptlyVectorStore(BaseDestination):
             raise ValueError(f"store_provider_slug {self.store_provider_slug} is not supported")
         self._store.initialize_client(*args, **kwargs)
 
+    def close_client(self):
+        self._store.close_client()
+
     def add(self, document):
         return self._store.add(document)
 
