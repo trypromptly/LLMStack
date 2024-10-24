@@ -733,6 +733,9 @@ class AbstractProfile(models.Model):
     @staticmethod
     @cache
     def user_in_org_cached(organization, user):
+        if not organization or not user:
+            return False
+
         profile = Profile.objects.get(user=user)
 
         if not profile:
