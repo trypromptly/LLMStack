@@ -17,6 +17,23 @@ from llmstack.processors.providers.processors import ProcessorFactory
 logger = logging.getLogger(__name__)
 
 
+def iter_over_async(ait, loop):
+    ait = ait.__aiter__()
+
+    async def get_next():
+        try:
+            obj = await ait.__anext__()
+            return False, obj
+        except StopAsyncIteration:
+            return True, None
+
+    while True:
+        done, obj = loop.run_until_complete(get_next())
+        if done:
+            break
+        yield obj
+
+
 class AppRunnerSourceType(str, Enum):
     PLAYGROUND = "playground"
     PLATFORM = "platform"
@@ -24,7 +41,9 @@ class AppRunnerSourceType(str, Enum):
     SLACK = "slack"
     TWILIO = "twilio"
     DISCORD = "discord"
+    SHEET = "sheet"
     WEB = "web"
+    API = "api"
 
     def __str__(self):
         return str(self.value)
@@ -72,6 +91,10 @@ class WebAppRunnerSource(AppRunnerSource):
     @property
     def id(self):
         return self.app_uuid
+
+
+class APIAppRunnerSource(WebAppRunnerSource):
+    type: AppRunnerSourceType = AppRunnerSourceType.API
 
 
 class PlaygroundAppRunnerSource(AppRunnerSource):
@@ -366,3 +389,11 @@ class AppRunner:
             # Persist bookkeeping data
             bookkeeping_data = self._coordinator.bookkeeping_data().get().get()
             self._source.effects(request_id, self._session_id, output, bookkeeping_data)
+
+    def run_until_complete(self, request: AppRunnerRequest, event_loop):
+        for response in iter_over_async(self.run(request), event_loop):
+            if isinstance(response.data, AppRunnerResponseErrorsData) or isinstance(
+                response.data, AppRunnerResponseOutputData
+            ):
+                break
+        return response
