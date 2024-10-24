@@ -15,7 +15,9 @@ import {
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 import { useRecoilValue } from "recoil";
+import { useLocation } from "react-router-dom";
 import { storeCategoriesListState, isMobileState } from "../../data/atoms";
+import { isUUID } from "../../data/utils";
 import LayoutRenderer from "../apps/renderer/LayoutRenderer";
 import ShareModal from "./ShareModal";
 import promptlyIcon from "../../assets/promptly-icon.png";
@@ -54,6 +56,7 @@ function StoreAppHeader({
   const [expanded, setExpanded] = useState(!shareHeader && !isMobile);
   const [showShareModal, setShowShareModal] = useState(false);
   const storeCategories = useRecoilValue(storeCategoriesListState);
+  const location = useLocation();
 
   const findCategory = useCallback(
     (slug) => {
@@ -213,10 +216,15 @@ function StoreAppHeader({
                     </Button>
                   ))}
               </Box>
-              <span style={{ color: "gray" }}>by&nbsp;</span>
-              <Typography color="corral.main" sx={{ display: "inline" }}>
-                {username}
-              </Typography>
+              {isUUID(location.pathname.split("/")[2]) && (
+                <>
+                  <span style={{ color: "gray" }}>by&nbsp;</span>
+
+                  <Typography color="corral.main" sx={{ display: "inline" }}>
+                    {username}
+                  </Typography>
+                </>
+              )}
               <Box sx={{ mt: 1, mb: 1, ml: -0.4 }}>
                 {categories &&
                   categories.map((category) => (
