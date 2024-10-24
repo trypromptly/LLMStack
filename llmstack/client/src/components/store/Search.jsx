@@ -18,6 +18,7 @@ import {
   fetchAppsFromStore,
   profileFlagsSelector,
 } from "../../data/atoms";
+import { isUUID } from "../../data/utils";
 import promptlyIcon from "../../assets/promptly-icon.png";
 import llmstackIcon from "../../assets/llmstack-icon.png";
 
@@ -193,12 +194,6 @@ const AppList = ({ queryTerm }) => {
     </Box>
   );
 };
-
-function isUUID(str) {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[14][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-  return uuidRegex.test(str);
-}
 
 export default function Search({ appSlug }) {
   const isMobile = useRecoilValue(isMobileState);

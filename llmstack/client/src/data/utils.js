@@ -254,3 +254,9 @@ export function getTemplateKeysFromObject(obj) {
   extractKeys(obj);
   return Array.from(templateKeys);
 }
+
+export function isUUID(str) {
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[14][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  return uuidRegex.test(str);
+}
