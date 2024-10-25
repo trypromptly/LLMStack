@@ -14,7 +14,7 @@ from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import ValidationError
 from django.http import StreamingHttpResponse
-from django.shortcuts import aget_object_or_404, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.test import RequestFactory
 from django.views.decorators.clickjacking import xframe_options_exempt
 from drf_yaml.parsers import YAMLParser
@@ -693,33 +693,34 @@ class AppViewSet(viewsets.ViewSet):
         source,
         request_user,
         preview=False,
-        app_data=None,
     ):
         runner_user = request_user
-        if not app_data:
-            app = await aget_object_or_404(App, uuid=uuid.UUID(app_uuid))
-            app_data_obj = (
-                await AppData.objects.filter(
-                    app_uuid=app.uuid,
-                    is_draft=preview,
-                )
-                .order_by("-created_at")
-                .afirst()
+        app = await App.objects.select_related("owner").aget(uuid=uuid.UUID(app_uuid))
+        app_data_obj = (
+            await AppData.objects.filter(
+                app_uuid=app.uuid,
+                is_draft=preview,
             )
-            if not app_data_obj and preview:
-                app_data_obj = await AppData.objects.filter(app_uuid=app.uuid).order_by("-created_at").afirst()
+            .order_by("-created_at")
+            .afirst()
+        )
+        if not app_data_obj and preview:
+            app_data_obj = await AppData.objects.filter(app_uuid=app.uuid).order_by("-created_at").afirst()
 
-            if not app_data_obj:
-                raise Exception("App data not found")
-            app_data = app_data_obj.data
+        if not app_data_obj:
+            raise Exception("App data not found")
+        app_data = app_data_obj.data
+
+        # We will always use app owner credentials for running the app
+        credentials_user = app.owner
 
         if runner_user is None or runner_user.is_anonymous:
-            app = await App.objects.select_related("owner").aget(uuid=uuid.UUID(app_uuid))
             runner_user = app.owner
 
-        app_run_user_profile = await Profile.objects.aget(user=runner_user)
+        credentials_user_profile = await Profile.objects.aget(user=credentials_user)
         vendor_env = {
-            "provider_configs": await database_sync_to_async(app_run_user_profile.get_merged_provider_configs)(),
+            "provider_configs": await database_sync_to_async(credentials_user_profile.get_merged_provider_configs)(),
+            "connections": credentials_user_profile.connections,
         }
 
         return AppRunner(
@@ -809,6 +810,7 @@ class PlaygroundViewSet(viewsets.ViewSet):
 
         vendor_env = {
             "provider_configs": await database_sync_to_async(app_run_user_profile.get_merged_provider_configs)(),
+            "connections": app_run_user_profile.connections,
         }
 
         processor_cls = ProcessorFactory.get_processor(processor_slug=processor_slug, provider_slug=provider_slug)

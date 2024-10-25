@@ -412,6 +412,7 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         app_run_user_profile = Profile.objects.get(user=request.user)
         vendor_env = {
             "provider_configs": app_run_user_profile.get_merged_provider_configs(),
+            "connections": app_run_user_profile.connections,
         }
 
         app_runner = AppRunner(

@@ -253,6 +253,7 @@ class AppStoreAppViewSet(viewsets.ModelViewSet):
         app_run_user_profile = await Profile.objects.aget(user=runner_user)
         vendor_env = {
             "provider_configs": await database_sync_to_async(app_run_user_profile.get_merged_provider_configs)(),
+            "connections": app_run_user_profile.connections,
         }
         return AppRunner(
             session_id=session_id,
