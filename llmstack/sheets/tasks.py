@@ -110,9 +110,6 @@ def _execute_cell(
                         processor_run_response["output"]
                     )
                 ]
-                if len(jsonpath_output) == 1:
-                    jsonpath_output = jsonpath_output[0]
-
                 cell_output = jsonpath_output[0] if len(jsonpath_output) == 1 else jsonpath_output
             elif processor_run_response.get("errors"):
                 cell_error = str(processor_run_response.get("errors"))
@@ -125,7 +122,7 @@ def _execute_cell(
             )
             if app_run_response.get("output"):
                 cell_output = app_run_response.get("output", "")
-            elif processor_run_response.get("errors"):
+            elif app_run_response.get("errors"):
                 cell_error = str(app_run_response.get("errors"))
         elif formula_type == SheetFormulaType.AGENT_RUN:
             agent_run_response = PromptlySheetViewSet()._execute_agent_run_cell(
@@ -136,7 +133,7 @@ def _execute_cell(
             )
             if agent_run_response.get("output"):
                 cell_output = agent_run_response.get("output", "")
-            elif processor_run_response.get("errors"):
+            elif agent_run_response.get("errors"):
                 cell_error = str(agent_run_response.get("errors"))
     except Exception as e:
         logger.exception("Error in running formula")
