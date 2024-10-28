@@ -345,7 +345,10 @@ export function AppRunHistoryTimeline(props) {
         </Tooltip>
       );
     } else if (column.id === "request_user_email") {
-      if (row.platform_data?.slack?.user_email) {
+      if (
+        row.platform_data?.slack?.user_email ||
+        row.platform_data?.type === "slack"
+      ) {
         return (
           <Box>
             <SvgIcon
@@ -357,10 +360,15 @@ export function AppRunHistoryTimeline(props) {
                 verticalAlign: "middle",
               }}
             />
-            {row.platform_data?.slack?.user_email}
+            {row.platform_data?.slack?.user_email ||
+              row.platform_data?.request_user_email ||
+              "Anonymous"}
           </Box>
         );
-      } else if (row.platform_data?.discord?.global_name) {
+      } else if (
+        row.platform_data?.discord?.global_name ||
+        row.platform_data?.type === "discord"
+      ) {
         return (
           <Box>
             <SvgIcon
@@ -372,10 +380,13 @@ export function AppRunHistoryTimeline(props) {
                 verticalAlign: "middle",
               }}
             />
-            {row.platform_data?.discord?.global_name}
+            {row.platform_data?.discord?.global_name || "Anonymous"}
           </Box>
         );
-      } else if (row.platform_data?.twilio?.requestor) {
+      } else if (
+        row.platform_data?.twilio?.requestor ||
+        row.platform_data?.type === "twilio"
+      ) {
         return (
           <Box>
             <SvgIcon
@@ -387,7 +398,7 @@ export function AppRunHistoryTimeline(props) {
                 verticalAlign: "middle",
               }}
             />
-            {row.platform_data?.twilio?.requestor}
+            {row.platform_data?.twilio?.requestor || "Anonymous"}
           </Box>
         );
       } else if (

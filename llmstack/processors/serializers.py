@@ -156,6 +156,13 @@ class HistorySerializer(serializers.ModelSerializer):
                         return {"name": "Playground", "path": "/playground"}
                 except Exception:
                     pass
+
+        if obj.platform_data.get("type") == "playground":
+            return {"name": "Playground", "path": "/playground"}
+
+        if obj.platform_data.get("type") == "sheet":
+            return {"name": "Sheet", "path": f"/sheets/{obj.platform_data.get('sheet_id', '')}"}
+
         return {"name": "Deleted App", "path": "/"}
 
     def get_processor_runs(self, obj):
