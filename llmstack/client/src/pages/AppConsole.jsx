@@ -4,7 +4,6 @@ import PreviewIcon from "@mui/icons-material/Preview";
 import PublishedWithChangesIcon from "@mui/icons-material/PublishedWithChanges";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import UnpublishedIcon from "@mui/icons-material/Unpublished";
-import StorefrontIcon from "@mui/icons-material/Storefront";
 import {
   Alert,
   AlertTitle,
@@ -183,7 +182,6 @@ export default function AppConsolePage(props) {
   const [isPublished, setIsPublished] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showUnpublishModal, setShowUnpublishModal] = useState(false);
-  const [showStoreListingModal, setShowStoreListingModal] = useState(false);
   const [processors, setProcessors] = useState([]);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
@@ -442,37 +440,6 @@ export default function AppConsolePage(props) {
                         </Button>
                       </span>
                     </Tooltip>
-                    {process.env.REACT_APP_ENABLE_APP_STORE && (
-                      <Tooltip
-                        arrow={true}
-                        title={
-                          !isPublished
-                            ? "Please publish the app before submitting to Promptly App Store"
-                            : !profile.username
-                              ? "Please set your username in settings to submit to Promptly App Store"
-                              : !app?.store_uuid
-                                ? "Submit to Promptly App Store to make it available to other users"
-                                : "Edit Store Listing"
-                        }
-                      >
-                        <span>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            style={{ textTransform: "none" }}
-                            disabled={!isPublished || !profile.username}
-                            startIcon={<StorefrontIcon />}
-                            onClick={() =>
-                              setShowStoreListingModal(!showStoreListingModal)
-                            }
-                          >
-                            {app?.store_uuid
-                              ? "Edit Store Listing"
-                              : "List on App Store"}
-                          </Button>
-                        </span>
-                      </Tooltip>
-                    )}
                   </>
                 )}
               </Stack>
@@ -618,13 +585,6 @@ export default function AppConsolePage(props) {
           </Box>
         </Grid>
       </Grid>
-      {showStoreListingModal && (
-        <StoreListingModal
-          app={app}
-          open={showStoreListingModal}
-          handleCloseCb={() => setShowStoreListingModal(false)}
-        />
-      )}
     </Box>
   );
 }
