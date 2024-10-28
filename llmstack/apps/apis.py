@@ -13,7 +13,6 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import ValidationError
-from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.test import RequestFactory
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -732,14 +731,7 @@ class AppViewSet(viewsets.ViewSet):
         )
 
     def get_app_runner(self, session_id, app_uuid, source, request_user, preview=False, app_data=None):
-        return async_to_sync(self.get_app_runner_async)(
-            session_id,
-            app_uuid,
-            source,
-            request_user,
-            preview,
-            app_data,
-        )
+        return async_to_sync(self.get_app_runner_async)(session_id, app_uuid, source, request_user, preview)
 
     def _run_internal(self, request, app_uuid, input_data, source, app_data, session_id, stream):
         app_runner = AppViewSet().get_app_runner(
@@ -853,29 +845,8 @@ class PlaygroundViewSet(viewsets.ViewSet):
 
 
 class APIViewSet(viewsets.ViewSet):
-    def _run_sync(self, app_runner, request: AppRunnerRequest):
-        import asyncio
-
-        """
-        Synchronous generator wrapper around the async 'run' method.
-        It runs the 'run' method in an event loop and yields results synchronously.
-        """
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        async_gen = app_runner.run(request)
-
-        # Synchronous generator to wrap the async generator
-        while True:
-            try:
-                # Run until the next item is available from the async generator
-                result = loop.run_until_complete(async_gen.__anext__())
-                yield result
-            except StopAsyncIteration:
-                # End of the async generator
-                break
-
-    def run_internal(self, request, app_uuid, input_data, source, app_data, session_id, stream):
+    @staticmethod
+    def run_internal(request, app_uuid, input_data, source, app_data, session_id, stream=False):
         app_runner = AppViewSet().get_app_runner(
             session_id=session_id,
             app_uuid=app_uuid,
@@ -884,24 +855,12 @@ class APIViewSet(viewsets.ViewSet):
             preview=False,
             app_data=app_data,
         )
-        response_iterator = self._run_sync(
-            app_runner,
-            AppRunnerRequest(
-                client_request_id=str(uuid.uuid4()),
-                session_id=session_id,
-                input=input_data,
-            ),
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        app_run_response = app_runner.run_until_complete(
+            AppRunnerRequest(client_request_id=str(uuid.uuid4()), session_id=session_id, input=input_data), loop
         )
-
-        response_iterator_json = map(lambda x: x.model_dump(), response_iterator)
-
-        if stream:
-            return StreamingHttpResponse(response_iterator_json, content_type="application/json")
-
-        for response in response_iterator_json:
-            pass
-
-        return DRFResponse(data=response, status=200)
+        return DRFResponse(data=app_run_response.data.model_dump(), status=200)
 
     def run(self, request, uid):
         if request.user.is_anonymous:
@@ -1102,8 +1061,8 @@ class SlackViewSet(viewsets.ViewSet):
                 app_data=app_data,
             )
             response_text = (
-                response.data.get("data", {}).get("output", {}).get("output")
-                or (" ".join(response.data.get("data", {}).get("output", {}).get("errors", [])) or "An error occurred.")
+                response.data.get("output", {}).get("output")
+                or (" ".join(response.data.get("output", {}).get("errors", [])) or "An error occurred.")
                 if response.status_code == 200
                 else "An error occurred."
             )
@@ -1252,8 +1211,8 @@ class TwilioSMSViewSet(viewsets.ViewSet):
             reply_to = input_data.get("_request", {}).get("From")
             reply_from = input_data.get("_request", {}).get("To")
             response_text = (
-                response.data.get("data", {}).get("output", {}).get("output")
-                or (" ".join(response.data.get("data", {}).get("output", {}).get("errors", [])) or "An error occurred.")
+                response.data.get("output", {}).get("output")
+                or (" ".join(response.data.get("output", {}).get("errors", [])) or "An error occurred.")
                 if response.status_code == 200
                 else "An error occurred."
             )
