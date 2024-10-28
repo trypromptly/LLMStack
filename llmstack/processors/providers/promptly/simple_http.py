@@ -157,6 +157,9 @@ class SimpleHTTPProcessor(
                 timeout=(self._config.connect_timeout, self._config.read_timeout),
             )
         elif self._config.method == HTTPMethod.POST:
+            if headers.get("Content-Type", "").startswith("application/json") and isinstance(body, dict):
+                body = json.dumps(body)
+
             response = prequests.post(
                 self._input.url,
                 params=query_params,
