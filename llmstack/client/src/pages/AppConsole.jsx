@@ -44,7 +44,6 @@ import { AppWebConfigEditor } from "../components/apps/AppWebConfigEditor";
 import { useValidationErrorsForAppConsole } from "../data/appValidation";
 import { profileSelector } from "../data/atoms";
 import { axios } from "../data/axios";
-import StoreListingModal from "../components/store/StoreListingModal";
 import {
   defaultChatLayout,
   defaultWorkflowLayout,
