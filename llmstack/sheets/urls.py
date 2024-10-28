@@ -27,6 +27,10 @@ urlpatterns = [
         PromptlySheetViewSet.as_view({"get": "download"}),
     ),
     path(
+        "api/sheets/<str:sheet_uuid>/upload_assets",
+        PromptlySheetViewSet.as_view({"post": "upload_sheet_assets"}),
+    ),
+    path(
         "api/sheets/<str:sheet_uuid>/runs/<str:run_id>/download",
         PromptlySheetViewSet.as_view({"get": "download_run"}),
     ),

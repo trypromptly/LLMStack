@@ -55,6 +55,7 @@ export const SHEET_CELL_TYPE_TAGS = 3;
 export const SHEET_CELL_TYPE_BOOLEAN = 4;
 export const SHEET_CELL_TYPE_IMAGE = 5;
 export const SHEET_CELL_TYPE_OBJECT = 6;
+export const SHEET_CELL_TYPE_FILE = 7;
 
 export const SHEET_CELL_STATUS_READY = 0;
 export const SHEET_CELL_STATUS_RUNNING = 1;
@@ -92,6 +93,33 @@ export const sheetFormulaTypes = {
     order: 4,
   },
 };
+
+function memoize(func) {
+  const cache = {};
+  return function (...args) {
+    const key = JSON.stringify(args);
+    if (cache[key]) {
+      return cache[key];
+    }
+    const result = func.apply(this, args);
+    cache[key] = result;
+    return result;
+  };
+}
+
+function objrefURL(objref) {
+  if (!objref) {
+    return "";
+  }
+  const objrefParts = objref.split("/");
+  if (objrefParts.length < 4) {
+    return "";
+  }
+  const objrefId = objrefParts[3];
+  return `${window.location.origin}/api/sheets/${objrefId}`;
+}
+
+const memoizedObjrefURL = memoize(objrefURL);
 
 export const sheetCellTypes = {
   [SHEET_CELL_TYPE_TEXT]: {
@@ -324,6 +352,39 @@ export const sheetCellTypes = {
     },
     getCellValue: (cell) => {
       return cell.data ? JSON.parse(cell.data) : {};
+    },
+  },
+  [SHEET_CELL_TYPE_FILE]: {
+    label: "File",
+    value: "file",
+    description: "File Object",
+    kind: GridCellKind.Uri,
+    getDataGridCell: (cell, column) => {
+      if (!cell) {
+        return {
+          kind: GridCellKind.Uri,
+          data: "",
+          displayData: "",
+          readonly: column?.formula?.type > 0 || false,
+          allowOverlay: true,
+          allowWrapping: true,
+          hoverEffect: true,
+        };
+      }
+
+      let fileURL = memoizedObjrefURL(cell.value);
+      return {
+        kind: GridCellKind.Uri,
+        data: cell.value || "",
+        displayData: fileURL,
+        readonly: true,
+        allowOverlay: true,
+        allowWrapping: true,
+        hoverEffect: true,
+      };
+    },
+    getCellValue: (cell) => {
+      return cell.data;
     },
   },
 };
@@ -1212,9 +1273,46 @@ function Sheet(props) {
         setSheetRunning={setSheetRunning}
         selectedRows={selectedRows}
         deleteSelectedRows={deleteSelectedRows}
+        onFileAttach={({ files, startCell }) => {
+          if (files) {
+            const cellColumnLetter = startCell[0];
+            let cellRow = Number(startCell[1]);
+            let lastGridCell = null;
+            for (let i = 0; i < files.length; i++) {
+              const fileData = files[i];
+              const cellId = `${cellColumnLetter}${cellRow + i}`;
+              const gridCell = cellIdToGridCell(cellId, columns);
+              lastGridCell = gridCell;
+              const cell = {
+                id: cellId,
+                value: fileData?.data,
+              };
+              const column = columns[gridCell[0]];
+              if (gridCell) {
+                setCells((cells) => ({
+                  ...cells,
+                  [cell.id]: {
+                    ...cells[cell.id],
+                    row: gridCell[1] + 1,
+                    col_letter: column.col_letter,
+                    value: cell.value,
+                    error: cells[cell.id]?.error || null,
+                    status: cell.value ? 0 : cells[cell.id]?.status || 0,
+                  },
+                }));
+                updateUserChanges("cells", cellId, cell);
+                sheetRef.current?.updateCells([{ cell: gridCell }]);
+              }
+              if (lastGridCell) {
+                sheetRef.current?.scrollTo(lastGridCell[0], lastGridCell[1]);
+              }
+            }
+          }
+        }}
         runId={runId}
         lastRunAt={lastRunAt}
         selectedGrid={selectedGrid}
+        columns={columns}
       />
       <Box
         sx={{

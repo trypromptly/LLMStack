@@ -26,6 +26,7 @@ from llmstack.jobs.adhoc import ProcessingJob
 from llmstack.jobs.models import RepeatableJob
 from llmstack.sheets.models import (
     PromptlySheet,
+    PromptlySheetFiles,
     PromptlySheetRunEntry,
     SheetCell,
     SheetColumn,
@@ -258,8 +259,10 @@ class PromptlySheetViewSet(viewsets.ViewSet):
 
         if "cells" in request.data:
             cell_data = request.data.get("cells", {}).values()
+            cells = []
+            for cell in cell_data:
+                cells.append(SheetCell(**cell))
 
-            cells = [SheetCell(**cell_data) for cell_data in cell_data]
             sheet.save(cells=cells, update_fields=["data"])
 
         return DRFResponse(PromptlySheetSerializer(instance=sheet).data)
@@ -433,6 +436,37 @@ class PromptlySheetViewSet(viewsets.ViewSet):
         elif "errors" in run_response:
             return {"errors": run_response.get("errors")}
         return {"errors": "App run failed."}
+
+    def upload_sheet_assets(self, request, sheet_uuid=None):
+        profile = Profile.objects.get(user=request.user)
+        PromptlySheet.objects.get(uuid=sheet_uuid, profile_uuid=profile.uuid)
+        objrefs = []
+        files = request.data.get("files", [])
+        for file in files:
+            file_name = file.get("file_name")
+            mime_type = file.get("mime_type")
+            data = file.get("data")
+            if not file_name or not data:
+                objrefs.append(None)
+            asset = PromptlySheetFiles.create_from_data_uri(
+                data_uri=data,
+                ref_id=sheet_uuid,
+                metadata={
+                    "file_name": file_name,
+                    "mime_type": mime_type,
+                    "username": request.user.email,
+                    "sheet_uuid": sheet_uuid,
+                },
+            )
+            objrefs.append(
+                {
+                    "data": f"objref://sheets/{asset.uuid}",
+                    "file_name": file_name,
+                    "mime_type": mime_type,
+                }
+            )
+
+        return DRFResponse(data=objrefs)
 
     @action(detail=True, methods=["get"])
     def list_runs(self, request, sheet_uuid=None):

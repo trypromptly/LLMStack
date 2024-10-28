@@ -23,10 +23,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import UploadIcon from "@mui/icons-material/Upload";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
 import moment from "moment";
 import { axios } from "../../data/axios";
+import UploadFileModal from "./UploadFileModal";
 import PreviousRunsModal from "./PreviousRunsModal";
 import ScheduleRunsModal from "./ScheduleRunsModal";
 import SheetDeleteDialog from "./SheetDeleteDialog";
@@ -47,8 +49,10 @@ const SheetHeader = ({
   setSheetRunning,
   selectedRows,
   deleteSelectedRows,
+  onFileAttach,
   lastRunAt = null,
   selectedGrid = [],
+  columns = [],
 }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -56,11 +60,28 @@ const SheetHeader = ({
   const [isPreviousRunsModalOpen, setIsPreviousRunsModalOpen] = useState(false);
   const [isScheduleRunsModalOpen, setIsScheduleRunsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAttachFileModalOpen, setIsAttachFileModalOpen] = useState(false);
   const setSheets = useSetRecoilState(sheetsListSelector);
   const [isSaving, setIsSaving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isCommandPressed, setIsCommandPressed] = useState(false);
   const [isExportSchemaModalOpen, setIsExportSchemaModalOpen] = useState(false);
+  const [isFileColumnGridSelected, setIsFileColumnGridSelected] =
+    useState(false);
+
+  useEffect(() => {
+    const fileColumnsLetters = columns
+      .filter((column) => column.cell_type === 7)
+      .map((column) => column.col_letter);
+    let fileColumnSelected = false;
+    for (let i = 0; i < selectedGrid.length; i++) {
+      if (fileColumnsLetters.includes(selectedGrid[i][0])) {
+        fileColumnSelected = true;
+        break;
+      }
+    }
+    setIsFileColumnGridSelected(fileColumnSelected);
+  }, [columns, selectedGrid]);
 
   const getYamlSchemaFromSheet = useCallback(() => {
     let schema = {};
@@ -323,6 +344,31 @@ const SheetHeader = ({
                 </span>
               </Tooltip>
             )}
+            {!sheetRunning && isFileColumnGridSelected && (
+              <div>
+                <Tooltip title="Upload File">
+                  <span>
+                    <Button
+                      onClick={() => {
+                        setIsAttachFileModalOpen(true);
+                      }}
+                      variant="contained"
+                      size="medium"
+                      sx={{
+                        bgcolor: "gray.main",
+                        "&:hover": { bgcolor: "white" },
+                        color: "#999",
+                        minWidth: "40px",
+                        padding: "5px",
+                        borderRadius: "4px !important",
+                      }}
+                    >
+                      <AttachFileIcon />
+                    </Button>
+                  </span>
+                </Tooltip>
+              </div>
+            )}
             {!sheetRunning && (
               <div>
                 <Tooltip title="Download CSV">
@@ -476,6 +522,18 @@ const SheetHeader = ({
           open={isScheduleRunsModalOpen}
           onClose={() => setIsScheduleRunsModalOpen(false)}
           sheetUuid={sheet.uuid}
+        />
+      )}
+      {isAttachFileModalOpen && (
+        <UploadFileModal
+          open={isAttachFileModalOpen}
+          onClose={({ files, startCell }) => {
+            setIsAttachFileModalOpen(false);
+            onFileAttach({ files, startCell });
+          }}
+          sheetUuid={sheet.uuid}
+          sheet={sheet}
+          selectedGrid={selectedGrid}
         />
       )}
       <SheetDeleteDialog

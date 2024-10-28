@@ -25,6 +25,7 @@ class SheetCellType(int, Enum):
     BOOLEAN = 4
     IMAGE = 5
     OBJECT = 6
+    FILE = 7
 
     def __str__(self):
         return str(self.value)

@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 
 from llmstack.apps.models import AppDataAssets, AppSessionFiles
+from llmstack.sheets.models import PromptlySheetFiles
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +114,8 @@ class AssetViewSet(viewsets.ModelViewSet):
                 model_cls = AppSessionFiles
             elif category == "appdata":
                 model_cls = AppDataAssets
+            elif category == "sheets":
+                model_cls = PromptlySheetFiles
 
             if not model_cls:
                 logger.error(f"Invalid category for asset model: {category}")
