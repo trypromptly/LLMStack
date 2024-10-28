@@ -932,8 +932,8 @@ class DiscordViewSet(viewsets.ViewSet):
                 stream=stream,
             )
             response_text = (
-                response.data.get("data", {}).get("output", {}).get("output")
-                or (" ".join(response.data.get("data", {}).get("output", {}).get("errors", [])) or "An error occurred.")
+                response.data.get("output", {}).get("output")
+                or (" ".join(response.data.get("output", {}).get("errors", [])) or "An error occurred.")
                 if response.status_code == 200
                 else "An error occurred."
             )
