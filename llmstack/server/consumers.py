@@ -20,7 +20,6 @@ from llmstack.apps.runner.app_runner import (
     WebAppRunnerSource,
 )
 from llmstack.assets.utils import get_asset_by_objref
-from llmstack.common.utils.utils import get_location
 from llmstack.connections.actors import ConnectionActivationActor
 from llmstack.connections.models import (
     Connection,
@@ -108,10 +107,6 @@ class AppConsumer(AsyncWebsocketConsumer):
             0
         ].strip() or headers.get("X-Real-IP", "")
         request_location = headers.get("X-Client-Geo-Location", "")
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
-
         request_user_email = self._user.email if self._user and not self._user.is_anonymous else None
 
         self._source = WebAppRunnerSource(
@@ -504,10 +499,6 @@ class PlaygroundConsumer(AsyncWebsocketConsumer):
             0
         ].strip() or headers.get("X-Real-IP", "")
         request_location = headers.get("X-Client-Geo-Location", "")
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
-
         request_user_email = self.scope.get("user", None).email if self.scope.get("user", None) else None
 
         self._source = PlaygroundAppRunnerSource(
@@ -584,10 +575,6 @@ class StoreAppConsumer(AppConsumer):
             0
         ].strip() or headers.get("X-Real-IP", "")
         request_location = headers.get("X-Client-Geo-Location", "")
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
-
         request_user_email = self.scope.get("user", None).email if self.scope.get("user", None) else None
 
         self._source = StoreAppRunnerSource(

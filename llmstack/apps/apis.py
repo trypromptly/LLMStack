@@ -44,7 +44,6 @@ from llmstack.apps.yaml_loader import (
 )
 from llmstack.base.models import Profile
 from llmstack.common.utils import prequests
-from llmstack.common.utils.utils import get_location
 from llmstack.emails.sender import EmailSender
 from llmstack.emails.templates.factory import EmailTemplateFactory
 from llmstack.jobs.adhoc import ProcessingJob
@@ -770,10 +769,6 @@ class AppViewSet(viewsets.ViewSet):
 
         request_location = request.headers.get("X-Client-Geo-Location", "")
 
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
-
         app_run_response = self._run_internal(
             request,
             uid,
@@ -883,10 +878,6 @@ class APIViewSet(viewsets.ViewSet):
         ].strip() or request.META.get("HTTP_X_REAL_IP", "")
 
         request_location = request.headers.get("X-Client-Geo-Location", "")
-
-        if not request_location:
-            location = get_location(request_ip)
-            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
 
         return self.run_internal(
             request,

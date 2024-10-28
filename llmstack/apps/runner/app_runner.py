@@ -101,6 +101,9 @@ class PlaygroundAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.PLAYGROUND
     provider_slug: str
     processor_slug: str
+    request_ip: Optional[str] = ""
+    request_location: Optional[str] = ""
+    request_user_agent: Optional[str] = ""
 
     @property
     def id(self):

@@ -49,7 +49,14 @@ class AppRunFinishedEventData(BaseModel):
 
     @property
     def request_location(self):
-        return self.request_data.get("request_location", "")
+        from llmstack.common.utils.utils import get_location
+
+        request_location = self.request_data.get("request_location", "")
+
+        if not request_location:
+            location = get_location(self.request_ip)
+            request_location = f"{location.get('city', '')}, {location.get('country_code', '')}" if location else ""
+        return request_location
 
     @property
     def request_user_agent(self):
@@ -65,7 +72,6 @@ class AppRunFinishedEventData(BaseModel):
             return 200
         return 400
 
-    #     return self.request_data.get("id", "")
     @property
     def request_body(self):
         return self.bookkeeping_data_map.get("_inputs0", {}).get("input", {})
