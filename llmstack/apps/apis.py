@@ -760,6 +760,14 @@ class AppViewSet(viewsets.ViewSet):
         if not app_data_obj:
             return DRFResponse(status=404)
 
+        csp = "frame-ancestors self"
+        if app.is_published:
+            if app.visibility == AppVisibility.PUBLIC:
+                csp = "frame-ancestors *"
+            if app.web_config:
+                if app.web_config.get("allowed_sites", []):
+                    csp = "frame-ancestors " + " ".join(app.web_config["allowed_sites"])
+
         session_id = request.data.get("session_id", str(uuid.uuid4()))
         input_data = request.data.get("input", {})
 
@@ -785,7 +793,9 @@ class AppViewSet(viewsets.ViewSet):
             session_id,
             False,
         )
-        return DRFResponse(data=app_run_response.data.model_dump(), status=200)
+        response = app_run_response.data.model_dump()
+        response["session"] = {"id": session_id}
+        return DRFResponse(data=response, status=200, headers={"Content-Security-Policy": csp})
 
 
 class PlaygroundViewSet(viewsets.ViewSet):
