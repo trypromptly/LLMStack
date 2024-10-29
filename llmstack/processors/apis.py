@@ -5,7 +5,7 @@ from collections import namedtuple
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Max, Q
-from django.http import Http404, HttpResponseForbidden, StreamingHttpResponse
+from django.http import HttpResponseForbidden, StreamingHttpResponse
 from django.views.decorators.cache import cache_page
 from flags.state import flag_enabled
 from rest_framework import status, viewsets
@@ -251,17 +251,23 @@ class HistoryViewSet(viewsets.ModelViewSet):
         return DRFResponse(response.data)
 
     def get(self, request, request_uuid):
-        object = (
-            RunEntry.objects.all()
-            .filter(
-                Q(request_uuid=request_uuid) & (Q(owner=request.user) | Q(request_user_email=request.user.email)),
-            )
-            .first()
-        )
-        if not object:
-            raise Http404("Invalid request uuid")
+        object = RunEntry.objects.get(request_uuid=request_uuid)
 
-        return DRFResponse(HistorySerializer(instance=object).data)
+        if object.request_user_email == request.user.email:
+            return DRFResponse(HistorySerializer(instance=object).data)
+
+        if object.owner == request.user:
+            return DRFResponse(HistorySerializer(instance=object).data)
+
+        if object.platform_data:
+            if object.platform_data.get("type") in ["slack", "twilio", "discord", "web", "api"]:
+                app_uuid = object.app_uuid
+                app = App.objects.filter(uuid=app_uuid).first()
+                if app:
+                    if app.has_write_permission(request.user):
+                        return DRFResponse(HistorySerializer(instance=object).data)
+
+        return DRFResponse(status=403)
 
     def patch(self, request, request_uuid):
         run_entry = RunEntry.objects.filter(request_uuid=request_uuid, owner=request.user).first()
