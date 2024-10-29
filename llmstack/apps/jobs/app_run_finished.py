@@ -124,12 +124,7 @@ def persist_app_run_history(event_data: AppRunFinishedEventData):
         response_headers={},
         response_time=event_data.response_time,
         platform_data=event_data.request_data,
-        usage_metrics=dict(
-            map(
-                lambda key: (key, event_data.usage_metrics[key].get("usage_metrics", [])),
-                event_data.usage_metrics.keys(),
-            )
-        ),
+        usage_metrics=event_data.usage_metrics,
     )
     # Save History
     run_entry.save(processor_runs=event_data.processor_runs)

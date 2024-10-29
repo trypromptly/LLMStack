@@ -76,6 +76,12 @@ class AppRunnerSource(BaseModel):
                     "request_id": request_id,
                     "session_id": session_id,
                 },
+                "usage_metrics": dict(
+                    map(
+                        lambda key: (key, bookkeeping_data[key].get("usage_data", {}).get("usage_metrics", [])),
+                        bookkeeping_data.keys(),
+                    )
+                ),
             },
         )
 
