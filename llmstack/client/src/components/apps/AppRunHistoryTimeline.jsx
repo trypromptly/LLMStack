@@ -667,7 +667,8 @@ export function AppRunHistoryTimeline(props) {
                                     }
                                   />
                                 )}
-                                {row.app_uuid && (
+                                {expandedRows[row.request_uuid]
+                                  .usage_metrics && (
                                   <ExpandedRowItem
                                     label="Usage Metrics"
                                     value={getUsageMetricsFromObject(
