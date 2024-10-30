@@ -181,6 +181,7 @@ export function getJSONSchemaFromInputFields(inputFields) {
           "audio/*, video/*, image/*, text/csv, application/pdf";
         schema.properties[field.name].filesMaxSize =
           field.filesMaxSize || 2000000;
+        schema.properties[field.name].stream = field.stream || false;
       }
 
       if (field.type === "datasource") {
