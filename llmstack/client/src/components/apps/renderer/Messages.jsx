@@ -78,6 +78,13 @@ export class AgentMessage extends AppMessage {
   }
 }
 
+export class AgentMultiModalMessage extends AppMessage {
+  constructor(id, requestId, content, replyTo) {
+    super(id, requestId, content, replyTo);
+    this.subType = "agent-multi-modal";
+  }
+}
+
 export class AgentStepMessage extends AppMessage {
   constructor(id, requestId, content, replyTo, isRunning = true) {
     super(id, requestId, content, replyTo);
