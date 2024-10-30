@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any, Dict, List, Set
 
@@ -22,9 +23,12 @@ class AppCoordinator(ThreadingActor):
         env: Dict[str, Any] = {},
         config: Dict[str, Any] = {},
         spread_output_for_keys: Set[str] = set(),
+        bookkeeping_queue: asyncio.Queue = None,
         metadata: Dict[str, Any] = {},
     ):
         super().__init__()
+
+        self._bookkeeping_queue = bookkeeping_queue
 
         # Make sure there are no duplicate names in actor_configs
         assert len(set([actor_config.name for actor_config in actor_configs])) == len(
@@ -44,6 +48,7 @@ class AppCoordinator(ThreadingActor):
         self.actors = {
             "_inputs0": InputActor.start(
                 coordinator_urn=self.actor_urn,
+                bookkeeping_queue=self._bookkeeping_queue,
             )
         }
 
@@ -59,6 +64,7 @@ class AppCoordinator(ThreadingActor):
                 metadata=metadata,
                 provider_configs=env.get("provider_configs", {}),
                 tools=list(map(lambda x: x.tool_schema, actor_configs)),
+                bookkeeping_queue=self._bookkeeping_queue,
             )
         else:
             self.actors["output"] = OutputActor.start(
@@ -66,6 +72,7 @@ class AppCoordinator(ThreadingActor):
                 dependencies=["_inputs0"] + list(self._actor_configs_map.keys()),
                 templates={"output": output_template},
                 spread_output_for_keys=spread_output_for_keys,
+                bookkeeping_queue=self._bookkeeping_queue,
             )
 
         self._actor_dependencies = {ac.name: set(ac.dependencies) for ac in actor_configs}

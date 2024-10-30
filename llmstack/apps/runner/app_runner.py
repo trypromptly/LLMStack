@@ -68,7 +68,7 @@ class AppRunnerSource(BaseModel):
         EventsViewSet().create(
             "app.run.finished",
             {
-                "output": output.get("output"),
+                "output": output,
                 "bookkeeping_data_map": bookkeeping_data,
                 "request_data": {
                     **(self.model_dump()),
@@ -372,6 +372,18 @@ class AppRunner:
             )
         return actor_configs
 
+    def _get_bookkeeping_data(self):
+        """
+        Return a dictionary of bookkeeping data from the queue
+        """
+        bookkeeping_data = {}
+        while not self._bookkeeping_queue.empty():
+            stream_id, data = self._bookkeeping_queue.get_nowait()
+            bookkeeping_data[stream_id] = data
+            self._bookkeeping_queue.task_done()
+
+        return bookkeeping_data
+
     def __init__(
         self,
         session_id: str = None,
@@ -387,6 +399,8 @@ class AppRunner:
         self._source = source
         self._is_agent = app_data.get("type_slug") == "agent"
         self._file_uploader = file_uploader
+        self._bookkeeping_queue = asyncio.Queue()
+
         actor_configs = self._get_actor_configs_from_processors(
             app_data.get("processors", []), self._session_id, self._is_agent, vendor_env
         )
@@ -398,6 +412,7 @@ class AppRunner:
             is_agent=self._is_agent,
             env=vendor_env,
             config=self._app_config,
+            bookkeeping_queue=self._bookkeeping_queue,
             metadata={
                 "app_uuid": self._source.id,
                 "username": self._source.request_user_email,
@@ -409,15 +424,27 @@ class AppRunner:
     async def stop(self):
         await self._coordinator.stop()
 
+        # Check if there is any pending bookkeeping data
+        bookkeeping_data = self._get_bookkeeping_data()
+        if bookkeeping_data:
+            self._source.effects(
+                self._request_id, self._session_id, bookkeeping_data.get("output", {}), bookkeeping_data
+            )
+
     async def run(self, request: AppRunnerRequest):
-        request_id = str(uuid.uuid4())
+        self._request_id = str(uuid.uuid4())
+
+        # Clear the bookkeeping queue
+        while not self._bookkeeping_queue.empty():
+            self._bookkeeping_queue.get_nowait()
+            self._bookkeeping_queue.task_done()
 
         # Pre-process run input to convert files to objrefs
         input_data = request.input
         input_fields = self._app_data.get("input_fields", [])
         if input_data and self._file_uploader:
             input_data = await self._preprocess_input_files(
-                request_id,
+                self._request_id,
                 input_data,
                 input_fields,
                 self._session_id,
@@ -438,10 +465,10 @@ class AppRunner:
                     }
                     break
 
-        self._coordinator.input(request_id, input_data)
+        self._coordinator.input(self._request_id, input_data)
 
         yield AppRunnerStreamingResponse(
-            id=request_id,
+            id=self._request_id,
             client_request_id=request.client_request_id,
             type=AppRunnerStreamingResponseType.OUTPUT_STREAM_BEGIN,
         )
@@ -454,7 +481,7 @@ class AppRunner:
 
             if "errors" in output:
                 yield AppRunnerStreamingResponse(
-                    id=request_id,
+                    id=self._request_id,
                     client_request_id=request.client_request_id,
                     type=AppRunnerStreamingResponseType.ERRORS,
                     data=AppRunnerResponseErrorsData(
@@ -463,7 +490,7 @@ class AppRunner:
                 )
             else:
                 yield AppRunnerStreamingResponse(
-                    id=request_id,
+                    id=self._request_id,
                     client_request_id=request.client_request_id,
                     type=AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK,
                     data=AppRunnerResponseOutputChunkData(
@@ -472,7 +499,7 @@ class AppRunner:
                 )
 
         yield AppRunnerStreamingResponse(
-            id=request_id,
+            id=self._request_id,
             client_request_id=request.client_request_id,
             type=AppRunnerStreamingResponseType.OUTPUT_STREAM_END,
         )
@@ -480,12 +507,14 @@ class AppRunner:
         # Send the final output
         if "chunks" in output:
             # Persist bookkeeping data
-            bookkeeping_data = self._coordinator.bookkeeping_data().get().get()
-            self._source.effects(request_id, self._session_id, output, bookkeeping_data)
+            bookkeeping_data = self._get_bookkeeping_data()
+            self._source.effects(
+                self._request_id, self._session_id, bookkeeping_data.get("output", {}), bookkeeping_data
+            )
 
             # Send the final output
             yield AppRunnerStreamingResponse(
-                id=request_id,
+                id=self._request_id,
                 client_request_id=request.client_request_id,
                 type=AppRunnerStreamingResponseType.OUTPUT,
                 data=AppRunnerResponseOutputData(output=output.get("output", {}), chunks=output.get("chunks", {})),

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 from types import TracebackType
@@ -50,7 +51,14 @@ class ActorConfig(BaseModel):
 
 
 class Actor(ThreadingActor):
-    def __init__(self, id: str, coordinator_urn: str, output_cls: Type = None, dependencies: list = []):
+    def __init__(
+        self,
+        id: str,
+        coordinator_urn: str,
+        output_cls: Type = None,
+        dependencies: list = [],
+        bookkeeping_queue: asyncio.Queue = None,
+    ):
         super().__init__()
         self._id = id
         self._dependencies = dependencies
@@ -61,6 +69,7 @@ class Actor(ThreadingActor):
             stream_id=self._id,
             coordinator_urn=self._coordinator_urn,
             output_cls=output_cls,
+            bookkeeping_queue=bookkeeping_queue,
         )
 
     def on_receive(self, message: Message) -> Any:

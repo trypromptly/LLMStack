@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 from typing import Any, NamedTuple
@@ -32,9 +33,15 @@ class InputRequest(NamedTuple):
 class InputActor(Actor):
     def __init__(
         self,
-        coordinator_urn,
+        coordinator_urn: str,
+        bookkeeping_queue: asyncio.Queue = None,
     ):
-        super().__init__(id="_inputs0", coordinator_urn=coordinator_urn, dependencies=["coordinator"])
+        super().__init__(
+            id="_inputs0",
+            coordinator_urn=coordinator_urn,
+            dependencies=["coordinator"],
+            bookkeeping_queue=bookkeeping_queue,
+        )
 
     def input(self, message: Any) -> Any:
         async_to_sync(self._output_stream.write)(message["coordinator"])

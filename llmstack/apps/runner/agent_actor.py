@@ -17,6 +17,7 @@ from llmstack.apps.runner.agent_controller import (
 from llmstack.apps.runner.output_actor import OutputActor
 from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.provider_config import get_matched_provider_config
+from llmstack.play.actor import BookKeepingData
 from llmstack.play.messages import ContentData, Error, Message, MessageType
 from llmstack.play.output_stream import stitch_model_objects
 from llmstack.play.utils import run_coro_in_new_loop
@@ -29,13 +30,14 @@ logger = logging.getLogger(__name__)
 class AgentActor(OutputActor):
     def __init__(
         self,
-        coordinator_urn,
-        dependencies,
+        coordinator_urn: str,
+        dependencies: list = [],
         templates: Dict[str, str] = {},
         agent_config: Dict[str, Any] = {},
         metadata: Dict[str, Any] = {},
         provider_configs: Dict[str, Any] = {},
         tools: List[Dict] = [],
+        bookkeeping_queue: asyncio.Queue = None,
     ):
         self._process_output_task = None
         self._config = agent_config
@@ -66,6 +68,7 @@ class AgentActor(OutputActor):
             coordinator_urn=coordinator_urn,
             dependencies=dependencies,
             templates=templates,
+            bookkeeping_queue=bookkeeping_queue,
         )
 
     def _add_error_from_tool_call(self, output_index, tool_name, tool_call_id, errors):
@@ -141,11 +144,6 @@ class AgentActor(OutputActor):
                             "chunks": self._stitched_data,
                         }
                     )
-
-                    self._bookkeeping_data_map["agent"]["config"] = self._config
-                    self._bookkeeping_data_map["agent"]["output"] = self._stitched_data["agent"]
-                    self._bookkeeping_data_map["agent"]["timestamp"] = time.time()
-                    self._bookkeeping_data_future.set(self._bookkeeping_data_map)
 
                 elif controller_output.type == AgentControllerDataType.TOOL_CALLS:
                     self._stitched_data["agent"][message_index] = stitch_model_objects(
@@ -243,7 +241,7 @@ class AgentActor(OutputActor):
                 elif controller_output.type == AgentControllerDataType.AGENT_OUTPUT_END:
                     message_index = 0
                 elif controller_output.type == AgentControllerDataType.USAGE_DATA:
-                    self._bookkeeping_data_map["agent"]["usage_data"] = {
+                    self._usage_data = {
                         "usage_metrics": [
                             [
                                 ("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1)),
@@ -266,6 +264,14 @@ class AgentActor(OutputActor):
                             ]
                         ]
                     }
+
+                self._output_stream.bookkeep(
+                    BookKeepingData(
+                        output=self._stitched_data["agent"],
+                        config=self._config,
+                        usage_data=self._usage_data,
+                    )
+                )
             except asyncio.QueueEmpty:
                 await asyncio.sleep(0.1)
             except Exception as e:
@@ -442,14 +448,12 @@ class AgentActor(OutputActor):
         elif message.type == MessageType.CONTENT_STREAM_END:
             if message.sender != "_inputs0":
                 return
-        elif message.type == MessageType.BOOKKEEPING:
-            self._bookkeeping_data_map[message.sender] = message.data
 
     def reset(self):
         super().reset()
+        self._usage_data = {}
         self._stitched_data = {"agent": {}}
         self._agent_outputs = {}
-        self._bookkeeping_data_map = {"agent": {}}
 
         if self._process_output_task:
             self._process_output_task.cancel()

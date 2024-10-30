@@ -142,6 +142,7 @@ class ApiProcessorInterface(
         request_user=None,
         app_uuid=None,
         coordinator_urn=None,
+        bookkeeping_queue=None,
         input_fields=[],
         dependencies=[],
         output_template={},
@@ -155,6 +156,7 @@ class ApiProcessorInterface(
             coordinator_urn=coordinator_urn,
             output_cls=self._get_output_class(),
             dependencies=dependencies,
+            bookkeeping_queue=bookkeeping_queue,
         )
 
         self._config = self._get_configuration_class()(**config)

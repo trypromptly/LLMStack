@@ -2,11 +2,10 @@ import asyncio
 import logging
 from typing import Any, Dict, List, NamedTuple, Set
 
-import pykka
 from pydantic import BaseModel
 
 from llmstack.common.utils.liquid import render_template
-from llmstack.play.actor import Actor
+from llmstack.play.actor import Actor, BookKeepingData
 from llmstack.play.messages import Error, Message, MessageType
 from llmstack.play.output_stream import stitch_model_objects
 from llmstack.play.utils import DiffMatchPatch
@@ -31,11 +30,17 @@ class OutputActor(Actor):
     def __init__(
         self,
         coordinator_urn,
-        dependencies,
+        dependencies: list = [],
         templates: Dict[str, str] = {},
         spread_output_for_keys: Set[str] = set(),
+        bookkeeping_queue: asyncio.Queue = None,
     ):
-        super().__init__(id="output", coordinator_urn=coordinator_urn, dependencies=dependencies)
+        super().__init__(
+            id="output",
+            coordinator_urn=coordinator_urn,
+            dependencies=dependencies,
+            bookkeeping_queue=bookkeeping_queue,
+        )
         self._templates = templates
         self.reset()
         self._dmp = DiffMatchPatch()
@@ -60,6 +65,8 @@ class OutputActor(Actor):
                 delta = self._dmp.to_delta(self._int_output.get("output", ""), new_int_output)
                 self._int_output["output"] = new_int_output
 
+                self._output_stream.bookkeep(BookKeepingData(output=self._int_output))
+
                 self._content_queue.put_nowait(
                     {
                         "deltas": {"output": delta},
@@ -83,12 +90,6 @@ class OutputActor(Actor):
                         "chunks": self._messages,
                     }
                 )
-
-        if message.type == MessageType.BOOKKEEPING:
-            self._bookkeeping_data_map[message.sender] = message.data
-
-            if set(self._dependencies).issubset(self._bookkeeping_data_map.keys()):
-                self._bookkeeping_data_future.set(self._bookkeeping_data_map)
 
     async def get_output(self):
         try:
@@ -123,8 +124,6 @@ class OutputActor(Actor):
         self._int_output = {}
         self._errors = None
         self._stopped = False
-        self._bookkeeping_data_map = {}
-        self._bookkeeping_data_future = pykka.ThreadingFuture()
         self._content_queue = asyncio.Queue()
         self._messages = {}
         super().reset()

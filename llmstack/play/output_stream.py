@@ -101,6 +101,7 @@ class OutputStream:
         stream_id: str = None,
         coordinator_urn: str = None,
         output_cls: Type = None,
+        bookkeeping_queue: asyncio.Queue = None,
     ) -> None:
         """
         Initializes the OutputStream class.
@@ -111,6 +112,7 @@ class OutputStream:
         self._stream_id = stream_id
         self._coordinator_urn = coordinator_urn
         self._coordinator_proxy = None
+        self._bookkeeping_queue = bookkeeping_queue
 
     @property
     def _coordinator(self) -> ActorProxy:
@@ -228,15 +230,7 @@ class OutputStream:
         """
         Bookkeeping entry.
         """
-        self._coordinator.relay(
-            Message(
-                id=self._message_id,
-                type=MessageType.BOOKKEEPING,
-                sender=self._stream_id,
-                receiver="output",
-                data=data.model_dump(),
-            ),
-        )
+        self._bookkeeping_queue.put_nowait((self._stream_id, data.model_dump()))
 
     def error(self, error: Exception) -> None:
         """
