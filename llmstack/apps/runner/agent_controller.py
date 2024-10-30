@@ -176,13 +176,13 @@ class AgentController:
         # Create the output streams
         self._output_audio_stream = AssetStream(
             await sync_to_async(AppSessionFiles.create_streaming_asset)(
-                metadata=self._config.metadata,
+                metadata={**self._config.metadata, "mime_type": "audio/wav"},
                 ref_id=self._config.metadata.get("session_id"),
             )
         )
         self._output_transcript_stream = AssetStream(
             await sync_to_async(AppSessionFiles.create_streaming_asset)(
-                metadata=self._config.metadata,
+                metadata={**self._config.metadata, "mime_type": "text/plain"},
                 ref_id=self._config.metadata.get("session_id"),
             )
         )
@@ -634,6 +634,10 @@ class AgentController:
             self._output_audio_stream.finalize()
         if self._output_transcript_stream:
             self._output_transcript_stream.finalize()
+        if self._input_audio_stream:
+            self._input_audio_stream.finalize()
+        if self._input_transcript_stream:
+            self._input_transcript_stream.finalize()
 
         # Cancel running tasks
         if hasattr(self, "_input_audio_stream_task") and self._input_audio_stream_task:

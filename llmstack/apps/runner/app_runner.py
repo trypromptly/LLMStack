@@ -283,7 +283,7 @@ class AppRunner:
                     input_data[field["name"]]["files"] = files
                 elif field["type"] == "multi" and field.get("stream", False):
                     # For input streaming, we need to create streaming objrefs for input, audio and transcript
-                    objref_prefix = f"{app_uuid}/{session_id}/{request_id}"
+                    objref_prefix = f"{request_id}"
                     asset_metadata = {
                         "app_uuid": app_uuid,
                         "username": self._source.request_user_email,
@@ -305,7 +305,7 @@ class AppRunner:
                             metadata={
                                 **asset_metadata,
                                 "file_name": f"{objref_prefix}_audio",
-                                "mime_type": "audio/webm",
+                                "mime_type": "audio/wav",
                             },
                             ref_id=session_id,
                         )
