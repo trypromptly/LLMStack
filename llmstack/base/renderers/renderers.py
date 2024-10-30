@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Mapping, Optional, Union
 
 import orjson
@@ -5,6 +6,8 @@ import ujson
 from rest_framework.renderers import JSONRenderer
 
 __all__ = ["UJSONRenderer", "ORJSONRenderer"]
+
+logger = logging.getLogger(__name__)
 
 
 class UJSONRenderer(JSONRenderer):
@@ -81,10 +84,14 @@ class ORJSONRenderer(JSONRenderer):
         self.get_indent(accepted_media_type, renderer_context)
         encoder = self.encoder_class()
 
-        ret = orjson.dumps(
-            data,
-            default=encoder.default,  # type: ignore
-        )
+        try:
+            ret = orjson.dumps(
+                data,
+                default=encoder.default,  # type: ignore
+            )
+        except Exception as e:
+            logger.exception(f"Failed to serialize data: {data}")
+            raise e
 
         # force return value to unicode
         if isinstance(ret, str):
