@@ -135,6 +135,12 @@ class AgentConfigSchema(BaseSchema):
         description="If checked, the app will be initialized when the page is loaded. This is useful for apps that need to be initialized before the user interacts with them.",
         json_schema_extra={"advanced_parameter": True, "hidden": True},
     )
+    realtime: Optional[bool] = Field(
+        default=None,
+        title="Realtime",
+        description="Whether to use realtime mode for the agent. Realtime mode is currently only supported for a select few models from OpenAI.",
+        json_schema_extra={"advanced_parameter": True, "hidden": True},
+    )
 
 
 class Agent(AppTypeInterface[AgentConfigSchema]):
