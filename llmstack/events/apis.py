@@ -17,18 +17,22 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         from django.contrib.auth.models import AnonymousUser, User
 
+        from llmstack.assets.stream import AssetStream
+
         if isinstance(o, uuid.UUID):
             return str(o)
         elif isinstance(o, (datetime.date, datetime.datetime)):
             return o.isoformat()
         elif isinstance(o, User):
             return o.username
+        elif isinstance(o, AnonymousUser):
+            return "AnonymousUser"
         elif isinstance(o, bytes):
             return o.decode("utf-8")
         elif isinstance(o, BaseModel):
             return o.model_dump()
-        elif isinstance(o, AnonymousUser):
-            return "AnonymousUser"
+        elif isinstance(o, AssetStream):
+            return o.objref
 
         return super().default(o)
 
