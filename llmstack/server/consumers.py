@@ -363,6 +363,9 @@ class AssetStreamConsumer(AsyncWebsocketConsumer):
         self._uuid = self.scope["url_route"]["kwargs"]["uuid"]
         self._session = self.scope["session"]
         self._request_user = self.scope["user"]
+        self._asset = await sync_to_async(get_asset_by_objref)(
+            f"objref://{self._category}/{self._uuid}", self._request_user, self._session
+        )
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -375,19 +378,17 @@ class AssetStreamConsumer(AsyncWebsocketConsumer):
             # Using b"\n" as delimiter
             chunks = bytes_data.split(b"\n")
             event = chunks[0]
-            asset = await database_sync_to_async(get_asset_by_objref)(
-                f"objref://{self._category}/{self._uuid}", self._request_user, self._session
-            )
-            if not asset:
+
+            if not self._asset:
                 # Close the connection
                 await self.close(code=1008)
                 return
 
-            asset_stream = AssetStream(asset)
+            asset_stream = AssetStream(self._asset)
 
             try:
                 if event == b"read":
-                    for chunk in asset_stream.read(start_index=0, timeout=10000):
+                    async for chunk in asset_stream.read_async(start_index=0):
                         await self.send(bytes_data=chunk)
 
                 if event == b"write":

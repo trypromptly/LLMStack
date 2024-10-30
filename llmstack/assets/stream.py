@@ -1,8 +1,7 @@
+import asyncio
 import logging
 
 from django_redis import get_redis_connection
-
-from llmstack.assets.models import Assets
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +9,8 @@ objref_stream_client = get_redis_connection("objref_stream")
 
 
 class AssetStream:
+    from llmstack.assets.models import Assets
+
     """
     Helper class to manage streaming assets.
     """
@@ -87,6 +88,35 @@ class AssetStream:
 
                 if chunk_index == -1 or chunk == b"":
                     break
+        except Exception as e:
+            logger.error(f"Error reading stream: {e}")
+            yield b""
+
+    async def read_async(self, start_index=0, timeout=10, cancel_event=None):
+        """
+        Subscribe to the stream, read the chunks and return an iterator.
+        """
+        message_index = start_index
+        chunk = b""
+        chunk_index = 0
+
+        try:
+            while True:
+                stream = objref_stream_client.xread(count=1, streams={self.objref: message_index}, block=timeout)
+                if cancel_event and cancel_event.is_set():
+                    break
+
+                for _, messages in stream:
+                    for id, message in messages:
+                        chunk_index = message[b"id"]
+                        chunk = message[b"chunk"]
+                        yield chunk
+                        message_index = id
+
+                    if chunk_index == -1 or chunk == b"":
+                        break
+
+                await asyncio.sleep(0.0001)
         except Exception as e:
             logger.error(f"Error reading stream: {e}")
             yield b""
