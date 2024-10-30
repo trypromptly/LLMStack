@@ -42,6 +42,7 @@ import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { useRecoilValue } from "recoil";
 import { ProviderIcon } from "../ProviderIcon";
+import { AgentMultiModalContent } from "./AgentMultiModalContent";
 import { getJSONSchemaFromInputFields } from "../../../data/utils";
 import { AssetRenderer } from "./AssetRenderer";
 import { HeyGenRealtimeAvatar } from "../HeyGenRealtimeAvatar";
@@ -545,6 +546,56 @@ const AgentMessage = memo(
   },
 );
 
+/**
+ * Agent multi modal message with audio, text and transcript from the agent
+ */
+const AgentMultiModalMessage = memo(
+  (props) => {
+    const { message, workflow, assistantImage } = props;
+    const [showToolbar, setShowToolbar] = useState(false);
+    const [showFeedback, setShowFeedback] = useState(true);
+
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          textAlign: "left",
+          fontSize: 16,
+          padding: "3px 0",
+        }}
+      >
+        <AppAvatar assistantImage={assistantImage} />
+        <Box
+          className={
+            workflow ? "layout-workflow-output" : "layout-chat_message_from_app"
+          }
+          sx={{
+            position: "relative",
+            color:
+              message?.subType === "agent-step-error"
+                ? "red !important"
+                : "inherit",
+          }}
+          onMouseEnter={() => setShowToolbar(true)}
+          onMouseLeave={() => setShowToolbar(false)}
+        >
+          {showToolbar && (
+            <AppMessageToolbar
+              message={message}
+              showFeedback={showFeedback}
+              onFeedbackClick={() => setShowFeedback(false)}
+            />
+          )}
+          <AgentMultiModalContent content={message.content} />
+        </Box>
+      </Box>
+    );
+  },
+  (prev, next) => {
+    return prev?.message?.hash === next?.message?.hash;
+  },
+);
+
 const AgentStepToolHeader = memo(
   ({ processor, isExpanded, onClick, isRunning = true }) => {
     const icon = (
@@ -779,6 +830,14 @@ export const PromptlyAppChatOutput = memo(
             } else if (message.subType === "agent") {
               return (
                 <AgentMessage
+                  message={message}
+                  key={message.id}
+                  assistantImage={assistantImage}
+                />
+              );
+            } else if (message.subType === "agent-multi-modal") {
+              return (
+                <AgentMultiModalMessage
                   message={message}
                   key={message.id}
                   assistantImage={assistantImage}

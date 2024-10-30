@@ -15,6 +15,7 @@ import {
   AgentMessage,
   AgentStepMessage,
   AgentStepErrorMessage,
+  AgentMultiModalMessage,
   Messages,
   UserMessage,
 } from "./Messages";
@@ -132,6 +133,44 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
             newContent,
             replyTo,
           );
+        } else if (key.startsWith("agent_input_text_stream")) {
+          setAppRunData((prevState) => ({
+            ...prevState,
+            agentInputTextStreamId: newContent,
+          }));
+        } else if (key.startsWith("agent_input_audio_stream_started_at")) {
+          setAppRunData((prevState) => ({
+            ...prevState,
+            agentInputAudioStreamStartedAt: newContent,
+          }));
+        } else if (key.startsWith("agent_input_audio_stream")) {
+          setAppRunData((prevState) => ({
+            ...prevState,
+            agentInputAudioStreamId: newContent,
+          }));
+        } else if (key.startsWith("agent_input_transcript_stream")) {
+          setAppRunData((prevState) => ({
+            ...prevState,
+            agentInputTranscriptStreamId: newContent,
+          }));
+        } else if (key.startsWith("agent_output_audio_stream")) {
+          message = new AgentMultiModalMessage(
+            messageId,
+            clientRequestId,
+            {
+              audio: newContent,
+            },
+            replyTo,
+          );
+        } else if (key.startsWith("agent_output_transcript_stream")) {
+          message = new AgentMultiModalMessage(
+            messageId,
+            clientRequestId,
+            {
+              transcript: newContent,
+            },
+            replyTo,
+          );
         }
 
         if (message) {
@@ -141,7 +180,7 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
         console.error(e);
       }
     },
-    [dmp],
+    [dmp, setAppRunData],
   );
 
   if (ws) {
