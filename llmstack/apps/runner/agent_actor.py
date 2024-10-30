@@ -243,25 +243,23 @@ class AgentActor(OutputActor):
                 elif controller_output.type == AgentControllerDataType.USAGE_DATA:
                     self._usage_data = {
                         "usage_metrics": [
-                            [
-                                ("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1)),
+                            ("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1)),
+                            (
+                                f"{self._provider_slug}/*/{self._model_slug}/*",
+                                MetricType.INPUT_TOKENS,
                                 (
-                                    f"{self._provider_slug}/*/{self._model_slug}/*",
-                                    MetricType.INPUT_TOKENS,
-                                    (
-                                        self._provider_config.provider_config_source,
-                                        controller_output.data.prompt_tokens,
-                                    ),
+                                    self._provider_config.provider_config_source,
+                                    controller_output.data.prompt_tokens,
                                 ),
+                            ),
+                            (
+                                f"{self._provider_slug}/*/{self._model_slug}/*",
+                                MetricType.OUTPUT_TOKENS,
                                 (
-                                    f"{self._provider_slug}/*/{self._model_slug}/*",
-                                    MetricType.OUTPUT_TOKENS,
-                                    (
-                                        self._provider_config.provider_config_source,
-                                        controller_output.data.completion_tokens,
-                                    ),
+                                    self._provider_config.provider_config_source,
+                                    controller_output.data.completion_tokens,
                                 ),
-                            ]
+                            ),
                         ]
                     }
 
