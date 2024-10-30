@@ -101,6 +101,7 @@ class AppCoordinator(ThreadingActor):
                 id=actor_id,
                 coordinator_urn=self.actor_urn,
                 dependencies=self._actor_configs_map[actor_id_prefix].dependencies,
+                bookkeeping_queue=self._bookkeeping_queue,
                 **self._actor_configs_map[actor_id_prefix].kwargs,
             )
 
