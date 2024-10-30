@@ -33,6 +33,7 @@ class AgentActor(OutputActor):
         dependencies,
         templates: Dict[str, str] = {},
         agent_config: Dict[str, Any] = {},
+        metadata: Dict[str, Any] = {},
         provider_configs: Dict[str, Any] = {},
         tools: List[Dict] = [],
     ):
@@ -46,16 +47,19 @@ class AgentActor(OutputActor):
             provider_slug=self._provider_slug,
             model_slug=self._model_slug,
         )
+        self._realtime = self._config.get("realtime", False)
 
         self._controller_config = AgentControllerConfig(
             provider_configs=self._provider_configs,
+            provider_config=self._provider_config,
             provider_slug=self._provider_slug,
             model_slug=self._model_slug,
             system_message=self._config.get("system_message", "You are a helpful assistant."),
             tools=tools,
             stream=True if self._config.get("stream") is None else self._config.get("stream"),
-            realtime=self._config.get("realtime", False),
+            realtime=self._realtime,
             max_steps=min(self._config.get("max_steps", 30), 100),
+            metadata=metadata,
         )
 
         super().__init__(
@@ -142,6 +146,7 @@ class AgentActor(OutputActor):
                     self._bookkeeping_data_map["agent"]["output"] = self._stitched_data["agent"]
                     self._bookkeeping_data_map["agent"]["timestamp"] = time.time()
                     self._bookkeeping_data_future.set(self._bookkeeping_data_map)
+
                 elif controller_output.type == AgentControllerDataType.TOOL_CALLS:
                     self._stitched_data["agent"][message_index] = stitch_model_objects(
                         self._stitched_data["agent"].get(message_index, None),
@@ -202,6 +207,36 @@ class AgentActor(OutputActor):
                 elif controller_output.type == AgentControllerDataType.ERROR:
                     # Treat this as an agent output end
                     self._errors = [Error(message=controller_output.data.content[0].data)]
+                elif controller_output.type == AgentControllerDataType.INPUT_STREAM:
+                    # Input has started streaming. We need to let the client know so they can interrupt audio playback
+                    self._content_queue.put_nowait(
+                        {
+                            "deltas": {"agent_input_audio_stream_started_at": self._dmp.to_delta("", str(time.time()))},
+                        }
+                    )
+                elif controller_output.type == AgentControllerDataType.OUTPUT_STREAM:
+                    # Send output_stream info to the client
+                    for content in controller_output.data.content:
+                        if content.type == AgentMessageContentType.AUDIO_STREAM:
+                            self._content_queue.put_nowait(
+                                {
+                                    "deltas": {
+                                        f"agent_output_audio_stream__{message_index}": self._dmp.to_delta(
+                                            "", content.data
+                                        )
+                                    },
+                                }
+                            )
+                        elif content.type == AgentMessageContentType.TRANSCRIPT_STREAM:
+                            self._content_queue.put_nowait(
+                                {
+                                    "deltas": {
+                                        f"agent_output_transcript_stream__{message_index}": self._dmp.to_delta(
+                                            "", content.data
+                                        )
+                                    },
+                                }
+                            )
 
                 if controller_output.type == AgentControllerDataType.TOOL_CALLS_END:
                     message_index += 1
@@ -239,28 +274,93 @@ class AgentActor(OutputActor):
     def on_receive(self, message: Message) -> None:
         if message.type == MessageType.CONTENT:
             if message.sender == "_inputs0":
-                # Get and hydrate user_message_template with message.data
-                user_message_template = self._config.get("user_message")
+                if self._realtime:
+                    # For realtime, we send both text and audio streams if available
+                    content = []
+                    if message.data.content.get("text", None):
+                        content.append(
+                            AgentMessageContent(
+                                type=AgentMessageContentType.TEXT_STREAM, data=message.data.content.get("text")
+                            )
+                        )
+                        self._content_queue.put_nowait(
+                            {
+                                "deltas": {
+                                    "agent_input_text_stream": self._dmp.to_delta(
+                                        "", message.data.content.get("text").objref
+                                    )
+                                },
+                            }
+                        )
+                    if message.data.content.get("audio", None):
+                        content.append(
+                            AgentMessageContent(
+                                type=AgentMessageContentType.AUDIO_STREAM, data=message.data.content.get("audio")
+                            )
+                        )
+                        self._content_queue.put_nowait(
+                            {
+                                "deltas": {
+                                    "agent_input_audio_stream": self._dmp.to_delta(
+                                        "", message.data.content.get("audio").objref
+                                    )
+                                },
+                            }
+                        )
+                    if message.data.content.get("transcript", None):
+                        content.append(
+                            AgentMessageContent(
+                                type=AgentMessageContentType.TRANSCRIPT_STREAM,
+                                data=message.data.content.get("transcript"),
+                            )
+                        )
+                        self._content_queue.put_nowait(
+                            {
+                                "deltas": {
+                                    "agent_input_transcript_stream": self._dmp.to_delta(
+                                        "", message.data.content.get("transcript").objref
+                                    )
+                                },
+                            }
+                        )
 
-                try:
-                    user_message = (
-                        render_template(user_message_template, message.data.content)
-                        if user_message_template
-                        else json.dumps(message.data.content)
+                    content.append(
+                        AgentMessageContent(
+                            type=AgentMessageContentType.METADATA,
+                            data=message.data.content.get("metadata", {}),
+                        )
                     )
-                except Exception as e:
-                    logger.error(f"Error rendering user message template: {e}")
-                    user_message = user_message_template
 
-                # Begin processing input
-                self._agent_controller.process(
-                    AgentControllerData(
-                        type=AgentControllerDataType.INPUT,
-                        data=AgentUserMessage(
-                            content=[AgentMessageContent(type=AgentMessageContentType.TEXT, data=user_message)]
-                        ),
+                    self._agent_controller.process(
+                        AgentControllerData(
+                            type=AgentControllerDataType.INPUT_STREAM,
+                            data=AgentUserMessage(
+                                content=content,
+                            ),
+                        )
                     )
-                )
+                else:
+                    # Get and hydrate user_message_template with message.data
+                    user_message_template = self._config.get("user_message")
+
+                    try:
+                        user_message = (
+                            render_template(user_message_template, message.data.content)
+                            if user_message_template
+                            else json.dumps(message.data.content)
+                        )
+                    except Exception as e:
+                        logger.error(f"Error rendering user message template: {e}")
+                        user_message = user_message_template
+
+                    self._agent_controller.process(
+                        AgentControllerData(
+                            type=AgentControllerDataType.INPUT,
+                            data=AgentUserMessage(
+                                content=[AgentMessageContent(type=AgentMessageContentType.TEXT, data=user_message)]
+                            ),
+                        )
+                    )
             elif message.sender != message.receiver:
                 tool_name = message.sender.split("/")[0]
                 output_index = int(message.sender.split("/")[1])
@@ -336,6 +436,12 @@ class AgentActor(OutputActor):
                 self._add_error_from_tool_call(
                     output_index, tool_name, tool_call_id, [error.message for error in message.data.errors]
                 )
+        elif message.type == MessageType.CONTENT_STREAM_BEGIN:
+            if message.sender != "_inputs0":
+                return
+        elif message.type == MessageType.CONTENT_STREAM_END:
+            if message.sender != "_inputs0":
+                return
         elif message.type == MessageType.BOOKKEEPING:
             self._bookkeeping_data_map[message.sender] = message.data
 
@@ -366,3 +472,5 @@ class AgentActor(OutputActor):
         if self._process_output_task:
             self._process_output_task.cancel()
             self._process_output_task = None
+
+        self._agent_controller.terminate()

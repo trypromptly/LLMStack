@@ -22,6 +22,7 @@ class AppCoordinator(ThreadingActor):
         env: Dict[str, Any] = {},
         config: Dict[str, Any] = {},
         spread_output_for_keys: Set[str] = set(),
+        metadata: Dict[str, Any] = {},
     ):
         super().__init__()
 
@@ -55,6 +56,7 @@ class AppCoordinator(ThreadingActor):
                     **{ac.name: ac.kwargs.get("output_template", {}).get("markdown", "") for ac in actor_configs},
                 },
                 agent_config=config,
+                metadata=metadata,
                 provider_configs=env.get("provider_configs", {}),
                 tools=list(map(lambda x: x.tool_schema, actor_configs)),
             )

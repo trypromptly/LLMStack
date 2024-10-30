@@ -261,19 +261,66 @@ class AppRunner:
 
         return list(set(dep[0] for dep in dependencies if dep[0] in allowed_variables))
 
-    async def _preprocess_input_files(self, input_data, input_fields, session_id, app_uuid, user, upload_file_fn):
+    async def _preprocess_input_files(
+        self, request_id, input_data, input_fields, session_id, app_uuid, user, upload_file_fn
+    ):
+        from llmstack.apps.models import AppSessionFiles
+        from llmstack.assets.stream import AssetStream
+
         for field in input_fields:
-            if field["name"] in input_data and input_data[field["name"]]:
+            if field["name"] in input_data:
                 if field["type"] == "file":
                     input_data[field["name"]] = await sync_to_async(upload_file_fn)(
                         input_data[field["name"]], session_id, app_uuid, user
                     )
-                elif field["type"] == "multi" and "files" in input_data[field["name"]]:
+                elif (
+                    field["type"] == "multi" and "files" in input_data[field["name"]] and not field.get("stream", False)
+                ):
                     # multi has a list of files to upload
                     files = input_data[field["name"]]["files"]
                     for file in files[:5]:
                         file["data"] = await sync_to_async(upload_file_fn)(file["data"], session_id, app_uuid, user)
                     input_data[field["name"]]["files"] = files
+                elif field["type"] == "multi" and field.get("stream", False):
+                    # For input streaming, we need to create streaming objrefs for input, audio and transcript
+                    objref_prefix = f"{app_uuid}/{session_id}/{request_id}"
+                    asset_metadata = {
+                        "app_uuid": app_uuid,
+                        "username": self._source.request_user_email,
+                    }
+
+                    input_data[field["name"]]["text"] = AssetStream(
+                        await sync_to_async(AppSessionFiles.create_streaming_asset)(
+                            metadata={
+                                **asset_metadata,
+                                "file_name": f"{objref_prefix}_text",
+                                "mime_type": "text/plain",
+                            },
+                            ref_id=session_id,
+                        )
+                    )
+
+                    input_data[field["name"]]["audio"] = AssetStream(
+                        await sync_to_async(AppSessionFiles.create_streaming_asset)(
+                            metadata={
+                                **asset_metadata,
+                                "file_name": f"{objref_prefix}_audio",
+                                "mime_type": "audio/webm",
+                            },
+                            ref_id=session_id,
+                        )
+                    )
+
+                    input_data[field["name"]]["transcript"] = AssetStream(
+                        await sync_to_async(AppSessionFiles.create_streaming_asset)(
+                            metadata={
+                                **asset_metadata,
+                                "file_name": f"{objref_prefix}_transcript",
+                                "mime_type": "text/plain",
+                            },
+                            ref_id=session_id,
+                        )
+                    )
 
         return input_data
 
@@ -335,6 +382,8 @@ class AppRunner:
     ):
         self._session_id = session_id or str(uuid.uuid4())
         self._app_data = app_data
+        self._app_config = app_data.get("config", {})
+        self._realtime = self._app_config.get("realtime", False)
         self._source = source
         self._is_agent = app_data.get("type_slug") == "agent"
         self._file_uploader = file_uploader
@@ -342,12 +391,18 @@ class AppRunner:
             app_data.get("processors", []), self._session_id, self._is_agent, vendor_env
         )
         output_template = app_data.get("output_template", {}).get("markdown", "")
+
         self._coordinator = AppCoordinator.start(
             actor_configs=actor_configs,
             output_template=output_template,
             is_agent=self._is_agent,
             env=vendor_env,
-            config=app_data.get("config", {}),
+            config=self._app_config,
+            metadata={
+                "app_uuid": self._source.id,
+                "username": self._source.request_user_email,
+                "session_id": self._session_id,
+            },
             spread_output_for_keys=app_data.get("spread_output_for_keys", set()),
         ).proxy()
 
@@ -358,17 +413,32 @@ class AppRunner:
         request_id = str(uuid.uuid4())
 
         # Pre-process run input to convert files to objrefs
-        if request.input and self._file_uploader:
-            request.input = await self._preprocess_input_files(
-                request.input,
-                self._app_data.get("input_fields", []),
+        input_data = request.input
+        input_fields = self._app_data.get("input_fields", [])
+        if input_data and self._file_uploader:
+            input_data = await self._preprocess_input_files(
+                request_id,
+                input_data,
+                input_fields,
                 self._session_id,
                 self._source.id,
                 self._source.request_user_email,
                 self._file_uploader,
             )
 
-        self._coordinator.input(request_id, request.input)
+        if self._realtime:
+            # Find the multi stream input and send it as a single message
+            for field in input_fields:
+                if field.get("type", None) == "multi" and field.get("stream", None) and field["name"] in input_data:
+                    input_data = {**input_data[field["name"]]}
+                    input_data["metadata"] = {
+                        "username": self._source.request_user_email,
+                        "app_uuid": self._source.id,
+                        "session_id": self._session_id,
+                    }
+                    break
+
+        self._coordinator.input(request_id, input_data)
 
         yield AppRunnerStreamingResponse(
             id=request_id,
