@@ -373,6 +373,19 @@ class AgentController:
                         ),
                     )
                 )
+            elif data.type == AgentControllerDataType.TOOL_CALLS:
+                for tool_call_id, response in data.data.responses.items():
+                    await self._send_websocket_message(
+                        {
+                            "type": "conversation.item.create",
+                            "item": {
+                                "type": "function_call_output",
+                                "call_id": tool_call_id,
+                                "output": response,
+                            },
+                        }
+                    )
+                    await self._send_websocket_message({"type": "response.create"})
         else:
             if not self._llm_client:
                 self._init_llm_client()
@@ -506,19 +519,57 @@ class AgentController:
 
     async def add_ws_event_to_output_queue(self, event: Any):
         event_type = event["type"]
+
         if event_type == "conversation.item.created":
-            content_list = event["item"]["content"]
-            for content_item in content_list:
-                if content_item["type"] == "text":
-                    text = content_item["text"]
-                    self._output_queue.put_nowait(
-                        AgentControllerData(
-                            type=AgentControllerDataType.AGENT_OUTPUT,
-                            data=AgentAssistantMessage(
-                                content=[AgentMessageContent(data=text)],
-                            ),
+            if event["item"]["type"] == "message":
+                content_list = event["item"]["content"]
+                for content_item in content_list:
+                    if content_item["type"] == "text":
+                        text = content_item["text"]
+                        self._output_queue.put_nowait(
+                            AgentControllerData(
+                                type=AgentControllerDataType.AGENT_OUTPUT,
+                                data=AgentAssistantMessage(
+                                    content=[AgentMessageContent(data=text)],
+                                ),
+                            )
                         )
+            elif event["item"]["type"] == "function_call":
+                self._output_queue.put_nowait(
+                    AgentControllerData(
+                        type=AgentControllerDataType.TOOL_CALLS,
+                        data=AgentToolCallsMessage(
+                            tool_calls=[
+                                AgentToolCall(
+                                    id=event["item"]["call_id"],
+                                    name=event["item"]["name"],
+                                    arguments=event["item"]["arguments"],
+                                )
+                            ],
+                        ),
                     )
+                )
+        elif event_type == "response.function_call_arguments.delta":
+            self._output_queue.put_nowait(
+                AgentControllerData(
+                    type=AgentControllerDataType.TOOL_CALLS,
+                    data=AgentToolCallsMessage(
+                        tool_calls=[
+                            AgentToolCall(
+                                id="",
+                                name="",
+                                arguments=event.get("delta", ""),
+                            )
+                        ],
+                    ),
+                )
+            )
+        elif event_type == "response.function_call_arguments.done":
+            self._output_queue.put_nowait(
+                AgentControllerData(
+                    type=AgentControllerDataType.TOOL_CALLS_END,
+                )
+            )
         elif event_type == "response.text.delta":
             delta = event["delta"]
             try:
