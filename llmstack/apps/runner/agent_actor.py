@@ -77,7 +77,7 @@ class AgentActor(OutputActor):
             self._stitched_data,
             {
                 "agent": {
-                    output_index: AgentControllerData(
+                    str(output_index): AgentControllerData(
                         type=AgentControllerDataType.TOOL_CALLS,
                         data=AgentToolCallsMessage(responses={tool_call_id: f"Error: {error_message}"}),
                     )
@@ -95,15 +95,15 @@ class AgentActor(OutputActor):
         )
         self._agent_outputs[f"agent_tool_call_errors__{output_index}__{tool_name}__{tool_call_id}"] = error_message
 
-        if len(self._stitched_data["agent"][output_index].data.tool_calls) == len(
-            self._stitched_data["agent"][output_index].data.responses.keys()
+        if len(self._stitched_data["agent"][str(output_index)].data.tool_calls) == len(
+            self._stitched_data["agent"][str(output_index)].data.responses.keys()
         ):
             self._agent_controller.process(
                 AgentControllerData(
                     type=AgentControllerDataType.TOOL_CALLS,
                     data=AgentToolCallsMessage(
-                        tool_calls=self._stitched_data["agent"][output_index].data.tool_calls,
-                        responses=self._stitched_data["agent"][output_index].data.responses,
+                        tool_calls=self._stitched_data["agent"][str(output_index)].data.tool_calls,
+                        responses=self._stitched_data["agent"][str(output_index)].data.responses,
                     ),
                 )
             )
@@ -116,14 +116,14 @@ class AgentActor(OutputActor):
                 controller_output = self._agent_output_queue.get_nowait()
 
                 if controller_output.type == AgentControllerDataType.AGENT_OUTPUT:
-                    self._stitched_data["agent"][message_index] = stitch_model_objects(
-                        self._stitched_data["agent"].get(message_index, None),
+                    self._stitched_data["agent"][str(message_index)] = stitch_model_objects(
+                        self._stitched_data["agent"].get(str(message_index), None),
                         controller_output,
                     )
 
                     old_agent_output = self._agent_outputs.get(f"agent_output__{message_index}", "")
                     self._agent_outputs[f"agent_output__{message_index}"] = (
-                        self._stitched_data["agent"][message_index].data.content[0].data
+                        self._stitched_data["agent"][str(message_index)].data.content[0].data
                     )
                     delta = self._dmp.to_delta(old_agent_output, self._agent_outputs[f"agent_output__{message_index}"])
 
@@ -139,21 +139,21 @@ class AgentActor(OutputActor):
                         {
                             "output": {
                                 **self._agent_outputs,
-                                "output": self._stitched_data["agent"][message_index].data.content[0].data,
+                                "output": self._stitched_data["agent"][str(message_index)].data.content[0].data,
                             },
                             "chunks": self._stitched_data,
                         }
                     )
 
                 elif controller_output.type == AgentControllerDataType.TOOL_CALLS:
-                    self._stitched_data["agent"][message_index] = stitch_model_objects(
-                        self._stitched_data["agent"].get(message_index, None),
+                    self._stitched_data["agent"][str(message_index)] = stitch_model_objects(
+                        self._stitched_data["agent"].get(str(message_index), None),
                         controller_output,
                     )
                     deltas = {}
 
                     for tool_call_index, tool_call in enumerate(controller_output.data.tool_calls):
-                        stitched_tool_call = self._stitched_data["agent"][message_index].data.tool_calls[
+                        stitched_tool_call = self._stitched_data["agent"][str(message_index)].data.tool_calls[
                             tool_call_index
                         ]
 
@@ -178,7 +178,7 @@ class AgentActor(OutputActor):
                     )
 
                 elif controller_output.type == AgentControllerDataType.TOOL_CALLS_END:
-                    tool_calls = self._stitched_data["agent"][message_index].data.tool_calls
+                    tool_calls = self._stitched_data["agent"][str(message_index)].data.tool_calls
 
                     for tool_call in tool_calls:
                         tool_call_args = tool_call.arguments
@@ -377,7 +377,7 @@ class AgentActor(OutputActor):
                     self._stitched_data,
                     {
                         "agent": {
-                            output_index: AgentControllerData(
+                            str(output_index): AgentControllerData(
                                 type=AgentControllerDataType.TOOL_CALLS,
                                 data=AgentToolCallsMessage(responses={tool_call_id: tool_call_output}),
                             )
@@ -391,15 +391,15 @@ class AgentActor(OutputActor):
                     }
                 )
 
-                if len(self._stitched_data["agent"][output_index].data.tool_calls) == len(
-                    self._stitched_data["agent"][output_index].data.responses.keys()
+                if len(self._stitched_data["agent"][str(output_index)].data.tool_calls) == len(
+                    self._stitched_data["agent"][str(output_index)].data.responses.keys()
                 ):
                     self._agent_controller.process(
                         AgentControllerData(
                             type=AgentControllerDataType.TOOL_CALLS,
                             data=AgentToolCallsMessage(
-                                tool_calls=self._stitched_data["agent"][output_index].data.tool_calls,
-                                responses=self._stitched_data["agent"][output_index].data.responses,
+                                tool_calls=self._stitched_data["agent"][str(output_index)].data.tool_calls,
+                                responses=self._stitched_data["agent"][str(output_index)].data.responses,
                             ),
                         )
                     )
