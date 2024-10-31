@@ -130,33 +130,38 @@ def get_scheduled_task(task_model: str, task_id: int):
 
 
 def failure_callback(job, connection, type, value, traceback):
-    task = get_scheduled_task(
-        job.meta.get(
-            "task_type",
-            None,
-        ),
-        job.meta.get("scheduled_task_id"),
-    )
-    if task is None:
-        return
+    try:
+        task = get_scheduled_task(
+            job.meta.get(
+                "task_type",
+                None,
+            ),
+            job.meta.get("scheduled_task_id"),
+        )
+        if task is None:
+            return
 
-    task_log = TaskRunLog.objects.filter(
-        job_id=job.id,
-        task_id=task.id,
-    ).first()
-    if task_log is None:
-        logger.error(f"Could not find task log for job {job.id}")
-    else:
-        task_log.status = "failed"
-        task_log.errors = {
-            "type": type,
-            "value": value,
-            "traceback": traceback,
-        }
-        task_log.save()
+        task_log = TaskRunLog.objects.filter(
+            job_id=job.id,
+            task_id=task.id,
+        ).first()
+        if task_log is None:
+            logger.error(f"Could not find task log for job {job.id}")
+        else:
+            task_log.status = "failed"
+            task_log.errors = {
+                "type": type,
+                "value": value,
+                "traceback": traceback,
+            }
+            task_log.save()
 
-    task.job_id = None
-    task.save(schedule_job=True)
+        task.job_id = None
+        task.save(schedule_job=True)
+    except Exception:
+        logger.exception(
+            f"Error while saving task run log job: {job} type: {type} value: {value} traceback: {traceback}"
+        )
 
 
 def success_callback(job, connection, result, *args, **kwargs):
