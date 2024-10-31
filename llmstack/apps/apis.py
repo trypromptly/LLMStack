@@ -552,17 +552,35 @@ class AppViewSet(viewsets.ViewSet):
             "processors": processed_processors_data,
         }
 
-        if versioned_app_data:
+        if versioned_app_data and (
+            (versioned_app_data.is_draft and draft) or (versioned_app_data.is_draft and not draft)
+        ):
+            # Update existing draft version
             versioned_app_data.comment = comment
             versioned_app_data.data = app_data
             versioned_app_data.is_draft = draft
             versioned_app_data.save()
-        else:
-            # Find the total number of published versions
+        elif versioned_app_data and not versioned_app_data.is_draft and draft:
+            # Create new draft version from published version
             published_versions = AppData.objects.filter(
                 app_uuid=app.uuid,
                 is_draft=False,
             ).count()
+
+            AppData.objects.create(
+                app_uuid=app.uuid,
+                data=app_data,
+                comment=comment,
+                is_draft=True,
+                version=published_versions,
+            )
+        else:
+            # Create new version (either draft or published)
+            published_versions = AppData.objects.filter(
+                app_uuid=app.uuid,
+                is_draft=False,
+            ).count()
+
             AppData.objects.create(
                 app_uuid=app.uuid,
                 data=app_data,
