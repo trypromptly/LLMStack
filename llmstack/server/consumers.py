@@ -664,6 +664,9 @@ class TwilioVoiceConsumer(AsyncWebsocketConsumer):
                                 deltas["agent_output_audio_stream__0"][1:]
                             )  # Remove + prefix since this is a delta
                         )
+                    elif "agent_input_audio_stream_started_at" in deltas:
+                        # Clear current media buffer
+                        await self.send(text_data=json.dumps({"event": "clear", "streamSid": self._stream_sid}))
         elif event == "stop":
             await self._app_runner.stop()
             self._app_runner = None
