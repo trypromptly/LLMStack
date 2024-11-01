@@ -86,11 +86,6 @@ const PCMStreamPlayer = forwardRef(
 
           try {
             arrayBuffer = await blob.arrayBuffer();
-            console.log(
-              "Received buffer length:",
-              arrayBuffer.byteLength,
-              "bytes",
-            );
 
             // If the buffer is empty, skip processing
             if (arrayBuffer.byteLength === 0) {
