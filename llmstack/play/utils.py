@@ -79,12 +79,22 @@ def run_coro_in_new_loop(coro):
         asyncio.set_event_loop(loop)
         loop.run_forever()
 
+    def _done_callback(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            logger.exception(f"Task failed with error: {e}")
+        finally:
+            loop.stop()
+
     loop = asyncio.new_event_loop()
     t = threading.Thread(target=start_loop, args=(loop,))
     t.start()
     coro_future = asyncio.run_coroutine_threadsafe(coro, loop)
 
-    coro_future.add_done_callback(lambda f: loop.stop())
+    coro_future.add_done_callback(_done_callback)
 
     return coro_future
 
