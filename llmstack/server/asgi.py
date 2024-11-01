@@ -13,6 +13,7 @@ from llmstack.server.consumers import (
     ConnectionConsumer,
     PlaygroundConsumer,
     StoreAppConsumer,
+    TwilioVoiceConsumer,
 )
 from llmstack.sheets.consumers import SheetAppConsumer, SheetBuilderConsumer
 
@@ -31,6 +32,7 @@ application = ProtocolTypeRouter(
             URLRouter(
                 [
                     path("ws/apps/<str:app_uuid>", AppConsumer.as_asgi()),
+                    path("ws/apps/<str:app_uuid>/twiliovoice/<str:incoming_number>", TwilioVoiceConsumer.as_asgi()),
                     path("ws/apps/<str:app_uuid>/<str:preview>", AppConsumer.as_asgi()),
                     path("ws/assets/<str:category>/<str:uuid>", AssetStreamConsumer.as_asgi()),
                     path(

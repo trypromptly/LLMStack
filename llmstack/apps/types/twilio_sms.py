@@ -2,6 +2,7 @@ import logging
 from typing import List
 
 import requests
+from django.conf import settings
 from pydantic import Field
 
 from llmstack.apps.models import App
@@ -30,6 +31,12 @@ class TwilioSmsAppConfigSchema(BaseSchema):
         description="Automatically create an SMS webhook for the phone numbers.",
         json_schema_extra={"required": False},
     )
+    auto_create_voice_webhook: bool = Field(
+        default=False,
+        title="Auto Create Voice Webhook",
+        description="Automatically create a voice webhook for the phone numbers.",
+        json_schema_extra={"required": False},
+    )
 
 
 class TwilioSmsApp(AppTypeInterface[TwilioSmsAppConfigSchema]):
@@ -53,19 +60,23 @@ class TwilioSmsApp(AppTypeInterface[TwilioSmsAppConfigSchema]):
                 "auto_create_sms_webhook",
                 False,
             )
+            auto_create_voice_webhook = config.get(
+                "auto_create_voice_webhook",
+                False,
+            )
 
-            if auto_create_sms_webhook:
+            if auto_create_sms_webhook or auto_create_voice_webhook:
                 phone_numbers = config.get("phone_numbers", [])
                 account_sid = config.get("account_sid", None)
                 auth_token = config.get("auth_token", None)
 
                 if not phone_numbers:
                     raise Exception(
-                        "You must provide at least one phone number to send SMS messages from.",
+                        "You must provide at least one phone number to configure webhooks for.",
                     )
                 if not account_sid or not auth_token:
                     raise Exception(
-                        "You must provide an account SID and auth token to send SMS messages from.",
+                        "You must provide an account SID and auth token to configure webhooks.",
                     )
 
                 headers = {
@@ -93,22 +104,30 @@ class TwilioSmsApp(AppTypeInterface[TwilioSmsAppConfigSchema]):
                         > 0
                     ):
                         twilio_phone_number_resource = response.json()["incoming_phone_numbers"][0]
-                        sms_url = twilio_phone_number_resource["sms_url"]
-                        # Create SMS webhook if it doesn't exist
-                        if not sms_url or sms_url != f"https://trypromptly.com/api/apps/{app.uuid}/twiliosms/run":
-                            # Update twilio phone number resource with voice
-                            # webhook
+                        update_data = {}
+
+                        if auto_create_sms_webhook:
+                            sms_url = twilio_phone_number_resource["sms_url"]
+                            webhook_url = f"{settings.SITE_URL}/api/apps/{app.uuid}/twiliosms/run"
+                            if not sms_url or sms_url != webhook_url:
+                                update_data["SmsUrl"] = webhook_url
+
+                        if auto_create_voice_webhook:
+                            voice_url = twilio_phone_number_resource["voice_url"]
+                            webhook_url = f"{settings.SITE_URL}/api/apps/{app.uuid}/twiliovoice/run"
+                            if not voice_url or voice_url != webhook_url:
+                                update_data["VoiceUrl"] = webhook_url
+
+                        if update_data:
                             response = requests.post(
                                 f'https://api.twilio.com/2010-04-01/Accounts/{account_sid}/IncomingPhoneNumbers/{twilio_phone_number_resource["sid"]}.json',
                                 headers=headers,
                                 auth=auth,
-                                data={
-                                    "SmsUrl": f"https://trypromptly.com/api/apps/{app.uuid}/twiliosms/run",
-                                },
+                                data=update_data,
                             )
                             if response.status_code != 200:
                                 raise Exception(
-                                    f"Failed to update SMS webhook for phone number {phone_number}. Error: {response.text}",
+                                    f"Failed to update webhooks for phone number {phone_number}. Error: {response.text}",
                                 )
 
         return app

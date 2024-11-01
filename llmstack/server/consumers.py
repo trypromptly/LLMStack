@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import importlib
 import json
 import logging
@@ -17,6 +18,7 @@ from llmstack.apps.runner.app_runner import (
     AppRunnerStreamingResponseType,
     PlaygroundAppRunnerSource,
     StoreAppRunnerSource,
+    TwilioAppRunnerSource,
     WebAppRunnerSource,
 )
 from llmstack.assets.utils import get_asset_by_objref
@@ -591,3 +593,106 @@ class StoreAppConsumer(AppConsumer):
             self._session_id, self._app_slug, self._source, self.scope.get("user", None)
         )
         await self.accept()
+
+
+class TwilioVoiceConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        from llmstack.apps.apis import AppViewSet
+
+        self._app_uuid = self.scope["url_route"]["kwargs"]["app_uuid"]
+        self._session_id = str(uuid.uuid4())
+        self._source = TwilioAppRunnerSource(
+            app_uuid=self._app_uuid, incoming_number=self.scope["url_route"]["kwargs"]["incoming_number"]
+        )
+        self._input_audio_stream = None
+        self._output_audio_task = None
+
+        headers = dict(self.scope["headers"])
+
+        twilio_signature = headers.get(b"x-twilio-signature", b"").decode("utf-8")
+        logger.info(f"Twilio signature to verify: {twilio_signature}")
+
+        # TODO: Verify the twilio signature
+
+        self._app_runner = await AppViewSet().get_app_runner_async(
+            self._session_id,
+            self._app_uuid,
+            self._source,
+            self.scope.get("user", None),
+        )
+
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        if self._app_runner:
+            await self._app_runner.stop()
+        await self.close(code=close_code)
+
+    async def receive(self, text_data):
+        run_coro_in_new_loop(self._respond_to_event(text_data))
+
+    async def _respond_to_event(self, text_data):
+        from llmstack.assets.stream import AssetStream
+
+        json_data = json.loads(text_data)
+        event = json_data.get("event", None)
+
+        if event == "start":
+            # Run the app
+            self._stream_sid = json_data.get("start", {}).get("streamSid", "")
+            response_iterator = self._app_runner.run(
+                AppRunnerRequest(
+                    client_request_id=self._stream_sid,
+                    session_id=self._session_id,
+                    input={},
+                )
+            )
+
+            # Iterate till we get the objrefs for input and output audio
+            async for response in response_iterator:
+                if response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK:
+                    deltas = response.data.deltas
+                    if "agent_input_audio_stream" in deltas:
+                        input_audio_stream_objref = deltas["agent_input_audio_stream"][1:]
+                        input_audio_stream = await sync_to_async(get_asset_by_objref)(
+                            input_audio_stream_objref, self.scope.get("user", None), self._session_id
+                        )
+                        self._input_audio_stream = AssetStream(input_audio_stream)
+                    elif "agent_output_audio_stream__0" in deltas:
+                        self._output_audio_task = run_coro_in_new_loop(
+                            self._process_output_audio_stream(
+                                deltas["agent_output_audio_stream__0"][1:]
+                            )  # Remove + prefix since this is a delta
+                        )
+        elif event == "stop":
+            await self._app_runner.stop()
+            self._app_runner = None
+        elif event == "media":
+            encoded_audio_chunk = json_data.get("media", {}).get("payload", "")
+            if not encoded_audio_chunk:
+                return
+
+            if self._input_audio_stream:
+                self._input_audio_stream.append_chunk(base64.b64decode(encoded_audio_chunk))
+
+        elif event == "mark":
+            logger.info(f"Received mark event from twilio: {json_data}")
+
+    async def _process_output_audio_stream(self, audio_stream):
+        from llmstack.assets.stream import AssetStream
+
+        output_audio_asset = await sync_to_async(get_asset_by_objref)(
+            audio_stream, self.scope.get("user", None), self._session_id
+        )
+        output_audio_asset_stream = AssetStream(output_audio_asset)
+        async for chunk in output_audio_asset_stream.read_async(start_index=0):
+            if not chunk:
+                break
+
+            audio_delta = {
+                "event": "media",
+                "streamSid": self._stream_sid,
+                "media": {"payload": base64.b64encode(chunk).decode("utf-8")},
+            }
+
+            await self.send(text_data=json.dumps(audio_delta))

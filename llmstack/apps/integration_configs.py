@@ -74,3 +74,4 @@ class TwilioIntegrationConfig(AppIntegrationConfig):
     auth_token: str = ""
     phone_numbers: List[str] = []
     auto_create_sms_webhook: bool = False
+    auto_create_voice_webhook: bool = False

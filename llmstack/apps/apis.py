@@ -13,6 +13,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import ValidationError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.test import RequestFactory
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -35,7 +36,7 @@ from llmstack.apps.runner.app_runner import (
     AppRunnerRequest,
     DiscordAppRunnerSource,
     SlackAppRunnerSource,
-    TwilioSMSAppRunnerSource,
+    TwilioAppRunnerSource,
     WebAppRunnerSource,
 )
 from llmstack.apps.yaml_loader import (
@@ -1250,7 +1251,7 @@ class TwilioSMSViewSet(viewsets.ViewSet):
                 auth=(account_sid, twilio_config.get("auth_token")),
             )
 
-    def run_async(self, request, uid):
+    def handle_sms_request(self, request, uid):
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
         app_data_obj = AppData.objects.filter(app_uuid=app.uuid, is_draft=False).order_by("-created_at").first()
         if not app_data_obj:
@@ -1309,11 +1310,47 @@ class TwilioSMSViewSet(viewsets.ViewSet):
             new_request.user = AnonymousUser()
             new_request.data = {"input": input_data, "session_id": session_id}
 
-            source = TwilioSMSAppRunnerSource(app_uuid=uid)
+            source = TwilioAppRunnerSource(app_uuid=uid, incoming_number=request.data.get("From"))
 
             RunAppAsyncJob.create(
                 func="llmstack.apps.apis.run_twilio_sms_app",
                 args=[new_request, uid, input_data, source, app_data_obj.data, session_id, False],
             ).add_to_queue()
 
-        return DRFResponse(status=204, headers={"Content-Type": "text/xml"})
+        return DRFResponse(status=204, content_type="text/xml")
+
+    def handle_voice_request(self, request, uid):
+        # Get app and verify it exists
+        app = get_object_or_404(App, uuid=uuid.UUID(uid))
+
+        # Get app owner profile and twilio config
+        app_owner_profile = get_object_or_404(Profile, user=app.owner)
+        twilio_config = (
+            TwilioIntegrationConfig().from_dict(
+                app.twilio_integration_config,
+                app_owner_profile.decrypt_value,
+            )
+            if app.twilio_integration_config
+            else None
+        )
+
+        # TODO: Make sure the app is voice enabled
+
+        if (
+            twilio_config
+            and request.data.get("To") in twilio_config.get("phone_numbers", [])
+            and request.data.get("AccountSid") == twilio_config.get("account_sid")
+        ):
+            logger.info(f"wss://{request.get_host()}/ws/apps/{uid}/twiliovoice")
+
+            # Generate TwiML response for websocket connection
+            twiml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
+            <Response>
+                <Connect>
+                    <Stream url="wss://{request.get_host()}/ws/apps/{uid}/twiliovoice/{request.data.get('From')}" />
+                </Connect>
+            </Response>"""
+
+            return HttpResponse(content=twiml_response, content_type="text/xml; charset=utf-8")
+
+        return DRFResponse(status=403, data={"error": "Invalid Twilio configuration"})

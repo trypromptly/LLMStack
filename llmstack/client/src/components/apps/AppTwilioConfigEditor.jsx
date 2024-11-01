@@ -33,9 +33,15 @@ const twilioConfigSchema = {
     },
     auto_create_sms_webhook: {
       type: "boolean",
-      title: "Create Twilio SMS Webhook",
+      title: "Auto-configure Twilio SMS Webhook",
       description:
-        "Update Twilio SMS Webhook to point to send message to application",
+        "Automatically create a Twilio SMS webhook for the phone numbers.",
+    },
+    auto_create_voice_webhook: {
+      type: "boolean",
+      title: "Auto-configure Twilio Voice Webhook",
+      description:
+        "Automatically create a Twilio Voice webhook for the phone numbers.",
     },
   },
   required: ["account_sid", "auth_token", "phone_numbers"],

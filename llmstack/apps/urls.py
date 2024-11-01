@@ -48,7 +48,11 @@ urlpatterns = [
     ),
     path(
         "api/apps/<str:uid>/twiliosms/run",
-        TwilioSMSViewSet.as_view({"post": "run_async"}),
+        TwilioSMSViewSet.as_view({"post": "handle_sms_request"}),
+    ),
+    path(
+        "api/apps/<str:uid>/twiliovoice/run",
+        TwilioSMSViewSet.as_view({"post": "handle_voice_request"}),
     ),
     path(
         "api/apps/<str:uid>/run/<str:session_id>",

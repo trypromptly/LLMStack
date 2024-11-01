@@ -146,9 +146,10 @@ class SlackAppRunnerSource(AppRunnerSource):
         return self.app_uuid
 
 
-class TwilioSMSAppRunnerSource(AppRunnerSource):
+class TwilioAppRunnerSource(AppRunnerSource):
     type: AppRunnerSourceType = AppRunnerSourceType.TWILIO
     app_uuid: str
+    incoming_number: Optional[str] = None
 
     @property
     def id(self):
@@ -281,46 +282,50 @@ class AppRunner:
                     for file in files[:5]:
                         file["data"] = await sync_to_async(upload_file_fn)(file["data"], session_id, app_uuid, user)
                     input_data[field["name"]]["files"] = files
-                elif field["type"] == "multi" and field.get("stream", False):
-                    # For input streaming, we need to create streaming objrefs for input, audio and transcript
-                    objref_prefix = f"{request_id}"
-                    asset_metadata = {
-                        "app_uuid": app_uuid,
-                        "username": self._source.request_user_email,
-                    }
 
-                    input_data[field["name"]]["text"] = AssetStream(
-                        await sync_to_async(AppSessionFiles.create_streaming_asset)(
-                            metadata={
-                                **asset_metadata,
-                                "file_name": f"{objref_prefix}_text",
-                                "mime_type": "text/plain",
-                            },
-                            ref_id=session_id,
-                        )
-                    )
+            if field["type"] == "multi" and field.get("stream", False):
+                # For input streaming, we need to create streaming objrefs for input, audio and transcript
+                objref_prefix = f"{request_id}"
+                asset_metadata = {
+                    "app_uuid": app_uuid,
+                    "username": self._source.request_user_email,
+                }
 
-                    input_data[field["name"]]["audio"] = AssetStream(
-                        await sync_to_async(AppSessionFiles.create_streaming_asset)(
-                            metadata={
-                                **asset_metadata,
-                                "file_name": f"{objref_prefix}_audio",
-                                "mime_type": "audio/wav",
-                            },
-                            ref_id=session_id,
-                        )
-                    )
+                if field["name"] not in input_data:
+                    input_data[field["name"]] = {}
 
-                    input_data[field["name"]]["transcript"] = AssetStream(
-                        await sync_to_async(AppSessionFiles.create_streaming_asset)(
-                            metadata={
-                                **asset_metadata,
-                                "file_name": f"{objref_prefix}_transcript",
-                                "mime_type": "text/plain",
-                            },
-                            ref_id=session_id,
-                        )
+                input_data[field["name"]]["text"] = AssetStream(
+                    await sync_to_async(AppSessionFiles.create_streaming_asset)(
+                        metadata={
+                            **asset_metadata,
+                            "file_name": f"{objref_prefix}_text",
+                            "mime_type": "text/plain",
+                        },
+                        ref_id=session_id,
                     )
+                )
+
+                input_data[field["name"]]["audio"] = AssetStream(
+                    await sync_to_async(AppSessionFiles.create_streaming_asset)(
+                        metadata={
+                            **asset_metadata,
+                            "file_name": f"{objref_prefix}_audio",
+                            "mime_type": "audio/wav",
+                        },
+                        ref_id=session_id,
+                    )
+                )
+
+                input_data[field["name"]]["transcript"] = AssetStream(
+                    await sync_to_async(AppSessionFiles.create_streaming_asset)(
+                        metadata={
+                            **asset_metadata,
+                            "file_name": f"{objref_prefix}_transcript",
+                            "mime_type": "text/plain",
+                        },
+                        ref_id=session_id,
+                    )
+                )
 
         return input_data
 
@@ -442,7 +447,7 @@ class AppRunner:
         # Pre-process run input to convert files to objrefs
         input_data = request.input
         input_fields = self._app_data.get("input_fields", [])
-        if input_data and self._file_uploader:
+        if self._file_uploader:
             input_data = await self._preprocess_input_files(
                 self._request_id,
                 input_data,
