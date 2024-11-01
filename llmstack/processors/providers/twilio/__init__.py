@@ -3,7 +3,7 @@ from typing import Optional
 from llmstack.processors.providers.api_processor_interface import ApiProcessorSchema
 
 
-class TwilioSmsWebhookRequest(ApiProcessorSchema):
+class TwilioWebhookRequest(ApiProcessorSchema):
     ToCountry: Optional[str] = None
     ToState: Optional[str] = None
     SmsMessageSid: Optional[str] = None

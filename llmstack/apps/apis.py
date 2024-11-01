@@ -1194,10 +1194,10 @@ class SlackViewSet(viewsets.ViewSet):
 
 
 def run_twilio_sms_app(request, uid, input_data, source, app_data, session_id, stream=False):
-    TwilioSMSViewSet._run(request, uid, input_data, source, app_data, session_id, stream)
+    TwilioViewSet._run(request, uid, input_data, source, app_data, session_id, stream)
 
 
-class TwilioSMSViewSet(viewsets.ViewSet):
+class TwilioViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
     @staticmethod

@@ -11,7 +11,7 @@ from llmstack.apps.types.app_type_interface import AppTypeInterface, BaseSchema
 logger = logging.getLogger(__name__)
 
 
-class TwilioSmsAppConfigSchema(BaseSchema):
+class TwilioAppConfigSchema(BaseSchema):
     account_sid: str = Field(
         title="Account SID",
         description="Account SID of the Twilio account. Your account's SID can be found in the console.",
@@ -39,18 +39,18 @@ class TwilioSmsAppConfigSchema(BaseSchema):
     )
 
 
-class TwilioSmsApp(AppTypeInterface[TwilioSmsAppConfigSchema]):
+class TwilioApp(AppTypeInterface[TwilioAppConfigSchema]):
     @staticmethod
     def slug() -> str:
-        return "twilio_sms"
+        return "twilio"
 
     @staticmethod
     def name() -> str:
-        return "Twilio SMS App"
+        return "Twilio App"
 
     @staticmethod
     def description() -> str:
-        return "Send SMS messages from Twilio."
+        return "Send SMS and voice messages from Twilio."
 
     @classmethod
     def pre_save(self, app: App):
