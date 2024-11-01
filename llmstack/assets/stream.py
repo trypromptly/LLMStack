@@ -102,7 +102,7 @@ class AssetStream:
 
         try:
             while True:
-                stream = objref_stream_client.xread(count=1, streams={self.objref: message_index}, block=timeout)
+                stream = objref_stream_client.xread(count=1000, streams={self.objref: message_index}, block=timeout)
                 if cancel_event and cancel_event.is_set():
                     break
 
@@ -116,7 +116,7 @@ class AssetStream:
                     if chunk_index == -1 or chunk == b"":
                         break
 
-                await asyncio.sleep(0.0001)
+                await asyncio.sleep(0.00001)
         except Exception as e:
             logger.error(f"Error reading stream: {e}")
             yield b""
