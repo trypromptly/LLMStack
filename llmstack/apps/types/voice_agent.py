@@ -66,7 +66,7 @@ class VoiceActivityDetectionSettings(BaseSchema):
 
 class MultiModal(BaseSchema):
     backend_type: Literal["multi_modal"] = Field(
-        default=Literal["multi_modal"],
+        default="multi_modal",
         title="Backend Type",
         description="The backend type to use for the multi modal model.",
         json_schema_extra={"widget": "hidden", "readOnly": True},
@@ -113,7 +113,7 @@ class MultiModal(BaseSchema):
 
 class CustomPipeline(BaseSchema):
     backend_type: Literal["custom_pipeline"] = Field(
-        default=Literal["custom_pipeline"],
+        default="custom_pipeline",
         title="Backend Type",
         description="The backend type to use for the custom pipeline.",
         json_schema_extra={"widget": "hidden", "readOnly": True},
@@ -190,7 +190,7 @@ class VoiceAgentConfigSchema(BaseSchema):
         ge=1,
     )
     backend: Union[MultiModal, CustomPipeline] = Field(
-        default=None,
+        default=MultiModal(),
         title="Backend",
         description="The backend to use for the voice agent.",
     )

@@ -55,7 +55,7 @@ class AppCoordinator(ThreadingActor):
         }
 
         # Add agent actor for output if it's an agent
-        if self._is_agent:
+        if self._is_agent or self._is_voice_agent:
             self.actors["output"] = AgentActor.start(
                 coordinator_urn=self.actor_urn,
                 dependencies=["_inputs0"] + list(self._actor_configs_map.keys()),

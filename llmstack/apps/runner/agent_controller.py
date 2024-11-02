@@ -5,7 +5,7 @@ import logging
 import queue
 import ssl
 import threading
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import websockets
 from asgiref.sync import sync_to_async
@@ -370,7 +370,7 @@ class AgentController:
             )
 
     async def process_messages(self, data: AgentControllerData):
-        if self._config.is_voice_agent and self._config.agent_config.backend.backend_type == Literal["multi_modal"]:
+        if self._config.is_voice_agent and self._config.agent_config.backend.backend_type == "multi_modal":
             if not self._websocket:
                 await self._init_websocket_connection()
 
