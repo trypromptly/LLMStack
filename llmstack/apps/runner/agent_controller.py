@@ -165,6 +165,7 @@ class AgentController:
                 session["tools"] = [
                     {"type": "function", **t["function"]} for t in self._config.tools if t["type"] == "function"
                 ]
+                session["voice"] = self._config.agent_config.backend.voice
 
                 if self._config.agent_config.input_audio_format:
                     session["input_audio_format"] = self._config.agent_config.input_audio_format
