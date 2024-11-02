@@ -209,7 +209,12 @@ class AgentController:
         ssl_context.check_hostname = False
         ssl_context.verify_mode = ssl.CERT_NONE
 
-        websocket_url = f"wss://api.openai.com/v1/realtime?model={self._config.agent_config.backend.model}"
+        model_slug = (
+            "gpt-4o-realtime-preview"
+            if self._config.agent_config.backend.model == "gpt-4o-realtime"
+            else self._config.agent_config.backend.model
+        )
+        websocket_url = f"wss://api.openai.com/v1/realtime?model={model_slug}"
         headers = {
             "Authorization": f"Bearer {self._provider_config.api_key}",
             "OpenAI-Beta": "realtime=v1",
@@ -224,6 +229,9 @@ class AgentController:
 
         # Handle websocket messages and input streams
         self._loop.create_task(self._handle_websocket_messages())
+
+        # Create an initial response
+        await self._send_websocket_message({"type": "response.create"})
 
     def _init_llm_client(self):
         self._provider_config = get_matched_provider_config(
