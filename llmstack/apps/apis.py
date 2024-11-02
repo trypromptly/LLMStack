@@ -682,6 +682,18 @@ class AppViewSet(viewsets.ViewSet):
             "processors": app_processors,
         }
 
+        if app_type_slug == "voice-agent":
+            app_data["input_fields"] = [
+                {
+                    "name": "task",
+                    "type": "multi",
+                    "stream": True,
+                    "required": True,
+                    "description": "What do you want the agent to perform?",
+                    "placeholder": "Type in your message",
+                },
+            ]
+
         # Add app icon to app data if it exists
         if app_icon:
             app_data["icon"] = app_icon
