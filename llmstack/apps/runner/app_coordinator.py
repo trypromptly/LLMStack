@@ -137,7 +137,7 @@ class AppCoordinator(ThreadingActor):
         self.tell_actor("_inputs0", message)
 
         # Also start actors that have no dependencies and send a BEGIN message when not an agent
-        if not self._is_agent:
+        if not self._is_agent and not self._is_voice_agent:
             for actor_config in self._actor_configs_map.values():
                 if not self._actor_dependencies[actor_config.name]:
                     actor_id = actor_config.name

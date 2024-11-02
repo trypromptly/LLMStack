@@ -330,7 +330,7 @@ class AppRunner:
         return input_data
 
     def _get_actor_configs_from_processors(
-        self, processors: List[Dict], session_id: str, is_agent: bool, vendor_env: Dict = {}
+        self, processors: List[Dict], session_id: str, is_agent_or_voice_agent: bool, vendor_env: Dict = {}
     ):
         actor_configs = []
         allowed_processor_variables = [p["id"] for p in processors] + ["_inputs0"]
@@ -357,8 +357,10 @@ class AppRunner:
                         "request_user": self._source.request_user,
                         "app_uuid": self._source.id,
                         "input_fields": processor.get("input_fields", []),
-                        "is_tool": is_agent,
-                        "output_template": processor.get("output_template", {"markdown": ""}) if is_agent else None,
+                        "is_tool": is_agent_or_voice_agent,
+                        "output_template": (
+                            processor.get("output_template", {"markdown": ""}) if is_agent_or_voice_agent else None
+                        ),
                     },
                     dependencies=self._compute_dependencies_from_processor(processor, allowed_processor_variables),
                     tool_schema=(
@@ -370,7 +372,7 @@ class AppRunner:
                                 "parameters": processor_cls.get_tool_input_schema(processor),
                             },
                         }
-                        if is_agent
+                        if is_agent_or_voice_agent
                         else None
                     ),
                 ),
@@ -407,7 +409,7 @@ class AppRunner:
         self._bookkeeping_queue = asyncio.Queue()
 
         actor_configs = self._get_actor_configs_from_processors(
-            app_data.get("processors", []), self._session_id, self._is_agent, vendor_env
+            app_data.get("processors", []), self._session_id, (self._is_agent or self._is_voice_agent), vendor_env
         )
         output_template = app_data.get("output_template", {}).get("markdown", "")
 
