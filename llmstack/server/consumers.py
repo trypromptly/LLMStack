@@ -619,6 +619,10 @@ class TwilioVoiceConsumer(AsyncWebsocketConsumer):
             self._app_uuid,
             self._source,
             self.scope.get("user", None),
+            app_data_config_override={
+                "input_audio_format": "g711_ulaw",
+                "output_audio_format": "g711_ulaw",
+            },
         )
 
         await self.accept()
