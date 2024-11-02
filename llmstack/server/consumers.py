@@ -152,7 +152,7 @@ class AppConsumer(AsyncWebsocketConsumer):
                 response_iterator = self._app_runner.run(app_runner_request)
                 async for response in response_iterator:
                     if response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK:
-                        await self.send(text_data=json.dumps(response.model_dump()))
+                        await self.send(text_data=response.model_dump_json())
                     elif response.type == AppRunnerStreamingResponseType.ERRORS:
                         await self.send(
                             text_data=json.dumps(
@@ -551,7 +551,7 @@ class PlaygroundConsumer(AsyncWebsocketConsumer):
             response_iterator = app_runner.run(app_runner_request)
             async for response in response_iterator:
                 if response.type == AppRunnerStreamingResponseType.OUTPUT_STREAM_CHUNK:
-                    await self.send(text_data=json.dumps(response.model_dump()))
+                    await self.send(text_data=response.model_dump_json())
                 elif response.type == AppRunnerStreamingResponseType.OUTPUT:
                     await self.send(
                         text_data=json.dumps(
