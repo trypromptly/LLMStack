@@ -16,7 +16,6 @@ from llmstack.apps.runner.agent_controller import (
 )
 from llmstack.apps.runner.output_actor import OutputActor
 from llmstack.common.utils.liquid import render_template
-from llmstack.common.utils.provider_config import get_matched_provider_config
 from llmstack.play.actor import BookKeepingData
 from llmstack.play.messages import ContentData, Error, Message, MessageType
 from llmstack.play.output_stream import stitch_model_objects
@@ -34,6 +33,7 @@ class AgentActor(OutputActor):
         dependencies: list = [],
         templates: Dict[str, str] = {},
         agent_config: Dict[str, Any] = {},
+        is_voice_agent: bool = False,
         metadata: Dict[str, Any] = {},
         provider_configs: Dict[str, Any] = {},
         tools: List[Dict] = [],
@@ -42,25 +42,13 @@ class AgentActor(OutputActor):
         self._process_output_task = None
         self._config = agent_config
         self._provider_configs = provider_configs
-        self._provider_slug = self._config.get("provider_slug", "openai")
-        self._model_slug = self._config.get("model", "gpt-4o-mini")
-        self._provider_config = get_matched_provider_config(
-            provider_configs=self._provider_configs,
-            provider_slug=self._provider_slug,
-            model_slug=self._model_slug,
-        )
-        self._realtime = self._config.get("realtime", False)
+        self._is_voice_agent = is_voice_agent
 
         self._controller_config = AgentControllerConfig(
             provider_configs=self._provider_configs,
-            provider_config=self._provider_config,
-            provider_slug=self._provider_slug,
-            model_slug=self._model_slug,
-            system_message=self._config.get("system_message", "You are a helpful assistant."),
+            agent_config=self._config,
+            is_voice_agent=self._is_voice_agent,
             tools=tools,
-            stream=True if self._config.get("stream") is None else self._config.get("stream"),
-            realtime=self._realtime,
-            max_steps=min(self._config.get("max_steps", 30), 100),
             metadata=metadata,
         )
 
@@ -245,18 +233,18 @@ class AgentActor(OutputActor):
                         "usage_metrics": [
                             ("promptly/*/*/*", MetricType.INVOCATION, (ProviderConfigSource.PLATFORM_DEFAULT, 1)),
                             (
-                                f"{self._provider_slug}/*/{self._model_slug}/*",
+                                controller_output.data.provider,
                                 MetricType.INPUT_TOKENS,
                                 (
-                                    self._provider_config.provider_config_source,
+                                    controller_output.data.source,
                                     controller_output.data.prompt_tokens,
                                 ),
                             ),
                             (
-                                f"{self._provider_slug}/*/{self._model_slug}/*",
+                                controller_output.data.provider,
                                 MetricType.OUTPUT_TOKENS,
                                 (
-                                    self._provider_config.provider_config_source,
+                                    controller_output.data.source,
                                     controller_output.data.completion_tokens,
                                 ),
                             ),
@@ -278,8 +266,8 @@ class AgentActor(OutputActor):
     def on_receive(self, message: Message) -> None:
         if message.type == MessageType.CONTENT:
             if message.sender == "_inputs0":
-                if self._realtime:
-                    # For realtime, we send both text and audio streams if available
+                if self._is_voice_agent:
+                    # For voice agents, we send both text and audio streams if available
                     content = []
                     if message.data.content.get("text", None):
                         content.append(

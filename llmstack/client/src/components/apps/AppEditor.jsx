@@ -129,7 +129,13 @@ export function AppEditor(props) {
           </Stack>
           {processors.map((processor, index) => (
             <Stack style={{ justifyContent: "center" }} key={index}>
-              <AddProcessorDivider showProcessorSelector={false} />
+              <AddProcessorDivider
+                showProcessorSelector={false}
+                isTool={
+                  app.app_type_slug === "agent" ||
+                  app.app_type_slug === "voice-agent"
+                }
+              />
               <ProcessorEditor
                 appId={app.uuid}
                 index={index}
@@ -138,7 +144,10 @@ export function AppEditor(props) {
                 activeStep={activeStep}
                 setActiveStep={setActiveStep}
                 outputSchemas={outputSchemas}
-                isTool={app.app_type_slug === "agent"}
+                isTool={
+                  app.app_type_slug === "agent" ||
+                  app.app_type_slug === "voice-agent"
+                }
               />
             </Stack>
           ))}
@@ -160,18 +169,28 @@ export function AppEditor(props) {
                 setProcessors(newProcessors);
                 setActiveStep(newProcessors.length + 1);
               }}
+              isTool={
+                app.app_type_slug === "agent" ||
+                app.app_type_slug === "voice-agent"
+              }
             />
           </Stack>
           <Stack>
-            <AppOutputEditor
-              index={processors.length}
-              activeStep={activeStep}
-              setActiveStep={setActiveStep}
-              outputTemplate={appOutputTemplate}
-              setOutputTemplate={setAppOutputTemplate}
-              outputSchemas={outputSchemas}
-              isAgent={app.app_type_slug === "agent"}
-            />
+            {app.app_type_slug !== "agent" &&
+              app.app_type_slug !== "voice-agent" && (
+                <AppOutputEditor
+                  index={processors.length}
+                  activeStep={activeStep}
+                  setActiveStep={setActiveStep}
+                  outputTemplate={appOutputTemplate}
+                  setOutputTemplate={setAppOutputTemplate}
+                  outputSchemas={outputSchemas}
+                  isTool={
+                    app.app_type_slug === "agent" ||
+                    app.app_type_slug === "voice-agent"
+                  }
+                />
+              )}
           </Stack>
         </Box>
       )}

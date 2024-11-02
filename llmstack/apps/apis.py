@@ -606,15 +606,9 @@ class AppViewSet(viewsets.ViewSet):
         app_owner_profile = get_object_or_404(Profile, user=owner)
         app_type_slug = request.data["type_slug"] if "type_slug" in request.data else None
         app_type = (
-            get_object_or_404(
-                AppType,
-                id=request.data["app_type"],
-            )
+            AppType.objects.filter(id=request.data["app_type"]).first()
             if "app_type" in request.data
-            else get_object_or_404(
-                AppType,
-                slug=app_type_slug,
-            )
+            else AppType.objects.filter(slug=app_type_slug).first()
         )
         app_name = request.data["name"]
         app_description = request.data["description"] if "description" in request.data else ""
@@ -670,6 +664,7 @@ class AppViewSet(viewsets.ViewSet):
             owner=owner,
             description=app_description,
             type=app_type,
+            type_slug=app_type.slug if app_type else app_type_slug,
             template_slug=template_slug,
             web_integration_config=web_integration_config,
             slack_integration_config=slack_integration_config,
@@ -679,7 +674,7 @@ class AppViewSet(viewsets.ViewSet):
         app_data = {
             "name": app_name,
             "description": app_description,
-            "type_slug": app_type.slug,
+            "type_slug": app_type.slug if app_type else app_type_slug,
             "description": app_description,
             "config": app_config,
             "input_fields": app_input_fields,

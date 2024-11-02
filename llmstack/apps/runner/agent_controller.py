@@ -5,12 +5,14 @@ import logging
 import queue
 import ssl
 import threading
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import websockets
 from asgiref.sync import sync_to_async
 from pydantic import BaseModel, ConfigDict
 
+from llmstack.apps.types.agent import AgentConfigSchema
+from llmstack.apps.types.voice_agent import VoiceAgentConfigSchema
 from llmstack.common.blocks.base.schema import StrEnum
 from llmstack.common.utils.liquid import render_template
 from llmstack.common.utils.provider_config import get_matched_provider_config
@@ -18,7 +20,6 @@ from llmstack.common.utils.sslr.types.chat.chat_completion import ChatCompletion
 from llmstack.common.utils.sslr.types.chat.chat_completion_chunk import (
     ChatCompletionChunk,
 )
-from llmstack.processors.providers.config import ProviderConfig
 from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
 
 logger = logging.getLogger(__name__)
@@ -26,16 +27,29 @@ logger = logging.getLogger(__name__)
 
 class AgentControllerConfig(BaseModel):
     provider_configs: Dict[str, Any]
-    provider_config: ProviderConfig
-    provider_slug: str
-    model_slug: str
-    system_message: str
+    agent_config: Union[AgentConfigSchema, VoiceAgentConfigSchema]
+    is_voice_agent: bool = False
     tools: List[Dict]
-    stream: bool = False
-    realtime: bool = False
-    max_steps: int = 30
     metadata: Dict[str, Any]
-    model_config = ConfigDict(protected_namespaces=())
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    def __init__(self, **data):
+        # Convert agent_config to correct type if needed
+        if "agent_config" in data:
+            config = data["agent_config"]
+            if isinstance(config, dict):
+                if data.get("is_voice_agent", False):
+                    data["agent_config"] = VoiceAgentConfigSchema(**config)
+                else:
+                    data["agent_config"] = AgentConfigSchema(**config)
+
+        super().__init__(**data)
+
+        if self.is_voice_agent and not isinstance(self.agent_config, VoiceAgentConfigSchema):
+            raise ValueError("agent_config must be VoiceAgentConfigSchema when is_voice_agent is True")
+        elif not self.is_voice_agent and not isinstance(self.agent_config, AgentConfigSchema):
+            raise ValueError("agent_config must be AgentConfigSchema when is_voice_agent is False")
 
 
 class AgentControllerDataType(StrEnum):
@@ -54,6 +68,8 @@ class AgentUsageData(BaseModel):
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_tokens: int = 0
+    provider: str = ""
+    source: str = ""
 
 
 class AgentMessageRole(StrEnum):
@@ -116,19 +132,10 @@ class AgentController:
     def __init__(self, output_queue: asyncio.Queue, config: AgentControllerConfig):
         self._output_queue = output_queue
         self._config = config
-        self._messages: List[AgentMessage] = [
-            AgentSystemMessage(
-                role=AgentMessageRole.SYSTEM,
-                content=[
-                    AgentMessageContent(
-                        type=AgentMessageContentType.TEXT,
-                        data=render_template(self._config.system_message, {}),
-                    )
-                ],
-            )
-        ]
+        self._messages: List[AgentMessage] = []
         self._llm_client = None
         self._websocket = None
+        self._provider_config = None
 
         self._input_text_stream = None
         self._input_audio_stream = None
@@ -154,10 +161,15 @@ class AgentController:
             if event["type"] == "session.created":
                 logger.info(f"Session created: {event['session']['id']}")
                 session = {}
-                session["instructions"] = self._config.system_message
+                session["instructions"] = self._config.agent_config.system_message
                 session["tools"] = [
                     {"type": "function", **t["function"]} for t in self._config.tools if t["type"] == "function"
                 ]
+
+                if self._config.agent_config.input_audio_format:
+                    session["input_audio_format"] = self._config.agent_config.input_audio_format
+                if self._config.agent_config.output_audio_format:
+                    session["output_audio_format"] = self._config.agent_config.output_audio_format
 
                 updated_session = {
                     "type": "session.update",
@@ -172,6 +184,12 @@ class AgentController:
     async def _init_websocket_connection(self):
         from llmstack.apps.models import AppSessionFiles
         from llmstack.assets.stream import AssetStream
+
+        self._provider_config = get_matched_provider_config(
+            provider_configs=self._config.provider_configs,
+            provider_slug=self._config.agent_config.backend.provider,
+            model_slug=self._config.agent_config.backend.model,
+        )
 
         # Create the output streams
         self._output_audio_stream = AssetStream(
@@ -191,9 +209,9 @@ class AgentController:
         ssl_context.check_hostname = False
         ssl_context.verify_mode = ssl.CERT_NONE
 
-        websocket_url = f"wss://api.openai.com/v1/realtime?model={self._config.model_slug}"
+        websocket_url = f"wss://api.openai.com/v1/realtime?model={self._config.agent_config.backend.model}"
         headers = {
-            "Authorization": f"Bearer {self._config.provider_config.api_key}",
+            "Authorization": f"Bearer {self._provider_config.api_key}",
             "OpenAI-Beta": "realtime=v1",
         }
 
@@ -208,14 +226,32 @@ class AgentController:
         self._loop.create_task(self._handle_websocket_messages())
 
     def _init_llm_client(self):
+        self._provider_config = get_matched_provider_config(
+            provider_configs=self._config.provider_configs,
+            provider_slug=self._config.agent_config.provider,
+            model_slug=self._config.agent_config.model,
+        )
+
         self._llm_client = get_llm_client_from_provider_config(
-            self._config.provider_slug,
-            self._config.model_slug,
+            self._config.agent_config.provider,
+            self._config.agent_config.model,
             lambda provider_slug, model_slug: get_matched_provider_config(
                 provider_configs=self._config.provider_configs,
                 provider_slug=provider_slug,
                 model_slug=model_slug,
             ),
+        )
+
+        self._messages.append(
+            AgentSystemMessage(
+                role=AgentMessageRole.SYSTEM,
+                content=[
+                    AgentMessageContent(
+                        type=AgentMessageContentType.TEXT,
+                        data=render_template(self._config.agent_config.system_message, {}),
+                    )
+                ],
+            )
         )
 
     async def _process_input_audio_stream(self):
@@ -317,8 +353,8 @@ class AgentController:
         self._messages.append(data.data)
 
         try:
-            if len(self._messages) > self._config.max_steps:
-                raise Exception(f"Max steps ({self._config.max_steps}) exceeded: {len(self._messages)}")
+            if len(self._messages) > self._config.agent_config.max_steps:
+                raise Exception(f"Max steps ({self._config.agent_config.max_steps}) exceeded: {len(self._messages)}")
 
             if data.type != AgentControllerDataType.AGENT_OUTPUT:
                 self._input_messages_queue.put(data)
@@ -334,7 +370,7 @@ class AgentController:
             )
 
     async def process_messages(self, data: AgentControllerData):
-        if self._config.realtime:
+        if self._config.is_voice_agent and self._config.agent_config.backend.backend_type == Literal["multi_modal"]:
             if not self._websocket:
                 await self._init_websocket_connection()
 
@@ -391,14 +427,15 @@ class AgentController:
                 self._init_llm_client()
 
             client_messages = self._convert_messages_to_llm_client_format()
+            stream = True if self._config.agent_config.stream is None else self._config.agent_config.stream
             response = self._llm_client.chat.completions.create(
-                model=self._config.model_slug,
+                model=self._config.agent_config.model,
                 messages=client_messages,
-                stream=self._config.stream,
+                stream=stream,
                 tools=self._config.tools,
             )
 
-            if self._config.stream:
+            if stream:
                 for chunk in response:
                     self.add_llm_client_response_to_output_queue(chunk)
             else:
@@ -419,6 +456,8 @@ class AgentController:
                         prompt_tokens=response.usage.input_tokens,
                         completion_tokens=response.usage.output_tokens,
                         total_tokens=response.usage.total_tokens,
+                        source=self._provider_config.provider_config_source,
+                        provider=str(self._provider_config),
                     ),
                 )
             )
@@ -621,6 +660,10 @@ class AgentController:
                     type=AgentControllerDataType.INPUT_STREAM,
                 )
             )
+        elif event_type == "input_audio_buffer.speech_stopped":
+            pass
+        elif event_type == "conversation.item.input_audio_transcription.completed":
+            pass
         elif event_type == "error":
             logger.error(f"WebSocket error: {event}")
 

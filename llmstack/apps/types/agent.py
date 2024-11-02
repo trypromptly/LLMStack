@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import Field
 
@@ -21,6 +21,12 @@ class AgentModel(StrEnum):
 
 
 class AgentConfigSchema(BaseSchema):
+    provider: str = Field(
+        default="openai",
+        title="Model Provider",
+        description="The provider to use for the model.",
+        json_schema_extra={"widget": "customselect", "readOnly": True},
+    )
     model: AgentModel = Field(
         title="Model",
         default=AgentModel.GPT_4_O_MINI,
@@ -52,12 +58,6 @@ class AgentConfigSchema(BaseSchema):
         json_schema_extra={"advanced_parameter": True},
         le=100,
         ge=1,
-    )
-    split_tasks: bool = Field(
-        title="Split Tasks",
-        default=True,
-        description="Whether to split tasks into subtasks.",
-        json_schema_extra={"advanced_parameter": True},
     )
     input_template: str = Field(
         title="Page Content",
@@ -95,7 +95,7 @@ class AgentConfigSchema(BaseSchema):
         description="CSS style object to apply to the app bubble when embedded in another page",
         json_schema_extra={"widget": "textarea", "advanced_parameter": True},
     )
-    suggested_messages: List[str] = Field(
+    suggested_messages: List[Any] = Field(
         title="Suggested messages",
         default=[],
         description="List of upto 3 suggested messages to show to the user",
@@ -128,18 +128,6 @@ class AgentConfigSchema(BaseSchema):
         title="Layout",
         description="Layout to use for the app page",
         json_schema_extra={"widget": "textarea", "advanced_parameter": True},
-    )
-    init_on_load: Optional[bool] = Field(
-        default=None,
-        title="Initialize processors on load. Use this for apps like realtime avatars.",
-        description="If checked, the app will be initialized when the page is loaded. This is useful for apps that need to be initialized before the user interacts with them.",
-        json_schema_extra={"advanced_parameter": True, "hidden": True},
-    )
-    realtime: Optional[bool] = Field(
-        default=None,
-        title="Realtime",
-        description="Whether to use realtime mode for the agent. Realtime mode is currently only supported for a select few models from OpenAI.",
-        json_schema_extra={"advanced_parameter": True, "hidden": True},
     )
 
 

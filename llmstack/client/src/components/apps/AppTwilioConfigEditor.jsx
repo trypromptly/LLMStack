@@ -41,7 +41,7 @@ const twilioConfigSchema = {
       type: "boolean",
       title: "Auto-configure Twilio Voice Webhook",
       description:
-        "Automatically create a Twilio Voice webhook for the phone numbers.",
+        "Automatically create a Twilio Voice webhook for the phone numbers. Only available for Voice Agents.",
     },
   },
   required: ["account_sid", "auth_token", "phone_numbers"],

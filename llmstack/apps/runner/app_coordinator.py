@@ -20,6 +20,7 @@ class AppCoordinator(ThreadingActor):
         actor_configs: List[ActorConfig],
         output_template: str = "",
         is_agent: bool = False,
+        is_voice_agent: bool = False,
         env: Dict[str, Any] = {},
         config: Dict[str, Any] = {},
         spread_output_for_keys: Set[str] = set(),
@@ -43,6 +44,7 @@ class AppCoordinator(ThreadingActor):
         self._actor_configs_map = {actor_config.name: actor_config for actor_config in actor_configs}
 
         self._is_agent = is_agent
+        self._is_voice_agent = is_voice_agent
 
         # Map of actor id to actor
         self.actors = {
@@ -61,6 +63,7 @@ class AppCoordinator(ThreadingActor):
                     **{ac.name: ac.kwargs.get("output_template", {}).get("markdown", "") for ac in actor_configs},
                 },
                 agent_config=config,
+                is_voice_agent=self._is_voice_agent,
                 metadata=metadata,
                 provider_configs=env.get("provider_configs", {}),
                 tools=list(map(lambda x: x.tool_schema, actor_configs)),

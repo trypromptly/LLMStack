@@ -34,8 +34,16 @@ const VerticalLine = styled("div")`
   margin: 4px 0;
 `;
 
+const HorizontalRule = styled("div")`
+  width: 100%;
+  height: 1px;
+  background-color: #ccc;
+  margin-top: 24px;
+`;
+
 export function AddProcessorDivider({
   showProcessorSelector,
+  isTool,
   setProcessorBackend,
 }) {
   const organization = useRecoilValue(organizationState);
@@ -169,10 +177,10 @@ export function AddProcessorDivider({
                 setProcessor("");
               }}
             >
-              Processor
+              {isTool ? "Tool" : "Processor"}
             </Button>
           </Stack>
-          <VerticalLine />
+          {isTool ? <HorizontalRule /> : <VerticalLine />}
         </>
       )}
     </Separator>

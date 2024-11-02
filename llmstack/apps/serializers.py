@@ -9,14 +9,7 @@ from llmstack.base.models import Profile
 from llmstack.processors.models import ApiBackend, Endpoint
 from llmstack.processors.serializers import ApiProviderSerializer
 
-from .models import (
-    App,
-    AppAccessPermission,
-    AppData,
-    AppTemplate,
-    AppTemplateCategory,
-    AppType,
-)
+from .models import App, AppAccessPermission, AppData, AppTemplate, AppTemplateCategory
 
 
 class DynamicFieldsModelSerializer(serializers.ModelSerializer):
@@ -36,32 +29,19 @@ class DynamicFieldsModelSerializer(serializers.ModelSerializer):
                 self.fields.pop(field_name)
 
 
-class AppTypeSerializer(serializers.ModelSerializer):
-    config_schema = serializers.SerializerMethodField()
-    config_ui_schema = serializers.SerializerMethodField()
+@cache
+def get_app_type_serializer(app_type_slug: str):
+    app_type_handler_cls = AppTypeFactory.get_app_type_handler(app_type_slug)
+    if app_type_handler_cls is None:
+        return None
 
-    def get_config_schema(self, obj):
-        app_type_handler_cls = AppTypeFactory.get_app_type_handler(obj)
-        if app_type_handler_cls is None:
-            return {}
-        return app_type_handler_cls.get_config_schema()
-
-    def get_config_ui_schema(self, obj):
-        app_type_handler_cls = AppTypeFactory.get_app_type_handler(obj)
-        if app_type_handler_cls is None:
-            return {}
-        return app_type_handler_cls.get_config_ui_schema()
-
-    class Meta:
-        model = AppType
-        fields = [
-            "id",
-            "slug",
-            "name",
-            "description",
-            "config_schema",
-            "config_ui_schema",
-        ]
+    return {
+        "name": app_type_handler_cls.name(),
+        "slug": app_type_handler_cls.slug(),
+        "description": app_type_handler_cls.description(),
+        "config_schema": app_type_handler_cls.get_config_schema(),
+        "config_ui_schema": app_type_handler_cls.get_config_ui_schema(),
+    }
 
 
 class AppSerializer(DynamicFieldsModelSerializer):
@@ -86,7 +66,7 @@ class AppSerializer(DynamicFieldsModelSerializer):
             model = AppTemplate
             fields = ["name", "slug"]
 
-    type = AppTypeSerializer()
+    type = serializers.SerializerMethodField()
     data = serializers.SerializerMethodField()
     processors = serializers.SerializerMethodField()
     unique_processors = serializers.SerializerMethodField()
@@ -172,10 +152,13 @@ class AppSerializer(DynamicFieldsModelSerializer):
         return app_datas is not None
 
     def get_app_type_name(self, obj):
-        return obj.type.name
+        return get_app_type_serializer(obj.type.slug if obj.type else obj.type_slug).get("name")
 
     def get_app_type_slug(self, obj):
-        return obj.type.slug
+        return obj.type.slug if obj.type else obj.type_slug
+
+    def get_type(self, obj):
+        return get_app_type_serializer(obj.type.slug if obj.type else obj.type_slug)
 
     def get_processors(self, obj):
         return []

@@ -112,7 +112,7 @@ class TwilioApp(AppTypeInterface[TwilioAppConfigSchema]):
                             if not sms_url or sms_url != webhook_url:
                                 update_data["SmsUrl"] = webhook_url
 
-                        if auto_create_voice_webhook:
+                        if auto_create_voice_webhook and app.type_slug == "voice-agent":
                             voice_url = twilio_phone_number_resource["voice_url"]
                             webhook_url = f"{settings.SITE_URL}/api/apps/{app.uuid}/twiliovoice/run"
                             if not voice_url or voice_url != webhook_url:

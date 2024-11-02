@@ -184,7 +184,10 @@ export const PublishedAppChatEmbed = ({
   const chatBubbleRef = useRef(null);
   const [showChat, setShowChat] = useState(false);
   const [chatBubbleStyle, setChatBubbleStyle] = useState({
-    backgroundColor: app?.data?.config?.window_color || "#0f477e",
+    backgroundColor:
+      app?.data?.config?.window_color ||
+      app?.data?.config?.renderer_settings?.window_color ||
+      "#0f477e",
     color: "white",
     position: "fixed",
     right: 16,
@@ -196,10 +199,17 @@ export const PublishedAppChatEmbed = ({
     document.getElementsByClassName("root").style = "background: transparent";
 
     try {
-      const style = JSON.parse(app?.data?.config?.chat_bubble_style || "{}");
+      const style = JSON.parse(
+        app?.data?.config?.chat_bubble_style ||
+          app?.data?.config?.renderer_settings?.chat_bubble_style ||
+          "{}",
+      );
       setChatBubbleStyle((prevBubbleStyle) => ({
         ...prevBubbleStyle,
-        backgroundColor: app?.data?.config?.window_color || "#0f477e",
+        backgroundColor:
+          app?.data?.config?.window_color ||
+          app?.data?.config?.renderer_settings?.window_color ||
+          "#0f477e",
         ...style,
       }));
     } catch (e) {
@@ -234,6 +244,8 @@ export const PublishedAppChatEmbed = ({
     showChat,
     app?.data?.config?.chat_bubble_style,
     app?.data?.config?.window_color,
+    app?.data?.config?.renderer_settings?.chat_bubble_style,
+    app?.data?.config?.renderer_settings?.window_color,
   ]);
 
   return (
@@ -241,13 +253,17 @@ export const PublishedAppChatEmbed = ({
       <Fab
         style={chatBubbleStyle}
         onClick={() => setShowChat(!showChat)}
-        variant={app?.data?.config?.chat_bubble_text ? "extended" : "circular"}
+        variant={
+          app?.data?.config?.renderer_settings?.chat_bubble_text
+            ? "extended"
+            : "circular"
+        }
         ref={chatBubbleRef}
       >
         {showChat ? (
           <KeyboardArrowDownIcon />
-        ) : app?.data?.config?.chat_bubble_text ? (
-          <span>{app?.data?.config?.chat_bubble_text}</span>
+        ) : app?.data?.config?.renderer_settings?.chat_bubble_text ? (
+          <span>{app?.data?.config?.renderer_settings?.chat_bubble_text}</span>
         ) : (
           <QuestionAnswerIcon />
         )}
@@ -264,7 +280,10 @@ export const PublishedAppChatEmbed = ({
           <div
             style={{
               display: "flex",
-              backgroundColor: app?.data?.config.window_color || "#0f477e",
+              backgroundColor:
+                app?.data?.config?.window_color ||
+                app?.data?.config?.renderer_settings?.window_color ||
+                "#0f477e",
               borderRadius: "8px 8px 0px 0px",
             }}
           >

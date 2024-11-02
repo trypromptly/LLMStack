@@ -400,9 +400,9 @@ class AppRunner:
         self._session_id = session_id or str(uuid.uuid4())
         self._app_data = app_data
         self._app_config = app_data.get("config", {})
-        self._realtime = self._app_config.get("realtime", False)
         self._source = source
         self._is_agent = app_data.get("type_slug") == "agent"
+        self._is_voice_agent = app_data.get("type_slug") == "voice-agent"
         self._file_uploader = file_uploader
         self._bookkeeping_queue = asyncio.Queue()
 
@@ -415,6 +415,7 @@ class AppRunner:
             actor_configs=actor_configs,
             output_template=output_template,
             is_agent=self._is_agent,
+            is_voice_agent=self._is_voice_agent,
             env=vendor_env,
             config=self._app_config,
             bookkeeping_queue=self._bookkeeping_queue,
@@ -458,7 +459,7 @@ class AppRunner:
                 self._file_uploader,
             )
 
-        if self._realtime:
+        if self._is_voice_agent:
             # Find the multi stream input and send it as a single message
             for field in input_fields:
                 if field.get("type", None) == "multi" and field.get("stream", None) and field["name"] in input_data:

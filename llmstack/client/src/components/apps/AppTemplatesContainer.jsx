@@ -215,25 +215,14 @@ const AppTemplatesContainer = () => {
 
   const blankTemplates = [
     {
-      name: "Web App",
+      name: "Workflow",
       description:
-        "Provides a web app that takes in a user input and returns a rendered output in the provided template.",
-      slug: "_blank_web",
-      icon: "tool",
-      category_slugs: ["blank"],
-      app: {
-        type_slug: "web",
-      },
-    },
-    {
-      name: "Chat Bot",
-      description:
-        "Provides a chat bot that takes in a user input and returns a rendered output in the provided template.",
-      slug: "_blank_text-chat",
+        "Provides a workflow that takes in a user input and returns a rendered output in the provided template.",
+      slug: "_blank_workflow",
       icon: "text",
       category_slugs: ["blank"],
       app: {
-        type_slug: "text-chat",
+        type_slug: "workflow",
       },
     },
     {
@@ -245,6 +234,17 @@ const AppTemplatesContainer = () => {
       category_slugs: ["blank"],
       app: {
         type_slug: "agent",
+      },
+    },
+    {
+      name: "Voice Agent",
+      description:
+        "Conversational agent the user can speak to and interact with.",
+      slug: "_blank_voice-agent",
+      icon: "voice",
+      category_slugs: ["blank"],
+      app: {
+        type_slug: "voice-agent",
       },
     },
   ];

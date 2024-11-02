@@ -37,6 +37,7 @@ export function AppConfigEditor({
   const [setValidationErrorsForId, clearValidationErrorsForId] =
     useValidationErrorsForAppComponents("appConfig");
   const inputSchema = getJSONSchemaFromInputFields(inputFields);
+  const isVoiceAgent = appType?.slug?.toLowerCase() === "voice-agent";
 
   useEffect(() => {
     if (!isAgent) {
@@ -87,35 +88,37 @@ export function AppConfigEditor({
       errors={errors}
     >
       <CardContent style={{ maxHeight: 400, overflow: "auto" }}>
-        <Accordion defaultExpanded={!isAgent}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="input-content"
-            id="input-header"
-            className="app-editor-section-header"
-          >
-            App Input
-          </AccordionSummary>
-          <AccordionDetails>
-            <AppInputSchemaEditor
-              fields={
-                !inputFields && isAgent
-                  ? [
-                      {
-                        name: "task",
-                        title: "Task",
-                        description: "What do you want the agent to perform?",
-                        type: "string",
-                        required: true,
-                      },
-                    ]
-                  : inputFields
-              }
-              setFields={setInputFields}
-              setErrors={setErrors}
-            />
-          </AccordionDetails>
-        </Accordion>
+        {!isVoiceAgent && (
+          <Accordion defaultExpanded={!isAgent}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="input-content"
+              id="input-header"
+              className="app-editor-section-header"
+            >
+              App Input
+            </AccordionSummary>
+            <AccordionDetails>
+              <AppInputSchemaEditor
+                fields={
+                  !inputFields && isAgent
+                    ? [
+                        {
+                          name: "task",
+                          title: "Task",
+                          description: "What do you want the agent to perform?",
+                          type: "string",
+                          required: true,
+                        },
+                      ]
+                    : inputFields
+                }
+                setFields={setInputFields}
+                setErrors={setErrors}
+              />
+            </AccordionDetails>
+          </Accordion>
+        )}
         <Accordion defaultExpanded={true}>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}

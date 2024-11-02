@@ -462,23 +462,34 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
   }, [location, cancelAppRun, setAppRunData]);
 
   useEffect(() => {
-    if (app?.data?.config?.layout) {
+    if (app?.data?.config?.layout && app?.data?.type_slug !== "workflow") {
       setLayout(app?.data?.config?.layout);
     } else {
       setLayout(
-        app?.data?.type_slug === "web"
+        app?.data?.type_slug === "web" ||
+          (app?.data?.type_slug === "workflow" &&
+            app?.data?.config?.renderer_settings?.renderer_slug === "web")
           ? defaultWorkflowLayout
           : defaultChatLayout,
       );
     }
-  }, [app?.data?.config?.layout, app?.data?.type_slug]);
+  }, [
+    app?.data?.config?.layout,
+    app?.data?.type_slug,
+    app?.data?.config?.renderer_settings,
+  ]);
 
   useEffect(() => {
-    if (app?.data?.config?.welcome_message) {
+    if (
+      app?.data?.config?.welcome_message ||
+      (app?.data?.config?.renderer_settings &&
+        app?.data?.config?.renderer_settings?.welcome_message)
+    ) {
       const welcomeMessage = new AppMessage(
         "welcome",
         null,
-        app?.data?.config?.welcome_message,
+        app?.data?.config?.welcome_message ||
+          app?.data?.config?.renderer_settings?.welcome_message,
       );
       messagesRef.current.add(welcomeMessage);
     }
@@ -496,7 +507,11 @@ export default function AppRenderer({ app, ws, onEventDone = null }) {
       messages: messagesRef.current.get(),
       processors: app?.data?.processors || [],
       assistantImage: app?.icon || app?.data?.config?.assistant_image || logo,
-      suggestedMessages: app?.data?.config?.suggested_messages || [],
+      suggestedMessages:
+        app?.data?.config?.suggested_messages ||
+        (app?.data?.config?.renderer_settings &&
+          app?.data?.config?.renderer_settings?.suggested_messages) ||
+        [],
     }));
 
     return () => {
