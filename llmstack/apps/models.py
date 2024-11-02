@@ -214,6 +214,14 @@ class App(models.Model):
         AppType,
         on_delete=models.DO_NOTHING,
         help_text="Type of the app",
+        null=True,
+        blank=True,
+    )
+    type_slug = models.CharField(
+        max_length=100,
+        help_text="Slug of the app type",
+        default="",
+        blank=True,
     )
     description = models.TextField(
         default="",
@@ -720,18 +728,18 @@ def update_app_pre_save(sender, instance, **kwargs):
 
     # Save discord and slack config
     discord_app_type_handler_cls = AppTypeFactory.get_app_type_handler(
-        instance.type,
+        instance.type.slug if instance.type else instance.type_slug,
         "discord",
     )
     instance = discord_app_type_handler_cls.pre_save(instance)
     slack_app_type_handler_cls = AppTypeFactory.get_app_type_handler(
-        instance.type,
+        instance.type.slug if instance.type else instance.type_slug,
         "slack",
     )
     instance = slack_app_type_handler_cls.pre_save(instance)
 
-    twilio_sms_type_handler_cls = AppTypeFactory.get_app_type_handler(
-        instance.type,
-        "twilio_sms",
+    twilio_app_type_handler_cls = AppTypeFactory.get_app_type_handler(
+        instance.type.slug if instance.type else instance.type_slug,
+        "twilio",
     )
-    instance = twilio_sms_type_handler_cls.pre_save(instance)
+    instance = twilio_app_type_handler_cls.pre_save(instance)
