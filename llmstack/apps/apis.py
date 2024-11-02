@@ -717,6 +717,7 @@ class AppViewSet(viewsets.ViewSet):
         source,
         request_user,
         preview=False,
+        app_data_config_override={},
     ):
         runner_user = request_user
         app = await App.objects.select_related("owner").aget(uuid=uuid.UUID(app_uuid))
@@ -734,6 +735,9 @@ class AppViewSet(viewsets.ViewSet):
         if not app_data_obj:
             raise Exception("App data not found")
         app_data = app_data_obj.data
+
+        if app_data_config_override:
+            app_data["config"] = {**app_data["config"], **app_data_config_override}
 
         # We will always use app owner credentials for running the app
         credentials_user = app.owner
