@@ -145,6 +145,7 @@ class AppCoordinator(ThreadingActor):
                         id=actor_id,
                         coordinator_urn=self.actor_urn,
                         dependencies=actor_config.dependencies,
+                        bookkeeping_queue=self._bookkeeping_queue,
                         **actor_config.kwargs,
                     )
                     self.tell_actor(
