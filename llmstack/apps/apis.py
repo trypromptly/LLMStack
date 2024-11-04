@@ -1162,9 +1162,7 @@ class SlackViewSet(viewsets.ViewSet):
                     )
                     # Improve this check later
                     if app.visibility == AppVisibility.PUBLIC or (
-                        (app.visibility == AppVisibility.PRIVATE or app.visibility == AppVisibility.ORGANIZATION)
-                        and request_user
-                        and request_user.is_authenticated
+                        app.visibility < AppVisibility.PUBLIC and request_user and request_user.is_authenticated
                     ):
                         session_id = self._get_slack_app_session_id(request.data, uid)
                         slack_message_text = re.sub(r"<@.*>(\|)?", "", request.data["event"]["text"]).strip()
