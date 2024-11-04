@@ -59,6 +59,9 @@ class AgentActor(OutputActor):
             bookkeeping_queue=bookkeeping_queue,
         )
 
+        self._agent_output_queue = asyncio.Queue()
+        self._agent_controller = AgentController(self._agent_output_queue, self._controller_config)
+
     def _add_error_from_tool_call(self, output_index, tool_name, tool_call_id, errors):
         error_message = "\n".join([error for error in errors])
         self._stitched_data = stitch_model_objects(
@@ -444,9 +447,6 @@ class AgentActor(OutputActor):
         if self._process_output_task:
             self._process_output_task.cancel()
             self._process_output_task = None
-
-        self._agent_output_queue = asyncio.Queue()
-        self._agent_controller = AgentController(self._agent_output_queue, self._controller_config)
 
         # If there is no running event loop, create one and run the task
         try:
