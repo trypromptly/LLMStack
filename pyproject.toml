@@ -38,7 +38,6 @@ django-allauth = "^0.63.3"
 django-environ = "^0.11.2"
 django-picklefield = "^3.2"
 django-redis = "^5.4.0"
-django-rq = "^2.10.2"
 djangorestframework = "^3.15.2"
 django-flags = "^5.0.13"
 django-jsonform = {version = "^2.17.4"}
@@ -50,7 +49,6 @@ channels = "^4.1.0"
 importlib-metadata = {version = "^6.0.0" }
 pyyaml = {version = "^6.0" }
 redis = {version = "^4.5.4" }
-rq = "^1.16.2"
 sendgrid = {version = "^6.10.0" }
 python-liquid = {version ="^1.12.1"}
 orjson = {version = "^3.8.14" }
@@ -72,6 +70,9 @@ daphne = "^4.1.2"
 striprtf = "^0.0.26"
 langrocks = "0.1.4"
 diff-match-patch = "^20230430"
+rq = "^2.0.0"
+django-rq = "^3.0.0"
+distlib = "^0.3.9"
 
 [tool.poetry.group.faiss.dependencies]
 faiss-cpu = "^1.8.0"

@@ -287,7 +287,7 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
 
     def process_entry(self, request, uid):
         entry = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
-        if request and request.user != entry.datasource.owner:
+        if request and request.user != entry.datasource.has_write_permission(request.user):
             return DRFResponse(status=404)
 
         document = DataDocument(**entry.config)
@@ -569,7 +569,9 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         documents = self.process_add_entry_request(datasource, source_data)
         for document in documents:
             create_result = DataSourceEntryViewSet().create_entry(user=request.user, document=document)
-            process_result = DataSourceEntryViewSet().process_entry(request=None, uid=str(create_result.data["uuid"]))
+            process_result = DataSourceEntryViewSet().process_entry(
+                request=request, uid=str(create_result.data["uuid"])
+            )
             datasource.size += process_result.data["size"]
 
         datasource.save()
