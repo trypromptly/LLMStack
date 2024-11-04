@@ -229,7 +229,7 @@ class AgentController:
         logger.info(f"WebSocket connection for realtime mode initialized: {self._websocket}")
 
         # Handle websocket messages and input streams
-        self._loop.create_task(self._handle_websocket_messages())
+        self._loop.create_task(self._handle_websocket_messages(), name="handle_websocket_messages")
 
         # Create an initial response
         await self._send_websocket_message({"type": "response.create"})

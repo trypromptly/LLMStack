@@ -455,7 +455,7 @@ class AgentActor(OutputActor):
             self._process_output_task = loop.create_task(self._process_output())
         except RuntimeError:
             logger.info("No running event loop, creating one and running process output task")
-            self._process_output_task = run_coro_in_new_loop(self._process_output())
+            self._process_output_task = run_coro_in_new_loop(self._process_output(), name="process_output")
 
     def on_stop(self):
         super().on_stop()
