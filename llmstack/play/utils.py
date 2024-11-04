@@ -75,7 +75,7 @@ def extract_variables(expression):
     return variables
 
 
-def run_coro_in_new_loop(coro):
+def run_coro_in_new_loop(coro, name=None):
     def start_loop(loop):
         asyncio.set_event_loop(loop)
         loop.run_forever()
@@ -86,8 +86,12 @@ def run_coro_in_new_loop(coro):
         except CancelledError:
             logger.info("Task cancelled")
         except Exception as e:
-            logger.exception(f"Task failed with error: {e}")
+            logger.error(f"Task in loop {name} failed with error: {e}")
         finally:
+            # Find and cancel all pending tasks before stopping the loop
+            for task in asyncio.all_tasks(loop):
+                task.cancel()
+
             loop.stop()
 
     loop = asyncio.new_event_loop()
