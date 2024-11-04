@@ -340,7 +340,9 @@ function TemplateForm({
   setPipelineSlug,
   setPipeline,
 }) {
-  const templates = useRecoilValue(pipelineTemplatesState);
+  const allTemplates = useRecoilValue(pipelineTemplatesState);
+  // Filter out pdf template
+  const templates = allTemplates.filter((template) => template.slug !== "pdf");
   const [selectedTemplate, setSelectedTemplate] = useState(
     useMemo(() => {
       return datasource?.type?.slug &&
