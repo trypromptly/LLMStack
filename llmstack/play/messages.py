@@ -8,7 +8,6 @@ from llmstack.common.blocks.base.schema import StrEnum
 
 class MessageType(StrEnum):
     BEGIN = "BEGIN"
-    BOOKKEEPING = "BOOKKEEPING"
     CONTENT = "CONTENT"
     CONTENT_STREAM_CHUNK = "CONTENT_STREAM_CHUNK"
     CONTENT_STREAM_BEGIN = "CONTENT_STREAM_BEGIN"
