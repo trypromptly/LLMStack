@@ -2,6 +2,7 @@ import asyncio
 import logging
 import re
 import threading
+from concurrent.futures import CancelledError
 from urllib.parse import quote
 
 from diff_match_patch import diff_match_patch
@@ -82,8 +83,8 @@ def run_coro_in_new_loop(coro):
     def _done_callback(future):
         try:
             future.result()
-        except asyncio.CancelledError:
-            pass
+        except CancelledError:
+            logger.info("Task cancelled")
         except Exception as e:
             logger.exception(f"Task failed with error: {e}")
         finally:
