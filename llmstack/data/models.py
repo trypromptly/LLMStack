@@ -169,6 +169,8 @@ class DataSource(models.Model):
         return self.config.get("pipeline", {})
 
     def has_read_permission(self, user):
+        if not user:
+            return False
         return (
             self.owner == user
             or user.email in self.read_accessible_by
@@ -179,6 +181,8 @@ class DataSource(models.Model):
         )
 
     def has_write_permission(self, user):
+        if not user:
+            return False
         return (
             self.owner == user
             or user.email in self.write_accessible_by
@@ -280,7 +284,7 @@ def register_data_change(sender, instance: DataSourceEntry, **kwargs):
                 "uuid": str(instance.uuid),
                 "old_size": instance.old_size,
                 "size": instance.size,
-                "owner": instance.owner_id,
+                "owner_email": instance.owner_id.email,
             },
         )
 
@@ -308,7 +312,7 @@ def register_data_delete(sender, instance: DataSourceEntry, **kwargs):
                 "uuid": str(instance.uuid),
                 "old_size": instance.size,
                 "size": 0,
-                "owner": instance.owner_id,
+                "owner_email": instance.owner_id.email,
             },
         )
 

@@ -317,7 +317,10 @@ class DataSourceEntryViewSet(viewsets.ModelViewSet):
         entry.status = DataSourceEntryStatus.READY if not document.processing_errors else DataSourceEntryStatus.FAILED
         entry.save(update_fields=["config", "size", "status", "updated_at"])
 
-        return DRFResponse(DataSourceEntrySerializer(instance=entry, context={"request_user": request.user}).data)
+        context = {}
+        if request:
+            context["request_user"] = request.user
+        return DRFResponse(DataSourceEntrySerializer(instance=entry, context=context).data)
 
     def resync(self, request, uid):
         datasource_entry_object = get_object_or_404(DataSourceEntry, uuid=uuid.UUID(uid))
@@ -569,9 +572,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         documents = self.process_add_entry_request(datasource, source_data)
         for document in documents:
             create_result = DataSourceEntryViewSet().create_entry(user=request.user, document=document)
-            process_result = DataSourceEntryViewSet().process_entry(
-                request=request, uid=str(create_result.data["uuid"])
-            )
+            process_result = DataSourceEntryViewSet().process_entry(request=None, uid=str(create_result.data["uuid"]))
             datasource.size += process_result.data["size"]
 
         datasource.save()
