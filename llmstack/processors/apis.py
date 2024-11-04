@@ -234,7 +234,6 @@ class HistoryViewSet(viewsets.ModelViewSet):
                 "session_key",
                 "app_uuid",
                 "request_user_email",
-                "platform_data",
             )
             .annotate(
                 latest_created_at=Max("created_at"),
