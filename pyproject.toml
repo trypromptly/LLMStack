@@ -40,7 +40,6 @@ django-picklefield = "^3.2"
 django-redis = "^5.4.0"
 djangorestframework = "^3.15.2"
 django-flags = "^5.0.13"
-django-jsonform = {version = "^2.17.4"}
 django-ratelimit = {version = "^4.1.0"}
 croniter = {version ="^2.0.1"}
 pykka = "^4.0.2"
@@ -75,7 +74,7 @@ django-rq = "^3.0.0"
 distlib = "^0.3.9"
 
 [tool.poetry.group.faiss.dependencies]
-faiss-cpu = "^1.8.0"
+faiss-cpu = "^1.9.0"
 
 [tool.poetry.group.processors]
 

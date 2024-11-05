@@ -5,10 +5,10 @@ import time
 from typing import Any, Dict, List
 
 from llmstack.apps.runner.agent_controller import (
-    AgentController,
     AgentControllerConfig,
     AgentControllerData,
     AgentControllerDataType,
+    AgentControllerFactory,
     AgentMessageContent,
     AgentMessageContentType,
     AgentToolCallsMessage,
@@ -60,7 +60,7 @@ class AgentActor(OutputActor):
         )
 
         self._agent_output_queue = asyncio.Queue()
-        self._agent_controller = AgentController(self._agent_output_queue, self._controller_config)
+        self._agent_controller = AgentControllerFactory.create(self._agent_output_queue, self._controller_config)
 
     def _add_error_from_tool_call(self, output_index, tool_name, tool_call_id, errors):
         error_message = "\n".join([error for error in errors])

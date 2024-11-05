@@ -134,15 +134,7 @@ class AgentController:
         self._config = config
         self._messages: List[AgentMessage] = []
         self._llm_client = None
-        self._websocket = None
         self._provider_config = None
-
-        self._input_text_stream = None
-        self._input_audio_stream = None
-        self._input_transcript_stream = None
-        self._input_metadata = {}
-        self._output_audio_stream = None
-        self._output_transcript_stream = None
 
         self._input_messages_queue = queue.Queue()
         self._loop = asyncio.new_event_loop()
@@ -152,87 +144,6 @@ class AgentController:
     def _run_event_loop(self):
         asyncio.set_event_loop(self._loop)
         self._loop.run_until_complete(self._process_messages_loop())
-
-    async def _handle_websocket_messages(self):
-        while self._websocket.open:
-            response = await self._websocket.recv()
-            event = json.loads(response)
-
-            if event["type"] == "session.created":
-                logger.info(f"Session created: {event['session']['id']}")
-                session = {}
-                session["instructions"] = self._config.agent_config.system_message
-                session["tools"] = [
-                    {"type": "function", **t["function"]} for t in self._config.tools if t["type"] == "function"
-                ]
-                session["voice"] = self._config.agent_config.backend.voice
-
-                if self._config.agent_config.input_audio_format:
-                    session["input_audio_format"] = self._config.agent_config.input_audio_format
-                if self._config.agent_config.output_audio_format:
-                    session["output_audio_format"] = self._config.agent_config.output_audio_format
-
-                updated_session = {
-                    "type": "session.update",
-                    "session": session,
-                }
-                await self._send_websocket_message(updated_session)
-            elif event["type"] == "session.updated":
-                pass
-            else:
-                await self.add_ws_event_to_output_queue(event)
-
-    async def _init_websocket_connection(self):
-        from llmstack.apps.models import AppSessionFiles
-        from llmstack.assets.stream import AssetStream
-
-        self._provider_config = get_matched_provider_config(
-            provider_configs=self._config.provider_configs,
-            provider_slug=self._config.agent_config.backend.provider,
-            model_slug=self._config.agent_config.backend.model,
-        )
-
-        # Create the output streams
-        self._output_audio_stream = AssetStream(
-            await sync_to_async(AppSessionFiles.create_streaming_asset)(
-                metadata={**self._config.metadata, "mime_type": "audio/wav"},
-                ref_id=self._config.metadata.get("session_id"),
-            )
-        )
-        self._output_transcript_stream = AssetStream(
-            await sync_to_async(AppSessionFiles.create_streaming_asset)(
-                metadata={**self._config.metadata, "mime_type": "text/plain"},
-                ref_id=self._config.metadata.get("session_id"),
-            )
-        )
-
-        ssl_context = ssl.create_default_context()
-        ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE
-
-        model_slug = (
-            "gpt-4o-realtime-preview"
-            if self._config.agent_config.backend.model == "gpt-4o-realtime"
-            else self._config.agent_config.backend.model
-        )
-        websocket_url = f"wss://api.openai.com/v1/realtime?model={model_slug}"
-        headers = {
-            "Authorization": f"Bearer {self._provider_config.api_key}",
-            "OpenAI-Beta": "realtime=v1",
-        }
-
-        self._websocket = await websockets.connect(
-            websocket_url,
-            extra_headers=headers,
-            ssl=ssl_context,
-        )
-        logger.info(f"WebSocket connection for realtime mode initialized: {self._websocket}")
-
-        # Handle websocket messages and input streams
-        self._loop.create_task(self._handle_websocket_messages(), name="handle_websocket_messages")
-
-        # Create an initial response
-        await self._send_websocket_message({"type": "response.create"})
 
     def _init_llm_client(self):
         self._provider_config = get_matched_provider_config(
@@ -262,43 +173,6 @@ class AgentController:
                 ],
             )
         )
-
-    async def _process_input_audio_stream(self):
-        if self._input_audio_stream:
-            async for chunk in self._input_audio_stream.read_async():
-                if len(chunk) == 0:
-                    await self._send_websocket_message({"type": "response.create"})
-                    break
-
-                # Base64 encode and send
-                await self._send_websocket_message(
-                    {"type": "input_audio_buffer.append", "audio": base64.b64encode(chunk).decode("utf-8")}
-                )
-
-    async def _process_input_text_stream(self):
-        if self._input_text_stream:
-            async for chunk in self._input_text_stream.read_async():
-                await self._send_websocket_message(
-                    {
-                        "type": "conversation.item.create",
-                        "item": {
-                            "type": "message",
-                            "role": "user",
-                            "content": [{"type": "input_text", "text": chunk.decode("utf-8")}],
-                        },
-                    }
-                )
-
-                # Cancel the previous response and create a new one
-                await self._send_websocket_message({"type": "response.cancel"})
-                await self._send_websocket_message({"type": "response.create"})
-
-                # Let the client know that we just got a new message so it can interrupt the playing audio
-                self._output_queue.put_nowait(
-                    AgentControllerData(
-                        type=AgentControllerDataType.INPUT_STREAM,
-                    )
-                )
 
     async def _process_messages_loop(self):
         while True:
@@ -379,79 +253,23 @@ class AgentController:
             )
 
     async def process_messages(self, data: AgentControllerData):
-        if self._config.is_voice_agent and self._config.agent_config.backend.backend_type == "multi_modal":
-            if not self._websocket:
-                await self._init_websocket_connection()
+        if not self._llm_client:
+            self._init_llm_client()
 
-            # Use the data we just got from input queue when in realtime mode
-            if data.type == AgentControllerDataType.INPUT_STREAM:
-                # Use data from AssetStreams and respond accordingly
-                for content in data.data.content:
-                    if content.type == AgentMessageContentType.TEXT_STREAM:
-                        self._input_text_stream = content.data
-                    elif content.type == AgentMessageContentType.AUDIO_STREAM:
-                        self._input_audio_stream = content.data
-                    elif content.type == AgentMessageContentType.TRANSCRIPT_STREAM:
-                        self._input_transcript_stream = content.data
-                    elif content.type == AgentMessageContentType.METADATA:
-                        self._input_metadata = content.data
+        client_messages = self._convert_messages_to_llm_client_format()
+        stream = True if self._config.agent_config.stream is None else self._config.agent_config.stream
+        response = self._llm_client.chat.completions.create(
+            model=self._config.agent_config.model,
+            messages=client_messages,
+            stream=stream,
+            tools=self._config.tools,
+        )
 
-                # Process the input streams
-                self._input_audio_stream_task = self._loop.create_task(self._process_input_audio_stream())
-                self._input_text_stream_task = self._loop.create_task(self._process_input_text_stream())
-
-                # Send output_stream info to the client
-                self._output_queue.put_nowait(
-                    AgentControllerData(
-                        type=AgentControllerDataType.OUTPUT_STREAM,
-                        data=AgentSystemMessage(
-                            content=[
-                                AgentMessageContent(
-                                    type=AgentMessageContentType.AUDIO_STREAM,
-                                    data=self._output_audio_stream.objref,
-                                ),
-                                AgentMessageContent(
-                                    type=AgentMessageContentType.TRANSCRIPT_STREAM,
-                                    data=self._output_transcript_stream.objref,
-                                ),
-                            ]
-                        ),
-                    )
-                )
-            elif data.type == AgentControllerDataType.TOOL_CALLS:
-                for tool_call_id, response in data.data.responses.items():
-                    await self._send_websocket_message(
-                        {
-                            "type": "conversation.item.create",
-                            "item": {
-                                "type": "function_call_output",
-                                "call_id": tool_call_id,
-                                "output": response,
-                            },
-                        }
-                    )
-                    await self._send_websocket_message({"type": "response.create"})
+        if stream:
+            for chunk in response:
+                self.add_llm_client_response_to_output_queue(chunk)
         else:
-            if not self._llm_client:
-                self._init_llm_client()
-
-            client_messages = self._convert_messages_to_llm_client_format()
-            stream = True if self._config.agent_config.stream is None else self._config.agent_config.stream
-            response = self._llm_client.chat.completions.create(
-                model=self._config.agent_config.model,
-                messages=client_messages,
-                stream=stream,
-                tools=self._config.tools,
-            )
-
-            if stream:
-                for chunk in response:
-                    self.add_llm_client_response_to_output_queue(chunk)
-            else:
-                self.add_llm_client_response_to_output_queue(response)
-
-    async def _send_websocket_message(self, message):
-        await self._websocket.send(json.dumps(message))
+            self.add_llm_client_response_to_output_queue(response)
 
     def add_llm_client_response_to_output_queue(self, response: Any):
         """
@@ -565,6 +383,65 @@ class AgentController:
                     )
                 )
 
+    def terminate(self):
+        # Wait for thread to finish
+        self._thread.join(timeout=5)
+        logger.info("Agent controller terminated")
+
+
+class VoiceAgentController(AgentController):
+    def __init__(self, output_queue: asyncio.Queue, config: AgentControllerConfig):
+        self._websocket = None
+
+        self._input_text_stream = None
+        self._input_audio_stream = None
+        self._input_transcript_stream = None
+        self._input_metadata = {}
+        self._output_audio_stream = None
+        self._output_transcript_stream = None
+
+        super().__init__(output_queue, config)
+
+    async def _process_input_audio_stream(self):
+        if self._input_audio_stream:
+            async for chunk in self._input_audio_stream.read_async():
+                if len(chunk) == 0:
+                    await self._send_websocket_message({"type": "response.create"})
+                    break
+
+                # Base64 encode and send
+                await self._send_websocket_message(
+                    {"type": "input_audio_buffer.append", "audio": base64.b64encode(chunk).decode("utf-8")}
+                )
+
+    async def _process_input_text_stream(self):
+        if self._input_text_stream:
+            async for chunk in self._input_text_stream.read_async():
+                await self._send_websocket_message(
+                    {
+                        "type": "conversation.item.create",
+                        "item": {
+                            "type": "message",
+                            "role": "user",
+                            "content": [{"type": "input_text", "text": chunk.decode("utf-8")}],
+                        },
+                    }
+                )
+
+                # Cancel the previous response and create a new one
+                await self._send_websocket_message({"type": "response.cancel"})
+                await self._send_websocket_message({"type": "response.create"})
+
+                # Let the client know that we just got a new message so it can interrupt the playing audio
+                self._output_queue.put_nowait(
+                    AgentControllerData(
+                        type=AgentControllerDataType.INPUT_STREAM,
+                    )
+                )
+
+    async def _send_websocket_message(self, message):
+        await self._websocket.send(json.dumps(message))
+
     async def add_ws_event_to_output_queue(self, event: Any):
         event_type = event["type"]
 
@@ -676,6 +553,140 @@ class AgentController:
         elif event_type == "error":
             logger.error(f"WebSocket error: {event}")
 
+    async def _handle_websocket_messages(self):
+        while self._websocket.open:
+            response = await self._websocket.recv()
+            event = json.loads(response)
+
+            if event["type"] == "session.created":
+                logger.info(f"Session created: {event['session']['id']}")
+                session = {}
+                session["instructions"] = self._config.agent_config.system_message
+                session["tools"] = [
+                    {"type": "function", **t["function"]} for t in self._config.tools if t["type"] == "function"
+                ]
+                session["voice"] = self._config.agent_config.backend.voice
+
+                if self._config.agent_config.input_audio_format:
+                    session["input_audio_format"] = self._config.agent_config.input_audio_format
+                if self._config.agent_config.output_audio_format:
+                    session["output_audio_format"] = self._config.agent_config.output_audio_format
+
+                updated_session = {
+                    "type": "session.update",
+                    "session": session,
+                }
+                await self._send_websocket_message(updated_session)
+            elif event["type"] == "session.updated":
+                pass
+            else:
+                await self.add_ws_event_to_output_queue(event)
+
+    async def _init_websocket_connection(self):
+        from llmstack.apps.models import AppSessionFiles
+        from llmstack.assets.stream import AssetStream
+
+        self._provider_config = get_matched_provider_config(
+            provider_configs=self._config.provider_configs,
+            provider_slug=self._config.agent_config.backend.provider,
+            model_slug=self._config.agent_config.backend.model,
+        )
+
+        # Create the output streams
+        self._output_audio_stream = AssetStream(
+            await sync_to_async(AppSessionFiles.create_streaming_asset)(
+                metadata={**self._config.metadata, "mime_type": "audio/wav"},
+                ref_id=self._config.metadata.get("session_id"),
+            )
+        )
+        self._output_transcript_stream = AssetStream(
+            await sync_to_async(AppSessionFiles.create_streaming_asset)(
+                metadata={**self._config.metadata, "mime_type": "text/plain"},
+                ref_id=self._config.metadata.get("session_id"),
+            )
+        )
+
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+
+        model_slug = (
+            "gpt-4o-realtime-preview"
+            if self._config.agent_config.backend.model == "gpt-4o-realtime"
+            else self._config.agent_config.backend.model
+        )
+        websocket_url = f"wss://api.openai.com/v1/realtime?model={model_slug}"
+        headers = {
+            "Authorization": f"Bearer {self._provider_config.api_key}",
+            "OpenAI-Beta": "realtime=v1",
+        }
+
+        self._websocket = await websockets.connect(
+            websocket_url,
+            extra_headers=headers,
+            ssl=ssl_context,
+        )
+        logger.info(f"WebSocket connection for realtime mode initialized: {self._websocket}")
+
+        # Handle websocket messages and input streams
+        self._loop.create_task(self._handle_websocket_messages(), name="handle_websocket_messages")
+
+        # Create an initial response
+        await self._send_websocket_message({"type": "response.create"})
+
+    async def process_messages(self, data: AgentControllerData):
+        if not self._websocket:
+            await self._init_websocket_connection()
+
+        # Use the data we just got from input queue when in realtime mode
+        if data.type == AgentControllerDataType.INPUT_STREAM:
+            # Use data from AssetStreams and respond accordingly
+            for content in data.data.content:
+                if content.type == AgentMessageContentType.TEXT_STREAM:
+                    self._input_text_stream = content.data
+                elif content.type == AgentMessageContentType.AUDIO_STREAM:
+                    self._input_audio_stream = content.data
+                elif content.type == AgentMessageContentType.TRANSCRIPT_STREAM:
+                    self._input_transcript_stream = content.data
+                elif content.type == AgentMessageContentType.METADATA:
+                    self._input_metadata = content.data
+
+            # Process the input streams
+            self._input_audio_stream_task = self._loop.create_task(self._process_input_audio_stream())
+            self._input_text_stream_task = self._loop.create_task(self._process_input_text_stream())
+
+            # Send output_stream info to the client
+            self._output_queue.put_nowait(
+                AgentControllerData(
+                    type=AgentControllerDataType.OUTPUT_STREAM,
+                    data=AgentSystemMessage(
+                        content=[
+                            AgentMessageContent(
+                                type=AgentMessageContentType.AUDIO_STREAM,
+                                data=self._output_audio_stream.objref,
+                            ),
+                            AgentMessageContent(
+                                type=AgentMessageContentType.TRANSCRIPT_STREAM,
+                                data=self._output_transcript_stream.objref,
+                            ),
+                        ]
+                    ),
+                )
+            )
+        elif data.type == AgentControllerDataType.TOOL_CALLS:
+            for tool_call_id, response in data.data.responses.items():
+                await self._send_websocket_message(
+                    {
+                        "type": "conversation.item.create",
+                        "item": {
+                            "type": "function_call_output",
+                            "call_id": tool_call_id,
+                            "output": response,
+                        },
+                    }
+                )
+                await self._send_websocket_message({"type": "response.create"})
+
     def terminate(self):
         # Create task for graceful websocket closure
         if hasattr(self, "_websocket") and self._websocket:
@@ -697,6 +708,13 @@ class AgentController:
         if hasattr(self, "_input_text_stream_task") and self._input_text_stream_task:
             self._input_text_stream_task.cancel()
 
-        # Wait for thread to finish
-        self._thread.join(timeout=5)
-        logger.info("Agent controller terminated")
+        super().terminate()
+
+
+class AgentControllerFactory:
+    @staticmethod
+    def create(output_queue: asyncio.Queue, config: AgentControllerConfig) -> AgentController:
+        if config.is_voice_agent and config.agent_config.backend.backend_type == "multi_modal":
+            return VoiceAgentController(output_queue, config)
+        else:
+            return AgentController(output_queue, config)
