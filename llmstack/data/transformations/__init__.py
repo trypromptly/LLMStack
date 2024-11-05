@@ -17,10 +17,7 @@ from llmstack.data.transformations.unstructured.splitters import UnstructuredIOS
 
 @cache
 def get_transformer_cls(slug, provider_slug):
-    for cls in [
-        UnstructuredIOSplitter,
-        EmbeddingsGenerator,
-    ]:
+    for cls in [UnstructuredIOSplitter, EmbeddingsGenerator, CSVTextSplitter]:
         if cls.slug() == slug and cls.provider_slug() == provider_slug:
             return cls
 

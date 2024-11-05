@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class DataSourceSearchInput(ApiProcessorSchema):
-    query: str
+    query: Optional[str] = None
+    filters: Optional[str] = None
 
 
 class DocumentMetadata(BaseModel):
@@ -104,6 +105,7 @@ class DataSourceSearchProcessor(
                     alpha=hybrid_semantic_search_ratio,
                     limit=self._config.document_limit,
                     use_hybrid_search=True,
+                    search_filters=input_data.filters or self._config.search_filters,
                 )
                 documents.extend(result)
             except BaseException:

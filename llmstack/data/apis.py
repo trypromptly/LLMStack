@@ -140,6 +140,7 @@ class PipelineViewSet(viewsets.ViewSet):
     def transformations(self, request):
         from llmstack.data.transformations import (
             CodeSplitter,
+            CSVTextSplitter,
             SemanticDoubleMergingSplitterNodeParser,
             SentenceSplitter,
             UnstructuredIOSplitter,
@@ -170,6 +171,12 @@ class PipelineViewSet(viewsets.ViewSet):
                     "provider_slug": UnstructuredIOSplitter.provider_slug(),
                     "schema": UnstructuredIOSplitter.get_schema(),
                     "ui_schema": UnstructuredIOSplitter.get_ui_schema(),
+                },
+                {
+                    "slug": CSVTextSplitter.slug(),
+                    "provider_slug": CSVTextSplitter.provider_slug(),
+                    "schema": CSVTextSplitter.get_schema(),
+                    "ui_schema": CSVTextSplitter.get_ui_schema(),
                 },
             ]
         )

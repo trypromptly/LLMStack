@@ -95,7 +95,7 @@ class PandasStore(BaseDestination):
             k: v for k, v in document.extra_info.get("extra_data", {}).items() if k in [m.target for m in self.mapping]
         }
         for item in self.schema:
-            if item.name == "id" or item.name == "text":
+            if item.name == "id" or item.name == "text" or item.name == "embedding":
                 continue
             if item.name not in extra_data:
                 if item.type == "string":
@@ -112,7 +112,8 @@ class PandasStore(BaseDestination):
                 extra_data[item.name] = str(extra_data[item.name])
 
         for node in document.nodes:
-            document_dict = {"text": node.text, **extra_data}
+            node_metadata = node.metadata
+            document_dict = {"text": node.text, "embedding": node.embedding, **extra_data, **node_metadata}
             entry_dict = {
                 "id": node.id_,
                 **{mapping.source: document_dict.get(mapping.target) for mapping in self.mapping},
@@ -136,11 +137,37 @@ class PandasStore(BaseDestination):
         buffer.seek(0)
         self._asset.update_file(buffer.getvalue(), filename)
 
+    def _embedding_search(self, df, query_embedding, limit=10):
+        import faiss
+        import numpy as np
+
+        df_embeddings = np.array([json.loads(x) for x in df["embedding"]])
+        query_embedding_array = np.array(query_embedding)
+        index = faiss.IndexFlatL2(df_embeddings.shape[1])
+        index.add(df_embeddings)
+        # Search for the most similar vectors
+        distances, idx = index.search(np.expand_dims(query_embedding_array, axis=0), limit)
+        results = pd.DataFrame({"_distances": distances[0], "_ann": idx[0]})
+        merged = pd.merge(results, df, left_on="_ann", right_index=True)
+        return merged
+
     def search(self, query: str, **kwargs):
-        result = self._dataframe.query(query).to_dict(orient="records")
-        nodes = list(
-            map(lambda x: TextNode(text=json.dumps(x), metadata={"query": query, "source": self._name}), result)
-        )
+        df = self._dataframe
+        if kwargs.get("search_filters"):
+            df = df.query(kwargs.get("search_filters"))
+        if query and kwargs.get("query_embedding"):
+            df = self._embedding_search(df, kwargs.get("query_embedding"), limit=kwargs.get("limit", 10))
+        result = df.to_dict(orient="records")
+        nodes = []
+        for entry in result:
+            entry.pop("embedding")
+            nodes.append(
+                TextNode(
+                    text=json.dumps(entry),
+                    metadata={"query": query, "source": self._name, "search_filters": kwargs.get("search_filters")},
+                )
+            )
+
         node_ids = list(map(lambda x: x["id"], result))
         return VectorStoreQueryResult(nodes=nodes, ids=node_ids, similarities=[])
 
