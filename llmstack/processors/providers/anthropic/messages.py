@@ -21,17 +21,20 @@ class MessagesModel(StrEnum):
     CLAUDE_3_Opus = "claude-3-opus"
     CLAUDE_3_Sonnet = "claude-3-sonnet"
     CLAUDE_3_Haiku = "claude-3-haiku"
+    CLAUDE_3_5_Haiku = "claude-3-5-haiku"
     CLAUDE_3_5_Sonnet = "claude-3-5-sonnet"
 
     def model_name(self):
         if self.value == "claude-3-opus":
-            return "claude-3-opus-20240229"
+            return "claude-3-opus-latest"
         elif self.value == "claude-3-sonnet":
             return "claude-3-sonnet-20240229"
         elif self.value == "claude-3-haiku":
             return "claude-3-haiku-20240307"
+        elif self.value == "claude-3-5-haiku":
+            return "claude-3-5-haiku-20241022"
         elif self.value == "claude-3-5-sonnet":
-            return "claude-3-5-sonnet-20240620"
+            return "claude-3-5-sonnet-latest"
 
 
 class Role(StrEnum):
