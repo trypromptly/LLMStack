@@ -99,12 +99,9 @@ class DataQueryPipeline:
         content_key = self.datasource.destination_text_content_key
         query_embedding = None
 
-        if kwargs.get("search_filters", None):
-            raise NotImplementedError("Search filters are not supported for this data source.")
-
         documents = []
 
-        if self._embedding_generator:
+        if query and self._embedding_generator:
             query_embedding = self._embedding_generator.get_embedding(query)
 
         if self._destination:
