@@ -6,10 +6,12 @@ from typing import List, Optional
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from langrocks.client import WebBrowser
+from langrocks.common.models.files import File
 from langrocks.common.models.web_browser import (
     WebBrowserCommand,
     WebBrowserCommandType,
     WebBrowserContent,
+    WebBrowserDownload,
 )
 from pydantic import BaseModel, Field, field_validator
 
@@ -87,10 +89,28 @@ class StaticWebBrowserInput(ApiProcessorSchema):
     )
 
 
+class StaticWebBrowserFile(File):
+    data: str = Field(
+        default="",
+        description="File data as an objref",
+    )
+
+
+class StaticWebBrowserDownload(WebBrowserDownload):
+    file: StaticWebBrowserFile = Field(
+        default=None,
+        description="File",
+    )
+
+
 class StaticWebBrowserContent(WebBrowserContent):
     screenshot: Optional[str] = Field(
         default=None,
         description="Screenshot of the result",
+    )
+    downloads: Optional[List[StaticWebBrowserDownload]] = Field(
+        default=None,
+        description="Downloads",
     )
 
 
@@ -213,14 +233,36 @@ class StaticWebBrowser(
             output_text = browser_response.text or "\n".join(
                 list(map(lambda entry: entry.output, browser_response.command_outputs))
             )
-            browser_content = browser_response.model_dump(exclude=("screenshot",))
+            browser_content = StaticWebBrowserContent.model_validate(
+                browser_response.model_dump(exclude=("screenshot", "downloads"))
+            )
             screenshot_asset = None
             if browser_response.screenshot:
                 screenshot_asset = self._upload_asset_from_url(
                     f"data:image/png;name={str(uuid.uuid4())};base64,{base64.b64encode(browser_response.screenshot).decode('utf-8')}",
                     mime_type="image/png",
                 )
-            browser_content["screenshot"] = screenshot_asset.objref if screenshot_asset else None
+            browser_content.screenshot = screenshot_asset.objref if screenshot_asset else None
+
+            if browser_response.downloads:
+                swb_downloads = []
+                for download in browser_response.downloads:
+                    # Create an objref for the file data
+                    file_data = self._upload_asset_from_url(
+                        f"data:{download.file.mime_type};name={download.file.name};base64,{base64.b64encode(download.file.data).decode('utf-8')}",
+                        mime_type=download.file.mime_type,
+                    )
+
+                    swb_download = StaticWebBrowserDownload(
+                        url=download.url,
+                        file=StaticWebBrowserFile(
+                            name=download.file.name,
+                            data=file_data.objref,
+                            mime_type=download.file.mime_type,
+                        ),
+                    )
+                    swb_downloads.append(swb_download)
+                browser_content.downloads = swb_downloads
             async_to_sync(self._output_stream.write)(StaticWebBrowserOutput(text=output_text, content=browser_content))
 
         output = output_stream.finalize()
