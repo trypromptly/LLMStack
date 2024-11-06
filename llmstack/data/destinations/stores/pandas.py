@@ -137,26 +137,9 @@ class PandasStore(BaseDestination):
         buffer.seek(0)
         self._asset.update_file(buffer.getvalue(), filename)
 
-    def _embedding_search(self, df, query_embedding, limit=10):
-        import faiss
-        import numpy as np
-
-        df_embeddings = np.array([json.loads(x) for x in df["embedding"]])
-        query_embedding_array = np.array(query_embedding)
-        index = faiss.IndexFlatL2(df_embeddings.shape[1])
-        index.add(df_embeddings)
-        # Search for the most similar vectors
-        distances, idx = index.search(np.expand_dims(query_embedding_array, axis=0), limit)
-        results = pd.DataFrame({"_distances": distances[0], "_ann": idx[0]})
-        merged = pd.merge(results, df, left_on="_ann", right_index=True)
-        return merged
-
     def search(self, query: str, **kwargs):
         df = self._dataframe
-        if kwargs.get("search_filters"):
-            df = df.query(kwargs.get("search_filters"))
-        if query and kwargs.get("query_embedding"):
-            df = self._embedding_search(df, kwargs.get("query_embedding"), limit=kwargs.get("limit", 10))
+        df = df.query(kwargs.get("search_filters") or query)
         result = df.to_dict(orient="records")
         nodes = []
         for entry in result:
