@@ -224,7 +224,20 @@ class OpenAIVisionToolModelConfig(BaseModel):
     model: OpenAIModel = Field(default=OpenAIModel.GPT_4_O, description="The model for the LLM")
 
 
-ProviderConfigType = Union[OpenAIVisionToolModelConfig, GoogleVisionToolModelConfig]
+class AnthropicModel(StrEnum):
+    CLAUDE_3_5_Sonnet = "claude-3-5-sonnet"
+
+    def model_name(self):
+        if self.value == "claude-3-5-sonnet":
+            return "claude-3-5-sonnet-20241022"
+
+
+class AnthropicVisionToolModelConfig(BaseModel):
+    provider: Literal["anthropic"] = "anthropic"
+    model: AnthropicModel = Field(default=AnthropicModel.CLAUDE_3_5_Sonnet, description="The model for the LLM")
+
+
+ProviderConfigType = Union[OpenAIVisionToolModelConfig, GoogleVisionToolModelConfig, AnthropicVisionToolModelConfig]
 
 
 class WebBrowserConfiguration(ApiProcessorSchema):
@@ -344,7 +357,204 @@ class WebBrowser(
             jsonpath="$.text",
         )
 
+    def _execute_anthropic_instruction_in_browser(
+        self, instruction_input, web_browser: WebBrowserClient, prev_browser_state: WebBrowserContent = None
+    ):
+        if instruction_input.get("action") == "screenshot":
+            return prev_browser_state
+        elif instruction_input.get("action") == "mouse_move":
+            coordinates = instruction_input.get("coordinate")
+            return web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.MOUSE_MOVE,
+                        data=json.dumps({"x": coordinates[0], "y": coordinates[1]}),
+                    )
+                ]
+            )
+        elif instruction_input.get("action") == "left_click":
+            return web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.CLICK,
+                    )
+                ]
+            )
+        elif instruction_input.get("action") == "type":
+            return web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.TYPE,
+                        data=instruction_input.get("text"),
+                    )
+                ]
+            )
+        elif instruction_input.get("action") == "key":
+            return web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.KEY,
+                        data=instruction_input.get("text"),
+                    ),
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.WAIT,
+                        data="2000",
+                    ),
+                ]
+            )
+        else:
+            raise Exception("Invalid instruction")
+
+    def _process_anthropic(self) -> dict:
+        client = get_llm_client_from_provider_config(
+            provider=self._config.provider_config.provider,
+            model_slug=self._config.provider_config.model.value,
+            get_provider_config_fn=self.get_provider_config,
+        )
+        provider_config = self.get_provider_config(
+            provider_slug=self._config.provider_config.provider, model_slug=self._config.provider_config.model.value
+        )
+        messages = [
+            {
+                "role": "system",
+                "content": f"<SYSTEM_CAPABILITY> You are utilising a virtual chrome browser. If user asks you to visit a website, you can simply start your responses assuming the browser is opened and the current page is {self._input.start_url}.",
+            },
+            {
+                "role": "user",
+                "content": f"Perform the following task: {self._input.task}",
+            },
+        ]
+        commands_executed = 0
+        browser_response = None
+        with WebBrowserClient(
+            f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
+            interactive=self._config.stream_video,
+            capture_screenshot=True,
+            annotate=True,
+            tags_to_extract=self._config.tags_to_extract,
+            session_data=(
+                self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
+                if self._config.connection_id
+                else ""
+            ),
+        ) as web_browser:
+            browser_response = web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.GOTO,
+                        data=self._input.start_url,
+                    )
+                ]
+            )
+            # Start streaming video if enabled
+            if self._config.stream_video and web_browser.get_wss_url():
+                async_to_sync(self._output_stream.write)(
+                    WebBrowserOutput(
+                        session=BrowserRemoteSessionData(ws_url=web_browser.get_wss_url()),
+                    ),
+                )
+
+            while True:
+                if commands_executed > self._config.max_steps:
+                    break
+                response = client.chat.completions.create(
+                    model=self._config.provider_config.model.model_name(),
+                    messages=messages,
+                    seed=self._config.seed,
+                    tools=[
+                        {
+                            "type": "computer_20241022",
+                            "name": "computer",
+                            "display_width_px": 1024,
+                            "display_height_px": 768,
+                            "display_number": 1,
+                        },
+                    ],
+                    stream=False,
+                    extra_headers={"anthropic-beta": "computer-use-2024-10-22"},
+                    max_tokens=4096,
+                )
+                if response.usage:
+                    self._usage_data.append(
+                        (
+                            f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                            MetricType.INPUT_TOKENS,
+                            (provider_config.provider_config_source, response.usage.get_input_tokens()),
+                        )
+                    )
+                    self._usage_data.append(
+                        (
+                            f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                            MetricType.OUTPUT_TOKENS,
+                            (provider_config.provider_config_source, response.usage.get_output_tokens()),
+                        )
+                    )
+                choice = response.choices[0]
+                # Append to history of messages
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": choice.message.content,
+                    }
+                )
+                if choice.finish_reason == "tool_use":
+                    tool_responses = []
+                    for message_content in choice.message.content:
+                        if message_content.get("type") == "tool_use":
+                            browser_response = self._execute_anthropic_instruction_in_browser(
+                                message_content.get("input", {}),
+                                web_browser=web_browser,
+                                prev_browser_state=browser_response,
+                            )
+                            tool_responses.append(
+                                {
+                                    "type": "tool_result",
+                                    "content": [
+                                        {
+                                            "type": "image",
+                                            "source": {
+                                                "type": "base64",
+                                                "media_type": "image/png",
+                                                "data": base64.b64encode(browser_response.screenshot).decode("utf-8"),
+                                            },
+                                        },
+                                    ],
+                                    "tool_use_id": message_content["id"],
+                                    "is_error": False,
+                                }
+                            )
+                        else:
+                            logger.info(f"message content: {message_content}")
+                    if tool_responses:
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": tool_responses,
+                            }
+                        )
+                    continue
+                elif choice.finish_reason == "end_turn":
+                    break
+
+        if browser_response:
+            output_text = "\n".join(list(map(lambda entry: entry.output, browser_response.command_outputs)))
+            browser_content = browser_response.model_dump(exclude=("screenshot",))
+            screenshot_asset = None
+            if browser_response.screenshot:
+                screenshot_asset = self._upload_asset_from_url(
+                    f"data:image/png;name={str(uuid.uuid4())};base64,{base64.b64encode(browser_response.screenshot).decode('utf-8')}",
+                    mime_type="image/png",
+                )
+            browser_content["screenshot"] = screenshot_asset.objref if screenshot_asset else None
+            async_to_sync(self._output_stream.write)(WebBrowserOutput(text=output_text, content=browser_content))
+
+        output = self._output_stream.finalize()
+        return output
+
     def process(self) -> dict:
+        if self._config.provider_config.provider == "anthropic":
+            return self._process_anthropic()
+
         client = get_llm_client_from_provider_config(
             provider=self._config.provider_config.provider,
             model_slug=self._config.provider_config.model.value,

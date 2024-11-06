@@ -487,11 +487,12 @@ class LLM(LLMClient, OpenAI):
         default_query: Optional[Mapping[str, object]] = None,
         http_client: Optional[httpx.Client] = None,
         _strict_response_validation: bool = False,
+        openai_base_url: Optional[str] = None,
     ) -> None:
         self._llm_router_provider = provider
 
         if provider == PROVIDER_OPENAI:
-            base_url = base_url if base_url else "https://api.openai.com/v1"
+            base_url = openai_base_url or base_url or "https://api.openai.com/v1"
             api_key = openai_api_key
             api_version = openai_api_version
 

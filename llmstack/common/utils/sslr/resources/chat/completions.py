@@ -63,7 +63,9 @@ def _convert_to_anthropic_format(messages):
         elif isinstance(message["content"], list):
             for part in message["content"]:
                 if part["type"] == "text":
-                    anthropic_messages[-1]["content"].append({"type": "text", "text": part["data"]})
+                    anthropic_messages[-1]["content"].append(
+                        {"type": "text", "text": part.get("data") or part.get("text")}
+                    )
                 elif part["type"] == "file":
                     if part["mime_type"].startswith("image"):
                         anthropic_messages[-1]["content"].append(
@@ -88,7 +90,23 @@ def _convert_to_anthropic_format(messages):
                                 },
                             }
                         )
-
+                elif part["type"] == "tool_use":
+                    anthropic_messages[-1]["content"].append(
+                        {
+                            "type": "tool_use",
+                            "id": part["id"],
+                            "name": part["name"],
+                            "input": part["input"],
+                        }
+                    )
+                elif part["type"] == "tool_result":
+                    anthropic_messages[-1]["content"].append(
+                        {
+                            "type": "tool_result",
+                            "content": part["content"],
+                            "tool_use_id": part["tool_use_id"],
+                        }
+                    )
     return anthropic_messages
 
 
