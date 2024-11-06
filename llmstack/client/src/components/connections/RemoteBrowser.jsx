@@ -239,7 +239,7 @@ export function RemoteBrowserEmbed({ wsUrl }) {
       }
 
       if (tries >= 10 || rfbRef.current) {
-        if (rfbRef.current) {
+        if (rfbRef.current && screenRef.current) {
           rfbRef.current.viewOnly = true;
 
           // Get width of screenRef parent and set it to the screenRef
