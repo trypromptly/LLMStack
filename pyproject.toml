@@ -23,6 +23,7 @@ channels-redis = "^4.2.0"
 jsonpath-ng = "^1.6.1"
 cryptography = "^43.0.1"
 langrocks = "^0.1.5"
+grpcio = "1.65.1"
 
 [tool.poetry.extras]
 networking = ["junos-eznc"]
