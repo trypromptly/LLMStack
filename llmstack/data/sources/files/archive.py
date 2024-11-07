@@ -14,6 +14,7 @@ from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.data.sources.base import BaseSource, DataDocument
 from llmstack.data.sources.utils import (
     create_source_document_asset,
+    get_document_data_uri_from_objref,
     get_source_document_asset_by_objref,
 )
 
@@ -74,10 +75,15 @@ class ArchiveFileSchema(BaseSource):
         return "promptly"
 
     def get_data_documents(self, **kwargs) -> List[DataDocument]:
+        archive_file = self.file
+        # If objref:// is present, get the data URI from the objref
+        if archive_file and archive_file.startswith("objref://"):
+            archive_file = get_document_data_uri_from_objref(archive_file, datasource_uuid=kwargs["datasource_uuid"])
+
         if self.split_files:
-            files = extract_archive_files(*validate_parse_data_uri(self.file))
+            files = extract_archive_files(*validate_parse_data_uri(archive_file))
         else:
-            files = [self.file]
+            files = [archive_file]
 
         documents = []
         for file in files:

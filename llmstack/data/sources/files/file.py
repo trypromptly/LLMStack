@@ -10,6 +10,7 @@ from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.data.sources.base import BaseSource, DataDocument
 from llmstack.data.sources.utils import (
     create_source_document_asset,
+    get_document_data_uri_from_objref,
     get_source_document_asset_by_objref,
 )
 
@@ -48,6 +49,21 @@ class FileSchema(BaseSource):
 
     def get_data_documents(self, **kwargs) -> List[DataDocument]:
         files = self.file.split("|")
+        files = list(
+            filter(
+                lambda entry: entry is not None,
+                list(
+                    map(
+                        lambda entry: (
+                            get_document_data_uri_from_objref(file_objref, datasource_uuid=kwargs["datasource_uuid"])
+                            if entry.startswith("objref://")
+                            else entry
+                        ),
+                        files,
+                    )
+                ),
+            )
+        )
         documents = []
         for file in files:
             file_id = str(uuid.uuid4())
