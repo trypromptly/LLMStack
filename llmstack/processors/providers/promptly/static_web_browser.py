@@ -21,7 +21,6 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.processors.providers.promptly.web_browser import BrowserRemoteSessionData
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +35,7 @@ class BrowserInstructionType(StrEnum):
     ENTER = "Enter"
     SCROLLX = "Scrollx"
     SCROLLY = "Scrolly"
+    MOUSE_MOVE = "Mousemove"
 
 
 class BrowserInstruction(BaseModel):
@@ -46,6 +46,12 @@ class BrowserInstruction(BaseModel):
     @field_validator("type")
     def validate_type(cls, v):
         return v.lower().capitalize()
+
+
+class BrowserRemoteSessionData(BaseModel):
+    ws_url: str = Field(
+        description="Websocket URL to connect to",
+    )
 
 
 class StaticWebBrowserConfiguration(ApiProcessorSchema):
@@ -188,6 +194,8 @@ class StaticWebBrowser(
             instruction_type = WebBrowserCommandType.ENTER
         elif instruction.type == BrowserInstructionType.TYPE.value:
             instruction_type = WebBrowserCommandType.TYPE
+        elif instruction.type == BrowserInstructionType.MOUSE_MOVE.value:
+            instruction_type = WebBrowserCommandType.MOUSE_MOVE
 
         return WebBrowserCommand(
             command_type=instruction_type, data=(instruction.data or ""), selector=(instruction.selector or "")

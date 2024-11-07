@@ -22,6 +22,11 @@ from llmstack.processors.providers.api_processor_interface import (
 )
 from llmstack.processors.providers.metrics import MetricType
 from llmstack.processors.providers.promptly import get_llm_client_from_provider_config
+from llmstack.processors.providers.promptly.static_web_browser import (
+    BrowserRemoteSessionData,
+    StaticWebBrowserDownload,
+    StaticWebBrowserFile,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -289,12 +294,6 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     )
 
 
-class BrowserRemoteSessionData(BaseModel):
-    ws_url: str = Field(
-        description="Websocket URL to connect to",
-    )
-
-
 class WebBrowserOutput(ApiProcessorSchema):
     text: str = Field(default="", description="Text of the result")
     video: Optional[str] = Field(
@@ -361,7 +360,13 @@ class WebBrowser(
         self, instruction_input, web_browser: WebBrowserClient, prev_browser_state: WebBrowserContent = None
     ):
         if instruction_input.get("action") == "screenshot":
-            return prev_browser_state
+            return web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.SCREENSHOT,
+                    )
+                ]
+            )
         elif instruction_input.get("action") == "mouse_move":
             coordinates = instruction_input.get("coordinate")
             return web_browser.run_commands(
@@ -396,10 +401,6 @@ class WebBrowser(
                         command_type=WebBrowserCommandType.KEY,
                         data=instruction_input.get("text"),
                     ),
-                    WebBrowserCommand(
-                        command_type=WebBrowserCommandType.WAIT,
-                        data="2000",
-                    ),
                 ]
             )
         else:
@@ -430,7 +431,7 @@ class WebBrowser(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             interactive=self._config.stream_video,
             capture_screenshot=True,
-            annotate=True,
+            annotate=False,
             tags_to_extract=self._config.tags_to_extract,
             session_data=(
                 self._env["connections"][self._config.connection_id]["configuration"]["_storage_state"]
@@ -457,6 +458,17 @@ class WebBrowser(
             while True:
                 if commands_executed > self._config.max_steps:
                     break
+
+                # Trim messages by removing tool call responses with images from all but the last message
+                for message in messages[:-1]:
+                    if (
+                        message.get("role") == "user"
+                        and message.get("content")
+                        and isinstance(message.get("content"), list)
+                        and message.get("content")[0].get("type") == "tool_result"
+                    ):
+                        message["content"][0]["content"] = []
+
                 response = client.chat.completions.create(
                     model=self._config.provider_config.model.model_name(),
                     messages=messages,
@@ -466,7 +478,7 @@ class WebBrowser(
                             "type": "computer_20241022",
                             "name": "computer",
                             "display_width_px": 1024,
-                            "display_height_px": 768,
+                            "display_height_px": 720,
                             "display_number": 1,
                         },
                     ],
@@ -506,25 +518,43 @@ class WebBrowser(
                                 web_browser=web_browser,
                                 prev_browser_state=browser_response,
                             )
-                            tool_responses.append(
-                                {
-                                    "type": "tool_result",
-                                    "content": [
-                                        {
-                                            "type": "image",
-                                            "source": {
-                                                "type": "base64",
-                                                "media_type": "image/png",
-                                                "data": base64.b64encode(browser_response.screenshot).decode("utf-8"),
+                            command_output = browser_response.command_outputs[0]
+                            if message_content.get("input", {}).get("action") == "screenshot":
+                                tool_responses.append(
+                                    {
+                                        "type": "tool_result",
+                                        "content": [
+                                            {
+                                                "type": "image",
+                                                "source": {
+                                                    "type": "base64",
+                                                    "media_type": "image/png",
+                                                    "data": command_output.output,
+                                                },
                                             },
-                                        },
-                                    ],
-                                    "tool_use_id": message_content["id"],
-                                    "is_error": False,
-                                }
-                            )
+                                        ],
+                                        "tool_use_id": message_content["id"],
+                                        "is_error": False,
+                                    }
+                                )
+                            else:
+                                tool_responses.append(
+                                    {
+                                        "type": "tool_result",
+                                        "content": [
+                                            {
+                                                "type": "text",
+                                                "text": command_output.output,
+                                            },
+                                        ],
+                                        "tool_use_id": message_content["id"],
+                                        "is_error": False,
+                                    }
+                                )
                         else:
-                            logger.info(f"message content: {message_content}")
+                            async_to_sync(self._output_stream.write)(
+                                WebBrowserOutput(text=message_content.get("text", "") + "\n\n"),
+                            )
                     if tool_responses:
                         messages.append(
                             {
@@ -534,11 +564,22 @@ class WebBrowser(
                         )
                     continue
                 elif choice.finish_reason == "end_turn":
+                    browser_response = web_browser.run_commands(
+                        commands=[
+                            WebBrowserCommand(
+                                command_type=WebBrowserCommandType.WAIT,
+                                data="2",
+                            ),
+                        ]
+                    )
+                    async_to_sync(self._output_stream.write)(
+                        WebBrowserOutput(text=choice.message.content[0].get("text", "")),
+                    )
                     break
 
         if browser_response:
             output_text = "\n".join(list(map(lambda entry: entry.output, browser_response.command_outputs)))
-            browser_content = browser_response.model_dump(exclude=("screenshot",))
+            browser_content = browser_response.model_dump(exclude=("screenshot", "downloads"))
             screenshot_asset = None
             if browser_response.screenshot:
                 screenshot_asset = self._upload_asset_from_url(
@@ -546,6 +587,26 @@ class WebBrowser(
                     mime_type="image/png",
                 )
             browser_content["screenshot"] = screenshot_asset.objref if screenshot_asset else None
+
+            if browser_response.downloads:
+                swb_downloads = []
+                for download in browser_response.downloads:
+                    # Create an objref for the file data
+                    file_data = self._upload_asset_from_url(
+                        f"data:{download.file.mime_type};name={download.file.name};base64,{base64.b64encode(download.file.data).decode('utf-8')}",
+                        mime_type=download.file.mime_type,
+                    )
+
+                    swb_download = StaticWebBrowserDownload(
+                        url=download.url,
+                        file=StaticWebBrowserFile(
+                            name=download.file.name,
+                            data=file_data.objref,
+                            mime_type=download.file.mime_type,
+                        ),
+                    )
+                    swb_downloads.append(swb_download)
+                browser_content.downloads = swb_downloads
             async_to_sync(self._output_stream.write)(WebBrowserOutput(text=output_text, content=browser_content))
 
         output = self._output_stream.finalize()
