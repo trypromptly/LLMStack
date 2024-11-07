@@ -29,6 +29,7 @@ from llmstack.connections.models import (
     ConnectionActivationOutput,
     ConnectionStatus,
 )
+from llmstack.events.apis import JSONEncoder
 from llmstack.play.utils import run_coro_in_new_loop
 
 logger = logging.getLogger(__name__)
@@ -449,7 +450,8 @@ class PlaygroundConsumer(AsyncWebsocketConsumer):
                 elif response.type == AppRunnerStreamingResponseType.OUTPUT:
                     await self.send(
                         text_data=json.dumps(
-                            {"event": "done", "request_id": client_request_id, "data": response.data.chunks}
+                            {"event": "done", "request_id": client_request_id, "data": response.data.chunks},
+                            cls=JSONEncoder,
                         )
                     )
         except Exception as e:
