@@ -1527,20 +1527,6 @@ docs = ["mkdocs (>=0.17)", "mkdocs-rtd-dropdown (>=0.0.11)", "pymdown-extensions
 testing = ["coverage (>=3.7.0)", "django-debug-toolbar (>=3.2,<4)", "jinja2"]
 
 [[package]]
-name = "django-jsonform"
-version = "2.22.0"
-description = "A user-friendly JSON editing form for Django admin."
-optional = false
-python-versions = ">=3.4"
-files = [
-    {file = "django-jsonform-2.22.0.tar.gz", hash = "sha256:0c9d50fb371938e7262a7fef7c5a60835dd288f872f87b952d5e2ea84c825221"},
-    {file = "django_jsonform-2.22.0-py3-none-any.whl", hash = "sha256:c4dd1ba2b0152bd3164aacf326a83c35355c70d12de81908b5ced5f94c8263d6"},
-]
-
-[package.dependencies]
-django = ">=2.0"
-
-[[package]]
 name = "django-picklefield"
 version = "3.2"
 description = "Pickled object field for Django"
@@ -9191,4 +9177,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "db73315edf956953dd6e353cb1a42b809a1e335f40c4a1df3341fb0287773e47"
+content-hash = "f3bcc928a1a29d5e8d35b4e3d704fa08527d98e669532750bdd987bd407cde33"
