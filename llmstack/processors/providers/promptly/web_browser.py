@@ -427,6 +427,7 @@ class WebBrowser(
         ]
         commands_executed = 0
         browser_response = None
+        browser_downloads = []
         with WebBrowserClient(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             interactive=self._config.stream_video,
@@ -447,6 +448,8 @@ class WebBrowser(
                     )
                 ]
             )
+            if browser_response.downloads:
+                browser_downloads.extend(browser_response.downloads)
             # Start streaming video if enabled
             if self._config.stream_video and web_browser.get_wss_url():
                 async_to_sync(self._output_stream.write)(
@@ -518,6 +521,8 @@ class WebBrowser(
                                 web_browser=web_browser,
                                 prev_browser_state=browser_response,
                             )
+                            if browser_response.downloads:
+                                browser_downloads.extend(browser_response.downloads)
                             command_output = browser_response.command_outputs[0]
                             if message_content.get("input", {}).get("action") == "screenshot":
                                 tool_responses.append(
@@ -572,6 +577,8 @@ class WebBrowser(
                             ),
                         ]
                     )
+                    if browser_response.downloads:
+                        browser_downloads.extend(browser_response.downloads)
                     async_to_sync(self._output_stream.write)(
                         WebBrowserOutput(text=choice.message.content[0].get("text", "")),
                     )
@@ -579,18 +586,18 @@ class WebBrowser(
 
         if browser_response:
             output_text = "\n".join(list(map(lambda entry: entry.output, browser_response.command_outputs)))
-            browser_content = browser_response.model_dump(exclude=("screenshot", "downloads"))
+            browser_content = WebBrowserContent(**browser_response.model_dump(exclude=("screenshot", "downloads")))
             screenshot_asset = None
             if browser_response.screenshot:
                 screenshot_asset = self._upload_asset_from_url(
                     f"data:image/png;name={str(uuid.uuid4())};base64,{base64.b64encode(browser_response.screenshot).decode('utf-8')}",
                     mime_type="image/png",
                 )
-            browser_content["screenshot"] = screenshot_asset.objref if screenshot_asset else None
+            browser_content.screenshot = screenshot_asset.objref if screenshot_asset else None
 
-            if browser_response.downloads:
+            if browser_downloads:
                 swb_downloads = []
-                for download in browser_response.downloads:
+                for download in browser_downloads:
                     # Create an objref for the file data
                     file_data = self._upload_asset_from_url(
                         f"data:{download.file.mime_type};name={download.file.name};base64,{base64.b64encode(download.file.data).decode('utf-8')}",
