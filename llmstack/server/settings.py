@@ -74,7 +74,6 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "django_rq",
-    "django_jsonform",
 ]
 
 MIDDLEWARE = [
