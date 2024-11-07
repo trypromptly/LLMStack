@@ -1,0 +1,16 @@
+name: Archive
+slug: archive
+description: Read data from an archive
+pipeline:
+  source:
+    slug: archive
+    provider_slug: promptly
+  transformations:
+    - slug: splitter
+      provider_slug: unstructured
+  embedding:
+    slug: embeddings-generator
+    provider_slug: promptly
+  destination:
+    slug: vector-store
+    provider_slug: promptly

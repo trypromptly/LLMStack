@@ -75,7 +75,12 @@ class PipelineViewSet(viewsets.ViewSet):
         return DRFResponse(templates_data)
 
     def sources(self, request):
-        from llmstack.data.sources import FileSchema, TextSchema, URLSchema
+        from llmstack.data.sources import (
+            ArchiveFileSchema,
+            FileSchema,
+            TextSchema,
+            URLSchema,
+        )
 
         return DRFResponse(
             [
@@ -96,6 +101,12 @@ class PipelineViewSet(viewsets.ViewSet):
                     "provider_slug": URLSchema.provider_slug(),
                     "schema": URLSchema.get_schema(),
                     "ui_schema": URLSchema.get_ui_schema(),
+                },
+                {
+                    "slug": ArchiveFileSchema.slug(),
+                    "provider_slug": ArchiveFileSchema.provider_slug(),
+                    "schema": ArchiveFileSchema.get_schema(),
+                    "ui_schema": ArchiveFileSchema.get_ui_schema(),
                 },
             ]
         )
