@@ -39,7 +39,7 @@ class PromptlyTransformers:
 class CSVTextSplitter(TextSplitter, PromptlyTransformers):
     exclude_columns: Optional[List[str]] = Field(
         default=None,
-        description="Columns to exclude from the text",
+        description="Columns to drop from the csv row",
     )
     text_columns: Optional[List[str]] = Field(
         default=None,
@@ -92,6 +92,7 @@ class CSVTextSplitter(TextSplitter, PromptlyTransformers):
                                 row_text = json.dumps(text_parts)
                         all_nodes.extend(build_nodes_from_splits([row_text], node, id_func=self.id_func))
                         for column_name, value in content.items():
-                            all_nodes[-1].metadata[f"{self.metadata_prefix}{column_name}"] = value
+                            metadata_key = f"{self.metadata_prefix}{column_name}".replace(" ", "_")
+                            all_nodes[-1].metadata[metadata_key] = value
 
         return all_nodes

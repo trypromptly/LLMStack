@@ -116,6 +116,7 @@ class PipelineViewSet(viewsets.ViewSet):
             PandasStore,
             Pinecone,
             SingleStore,
+            SqliteDatabase,
             Weaviate,
         )
 
@@ -144,6 +145,12 @@ class PipelineViewSet(viewsets.ViewSet):
                     "provider_slug": PandasStore.provider_slug(),
                     "schema": PandasStore.get_schema(),
                     "ui_schema": PandasStore.get_ui_schema(),
+                },
+                {
+                    "slug": SqliteDatabase.slug(),
+                    "provider_slug": SqliteDatabase.provider_slug(),
+                    "schema": SqliteDatabase.get_schema(),
+                    "ui_schema": SqliteDatabase.get_ui_schema(),
                 },
             ]
         )
