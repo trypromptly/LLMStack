@@ -86,7 +86,7 @@ def run_coro_in_new_loop(coro, name=None):
         except CancelledError:
             logger.info("Task cancelled")
         except Exception as e:
-            logger.error(f"Task in loop {name} failed with error: {e}")
+            logger.exception(f"Task in loop {name} failed with error: {e}")
         finally:
             # Find and cancel all pending tasks before stopping the loop
             for task in asyncio.all_tasks(loop):

@@ -1,11 +1,17 @@
 import base64
 import logging
 import uuid
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-import grpc
 from asgiref.sync import async_to_sync
 from django.conf import settings
+from langrocks.client.code_runner import (
+    CodeRunner,
+    CodeRunnerSession,
+    CodeRunnerState,
+    Content,
+    ContentMimeType,
+)
 from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
@@ -14,7 +20,10 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
-from llmstack.processors.providers.promptly import Content, ContentMimeType
+from llmstack.processors.providers.promptly import Content as PromptlyContent
+from llmstack.processors.providers.promptly import (
+    ContentMimeType as PromptlyContentMimeType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +34,21 @@ class CodeInterpreterLanguage(StrEnum):
 
 class CodeInterpreterInput(ApiProcessorSchema):
     code: str = Field(description="The code to run", json_schema_extra={"widget": "textarea"}, default="")
+    files: Optional[str] = Field(
+        description="Workspace files as a comma separated list",
+        default=None,
+        json_schema_extra={
+            "widget": "file",
+        },
+    )
     language: CodeInterpreterLanguage = Field(
         title="Language", description="The language of the code", default=CodeInterpreterLanguage.PYTHON
     )
 
 
 class CodeInterpreterOutput(ApiProcessorSchema):
-    stdout: List[Content] = Field(default=[], description="Standard output as a list of Content objects")
+    stdout: List[PromptlyContent] = Field(default=[], description="Standard output as a list of Content objects")
     stderr: str = Field(default="", description="Standard error")
-    local_variables: Optional[Dict] = Field(description="Local variables as a JSON object")
     exit_code: int = Field(default=0, description="Exit code of the process")
 
 
@@ -106,33 +121,34 @@ class CodeInterpreterProcessor(
         return content
 
     def process_session_data(self, session_data):
-        self._kernel_session_id = session_data.get("kernel_session_id", None)
+        self._interpreter_session_id = session_data.get("interpreter_session_id", str(uuid.uuid4()))
+        self._interpreter_session_data = session_data.get("interpreter_session_data", "")
 
     def session_data_to_persist(self) -> dict:
         return {
-            "kernel_session_id": self._kernel_session_id,
+            "interpreter_session_id": self._interpreter_session_id,
+            "interpreter_session_data": self._interpreter_session_data,
         }
 
     def process(self) -> dict:
-        from langrocks.common.models import runner_pb2, runner_pb2_grpc
+        with CodeRunner(
+            base_url=f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
+            session=CodeRunnerSession(
+                session_id=self._interpreter_session_id, session_data=self._interpreter_session_data
+            ),
+        ) as code_runner:
+            current_state = code_runner.get_state()
+            if current_state == CodeRunnerState.CODE_RUNNING:
+                respose_iter = code_runner.run_code(source_code=self._input.code)
+                for response in respose_iter:
+                    async_to_sync(self._output_stream.write)(
+                        CodeInterpreterOutput(
+                            stdout=[PromptlyContent(mime_type=PromptlyContentMimeType.TEXT, data=response.decode())]
+                        )
+                    )
 
-        kernel_session_id = self._kernel_session_id if self._kernel_session_id else str(uuid.uuid4())
-
-        channel = grpc.insecure_channel(f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}")
-        stub = runner_pb2_grpc.RunnerStub(channel)
-
-        request = runner_pb2.CodeRunnerRequest(source_code=self._input.code, timeout_secs=self._config.timeout)
-        response_iter = stub.GetCodeRunner(
-            iter([request]),
-            metadata=(("kernel_session_id", kernel_session_id),),
-        )
-        for response in response_iter:
-            if response.stdout:
-                stdout_result = self.convert_stdout_to_content(response.stdout)
-                async_to_sync(self._output_stream.write)(CodeInterpreterOutput(stdout=stdout_result))
-
-            if response.stderr:
-                async_to_sync(self._output_stream.write)(CodeInterpreterOutput(stderr=response.stderr))
+            session_data = code_runner.get_session()
+            self._interpreter_session_data = session_data.session_data
 
         output = self._output_stream.finalize()
         return output

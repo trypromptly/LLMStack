@@ -844,7 +844,7 @@ class PlaygroundViewSet(viewsets.ViewSet):
         input_schema = json.loads(processor_cls.get_input_schema())
         input_fields = []
         for property in input_schema["properties"]:
-            input_fields.append({"name": property, "type": input_schema["properties"][property]["type"]})
+            input_fields.append({"name": property, "type": input_schema["properties"][property].get("type", "string")})
 
         app_data = {
             "name": f"Processor {provider_slug}_{processor_slug}",
