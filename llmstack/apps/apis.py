@@ -818,6 +818,7 @@ class AppViewSet(viewsets.ViewSet):
                 request_content_type=request.headers.get("Content-Type", ""),
                 app_uuid=uid,
                 request_user_email=request.user.email,
+                request_user=request.user,
             ),
             app_data_obj.data,
             session_id,
