@@ -264,8 +264,8 @@ class WebBrowserConfiguration(ApiProcessorSchema):
         description="Stream video of the browser",
         default=True,
     )
-    stream_text: bool = Field(
-        description="Stream output text from the browser",
+    record_session_video: bool = Field(
+        description="Record session video",
         default=False,
     )
     timeout: int = Field(
@@ -289,9 +289,7 @@ class WebBrowserConfiguration(ApiProcessorSchema):
         default=None,
         description="Seed to use for random number generator",
     )
-    tags_to_extract: List[str] = Field(
-        description="Tags to extract", default=["a", "button", "input", "textarea", "select"]
-    )
+    tags_to_extract: List[str] = Field(description="Tags to extract", default=[])
 
 
 class WebBrowserOutput(ApiProcessorSchema):
@@ -311,6 +309,10 @@ class WebBrowserOutput(ApiProcessorSchema):
     steps: List[str] = Field(
         default=[],
         description="Steps taken to complete the task",
+    )
+    videos: List[StaticWebBrowserFile] = Field(
+        default=[],
+        description="Videos from the session",
     )
 
 
@@ -351,8 +353,18 @@ class WebBrowser(
     @classmethod
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
-            markdown="""<promptly-web-browser-embed wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
-        {{text}}""",
+            markdown="""
+{% if session %}
+### Live Browser Session
+<promptly-web-browser-embed wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
+{% endif %}
+{{text}}
+{% if videos %}
+### Session Videos
+{% for video in videos %}
+<pa-asset url="{{video.data}}" type="{{video.mime_type}}"></pa-asset>
+{% endfor %}
+{% endif %}""",
             jsonpath="$.text",
         )
 
@@ -428,6 +440,8 @@ class WebBrowser(
         commands_executed = 0
         browser_response = None
         browser_downloads = []
+        session_videos = []
+
         with WebBrowserClient(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             interactive=self._config.stream_video,
@@ -439,6 +453,7 @@ class WebBrowser(
                 if self._config.connection_id
                 else ""
             ),
+            record_video=self._config.record_session_video,
         ) as web_browser:
             browser_response = web_browser.run_commands(
                 commands=[
@@ -583,6 +598,8 @@ class WebBrowser(
                         WebBrowserOutput(text=choice.message.content[0].get("text", "")),
                     )
                     break
+            if self._config.record_session_video:
+                session_videos = web_browser.get_videos()
 
         if browser_response:
             output_text = "\n".join(list(map(lambda entry: entry.output, browser_response.command_outputs)))
@@ -615,6 +632,21 @@ class WebBrowser(
                     swb_downloads.append(swb_download)
                 browser_content.downloads = swb_downloads
             async_to_sync(self._output_stream.write)(WebBrowserOutput(text=output_text, content=browser_content))
+
+        if session_videos:
+            encoded_videos = []
+            for video in session_videos:
+                encoded_videos.append(
+                    StaticWebBrowserFile(
+                        name=video.name,
+                        data=self._upload_asset_from_url(
+                            f"data:{video.mime_type};name={video.name};base64,{base64.b64encode(video.data).decode('utf-8')}",
+                            mime_type=video.mime_type,
+                        ).objref,
+                        mime_type=video.mime_type,
+                    )
+                )
+            async_to_sync(self._output_stream.write)(WebBrowserOutput(videos=encoded_videos))
 
         output = self._output_stream.finalize()
         return output

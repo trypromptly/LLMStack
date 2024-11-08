@@ -22,7 +22,6 @@ python-on-whales = "^0.71.0"
 channels-redis = "^4.2.0"
 jsonpath-ng = "^1.6.1"
 cryptography = "^43.0.1"
-langrocks = "^0.1.5"
 grpcio = "1.65.1"
 
 [tool.poetry.extras]
@@ -69,7 +68,7 @@ google-auth = {version = "^2.22.0" }
 pydantic = "^2.7.4"
 daphne = "^4.1.2"
 striprtf = "^0.0.26"
-langrocks = "0.1.9"
+langrocks = "0.2.0"
 diff-match-patch = "^20230430"
 rq = "^2.0.0"
 django-rq = "^3.0.0"

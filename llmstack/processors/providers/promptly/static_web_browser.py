@@ -83,6 +83,10 @@ class StaticWebBrowserConfiguration(ApiProcessorSchema):
         description="Capture screenshot",
         default=True,
     )
+    capture_session_video: bool = Field(
+        description="Capture session video",
+        default=False,
+    )
 
 
 class StaticWebBrowserInput(ApiProcessorSchema):
@@ -138,6 +142,10 @@ class StaticWebBrowserOutput(ApiProcessorSchema):
         default=[],
         description="Steps taken to complete the task",
     )
+    videos: Optional[List[StaticWebBrowserFile]] = Field(
+        default=None,
+        description="Videos from the browser session. Make sure to TERMINATE the browser to capture the video",
+    )
 
 
 class StaticWebBrowser(
@@ -167,8 +175,20 @@ class StaticWebBrowser(
     def get_output_template(cls) -> Optional[OutputTemplate]:
         return OutputTemplate(
             markdown="""
+{% if session %}
+### Live Browser Session
 <promptly-web-browser-embed wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
+{% endif %}
+{% if videos %}
+### Videos
+{% for video in videos %}
+<pa-asset url="{{video.data}}" type="{{video.mime_type}}"></pa-asset>
+{% endfor %}
+{% endif %}
+{% if content.screenshot %}
+### Screenshot
 <pa-asset url="{{content.screenshot}}" type="image/png"></pa-asset>
+{% endif %}
 {{text}}
 """,
             jsonpath="$.text",
@@ -204,7 +224,7 @@ class StaticWebBrowser(
     def process(self) -> dict:
         output_stream = self._output_stream
         browser_response = None
-
+        session_videos = []
         with WebBrowser(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             interactive=self._config.stream_video,
@@ -216,6 +236,7 @@ class StaticWebBrowser(
                 if self._config.connection_id
                 else ""
             ),
+            record_video=self._config.capture_session_video,
         ) as web_browser:
             if self._config.stream_video and web_browser.get_wss_url():
                 async_to_sync(
@@ -237,6 +258,10 @@ class StaticWebBrowser(
                 ]
                 + list(map(self._web_browser_instruction_to_command, self._input.instructions))
             )
+
+            if self._config.capture_session_video:
+                session_videos = web_browser.get_videos()
+
         if browser_response:
             output_text = browser_response.text or "\n".join(
                 list(map(lambda entry: entry.output, browser_response.command_outputs))
@@ -272,6 +297,21 @@ class StaticWebBrowser(
                     swb_downloads.append(swb_download)
                 browser_content.downloads = swb_downloads
             async_to_sync(self._output_stream.write)(StaticWebBrowserOutput(text=output_text, content=browser_content))
+
+        if session_videos:
+            encoded_videos = []
+            for video in session_videos:
+                encoded_videos.append(
+                    StaticWebBrowserFile(
+                        name=video.name,
+                        data=self._upload_asset_from_url(
+                            f"data:{video.mime_type};name={video.name};base64,{base64.b64encode(video.data).decode('utf-8')}",
+                            mime_type=video.mime_type,
+                        ).objref,
+                        mime_type=video.mime_type,
+                    )
+                )
+            async_to_sync(self._output_stream.write)(StaticWebBrowserOutput(videos=encoded_videos))
 
         output = output_stream.finalize()
 
