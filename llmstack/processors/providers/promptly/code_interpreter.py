@@ -16,6 +16,7 @@ from pydantic import Field
 
 from llmstack.apps.schemas import OutputTemplate
 from llmstack.common.blocks.base.schema import StrEnum
+from llmstack.common.utils.utils import validate_parse_data_uri
 from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
@@ -54,6 +55,28 @@ class CodeInterpreterOutput(ApiProcessorSchema):
 
 class CodeInterpreterConfiguration(ApiProcessorSchema):
     timeout: int = Field(default=5, description="Timeout in seconds", ge=1, le=30)
+
+
+def mime_type_to_content_mime_type(mime_type):
+    if mime_type == "text/plain":
+        return ContentMimeType.TEXT
+    if mime_type == "image/png":
+        return ContentMimeType.PNG
+    if mime_type == "image/jpeg":
+        return ContentMimeType.JPEG
+    if mime_type == "image/svg+xml":
+        return ContentMimeType.SVG
+    if mime_type == "application/pdf":
+        return ContentMimeType.PDF
+    if mime_type == "text/html":
+        return ContentMimeType.HTML
+    if mime_type == "application/json":
+        return ContentMimeType.JSON
+    if mime_type == "text/latex":
+        return ContentMimeType.LATEX
+    if mime_type == "text/csv":
+        return ContentMimeType.CSV
+    return ContentMimeType.TEXT
 
 
 class CodeInterpreterProcessor(
@@ -130,7 +153,33 @@ class CodeInterpreterProcessor(
             "interpreter_session_data": self._interpreter_session_data,
         }
 
+    def get_file_data_uri_from_objref(self, objref):
+        from llmstack.apps.models import AppSessionFiles
+
+        asset_obj = self._get_session_asset(
+            objref,
+        )
+        asset = AppSessionFiles.get_asset_data_uri(asset_obj, include_name=True) if asset_obj else None
+
+        return asset
+
     def process(self) -> dict:
+        content_files = []
+        for file in self._input.files.split("|"):
+            if file.startswith("objref://"):
+                file = self.get_file_data_uri_from_objref(file)
+            if not file:
+                continue
+
+            mime_type, file_name, data = validate_parse_data_uri(file)
+            content_files.append(
+                Content(
+                    mime_type=mime_type_to_content_mime_type(mime_type=mime_type),
+                    data=base64.b64decode(data),
+                    name=file_name,
+                )
+            )
+
         with CodeRunner(
             base_url=f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             session=CodeRunnerSession(
@@ -139,7 +188,7 @@ class CodeInterpreterProcessor(
         ) as code_runner:
             current_state = code_runner.get_state()
             if current_state == CodeRunnerState.CODE_RUNNING:
-                respose_iter = code_runner.run_code(source_code=self._input.code)
+                respose_iter = code_runner.run_code(source_code=self._input.code, files=content_files)
                 for response in respose_iter:
                     async_to_sync(self._output_stream.write)(
                         CodeInterpreterOutput(
