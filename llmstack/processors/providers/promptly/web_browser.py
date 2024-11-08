@@ -2,6 +2,7 @@ import base64
 import logging
 import uuid
 from typing import List, Literal, Optional, Union
+from urllib.parse import urlparse
 
 import orjson as json
 from asgiref.sync import async_to_sync
@@ -161,6 +162,24 @@ TERMINATE_TOOL_SCHEMA = {
                 },
             },
             "required": ["explanation"],
+        },
+    },
+}
+
+CREDENTIALS_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "credentials",
+        "description": "Get credentials for a given domain",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "type": "string",
+                    "description": "Domain of the website to get credentials for",
+                },
+            },
+            "required": ["domain"],
         },
     },
 }
@@ -442,6 +461,10 @@ class WebBrowser(
         browser_downloads = []
         session_videos = []
 
+        credentials_tool_schema = CREDENTIALS_TOOL_SCHEMA["function"]
+        credentials_tool_schema["input_schema"] = credentials_tool_schema["parameters"]
+        del credentials_tool_schema["parameters"]
+
         with WebBrowserClient(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             interactive=self._config.stream_video,
@@ -485,7 +508,12 @@ class WebBrowser(
                         and isinstance(message.get("content"), list)
                         and message.get("content")[0].get("type") == "tool_result"
                     ):
-                        message["content"][0]["content"] = []
+                        tool_result = message.get("content")[0]
+                        new_content = []
+                        for content in tool_result.get("content"):
+                            if content.get("type") != "image":
+                                new_content.append(content)
+                        tool_result["content"] = new_content
 
                 response = client.chat.completions.create(
                     model=self._config.provider_config.model.model_name(),
@@ -499,6 +527,7 @@ class WebBrowser(
                             "display_height_px": 720,
                             "display_number": 1,
                         },
+                        credentials_tool_schema,
                     ],
                     stream=False,
                     extra_headers={"anthropic-beta": "computer-use-2024-10-22"},
@@ -531,6 +560,43 @@ class WebBrowser(
                     tool_responses = []
                     for message_content in choice.message.content:
                         if message_content.get("type") == "tool_use":
+                            if message_content.get("name") == "credentials":
+                                domain = message_content.get("input", {}).get("domain")
+                                if domain:
+                                    credentials = self._env["connections"][self._config.connection_id]["configuration"][
+                                        "credentials"
+                                    ]
+                                    credentials_to_use = None
+                                    for credential in credentials:
+                                        credential_domain = urlparse(credential.get("domain")).netloc or credential.get(
+                                            "domain"
+                                        )
+                                        input_domain = urlparse(domain).netloc or domain
+
+                                        # Compare the extracted domains
+                                        if credential_domain in input_domain or input_domain in credential_domain:
+                                            credentials_to_use = credential
+                                            break
+                                    if credentials_to_use:
+                                        messages.append(
+                                            {
+                                                "role": "user",
+                                                "content": [
+                                                    {
+                                                        "type": "tool_result",
+                                                        "content": [
+                                                            {
+                                                                "type": "text",
+                                                                "text": f"Credentials for {domain}: username: {credentials_to_use.get('username')}, password: {credentials_to_use.get('password')}",
+                                                            }
+                                                        ],
+                                                        "tool_use_id": message_content["id"],
+                                                    }
+                                                ],
+                                            }
+                                        )
+                                    continue
+
                             browser_response = self._execute_anthropic_instruction_in_browser(
                                 message_content.get("input", {}),
                                 web_browser=web_browser,
