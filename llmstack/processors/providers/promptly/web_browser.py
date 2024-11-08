@@ -478,7 +478,7 @@ class WebBrowser(
                     break
 
                 # Trim messages by removing tool call responses with images from all but the last message
-                for message in messages[:-1]:
+                for message in messages[:-2]:
                     if (
                         message.get("role") == "user"
                         and message.get("content")
