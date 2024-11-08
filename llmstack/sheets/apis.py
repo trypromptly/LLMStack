@@ -309,7 +309,11 @@ class PromptlySheetViewSet(viewsets.ViewSet):
 
         if run_id_in_sheet != run_id:
             return DRFResponse(status=status.HTTP_400_BAD_REQUEST)
-        PromptlySheetAppExecuteJob.cancel(job_id)
+
+        try:
+            PromptlySheetAppExecuteJob.cancel(job_id)
+        except Exception as e:
+            logger.error(f"Error cancelling job {job_id}: {e}")
 
         sheet.extra_data["running"] = False
         sheet.extra_data["job_id"] = None
