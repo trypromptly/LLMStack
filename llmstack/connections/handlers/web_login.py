@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Iterator, Union
+from typing import Iterator, List, Union
 
 import grpc
 from django.conf import settings
@@ -24,10 +24,20 @@ class WebLoginBaseConfiguration(BaseSchema):
     _storage_state: str
 
 
+class WebLoginCredentials(BaseSchema):
+    domain: str = Field(description="Domain of the website")
+    username: str = Field(description="Username")
+    password: str = Field(description="Password", json_schema_extra={"widget": "password"})
+
+
 class WebLoginConfiguration(WebLoginBaseConfiguration):
     start_url: str = Field(
         description="URL to login to",
         default="https://google.com",
+    )
+    credentials: List[WebLoginCredentials] = Field(
+        description="Credentials to login to the website",
+        default=[],
     )
 
 
