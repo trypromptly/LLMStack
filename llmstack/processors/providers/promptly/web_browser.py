@@ -10,8 +10,10 @@ from django.conf import settings
 from langrocks.client import WebBrowser as WebBrowserClient
 from langrocks.common.models.web_browser import (
     WebBrowserCommand,
+    WebBrowserCommandOutput,
     WebBrowserCommandType,
     WebBrowserContent,
+    WebBrowserResponse,
 )
 from pydantic import BaseModel, Field
 
@@ -434,8 +436,49 @@ class WebBrowser(
                     ),
                 ]
             )
+        elif instruction_input.get("action") == "right_click":
+            return web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.RIGHT_CLICK,
+                    )
+                ]
+            )
+        elif instruction_input.get("action") == "middle_click":
+            return web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.MIDDLE_CLICK,
+                    )
+                ]
+            )
+        elif instruction_input.get("action") == "double_click":
+            return web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.DOUBLE_CLICK,
+                    )
+                ]
+            )
+        elif instruction_input.get("action") == "cursor_position":
+            return web_browser.run_commands(
+                commands=[
+                    WebBrowserCommand(
+                        command_type=WebBrowserCommandType.CURSOR_POSITION,
+                    )
+                ]
+            )
         else:
-            raise Exception("Invalid instruction")
+            return WebBrowserResponse(
+                content=WebBrowserContent(
+                    command_outputs=[
+                        WebBrowserCommandOutput(
+                            index=0,
+                            output="We do not currently support this action",
+                        )
+                    ],
+                ),
+            )
 
     def _process_anthropic(self) -> dict:
         client = get_llm_client_from_provider_config(
