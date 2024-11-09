@@ -1,6 +1,7 @@
 import base64
 import logging
 import uuid
+from copy import deepcopy
 from typing import List, Literal, Optional, Union
 from urllib.parse import urlparse
 
@@ -505,7 +506,7 @@ class WebBrowser(
         browser_downloads = []
         session_videos = []
 
-        credentials_tool_schema = CREDENTIALS_TOOL_SCHEMA["function"].copy()
+        credentials_tool_schema = deepcopy(CREDENTIALS_TOOL_SCHEMA["function"])
         credentials_tool_schema["input_schema"] = credentials_tool_schema.pop("parameters")
 
         updated_session_data = None
