@@ -665,7 +665,9 @@ class WebBrowser(
                     if browser_response.downloads:
                         browser_downloads.extend(browser_response.downloads)
                     async_to_sync(self._output_stream.write)(
-                        WebBrowserOutput(text=choice.message.content[0].get("text", "")),
+                        WebBrowserOutput(text=choice.message.content[0].get("text", ""))
+                        if choice.message.content
+                        else WebBrowserOutput(text="")
                     )
                     break
             if self._config.record_session_video:
