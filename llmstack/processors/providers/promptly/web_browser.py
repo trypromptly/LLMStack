@@ -505,9 +505,8 @@ class WebBrowser(
         browser_downloads = []
         session_videos = []
 
-        credentials_tool_schema = CREDENTIALS_TOOL_SCHEMA["function"]
-        credentials_tool_schema["input_schema"] = credentials_tool_schema["parameters"]
-        del credentials_tool_schema["parameters"]
+        credentials_tool_schema = CREDENTIALS_TOOL_SCHEMA["function"].copy()
+        credentials_tool_schema["input_schema"] = credentials_tool_schema.pop("parameters")
 
         updated_session_data = None
 
