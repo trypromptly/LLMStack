@@ -301,7 +301,7 @@ class WebBrowserConfiguration(ApiProcessorSchema):
     )
     system_message: str = Field(
         description="System message to use",
-        default=DEFAULT_SYSTEM_MESSAGE,
+        default="",
         json_schema_extra={"widget": "textarea"},
     )
     seed: Optional[int] = Field(
@@ -449,7 +449,8 @@ class WebBrowser(
         messages = [
             {
                 "role": "system",
-                "content": f"<SYSTEM_CAPABILITY> You are utilising a virtual chrome browser. If user asks you to visit a website, you can simply start your responses assuming the browser is opened and the current page is {self._input.start_url}.",
+                "content": self._config.system_message
+                or f"You are utilising a virtual chrome browser. If user asks you to visit a website, you can simply start your responses assuming the browser is opened and the current page is {self._input.start_url}.",
             },
             {
                 "role": "user",
@@ -753,7 +754,7 @@ class WebBrowser(
         messages = [
             {
                 "role": "system",
-                "content": self._config.system_message,
+                "content": self._config.system_message or DEFAULT_SYSTEM_MESSAGE,
             },
             {
                 "role": "user",
