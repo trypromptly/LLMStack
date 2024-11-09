@@ -465,6 +465,8 @@ class WebBrowser(
         credentials_tool_schema["input_schema"] = credentials_tool_schema["parameters"]
         del credentials_tool_schema["parameters"]
 
+        updated_session_data = None
+
         with WebBrowserClient(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             interactive=self._config.stream_video,
@@ -477,6 +479,7 @@ class WebBrowser(
                 else ""
             ),
             record_video=self._config.record_session_video,
+            persist_session=bool(self._config.connection_id),
         ) as web_browser:
             browser_response = web_browser.run_commands(
                 commands=[
@@ -667,6 +670,9 @@ class WebBrowser(
             if self._config.record_session_video:
                 session_videos = web_browser.get_videos()
 
+            if self._config.connection_id:
+                updated_session_data = web_browser.terminate()
+
         if browser_response:
             output_text = "\n".join(list(map(lambda entry: entry.output, browser_response.command_outputs)))
             browser_content = WebBrowserContent(**browser_response.model_dump(exclude=("screenshot", "downloads")))
@@ -715,11 +721,25 @@ class WebBrowser(
             async_to_sync(self._output_stream.write)(WebBrowserOutput(videos=encoded_videos))
 
         output = self._output_stream.finalize()
+
+        # Update the session data if we have a connection ID
+        if self._config.connection_id and updated_session_data:
+            self.update_connection(
+                {
+                    **self._env["connections"][self._config.connection_id],
+                    "configuration": {
+                        **self._env["connections"][self._config.connection_id]["configuration"],
+                        "_storage_state": updated_session_data,
+                    },
+                }
+            )
         return output
 
     def process(self) -> dict:
         if self._config.provider_config.provider == "anthropic":
             return self._process_anthropic()
+
+        updated_session_data = None
 
         client = get_llm_client_from_provider_config(
             provider=self._config.provider_config.provider,
@@ -752,6 +772,7 @@ class WebBrowser(
                 if self._config.connection_id
                 else ""
             ),
+            persist_session=bool(self._config.connection_id),
         ) as web_browser:
             # Start streaming video if enabled
             if self._config.stream_video and web_browser.get_wss_url():
@@ -938,6 +959,9 @@ class WebBrowser(
                         )
                     )
 
+            if self._config.connection_id:
+                updated_session_data = web_browser.terminate()
+
         if browser_response:
             output_text = "\n".join(list(map(lambda entry: entry.output, browser_response.command_outputs)))
             browser_content = browser_response.model_dump(exclude=("screenshot",))
@@ -951,4 +975,17 @@ class WebBrowser(
             async_to_sync(self._output_stream.write)(WebBrowserOutput(text=output_text, content=browser_content))
 
         output = self._output_stream.finalize()
+
+        # Update the session data if we have a connection ID
+        if self._config.connection_id and updated_session_data:
+            self.update_connection(
+                {
+                    **self._env["connections"][self._config.connection_id],
+                    "configuration": {
+                        **self._env["connections"][self._config.connection_id]["configuration"],
+                        "_storage_state": updated_session_data,
+                    },
+                }
+            )
+
         return output

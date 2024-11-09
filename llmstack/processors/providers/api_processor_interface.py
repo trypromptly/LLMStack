@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 
 import ujson as json
 from django import db
+from django.shortcuts import get_object_or_404
 from pydantic import BaseModel
 
 from llmstack.apps.app_session_utils import get_app_session_data, save_app_session_data
@@ -132,6 +133,13 @@ class ApiProcessorInterface(
         if asset:
             return AssetStream(asset)
         return None
+
+    def update_connection(self, connection):
+        from llmstack.base.models import Profile
+
+        if self._request_user and self._request_user.is_authenticated:
+            profile = get_object_or_404(Profile, user=self._request_user)
+            profile.add_connection(connection)
 
     def __init__(
         self,

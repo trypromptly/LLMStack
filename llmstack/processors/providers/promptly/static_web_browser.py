@@ -225,6 +225,8 @@ class StaticWebBrowser(
         output_stream = self._output_stream
         browser_response = None
         session_videos = []
+        updated_session_data = None
+
         with WebBrowser(
             f"{settings.RUNNER_HOST}:{settings.RUNNER_PORT}",
             interactive=self._config.stream_video,
@@ -237,6 +239,7 @@ class StaticWebBrowser(
                 else ""
             ),
             record_video=self._config.capture_session_video,
+            persist_session=bool(self._config.connection_id),
         ) as web_browser:
             if self._config.stream_video and web_browser.get_wss_url():
                 async_to_sync(
@@ -261,6 +264,9 @@ class StaticWebBrowser(
 
             if self._config.capture_session_video:
                 session_videos = web_browser.get_videos()
+
+            if self._config.connection_id:
+                updated_session_data = web_browser.terminate()
 
         if browser_response:
             output_text = browser_response.text or "\n".join(
@@ -314,5 +320,16 @@ class StaticWebBrowser(
             async_to_sync(self._output_stream.write)(StaticWebBrowserOutput(videos=encoded_videos))
 
         output = output_stream.finalize()
+
+        if self._config.connection_id and updated_session_data:
+            self.update_connection(
+                {
+                    **self._env["connections"][self._config.connection_id],
+                    "configuration": {
+                        **self._env["connections"][self._config.connection_id]["configuration"],
+                        "_storage_state": updated_session_data,
+                    },
+                }
+            )
 
         return output
