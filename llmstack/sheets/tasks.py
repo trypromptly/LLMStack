@@ -618,14 +618,17 @@ def on_sheet_run_success(job, connection, result, *args, **kwargs):
 
 
 def on_sheet_run_failed(job, connection, type, value, traceback):
-    sheet_uuid = job.args[0]
-    run_uuid = job.args[1]
+    try:
+        sheet_uuid = job.args[0]
+        run_uuid = job.args[1]
 
-    async_to_sync(channel_layer.group_send)(
-        run_uuid, {"type": "sheet.error", "error": f"Sheet run failed: {str(type)} - {str(value)}"}
-    )
+        async_to_sync(channel_layer.group_send)(
+            run_uuid, {"type": "sheet.error", "error": f"Sheet run failed: {str(type)} - {str(value)}"}
+        )
 
-    update_sheet_with_post_run_data(sheet_uuid, run_uuid)
+        update_sheet_with_post_run_data(sheet_uuid, run_uuid)
+    except Exception:
+        logger.exception("Error in on_sheet_run_failed")
 
 
 def on_sheet_run_stopped(job, connection):
