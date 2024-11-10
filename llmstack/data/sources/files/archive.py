@@ -2,6 +2,7 @@ import base64
 import io
 import logging
 import mimetypes
+import re
 import tarfile
 import uuid
 import zipfile
@@ -30,7 +31,9 @@ def extract_archive_files(mime_type, file_name, file_data):
                     continue
                 with archive.open(file_info) as file:
                     file_mime_type = mimetypes.guess_type(file_info.filename)[0]
-                    data_uri = f"data:{file_mime_type};name={file_info.filename};base64,{base64.b64encode(file.read()).decode()}"
+                    filename = file_info.filename
+                    filename = "/".join(filename.split("/")[1:])
+                    data_uri = f"data:{file_mime_type};name={filename};base64,{base64.b64encode(file.read()).decode()}"
                     extracted_files.append(data_uri)
     elif mime_type in ["application/x-tar", "application/gzip", "application/x-bzip2"]:
         with tarfile.open(fileobj=io.BytesIO(file_data), mode="r:*") as archive:
@@ -65,6 +68,11 @@ class ArchiveFileSchema(BaseSource):
         description="Split the archive into individual files",
         json_schema_extra={"advanced_parameter": True},
     )
+    file_regex: str = Field(
+        default=None,
+        description="Regex to filter files",
+        json_schema_extra={"advanced_parameter": True},
+    )
 
     @classmethod
     def slug(cls):
@@ -89,6 +97,8 @@ class ArchiveFileSchema(BaseSource):
         for file in files:
             file_id = str(uuid.uuid4())
             mime_type, file_name, file_data = validate_parse_data_uri(file)
+            if self.split_files and self.file_regex and not re.match(self.file_regex, file_name):
+                continue
             file_objref = create_source_document_asset(
                 file, datasource_uuid=kwargs["datasource_uuid"], document_id=file_id
             )
@@ -103,6 +113,7 @@ class ArchiveFileSchema(BaseSource):
                         "mime_type": mime_type,
                         "source": file_name,
                         "datasource_uuid": kwargs["datasource_uuid"],
+                        "file_regex": self.file_regex,
                     },
                     datasource_uuid=kwargs["datasource_uuid"],
                     extra_info={"extra_data": self.get_extra_data()},
@@ -121,6 +132,8 @@ class ArchiveFileSchema(BaseSource):
             text_content = ""
             for extracted_file in extracted_files:
                 mime_type, file_name, extracted_file_data = validate_parse_data_uri(extracted_file)
+                if document.metadata.get("file_regex") and not re.match(document.metadata["file_regex"], file_name):
+                    continue
                 text_content += f"File: {file_name}\n"
                 decoded_file_data = base64.b64decode(extracted_file_data)
                 elements += extract_text_elements(

@@ -177,7 +177,8 @@ def extract_text_elements(
     elif mime_type == "text/markdown":
         elements = partition_md(text=data.decode(charset), chunking_strategy=chunking_strategy)
     else:
-        raise Exception("Unsupported file type")
+        logger.error(f"Unsupported mime type: {mime_type}")
+        elements = []
 
     # Merge elements depending on metadata page number
     merged_elements = []
