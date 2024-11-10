@@ -112,6 +112,10 @@ def _get_sheet_csv(columns, cells, total_rows):
 
 
 class PromptlySheetAppExecuteJob(ProcessingJob):
+    @property
+    def queue_name(self):
+        return "sheets"
+
     @classmethod
     def get_connection(self):
         if self._use_redis:
