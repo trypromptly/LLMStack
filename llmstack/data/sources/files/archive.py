@@ -86,7 +86,9 @@ class ArchiveFileSchema(BaseSource):
         archive_file = self.file
         # If objref:// is present, get the data URI from the objref
         if archive_file and archive_file.startswith("objref://"):
-            archive_file = get_document_data_uri_from_objref(archive_file, datasource_uuid=kwargs["datasource_uuid"])
+            archive_file = get_document_data_uri_from_objref(
+                archive_file, datasource_uuid=kwargs["datasource_uuid"], request_user=kwargs["request_user"]
+            )
 
         if self.split_files:
             files = extract_archive_files(*validate_parse_data_uri(archive_file))

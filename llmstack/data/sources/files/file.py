@@ -55,7 +55,11 @@ class FileSchema(BaseSource):
                 list(
                     map(
                         lambda entry: (
-                            get_document_data_uri_from_objref(file_objref, datasource_uuid=kwargs["datasource_uuid"])
+                            get_document_data_uri_from_objref(
+                                file_objref,
+                                datasource_uuid=kwargs["datasource_uuid"],
+                                request_user=kwargs["request_user"],
+                            )
                             if entry.startswith("objref://")
                             else entry
                         ),

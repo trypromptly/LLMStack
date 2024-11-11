@@ -574,12 +574,14 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         datasource.delete()
         return DRFResponse(status=204)
 
-    def process_add_entry_request(self, datasource: DataSource, source_data) -> List[DataDocument]:
+    def process_add_entry_request(self, datasource: DataSource, source_data, request=None) -> List[DataDocument]:
         source_cls = datasource.pipeline_obj.source_cls
         if not source_cls:
             raise Exception("No source class found for data source")
         source = source_cls(**source_data)
-        return source.get_data_documents(datasource_uuid=str(datasource.uuid))
+        return source.get_data_documents(
+            datasource_uuid=str(datasource.uuid), request_user=request.user if request else None
+        )
 
     def add_entry(self, request, uid):
         datasource = get_object_or_404(DataSource, uuid=uuid.UUID(uid))
@@ -594,7 +596,7 @@ class DataSourceViewSet(viewsets.ModelViewSet):
         if not source_data:
             return DRFResponse({"errors": ["No source_data provided"]}, status=400)
 
-        documents = self.process_add_entry_request(datasource, source_data)
+        documents = self.process_add_entry_request(datasource, source_data, request=request)
         for document in documents:
             create_result = DataSourceEntryViewSet().create_entry(user=request.user, document=document)
             process_result = DataSourceEntryViewSet().process_entry(request=None, uid=str(create_result.data["uuid"]))

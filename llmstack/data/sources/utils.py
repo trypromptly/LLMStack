@@ -59,36 +59,19 @@ def create_source_document_asset(file, datasource_uuid, document_id):
 
 
 def get_source_document_asset_by_objref(objref):
+    from llmstack.assets.utils import get_asset_by_objref_internal
     from llmstack.data.models import DataSourceEntryFiles
 
-    if not objref:
-        return None
-    asset = None
-    try:
-        category, uuid = objref.strip().split("//")[1].split("/")
-        asset = DataSourceEntryFiles.get_asset_data_uri(DataSourceEntryFiles.objects.get(uuid=uuid), include_name=True)
-    except Exception:
-        pass
-
+    asset_obj = get_asset_by_objref_internal(objref)
+    asset = DataSourceEntryFiles.get_asset_data_uri(asset_obj, include_name=True)
     return asset
 
 
-def get_document_data_uri_from_objref(objref, datasource_uuid):
+def get_document_data_uri_from_objref(objref, datasource_uuid, request_user):
+    from llmstack.assets.utils import get_asset_by_objref
     from llmstack.data.models import DataSourceEntryFiles
 
-    if not objref:
-        return None
-    asset = None
-    try:
-        _, uuid = objref.strip().split("//")[1].split("/")
-        asset_obj = DataSourceEntryFiles.objects.get(uuid=uuid)
-
-        if asset_obj.metadata.get("datasource_uuid") != datasource_uuid:
-            return None
-
-        asset = DataSourceEntryFiles.get_asset_data_uri(asset_obj, include_name=True)
-
-    except Exception:
-        pass
+    asset_obj = get_asset_by_objref(objref, request_user, None)
+    asset = DataSourceEntryFiles.get_asset_data_uri(asset_obj, include_name=True) if asset_obj else None
 
     return asset
