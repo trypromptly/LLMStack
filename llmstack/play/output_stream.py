@@ -4,6 +4,7 @@ This module contains the OutputStream class.
 
 import asyncio
 import logging
+import time
 import uuid
 from collections import defaultdict
 from typing import Any, Dict, Type
@@ -230,7 +231,10 @@ class OutputStream:
         """
         Bookkeeping entry.
         """
-        self._bookkeeping_queue.put_nowait((self._stream_id, data.model_dump()))
+        timestamp = time.time()
+        timestamped_data = {**data.model_dump(), "timestamp": timestamp}
+
+        self._bookkeeping_queue.put_nowait((self._stream_id, timestamped_data))
 
     def error(self, error: Exception) -> None:
         """
