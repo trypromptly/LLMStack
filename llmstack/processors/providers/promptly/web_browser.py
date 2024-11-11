@@ -11,7 +11,6 @@ from django.conf import settings
 from langrocks.client import WebBrowser as WebBrowserClient
 from langrocks.common.models.web_browser import (
     WebBrowserCommand,
-    WebBrowserCommandOutput,
     WebBrowserCommandType,
     WebBrowserContent,
 )
@@ -470,14 +469,7 @@ class WebBrowser(
             )
         else:
             logger.error(f"Invalid instruction: {instruction_input}")
-            return WebBrowserContent(
-                command_outputs=[
-                    WebBrowserCommandOutput(
-                        index=0,
-                        output="We do not currently support this action",
-                    )
-                ],
-            )
+            return None
 
     def _process_anthropic(self) -> dict:
         client = get_llm_client_from_provider_config(
@@ -579,20 +571,18 @@ class WebBrowser(
                     max_tokens=4096,
                 )
                 if response.usage:
-                    self._usage_data.append(
-                        (
-                            f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
-                            MetricType.INPUT_TOKENS,
-                            (provider_config.provider_config_source, response.usage.get_input_tokens()),
+                    for metric_type, token_getter in [
+                        (MetricType.INPUT_TOKENS, response.usage.get_input_tokens),
+                        (MetricType.OUTPUT_TOKENS, response.usage.get_output_tokens),
+                    ]:
+                        self._usage_data.append(
+                            (
+                                f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
+                                metric_type,
+                                (provider_config.provider_config_source, token_getter()),
+                            )
                         )
-                    )
-                    self._usage_data.append(
-                        (
-                            f"{self._config.provider_config.provider}/*/{self._config.provider_config.model.model_name()}/*",
-                            MetricType.OUTPUT_TOKENS,
-                            (provider_config.provider_config_source, response.usage.get_output_tokens()),
-                        )
-                    )
+
                 choice = response.choices[0]
                 # Append to history of messages
                 messages.append(
@@ -601,6 +591,15 @@ class WebBrowser(
                         "content": choice.message.content,
                     }
                 )
+
+                def create_tool_response(content, tool_use_id, is_error=False):
+                    return {
+                        "type": "tool_result",
+                        "content": [content],
+                        "tool_use_id": tool_use_id,
+                        "is_error": is_error,
+                    }
+
                 if choice.finish_reason == "tool_use":
                     tool_responses = []
                     for message_content in choice.message.content:
@@ -618,7 +617,6 @@ class WebBrowser(
                                         )
                                         input_domain = urlparse(domain).netloc or domain
 
-                                        # Compare the extracted domains
                                         if credential_domain in input_domain or input_domain in credential_domain:
                                             credentials_to_use = credential
                                             break
@@ -627,16 +625,13 @@ class WebBrowser(
                                             {
                                                 "role": "user",
                                                 "content": [
-                                                    {
-                                                        "type": "tool_result",
-                                                        "content": [
-                                                            {
-                                                                "type": "text",
-                                                                "text": f"Credentials for {domain}: username: {credentials_to_use.get('username')}, password: {credentials_to_use.get('password')}",
-                                                            }
-                                                        ],
-                                                        "tool_use_id": message_content["id"],
-                                                    }
+                                                    create_tool_response(
+                                                        {
+                                                            "type": "text",
+                                                            "text": f"Credentials for {domain}: username: {credentials_to_use.get('username')}, password: {credentials_to_use.get('password')}",
+                                                        },
+                                                        message_content["id"],
+                                                    )
                                                 ],
                                             }
                                         )
@@ -647,52 +642,68 @@ class WebBrowser(
                                 web_browser=web_browser,
                                 prev_browser_state=browser_response,
                             )
-                            if browser_response.downloads:
-                                browser_downloads.extend(browser_response.downloads)
-                            command_output = browser_response.command_outputs[0]
-                            if message_content.get("input", {}).get("action") == "screenshot":
+                            if browser_response is None:
                                 tool_responses.append(
-                                    {
-                                        "type": "tool_result",
-                                        "content": [
-                                            {
-                                                "type": "image",
-                                                "source": {
-                                                    "type": "base64",
-                                                    "media_type": "image/png",
-                                                    "data": command_output.output,
-                                                },
-                                            },
-                                        ],
-                                        "tool_use_id": message_content["id"],
-                                        "is_error": False,
-                                    }
+                                    create_tool_response(
+                                        {"type": "text", "text": "We do not currently support this action"},
+                                        message_content["id"],
+                                        is_error=True,
+                                    )
                                 )
                             else:
-                                tool_responses.append(
-                                    {
-                                        "type": "tool_result",
-                                        "content": [
+                                if browser_response.downloads:
+                                    browser_downloads.extend(browser_response.downloads)
+
+                                is_screenshot = message_content.get("input", {}).get("action") == "screenshot"
+                                command_output = (
+                                    browser_response.command_outputs[0] if browser_response.command_outputs else None
+                                )
+                                command_error = (
+                                    browser_response.command_errors[0].error
+                                    if browser_response.command_errors
+                                    else None
+                                )
+
+                                if command_output and command_output.output:
+                                    content = {
+                                        "type": "image" if is_screenshot else "text",
+                                        "source"
+                                        if is_screenshot
+                                        else "text": (
+                                            {
+                                                "type": "base64",
+                                                "media_type": "image/png",
+                                                "data": command_output.output,
+                                            }
+                                            if is_screenshot
+                                            else command_output.output
+                                        ),
+                                    }
+                                    tool_responses.append(create_tool_response(content, message_content["id"]))
+                                else:
+                                    screenshot_error_text = (
+                                        command_error.error if command_error else "No screenshot available"
+                                    )
+                                    output_error_text = command_error.error if command_error else "No output available"
+                                    tool_responses.append(
+                                        create_tool_response(
                                             {
                                                 "type": "text",
-                                                "text": command_output.output,
+                                                "text": screenshot_error_text if is_screenshot else output_error_text,
                                             },
-                                        ],
-                                        "tool_use_id": message_content["id"],
-                                        "is_error": False,
-                                    }
-                                )
+                                            message_content["id"],
+                                            is_error=True,
+                                        )
+                                    )
+                                    logger.error(
+                                        f"No command output for tool use: {message_content.get('input', {})}. Error: {command_error}",
+                                    )
                         else:
                             async_to_sync(self._output_stream.write)(
                                 WebBrowserOutput(text=message_content.get("text", "") + "\n\n"),
                             )
                     if tool_responses:
-                        messages.append(
-                            {
-                                "role": "user",
-                                "content": tool_responses,
-                            }
-                        )
+                        messages.append({"role": "user", "content": tool_responses})
                     continue
                 elif choice.finish_reason == "end_turn":
                     browser_response = web_browser.run_commands(
