@@ -3191,13 +3191,13 @@ six = "*"
 
 [[package]]
 name = "langrocks"
-version = "0.2.0"
+version = "0.2.1"
 description = "Tools like web browser and code interpreters for LLMs"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "langrocks-0.2.0-py3-none-any.whl", hash = "sha256:7683d14e62e7993792be775eab4526a651494072c4046d0a454084a13843ed1a"},
-    {file = "langrocks-0.2.0.tar.gz", hash = "sha256:9f4b13bacad2c1ab37b33f28600f0df33ce62ccfe6c448006ea0a8370c58b594"},
+    {file = "langrocks-0.2.1-py3-none-any.whl", hash = "sha256:dc19db424da9f92d827c30a0a48f32da5e51eb9393071d18b5b02411cc27369d"},
+    {file = "langrocks-0.2.1.tar.gz", hash = "sha256:06698144d5768194b05b609c0d3ca2d85322c7c15a845b430c9e6d5a673889c0"},
 ]
 
 [package.dependencies]
@@ -9177,4 +9177,4 @@ networking = ["junos-eznc"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "86846073bf607607c4d454e8cb10dd64de2129252ec31f94431da29212e4a803"
+content-hash = "6e3e57d25fead51997e42b72d765ab10a88d7fe9d2a397b49533034391b53738"
