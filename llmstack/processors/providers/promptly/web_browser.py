@@ -14,7 +14,6 @@ from langrocks.common.models.web_browser import (
     WebBrowserCommandOutput,
     WebBrowserCommandType,
     WebBrowserContent,
-    WebBrowserResponse,
 )
 from pydantic import BaseModel, Field
 
@@ -470,15 +469,14 @@ class WebBrowser(
                 ]
             )
         else:
-            return WebBrowserResponse(
-                content=WebBrowserContent(
-                    command_outputs=[
-                        WebBrowserCommandOutput(
-                            index=0,
-                            output="We do not currently support this action",
-                        )
-                    ],
-                ),
+            logger.error(f"Invalid instruction: {instruction_input}")
+            return WebBrowserContent(
+                command_outputs=[
+                    WebBrowserCommandOutput(
+                        index=0,
+                        output="We do not currently support this action",
+                    )
+                ],
             )
 
     def _process_anthropic(self) -> dict:
