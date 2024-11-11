@@ -467,7 +467,7 @@ export function SheetColumnMenu({
                       label="Parallel Runs"
                       value={formulaData.max_parallel_runs || 1}
                       onChange={(e) => {
-                        const value = Math.max(
+                        const value = Math.min(
                           4,
                           parseInt(e.target.value, 10) || 4,
                         );
