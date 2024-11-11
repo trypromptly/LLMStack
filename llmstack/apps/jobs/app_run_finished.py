@@ -78,8 +78,7 @@ class AppRunFinishedEventData(BaseModel):
 
     @property
     def response_body(self):
-        if self.output:
-            return self.output.get("output") or ""
+        return self.output.get("output", "") if self.output and isinstance(self.output, dict) else ""
 
     @property
     def is_store_request(self):
