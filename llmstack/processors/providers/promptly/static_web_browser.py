@@ -36,6 +36,7 @@ class BrowserInstructionType(StrEnum):
     SCROLLX = "Scrollx"
     SCROLLY = "Scrolly"
     MOUSE_MOVE = "Mousemove"
+    KEY = "Key"
 
 
 class BrowserInstruction(BaseModel):
@@ -216,6 +217,8 @@ class StaticWebBrowser(
             instruction_type = WebBrowserCommandType.TYPE
         elif instruction.type == BrowserInstructionType.MOUSE_MOVE.value:
             instruction_type = WebBrowserCommandType.MOUSE_MOVE
+        elif instruction.type == BrowserInstructionType.KEY.value:
+            instruction_type = WebBrowserCommandType.KEY
 
         return WebBrowserCommand(
             command_type=instruction_type, data=(instruction.data or ""), selector=(instruction.selector or "")
