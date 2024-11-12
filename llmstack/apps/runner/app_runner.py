@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 import uuid
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Union
@@ -384,9 +385,18 @@ class AppRunner:
         Return a dictionary of bookkeeping data from the queue
         """
         bookkeeping_data = {}
-        while not self._bookkeeping_queue.empty():
-            stream_id, data = self._bookkeeping_queue.get_nowait()
-            bookkeeping_data[stream_id] = data
+        start_time = time.time()
+        while (not self._bookkeeping_queue.empty() or any([data is None for data in bookkeeping_data.values()])) and (
+            time.time() - start_time < 5
+        ):
+            if self._bookkeeping_queue.empty():
+                continue
+
+            actor_id, data = self._bookkeeping_queue.get_nowait()
+
+            if actor_id not in bookkeeping_data or data is not None:
+                bookkeeping_data[actor_id] = data
+
             self._bookkeeping_queue.task_done()
 
         return bookkeeping_data

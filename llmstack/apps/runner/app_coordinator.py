@@ -108,6 +108,9 @@ class AppCoordinator(ThreadingActor):
                 **self._actor_configs_map[actor_id_prefix].kwargs,
             )
 
+        if message.type == MessageType.BEGIN or message.type == MessageType.CONTENT:
+            self._bookkeeping_queue.put_nowait((actor_id, None))
+
         self.actors[actor_id].tell(message)
 
     def relay(self, message: Message):
