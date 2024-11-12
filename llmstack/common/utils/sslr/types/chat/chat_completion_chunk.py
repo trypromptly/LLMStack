@@ -9,11 +9,12 @@ from openai.types.chat.chat_completion_chunk import (  # noqa F401
 from openai.types.chat.chat_completion_chunk import (  # noqa F401
     ChoiceDeltaToolCallFunction as _ChoiceDeltaToolCallFunction,
 )
-from openai.types.completion_usage import CompletionUsage
 
 from llmstack.common.utils.sslr.types.chat.chat_completion_message_param import (
     ContentPartParam,
 )
+
+from ..completions_usage import CompletionUsage
 
 
 class ChoiceDelta(_ChoiceDelta):

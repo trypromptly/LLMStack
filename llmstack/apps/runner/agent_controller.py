@@ -462,8 +462,8 @@ class AgentController:
                 AgentControllerData(
                     type=AgentControllerDataType.USAGE_DATA,
                     data=AgentUsageData(
-                        prompt_tokens=response.usage.input_tokens,
-                        completion_tokens=response.usage.output_tokens,
+                        prompt_tokens=response.usage.get_input_tokens(),
+                        completion_tokens=response.usage.get_output_tokens(),
                         total_tokens=response.usage.total_tokens,
                         source=self._provider_config.provider_config_source,
                         provider=str(self._provider_config),
