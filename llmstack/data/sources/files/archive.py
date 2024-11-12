@@ -22,17 +22,20 @@ from llmstack.data.sources.utils import (
 logger = logging.getLogger(__name__)
 
 
-def extract_archive_files(mime_type, file_name, file_data):
+def extract_archive_files(mime_type, archive_filename, file_data):
     extracted_files = []
     if mime_type == "application/zip":
         with zipfile.ZipFile(io.BytesIO(base64.b64decode(file_data))) as archive:
+            archive_name = archive_filename.split(".zip")[0]
             for file_info in archive.infolist():
                 if file_info.is_dir() or file_info.file_size == 0 or file_info.filename.startswith("__MACOSX"):
                     continue
                 with archive.open(file_info) as file:
                     file_mime_type = mimetypes.guess_type(file_info.filename)[0]
                     filename = file_info.filename
-                    filename = "/".join(filename.split("/")[1:])
+                    if filename.startswith(archive_name):
+                        filename_parts = filename.split("/")
+                        filename = "/".join(filename_parts[1:]) if len(filename_parts) > 1 else filename
                     data_uri = f"data:{file_mime_type};name={filename};base64,{base64.b64encode(file.read()).decode()}"
                     extracted_files.append(data_uri)
     elif mime_type in ["application/x-tar", "application/gzip", "application/x-bzip2"]:
