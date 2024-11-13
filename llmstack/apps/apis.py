@@ -778,7 +778,7 @@ class AppViewSet(viewsets.ViewSet):
         )
         return response
 
-    def run(self, request, uid):
+    def run(self, request, uid, session_id=None):
         if request.user.is_anonymous:
             return DRFResponse(status=403)
         app = get_object_or_404(App, uuid=uuid.UUID(uid))
@@ -798,7 +798,7 @@ class AppViewSet(viewsets.ViewSet):
                 if app.web_config.get("allowed_sites", []):
                     csp = "frame-ancestors " + " ".join(app.web_config["allowed_sites"])
 
-        session_id = request.data.get("session_id", str(uuid.uuid4()))
+        session_id = session_id or request.data.get("session_id", str(uuid.uuid4()))
         input_data = request.data.get("input", {})
 
         request_ip = request.headers.get("X-Forwarded-For", request.META.get("REMOTE_ADDR", "")).split(",")[
