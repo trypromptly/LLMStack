@@ -64,7 +64,7 @@ def get_location(ip):
             "longitude": city_loc.location.longitude,
         }
     except Exception as e:
-        logger.exception(e)
+        logger.debug(e)
         return {}
 
 
