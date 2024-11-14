@@ -130,7 +130,11 @@ class AgentActor(OutputActor):
                         {
                             "output": {
                                 **self._agent_outputs,
-                                "output": self._stitched_data["agent"][str(message_index)].data.content[0].data,
+                                "output": (
+                                    self._stitched_data["agent"][str(message_index)].data.content[0].data
+                                    if str(message_index) in self._stitched_data["agent"]
+                                    else ""
+                                ),
                             },
                             "chunks": self._stitched_data,
                         }
