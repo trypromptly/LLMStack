@@ -343,6 +343,7 @@ class WebBrowserInput(ApiProcessorSchema):
     )
     task: str = Field(
         description="Details of the task to perform",
+        json_schema_extra={"widget": "textarea"},
         default="",
     )
 
