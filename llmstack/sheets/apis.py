@@ -32,7 +32,10 @@ from llmstack.sheets.models import (
     SheetColumn,
 )
 from llmstack.sheets.serializers import PromptlySheetSerializer
-from llmstack.sheets.yaml_loader import load_sheet_templates
+from llmstack.sheets.yaml_loader import (
+    load_sheet_formula_templates,
+    load_sheet_templates,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -608,3 +611,13 @@ class PromptlySheetTemplateViewSet(viewsets.ViewSet):
             return DRFResponse(templates.get(slug))
 
         return DRFResponse(templates)
+
+
+class PromptlySheetFormulasViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list_formula_templates(self, request, slug=None):
+        formula_templates = load_sheet_formula_templates()
+        if slug:
+            return DRFResponse(formula_templates.get(slug))
+        return DRFResponse(formula_templates)

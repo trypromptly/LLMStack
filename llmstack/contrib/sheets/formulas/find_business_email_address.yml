@@ -1,0 +1,15 @@
+name: Find Business Email Address
+category_slug: null
+slug: find-business-email-address
+description: >-
+  Given a business/company name, this formula will attempt to find the email address of the business.
+formula:
+  data:
+    input:
+      task: >-
+        Search for the company website and and find a email address to contact them. You might have to scroll all the way down to the footer to get the phoner number or visit a contact us or similar page to extract the information. If you are unable to find an email address on the website, try looking at other sources such as Google, or other business directories. If you cannot find a email address, return "Not found".
+        --- 
+        Company/Business Name: {{?}}
+    app_slug: sheet-agent
+    max_parallel_runs: null
+  type: 2

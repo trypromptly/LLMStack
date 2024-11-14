@@ -1,0 +1,13 @@
+name: Determine industry of company
+category_slug: null
+slug: find_company_industry
+description: >-
+  Given a company name, this formula will attempt to find the industry of the company.
+formula:
+  data:
+    input:
+      task: >-
+        Search for the company {{?}} website and use the website data and other relevat search results to determine the industry of the company. You can also use websites like g2.com, capterra.com, etc. to gather information about the company's products, services, pricing details and competitors, etc. Do not return anything else other than the industry. If you cannot find the industry, return "Not found".
+    app_slug: sheet-agent
+    max_parallel_runs: null
+  type: 2

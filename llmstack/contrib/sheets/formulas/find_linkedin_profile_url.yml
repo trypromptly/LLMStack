@@ -1,0 +1,28 @@
+name: Find LinkedIn Profile URL
+description: >-
+  Given a person's name and company, this formula will attempt to find the LinkedIn profile URL of the person.
+category_slug: null
+slug: find-linkedin-profile-url
+formula:
+  data:
+    input:
+      task: >-
+        Your task is to find the LinkedIn profile URL of the person given the person's details like name, First Name or full name and some company details like company name or company domain and some additional information. The result must match the pattern https://www.linkedin.com/in/. It should not be a company URL or a posts URL or anything but a profile URL. Try to run as many searches as possible to find the correct URL and ALSO validate that it is the RIGHT profile URL for person. Return only the final URL and nothing else. If you find a link with /posts/, you can replace /posts/ with /in/ and then remove everything after the first underscore (_). Then it's a correct result. For example, you could turn an incorrect result like: https://www.linkedin.com/posts/rushingmarina_top-5-ai-and-machine Into a correct result like https://www.linkedin.com/in/rushingmarina 
+
+        Follow the steps below in your research: 
+        1. Search LinkedIn for a profile associated with the provided person's detail (name or email). 
+        2. If you find a matching LinkedIn profile, ensure that it is a profile URL by making sure that it matches the pattern linkedin.com/in 
+        3. If you find a matching LinkedIn URL with /posts/, you can replace /posts/ with /in/ and then remove everything after the first underscore (_). Then it's a correct profile result. 
+        4. If you find a matching LinkedIn URL with /in/, ensure that it is the correct profile URL for the person by validating the details on the profile.
+        5. If that doesn't work, then run a google search for \\n\" + {{?}} + \" site:linkedin.com/in 
+        6. Finally, if that doesn't work, then search \\n\" + {{?}} + \" site:linkedin.com, and repeat steps 2-3 for validating the URLs you find. 
+        7. If you still find no results return "No LinkedIn profile found" 
+        A few important reminders: 
+          Base your search only on the person's details provided. Do not make any assumptions. 
+          Only search for and return information from LinkedIn. Do not use or include information from other sources. Do not include any additional information or commentary in your response, only the LinkedIn profile URL or the \\\"no profile found\\\" message inside the specified tags. Return only the final profile URL found and nothing else.
+        --- 
+        Person Details: {{?}}
+        Company Details: {{?}}
+    app_slug: sheet-agent
+    max_parallel_runs: null
+  type: 2

@@ -1,0 +1,15 @@
+name: Validate a domain
+description: >-
+  Given a domain name, this formula will attempt to validate the domain.
+category_slug: null
+slug: validate-a-domain
+formula:
+  data:
+    input:
+      task: >-
+        Verify the validity of a given domain and classify its status.\\n\\nHere's the domain to verify: \" + {{Input_1}} + \"\\n\\nSummary of Actions:\\n\\n- Access the domain and check its response.\\n- Determine if the domain is active, returns a 404 error, is parked, or is a redirect.\\n- Ensure the domain is not an email address and is a properly formatted website domain.\\n- Ensure the domain is not a google.com/maps link. That does not represent a businesses website. \\n- Classify the domain based on its status.\\n\\nDetailed Step-by-Step:\\n1. Domain Access: Start by navigating to the domain URL provided.\\n2. Response Check:\\n- Observe the response when the domain is accessed.\\n- If the page loads normally, proceed to step 3.\\n- If the domain returns a \\\"404 Not Found\\\" error, classify it as a \\\"404 Error.\\\"\\n- If the domain redirects to a generic hosting provider page (e.g., GoDaddy, Bluehost), or shows content indicating that it is \\\"For Sale\\\" or \\\"Parked,\\\" classify it as a \\\"Parked Domain.\\\"\\n- If the domain redirects to a non-generic hosting provider and it is a valid business website, return the website.\\n\\nContent Verification:\\n- If the domain loads, verify that the content is genuine and not a placeholder or domain parking page.\\n- Check for indicators of an active, operational website, such as legitimate company information, products, services, or blog content.\\n- If the domain shows only a placeholder or minimal content (indicating it might be parked or inactive), classify it as \\\"Parked Domain.\\\"\\n\\nSecondary Checks:\\n- Use online tools or commands (e.g., ping, whois, or domain lookup services) to further verify the status of the domain if uncertain.\\n- If the domain is listed for sale or shown on a hosting page without any real content, it is not a valid, active domain.\\n\\nConstraints:\\n- Focus on determining whether the domain is actively being used.\\n- Ignore any domains that are clearly placeholders or listed for sale without real content.\\n- Consider a domain valid only if it displays a functioning website with meaningful content. Email addresses should return \\\"Invalid\\\". - Domains that contain google.com/maps should return \\\"Invalid\\\":\\n\\nOutput Format:\\n- Return \\\"Valid Domain\\\" if the domain is active with real content.\\n- Return \\\"404 Error\\\" if the domain returns a 404 error.\\n- Return \\\"Parked Domain\\\" if the domain is a placeholder, for sale, or redirects to a generic page.\\n- Return \\\"Invalid\\\" if the input is not a properly formatted domain (email addresses, google maps links, etc...)\\n- If the domain redirects to a non-generic hosting provider and it is a valid business website, return the website it redirects to.\\n\\nDo not return anything outside one of these 5 options.
+        ---
+        Domain Name: {{?}}
+    app_slug: sheet-agent
+    max_parallel_runs: null
+  type: 2

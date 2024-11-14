@@ -1,0 +1,111 @@
+name: Sheet Agent
+slug: sheet-agent
+version: "0.0.1"
+icon: super_agent_icon.png
+description: >-
+  Sheet Agent is a Promptly Sheets helper AI agent. With features like Web Search and web browser, this agent provides a range of capabilities to assist you in various tasks seamlessly. Just input your requests and let agent handle the rest effortlessly.
+categories:
+  - utilities
+config:
+  model: "gpt-4o-mini"
+  system_message: >-
+    You are PromptlyGPT, a helpful assistant from Promptly. You help users
+    perform their tasks using available a combination of available tools. You
+    have access to the following tools:
+
+    ## Web search (_inputs1)
+
+    - Searches the web for URLs containing realtime information. Only use web
+    search when you cannot answer from your knowledge. Once the URLs are
+    available, visit these URLs with static web browser to pull more
+    information.
+
+    ## Static web browser (_inputs2)
+
+    - Access a URL to retrieve information from a web page. Following are the
+    only valid instruction types for browser input: Click, Type, Wait, Goto,
+    Copy, Terminate, Enter, Scrollx, Scrolly
+
+    Follow the below guidelines while responding to the user:
+      1. Never ask users any follow up questions.
+
+    Now let's think step by step -
+  max_steps: 15
+  split_tasks: true
+  input_template: <p class="editor-paragraph"><br></p>
+  welcome_message: ""
+  window_color: "#477195"
+  suggested_messages:
+    - input:
+        task:
+          text: Find domain name for a company named "Apple"
+      label: "**Find domain name for a company named Apple**"
+  chat_history_limit: 20
+  temperature: 0.7
+  layout: >-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "5px
+    0", "height": "100%"}'>
+        <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
+          <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
+            <pa-chat-output></pa-chat-output>
+          </pa-grid>
+          <pa-grid item="true" xs="12" sx='{"alignSelf": "flex-end", "flex": "0 !important", "width": "100%", "padding": "0 !important"}'>
+            <pa-input-form clearonsubmit="true"></pa-input-form>
+          </pa-grid>
+        </pa-grid>
+    </pa-layout>
+  seed: 1233
+  user_message: "{{task}}"
+  renderer_type: Chat
+type_slug: agent
+processors:
+  - id: _inputs1
+    name: Web Search
+    input:
+      query: ""
+    config:
+      k: 5
+      search_engine: Google
+    description: Search the web for answers
+    provider_slug: promptly
+    processor_slug: web_search
+    output_template:
+      markdown: |-
+        {% for result in results %}
+        {{result.text}}
+        {{result.source}}
+
+        {% endfor %}
+  - id: _inputs2
+    name: Static Web Browser
+    input:
+      url: ""
+      instructions: []
+    config:
+      timeout: 10
+      stream_video: true
+      connection_id: null
+    description: >-
+      Visit a URL and perform actions. Copy, Wait, Goto, Enter, Scollx, Scrolly
+      and Click are the valid instruction types
+    provider_slug: promptly
+    processor_slug: static_web_browser
+    output_template:
+      markdown: >
+
+        <promptly-web-browser-embed
+        wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
+
+
+        {{text}}
+input_fields:
+  - name: task
+    type: multi
+    title: Task
+    required: true
+    allowFiles: true
+    description: Provide the task you want the agent to perform
+    filesAccept: null
+    placeholder: Type in your message
+output_template:
+  markdown: "{{agent.content}}"
