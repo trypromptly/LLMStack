@@ -5,8 +5,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import ContentPasteGoIcon from "@mui/icons-material/ContentPasteGo";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import RFB from "@novnc/novnc/core/rfb";
 import React from "react";
 import { isMobileState } from "../../data/atoms";
@@ -16,9 +20,34 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export function RemoteBrowser({ wsUrl, timeout, onClose }) {
   const screenRef = useRef(null);
   const rfbRef = useRef(null);
+  const [selectedText, setSelectedText] = useState("");
   const [connected, setConnected] = useState(false);
   const [open, setOpen] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeout);
+
+  const onPaste = useCallback(() => {
+    if (!rfbRef.current) {
+      return;
+    }
+
+    navigator.permissions.query({ name: "clipboard-read" }).then((status) => {
+      if (status.state === "granted" || status.state === "prompt") {
+        navigator.clipboard.readText().then((text) => {
+          for (const char of text) {
+            rfbRef.current.sendKey(char.charCodeAt(0), char);
+          }
+        });
+      }
+    });
+  }, [rfbRef]);
+
+  const onCopy = useCallback(() => {
+    if (!selectedText) {
+      return;
+    }
+
+    navigator.clipboard.writeText(selectedText);
+  }, [selectedText]);
 
   const setupRFB = useCallback(() => {
     if (screenRef.current && !rfbRef.current) {
@@ -57,7 +86,7 @@ export function RemoteBrowser({ wsUrl, timeout, onClose }) {
 
       rfbRef.current.addEventListener("clipboard", (e) => {
         if (e.detail.text) {
-          navigator.clipboard.writeText(e.detail.text);
+          setSelectedText(e.detail.text);
         }
       });
 
@@ -147,6 +176,16 @@ export function RemoteBrowser({ wsUrl, timeout, onClose }) {
         {!connected && "Connecting..."}
       </DialogContent>
       <DialogActions>
+        <Tooltip title="Copy selected text to clipboard">
+          <IconButton onClick={onCopy} sx={{ pr: 0 }}>
+            <ContentCopyIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Paste text from clipboard">
+          <IconButton onClick={onPaste}>
+            <ContentPasteGoIcon />
+          </IconButton>
+        </Tooltip>
         <Button onClick={() => onClose()} variant="contained">
           Done
         </Button>
