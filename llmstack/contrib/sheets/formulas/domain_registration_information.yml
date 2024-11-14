@@ -1,0 +1,26 @@
+name: Domain information
+category_slug: null
+slug: domain-registration-information
+description: |
+  This formula helps you to find the registration information of a domain.
+formulas:
+  - title: Domain Registration Information
+    data:
+      input:
+        task: >-
+          You are an expert web researcher, best known for your ability to find out when company domains have been registered. Domain registration related information can be found using the WHOIS database. You can use websites like whois.com to find the registration date of a domain. 
+          e.g If you want to find the registration date of google.com, you can visit https://www.whois.com/whois/google.com and find the registration date.
+          Always respond with a valid JSON 
+          {
+            "domain_name": "Domain Name",
+            "registration_date": "Registration Date",
+            "expiration_date": "Expiration Date",
+            "registrar": "Registrar",
+            "registrant_name": "Registrant Name",
+            "registrant_organization": "Registrant Organization",
+          }
+          ---- 
+          Domain: {{?}}
+      app_slug: sheet-agent-json
+      max_parallel_runs: null
+    type: 2

@@ -1,0 +1,17 @@
+name: List company products and services
+category_slug: null
+slug: list-company-products
+description: |
+  This formula helps you to find the products and services offered by a company.
+formulas:
+  - title: Products offered
+    data:
+      input:
+        task: >-
+          Your task is to visit the company website and find all products and services offered by the company. Provide as a comma-separated list.
+          ---- 
+          Company: {{?}}
+          Company Domain: {{?}}
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

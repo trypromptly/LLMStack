@@ -1,0 +1,26 @@
+name: Find Crunchbase Company Page
+description: >-
+  Given a company name, this formula will attempt to find the Crunchbase page of the company.
+category_slug: null
+slug: find-crunchbase-page
+formulas:
+  - title: Crunchbase Page
+    data:
+      input:
+        task: >-
+          Your task is to find the right Cruchbase URL of the company given the comapny's details like company name or company domain. The result must match the pattern https://www.crunchbase.com/organization/. It should not be a profile URL or anything but a organization URL. Try to run as many searches as possible to find the correct URL and ALSO validate that it is the RIGHT company URL for company. Return only the final URL and nothing else.
+          Follow the steps below in your research:
+          1. Find the company website by running a google search for the company name. 
+          2. Run a google search for the <Company Name> site:crunchbase.com/organization/
+          3. If the google search doesn't work, run different iterations of google searches as you need to find a valid company URL or conclude that no page exists.
+          4. If you still find no results return "No Crunchbase page found"
+          A few important reminders:
+            Base your search only on the company's details provided. Do not make any assumptions.
+            Only search for and return information about the Crunchbase page. Do not use or include information from other sources. Do not include any additional information or commentary in your response, only the LinkedIn company URL or the "no company found" message inside the specified tags. Return only the final company URL found and nothing else.
+          ---
+          Company Details: 
+          Company Name: {{?}}
+          Company Domain: {{?}}
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

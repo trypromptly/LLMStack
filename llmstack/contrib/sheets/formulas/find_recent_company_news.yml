@@ -3,18 +3,19 @@ description: >-
   Given a company name, this formula will attempt to find the latest news about the company.
 category_slug: null
 slug: find-recent-company-news
-formula:
-  data:
-    input:
-      task: >-
-        Search the web to find recent news articles about the company {{?}}. Today's date is {{}} give a higher preference to articles published recently. 
-        Marketing Campaigns and Rebranding Initiatives: Brands launching new marketing campaigns or undergoing rebranding are keen to measure the impact of their efforts and understand changes in brand perception. Look for press releases, social media announcements, or news articles about new advertising campaigns, rebranding, or product launches.
-        Expansion into New Markets: Companies expanding into new geographical markets or targeting new customer segments need to track brand awareness and sentiment in these areas. Monitor business news for announcements about market expansions, international growth, or new store openings, stores in progress or completed (into other states or countries).
-        Fundraising and Investment Rounds: Brands that have recently secured funding are often looking to scale their marketing efforts and will be interested in tools that can demonstrate ROI and brand growth. Keep an eye on financial news, investment websites, and press releases about venture capital funding, Series A/B/C rounds, or private equity investments.
-        Leadership Changes in Marketing: New CMOs, marketing directors, or brand managers often bring fresh perspectives and are more likely to invest in new tools to measure and improve brand performance. Follow industry publications and company websites for announcements of new hires or changes in the marketing leadership team.
-        Industry Awards and Recognition: Brands that have won industry awards or received recognition for their marketing efforts are likely to continue investing in brand tracking to maintain and build on their success. Track industry awards, such as marketing awards, brand excellence awards, or advertising accolades.
-        Partnerships: Considering if the company is owned by a group or the if the group has a one of their companies mentioned, include them.
-        Finally, keep your search simple and don't add quotes to google searches so you can maximize the chances of finding several links to analyze, so for example, use the following formats, if one doesn't work try the other: (company name + recent news) OR (company name + brand campaign OR product release OR collaboration OR partnership OR expansion OR fundraise). If you cannot find any links then output \\\"Not found\\\" and nothing else. Provide your response as a JSON with following format: { "news": [ { "title": "Title of the news article", "url": "URL of the news article" }, { "title": "Title of the news article", "url": "URL of the news article" } ], "company": "Company Name", "summary": "Summary of important points" }
-    app_slug: sheet-agent-json
-    max_parallel_runs: null
-  type: 2
+formulas:
+  - title: Company News
+    data:
+      input:
+        task: >-
+          Search the web to find recent news articles about the company {{?}}. Today's date is {{}} give a higher preference to articles published recently. 
+          Marketing Campaigns and Rebranding Initiatives: Brands launching new marketing campaigns or undergoing rebranding are keen to measure the impact of their efforts and understand changes in brand perception. Look for press releases, social media announcements, or news articles about new advertising campaigns, rebranding, or product launches.
+          Expansion into New Markets: Companies expanding into new geographical markets or targeting new customer segments need to track brand awareness and sentiment in these areas. Monitor business news for announcements about market expansions, international growth, or new store openings, stores in progress or completed (into other states or countries).
+          Fundraising and Investment Rounds: Brands that have recently secured funding are often looking to scale their marketing efforts and will be interested in tools that can demonstrate ROI and brand growth. Keep an eye on financial news, investment websites, and press releases about venture capital funding, Series A/B/C rounds, or private equity investments.
+          Leadership Changes in Marketing: New CMOs, marketing directors, or brand managers often bring fresh perspectives and are more likely to invest in new tools to measure and improve brand performance. Follow industry publications and company websites for announcements of new hires or changes in the marketing leadership team.
+          Industry Awards and Recognition: Brands that have won industry awards or received recognition for their marketing efforts are likely to continue investing in brand tracking to maintain and build on their success. Track industry awards, such as marketing awards, brand excellence awards, or advertising accolades.
+          Partnerships: Considering if the company is owned by a group or the if the group has a one of their companies mentioned, include them.
+          Finally, keep your search simple and don't add quotes to google searches so you can maximize the chances of finding several links to analyze, so for example, use the following formats, if one doesn't work try the other: (company name + recent news) OR (company name + brand campaign OR product release OR collaboration OR partnership OR expansion OR fundraise). If you cannot find any links then output \\\"Not found\\\" and nothing else. Provide your response as a JSON with following format: { "news": [ { "title": "Title of the news article", "url": "URL of the news article" }, { "title": "Title of the news article", "url": "URL of the news article" } ], "company": "Company Name", "summary": "Summary of important points" }
+      app_slug: sheet-agent-json
+      max_parallel_runs: null
+    type: 2

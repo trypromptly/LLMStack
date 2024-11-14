@@ -1,0 +1,18 @@
+name: Summarize pricing plans
+category_slug: null
+slug: summarize-pricing-plans
+description: |
+  This formula helps you to find the pricing plans offered by a company.
+formulas:
+  - title: Pricing plans
+    data:
+      input:
+        task: >-
+          Visit the company website scroll through the pages and try to find the pricing plans offered by the company. Provide the pricing plans in a structured format. Output a bullet-pointed list of each pricing option with information on the option. 
+          For each option (line in a bulleted-list), output the following comma-separated pieces of info: the name of the plan, its key offerings, and how much it costs.
+          ---- 
+          Company: {{?}}
+          Company Domain: {{?}}
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

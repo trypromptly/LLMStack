@@ -1,14 +1,15 @@
 name: Find Company Careers Page
 category_slug: null
 slug: find-company-careers-page
-formula:
-  data:
-    input:
-      task: >-
-        You are a web researcher. You have to find the careers page of the company. 
-        Return only the URL to the careers page, nothing else.
-        --- 
-        Company Name: {{?}}
-    app_slug: sheet-agent
-    max_parallel_runs: null
-  type: 2
+formulas:
+  - title: Company Careers URL
+    data:
+      input:
+        task: >-
+          You are a web researcher. You have to find the careers page of the company. 
+          Return only the URL to the careers page, nothing else.
+          --- 
+          Company Name: {{?}}
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

@@ -3,13 +3,14 @@ category_slug: null
 slug: company-to-domain-name
 description: >-
   Given a company name, this formula will attempt to find the domain name of the company.
-formula:
-  data:
-    input:
-      task: >-
-        Search for the company {{A}}  website and return the website domain.
-        Make sure to respond only with the domain name.  If you cannot find
-        a valid domain simply respond with an empty string
-    app_slug: sheet-agent
-    max_parallel_runs: null
-  type: 2
+formulas:
+  - title: Company Domain
+    data:
+      input:
+        task: >-
+          Search for the company {{A}}  website and return the website domain.
+          Make sure to respond only with the domain name.  If you cannot find
+          a valid domain simply respond with an empty string
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

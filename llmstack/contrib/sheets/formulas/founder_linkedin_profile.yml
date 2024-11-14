@@ -1,0 +1,21 @@
+name: Find Company Founders LinkedIn Profile
+category_slug: null
+slug: find-company-founders-linkedin-profile
+description: |
+  This formula helps you to find the LinkedIn profiles of the founders or business owners of a company.
+formulas:
+  - title: Founders LinkedIn Profile
+    data:
+      input:
+        task: >-
+          Your task is to find the LinkedIn profiles of the founders or business owners of the company. Think about various possible titles that are applicable for founders/owner and use those title to find a company's founder or owner. You can find this information on the company website, cruchbase, or other sources. 
+          Once you know the owner's name you can use that to find their LinkedIn profile if you don't already have it. 
+          The LinkedIn Profile URL must match the pattern https://www.linkedin.com/in/. It should not be a company URL or a posts URL or anything but a profile URL. Try to run as many searches as possible to find the correct URL and ALSO validate that it is the RIGHT profile URL for person. Return only the final URL and nothing else. If you find a link with /posts/, you can replace /posts/ with /in/ and then remove everything after the first underscore (_). Then it's a correct result. For example, you could turn an incorrect result like: https://www.linkedin.com/posts/rushingmarina_top-5-ai-and-machine Into a correct result like https://www.linkedin.com/in/rushingmarina 
+
+          In your final response only include the LinkedIn profile URL or the "No LinkedIn profile found" message inside the specified tags. In case of multiple founders simply return a comma-separated list of LinkedIn profile URLs. Only return the final profile URL found and nothing else limit it to max 4 URLs.
+          ---- 
+          Company: {{?}}
+          Company Domain: {{?}}
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

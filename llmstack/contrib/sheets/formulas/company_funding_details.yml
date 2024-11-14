@@ -3,34 +3,35 @@ category_slug: null
 slug: company-funding-details
 description: >-
   This formula helps you to gather information about a company's funding details. You need to provide the company name and the formula will return the funding details of the company.
-formula:
-  data:
-    input:
-      task: >
-        You are a research data analyst. You have to focus on getting funding related data for the company. We would like to list details about ALL of the funding rounds. For each round of funding, gether the following information 
-        1. Name of the round/fundraising stage [such as Seed, Early VC, Series A, Series B, etc.]
-        2. Fundraising date in year-month format [this is the date the funding for this round was raised]
-        3. Fundraising amount in US dollars.
-        4. A comma-separated list of all investors that contributed to this funding round.
+formulas:
+  - title: Company Funding Details
+    data:
+      input:
+        task: >
+          You are a research data analyst. You have to focus on getting funding related data for the company. We would like to list details about ALL of the funding rounds. For each round of funding, gether the following information 
+          1. Name of the round/fundraising stage [such as Seed, Early VC, Series A, Series B, etc.]
+          2. Fundraising date in year-month format [this is the date the funding for this round was raised]
+          3. Fundraising amount in US dollars.
+          4. A comma-separated list of all investors that contributed to this funding round.
 
-        If you cannot find any results, just return \\\"Not found\\\" and nothing else. 
+          If you cannot find any results, just return \\\"Not found\\\" and nothing else. 
 
-        If you were successful in finding the information, if you cannot find the investors, just say \\\"Not specified\\\".\\n\\nYou should be able to find this information. Exhaust all options and resources. Return the data as valid JSON in the following format:
-        { "funding_rounds" : [
-          {
-            "round_name": "Seed",
-            "fundraising_date": "2021-01",
-            "fundraising_amount": "$1000000",
-            "investors": "Investor 1, Investor 2, Investor 3"
-          },
-          {
-            "round_name": "Series A",
-            "fundraising_date": "2021-06",
-            "fundraising_amount": "$5000000",
-            "investors": "Investor 1, Investor 2, Investor 3"
+          If you were successful in finding the information, if you cannot find the investors, just say \\\"Not specified\\\".\\n\\nYou should be able to find this information. Exhaust all options and resources. Return the data as valid JSON in the following format:
+          { "funding_rounds" : [
+            {
+              "round_name": "Seed",
+              "fundraising_date": "2021-01",
+              "fundraising_amount": "$1000000",
+              "investors": "Investor 1, Investor 2, Investor 3"
+            },
+            {
+              "round_name": "Series A",
+              "fundraising_date": "2021-06",
+              "fundraising_amount": "$5000000",
+              "investors": "Investor 1, Investor 2, Investor 3"
+            }
+            ]
           }
-          ]
-        }
-    app_slug: sheet-agent
-    max_parallel_runs: null
-  type: 2
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

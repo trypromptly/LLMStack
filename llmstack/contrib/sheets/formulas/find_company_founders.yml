@@ -1,0 +1,17 @@
+name: Find Company Founders or Business Owners
+category_slug: null
+slug: find-company-founders
+description: |
+  This formula helps you to find the founders or business owners of a company.
+formulas:
+  - title: Founders
+    data:
+      input:
+        task: >-
+          Your task is to find the founders or business owners of the company. You can find this information on the company website, LinkedIn, or other sources. Provide the names of the founders or business owners in a comma-separated list.
+          ---- 
+          Company: {{?}}
+          Company Domain: {{?}}
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

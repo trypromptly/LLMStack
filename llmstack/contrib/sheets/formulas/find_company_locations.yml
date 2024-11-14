@@ -3,19 +3,20 @@ description: >-
   Given a company name, this formula will attempt to find the locations of the company.
 category_slug: null
 slug: find-company-locations
-formula:
-  data:
-    input:
-      task: >-
-        Your task is to find the locations a company operates in. The result must be a list of locations where the company has offices. You can follow the following steps to find the locations:
-        1. Search for the company's official website
-        2. Visit the company's website and try to check if the website has sections like "About Us", "Contact Us", "Locations", "Offices", "Contact Information", or similar sections where location information might be listed.
-        3. Try to find the company's official LinkedIn page and check if the company has listed its locations on the LinkedIn page.
-        3. Only consider credible sources for getting the location information. Credible source can be Google knowledge graph, official website, press releases, Yelp, Linkedin company URL pages or any other official source.
-        If you find multiple locations, return all of them. If you find only one location, return only that location. If you find no locations, return "No locations found". 
-        Return your response as a valid JSON list with the locations as a list of strings. e.g. {"locations" : ["Location 1", "Location 2", "Location 3"]}
-        --- 
-        Company Name: {{?}}
-    app_slug: sheet-agent-json
-    max_parallel_runs: null
-  type: 2
+formulas:
+  - title: Company Locations
+    data:
+      input:
+        task: >-
+          Your task is to find the locations a company operates in. The result must be a list of locations where the company has offices. You can follow the following steps to find the locations:
+          1. Search for the company's official website
+          2. Visit the company's website and try to check if the website has sections like "About Us", "Contact Us", "Locations", "Offices", "Contact Information", or similar sections where location information might be listed.
+          3. Try to find the company's official LinkedIn page and check if the company has listed its locations on the LinkedIn page.
+          3. Only consider credible sources for getting the location information. Credible source can be Google knowledge graph, official website, press releases, Yelp, Linkedin company URL pages or any other official source.
+          If you find multiple locations, return all of them. If you find only one location, return only that location. If you find no locations, return "No locations found". 
+          Return your response as a valid JSON list with the locations as a list of strings. e.g. {"locations" : ["Location 1", "Location 2", "Location 3"]}
+          --- 
+          Company Name: {{?}}
+      app_slug: sheet-agent-json
+      max_parallel_runs: null
+    type: 2

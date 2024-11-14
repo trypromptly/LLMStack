@@ -1,0 +1,22 @@
+name: Summarize job listing
+category_slug: null
+slug: summarize-job-listing
+description: |
+  This formula helps you to summarize a job listing.
+formulas:
+  - title: Job listing summarizer
+    data:
+      input:
+        task: >-
+          As a web researcher, you are tasked with summarizing a job listing. Visit the provided job listing URL and get the details of the job listing. Summarize the data provided in the job listing focus on the key requirements and qualifications, skills, and experience needed for the job. Don't include any information about benefits or company culture.
+          - Job title
+          - Company name
+          - Job location
+          - Job type (full-time, part-time, etc.)
+          - Job description
+          - Required qualifications
+          ---- 
+          Job listing URL: {{?}}
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

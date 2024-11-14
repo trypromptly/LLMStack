@@ -3,11 +3,12 @@ category_slug: null
 slug: naics-codes
 description: >-
   Search the web to find the NAICS codes for the company.
-formula:
-  data:
-    input:
-      task: >-
-        Find the NAICS code for the company/industry {{?}}. Your response should only include the NAICS code number and the industry.
-    app_slug: sheet-agent
-    max_parallel_runs: null
-  type: 2
+formulas:
+  - title: NAICS codes
+    data:
+      input:
+        task: >-
+          Find the NAICS code for the company/industry {{?}}. Your response should only include the NAICS code number and the industry.
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

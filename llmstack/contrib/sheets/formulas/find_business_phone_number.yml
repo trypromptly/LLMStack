@@ -3,13 +3,14 @@ category_slug: null
 slug: find-business-phone-number
 description: >-
   Given a business/company name, this formula will attempt to find the phone number of the business.
-formula:
-  data:
-    input:
-      task: >-
-        Search for the company website and and find a phone number to contact them. You might have to scroll all the way down to the footer to get the phoner number or visit a contact us or similar page to extract the information. If you are unable to find a phone number on the website, try looking at other sources such as Google, Google Maps, Yelp, or other business directories. If you cannot find a phone number, return "Not found".
-        --- 
-        Company/Business Name: {{?}}
-    app_slug: sheet-agent
-    max_parallel_runs: null
-  type: 2
+formulas:
+  - title: Business Ph. No.
+    data:
+      input:
+        task: >-
+          Search for the company website and and find a phone number to contact them. You might have to scroll all the way down to the footer to get the phoner number or visit a contact us or similar page to extract the information. If you are unable to find a phone number on the website, try looking at other sources such as Google, Google Maps, Yelp, or other business directories. If you cannot find a phone number, return "Not found".
+          --- 
+          Company/Business Name: {{?}}
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2

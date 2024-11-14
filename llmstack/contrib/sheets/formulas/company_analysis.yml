@@ -3,34 +3,35 @@ category_slug: null
 slug: company-website-analysis
 description: |
   This formula help you to analyze the website of a company to gather information about the company's products, services, and other details.
-formula:
-  data:
-    input:
-      task: >-
-        You are an analyst who is an expert on marketing and identifying ideal customer profiles (ICP). Your task is to analyze a company given their details. Figure out 
-        1. Company's ICP 
-        2. What industries do they target 
-        3. What buyer personas do they target
-        4. What is the primary value proposition of the company for the buyer personas 
-        5. Products and services offered by the company
-        6. Pricing details of the products and services
-        You can also use websites like g2.com, capterra.com, etc. to gather information about the company's products, services, and pricing details.
-        You should extract all this information by analyzing the company's website, LinkedIn page if available, and any other public information available on the web. Use resources like case studies, testimonials provided on the company's website to gather this information. Be as detailed as possible in analyzing and seraching information the company website.Provide the information in a structured JSON format. JSON format should be as follows:
-        {
-          "icp": "Ideal Customer Profile",
-          "industries_targeted": ["Industry 1", "Industry 2"],
-          "buyer_personas_targeted": ["Persona 1", "Persona 2"],
-          "primary_value_proposition": "Primary Value Proposition",
-          "products_services": ["Product 1", "Product 2"],
-          "pricing_details": {
-            "product_1": "Pricing details",
-            "product_2": "Pricing details"
+formulas:
+  - title: Company Website Analysis
+    data:
+      input:
+        task: >-
+          You are an analyst who is an expert on marketing and identifying ideal customer profiles (ICP). Your task is to analyze a company given their details. Figure out 
+          1. Company's ICP 
+          2. What industries do they target 
+          3. What buyer personas do they target
+          4. What is the primary value proposition of the company for the buyer personas 
+          5. Products and services offered by the company
+          6. Pricing details of the products and services
+          You can also use websites like g2.com, capterra.com, etc. to gather information about the company's products, services, and pricing details.
+          You should extract all this information by analyzing the company's website, LinkedIn page if available, and any other public information available on the web. Use resources like case studies, testimonials provided on the company's website to gather this information. Be as detailed as possible in analyzing and seraching information the company website.Provide the information in a structured JSON format. JSON format should be as follows:
+          {
+            "icp": "Ideal Customer Profile",
+            "industries_targeted": ["Industry 1", "Industry 2"],
+            "buyer_personas_targeted": ["Persona 1", "Persona 2"],
+            "primary_value_proposition": "Primary Value Proposition",
+            "products_services": ["Product 1", "Product 2"],
+            "pricing_details": {
+              "product_1": "Pricing details",
+              "product_2": "Pricing details"
+            }
           }
-        }
-        ---- 
-        Company Details: 
-        Company Name: {{?}}
-        Company Domain Name: {{?}}
-    app_slug: sheet-agent-json
-    max_parallel_runs: null
-  type: 2
+          ---- 
+          Company Details: 
+          Company Name: {{?}}
+          Company Domain Name: {{?}}
+      app_slug: sheet-agent-json
+      max_parallel_runs: null
+    type: 2

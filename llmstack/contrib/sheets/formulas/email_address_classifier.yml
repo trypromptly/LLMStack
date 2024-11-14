@@ -3,39 +3,40 @@ description: >-
   This formula helps you to classify the email address into different categories. You need to provide the email content and the formula will return the category of the email.
 category_slug: null
 slug: email-address-classifier
-formula:
-  data:
-    input:
-      task: >-
-        You are an expert in email address classification. Given an email address extract the domain name from the emaill address.Use the email address domain to classify whether the email address is personal or professional.
-        Personal emails and school emails are typically on domains that are in one of these buckets:
-          - University or Colleges
-          - Domains with .edu in them
-          - ISP
-          - Search Engines
-          - Phone operators
-          - Telecommunications provider
-          - Email service provider
-          - Web Portal
-          - Email provider
-          - Email hosting service
-          - Spam Email provider 
-          - web news site
-          - News portal
-          - Temporary Email provider
-          - Non existent
-          - Freemail or free email
-          
-          Even if the domain shows the company is a legitimate company - it still may fall into one of the buckets above and should be listed as a personal email. 
-          If the domain is often used for email hosting and the general public can make an email on the domain, its a personal email. 
-          If the domain is associated with a university or college it should also be listed as a personal email. These aren't technically work emails.
-          But that list is not exhaustive. We are trying to exclude companies that fall into one of those buckets (Or similar buckets) - as these often allow people to create public personal emails. Telecommunications providers often are used for personal emails which is why i'd like those listed as personal emails. Same with College and university emails - these typically aren't true work emails and should be listed as personal emails.
-          
-          If the email address is likely a Work Email, return Work Email. If an email on that domain is likely a Personal Email, return Personal Email. Only return one of these two options.
+formulas:
+  - title: Address type
+    data:
+      input:
+        task: >-
+          You are an expert in email address classification. Given an email address extract the domain name from the emaill address.Use the email address domain to classify whether the email address is personal or professional.
+          Personal emails and school emails are typically on domains that are in one of these buckets:
+            - University or Colleges
+            - Domains with .edu in them
+            - ISP
+            - Search Engines
+            - Phone operators
+            - Telecommunications provider
+            - Email service provider
+            - Web Portal
+            - Email provider
+            - Email hosting service
+            - Spam Email provider 
+            - web news site
+            - News portal
+            - Temporary Email provider
+            - Non existent
+            - Freemail or free email
+            
+            Even if the domain shows the company is a legitimate company - it still may fall into one of the buckets above and should be listed as a personal email. 
+            If the domain is often used for email hosting and the general public can make an email on the domain, its a personal email. 
+            If the domain is associated with a university or college it should also be listed as a personal email. These aren't technically work emails.
+            But that list is not exhaustive. We are trying to exclude companies that fall into one of those buckets (Or similar buckets) - as these often allow people to create public personal emails. Telecommunications providers often are used for personal emails which is why i'd like those listed as personal emails. Same with College and university emails - these typically aren't true work emails and should be listed as personal emails.
+            
+            If the email address is likely a Work Email, return Work Email. If an email on that domain is likely a Personal Email, return Personal Email. Only return one of these two options.
 
-          ----
-          Email Address: {{?}}
+            ----
+            Email Address: {{?}}
 
-    app_slug: sheet-agent
-    max_parallel_runs: null
-  type: 2
+      app_slug: sheet-agent
+      max_parallel_runs: null
+    type: 2
