@@ -31,6 +31,18 @@ def table_html_to_text(table_html: str) -> str:
     return text
 
 
+def table_html_to_markdown(table_html: str) -> str:
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(table_html, "html.parser")
+    text = ""
+    for row in soup.find_all("tr"):
+        for cell in row.find_all(["td", "th"]):
+            text += cell.get_text() + " | "
+        text += "\n"
+    return text
+
+
 class TextCanvas:
     def __init__(self, width: int, height: int):
         self.width = width
@@ -150,6 +162,50 @@ class Page(BaseModel):
         else:
             return "\n".join([element.formatted_text for element in self.elements])
 
+    @property
+    def markdown(self):
+        text = ""
+        for element in self.elements:
+            print(element)
+            if element.element_type == "Formula":
+                text += f"{element.text}\n\n"
+            elif element.element_type == "FigureCaption":
+                text += f"**{element.text}**\n\n"
+            elif element.element_type == "NarrativeText":
+                text += f"{element.text}\n\n"
+            elif element.element_type == "ListItem":
+                text += "-"
+                continue
+            elif element.element_type == "Title":
+                text += f"# {element.text}"
+            elif element.element_type == "Address":
+                text += f"{element.text}"
+            elif element.element_type == "EmailAddress":
+                text += f"{element.text}"
+            elif element.element_type == "Image":
+                text += f"![Image metadata: {element.text}](#)\n\n"
+            elif element.element_type == "PageBreak":
+                text += '<div class="pagebreak" />'
+            elif element.element_type == "Table":
+                if element.provider_data and element.provider_data.get("type") == "Table":
+                    text += table_html_to_markdown(element.provider_data.get("metadata", {}).get("text_as_html"))
+                else:
+                    text += f"{element.text}"
+            elif element.element_type == "Header":
+                text += f"## {element.text}"
+            elif element.element_type == "Footer":
+                text += f"## {element.text}"
+            elif element.element_type == "CodeSnippet":
+                text += f"```{element.text}```"
+            elif element.element_type == "PageNumber":
+                text += f"Page No. {element.text}"
+            elif element.element_type == "UncategorizedText":
+                text += f"{element.text}\n"
+            else:
+                text += element.text
+            text += "\n"
+        return text
+
 
 class TextractResponse(BaseModel):
     pages: List[Page] = []
@@ -169,6 +225,14 @@ class TextractResponse(BaseModel):
         for page in self.pages:
             text += page.formatted_text
             text += f"\n--- Page Break (Pg {page.page_no})---\n"
+        return text
+
+    @property
+    def markdown(self):
+        text = ""
+        for page in self.pages:
+            text += page.markdown
+            text += '<div class="pagebreak" />'
         return text
 
 
@@ -242,6 +306,7 @@ class GoogleVisionTextExtractionService(TextExtractionService):
                             bottom_right=(box[2].x, box[2].y),
                             bottom_left=(box[3].x, box[3].y),
                         ),
+                        element_type="UncategorizedText",
                     )
                     page_element.set_midpoint_normalized(page_width, page_height)
                     page.elements.append(page_element)
