@@ -11,6 +11,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.apollo.people_search import APIResponse
 from llmstack.processors.providers.metrics import MetricType
 
 logger = logging.getLogger(__name__)
@@ -50,21 +51,22 @@ class OrganizationSearchInput(ApiProcessorSchema):
 
 
 class OrganizationSearchOutput(ApiProcessorSchema):
-    response: str = Field(description="The response from the API call as a string", default="")
-    response_json: Optional[Dict[str, Any]] = Field(
-        description="The response from the API call as a JSON object", default={}
+    breadcrumbs: Optional[List[Dict[str, str]]] = Field(description="The breadcrumbs for the API call", default=[])
+    accounts: Optional[List[Dict[str, Any]]] = Field(description="The list of accounts from the API call", default=[])
+    organizations: Optional[List[Dict[str, Any]]] = Field(
+        description="The list of organizations from the API call", default=[]
     )
-    headers: Optional[Dict[str, str]] = Field(description="The headers from the API call", default={})
-    code: int = Field(description="The status code from the API call", default=200)
-    size: int = Field(description="The size of the response from the API call", default=0)
-    time: float = Field(description="The time it took to get the response from the API call", default=0.0)
+    api_response: APIResponse = Field(description="The  response from the API call", default={})
+
+
+class PeopleSearchOutput(ApiProcessorSchema):
+    breadcrumbs: Optional[List[Dict[str, str]]] = Field(description="The breadcrumbs for the API call", default=[])
+    people: Optional[List[Dict[str, Any]]] = Field(description="The list of people from the API call", default=[])
+    contacts: Optional[List[Dict[str, Any]]] = Field(description="The list of contacts for the API call", default=[])
+    api_response: APIResponse = Field(description="The  response from the API call", default={})
 
 
 class OrganizationSearchConfiguration(ApiProcessorSchema):
-    connection_id: Optional[str] = Field(
-        description="The connection id to use for the API call",
-        json_schema_extra={"advanced_parameter": False, "widget": "connection"},
-    )
     page: Optional[int] = Field(
         description="The page number to return",
         default=1,
@@ -101,7 +103,7 @@ class OrganizationSearch(
     @classmethod
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
-            markdown="{{response}}",
+            markdown="{{api_response.response}}",
             jsonpath="$.accounts",
         )
 
@@ -114,18 +116,23 @@ class OrganizationSearch(
             if not values:
                 continue
 
-            values = [urllib.parse.quote(value) for value in values]
-            if key == "organization_num_employees_ranges" and values:
+            values = (
+                [urllib.parse.quote(value) for value in values]
+                if isinstance(values, list)
+                else urllib.parse.quote(str(values))
+            )
+
+            if key == "organization_num_employees_ranges":
                 query_params_str += f"&organization_num_employees_ranges[]={','.join(values)}"
-            elif key == "organization_locations" and values:
+            elif key == "organization_locations":
                 query_params_str += f"&organization_locations[]={','.join(values)}"
-            elif key == "organization_not_locations" and values:
+            elif key == "organization_not_locations":
                 query_params_str += f"&organization_not_locations[]={','.join(values)}"
-            elif key == "q_organization_keyword_tags" and values:
+            elif key == "q_organization_keyword_tags":
                 query_params_str += f"&q_organization_keyword_tags[]={','.join(values)}"
-            elif key == "q_organization_name" and values:
+            elif key == "q_organization_name":
                 query_params_str += f"&q_organization_name={values}"
-            elif key == "organization_ids" and values:
+            elif key == "organization_ids":
                 query_params_str += f"&organization_ids[]={','.join(values)}"
 
         if query_params_str:
@@ -156,13 +163,18 @@ class OrganizationSearch(
 
         async_to_sync(self._output_stream.write)(
             OrganizationSearchOutput(
-                response=response_text,
-                response_json=response_json,
-                response_objref=objref,
-                headers=dict(response.headers),
-                code=response.status_code,
-                size=len(response.text),
-                time=response.elapsed.total_seconds(),
+                api_response=APIResponse(
+                    response=response_text,
+                    response_json=response_json,
+                    response_objref=objref,
+                    headers=dict(response.headers),
+                    code=response.status_code,
+                    size=len(response.text),
+                    time=response.elapsed.total_seconds(),
+                ),
+                breadcrumbs=response_json.get("breadcrumbs", []),
+                accounts=response_json.get("accounts", []),
+                organizations=response_json.get("organizations", []),
             )
         )
 

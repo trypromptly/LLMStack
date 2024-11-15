@@ -1,4 +1,5 @@
 import logging
+import urllib.parse
 from typing import Any, Dict, List, Optional
 
 from asgiref.sync import async_to_sync
@@ -38,8 +39,8 @@ class PeopleSearchInput(ApiProcessorSchema):
     )
     contact_email_status: Optional[List[str]] = Field(
         description="An array of strings to look for people having a set of email statuses",
-        examples=["verified", "guessed", "unavailable", "bounced", "pending_manual_fulfillment"],
-        default=["verified", "guessed", "unavailable", "pending_manual_fulfillment"],
+        examples=["verified", "unverified", "unavailable", "likely to engage"],
+        default=["verified", "unverified", "unavailable", "likely to engage"],
     )
     q_organization_domains: Optional[List[str]] = Field(
         description="An array of the company domains to search for, joined by the new line character.",
@@ -82,11 +83,6 @@ class PeopleSearchOutput(ApiProcessorSchema):
 
 
 class PeopleSearchConfiguration(ApiProcessorSchema):
-    connection_id: Optional[str] = Field(
-        default=None,
-        description="The connection id to use for the API call",
-        json_schema_extra={"widget": "hidden"},
-    )
     max_results: Optional[int] = Field(
         description="The maximum number of results to return",
         default=10,
@@ -97,9 +93,9 @@ class PeopleSearchConfiguration(ApiProcessorSchema):
     )
     page: Optional[int] = Field(
         description="The page number to return",
-        default=None,
+        default=1,
     )
-    page_size: Optional[int] = Field(description="The number of results to return per page", default=None, le=20, ge=10)
+    page_size: Optional[int] = Field(description="The number of results to return per page", default=10, le=20, ge=10)
 
 
 class PeopleSearch(ApiProcessorInterface[PeopleSearchInput, PeopleSearchOutput, PeopleSearchConfiguration]):
@@ -131,20 +127,47 @@ class PeopleSearch(ApiProcessorInterface[PeopleSearchInput, PeopleSearchOutput, 
         )
 
     def process(self) -> dict:
-        data = self._input.model_dump()
-        data["page"] = self._config.page or 1
-        data["per_page"] = self._config.page_size or self._config.max_results or 10
-
-        for key in data:
-            if not data[key]:
-                data[key] = None
-
         provider_config = self.get_provider_config(provider_slug=self.provider_slug())
         api_key = provider_config.api_key
 
+        query_params_str = ""
+        for key, values in self._input.model_dump().items():
+            if not values:
+                continue
+
+            values = (
+                [urllib.parse.quote(value) for value in values]
+                if isinstance(values, list)
+                else urllib.parse.quote(str(values))
+            )
+
+            if key == "q_keywords":
+                query_params_str += f"&q_keywords={','.join(values)}"
+            elif key == "person_locations":
+                query_params_str += f"&person_locations[]={','.join(values)}"
+            elif key == "person_seniorities":
+                query_params_str += f"&person_seniorities[]={','.join(values)}"
+            elif key == "contact_email_status":
+                query_params_str += f"&contact_email_status[]={','.join(values)}"
+            elif key == "q_organization_domains":
+                query_params_str += f"&q_organization_domains={','.join(values)}"
+            elif key == "organization_locations":
+                query_params_str += f"&organization_locations[]={','.join(values)}"
+            elif key == "organization_ids":
+                query_params_str += f"&organization_ids[]={','.join(values)}"
+            elif key == "organization_num_employees_ranges":
+                query_params_str += f"&organization_num_employees_ranges[]={','.join(values)}"
+            elif key == "person_titles":
+                query_params_str += f"&person_titles[]={','.join(values)}"
+
+        if query_params_str:
+            query_params_str = "?" + query_params_str[1:]
+
+        query_url = f"https://api.apollo.io/v1/mixed_people/search{query_params_str}?page={self._config.page}&per_page{self._config.page_size}"
+
+        logger.info(f"Querying Apollo API with URL: {query_url}")
         response = prequests.post(
-            url="https://api.apollo.io/v1/mixed_people/search",
-            json=data,
+            url=query_url,
             headers={"Cache-Control": "no-cache", "Content-Type": "application/json", "X-Api-Key": api_key},
         )
         if response.ok:
