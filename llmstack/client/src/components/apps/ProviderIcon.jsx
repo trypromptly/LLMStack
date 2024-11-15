@@ -31,6 +31,8 @@ import pineconeIcon_light from "../../assets/images/pinecone-icon-light.png";
 import pineconeIcon_dark from "../../assets/images/pinecone-icon-dark.png";
 import qdrantIcon_light from "../../assets/images/qdrant-icon-light.png";
 import qdrantIcon_dark from "../../assets/images/qdrant-icon-dark.png";
+import bouncbanIcon_light from "../../assets/images/bounceban-icon-light.png";
+import bouncbanIcon_dark from "../../assets/images/bounceban-icon-light.png";
 import weaviateIcon_light from "../../assets/images/weaviate-icon-light.png";
 import weaviateIcon_dark from "../../assets/images/weaviate-icon-dark.png";
 import singlestoreIcon_light from "../../assets/images/singlestore-icon-light.png";
@@ -74,6 +76,8 @@ export const getProviderIconImage = (icon, isActive) => {
       return isActive ? weaviateIcon_dark : weaviateIcon_light;
     case "singlestore":
       return isActive ? singlestoreIcon_dark : singlestoreIcon_light;
+    case "bounceban":
+      return isActive ? bouncbanIcon_dark : bouncbanIcon_light;
     default:
       return promptlyIcon_light;
   }
