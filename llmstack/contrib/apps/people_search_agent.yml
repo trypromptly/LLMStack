@@ -1,0 +1,274 @@
+icon: ""
+name: People Search Agent
+config:
+  model: gpt-4o-mini
+  layout: >-
+    <pa-layout sx='{"maxWidth": "1200px", "margin": "0 auto", "padding": "0",
+    "height": "100%"}'>
+        <pa-grid container="true" spacing="2" sx='{"height": "100%", "flexDirection": "column"}'>
+          <pa-grid item="true" xs="12" sx='{"overflow": "auto !important", "flex": "1 1 0 !important", "padding": "0 !important"}'>
+            <pa-chat-output></pa-chat-output>
+          </pa-grid>
+          <pa-grid item="true" xs="12" sx='{"alignSelf": "flex-end", "flex": "0 !important", "width": "100%", "padding": "0 !important"}'>
+            <pa-input-form clearonsubmit="true"></pa-input-form>
+          </pa-grid>
+        </pa-grid>
+    </pa-layout>
+  provider: openai
+  max_steps: 10
+  temperature: 0.7
+  user_message: ""
+  window_color: "#477195"
+  input_template: ""
+  system_message: >-
+    You are Promptly Company SearchGPT, a helpful assistant from Promptly.  You
+    help users find companies given a set of filter conditions from the user. 
+    Filter conditions you accept are 
+
+    lookalike: When user provided this they are trying to search for company
+    similar to the one provided in lookalike
+
+    industries: A comma Separated list of industries the user is interested in 
+
+    company_size: The number of  employees  for companies
+
+    keywords: A comma separated list of keywords that are associated with
+    companies
+
+    locations: A comma separated list of locations the company's hq is located
+    in. 
+
+
+    If no user filters are provided add a default filter of companies in 
+    location Milpitas with employee size of 1,10. 
+
+    You have access to the following tools, use these tools to accomplish the
+    task. Prefer the people_search tool first to get the info
+        ## Web search (web_search1)
+
+        - Searches the web for URLs containing realtime information. Only use web
+        search when you cannot answer from your knowledge. Once the URLs are
+        available, visit these URLs with static web browser to pull more
+        information.
+
+        ## Static web browser (static_web_browser2)
+
+        - Access a URL to retrieve information from a web page. Following are the
+        only valid instruction types for browser input: Click, Type, Wait, Goto,
+        Copy, Terminate, Enter, Scrollx, Scrolly
+
+     ## People Search (people_search3)
+        - Uses Apollo's database to search for people that match the filter criteria. 
+
+        Follow the below guidelines while responding to the user:
+          1. Always Provide your response in JSON only, when responding in JSON format, never wrap your response in ```json <CODE_TEXT>```.
+          2. Never ask users any follow up questions.
+
+    Your response will be used to make an API call, hence the response should
+    always be a valid response and should adhere to the below schema.
+
+    RESPONSE SCHEMA:
+
+    {
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": [
+            {
+              "type": "object",
+              "properties": {
+                "first_name": {
+                  "type": "string"
+                },
+                "last_name": {
+                  "type": "string"
+                },
+                "full_name": {
+                  "type": "string"
+                },
+                "job_title": {
+                  "type": "string"
+                },
+                "location": {
+                  "type": "string"
+                },
+                "company_domain": {
+                  "type": "string"
+                },
+                "linkedin_url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "first_name",
+                "last_name",
+                "full_name",
+                "job_title",
+                "location",
+                "company_domain",
+                "linkedin_url"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "results"
+      ]
+    }
+
+    Now let's think step by step -
+  assistant_image: ""
+  welcome_message: ""
+  chat_history_limit: 0
+  suggested_messages: []
+type_slug: agent
+processors:
+  - id: web_search2
+    name: Web Search
+    input:
+      query: ""
+    config:
+      k: 5
+      search_engine: Google
+      advanced_params: ""
+    description: Search the web for answers
+    dependencies: []
+    provider_slug: promptly
+    processor_slug: web_search
+    output_template:
+      jsonpath: $.results
+      markdown: |-
+        {% for result in results %}
+        {{result.text}}
+        {{result.source}}
+
+        {% endfor %}
+  - id: static_web_browser3
+    name: Static Web Browser
+    input:
+      url: ""
+      instructions: []
+    config:
+      timeout: 10
+      extract_html: false
+      stream_video: false
+      tags_to_extract: []
+      capture_screenshot: true
+      capture_session_video: false
+    description: >-
+      Visit a URL and perform actions. Copy, Wait, Goto, Enter, Scollx, Scrolly
+      and Click are the valid instruction types
+    dependencies: []
+    provider_slug: promptly
+    processor_slug: static_web_browser
+    output_template:
+      jsonpath: $.text
+      markdown: >
+
+        {% if session %}
+
+        ### Live Browser Session
+
+        <promptly-web-browser-embed
+        wsUrl="{{session.ws_url}}"></promptly-web-browser-embed>
+
+        {% endif %}
+
+        {% if videos %}
+
+        ### Videos
+
+        {% for video in videos %}
+
+        <pa-asset url="{{video.data}}" type="{{video.mime_type}}"></pa-asset>
+
+        {% endfor %}
+
+        {% endif %}
+
+        {% if content.screenshot %}
+
+        ### Screenshot
+
+        <pa-asset url="{{content.screenshot}}" type="image/png"></pa-asset>
+
+        {% endif %}
+
+        {{text}}
+  - id: people_search3
+    name: People Search
+    input:
+      q_keywords: ""
+      person_titles: []
+      organization_ids: []
+      person_locations: []
+      person_seniorities: []
+      contact_email_status:
+        - verified
+        - guessed
+        - unavailable
+        - pending_manual_fulfillment
+      organization_locations: []
+      q_organization_domains: []
+      organization_num_employees_ranges: []
+    config:
+      page: 1
+      page_size: 10
+      max_results: 10
+    description: >-
+      Use the people search tool to find person information from Apollo
+      database. person_titles Job titles held by the people. person_locations
+      The location where people live. You can  search across US cities, states
+      and countries. person_seniorities The job seniority that people hold
+      within their current employer. This enables you to find people that
+      currently hold positions at certain reporting levels, such as Director
+      level or senior IC level. within their current employer.
+      organization_locations The location of the company headquarters for a
+      person's current employer. q_organization_domains The domain name for the
+      person's employer. organization_num_employees_ranges The number range of
+      employees working for the person's current company. q_keywords some extra
+      keywords to filter the results
+    dependencies: []
+    provider_slug: apollo
+    processor_slug: people_search
+    output_template:
+      jsonpath: $.people
+      markdown: "{{api_response.response}}"
+description: ""
+input_fields:
+  - name: lookalike
+    type: string
+    title: Lookalike
+    required: false
+    description: Fetch people similar to lookalike
+  - name: title
+    type: string
+    title: Title
+    required: false
+    description: Provide Comma Separated list of  job titles
+  - name: location
+    type: string
+    title: Location
+    required: false
+    description: Provide a comma separated list of locations
+  - name: keywords
+    type: string
+    title: Keywords
+    required: false
+    description: Provide a comma separated list of keywords to add
+  - name: company_domain_
+    type: string
+    title: "Company Domain "
+    required: false
+    description: Provide a comma separated list of company domains
+output_template:
+  markdown: "{{agent.content}}"
+version: 0
+is_published: false
+web_config: null
+twilio_config: null
+slack_config: null
+discord_config: null
