@@ -1,4 +1,5 @@
 import logging
+import urllib.parse
 from typing import Any, Dict, List, Optional
 
 from asgiref.sync import async_to_sync
@@ -100,22 +101,43 @@ class OrganizationSearch(
     @classmethod
     def get_output_template(cls) -> OutputTemplate | None:
         return OutputTemplate(
-            markdown="",
+            markdown="{{response}}",
+            jsonpath="$.accounts",
         )
 
     def process(self) -> dict:
-        data = self._input.model_dump()
-        data["page"] = self._config.page
-        data["per_page"] = self._config.page_size
-
         provider_config = self.get_provider_config(provider_slug=self.provider_slug())
         api_key = provider_config.api_key
 
+        query_params_str = ""
+        for key, values in self._input.model_dump().items():
+            if not values:
+                continue
+
+            values = [urllib.parse.quote(value) for value in values]
+            if key == "organization_num_employees_ranges" and values:
+                query_params_str += f"&organization_num_employees_ranges[]={','.join(values)}"
+            elif key == "organization_locations" and values:
+                query_params_str += f"&organization_locations[]={','.join(values)}"
+            elif key == "organization_not_locations" and values:
+                query_params_str += f"&organization_not_locations[]={','.join(values)}"
+            elif key == "q_organization_keyword_tags" and values:
+                query_params_str += f"&q_organization_keyword_tags[]={','.join(values)}"
+            elif key == "q_organization_name" and values:
+                query_params_str += f"&q_organization_name={values}"
+            elif key == "organization_ids" and values:
+                query_params_str += f"&organization_ids[]={','.join(values)}"
+
+        if query_params_str:
+            query_params_str = "?" + query_params_str[1:]
+
+        query_url = f"https://api.apollo.io/api/v1/mixed_companies/search{query_params_str}&page={self._config.page}&per_page={self._config.page_size}"
+
         response = prequests.post(
-            url="https://api.apollo.io/api/v1/mixed_companies/search",
-            json=data,
+            url=query_url,
             headers={"Cache-Control": "no-cache", "Content-Type": "application/json", "X-Api-Key": api_key},
         )
+
         if response.ok:
             self._usage_data.append(
                 ("apollo/*/*/*", MetricType.API_INVOCATION, (provider_config.provider_config_source, 1))
