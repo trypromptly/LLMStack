@@ -1,6 +1,6 @@
 name: Find People at companies
 slug: find-people-at-companies
-description: ""
+description: "Find people at companies based on a given set of criteria"
 total_rows: 20
 total_columns: 26
 columns:
