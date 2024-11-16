@@ -1,0 +1,218 @@
+name: Find People at companies
+description: ""
+total_rows: 20
+total_columns: 26
+columns:
+  - title: People Search Source
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 6
+    col_letter: A
+  - title: First Name
+    width: 300
+    formula:
+      data:
+        max_parallel_runs: null
+        transformation_template: "{{A.first_name}}"
+      type: 1
+    position: 0
+    cell_type: 0
+    col_letter: B
+  - title: Last Name
+    width: 300
+    formula:
+      data:
+        max_parallel_runs: null
+        transformation_template: "{{A.last_name}}"
+      type: 1
+    position: 0
+    cell_type: 0
+    col_letter: C
+  - title: Full Name
+    width: 300
+    formula:
+      data:
+        max_parallel_runs: null
+        transformation_template: "{{A.name}}"
+      type: 1
+    position: 0
+    cell_type: 0
+    col_letter: D
+  - title: Job Title
+    width: 300
+    formula:
+      data:
+        max_parallel_runs: null
+        transformation_template: "{{A.title}}"
+      type: 1
+    position: 0
+    cell_type: 0
+    col_letter: E
+  - title: Location
+    width: 300
+    formula:
+      data:
+        max_parallel_runs: null
+        transformation_template: "{{A.city}}, {{A.state}}, {{A.country}}"
+      type: 1
+    position: 0
+    cell_type: 0
+    col_letter: F
+  - title: Company
+    width: 300
+    formula:
+      data:
+        max_parallel_runs: null
+        transformation_template: "{{A.organization}}"
+      type: 1
+    position: 0
+    cell_type: 0
+    col_letter: G
+  - title: LinkedIn Profile
+    width: 300
+    formula:
+      data:
+        max_parallel_runs: null
+        transformation_template: "{{A.linkedin_url}}"
+      type: 1
+    position: 0
+    cell_type: 0
+    col_letter: H
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: I
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: J
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: K
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: L
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: M
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: "N"
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: O
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: P
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: Q
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: R
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: S
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: T
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: U
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: V
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: W
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: X
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: "Y"
+  - title: ""
+    width: 300
+    formula: null
+    position: 0
+    cell_type: 0
+    col_letter: Z
+cells:
+  A1:
+    row: 1
+    col_letter: A
+    formula:
+      type: 3
+      data:
+        max_parallel_runs: null
+        provider_slug: apollo
+        processor_slug: people_search
+        input:
+          person_titles:
+            - Senior Manager
+          person_locations:
+            - Milpitas, CA
+          person_seniorities: []
+          contact_email_status:
+            - verified
+            - unverified
+            - unavailable
+            - likely to engage
+          q_organization_domains: []
+          organization_locations: []
+          organization_ids: []
+          organization_num_employees_ranges: []
+        config: {}
+        output_template:
+          jsonpath: $.people
+    spread_output: true
