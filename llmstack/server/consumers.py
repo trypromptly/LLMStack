@@ -1,4 +1,5 @@
 import asyncio
+import audioop
 import base64
 import importlib
 import json
@@ -518,7 +519,7 @@ class TwilioVoiceConsumer(AsyncWebsocketConsumer):
             self._source,
             self.scope.get("user", None),
             app_data_config_override={
-                "input_audio_format": "g711_ulaw",
+                "input_audio_format": "pcm16",
                 "output_audio_format": "g711_ulaw",
             },
         )
@@ -580,11 +581,24 @@ class TwilioVoiceConsumer(AsyncWebsocketConsumer):
             self._app_runner = None
         elif event == "media":
             encoded_audio_chunk = json_data.get("media", {}).get("payload", "")
-            if not encoded_audio_chunk:
+            if not encoded_audio_chunk or not self._input_audio_stream:
                 return
 
-            if self._input_audio_stream:
-                self._input_audio_stream.append_chunk(base64.b64decode(encoded_audio_chunk))
+            try:
+                # Decode base64 to get g711 ulaw data
+                ulaw_data = base64.b64decode(encoded_audio_chunk)
+
+                # Convert ulaw to PCM16 (lin)
+                pcm_data = audioop.ulaw2lin(ulaw_data, 2)  # 2 bytes per sample for 16-bit
+
+                # Upsample from 8kHz to 24kHz
+                pcm_upsampled = audioop.ratecv(pcm_data, 2, 1, 8000, 24000, None)[0]
+
+                # Append the converted and upsampled data
+                self._input_audio_stream.append_chunk(pcm_upsampled)
+
+            except Exception as e:
+                logger.exception(f"Error converting audio format: {e}")
 
         elif event == "mark":
             logger.info(f"Received mark event from twilio: {json_data}")
