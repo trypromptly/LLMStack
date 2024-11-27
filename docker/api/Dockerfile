@@ -1,6 +1,17 @@
 # Stage 1: Compile and build code
 FROM python:3.11 AS builder
 
+# Install build dependencies for pyrnnoise
+RUN apt-get update && apt-get install -y \
+    cmake \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone and build pyrnnoise
+RUN git clone https://github.com/pengzhendong/pyrnnoise.git /src/pyrnnoise
+RUN cd /src/pyrnnoise && git submodule update --init && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --target install && pip install . && cd ../../
+RUN cp /src/pyrnnoise/build/librnnoise.so /usr/local/lib/python3.11/site-packages/
+
 # Add poetry to the image
 RUN pip install --no-cache-dir poetry
 

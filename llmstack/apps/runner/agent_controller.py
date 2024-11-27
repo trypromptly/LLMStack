@@ -7,9 +7,11 @@ import ssl
 import threading
 from typing import Any, Dict, List, Optional, Union
 
+import numpy as np
 import websockets
 from asgiref.sync import sync_to_async
 from pydantic import BaseModel, ConfigDict
+from pyrnnoise import RNNoise
 
 from llmstack.apps.types.agent import AgentConfigSchema
 from llmstack.apps.types.voice_agent import VoiceAgentConfigSchema
@@ -143,6 +145,7 @@ class AgentController:
         self._input_metadata = {}
         self._output_audio_stream = None
         self._output_transcript_stream = None
+        self._rnnoise = RNNoise(sample_rate=24000)
 
         self._input_messages_queue = queue.Queue()
         self._loop = asyncio.new_event_loop()
@@ -270,10 +273,33 @@ class AgentController:
                     await self._send_websocket_message({"type": "response.create"})
                     break
 
+                # Convert bytes to numpy array and normalize to float32
+                try:
+                    audio_data = np.frombuffer(chunk, dtype=np.int16)
+                    # Convert int16 to float32 and normalize to [-1, 1]
+                    audio_data = audio_data.astype(np.float32) / 32768.0
+                    frame_iterator = self._rnnoise.process_chunk(audio_data)
+                except Exception as e:
+                    logger.exception(f"Error processing chunk with rnnoise: {e}")
+                    frame_iterator = []
+
+                # Rebuild the chunk from the denoised frames
+                denoised_chunk = b""
+                try:
+                    for _, denoised_frame in frame_iterator:
+                        # Convert float32 [-1, 1] back to int16 range and then to bytes
+                        int16_data = (denoised_frame * 32768.0).astype(np.int16)
+                        denoised_chunk += int16_data.tobytes()
+                except Exception as e:
+                    logger.exception(f"Error joining denoised frames: {e}")
+
+                logger.debug(f"Denoised chunk size to original chunk size: {len(denoised_chunk)} vs {len(chunk)}")
+
                 # Base64 encode and send
-                await self._send_websocket_message(
-                    {"type": "input_audio_buffer.append", "audio": base64.b64encode(chunk).decode("utf-8")}
-                )
+                if len(denoised_chunk) > 0:
+                    await self._send_websocket_message(
+                        {"type": "input_audio_buffer.append", "audio": base64.b64encode(denoised_chunk).decode("utf-8")}
+                    )
 
     async def _process_input_text_stream(self):
         if self._input_text_stream:
