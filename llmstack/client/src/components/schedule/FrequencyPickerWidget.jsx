@@ -34,6 +34,7 @@ export default function FrequencyPickerWidget(props) {
           variant="filled"
           sx={{ lineHeight: "0.5em" }}
         >
+          <MenuItem value="run_now">Run Now</MenuItem>
           <MenuItem value="run_once">Run Once</MenuItem>
           <MenuItem value="repeat">Repeat</MenuItem>
           <MenuItem value="cron">Cron Job</MenuItem>

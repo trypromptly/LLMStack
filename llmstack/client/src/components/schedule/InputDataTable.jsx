@@ -86,6 +86,7 @@ export default function InputDataTable({ columnData, rowData, onChange }) {
   const handleRowEditStop = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
       event.defaultMuiPrevented = true;
+      handleSaveClick(params.id)();
     }
   };
 
