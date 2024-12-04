@@ -539,9 +539,10 @@ class AppRunner:
             )
 
     def run_until_complete(self, request: AppRunnerRequest, event_loop):
+        final_response = None
         for response in iter_over_async(self.run(request), event_loop):
             if isinstance(response.data, AppRunnerResponseErrorsData) or isinstance(
                 response.data, AppRunnerResponseOutputData
             ):
-                break
-        return response
+                final_response = response
+        return final_response

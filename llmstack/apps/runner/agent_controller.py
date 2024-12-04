@@ -130,11 +130,43 @@ class AgentControllerData(BaseModel):
     ] = None
 
 
+def save_messages_to_session_data(session_id, id, messages: List[AgentMessage]):
+    from llmstack.apps.app_session_utils import save_app_session_data
+
+    logger.info(f"Saving messages to session data: {messages}")
+
+    save_app_session_data(session_id, id, [m.model_dump_json() for m in messages])
+
+
+def load_messages_from_session_data(session_id, id):
+    from llmstack.apps.app_session_utils import get_app_session_data
+
+    messages = []
+
+    session_data = get_app_session_data(session_id, id)
+    if session_data and isinstance(session_data, list):
+        for data in session_data:
+            data_json = json.loads(data)
+            if data_json["role"] == "system":
+                messages.append(AgentSystemMessage(**data_json))
+            elif data_json["role"] == "assistant":
+                messages.append(AgentAssistantMessage(**data_json))
+            elif data_json["role"] == "user":
+                messages.append(AgentUserMessage(**data_json))
+
+    return messages
+
+
 class AgentController:
     def __init__(self, output_queue: asyncio.Queue, config: AgentControllerConfig):
+        self._session_id = config.metadata.get("session_id")
+        self._controller_id = f"{config.metadata.get('app_uuid')}_agent"
+        self._system_message = render_template(config.agent_config.system_message, {})
         self._output_queue = output_queue
         self._config = config
-        self._messages: List[AgentMessage] = []
+        self._messages: List[AgentMessage] = (
+            load_messages_from_session_data(self._session_id, self._controller_id) or []
+        )
         self._llm_client = None
         self._websocket = None
         self._provider_config = None
@@ -252,18 +284,6 @@ class AgentController:
                 provider_slug=provider_slug,
                 model_slug=model_slug,
             ),
-        )
-
-        self._messages.append(
-            AgentSystemMessage(
-                role=AgentMessageRole.SYSTEM,
-                content=[
-                    AgentMessageContent(
-                        type=AgentMessageContentType.TEXT,
-                        data=render_template(self._config.agent_config.system_message, {}),
-                    )
-                ],
-            )
         )
 
     async def _process_input_audio_stream(self):
@@ -387,6 +407,10 @@ class AgentController:
         # Actor calls this to add a message to the conversation and trigger processing
         self._messages.append(data.data)
 
+        # This is a message from the assistant to the user, simply add it to the message to maintain state
+        if data.type == AgentControllerDataType.AGENT_OUTPUT_END or data.type == AgentControllerDataType.TOOL_CALLS_END:
+            return
+
         try:
             if len(self._messages) > self._config.agent_config.max_steps:
                 raise Exception(f"Max steps ({self._config.agent_config.max_steps}) exceeded: {len(self._messages)}")
@@ -465,7 +489,7 @@ class AgentController:
             stream = True if self._config.agent_config.stream is None else self._config.agent_config.stream
             response = self._llm_client.chat.completions.create(
                 model=self._config.agent_config.model,
-                messages=client_messages,
+                messages=[{"role": "system", "content": self._system_message}] + client_messages,
                 stream=stream,
                 tools=self._config.tools,
             )
@@ -703,6 +727,9 @@ class AgentController:
             logger.error(f"WebSocket error: {event}")
 
     def terminate(self):
+        # Save to session data
+        save_messages_to_session_data(self._session_id, self._controller_id, self._messages)
+
         # Create task for graceful websocket closure
         if hasattr(self, "_websocket") and self._websocket:
             asyncio.run_coroutine_threadsafe(self._websocket.close(), self._loop)
