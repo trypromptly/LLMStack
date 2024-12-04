@@ -776,6 +776,7 @@ class AppViewSet(viewsets.ViewSet):
         response = app_runner.run_until_complete(
             AppRunnerRequest(client_request_id=str(uuid.uuid4()), session_id=session_id, input=input_data), loop
         )
+        async_to_sync(app_runner.stop)()
         return response
 
     def run(self, request, uid, session_id=None):

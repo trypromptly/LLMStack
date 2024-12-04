@@ -5,6 +5,7 @@ import time
 from typing import Any, Dict, List
 
 from llmstack.apps.runner.agent_controller import (
+    AgentAssistantMessage,
     AgentController,
     AgentControllerConfig,
     AgentControllerData,
@@ -126,15 +127,29 @@ class AgentActor(OutputActor):
                     )
 
                 elif controller_output.type == AgentControllerDataType.AGENT_OUTPUT_END:
+                    agent_final_output = (
+                        self._stitched_data["agent"][str(message_index)].data.content[0].data
+                        if str(message_index) in self._stitched_data["agent"]
+                        else ""
+                    )
+                    self._agent_controller.process(
+                        AgentControllerData(
+                            type=AgentControllerDataType.AGENT_OUTPUT_END,
+                            data=AgentAssistantMessage(
+                                content=[
+                                    AgentMessageContent(
+                                        type=AgentMessageContentType.TEXT,
+                                        data=agent_final_output,
+                                    )
+                                ]
+                            ),
+                        )
+                    )
                     self._content_queue.put_nowait(
                         {
                             "output": {
                                 **self._agent_outputs,
-                                "output": (
-                                    self._stitched_data["agent"][str(message_index)].data.content[0].data
-                                    if str(message_index) in self._stitched_data["agent"]
-                                    else ""
-                                ),
+                                "output": agent_final_output,
                             },
                             "chunks": self._stitched_data,
                         }
@@ -174,6 +189,12 @@ class AgentActor(OutputActor):
 
                 elif controller_output.type == AgentControllerDataType.TOOL_CALLS_END:
                     tool_calls = self._stitched_data["agent"][str(message_index)].data.tool_calls
+                    self._agent_controller.process(
+                        AgentControllerData(
+                            type=AgentControllerDataType.TOOL_CALLS_END,
+                            data=AgentToolCallsMessage(tool_calls=tool_calls),
+                        ),
+                    )
 
                     for tool_call in tool_calls:
                         tool_call_args = tool_call.arguments
