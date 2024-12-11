@@ -189,13 +189,6 @@ class AgentActor(OutputActor):
 
                 elif controller_output.type == AgentControllerDataType.TOOL_CALLS_END:
                     tool_calls = self._stitched_data["agent"][str(message_index)].data.tool_calls
-                    self._agent_controller.process(
-                        AgentControllerData(
-                            type=AgentControllerDataType.TOOL_CALLS_END,
-                            data=AgentToolCallsMessage(tool_calls=tool_calls),
-                        ),
-                    )
-
                     for tool_call in tool_calls:
                         tool_call_args = tool_call.arguments
                         try:
