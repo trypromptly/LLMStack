@@ -51,7 +51,7 @@ services:
     env_file:
       - .env.dev
   runner:
-    image: langrocks-web-browser:latest
+    image: ghcr.io/langrocks/langrocks-web-browser:main
     env_file:
       - .env.dev
     ports:
