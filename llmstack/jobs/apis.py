@@ -334,7 +334,7 @@ class AppRunJobsViewSet(viewsets.ViewSet):
         if batch_size > len(data["app_run_data"]):
             return DRFResponse(status=400, data={"message": "Batch size cannot be greater than total rows"})
 
-        if frequency_type not in ["run_once", "repeat", "cron"]:
+        if frequency_type not in ["run_now", "run_once", "repeat", "cron"]:
             return DRFResponse(
                 status=400,
                 data={
@@ -343,7 +343,10 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             )
 
         scheduled_time = None
-        if frequency_type == "run_once" or frequency_type == "repeat":
+        if frequency_type == "run_now":
+            scheduled_time = timezone.now()
+
+        elif frequency_type == "run_once" or frequency_type == "repeat":
             if (
                 not frequency.get("start_date")
                 or not frequency.get(
@@ -390,7 +393,12 @@ class AppRunJobsViewSet(viewsets.ViewSet):
             "task_category": "app_run",
         }
 
-        if frequency_type == "run_once":
+        if frequency_type == "run_now":
+            job = ScheduledJob(**job_args)
+            job.save()
+            job.schedule_now()
+
+        elif frequency_type == "run_once":
             job = ScheduledJob(**job_args)
             job.save()
 
