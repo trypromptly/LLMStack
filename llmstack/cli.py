@@ -202,15 +202,16 @@ def print_compose_logs(follow=True, stream=True):
 
 def start(llmstack_environment):
     # Create a temp file with this environment variables to be used by docker-compose
-    with tempfile.NamedTemporaryFile(mode="w") as f:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
         for key in llmstack_environment:
             f.write(f"{key}={llmstack_environment[key]}\n")
-        f.flush()
+        env_file_path = f.name
 
+    try:
         # Start the containers
         docker_client = DockerClient(
             compose_files=[os.path.join(os.path.dirname(__file__), "docker-compose.yml")],
-            compose_env_file=f.name,
+            compose_env_file=env_file_path,
         )
 
         # Start the containers
@@ -240,6 +241,9 @@ def start(llmstack_environment):
 
             print("\n".join(compose_output[-10:]), end="", flush=True)
             last_output_len = len(compose_output[-10:])
+    finally:
+        # File clean up
+        os.remove(env_file_path)
 
 
 def main():
