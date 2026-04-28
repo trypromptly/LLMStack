@@ -114,3 +114,65 @@ Check out our development guide at [docs.trypromptly.com/llmstack/development](h
 ## Contributing
 
 We welcome contributions to LLMStack. Please check out our [contributing guide](https://docs.trypromptly.com/llmstack/contributing) to learn more about how you can contribute to LLMStack.
+
+## FAQ
+
+### General
+
+**What is LLMStack?**
+LLMStack is a no-code platform for building generative AI agents, workflows, and chatbots. It allows you to chain multiple LLMs together, integrate your own data, and deploy AI applications without writing code.
+
+**How does LLMStack differ from other AI platforms?**
+Unlike code-first frameworks, LLMStack provides a visual no-code builder for AI chains. It supports multi-model chaining, data import from various sources (Google Drive, Notion, websites), and deployment to cloud or on-premise.
+
+**Is LLMStack production-ready?**
+Yes, LLMStack can be deployed to your own infrastructure or used via the cloud offering at [Promptly](https://trypromptly.com). It supports multi-tenancy, API access, and integration with Slack/Discord.
+
+### Installation & Setup
+
+**How do I install LLMStack?**
+The quickest way is using pip: `pip install llmstack`, then start with `llmstack`. This creates a `.llmstack` directory in your home folder with the database and config files. The app will open at `localhost:3000`.
+
+**What are the system requirements?**
+LLMStack requires Python 3.8+ and depends on Docker for background job processing. On Windows, use WSL2. For production deployments, refer to the Docker Compose setup in the documentation.
+
+**How do I configure LLM providers?**
+Add your API keys for OpenAI, Cohere, Stability, etc. from the Settings page. For default keys across all users, add them to `~/.llmstack/config`.
+
+### AI Agents & Chains
+
+**What types of AI applications can I build?**
+You can build AI SDRs, research analysts, RPA automations, text generation apps, chatbots trained on your data, multimodal generators, conversational AI systems, search augmentation, and Discord/Slack bots.
+
+**How does the no-code builder work?**
+The visual builder lets you chain multiple LLMs together and connect them to your data and business processes. You can drag-and-drop components to create complex AI workflows without writing code.
+
+**Can I use my own data?**
+Yes, import CSV, TXT, PDF, DOCX, PPTX and other data types from Google Drive, Notion, websites, or direct uploads. LLMStack handles preprocessing and vectorization automatically.
+
+### Deployment & Usage
+
+**How do I deploy LLMStack?**
+Options include: local pip installation, Docker Compose for self-hosted deployment, or the cloud offering at Promptly. For cloud deployment, sign up at [trypromptly.com](https://trypromptly.com).
+
+**Can I trigger AI chains from Slack or Discord?**
+Yes, apps built with LLMStack can be triggered from Slack or Discord. Connect your AI chains directly from the no-code app editor.
+
+**Is there an API for programmatic access?**
+Yes, apps and chatbots built with LLMStack can be accessed via HTTP API, enabling integration with external systems and automation workflows.
+
+### Troubleshooting
+
+**LLMStack won't start after installation**
+Ensure Docker is running (required for background jobs). Check that port 3000 is not in use. On Windows, verify WSL2 is properly installed and you're running commands inside the WSL2 terminal.
+
+**API key not working**
+Verify your API key is correctly entered in Settings. For default keys, ensure they are added to `~/.llmstack/config` with the correct format. Check that your API key has sufficient quota.
+
+**Data import failing**
+Ensure the file format is supported (CSV, TXT, PDF, DOCX, PPTX). For Google Drive or Notion imports, verify the connection permissions. Large files may take longer to process.
+
+**Need more help?**
+- Check the full documentation at [docs.trypromptly.com](https://docs.trypromptly.com/llmstack/introduction)
+- Join the [Discord community](https://discord.gg/3JxEs3) for real-time help
+- Open an issue on GitHub for bug reports or feature requests
