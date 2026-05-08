@@ -114,3 +114,83 @@ Check out our development guide at [docs.trypromptly.com/llmstack/development](h
 ## Contributing
 
 We welcome contributions to LLMStack. Please check out our [contributing guide](https://docs.trypromptly.com/llmstack/contributing) to learn more about how you can contribute to LLMStack.
+
+## FAQ
+
+### General Questions
+
+**Q: What is LLMStack and how is it different from other AI platforms?**
+
+A: LLMStack is a no-code platform for building generative AI agents, workflows and chatbots. Unlike other platforms that require coding, LLMStack allows you to chain multiple LLMs, connect your data, and deploy to cloud or on-premise without writing any code.
+
+**Q: What kind of applications can I build with LLMStack?**
+
+A: You can build AI SDRs, Research Analysts, RPA Automations, chatbots, multimedia generators, conversational AI systems, search augmentation tools, and Discord/Slack bots.
+
+### Installation & Setup
+
+**Q: What are the prerequisites for running LLMStack?**
+
+A: LLMStack depends on Docker for running background jobs. Install Docker following the instructions at [docs.docker.com/get-docker](https://docs.docker.com/get-docker/). On Windows, use WSL2.
+
+**Q: How do I install LLMStack?**
+
+A: Run `pip install llmstack` and then `llmstack` to start. It will create a `.llmstack` directory in your home folder with database and config files.
+
+**Q: What are the default admin credentials?**
+
+A: Default credentials are `admin` and `promptly`. Be sure to change the password from the admin panel after logging in.
+
+### LLM Providers & Models
+
+**Q: Which LLM providers does LLMStack support?**
+
+A: LLMStack supports OpenAI, Cohere, Stability, and other major providers. Add your API keys from the Settings page or configure default keys in `~/.llmstack/config`.
+
+**Q: Can I use my own custom models?**
+
+A: Yes, LLMStack allows you to connect custom models and data sources through its no-code builder interface.
+
+### Data & Integration
+
+**Q: What types of data can I import?**
+
+A: LLMStack supports CSV, TXT, PDF, DOCX, PPTX and more. Import from Google Drive, Notion, websites, or direct uploads. Data is automatically preprocessed and vectorized.
+
+**Q: Can I trigger AI chains from Slack or Discord?**
+
+A: Yes, apps built with LLMStack can be triggered from Slack or Discord. Configure this from the no-code app editor.
+
+### Deployment & Administration
+
+**Q: How do I deploy LLMStack to production?**
+
+A: You can deploy to your own infrastructure or use the cloud offering at [Promptly](https://trypromptly.com). LLMStack is multi-tenant, supporting multiple organizations and users.
+
+**Q: How do I manage users and organizations?**
+
+A: Login to [localhost:3000/admin](http://localhost:3000/admin) using admin credentials. Add users and assign them to organizations from the admin panel.
+
+### Troubleshooting
+
+**Q: LLMStack won't start - what should I check?**
+
+A: Ensure Docker is running and you have sufficient permissions. Check that `.llmstack` directory was created in your home folder. Review logs for specific error messages.
+
+**Q: My API keys aren't working - what's wrong?**
+
+A: Verify keys are correctly added in Settings or `~/.llmstack/config`. Ensure you have active subscriptions with the providers (OpenAI, Cohere, etc.).
+
+### Getting Help
+
+**Q: Where can I find more documentation?**
+
+A: Visit [docs.trypromptly.com/llmstack](https://docs.trypromptly.com/llmstack/introduction) for comprehensive documentation.
+
+**Q: How can I contribute to LLMStack?**
+
+A: Check the [contributing guide](https://docs.trypromptly.com/llmstack/contributing) for contribution guidelines. Pull requests are welcome!
+
+**Q: Is there a community or support channel?**
+
+A: Join the [Discord server](https://discord.gg/3JsEzSXspJ) to interact with the community and get support.
