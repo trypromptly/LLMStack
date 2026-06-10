@@ -23,7 +23,7 @@ class AuthorizationMiddleware:
             raw_body = request.body
 
             if (
-                (discord_signature and discord_timestamp) or (slack_signature and slack_timestamp) or True
+                (discord_signature and discord_timestamp) or (slack_signature and slack_timestamp)
             ) and re.match(r"^/api/apps/.*/run", path):
                 app_id = path.split("/")[3]
                 platform = path.split("/")[4]
