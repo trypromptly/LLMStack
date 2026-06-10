@@ -1,4 +1,5 @@
 import base64
+import ipaddress
 import logging
 import re
 from io import BytesIO
@@ -59,11 +60,34 @@ class ExtraParams:
         return self._connection
 
 
+def _is_private_url(url):
+    """Check if a URL points to a private/internal IP address."""
+    try:
+        from urllib.parse import urlparse as _urlparse
+        parsed = _urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return True
+        if hostname in ('localhost', 'metadata.google.internal', 'metadata.internal'):
+            return True
+        try:
+            ip = ipaddress.ip_address(hostname)
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                return True
+        except ValueError:
+            pass
+        return False
+    except Exception:
+        return True
+
+
 def get_url_content_type(url, connection=None):
+    if _is_private_url(url):
+        raise ValueError("URLs pointing to private/internal addresses are not allowed")
     response = requests.head(
         url,
         allow_redirects=True,
-        verify=False,
+        verify=True,
         _connection=connection,
     )
 
