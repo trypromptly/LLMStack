@@ -47,6 +47,29 @@ from ...types.chat.chat_completion_message_param import ChatCompletionMessagePar
 __all__ = ["Completions", "AsyncCompletions"]
 
 
+def _convert_media_url_to_anthropic(part, media_type):
+    media = part[f"{media_type}_url"]
+    if isinstance(media, str):
+        media = {"url": media}
+
+    url = media["url"]
+    if url.startswith("data:") and ";base64," in url:
+        metadata, data = url.split(",", 1)
+        source = {
+            "type": "base64",
+            "media_type": metadata.removeprefix("data:").removesuffix(";base64"),
+            "data": data,
+        }
+    else:
+        source = {"type": "url", "url": url}
+
+    for option in ("detail", "fps", "max_long_side_pixel"):
+        if media.get(option) is not None:
+            source[option] = media[option]
+
+    return {"type": media_type, "source": source}
+
+
 def _convert_to_anthropic_format(messages):
     anthropic_messages = []
     last_role = None
@@ -66,6 +89,10 @@ def _convert_to_anthropic_format(messages):
                     anthropic_messages[-1]["content"].append(
                         {"type": "text", "text": part.get("data") or part.get("text")}
                     )
+                elif part["type"] == "image_url":
+                    anthropic_messages[-1]["content"].append(_convert_media_url_to_anthropic(part, "image"))
+                elif part["type"] == "video_url":
+                    anthropic_messages[-1]["content"].append(_convert_media_url_to_anthropic(part, "video"))
                 elif part["type"] == "file":
                     if part["mime_type"].startswith("image"):
                         anthropic_messages[-1]["content"].append(
@@ -363,8 +390,8 @@ class Completions(OpenAICompletions):
                         )
                     elif part.function_call:
                         call_id = generate_uuid(
-                            f"""{part.function_call.name}_{
-                            json.dumps(convert_google_function_call_args_map_to_dict(part.function_call.args))}"""
+                            f"{part.function_call.name}_"
+                            f"{json.dumps(convert_google_function_call_args_map_to_dict(part.function_call.args))}"
                         )
                         parts.append(
                             {
@@ -438,8 +465,8 @@ class Completions(OpenAICompletions):
                         )
                     elif part.function_call:
                         call_id = generate_uuid(
-                            f"""{part.function_call.name}_{
-                            json.dumps(convert_google_function_call_args_map_to_dict(part.function_call.args))}"""
+                            f"{part.function_call.name}_"
+                            f"{json.dumps(convert_google_function_call_args_map_to_dict(part.function_call.args))}"
                         )
                         parts.append(
                             {

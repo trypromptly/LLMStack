@@ -13,7 +13,12 @@ class MiniMaxProviderConfig(ProviderConfig):
     )
     base_url: str = Field(
         title="Base URL",
-        description=("Base URL for the MiniMax chat API. " "Use https://api.minimaxi.com/v1 for the China endpoint."),
+        description=(
+            "Base URL for the MiniMax chat API. Use https://api.minimax.io/v1 or "
+            "https://api.minimaxi.com/v1 for the OpenAI-compatible API. Use "
+            "https://api.minimax.io/anthropic or https://api.minimaxi.com/anthropic "
+            "for the Anthropic-compatible API."
+        ),
         default="https://api.minimax.io/v1",
         min_length=1,
     )

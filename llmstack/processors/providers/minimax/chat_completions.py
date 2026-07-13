@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import Annotated, List, Literal, Optional, Union
 
 from asgiref.sync import async_to_sync
 from pydantic import Field, model_validator
@@ -10,6 +10,7 @@ from llmstack.processors.providers.api_processor_interface import (
     ApiProcessorInterface,
     ApiProcessorSchema,
 )
+from llmstack.processors.providers.minimax.client import create_minimax_client
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +34,58 @@ class Role(StrEnum):
     ASSISTANT = "assistant"
 
 
+class TextContent(ApiProcessorSchema):
+    type: Literal["text"]
+    text: str = Field(description="The message text.")
+
+
+class MediaUrl(ApiProcessorSchema):
+    url: str = Field(description="A public URL or data URL.")
+    detail: Optional[Literal["low", "default", "high"]] = Field(
+        default=None,
+        description="The media understanding detail level.",
+    )
+    max_long_side_pixel: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="The longest-side pixel limit.",
+    )
+
+
+class VideoUrl(MediaUrl):
+    url: str = Field(description="A public URL, data URL, or uploaded file reference.")
+    fps: Optional[float] = Field(
+        default=None,
+        ge=0.2,
+        le=5,
+        description="The video frame sampling rate.",
+    )
+
+
+class ImageContent(ApiProcessorSchema):
+    type: Literal["image_url"]
+    image_url: MediaUrl
+
+
+class VideoContent(ApiProcessorSchema):
+    type: Literal["video_url"]
+    video_url: VideoUrl
+
+
+MessageContent = Annotated[
+    Union[TextContent, ImageContent, VideoContent],
+    Field(discriminator="type"),
+]
+
+
 class ChatMessage(ApiProcessorSchema):
     role: Role = Field(
         default=Role.USER,
         description="The role of the message. Can be 'system', 'user', or 'assistant'.",
     )
-    message: str = Field(
+    message: Union[str, List[MessageContent]] = Field(
         default="",
-        description="The message text.",
+        description="Text or multimodal message content. Image and video content require MiniMax-M3.",
         json_schema_extra={"widget": "textarea"},
     )
 
@@ -66,7 +111,10 @@ class MessagesConfiguration(ApiProcessorSchema):
     )
     model: MessagesModel = Field(
         default=MessagesModel.MINIMAX_M3,
-        description="The MiniMax model that will generate the responses.",
+        description=(
+            "The MiniMax model that will generate the responses. MiniMax-M3 has a "
+            "1,000,000-token context window; MiniMax-M2.7 has a 204,800-token context window."
+        ),
         json_schema_extra={"advanced_parameter": False},
     )
     max_tokens: int = Field(
@@ -92,9 +140,15 @@ class MessagesConfiguration(ApiProcessorSchema):
     )
 
     @model_validator(mode="after")
-    def validate_thinking(self):
+    def validate_model_options(self):
         if self.model == MessagesModel.MINIMAX_M2_7 and self.thinking == ThinkingType.DISABLED:
             raise ValueError("MiniMax-M2.7 does not support disabling thinking")
+        max_output_tokens = {
+            MessagesModel.MINIMAX_M3: 524288,
+            MessagesModel.MINIMAX_M2_7: 204800,
+        }[self.model]
+        if self.max_tokens > max_output_tokens:
+            raise ValueError(f"{self.model} supports at most {max_output_tokens} output tokens")
         return self
 
 
@@ -131,14 +185,6 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         return {}
 
     def process(self) -> MessagesOutput:
-        from llmstack.common.utils.sslr import LLM
-
-        minimax_provider_config = self.get_provider_config(model_slug=self._config.model.model_name())
-        client = LLM(
-            provider="openai",
-            openai_api_key=minimax_provider_config.api_key,
-            openai_base_url=minimax_provider_config.base_url,
-        )
         messages = []
 
         if self._config.system_prompt:
@@ -149,7 +195,24 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
                 messages.append({"role": message["role"], "content": message["message"]})
 
         for message in self._input.messages:
-            messages.append({"role": str(message.role), "content": str(message.message)})
+            if isinstance(message.message, list):
+                content = [part.model_dump(exclude_none=True) for part in message.message]
+            else:
+                content = message.message
+            messages.append({"role": str(message.role), "content": content})
+
+        has_media = any(
+            isinstance(message["content"], list)
+            and any(
+                isinstance(part, dict) and part.get("type") in ("image_url", "video_url") for part in message["content"]
+            )
+            for message in messages
+        )
+        if self._config.model == MessagesModel.MINIMAX_M2_7 and has_media:
+            raise ValueError("MiniMax-M2.7 only supports text input")
+
+        minimax_provider_config = self.get_provider_config(model_slug=self._config.model.model_name())
+        client = create_minimax_client(minimax_provider_config)
 
         response = client.chat.completions.create(
             messages=messages,
@@ -163,13 +226,24 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
         for result in response:
             choice = result.choices[0]
             if choice.delta.content:
-                async_to_sync(self._output_stream.write)(MessagesOutput(result=choice.delta.content))
+                if isinstance(choice.delta.content, list):
+                    text_content = "".join(
+                        entry.get("data", "") for entry in choice.delta.content if entry.get("type") == "text"
+                    )
+                else:
+                    text_content = choice.delta.content
+                if text_content:
+                    async_to_sync(self._output_stream.write)(MessagesOutput(result=text_content))
 
         output = self._output_stream.finalize()
 
         if self._config.retain_history:
             for message in self._input.messages:
-                self._chat_history.append({"role": str(message.role), "message": str(message.message)})
+                if isinstance(message.message, list):
+                    persisted_message = [part.model_dump(exclude_none=True) for part in message.message]
+                else:
+                    persisted_message = message.message
+                self._chat_history.append({"role": str(message.role), "message": persisted_message})
 
             self._chat_history.append({"role": "assistant", "message": output.result})
 
