@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class MessagesModel(StrEnum):
+    MINIMAX_M3_1_FLASH = "MiniMax-M3.1-Flash"
     MINIMAX_M3 = "MiniMax-M3"
-    MINIMAX_M2_7 = "MiniMax-M2.7"
 
     def model_name(self):
         return self.value
@@ -85,7 +85,7 @@ class ChatMessage(ApiProcessorSchema):
     )
     message: Union[str, List[MessageContent]] = Field(
         default="",
-        description="Text or multimodal message content. Image and video content require MiniMax-M3.",
+        description="Text or multimodal message content. MiniMax-M3.1-Flash and MiniMax-M3 support images and video.",
         json_schema_extra={"widget": "textarea"},
     )
 
@@ -109,13 +109,18 @@ class MessagesConfiguration(ApiProcessorSchema):
         description="A system prompt is a way of providing context and instructions to the model.",
         json_schema_extra={"widget": "textarea", "advanced_parameter": False},
     )
-    model: MessagesModel = Field(
-        default=MessagesModel.MINIMAX_M3,
+    model: str = Field(
+        default=MessagesModel.MINIMAX_M3_1_FLASH.value,
+        min_length=1,
         description=(
-            "The MiniMax model that will generate the responses. MiniMax-M3 has a "
-            "1,000,000-token context window; MiniMax-M2.7 has a 204,800-token context window."
+            "The MiniMax model that will generate the responses. MiniMax-M3.1-Flash and MiniMax-M3 have a "
+            "1,000,000-token context window. Saved legacy and custom model IDs remain supported."
         ),
-        json_schema_extra={"advanced_parameter": False},
+        json_schema_extra={
+            "advanced_parameter": False,
+            "widget": "customselect",
+            "options": [model.value for model in MessagesModel],
+        },
     )
     max_tokens: int = Field(
         ge=1,
@@ -132,7 +137,11 @@ class MessagesConfiguration(ApiProcessorSchema):
     )
     thinking: ThinkingType = Field(
         default=ThinkingType.ADAPTIVE,
-        description=("Thinking mode for MiniMax-M3. MiniMax-M2.7 always keeps thinking enabled."),
+        description="MiniMax-M3 supports adaptive or disabled thinking. Flash and MiniMax-M2.7 require thinking.",
+    )
+    reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] = Field(
+        default="max",
+        description="Thinking effort for MiniMax-M3.1-Flash. Not sent for other models.",
     )
     retain_history: Optional[bool] = Field(
         default=False,
@@ -141,13 +150,14 @@ class MessagesConfiguration(ApiProcessorSchema):
 
     @model_validator(mode="after")
     def validate_model_options(self):
-        if self.model == MessagesModel.MINIMAX_M2_7 and self.thinking == ThinkingType.DISABLED:
-            raise ValueError("MiniMax-M2.7 does not support disabling thinking")
+        if self.model in (MessagesModel.MINIMAX_M3_1_FLASH, "MiniMax-M2.7") and self.thinking == ThinkingType.DISABLED:
+            raise ValueError(f"{self.model} does not support disabling thinking")
         max_output_tokens = {
+            MessagesModel.MINIMAX_M3_1_FLASH: 524288,
             MessagesModel.MINIMAX_M3: 524288,
-            MessagesModel.MINIMAX_M2_7: 204800,
-        }[self.model]
-        if self.max_tokens > max_output_tokens:
+            "MiniMax-M2.7": 204800,
+        }.get(self.model)
+        if max_output_tokens is not None and self.max_tokens > max_output_tokens:
             raise ValueError(f"{self.model} supports at most {max_output_tokens} output tokens")
         return self
 
@@ -208,19 +218,25 @@ class MessagesProcessor(ApiProcessorInterface[MessagesInput, MessagesOutput, Mes
             )
             for message in messages
         )
-        if self._config.model == MessagesModel.MINIMAX_M2_7 and has_media:
+        if self._config.model == "MiniMax-M2.7" and has_media:
             raise ValueError("MiniMax-M2.7 only supports text input")
 
-        minimax_provider_config = self.get_provider_config(model_slug=self._config.model.model_name())
+        minimax_provider_config = self.get_provider_config(model_slug=self._config.model)
         client = create_minimax_client(minimax_provider_config)
+        extra_body = {"thinking": {"type": self._config.thinking.value}}
+        if self._config.model == MessagesModel.MINIMAX_M3_1_FLASH:
+            if minimax_provider_config.base_url.rstrip("/").endswith("/anthropic"):
+                extra_body["output_config"] = {"effort": self._config.reasoning_effort}
+            else:
+                extra_body["reasoning_effort"] = self._config.reasoning_effort
 
         response = client.chat.completions.create(
             messages=messages,
-            model=self._config.model.model_name(),
+            model=self._config.model,
             max_tokens=self._config.max_tokens,
             stream=True,
             temperature=self._config.temperature,
-            extra_body={"thinking": {"type": self._config.thinking.value}},
+            extra_body=extra_body,
         )
 
         for result in response:
