@@ -575,6 +575,12 @@ PROVIDERS = [
         "config_schema": "llmstack.processors.providers.mistral.MistralProviderConfig",
     },
     {
+        "name": "MiniMax",
+        "processor_packages": ["llmstack.processors.providers.minimax"],
+        "slug": "minimax",
+        "config_schema": "llmstack.processors.providers.minimax.MiniMaxProviderConfig",
+    },
+    {
         "name": "Meta",
         "processor_packages": ["llmstack.processors.providers.meta"],
         "slug": "meta",
