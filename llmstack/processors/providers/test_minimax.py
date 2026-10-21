@@ -4,9 +4,8 @@ from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from pydantic import ValidationError
-
 import httpx
+from pydantic import ValidationError
 
 from llmstack.common.utils.sslr.resources.chat.completions import (
     _convert_to_anthropic_format,
@@ -193,12 +192,20 @@ class MiniMaxProcessorTest(unittest.TestCase):
             {"type": "video_url", "video_url": {"url": "https://example.com/video.mp4", "fps": 2}},
         ]
         cases = [({}, "MiniMax-M3.1-Flash", "adaptive", "max")]
-        cases += [({"reasoning_effort": effort}, "MiniMax-M3.1-Flash", "adaptive", effort)
-                  for effort in ("low", "medium", "high", "xhigh", "max")]
-        cases += [({"model": model, "thinking": thinking}, model, thinking, None)
-                  for model, thinking in (("MiniMax-M3", "adaptive"), ("MiniMax-M3", "disabled"),
-                                          ("MiniMax-M2.7", "adaptive"), ("MiniMax-M2.1", "adaptive"),
-                                          ("saved-custom-model", "disabled"))]
+        cases += [
+            ({"reasoning_effort": effort}, "MiniMax-M3.1-Flash", "adaptive", effort)
+            for effort in ("low", "medium", "high", "xhigh", "max")
+        ]
+        cases += [
+            ({"model": model, "thinking": thinking}, model, thinking, None)
+            for model, thinking in (
+                ("MiniMax-M3", "adaptive"),
+                ("MiniMax-M3", "disabled"),
+                ("MiniMax-M2.7", "adaptive"),
+                ("MiniMax-M2.1", "adaptive"),
+                ("saved-custom-model", "disabled"),
+            )
+        ]
         for host in ("api.minimax.io", "api.minimaxi.com"):
             for protocol in ("openai", "anthropic"):
                 for options, model, thinking, effort in cases:
@@ -213,18 +220,25 @@ class MiniMaxProcessorTest(unittest.TestCase):
 
                         base_url = f"https://{host}/" + ("anthropic/" if protocol == "anthropic" else "v1/")
                         provider = MiniMaxProviderConfig(api_key="test-key", base_url=base_url)
-                        client = create_minimax_client(provider, http_client=httpx.Client(transport=httpx.MockTransport(handler)))
+                        client = create_minimax_client(
+                            provider, http_client=httpx.Client(transport=httpx.MockTransport(handler))
+                        )
                         content = "Hello" if model in ("MiniMax-M2.7", "MiniMax-M2.1") else media
                         processor = SimpleNamespace(
                             _config=MessagesConfiguration(system_prompt="Be helpful", retain_history=True, **options),
                             _input=MessagesInput(messages=[{"role": "user", "message": content}]),
-                            _chat_history=[{"role": "user", "message": "Earlier question"},
-                                           {"role": "assistant", "message": "Earlier answer"}],
+                            _chat_history=[
+                                {"role": "user", "message": "Earlier question"},
+                                {"role": "assistant", "message": "Earlier answer"},
+                            ],
                             get_provider_config=Mock(return_value=provider),
                             _output_stream=_OutputSink(),
                         )
                         try:
-                            with patch("llmstack.processors.providers.minimax.chat_completions.create_minimax_client", return_value=client):
+                            with patch(
+                                "llmstack.processors.providers.minimax.chat_completions.create_minimax_client",
+                                return_value=client,
+                            ):
                                 MessagesProcessor.process(processor)
                         finally:
                             client.close()
@@ -251,11 +265,13 @@ class MiniMaxProcessorTest(unittest.TestCase):
                             self.assertNotIn("output_config", payload)
                         if protocol == "anthropic":
                             self.assertEqual(payload["system"], "Be helpful")
-                            expected = _convert_to_anthropic_format([
-                                {"role": "user", "content": "Earlier question"},
-                                {"role": "assistant", "content": "Earlier answer"},
-                                {"role": "user", "content": content},
-                            ])
+                            expected = _convert_to_anthropic_format(
+                                [
+                                    {"role": "user", "content": "Earlier question"},
+                                    {"role": "assistant", "content": "Earlier answer"},
+                                    {"role": "user", "content": content},
+                                ]
+                            )
                             self.assertEqual(payload["messages"], expected)
                         else:
                             self.assertEqual(payload["messages"][-1]["content"], content)
