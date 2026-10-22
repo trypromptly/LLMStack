@@ -28,6 +28,7 @@ from llmstack.processors.providers.weaviate import (
     WeaviateCloudInstance,
     WeaviateLocalInstance,
     WeaviateProviderConfig,
+    with_integration_header,
 )
 
 logger = logging.getLogger(__name__)
@@ -124,6 +125,8 @@ def _create_weaviate_client(
     weaviate_config: Union[WeaviateLocalInstance, WeaviateCloudInstance], auth=None, additional_headers=None
 ):
     weaviate_client = None
+    # Passed at construction so the header reaches every REST request and the gRPC metadata.
+    additional_headers = with_integration_header(additional_headers)
     if isinstance(weaviate_config, WeaviateLocalInstance):
         weaviate_client = connect_to_custom(
             http_host=weaviate_config.http_host,

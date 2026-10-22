@@ -1,4 +1,5 @@
-from typing import Annotated, List, Optional, Union
+import importlib.metadata
+from typing import Annotated, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -93,3 +94,27 @@ class WeaviateProviderConfig(ProviderConfig):
     @property
     def additional_headers_dict(self):
         return {header.key: header.value for header in self.additional_headers}
+
+
+# Weaviate (1.38+) reads this header as `{name}/{version}` to attribute requests to
+# the integration that sent them. Older servers ignore it.
+INTEGRATION_HEADER = "X-Weaviate-Client-Integration"
+
+
+def _integration_header_value() -> str:
+    try:
+        version = importlib.metadata.version("llmstack").strip() or "unknown"
+    except Exception:
+        version = "unknown"
+    return f"llmstack/{version}"
+
+
+def with_integration_header(headers: Optional[Dict[str, str]]) -> Dict[str, str]:
+    """Return a copy of `headers` with the X-Weaviate-Client-Integration header added.
+
+    A value already supplied by the user (any letter case) is kept as is.
+    """
+    headers = dict(headers or {})
+    if not any(key.lower() == INTEGRATION_HEADER.lower() for key in headers):
+        headers[INTEGRATION_HEADER] = _integration_header_value()
+    return headers
