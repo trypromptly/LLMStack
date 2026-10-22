@@ -15,6 +15,7 @@ from llmstack.common.blocks.data.store.vectorstore import (
     DocumentQuery,
     VectorStoreInterface,
 )
+from llmstack.processors.providers.weaviate import with_integration_header
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +137,7 @@ class Weaviate(VectorStoreInterface):
                             ),
                         )
 
-        headers = configuration.additional_headers
+        headers = with_integration_header(configuration.additional_headers)
         if configuration.openai_key is not None:
             headers["X-OpenAI-Api-Key"] = configuration.openai_key
         if configuration.cohere_api_key is not None:
