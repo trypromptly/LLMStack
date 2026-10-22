@@ -106,7 +106,10 @@ services:
       POSTGRES_USER: ${DATABASE_USERNAME:-llmstack}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-llmstack}
   weaviate:
-    image: semitechnologies/weaviate:1.25.7
+    # Weaviate supports upgrading one minor version at a time. If the weaviatedata
+    # volume was created by an older Weaviate (e.g. 1.25.x), step through each minor
+    # release first: https://docs.weaviate.io/deploy/migration
+    image: semitechnologies/weaviate:1.39.13
     volumes:
       - weaviatedata:/var/lib/weaviate
     environment:
